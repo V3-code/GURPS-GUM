@@ -1333,6 +1333,104 @@ async function buildHybridActorItemFromGCS(gcsNode, parserFn) {
     return merged;
 }
 
+function getGCSChildren(node) {
+    return Array.isArray(node?.children) ? node.children : [];
+}
+
+function getGCSContainerPathLabel(node) {
+    return getGCSRowLabel(node) || String(node?.id || "").trim();
+}
+
+function collectGCSCharacterLeafEntries(nodes, path = [], collector = []) {
+    for (const node of nodes || []) {
+        const children = getGCSChildren(node);
+        if (children.length > 0) {
+            const label = getGCSContainerPathLabel(node);
+            const nextPath = label ? [...path, label] : path;
+            collectGCSCharacterLeafEntries(children, nextPath, collector);
+            continue;
+        }
+
+        collector.push({ node, path: [...path] });
+    }
+
+    return collector;
+}
+
+function applyGCSContainerPathMetadata(itemData, path = [], { groupFromPath = false } = {}) {
+    if (!itemData) return itemData;
+
+    const sanitizedPath = Array.isArray(path)
+        ? path.map(part => String(part || "").trim()).filter(Boolean)
+        : [];
+
+    if (!sanitizedPath.length) return itemData;
+
+    if (groupFromPath) {
+        itemData.system = itemData.system || {};
+        itemData.system.group = sanitizedPath[sanitizedPath.length - 1] || itemData.system.group || "Geral";
+    }
+
+    itemData.flags = foundry.utils.mergeObject(itemData.flags || {}, {
+        gum: {
+            gcs: {
+                containerPath: sanitizedPath,
+                containerPathLabel: sanitizedPath.join(" › ")
+            }
+        }
+    }, { inplace: false, overwrite: true });
+
+    return itemData;
+}
+
+function ensureImportedEmbeddedItemId(itemData) {
+    if (!itemData) return "";
+    itemData._id = foundry.utils.randomID();
+    return itemData._id;
+}
+
+async function buildGCSCharacterEquipmentItems(nodes, { location = "carried", path = [], parentContainerId = "" } = {}) {
+    const items = [];
+
+    for (const node of nodes || []) {
+        const children = getGCSChildren(node);
+        const hasChildren = children.length > 0;
+        const label = getGCSContainerPathLabel(node);
+        const childPath = hasChildren && label ? [...path, label] : path;
+        let nextParentContainerId = parentContainerId;
+
+        const resolvedLocation = node?.equipped === true ? "equipped" : location;
+        const item = await buildHybridActorItemFromGCS(node, parseGCSLibraryEquipment);
+        if (item) {
+            item.system = item.system || {};
+            item.system.location = resolvedLocation;
+            item.system.equipped = resolvedLocation === "equipped";
+            item.system.stored = resolvedLocation === "stored";
+            item.system.parent_container_id = parentContainerId || "";
+
+            if (hasChildren) {
+                item.system.is_container = true;
+                nextParentContainerId = ensureImportedEmbeddedItemId(item);
+            }
+
+            applyGCSContainerPathMetadata(item, path);
+            items.push(item);
+        }
+
+        if (hasChildren) {
+            const childItems = await buildGCSCharacterEquipmentItems(children, {
+                location: resolvedLocation,
+                path: childPath,
+                parentContainerId: nextParentContainerId
+            });
+            items.push(...childItems);
+        }
+    }
+
+    return items;
+}
+
+
 async function buildTemplateEntryFromGCSNode(gcsNode, parserFn, itemType, { defaultCost = 0 } = {}) {
     if (itemType === "advantage") {
         const attributeEntry = parseAttributeTemplateEntryFromGCSTrait(gcsNode);
@@ -1729,33 +1827,27 @@ async function parseGCSCharacter(gcsData) {
     // MAPEAMENTO DE VANTAGENS E DESVANTAGENS
     // =============================================================
     ui.notifications.info("Mapeando Vantagens e Desvantagens...");
-    const allTraits = [];
-    for (const gcsTrait of gcsData.traits || []) {
-        if (gcsTrait.name === "Natural Attacks") continue;
-        
-        if (gcsTrait.container_type && gcsTrait.children) {
-            for (const child of gcsTrait.children) {
-                child.parent_container_type = gcsTrait.container_type; 
-                allTraits.push(child);
-            }
-        } else {
-            allTraits.push(gcsTrait);
-        }
-    }
-    for (const gcsTrait of allTraits) {
-        if (gcsTrait.name === "Natural Attacks") continue;
+    const traitRoots = (gcsData.traits || []).filter(gcsTrait => gcsTrait?.name !== "Natural Attacks");
+    const traitEntries = collectGCSCharacterLeafEntries(traitRoots);
+    for (const { node: gcsTrait, path } of traitEntries) {
+        if (gcsTrait?.name === "Natural Attacks") continue;
 
         const item = await buildHybridActorItemFromGCS(gcsTrait, parseGCSLibraryTrait);
-        if(item) itemsToCreate.push(item);
+        if (item) {
+            applyGCSContainerPathMetadata(item, path);
+            itemsToCreate.push(item);
+        }
     }
 
     // =============================================================
     // MAPEAMENTO DE PERÍCIAS
     // =============================================================
     ui.notifications.info("Mapeando Perícias...");
-    for (const gcsSkill of gcsData.skills || []) {
+    const skillEntries = collectGCSCharacterLeafEntries(gcsData.skills || []);
+    for (const { node: gcsSkill, path } of skillEntries) {
         const item = await buildHybridActorItemFromGCS(gcsSkill, parseGCSLibrarySkill);
         if (item) {
+            applyGCSContainerPathMetadata(item, path, { groupFromPath: true });
             itemsToCreate.push(item);
         }
     }
@@ -1765,35 +1857,25 @@ async function parseGCSCharacter(gcsData) {
     // =============================================================
     ui.notifications.info("Mapeando Equipamentos...");
 
-    // --- Loop 1: Equipamentos "Carregados" (equipment) ---
-    for (const gcsEquip of gcsData.equipment || []) {
-        const item = await buildHybridActorItemFromGCS(gcsEquip, parseGCSLibraryEquipment);
-        if (item) {
-            if (gcsEquip.equipped === true) {
-                item.system.location = "equipped"; // Em Uso
-            } else {
-                item.system.location = "carried"; // Carregado
-            }
-            itemsToCreate.push(item);
-        }
+    const carriedEquipment = await buildGCSCharacterEquipmentItems(gcsData.equipment || [], { location: "carried" });
+    for (const item of carriedEquipment) {
+        itemsToCreate.push(item);
     }
-    
-    // --- Loop 2: Equipamentos "Outros" (other_equipment) ---
-    for (const gcsEquip of gcsData.other_equipment || []) {
-         const item = await buildHybridActorItemFromGCS(gcsEquip, parseGCSLibraryEquipment);
-        if (item) {
-            item.system.location = "stored"; // Armazenado
-            itemsToCreate.push(item);
-        }
+
+    const storedEquipment = await buildGCSCharacterEquipmentItems(gcsData.other_equipment || [], { location: "stored" });
+    for (const item of storedEquipment) {
+        itemsToCreate.push(item);
     }
 
     // =============================================================
     // MAPEAMENTO DE MAGIAS (Spell)
     // =============================================================
     ui.notifications.info("Mapeando Magias...");
-    for (const gcsSpell of gcsData.spells || []) {
+    const spellEntries = collectGCSCharacterLeafEntries(gcsData.spells || []);
+    for (const { node: gcsSpell, path } of spellEntries) {
         const item = await buildHybridActorItemFromGCS(gcsSpell, parseGCSLibrarySpell);
         if (item) {
+            applyGCSContainerPathMetadata(item, path, { groupFromPath: true });
             itemsToCreate.push(item);
         }
     }
