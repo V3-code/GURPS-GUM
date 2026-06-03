@@ -275,12 +275,52 @@ _promptMultipleReferences(parsedList) {
         context.hierarchyTypes = context.config.hierarchyTypes; 
  
         if (this.item.type === 'skill') { 
-            const baseAttrValue = (itemData.system.base_attribute ?? "").toString(); 
-            const baseAttrNormalized = baseAttrValue.trim().toLowerCase(); 
             const standardSkillAttrs = ["st", "dx", "iq", "ht", "per", "will"]; 
-            const isStandardAttr = standardSkillAttrs.includes(baseAttrNormalized); 
-            context.skillBaseAttributeSelect = isStandardAttr ? baseAttrNormalized : "skill"; 
-            context.skillBaseAttributeCustom = isStandardAttr ? "" : baseAttrValue; 
+            const resolveSkillBaseAttribute = (value) => {
+                const baseAttrValue = (value ?? "").toString();
+                const baseAttrNormalized = baseAttrValue.trim().toLowerCase();
+                const isStandardAttr = standardSkillAttrs.includes(baseAttrNormalized);
+                return {
+                    select: isStandardAttr ? baseAttrNormalized : "skill",
+                    custom: isStandardAttr ? "" : baseAttrValue
+                };
+            };
+
+            const standardBase = resolveSkillBaseAttribute(itemData.system.base_attribute);
+            context.skillBaseAttributeSelect = standardBase.select;
+            context.skillBaseAttributeCustom = standardBase.custom;
+
+            const treeBaseAttribute = itemData.system.tree_base_attribute ?? itemData.system.base_attribute;
+            const treeBase = resolveSkillBaseAttribute(treeBaseAttribute);
+            context.treeBaseAttributeSelect = treeBase.select;
+            context.treeBaseAttributeCustom = treeBase.custom;
+
+            context.treeHierarchyType = itemData.system.tree_hierarchy_type ?? itemData.system.hierarchy_type ?? "normal";
+            const savedTreePointsPerLevel = itemData.system.tree_points_per_level;
+            context.treePointsPerLevel = savedTreePointsPerLevel !== undefined && savedTreePointsPerLevel !== "" ? savedTreePointsPerLevel : this._getTreePointsPerLevelDefault(context.treeHierarchyType);
+            context.treeSkillLevel = itemData.system.tree_skill_level ?? itemData.system.skill_level ?? 0;
+            context.treeNhMod = itemData.system.tree_nh_mod ?? 0;
+            context.treePoints = itemData.system.tree_points ?? this._calculateTreeSkillPoints(context.treeSkillLevel, context.treePointsPerLevel);
+
+            const legacyTreeParent = (() => {
+                if (context.treeHierarchyType === "branch") return itemData.system.root_parent ?? "";
+                if (context.treeHierarchyType === "twig") return itemData.system.branch_parent ?? "";
+                if (context.treeHierarchyType === "leaf") return itemData.system.twig_parent ?? itemData.system.parent_skill ?? "";
+                return "";
+            })();
+            context.treeParentValue = itemData.system.tree_parent ?? legacyTreeParent;
+
+            const treeParentConfig = {
+                normal: { enabled: false, placeholder: "Não usa árvore", filter: "" },
+                trunk: { enabled: false, placeholder: "Tronco não possui pai", filter: "" },
+                branch: { enabled: true, placeholder: "Nome do tronco pai", filter: "trunk" },
+                twig: { enabled: true, placeholder: "Nome do galho/ramo pai", filter: "branch" },
+                leaf: { enabled: true, placeholder: "Nome do pai imediato", filter: "twig|branch" }
+            };
+            const parentConfig = treeParentConfig[context.treeHierarchyType] ?? treeParentConfig.normal;
+            context.treeParentEnabled = parentConfig.enabled;
+            context.treeParentPlaceholder = parentConfig.placeholder;
+            context.treeParentSkillFilter = parentConfig.filter;
         } 
  
         const defaultBlockId = this.item.type === 'disadvantage' ? 'block3' : 'block2'; 
@@ -477,19 +517,51 @@ _promptMultipleReferences(parsedList) {
         if (!this.isEditable) return; 
  
         // Auto-Cálculo 
-        html.find('input[name="system.auto_points"], select[name="system.difficulty"], input[name="system.skill_level"], select[name="system.cost_mode"], input[name="system.cost_per_level"]').on('change', this._onAutoCalcPoints.bind(this));     
- 
-        const baseAttributeSelect = html.find('select[name="system.base_attribute_select"]'); 
-        if (baseAttributeSelect.length) { 
-            const toggleCustomField = () => { 
-                const isSkillBased = baseAttributeSelect.val() === "skill"; 
-                const customField = html.find('.skill-base-attribute-custom'); 
-                customField.toggle(isSkillBased); 
-                customField.find('input').prop('disabled', !isSkillBased); 
-            }; 
-            toggleCustomField(); 
-            baseAttributeSelect.on('change', toggleCustomField); 
-        } 
+        html.find('input[name="system.auto_points"], select[name="system.difficulty"], input[name="system.skill_level"], select[name="system.cost_mode"], input[name="system.cost_per_level"], select[name="system.tree_hierarchy_type"], input[name="system.tree_skill_level"], input[name="system.tree_points_per_level"]').on('change', this._onAutoCalcPoints.bind(this));
+
+        const toggleSkillBaseAttribute = (select) => {
+            const selector = select.data('custom-target');
+            const customField = selector ? html.find(selector) : select.closest('.skill-compact-controls, .form-group').find('.skill-base-attribute-custom');
+            const isSkillBased = select.val() === "skill";
+            customField.prop('disabled', !isSkillBased);
+            customField.toggleClass('is-disabled', !isSkillBased);
+        };
+        html.find('.skill-base-attribute-select').each((_idx, el) => {
+            const select = $(el);
+            toggleSkillBaseAttribute(select);
+            select.on('change', () => toggleSkillBaseAttribute(select));
+        });
+
+        const updateTreeParentState = (select) => {
+            const type = (select.val() || "normal").toString();
+            const config = {
+                normal: { enabled: false, placeholder: "Não usa árvore", filter: "" },
+                trunk: { enabled: false, placeholder: "Tronco não possui pai", filter: "" },
+                branch: { enabled: true, placeholder: "Nome do tronco pai", filter: "trunk" },
+                twig: { enabled: true, placeholder: "Nome do galho/ramo pai", filter: "branch" },
+                leaf: { enabled: true, placeholder: "Nome do pai imediato", filter: "twig|branch" }
+            }[type] || { enabled: false, placeholder: "Não usa árvore", filter: "" };
+            const wrapper = select.closest('.tree-parent-control');
+            const input = wrapper.find('.tree-parent-input');
+            const link = wrapper.find('.tree-parent-link');
+            input.prop('disabled', !config.enabled).attr('placeholder', config.placeholder);
+            link.toggleClass('disabled', !config.enabled).attr('data-skill-filter', config.filter);
+
+            const pointsPerLevelInput = html.find('input[name="system.tree_points_per_level"]');
+            if (pointsPerLevelInput.length) {
+                const defaultValues = ["7", "3", "2", "1"];
+                const currentValue = (pointsPerLevelInput.val() ?? "").toString().trim();
+                const defaultValue = this._getTreePointsPerLevelDefault(type);
+                if (defaultValue !== "" && (!currentValue || defaultValues.includes(currentValue))) {
+                    pointsPerLevelInput.val(defaultValue);
+                }
+            }
+        };
+        html.find('.tree-hierarchy-select').each((_idx, el) => {
+            const select = $(el);
+            updateTreeParentState(select);
+            select.on('change', () => updateTreeParentState(select));
+        });
  
           // Ajuste de Valor (+/-) 
         html.find('.adjust-value').click(ev => { 
@@ -519,6 +591,17 @@ _promptMultipleReferences(parsedList) {
                     const newPoints = this._calculateSkillPoints(diff, newLevel); 
                     updateData[pointsField] = newPoints; 
                 } 
+            }
+
+            if (sys.auto_points !== false && targetField === "system.tree_skill_level") {
+                const pointsPerLevelInput = this.form?.querySelector('input[name="system.tree_points_per_level"]');
+                const pointsPerLevel = pointsPerLevelInput?.value ?? sys.tree_points_per_level ?? this._getTreePointsPerLevelDefault(sys.tree_hierarchy_type);
+                const newTreePoints = this._calculateTreeSkillPoints(newLevel, pointsPerLevel);
+                updateData["system.tree_points"] = newTreePoints;
+
+                // Atualiza imediatamente o campo desabilitado para refletir os botões +/- antes do rerender.
+                const treePointsInput = this.form?.querySelector('input[name="system.tree_points"]');
+                if (treePointsInput) treePointsInput.value = newTreePoints;
             } 
             this.item.update(updateData); 
         }); 
@@ -1151,6 +1234,18 @@ try {
             this.item.update(updateData); 
         } 
     } 
+
+    _getTreePointsPerLevelDefault(hierarchyType) {
+        const defaults = { trunk: 7, branch: 3, twig: 2, leaf: 1 };
+        return defaults[(hierarchyType || "normal").toString()] ?? "";
+    }
+
+    _calculateTreeSkillPoints(relativeLevel, pointsPerLevel) {
+        const level = Number(relativeLevel) || 0;
+        const perLevel = Number(pointsPerLevel) || 0;
+        return Math.max(0, level * perLevel);
+    }
+
  
     _calculateSkillPoints(difficulty, relativeLevel) { 
         const rl = parseInt(relativeLevel) || 0; 
@@ -1625,17 +1720,19 @@ new Dialog({
         attackItem.find('.attack-display-mode').show(); 
     } 
  
- _onLinkSkill(ev) { 
+ _onLinkSkill(ev) {
+        const trigger = $(ev.currentTarget);
+        if (trigger.hasClass('disabled')) return; 
         if (!this.item.isOwned) return ui.notifications.warn("Item precisa estar em um ator."); 
         const actor = this.item.parent; 
-        const trigger = $(ev.currentTarget); 
+
         const skillFilter = (trigger.data('skill-filter') || '').toString().trim(); 
         let skills = actor.items.filter(i => i.type === 'skill'); 
  
         if (skillFilter) { 
             const allowedTypes = new Set(skillFilter.split('|').map(type => type.trim()).filter(Boolean)); 
             if (allowedTypes.size > 0) { 
-                skills = skills.filter(skill => allowedTypes.has(skill.system?.hierarchy_type)); 
+                skills = skills.filter(skill => allowedTypes.has(skill.system?.tree_hierarchy_type ?? skill.system?.hierarchy_type));
             } 
         } 
  
@@ -1818,10 +1915,11 @@ new Dialog({
             const isNumericStringWithComma = typeof v === 'string' && /^[+-]?\d+(,\d+)?$/.test(v.trim()); 
             if (!isDescriptionField && isNumericStringWithComma && v.includes(',')) formData[k] = v.replace(',', '.'); 
         } 
+        const standardSkillAttrs = ["st", "dx", "iq", "ht", "per", "will"];
         if (formData["system.base_attribute_select"] !== undefined) { 
             const selected = formData["system.base_attribute_select"]; 
             const customValue = (formData["system.base_attribute_custom"] ?? "").toString().trim(); 
-            const standardSkillAttrs = ["st", "dx", "iq", "ht", "per", "will"]; 
+
             if (selected === "skill") { 
                 formData["system.base_attribute"] = customValue; 
             } else if (standardSkillAttrs.includes(selected)) { 
@@ -1829,7 +1927,41 @@ new Dialog({
             } 
             delete formData["system.base_attribute_select"]; 
             delete formData["system.base_attribute_custom"]; 
- } 
+         }
+
+        if (formData["system.tree_base_attribute_select"] !== undefined) {
+            const selected = formData["system.tree_base_attribute_select"];
+            const customValue = (formData["system.tree_base_attribute_custom"] ?? "").toString().trim();
+            if (selected === "skill") {
+                formData["system.tree_base_attribute"] = customValue;
+            } else if (standardSkillAttrs.includes(selected)) {
+                formData["system.tree_base_attribute"] = selected;
+            }
+            delete formData["system.tree_base_attribute_select"];
+            delete formData["system.tree_base_attribute_custom"];
+        }
+
+        if (this.item?.type === "skill") {
+            const treeHierarchyType = formData["system.tree_hierarchy_type"] ?? this.item.system?.tree_hierarchy_type ?? this.item.system?.hierarchy_type ?? "normal";
+            const parentEnabled = ["branch", "twig", "leaf"].includes(treeHierarchyType);
+            const treeParent = parentEnabled ? (formData["system.tree_parent"] ?? this.item.system?.tree_parent ?? "").toString().trim() : "";
+            const treePointsPerLevel = formData["system.tree_points_per_level"] ?? this.item.system?.tree_points_per_level ?? this._getTreePointsPerLevelDefault(treeHierarchyType);
+
+            const autoPointsEnabled = formData["system.auto_points"] !== undefined
+                ? formData["system.auto_points"] !== false
+                : this.item.system?.auto_points !== false;
+            if (autoPointsEnabled) {
+                const treeLevel = formData["system.tree_skill_level"] ?? this.item.system?.tree_skill_level ?? 0;
+                formData["system.tree_points"] = this._calculateTreeSkillPoints(treeLevel, treePointsPerLevel);
+            }
+
+            // Mantém os campos legados sincronizados para compatibilidade com itens, macros e importadores antigos.
+            formData["system.tree_parent"] = treeParent;
+            formData["system.hierarchy_type"] = treeHierarchyType;
+            formData["system.root_parent"] = treeHierarchyType === "branch" ? treeParent : "";
+            formData["system.branch_parent"] = treeHierarchyType === "twig" ? treeParent : "";
+            formData["system.twig_parent"] = treeHierarchyType === "leaf" ? treeParent : "";
+        }
  
         if (this.item?.type === "equipment" && this.item?.actor) { 
             const wasContainer = this.item.system?.is_container === true; 

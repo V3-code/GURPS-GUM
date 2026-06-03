@@ -455,7 +455,7 @@
      {{!-- Aba "Detalhes" --}}
      <div class="tab" data-tab="details">
 
-         {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "skill") (eq item.type "spell") (eq item.type "power"))}}
+        {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "spell") (eq item.type "power"))}}
             <div class="skill-ability-toggle">
                 <label class="custom-checkbox inline-checkbox">
                     <input type="checkbox" name="system.favorite_in_combat" {{checked system.favorite_in_combat}}/>
@@ -702,136 +702,60 @@
         {{/if}}
        
 {{!-- ===================================================================== --}}
-{{!--       ABA DETALHES: ITEM PERÍCIAS (SKILL TREE POWER-UPS 10)           --}}
+{{!--       ABA DETALHES: ITEM PERÍCIAS (USO PADRÃO + USO EM ÁRVORE)       --}}
 {{!-- ===================================================================== --}}
-{{#if (eq item.type "skill")}} 
-
-{{!-- SEÇÃO 1: ORGANIZAÇÃO & HIERARQUIA --}}
-    <div class="form-section skill-organization">
-        <h4 class="section-title">Organização</h4>
-        <p class="section-hint">Defina como a perícia se agrupa e se conecta na árvore.</p>
-        
-        <div class="form-grid-2">
-            <div class="form-group">
-                <label>Grupo / Tronco</label>
-                <input type="text" name="system.group" value="{{system.group}}" placeholder="Ex: Combate, Social..." list="groups-list"/>
-                <datalist id="groups-list">
-                    <option value="Animais">
-                    <option value="Artes">
-                    <option value="Atléticas">
-                    <option value="Combate Corpo a Corpo">
-                    <option value="Combate à Distância">
-                    <option value="Conhecimento">
-                    <option value="Criminosas">
-                    <option value="Influência">
-                    <option value="Mágicas">
-                    <option value="M militares">
-                    <option value="Natureza">
-                    <option value="Outras">
-                    <option value="Pessoais">
-                    <option value="Plantas">
-                    <option value="Profissionais">
-                    <option value="Sociais">
-                    <option value="Técnicas">
-                    <option value="Veículos">
-                </datalist>
-            </div>
-            
-            <div class="form-group">
-                <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> Ref. Página</label>
-                <div class="input-with-button">
-                    <input type="text" name="system.ref" value="{{system.ref}}"/>
-                </div>
-            </div>
+{{#if (eq item.type "skill")}}
+    <div class="form-section skill-details-compact">
+  
+        <div class="skill-line-field skill-reference-field">
+            <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> Ref.</label>
+            <input type="text" name="system.ref" value="{{system.ref}}" placeholder="Ex: B182"/>
         </div>
-
-        <hr class="section-divider">
-
-        <div class="form-group">
-            <label>Nível na Árvore (Tier)</label>
-            <select name="system.hierarchy_type" class="hierarchy-select">
-                {{!-- CORREÇÃO: Usando config.hierarchyTypes --}}
-                {{selectOptions config.hierarchyTypes selected=system.hierarchy_type localize=true}}
-            </select>
-        </div>
-
-        <div class="skill-hierarchy-grid">
-        {{!-- CONDICIONAIS DE VÍNCULO --}}
-        
-        {{!-- TRUNK --}}
-        {{#if (eq system.hierarchy_type "trunk")}}
-        <div class="skill-hierarchy-card">
-            <p class="hint-text">
-                <i class="fas fa-info-circle"></i> Este item define um <strong>Tronco</strong>. Outras perícias usarão o nome deste grupo ("{{system.group}}") para se agrupar aqui.
-            </p>
-        </div>
-        {{/if}}
-
-        {{!-- BRANCH --}}
-        {{#if (eq system.hierarchy_type "branch")}}
-        <div class="skill-hierarchy-card">
-            <label>
-                Vinculado ao Tronco (Opcional)
-                <a class="link-skill-button" data-link-target="system.root_parent" data-skill-filter="trunk" title="Buscar Tronco"><i class="fas fa-link"></i></a>
+        <div class="skill-details-header-grid">
+            <label class="custom-checkbox inline-checkbox skill-compact-checkbox">
+                <input type="checkbox" name="system.favorite_in_combat" {{checked system.favorite_in_combat}}/>
+                <span>Favorito</span>
             </label>
-            <input type="text" name="system.root_parent" value="{{system.root_parent}}" placeholder="Nome do Tronco Pai (se diferente do Grupo)"/>
-        </div>
-        {{/if}}
-
-        {{!-- TWIG --}}
-        {{#if (eq system.hierarchy_type "twig")}}
-        <div class="skill-hierarchy-card">
-            <label>
-                Vinculado ao Ramo (Branch)
-                <a class="link-skill-button" data-link-target="system.branch_parent" data-skill-filter="branch" title="Buscar Ramo"><i class="fas fa-link"></i></a>
-            </label>
-            <input type="text" name="system.branch_parent" value="{{system.branch_parent}}" placeholder="Nome exato da perícia Ramo"/>
-        </div>
-        {{/if}}
-
-        {{!-- LEAF --}}
-        {{#if (eq system.hierarchy_type "leaf")}}
-        <div class="skill-hierarchy-card">
-            <label>
-                Vinculado ao Pai (Twig/Branch)
-                <a class="link-skill-button" data-link-target="system.twig_parent" data-skill-filter="twig|branch" title="Buscar Pai"><i class="fas fa-link"></i></a>
-            </label>
-            <input type="text" name="system.twig_parent" value="{{system.twig_parent}}" placeholder="Nome do Pai imediato"/>
-        </div>
-        {{/if}}
-        </div>
-    </div>
-
-    {{!-- SEÇÃO 2: HABILIDADE & CUSTO --}}
-    <div class="form-section skill-ability">
-        <div class="skill-ability-header">
-            <div>
-                <h4 class="section-title">Habilidade</h4>
-                <p class="section-hint">Escolha o modelo de custo e ajuste os valores principais.</p>
-            </div>
-        </div>
-
-        <div class="skill-ability-toggle">
-            <label class="custom-checkbox inline-checkbox">
+            <label class="custom-checkbox inline-checkbox skill-compact-checkbox">
                 <input type="checkbox" name="system.auto_points" {{checked (ne system.auto_points false)}}/>
                 <span>Calcular Pontos Automaticamente</span>
-            </label>
+            </label>         
         </div>
-
-        <div class="skill-ability-grid trio">
-            <div class="form-group">
-                <label>Modo de Custo</label>
-                <div class="form-fields">
-                    <select name="system.cost_mode" class="cost-mode-select">
-                        {{selectOptions config.costModes selected=system.cost_mode localize=true}}
-                    </select>
+    </div>
+<div class="form-section skill-details-compact skill-usage-block skill-standard-usage">
+        <h4 class="section-title">Uso Padrão</h4>
+        <div class="skill-compact-rows">
+            <div class="skill-compact-row">
+                <label>Grupo</label>
+                <div class="skill-compact-controls">
+                    <input type="text" name="system.group" value="{{system.group}}" placeholder="Ex: Combate, Social..." list="groups-list"/>
+                    <datalist id="groups-list">
+                        <option value="Animais">
+                        <option value="Artes">
+                        <option value="Atléticas">
+                        <option value="Combate Corpo a Corpo">
+                        <option value="Combate à Distância">
+                        <option value="Conhecimento">
+                        <option value="Criminosas">
+                        <option value="Influência">
+                        <option value="Mágicas">
+                        <option value="M militares">
+                        <option value="Natureza">
+                        <option value="Outras">
+                        <option value="Pessoais">
+                        <option value="Plantas">
+                        <option value="Profissionais">
+                        <option value="Sociais">
+                        <option value="Técnicas">
+                        <option value="Veículos">
+                    </datalist>
                 </div>
             </div>
 
-           <div class="form-group">
+           <div class="skill-compact-row">
                 <label>Atributo Base</label>
-                <div class="form-fields">
-                    <select name="system.base_attribute_select">
+                <div class="skill-compact-controls split-control">
+                    <select name="system.base_attribute_select" class="skill-base-attribute-select" data-custom-target=".skill-base-attribute-custom">
                         <option value="st" {{#if (eq skillBaseAttributeSelect "st")}}selected{{/if}}>ST</option>
                         <option value="dx" {{#if (eq skillBaseAttributeSelect "dx")}}selected{{/if}}>DX</option>
                         <option value="iq" {{#if (eq skillBaseAttributeSelect "iq")}}selected{{/if}}>IQ</option>
@@ -840,48 +764,108 @@
                         <option value="will" {{#if (eq skillBaseAttributeSelect "will")}}selected{{/if}}>Vont</option>
                         <option value="skill" {{#if (eq skillBaseAttributeSelect "skill")}}selected{{/if}}>Perícia</option>
                     </select>
-                </div>
-                <div class="form-fields skill-base-attribute-custom" {{#unless (eq skillBaseAttributeSelect "skill")}}style="display:none;"{{/unless}}>
-                    <input type="text" name="system.base_attribute_custom" value="{{skillBaseAttributeCustom}}" placeholder="Nome da perícia base"/>
+                    <input class="skill-base-attribute-custom" type="text" name="system.base_attribute_custom" value="{{skillBaseAttributeCustom}}" placeholder="Nome da perícia base" {{#unless (eq skillBaseAttributeSelect "skill")}}disabled{{/unless}}/>
                 </div>
             </div>
 
-            <div class="form-group difficulty-group">
-                <label>{{#if (eq system.cost_mode "linear")}}Custo por Nível{{else}}Dificuldade{{/if}}</label>
-                <div class="form-fields">
-                    {{#if (eq system.cost_mode "linear")}}
-                        <input type="number" name="system.cost_per_level" value="{{system.cost_per_level}}" class="short-input cost-input" placeholder="pts/nível">
-                    {{else}}
-                        <select name="system.difficulty">
-                            {{selectOptions config.difficulties selected=system.difficulty localize=true}}
-                        </select>
-                    {{/if}}
+ <div class="skill-compact-row">
+                <label>Dificuldade</label>
+                <div class="skill-compact-controls">
+                    <select name="system.difficulty">
+                        {{selectOptions config.difficulties selected=system.difficulty localize=true}}
+                    </select>
                 </div>
             </div>
-        </div>
 
-        <div class="skill-ability-grid trio">
-            {{!-- Nível Relativo com Botões --}}
-            <div class="skill-stat-card level-card">
-                <div class="stat-label">Nível Relativo</div>
-                <div class="stat-value counter-wrapper">
+        <div class="skill-compact-row">
+                <label>Nível Relativo</label>
+                <div class="skill-compact-controls counter-wrapper compact-counter">
                     <a class="adjust-value" data-action="decrease" data-target="system.skill_level"><i class="fas fa-minus"></i></a>
                     <input type="number" name="system.skill_level" value="{{system.skill_level}}" data-dtype="Number">
                     <a class="adjust-value" data-action="increase" data-target="system.skill_level"><i class="fas fa-plus"></i></a>
                 </div>
             </div>
 
-            <div class="skill-stat-card">
-                <div class="stat-label">Pontos</div>
-                <input type="number" name="system.points" value="{{system.points}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/>
+            <div class="skill-compact-row">
+                <label>Modificador Base</label>
+                <div class="skill-compact-controls">
+                    <input type="number" name="system.nh_mod" value="{{system.nh_mod}}" placeholder="+0"/>
+                </div>
             </div>
-            
-            <div class="skill-stat-card">
-                <div class="stat-label">Mods. NH</div>
-                <input type="number" name="system.nh_mod" value="{{system.nh_mod}}" placeholder="+0"/>
+           
+            <div class="skill-compact-row">
+                <label>Pontos Totais</label>
+                <div class="skill-compact-controls">
+                    <input type="number" name="system.points" value="{{system.points}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/>
+                </div>
             </div>
         </div>
     </div>
+
+    <div class="form-section skill-details-compact skill-usage-block skill-tree-usage">
+        <h4 class="section-title">Uso em Árvore</h4>
+        <p class="section-hint">Campos independentes para a visualização em árvore. Itens antigos usam os dados padrão como fallback até que estes campos sejam preenchidos.</p>
+        <div class="skill-compact-rows">
+            <div class="skill-compact-row">
+                <label>Nível na Árvore</label>
+                <div class="skill-compact-controls split-control tree-parent-control">
+                    <select name="system.tree_hierarchy_type" class="hierarchy-select tree-hierarchy-select" >
+                        {{selectOptions config.hierarchyTypes selected=treeHierarchyType localize=true}}
+                    </select>
+                    <div class="input-with-button tree-parent-input-wrap">
+                        <input class="tree-parent-input" type="text" name="system.tree_parent" value="{{treeParentValue}}" placeholder="{{treeParentPlaceholder}}" {{#unless treeParentEnabled}}disabled{{/unless}}/>
+                        <a class="link-skill-button tree-parent-link {{#unless treeParentEnabled}}disabled{{/unless}}" data-link-target="system.tree_parent" data-skill-filter="{{treeParentSkillFilter}}" title="Buscar vínculo"><i class="fas fa-link"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="skill-compact-row">
+                <label>Atributo Base</label>
+                <div class="skill-compact-controls split-control">
+                    <select name="system.tree_base_attribute_select" class="skill-base-attribute-select" data-custom-target=".tree-base-attribute-custom">
+                        <option value="st" {{#if (eq treeBaseAttributeSelect "st")}}selected{{/if}}>ST</option>
+                        <option value="dx" {{#if (eq treeBaseAttributeSelect "dx")}}selected{{/if}}>DX</option>
+                        <option value="iq" {{#if (eq treeBaseAttributeSelect "iq")}}selected{{/if}}>IQ</option>
+                        <option value="ht" {{#if (eq treeBaseAttributeSelect "ht")}}selected{{/if}}>HT</option>
+                        <option value="per" {{#if (eq treeBaseAttributeSelect "per")}}selected{{/if}}>Per</option>
+                        <option value="will" {{#if (eq treeBaseAttributeSelect "will")}}selected{{/if}}>Vont</option>
+                        <option value="skill" {{#if (eq treeBaseAttributeSelect "skill")}}selected{{/if}}>Perícia</option>
+                    </select>
+                    <input class="tree-base-attribute-custom" type="text" name="system.tree_base_attribute_custom" value="{{treeBaseAttributeCustom}}" placeholder="Nome da perícia base" {{#unless (eq treeBaseAttributeSelect "skill")}}disabled{{/unless}}/>
+                </div>
+            </div>
+
+            <div class="skill-compact-row">
+                <label>Pontos por Nível</label>
+                <div class="skill-compact-controls">
+                    <input type="number" name="system.tree_points_per_level" value="{{treePointsPerLevel}}" placeholder="pts/nível"/>
+                </div>
+            </div>
+
+            <div class="skill-compact-row">
+                <label>Nível Relativo</label>
+                <div class="skill-compact-controls counter-wrapper compact-counter">
+                    <a class="adjust-value" data-action="decrease" data-target="system.tree_skill_level"><i class="fas fa-minus"></i></a>
+                    <input type="number" name="system.tree_skill_level" value="{{treeSkillLevel}}" data-dtype="Number">
+                    <a class="adjust-value" data-action="increase" data-target="system.tree_skill_level"><i class="fas fa-plus"></i></a>
+                </div>
+            </div>
+
+            <div class="skill-compact-row">
+                <label title="Modificador base próprio do uso em árvore">Modificador Base</label>
+                <div class="skill-compact-controls">
+                    <input type="number" name="system.tree_nh_mod" value="{{treeNhMod}}" placeholder="+0"/>
+                </div>
+            </div>
+
+        <div class="skill-compact-row">
+            <label>Pontos Totais</label>
+            <div class="skill-compact-controls">
+                <input type="number" name="system.tree_points" value="{{treePoints}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/>
+            </div>
+        </div>
+    </div>
+ </div>
 {{/if}}
         
         {{!-- ===================================================================== --}}
@@ -2065,7 +2049,7 @@
 
         <div class="form-section">
             <h4 class="section-title">Árvore de Perícia</h4>
-            <p class="section-hint">Aplicado somente no modo árvore para esta perícia. Não é herdado para níveis abaixo.</p>
+            <p class="section-hint">Somado ao NH final da própria perícia no modo árvore (ex.: Atributo -5). Não é herdado para níveis abaixo.</p>
             <div class="form-row">
                 <input type="number" name="system.tree_default_mod" value="{{system.tree_default_mod}}" placeholder="-5"/>
             </div>

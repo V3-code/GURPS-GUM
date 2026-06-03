@@ -327,6 +327,19 @@ async getData(options) {
             skill.effectNhTagVisible = directNhDelta !== 0;
             skill.effectNhTagValue = directNhDelta;
             skill.effectNhTagClass = directNhDelta >= 0 ? "is-positive" : "is-negative";
+
+            const useTreeFields = skillsViewMode === 'tree';
+            const treeHierarchyType = skill.system?.tree_hierarchy_type ?? skill.system?.hierarchy_type ?? "normal";
+            const treePointsDefaults = { trunk: 7, branch: 3, twig: 2, leaf: 1 };
+            const savedTreePointsPerLevel = skill.system?.tree_points_per_level;
+            const treePointsPerLevel = savedTreePointsPerLevel !== undefined && savedTreePointsPerLevel !== "" ? savedTreePointsPerLevel : treePointsDefaults[treeHierarchyType] ?? "";
+            skill.skillListDisplay = {
+                baseAttribute: useTreeFields ? (skill.system?.tree_base_attribute || skill.system?.base_attribute) : skill.system?.base_attribute,
+                difficulty: useTreeFields ? (treePointsPerLevel !== "" ? `${treePointsPerLevel}/nív` : "") : skill.system?.difficulty,
+                skillLevel: useTreeFields ? (skill.system?.tree_skill_level ?? skill.system?.skill_level ?? 0) : (skill.system?.skill_level ?? 0),
+                nhMod: useTreeFields ? (skill.system?.tree_nh_mod ?? 0) : (skill.system?.nh_mod ?? 0),
+                treeDefaultMod: useTreeFields ? (Number(skill.system?.tree_default_mod) || 0) : 0
+            };
         });
 
         // Objeto final que vai para o HTML
@@ -359,7 +372,24 @@ async getData(options) {
             // -------------------------------------------------------
             
             const normalize = (str) => str ? str.toLowerCase().trim() : "";
-            const trunks = skills.filter(s => s.system.hierarchy_type === 'trunk');
+            const getTreeHierarchyType = (skill) => skill.system?.tree_hierarchy_type ?? skill.system?.hierarchy_type ?? "normal";
+            const getTreeParentName = (skill) => {
+                const system = skill.system || {};
+                if (system.tree_parent) return system.tree_parent;
+                const hierarchyType = getTreeHierarchyType(skill);
+                if (hierarchyType === "branch") return system.root_parent;
+                if (hierarchyType === "twig") return system.branch_parent;
+                if (hierarchyType === "leaf") return system.twig_parent ?? system.parent_skill;
+                return system.parent_skill;
+            };
+            const getTreeOwnFinalNh = (skill) => {
+                const treeFinalNh = Number(skill.system?.tree_final_nh);
+                if (Number.isFinite(treeFinalNh)) return treeFinalNh;
+                const baseFinalNh = Number(skill.system?.final_nh);
+                const legacyTreeMod = Number(skill.system?.tree_default_mod) || 0;
+                return Number.isFinite(baseFinalNh) ? baseFinalNh + legacyTreeMod : skill.system?.final_nh;
+            };
+            const trunks = skills.filter(s => getTreeHierarchyType(s) === 'trunk');
 
             // =========================================================
             // FUNÇÃO RECURSIVA APRIMORADA (Soma + Histórico)
@@ -369,11 +399,9 @@ async getData(options) {
             // inheritedLevel: Soma matemática acumulada
             // pathTrace: Array com o histórico [{name: "Espada", val: 2, type: "trunk"}, ...]
             const getTreeCascadeContribution = (skill) => {
-                const relativeLevel = Number(skill.system?.skill_level) || 0;
-                const nhPassive = Number(skill.system?.nh_passive) || 0;
-                const nhTemp = Number(skill.system?.nh_temp) || 0;
-                const includeInNhEffectBonus = collectIncludeInNhEffectBonus(skill);
-                return relativeLevel + nhPassive + nhTemp + includeInNhEffectBonus;
+                // No Skill Trees, apenas os níveis comprados dos ancestrais são herdados.
+                // Modificadores próprios (incluindo o pré-definido Atributo -5) afetam somente o nó em si.
+                return Number(skill.system?.tree_skill_level ?? skill.system?.skill_level) || 0;
             };
 
             const processChildren = (parentName, depth, inheritedLevel = 0, pathTrace = [], ancestorIds = new Set()) => {
@@ -383,7 +411,8 @@ async getData(options) {
                 let directChildren = skills.filter(s => {
                     const p = s.system;
                     const pName = normalize(parentName);
-                    return normalize(p.root_parent) === pName ||
+                    return normalize(getTreeParentName(s)) === pName ||
+                           normalize(p.root_parent) === pName ||
                            normalize(p.branch_parent) === pName ||
                            normalize(p.twig_parent) === pName ||
                            normalize(p.parent_skill) === pName;
@@ -407,10 +436,9 @@ async getData(options) {
                     // Esse valor base é recalculado pelo fluxo padrão e pode
                     // ser reutilizado em múltiplos renders. Mutá-lo neste ponto
                     // gera acúmulo visual (ex.: +1 virando +2 no primeiro redraw).
-                    const baseFinalNh = Number(child.system.final_nh);
-                    const ownTreeDefaultMod = Number(child.system?.tree_default_mod) || 0;
-                    if (Number.isFinite(baseFinalNh)) {
-                        child.tree_final_nh = baseFinalNh + ownTreeDefaultMod + inheritedLevel;
+                    const ownTreeFinalNh = Number(getTreeOwnFinalNh(child));
+                    if (Number.isFinite(ownTreeFinalNh)) {
+                        child.tree_final_nh = ownTreeFinalNh + inheritedLevel;
                     } else {
                         child.tree_final_nh = child.system.final_nh;
                     }
@@ -423,7 +451,7 @@ async getData(options) {
                     const myNodeInfo = {
                         name: child.name,
                         value: myCascadeContribution,
-                        type: child.system.hierarchy_type // trunk, branch, etc.
+                        type: getTreeHierarchyType(child) // trunk, branch, etc.
                     };
                     const nextPathTrace = [...pathTrace, myNodeInfo];
                     const nextAncestorIds = new Set(ancestorIds);
@@ -447,9 +475,8 @@ async getData(options) {
                 trunk.isTrunk = true;
                 trunk.inheritancePath = []; // Tronco não herda de ninguém
                 {
-                    const trunkBaseFinalNh = Number(trunk.system.final_nh);
-                    const trunkTreeDefaultMod = Number(trunk.system?.tree_default_mod) || 0;
-                    if (Number.isFinite(trunkBaseFinalNh)) trunk.tree_final_nh = trunkBaseFinalNh + trunkTreeDefaultMod;
+                    const trunkOwnTreeFinalNh = Number(getTreeOwnFinalNh(trunk));
+                    if (Number.isFinite(trunkOwnTreeFinalNh)) trunk.tree_final_nh = trunkOwnTreeFinalNh;
                     else trunk.tree_final_nh = trunk.system.final_nh;
                 }
                 skillsByGroup[groupName].push(trunk);
@@ -483,9 +510,8 @@ async getData(options) {
                     skill.indentClass = "";
                     skill.isTrunk = false;
                     skill.inheritancePath = []; // Órfão não tem herança
-                    const orphanBaseFinalNh = Number(skill.system.final_nh);
-                    const orphanTreeDefaultMod = Number(skill.system?.tree_default_mod) || 0;
-                    if (Number.isFinite(orphanBaseFinalNh)) skill.tree_final_nh = orphanBaseFinalNh + orphanTreeDefaultMod;
+                    const orphanOwnTreeFinalNh = Number(getTreeOwnFinalNh(skill));
+                    if (Number.isFinite(orphanOwnTreeFinalNh)) skill.tree_final_nh = orphanOwnTreeFinalNh;
                     else skill.tree_final_nh = skill.system.final_nh;
                     
                     skillsByGroup[g].push(skill);

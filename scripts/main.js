@@ -809,6 +809,21 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                     i.system.final_nh = nhOverride !== null && nhOverride !== "" && nhOverride !== undefined
                         ? Number(nhOverride) || 0
                         : nhBase + nhLevel + nhMod + nhPassive + nhTemp;
+
+                    const hasTreeOwnData = i.system.tree_base_attribute !== undefined
+                        || i.system.tree_points_per_level !== undefined
+                        || i.system.tree_skill_level !== undefined
+                        || i.system.tree_nh_mod !== undefined
+                        || i.system.tree_points !== undefined;
+                    if (hasTreeOwnData) {
+                        const treeBaseAttribute = i.system.tree_base_attribute || i.system.base_attribute;
+                        const treeAttrVal = evaluateRollReference(treeBaseAttribute, skills).value;
+                        const treeNhBase = Number(treeAttrVal) || 0;
+                        const treeNhLevel = Number(i.system.tree_skill_level ?? i.system.skill_level) || 0;
+                        const treeNhMod = Number(i.system.tree_nh_mod ?? 0) || 0;
+                        const treeDefaultMod = Number(i.system.tree_default_mod ?? 0) || 0;
+                        i.system.tree_final_nh = treeNhBase + treeDefaultMod + treeNhLevel + treeNhMod + nhPassive + nhTemp;
+                    }
                 } catch (e) { console.error(`GUM | Erro ao calcular NH para ${i.name}:`, e); }
             }
         }

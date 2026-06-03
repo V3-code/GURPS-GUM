@@ -771,7 +771,7 @@
           <div class="skills-header-buttons">
               {{!-- NOVO: Botão de Alternar Visualização --}}
               <a class="toggle-skills-view" title="Alternar: Grupos / Árvore">
-                  {{#if (eq @root.skillsViewMode "tree")}}
+{{#if (eq @root.skillsViewMode 'tree')}}
                       <i class="fas fa-sitemap"></i> Árvore
                   {{else}}
                       <i class="fas fa-layer-group"></i> Grupos
@@ -830,25 +830,34 @@
                             {{!-- Linha de Detalhes e Caminho (AGORA SEMPRE VISÍVEL) --}}
                             <div class="st-inheritance-path">
 
-                                            {{!-- Meta tags (Dificuldade) --}}
-                            <div class="st-meta">
-                                 {{#unless this.isTrunk}}
-                                    <span>[{{this.system.difficulty}}]</span>
-                                {{/unless}}
-                            </div>
+                              {{!-- Meta tags (Dificuldade) --}}
+                                <div class="st-meta">
+                                    {{#unless this.isTrunk}}
+                                        {{#if this.skillListDisplay.difficulty}}<span>[{{this.skillListDisplay.difficulty}}]</span>{{/if}}
+                                    {{/unless}}
+                                </div>
                                 
                                 {{!-- REQ 2: Tag de Modificadores Inatos (Só aparece se != 0) --}}
-                                {{#if (ne this.system.nh_mod 0)}}
-                                    <span class="path-node mod" title="Modificadores Inatos/Outros">
+                                  {{#if (ne this.skillListDisplay.nhMod 0)}}
+                                    <span class="path-node mod" title="Modificador Base">
                                         <i class="fas fa-adjust"></i>
                                         <span class="path-val">
-                                            {{#if (gte this.system.nh_mod 0)}}+{{/if}}{{this.system.nh_mod}}
+                                            {{#if (gte this.skillListDisplay.nhMod 0)}}+{{/if}}{{this.skillListDisplay.nhMod}}
+                                        </span>
+                                    </span>
+                                {{/if}}
+
+                                {{#if (ne this.skillListDisplay.treeDefaultMod 0)}}
+                                    <span class="path-node mod" title="Pré-definido da Árvore (aplicado somente a esta perícia)">
+                                        <i class="fas fa-tree"></i>
+                                        <span class="path-val">
+                                            {{#if (gte this.skillListDisplay.treeDefaultMod 0)}}+{{/if}}{{this.skillListDisplay.treeDefaultMod}}
                                         </span>
                                     </span>
                                 {{/if}}
 
                                 {{!-- Caminho dos Ancestrais (APENAS NO MODO ÁRVORE) --}}
-                                {{#if (eq @root.skillsViewMode "tree")}}
+                                {{#if (eq @root.skillsViewMode 'tree')}}
                                     {{#if this.inheritancePath.length}}
                                         {{#each this.inheritancePath}}
                                             <i class="fas fa-chevron-right path-separator"></i>
@@ -860,10 +869,10 @@
                                 {{/if}}
 
                                 {{!-- REQ 1: Meu Próprio Atributo + Nível (SEMPRE VISÍVEL) --}}
-                                <span class="path-node self" title="Base: {{this.system.base_attribute}}">
-                                    <i class="fas fa-chevron-right path-separator"></i>  {{this.system.base_attribute}}
+                                <span class="path-node self" title="Base: {{this.skillListDisplay.baseAttribute}}">
+                                    <i class="fas fa-chevron-right path-separator"></i>  {{this.skillListDisplay.baseAttribute}}
                                     <span class="path-val">
-                                     {{#if (gte this.system.skill_level 0)}}+{{/if}}{{this.system.skill_level}}
+                                     {{#if (gte this.skillListDisplay.skillLevel 0)}}+{{/if}}{{this.skillListDisplay.skillLevel}}
                                     </span>
                                 </span>
 
@@ -879,7 +888,7 @@
                                data-label="Teste de {{this.name}}" 
                                data-type="skill"
                                data-item-id="{{this._id}}"
-                               data-attribute-key="{{this.system.base_attribute}}">
+                               data-attribute-key="{{this.skillListDisplay.baseAttribute}}">
                                {{#if this.tree_final_nh}}{{this.tree_final_nh}}{{else}}{{this.system.final_nh}}{{/if}}
                             </a>
                         </div>
@@ -1767,23 +1776,29 @@
                         </h4>
                         <div class="st-inheritance-path">
                           <div class="st-meta">
-                            {{#unless this.isTrunk}}<span>[{{this.system.difficulty}}]</span>{{/unless}}
+                            {{#unless this.isTrunk}}<span>[{{this.skillListDisplay.difficulty}}]</span>{{/unless}}
                           </div>
-                          {{#if (ne this.system.nh_mod 0)}}
-                          <span class="path-node mod" title="Modificadores Inatos/Outros">
+ {{#if (ne this.skillListDisplay.nhMod 0)}}
+                          <span class="path-node mod" title="Modificador Base">
                             <i class="fas fa-adjust"></i>
-                            <span class="path-val">{{#if (gte this.system.nh_mod 0)}}+{{/if}}{{this.system.nh_mod}}</span>
+                            <span class="path-val">{{#if (gte this.skillListDisplay.nhMod 0)}}+{{/if}}{{this.skillListDisplay.nhMod}}</span>
                           </span>
                           {{/if}}
-                          <span class="path-node self" title="Base: {{this.system.base_attribute}}">
-                            <i class="fas fa-chevron-right path-separator"></i> {{this.system.base_attribute}}
-                            <span class="path-val">{{#if (gte this.system.skill_level 0)}}+{{/if}}{{this.system.skill_level}}</span>
+                          {{#if (ne this.skillListDisplay.treeDefaultMod 0)}}
+                          <span class="path-node mod" title="Pré-definido da Árvore (aplicado somente a esta perícia)">
+                            <i class="fas fa-tree"></i>
+                            <span class="path-val">{{#if (gte this.skillListDisplay.treeDefaultMod 0)}}+{{/if}}{{this.skillListDisplay.treeDefaultMod}}</span>
+                          </span>
+                          {{/if}}
+                          <span class="path-node self" title="Base: {{this.skillListDisplay.baseAttribute}}">
+                            <i class="fas fa-chevron-right path-separator"></i> {{this.skillListDisplay.baseAttribute}}
+                            <span class="path-val">{{#if (gte this.skillListDisplay.skillLevel 0)}}+{{/if}}{{this.skillListDisplay.skillLevel}}</span>
                           </span>
                         </div>
                       </div>
                       <div class="st-nh-box">
                         <span>NH</span>
-                        <a class="rollable" data-roll-value="{{#if this.tree_final_nh}}{{this.tree_final_nh}}{{else}}{{this.system.final_nh}}{{/if}}" data-label="Teste de {{this.name}}" data-type="skill" data-item-id="{{this._id}}" data-attribute-key="{{this.system.base_attribute}}">{{#if this.tree_final_nh}}{{this.tree_final_nh}}{{else}}{{this.system.final_nh}}{{/if}}</a>
+                        <a class="rollable" data-roll-value="{{#if this.tree_final_nh}}{{this.tree_final_nh}}{{else}}{{this.system.final_nh}}{{/if}}" data-label="Teste de {{this.name}}" data-type="skill" data-item-id="{{this._id}}" data-attribute-key="{{this.skillListDisplay.baseAttribute}}">{{#if this.tree_final_nh}}{{this.tree_final_nh}}{{else}}{{this.system.final_nh}}{{/if}}</a>
                       </div>
                       <div class="st-controls">
                         <a class="item-control item-edit" title="Editar Ficha"><i class="fas fa-edit"></i></a>

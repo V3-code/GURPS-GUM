@@ -3994,3 +3994,116 @@
     align-items: center;
     margin-bottom: 10px;
 }
+/* Compact skill details layout: separates standard use from tree use without adding tabs. */
+.gum.sheet.item .skill-details-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gum.sheet.item .skill-details-header-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  align-items: center;
+}
+
+.gum.sheet.item .skill-reference-field {
+  grid-column: 1 / -1;
+  grid-template-columns: 72px minmax(0, 1fr);
+}
+
+.gum.sheet.item .skill-line-field,
+.gum.sheet.item .skill-compact-row {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.gum.sheet.item .skill-line-field > label,
+.gum.sheet.item .skill-compact-row > label {
+  color: var(--item-text-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-family: 'Roboto Condensed';
+  letter-spacing: 1.15px;
+}
+
+.gum.sheet.item .skill-compact-checkbox {
+  background: var(--item-bg-dark);
+  border: 1px solid var(--item-border);
+  border-radius: 8px;
+  justify-content: center;
+  min-height: 34px;
+  padding: 6px 10px;
+}
+
+.gum.sheet.item .skill-compact-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.gum.sheet.item .skill-compact-controls {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.gum.sheet.item .skill-compact-controls > input,
+.gum.sheet.item .skill-compact-controls > select,
+.gum.sheet.item .skill-line-field > input,
+.gum.sheet.item .tree-parent-input-wrap {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.gum.sheet.item .skill-compact-controls.split-control > select {
+  flex: 0 0 150px;
+}
+
+.gum.sheet.item .compact-counter {
+  align-items: center;
+  justify-content: center;
+}
+
+.gum.sheet.item .compact-counter input[type="number"] {
+  flex: 0 0 80px;
+  text-align: center;
+}
+
+.gum.sheet.item .skill-base-attribute-custom.is-disabled,
+.gum.sheet.item .tree-parent-input:disabled {
+  opacity: 0.55;
+}
+
+.gum.sheet.item .tree-parent-input-wrap {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+}
+
+.gum.sheet.item .tree-parent-link.disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+@media (max-width: 620px) {
+  .gum.sheet.item .skill-details-header-grid,
+  .gum.sheet.item .skill-line-field,
+  .gum.sheet.item .skill-compact-row {
+    grid-template-columns: 1fr;
+  }
+
+  .gum.sheet.item .skill-compact-controls.split-control {
+    flex-direction: column;
+  }
+
+  .gum.sheet.item .skill-compact-controls.split-control > select {
+    flex-basis: auto;
+  }
+}

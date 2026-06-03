@@ -536,7 +536,21 @@
       },
       "block_id": "block1",
       "difficulty": "M",
-      "auto_points": true
+      "auto_points": true,
+      "tree_hierarchy_type": "normal",
+      "tree_parent": "",
+      "tree_base_attribute": "DX",
+      "tree_points_per_level": "",
+      "tree_skill_level": 0,
+      "tree_nh_mod": 0,
+      "tree_points": 2,
+      "hierarchy_type": "normal",
+      "root_parent": "",
+      "branch_parent": "",
+      "twig_parent": "",
+      "tree_default_mod": 0,
+      "cost_mode": "standard",
+      "cost_per_level": 1
     },
     "equipment": {
       "templates": [
