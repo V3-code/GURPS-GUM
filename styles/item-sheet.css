@@ -354,6 +354,22 @@
 .gum.sheet.item textarea::placeholder {
   color: var(--item-input-placeholder);
 }
+.gum.sheet.item select {
+  background-color: var(--item-input-bg);
+  color-scheme: dark;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gum.sheet.item select option,
+.gum.sheet.item select optgroup {
+color:#121114;
+}
+
+.gum.sheet.item select option:checked {
+  background: var(--item-accent);
+  background-color: var(--item-accent);
+  color: #16110a;
+}
 
 .gum.sheet.item input:focus,
 .gum.sheet.item select:focus,
