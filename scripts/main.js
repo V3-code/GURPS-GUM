@@ -635,9 +635,10 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
             const originalLabel = String(rawReference ?? "").trim();
             const { reference, modifier } = parseReferenceModifier(originalLabel);
             const normalizedRef = reference.toLowerCase();
+            const attributeKey = normalizedRef === "will" ? "vont" : normalizedRef;
             const fixedNumber = Number(normalizedRef);
             const refSkill = skillList.find(s => s.name?.toLowerCase().trim() === normalizedRef);
-            const attribute = attributes[normalizedRef];
+            const attribute = attributes[attributeKey];
 
             if (attribute?.final !== undefined) {
                 return applyModifierToResolved({
@@ -828,26 +829,30 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
             }
         }
         
-        for (const i of spellsAndPowers) {
-     try {
-                const conjurationBaseVal = evaluateRollReference(i.system.base_attribute, skills).value;
-                const nhBase = Number(conjurationBaseVal) || 0;
-                const nhLevel = Number(i.system.skill_level) || 0;
-                const nhMod = Number(i.system.nh_mod) || 0;
-                const nhBonuses = collectNhBonusesForItem(i);
-                const nhPassive = (Number(i.system.nh_passive) || 0) + nhBonuses.passive;
-                const nhTemp = (Number(i.system.nh_temp) || 0) + nhBonuses.temp;
-                const nhOverride = i.system.nh_override;
-                i.system.final_nh = nhOverride !== null && nhOverride !== "" && nhOverride !== undefined
-                    ? Number(nhOverride) || 0
-                    : nhBase + nhLevel + nhMod + nhPassive + nhTemp;
-                if (i.system.attack_roll?.skill_name) {
-                    const resolvedAttackBase = evaluateRollReference(i.system.attack_roll.skill_name, skills);
-                    const attackBaseVal = resolvedAttackBase.value;
-                    i.system.attack_nh = attackBaseVal + (i.system.attack_roll.skill_level_mod || 0);
-                    i.system.attack_roll.resolved_skill_name = resolvedAttackBase.label;
-                }
-            } catch (e) { console.error(`GUM | Erro ao calcular NH para ${i.name}:`, e); }
+         const spellResolutionPasses = Math.max(2, spellsAndPowers.length);
+        for (let pass = 0; pass < spellResolutionPasses; pass++) {
+            const rollReferences = [...skills, ...spellsAndPowers];
+            for (const i of spellsAndPowers) {
+                try {
+                    const conjurationBaseVal = evaluateRollReference(i.system.base_attribute, rollReferences).value;
+                    const nhBase = Number(conjurationBaseVal) || 0;
+                    const nhLevel = Number(i.system.skill_level) || 0;
+                    const nhMod = Number(i.system.nh_mod) || 0;
+                    const nhBonuses = collectNhBonusesForItem(i);
+                    const nhPassive = (Number(i.system.nh_passive) || 0) + nhBonuses.passive;
+                    const nhTemp = (Number(i.system.nh_temp) || 0) + nhBonuses.temp;
+                    const nhOverride = i.system.nh_override;
+                    i.system.final_nh = nhOverride !== null && nhOverride !== "" && nhOverride !== undefined
+                        ? Number(nhOverride) || 0
+                        : nhBase + nhLevel + nhMod + nhPassive + nhTemp;
+                    if (i.system.attack_roll?.skill_name) {
+                        const resolvedAttackBase = evaluateRollReference(i.system.attack_roll.skill_name, rollReferences);
+                        const attackBaseVal = resolvedAttackBase.value;
+                        i.system.attack_nh = attackBaseVal + (i.system.attack_roll.skill_level_mod || 0);
+                        i.system.attack_roll.resolved_skill_name = resolvedAttackBase.label;
+                    }
+                } catch (e) { console.error(`GUM | Erro ao calcular NH para ${i.name}:`, e); }
+            }
         }
         
         for (const i of equipment) {

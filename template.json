@@ -570,6 +570,7 @@
       "points": 4,
       "group": "Geral",
       "base_attribute": "IQ",
+      "base_attribute_type": "attribute",
       "skill_level": 0,
       "nh_mod": 0,
       "nh_passive": 0,
@@ -579,13 +580,19 @@
       "duration": "1 min",
       "mana_cost": "1",
       "mana_maint": "1",
+      "requires_concentration": false,
       "spell_class": "Comum",
+      "usage_type": "",
       "spell_school": "Fogo",
       "difficulty": "D",
+      "cost_mode": "standard",
+      "cost_per_level": 1,
       "source": "Arcana",
       "resistance": "",
       "effect": "",
       "auto_points": true,
+      "uses_attack": false,
+      "attack_type": "ranged",
       "attack_roll": {
         "skill_name": "",
         "skill_level_mod": 0
@@ -606,13 +613,14 @@
         }
       }
     },
-    "power": {
+     "power": {
       "templates": [
         "base"
       ],
       "points": 10,
       "group": "Geral",
       "base_attribute": "IQ",
+      "base_attribute_type": "attribute",
       "skill_level": 0,
       "nh_mod": 0,
       "nh_passive": 0,
@@ -622,14 +630,20 @@
       "duration": "1 min",
       "activation_cost": "1",
       "maint_cost": "1",
+      "requires_concentration": false,
       "spell_class": "Regular",
+      "usage_type": "",
       "difficulty": "D",
+      "cost_mode": "standard",
+      "cost_per_level": 1,
       "source": "Biológico",
       "resistance": "",
       "effect": "",
       "modifiers": {},
       "points_skill": 4,
       "auto_points": true,
+      "uses_attack": false,
+      "attack_type": "ranged",
       "attack_roll": {
         "skill_name": "",
         "skill_level_mod": 0

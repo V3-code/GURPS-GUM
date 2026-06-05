@@ -273,18 +273,84 @@ _promptMultipleReferences(parsedList) {
         // Disponibiliza as listas também na raiz para facilitar (opcional, mas seguro) 
         context.skillDifficulties = context.config.difficulties; 
         context.hierarchyTypes = context.config.hierarchyTypes; 
+        const standardSkillAttrs = ["st", "dx", "iq", "ht", "per", "will", "vont"];
+        const resolveSkillBaseAttribute = (value, { defaultCustomType = "skill", storedType = "" } = {}) => {
+            const baseAttrValue = (value ?? "").toString();
+            const baseAttrNormalized = baseAttrValue.trim().toLowerCase();
+            const isStandardAttr = standardSkillAttrs.includes(baseAttrNormalized);
+            const normalizedType = (storedType ?? "").toString().trim().toLowerCase();
+            const customTypes = ["skill", "spell", "power", "custom"];
+
+            return {
+                select: isStandardAttr ? baseAttrNormalized : (customTypes.includes(normalizedType) ? normalizedType : defaultCustomType),
+                custom: isStandardAttr ? "" : baseAttrValue
+            };
+        };
+
+        if (this.item.type === 'spell') {
+            const spellBase = resolveSkillBaseAttribute(itemData.system.base_attribute, {
+                defaultCustomType: "custom",
+                storedType: itemData.system.base_attribute_type
+            });
+            context.spellBaseAttributeSelect = spellBase.select;
+            context.spellBaseAttributeCustom = spellBase.custom;
+            context.spellBaseAttributeCustomEnabled = ["skill", "spell", "custom"].includes(spellBase.select);
+            context.spellBaseAttributePlaceholder = ({
+                skill: "Nome da perícia base",
+                spell: "Nome da magia base",
+                custom: "Valor fixo ou expressão"
+            })[spellBase.select] || "";
+
+            const normalizeSpellDifficulty = (difficulty) => ({
+                E: "F",
+                A: "M",
+                H: "D",
+                VH: "MD"
+            })[(difficulty ?? "").toString()] || (difficulty || "D");
+            context.spellDifficultyOptions = {
+                F: "Fácil",
+                M: "Média",
+                D: "Difícil",
+                MD: "Muito Difícil",
+                linear: "Linear"
+            };
+            context.spellUsesLinearCost = itemData.system.cost_mode === "linear" || itemData.system.difficulty === "linear";
+            context.spellDifficultySelected = context.spellUsesLinearCost ? "linear" : normalizeSpellDifficulty(itemData.system.difficulty);
+        }
+
+        if (this.item.type === 'power') {
+            const powerBase = resolveSkillBaseAttribute(itemData.system.base_attribute, {
+                defaultCustomType: "custom",
+                storedType: itemData.system.base_attribute_type
+            });
+            context.powerBaseAttributeSelect = powerBase.select;
+            context.powerBaseAttributeCustom = powerBase.custom;
+            context.powerBaseAttributeCustomEnabled = ["skill", "spell", "power", "custom"].includes(powerBase.select);
+            context.powerBaseAttributePlaceholder = ({
+                skill: "Nome da perícia base",
+                spell: "Nome da magia base",
+                power: "Nome do poder base",
+                custom: "Valor fixo ou expressão"
+            })[powerBase.select] || "";
+
+            const normalizePowerDifficulty = (difficulty) => ({
+                E: "F",
+                A: "M",
+                H: "D",
+                VH: "MD"
+            })[(difficulty ?? "").toString()] || (difficulty || "D");
+            context.powerDifficultyOptions = {
+                F: "Fácil",
+                M: "Média",
+                D: "Difícil",
+                MD: "Muito Difícil",
+                linear: "Linear"
+            };
+            context.powerUsesLinearCost = itemData.system.cost_mode === "linear" || itemData.system.difficulty === "linear";
+            context.powerDifficultySelected = context.powerUsesLinearCost ? "linear" : normalizePowerDifficulty(itemData.system.difficulty);
+        }
  
         if (this.item.type === 'skill') { 
-            const standardSkillAttrs = ["st", "dx", "iq", "ht", "per", "will"]; 
-            const resolveSkillBaseAttribute = (value) => {
-                const baseAttrValue = (value ?? "").toString();
-                const baseAttrNormalized = baseAttrValue.trim().toLowerCase();
-                const isStandardAttr = standardSkillAttrs.includes(baseAttrNormalized);
-                return {
-                    select: isStandardAttr ? baseAttrNormalized : "skill",
-                    custom: isStandardAttr ? "" : baseAttrValue
-                };
-            };
 
             const standardBase = resolveSkillBaseAttribute(itemData.system.base_attribute);
             context.skillBaseAttributeSelect = standardBase.select;
@@ -522,15 +588,56 @@ _promptMultipleReferences(parsedList) {
         const toggleSkillBaseAttribute = (select) => {
             const selector = select.data('custom-target');
             const customField = selector ? html.find(selector) : select.closest('.skill-compact-controls, .form-group').find('.skill-base-attribute-custom');
-            const isSkillBased = select.val() === "skill";
-            customField.prop('disabled', !isSkillBased);
-            customField.toggleClass('is-disabled', !isSkillBased);
-        };
+            const selected = select.val();
+            const usesCustomBase = ["skill", "spell", "power", "custom"].includes(selected);
+            const placeholder = ({
+                skill: "Nome da perícia base",
+                spell: "Nome da magia base",
+                power: "Nome do poder base",
+                custom: "Valor fixo ou expressão"
+            })[selected] || "";
+            customField.prop('disabled', !usesCustomBase);
+            customField.toggleClass('is-disabled', !usesCustomBase);
+            if (placeholder) customField.attr('placeholder', placeholder);
+ };
         html.find('.skill-base-attribute-select').each((_idx, el) => {
             const select = $(el);
             toggleSkillBaseAttribute(select);
             select.on('change', () => toggleSkillBaseAttribute(select));
         });
+
+        const toggleSpellLinearPoints = () => {
+            const isLinear = html.find('.spell-difficulty-select').val() === "linear";
+            html.find('.spell-linear-points')
+                .prop('disabled', !isLinear)
+                .toggleClass('is-disabled', !isLinear);
+        };
+        html.find('.spell-difficulty-select').on('change', toggleSpellLinearPoints);
+        toggleSpellLinearPoints();
+
+        const toggleSpellAttackFields = () => {
+            const usesAttack = html.find('.spell-uses-attack-toggle').is(':checked');
+            html.find('.spell-attack-fields').toggle(usesAttack);
+        };
+        html.find('.spell-uses-attack-toggle').on('change', toggleSpellAttackFields);
+        toggleSpellAttackFields();
+
+        const togglePowerLinearPoints = () => {
+            const isLinear = html.find('.power-difficulty-select').val() === "linear";
+            html.find('.power-linear-points')
+                .prop('disabled', !isLinear)
+                .toggleClass('is-disabled', !isLinear);
+        };
+        html.find('.power-difficulty-select').on('change', togglePowerLinearPoints);
+        togglePowerLinearPoints();
+
+        const togglePowerAttackFields = () => {
+            const usesAttack = html.find('.power-uses-attack-toggle').is(':checked');
+            html.find('.power-attack-fields').toggle(usesAttack);
+        };
+        html.find('.power-uses-attack-toggle').on('change', togglePowerAttackFields);
+        togglePowerAttackFields();
+
 
         const updateTreeParentState = (select) => {
             const type = (select.val() || "normal").toString();
@@ -582,9 +689,9 @@ _promptMultipleReferences(parsedList) {
             // Recalcula pontos automaticamente (aplicado em magias/poderes também) 
             if (sys.auto_points !== false && targetField === "system.skill_level") { 
                 const pointsField = (this.item.type === 'power') ? "system.points_skill" : "system.points"; 
-                const costMode = sys.cost_mode || "standard"; 
+                const costMode = sys.difficulty === "linear" ? "linear" : (sys.cost_mode || "standard"); 
                 if (costMode === 'linear') { 
-                    const cost = sys.cost_per_level || 1; 
+                    const cost = Number(sys.cost_per_level) || 1; 
                     updateData[pointsField] = Math.max(0, newLevel * cost); 
                 } else { 
                     const diff = sys.difficulty || "A";  
@@ -1281,7 +1388,8 @@ try {
     async _onAutoCalcPoints(event) { 
         const formData = new FormDataExtended(this.form).object; 
         const autoPoints = formData["system.auto_points"] || false; 
-        const costMode = formData["system.cost_mode"] || "standard"; 
+        const selectedDifficulty = formData["system.difficulty"] ?? this.item.system?.difficulty;
+        const costMode = selectedDifficulty === "linear" ? "linear" : (formData["system.cost_mode"] || "standard");  
          
         if (event.currentTarget.name === "system.auto_points") { 
              await this.item.update({"system.auto_points": autoPoints}); 
@@ -1294,7 +1402,7 @@ try {
             const pointsField = (this.item.type === 'power') ? "system.points_skill" : "system.points"; 
             let newPoints; 
             if (costMode === "linear") { 
-                const perLevel = Number(formData["system.cost_per_level"]) || 0; 
+                const perLevel = Number(formData["system.cost_per_level"] ?? this.item.system?.cost_per_level ?? 1) || 0;
                 newPoints = Math.max(0, (Number(relativeLevel) || 0) * perLevel); 
             } else { 
                 newPoints = this._calculateSkillPoints(difficulty, relativeLevel); 
@@ -1915,19 +2023,30 @@ new Dialog({
             const isNumericStringWithComma = typeof v === 'string' && /^[+-]?\d+(,\d+)?$/.test(v.trim()); 
             if (!isDescriptionField && isNumericStringWithComma && v.includes(',')) formData[k] = v.replace(',', '.'); 
         } 
-        const standardSkillAttrs = ["st", "dx", "iq", "ht", "per", "will"];
+        const standardSkillAttrs = ["st", "dx", "iq", "ht", "per", "will", "vont"];
         if (formData["system.base_attribute_select"] !== undefined) { 
             const selected = formData["system.base_attribute_select"]; 
-            const customValue = (formData["system.base_attribute_custom"] ?? "").toString().trim(); 
+            const customValue = (formData["system.base_attribute_custom"] ?? "").toString().trim();
+            const customBaseTypes = ["skill", "spell", "power", "custom"]; 
 
-            if (selected === "skill") { 
+            if (customBaseTypes.includes(selected)) { 
                 formData["system.base_attribute"] = customValue; 
+                if (["spell", "power"].includes(this.item?.type)) formData["system.base_attribute_type"] = selected;
             } else if (standardSkillAttrs.includes(selected)) { 
                 formData["system.base_attribute"] = selected; 
+                if (["spell", "power"].includes(this.item?.type)) formData["system.base_attribute_type"] = "attribute";
             } 
             delete formData["system.base_attribute_select"]; 
             delete formData["system.base_attribute_custom"]; 
          }
+
+        if (["spell", "power"].includes(this.item?.type) && formData["system.difficulty"] !== undefined) {
+            if (formData["system.difficulty"] === "linear") {
+                formData["system.cost_mode"] = "linear";
+            } else {
+                formData["system.cost_mode"] = "standard";
+            }
+        }
 
         if (formData["system.tree_base_attribute_select"] !== undefined) {
             const selected = formData["system.tree_base_attribute_select"];
