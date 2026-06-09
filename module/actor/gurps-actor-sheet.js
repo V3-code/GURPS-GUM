@@ -4197,8 +4197,8 @@ _onActionMenuToggle(ev) {
     menu.classList.add("is-open");
     const controls = menu.closest(".item-controls");
     if (controls) controls.classList.add("menu-open");
-    const row = menu.closest(".skill-tree-item, .casting-ability-card, .item-row, .spell-row-v3, .spell-row-main, .item");
-    if (row) row.classList.add("action-menu-open-row");
+    const skillRow = menu.closest(".skill-tree-item");
+    if (skillRow) skillRow.classList.add("action-menu-open-row");
     const toggle = menu.querySelector(".js-action-menu-toggle");
     if (toggle) toggle.setAttribute("aria-expanded", "true");
     this._positionActionMenu(menu);
@@ -4213,19 +4213,15 @@ _positionActionMenu(menu) {
   const toggle = menu.querySelector(".js-action-menu-toggle");
   if (!panel || !toggle) return;
 
-
-
   const toggleRect = toggle.getBoundingClientRect();
   const panelRect = panel.getBoundingClientRect();
   const panelWidth = panelRect.width || panel.offsetWidth || 140;
   const panelHeight = panelRect.height || panel.offsetHeight || 0;
   const gap = 4;
   const viewportPadding = 8;
-
   const spaceBelow = window.innerHeight - toggleRect.bottom - viewportPadding;
   const spaceAbove = toggleRect.top - viewportPadding;
   const shouldOpenUp = spaceBelow < (panelHeight + gap) && spaceAbove > spaceBelow;
-
   const left = Math.min(
     Math.max(toggleRect.right - panelWidth, viewportPadding),
     Math.max(window.innerWidth - panelWidth - viewportPadding, viewportPadding)
@@ -4235,16 +4231,14 @@ _positionActionMenu(menu) {
     : Math.min(toggleRect.bottom + gap, Math.max(window.innerHeight - panelHeight - viewportPadding, viewportPadding));
 
   if (shouldOpenUp) menu.classList.add("is-open-up");
-  panel.style.left = `${left}px`;
-  panel.style.top = `${top}px`;
-  panel.style.right = "auto";
-  panel.style.bottom = "auto";
+  panel.style.setProperty("--gum-action-menu-x", `${Math.round(left)}px`);
+  panel.style.setProperty("--gum-action-menu-y", `${Math.round(top)}px`);
 }
 
 _closeAllActionMenus() {
   if (!this.element?.length) return;
   this.element.find(".item-controls.menu-open").removeClass("menu-open");
-  this.element.find(".action-menu-open-row").removeClass("action-menu-open-row");
+  this.element.find(".skill-tree-item.action-menu-open-row").removeClass("action-menu-open-row");
   this.element.find(".js-action-menu.is-open, .js-action-menu.is-open-up").removeClass("is-open is-open-up")
     .find(".js-action-menu-toggle").attr("aria-expanded", "false");
 }

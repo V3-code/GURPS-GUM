@@ -1949,103 +1949,88 @@
 
         <div class="group-content">
             {{#each group.attacks as |attack|}}
-              <div class="attack-row item-row attack-row--{{attack.attack_type}}" data-attack-id="{{attack.id}}" data-item-id="{{attack.itemId}}">
-                <div class="attack-icon">
+              <div class="attack-row item-row attack-card-two-line attack-card-two-line--{{attack.attack_type}}" data-attack-id="{{attack.id}}" data-item-id="{{attack.itemId}}">
+                <div class="attack-card-primary">
+                  <div class="attack-icon">
                     {{#if (eq attack.attack_type "melee")}}<i class="fas fa-swords" title="Corpo a Corpo"></i>{{/if}}
                     {{#if (eq attack.attack_type "ranged")}}<i class="fas fa-bullseye" title="À Distância"></i>{{/if}}
-                </div>
-                <div class="attack-info">
-                    <div class="attack-line">
-                        <div class="attack-cell attack-identity">
-                            <div class="attack-skill-line">
-                                <span class="attack-skill">{{attack.skill_name}}</span>
-                                <span class="attack-flags">
-                                  {{#if this.unbalanced}}<span class="attack-flag u" title="Desbalanceada">U</span>{{/if}}
-                                  {{#if this.fencing}}<span class="attack-flag f" title="Esgrima">F</span>{{/if}}
-                                </span>
-                            </div>
-                            <div class="attack-mode-sub">{{attack.name}}</div>
-                            {{#if (eq attack.attack_type "ranged")}}
-                              {{#if attack.range}}
-                                <div class="attack-line-sub">Alc.: {{attack.range}}</div>
-                              {{/if}}
-                            {{/if}}
-                        </div>
-                        <div class="attack-cell is-center">
-                            <div class="attack-label">NH</div>
-                            <a class="rollable attack-value" data-type="attack" data-attack-type="{{attack.attack_type}}" data-roll-value="{{attack.final_nh}}" data-label="{{group.name}} ({{attack.name}})" data-item-id="{{attack.itemId}}">{{attack.final_nh}}</a>
-                        </div>
-                        <div class="attack-cell">
-                            <div class="attack-label">Dano</div>
-                            <a class="rollable-damage attack-value attack-damage-main"
-                                title="Rolar Dano"
-                                data-item-id="{{attack.itemId}}"
-                                data-attack-id="{{attack.id}}"
-                                data-dmg-formula="{{attack.damage_formula}}"
-                                data-dmg-type="{{attack.damage_type}}"
-                                data-armor-divisor="{{attack.armor_divisor}}"
-                                {{#with attack.follow_up_damage}}
-                                  {{#if this.formula}}
-                                    data-followup-formula="{{this.formula}}"
-                                    data-followup-type="{{this.type}}"
-                                  {{/if}}
-                                {{/with}}>
-                                {{attack.damage_formula}}{{#if (gt attack.armor_divisor 1)}}({{attack.armor_divisor}}){{/if}} {{attack.damage_type}}
-                            </a>
-                            {{#with attack.fragmentation_damage}}
-                              {{#if this.formula}}
-                                <div class="attack-damage-sub">[ {{this.formula}} {{this.type}}]</div>
-                              {{/if}}
-                            {{/with}}
-                            {{#with attack.follow_up_damage}}
-                              {{#if this.formula}}
-                                <div class="attack-damage-sub">( {{this.formula}} {{this.type}})</div>
-                              {{/if}}
-                            {{/with}}
-                        </div>
-                        {{#if (eq attack.attack_type "melee")}}
-                          <div class="attack-cell is-center">
-                            <div class="attack-label">APR</div>
-                            <a class="rollable attack-value" data-type="defense" data-roll-value="{{attack.final_parry}}" data-label="Teste de Aparar" data-defense-type="parry">{{attack.final_parry}}</a>
-                          </div>
-                          {{#if attack.final_block}}
-                            <div class="attack-cell is-center">
-                              <div class="attack-label">BLQ</div>
-                              <a class="rollable attack-value" data-type="defense" data-roll-value="{{attack.final_block}}" data-label="Teste de Bloqueio" data-defense-type="block">{{attack.final_block}}</a>
-                            </div>
-                          {{/if}}
-                          <div class="attack-cell is-center">
-                            <div class="attack-label">ALC</div>
-                            <div class="attack-value">{{attack.reach}}</div>
-                          </div>
-                          <div class="attack-cell is-center">
-                            <div class="attack-label">ST Min</div>
-                            <div class="attack-value">{{attack.min_strength}}</div>
-                          </div>
-                        {{/if}}
-                        {{#if (eq attack.attack_type "ranged")}}
-                          <div class="attack-cell is-center">
-                            <div class="attack-label">Prec</div>
-                            <div class="attack-value">{{attack.accuracy}}</div>
-                          </div>
-                          <div class="attack-cell is-center">
-                            <div class="attack-label">CdTxT (RCO)</div>
-                            <div class="attack-value">
-                              {{#if attack.rof}}{{attack.rof}}{{else}}—{{/if}}x{{#if attack.shots}}{{attack.shots}}{{else}}—{{/if}} ({{#if attack.rcl}}{{attack.rcl}}{{else}}—{{/if}})
-                            </div>
-                          </div>
-                          <div class="attack-cell is-center">
-                            <div class="attack-label">Mag</div>
-                            <div class="attack-value">{{attack.mag}}</div>
-                          </div>
-                          <div class="attack-cell is-center">
-                            <div class="attack-label">ST Min</div>
-                            <div class="attack-value">{{attack.min_strength}}</div>
-                          </div>
-                        {{/if}}
+                  </div>
+
+                  <div class="attack-name-stack">
+                    <h4 class="attack-name">{{attack.name}}</h4>
+                    <div class="attack-source-line">{{attack.skill_name}}</div>
+                  </div>
+
+                  <div class="attack-primary-stats">
+                    <div class="attack-pill-stat">
+                      <span class="attack-label">NH</span>
+                      <a class="rollable attack-value" data-type="attack" data-attack-type="{{attack.attack_type}}" data-roll-value="{{attack.final_nh}}" data-label="{{group.name}} ({{attack.name}})" data-item-id="{{attack.itemId}}">{{attack.final_nh}}</a>
                     </div>
+
+                    <div class="attack-pill-stat damage">
+                      <span class="attack-label">Dano</span>
+                      <a class="rollable-damage attack-value attack-damage-main"
+                          title="Rolar Dano"
+                          data-item-id="{{attack.itemId}}"
+                          data-attack-id="{{attack.id}}"
+                          data-dmg-formula="{{attack.damage_formula}}"
+                          data-dmg-type="{{attack.damage_type}}"
+                          data-armor-divisor="{{attack.armor_divisor}}"
+                          {{#with attack.follow_up_damage}}
+                            {{#if this.formula}}
+                              data-followup-formula="{{this.formula}}"
+                              data-followup-type="{{this.type}}"
+                            {{/if}}
+                          {{/with}}>
+                          {{attack.damage_formula}}{{#if (gt attack.armor_divisor 1)}}({{attack.armor_divisor}}){{/if}} {{attack.damage_type}}
+                      </a>
+                    </div>
+
+                    {{#if (eq attack.attack_type "melee")}}
+                    <div class="attack-pill-stat defense">
+                      <span class="attack-label">APR</span>
+                      <a class="rollable attack-value" data-type="defense" data-roll-value="{{attack.final_parry}}" data-label="Teste de Aparar" data-defense-type="parry">{{attack.final_parry}}</a>
+                    </div>
+                    {{#if attack.final_block}}
+                    <div class="attack-pill-stat defense">
+                      <span class="attack-label">BLQ</span>
+                      <a class="rollable attack-value" data-type="defense" data-roll-value="{{attack.final_block}}" data-label="Teste de Bloqueio" data-defense-type="block">{{attack.final_block}}</a>
+                    </div>
+                    {{/if}}
+                    {{/if}}
+                  </div>
                 </div>
-             </div>
+
+                <div class="attack-card-secondary">
+                  {{#if (eq attack.attack_type "melee")}}
+                  <span><strong>Alc.</strong> {{attack.reach}}</span>
+                  <span><strong>ST Min</strong> {{attack.min_strength}}</span>
+                  {{#if attack.unbalanced}}<span class="attack-secondary-flag"><strong>U</strong> Desbalanceada</span>{{/if}}
+                  {{#if attack.fencing}}<span class="attack-secondary-flag"><strong>F</strong> Esgrima</span>{{/if}}
+                  {{/if}}
+
+                  {{#if (eq attack.attack_type "ranged")}}
+                  {{#if attack.range}}<span><strong>Alc.</strong> {{attack.range}}</span>{{/if}}
+                  <span><strong>Prec</strong> {{attack.accuracy}}</span>
+                  <span><strong>CdT</strong> {{#if attack.rof}}{{attack.rof}}{{else}}—{{/if}}</span>
+                  <span><strong>Tiros</strong> {{#if attack.shots}}{{attack.shots}}{{else}}—{{/if}}</span>
+                  <span><strong>RCO</strong> {{#if attack.rcl}}{{attack.rcl}}{{else}}—{{/if}}</span>
+                  <span><strong>Mag</strong> {{attack.mag}}</span>
+                  <span><strong>ST Min</strong> {{attack.min_strength}}</span>
+                  {{/if}}
+
+                  {{#with attack.fragmentation_damage}}
+                    {{#if this.formula}}
+                    <span class="attack-damage-extra"><strong>FR</strong> {{this.formula}} {{this.type}}</span>
+                    {{/if}}
+                  {{/with}}
+                  {{#with attack.follow_up_damage}}
+                    {{#if this.formula}}
+                    <span class="attack-damage-extra"><strong>FU</strong> {{this.formula}} {{this.type}}</span>
+                    {{/if}}
+                  {{/with}}
+                </div>
+              </div>
             {{/each}}
         </div>
     </details>
@@ -2097,7 +2082,7 @@
           </section>
 
           {{!-- A classe .skill-block será o "card" padrão no novo design --}}
-          <div class="skill-block" style="background-color: var(--gum-bg-body);">
+          <div class="skill-block biography-profile-card">
             <div class="block-header">
               <h4>Perfil</h4>
               <a class="edit-biography-details" title="Editar Perfil"><i class="fas fa-edit"></i></a>
@@ -2148,7 +2133,7 @@
 
     {{!-- Coluna Principal: História do Personagem --}}
     <div class="biography-details">
-    <div class="biography-story skill-block">
+    <div class="biography-story skill-block biography-story-card">
         <div class="block-header biography-story-header">
             <h4>História do Personagem</h4>
             {{#if editable}}

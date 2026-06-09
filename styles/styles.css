@@ -349,10 +349,30 @@
 }
 
 .gum.sheet.actor .biography-models-block {
+      position: relative;
+  overflow: hidden;
   margin: 0 0 0.75rem;
-  padding: 0.2rem 0;
-  background: transparent;
-  border: none;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid rgba(197, 160, 91, 0.2);
+  border-radius: 6px;
+  background:
+    linear-gradient(135deg, rgba(22, 20, 27, 0.96), rgba(37, 33, 43, 0.94)),
+    var(--item-panel-texture) repeat;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 2px 8px rgba(0, 0, 0, 0.22);
+}
+.gum.sheet.actor .biography-models-block::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(197, 160, 91, 0.11), transparent 34%),
+    linear-gradient(90deg, rgba(255,255,255,0.03), transparent 36%);
+}
+.gum.sheet.actor .biography-models-block > * {
+  position: relative;
 }
 .gum.sheet.actor .biography-models-grid {
   display: grid;
@@ -398,9 +418,9 @@
     min-height: 24px;
   padding: 2px 8px;
   border-radius: 999px;
-  border: 1px solid rgba(197, 160, 91, 0.22);
-  background: rgba(255, 255, 255, 0.65);
-  color: #584329;
+  border: 1px solid rgba(197, 160, 91, 0.24);
+  background: linear-gradient(180deg, rgba(8, 8, 10, 0.42), rgba(0, 0, 0, 0.24));
+  color: rgba(247, 233, 215, 0.9);
 }
 .gum.sheet.actor .biography-models-block .character-model-pill-label {
   font-size: 0.7rem;
@@ -410,7 +430,7 @@
 .gum.sheet.actor .biography-models-block .character-model-empty {
   margin: 0;
   font-size: 0.72rem;
-  color: var(--gum-text-medio);
+  color: rgba(247, 233, 215, 0.58);
   font-style: italic;
 }
 .gum.sheet.actor .biography-models-block .remove-character-model-btn {
@@ -422,14 +442,14 @@
   padding: 0;
   border: none;
   border-radius: 50%;
-  background: rgba(131, 46, 46, 0.1);
-  color: rgba(131, 46, 46, 0.78);
+  background: rgba(240, 122, 130, 0.12);
+  color: rgba(240, 122, 130, 0.82);
   cursor: pointer;
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 .gum.sheet.actor .biography-models-block .remove-character-model-btn:hover {
-  background: rgba(131, 46, 46, 0.2);
-  color: #8a2d2d;
+  background: rgba(240, 122, 130, 0.22);
+  color: #f07a82;
 }
 @media (max-width: 640px) {
   .gum.sheet.actor .biography-models-grid {
@@ -668,7 +688,9 @@
 }
 .gum.sheet.actor .block-header {
     display: flex; justify-content: space-between; align-items: center;
-    border-bottom: 1px solid var(--gum-border-gold); margin-bottom: 8px; padding-bottom: 2px;
+    border-bottom: 1px solid var(--gum-border-gold); 
+    /* margin-bottom: 8px; */
+    padding-bottom: 2px;
     font-size: var(--gum-font-size-header);
     line-height: 1.2;
 }
@@ -1744,7 +1766,7 @@
 .flex-wrap-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 4px;
     padding: 0; margin: 0;
     list-style: none;
 }
@@ -1860,23 +1882,66 @@
 .gum.sheet.actor .social-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    margin-top: 25px;
+    gap: 12px;
+    margin-top: 12px;
 }
 
 .gum.sheet.actor .social-block,
 .gum.sheet.actor .social-block-fullwidth {
-    background: color-mix(in srgb, var(--gum-bg-body) 92%, white 8%);
-    border-radius: 4px;
-    padding: 6px;
+    position: relative;
     display: flex;
     flex-direction: column;
-    /* gap: 8px; */
+        gap: 6px;
+    padding: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(197, 160, 91, 0.22);
+    border-radius: 6px;
+    background:
+        linear-gradient(135deg, rgba(22, 20, 27, 0.96), rgba(37, 33, 43, 0.95)),
+        var(--item-panel-texture) repeat;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 2px 10px rgba(0, 0, 0, 0.22);
+}
+
+.gum.sheet.actor .social-block::before,
+.gum.sheet.actor .social-block-fullwidth::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 12% 0%, rgba(197, 160, 91, 0.12), transparent 34%),
+        linear-gradient(90deg, rgba(255,255,255,0.035), transparent 38%);
+}
+
+.gum.sheet.actor .social-block > *,
+.gum.sheet.actor .social-block-fullwidth > * {
+    position: relative;
 }
 
 .gum.sheet.actor .social-block-fullwidth {
     grid-column: 1 / -1;
-    margin-top: 15px;
+        margin-top: 12px;
+}
+
+.gum.sheet.actor .tab[data-tab="social"] .block-header {
+    border-bottom-color: rgba(197, 160, 91, 0.22);
+}
+
+.gum.sheet.actor .tab[data-tab="social"] .block-header h4 {
+    color: var(--gum-text-claro);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.gum.sheet.actor .tab[data-tab="social"] .block-header a {
+    color: rgba(248, 216, 148, 0.82);
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.gum.sheet.actor .tab[data-tab="social"] .block-header a:hover {
+    color: var(--gum-accent-gold);
+    transform: translateY(-1px) scale(1.08);
 }
 
 .gum.sheet.actor .tab[data-tab="social"] .item-list {
@@ -1885,16 +1950,16 @@
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 7px;
 }
 
 /* Item da Lista Social */
 .gum.sheet.actor .tab[data-tab="social"] .item-row {
-    padding: 4px;
-    /* border: 1px solid color-mix(in srgb, var(--gum-border-light) 85%, white 15%); */
-    border-radius: 4px;
-    background: var(--gum-bg-sidebar);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    padding: 6px 8px;
+    border: 1px solid rgba(197, 160, 91, 0.14);
+    border-radius: 5px;
+    background: linear-gradient(180deg, rgba(8, 8, 10, 0.46), rgba(0, 0, 0, 0.28));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.035);
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -1903,8 +1968,10 @@
 }
 
 .gum.sheet.actor .tab[data-tab="social"] .item-row:hover {
-    border-color: var(--gum-border-highlight);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-color: rgba(197, 160, 91, 0.34);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.055),
+        0 3px 10px rgba(0, 0, 0, 0.24);
     transform: translateY(-1px);
 }
 
@@ -1917,13 +1984,18 @@
 
 .gum.sheet.actor .tab[data-tab="social"] .item-name {
     font-weight: 700;
-    color: var(--gum-border-light);
+    color: rgba(247, 233, 215, 0.93);
     line-height: 1.3;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.45);
+}
+
+.gum.sheet.actor .tab[data-tab="social"] .item-name strong {
+    color: #f8d894;
 }
 
 .gum.sheet.actor .tab[data-tab="social"] .item-details {
     font-size: 0.85em;
-    color: var(--gum-text-medio);
+    color: rgba(247, 233, 215, 0.62);
     font-style: italic;
 }
 
@@ -1939,11 +2011,18 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    color: rgba(248, 216, 148, 0.68);
 }
 
 .gum.sheet.actor .tab[data-tab="social"] .item-control:hover {
-    border-color: var(--gum-border-highlight);
-    color: var(--gum-text-escuro);
+    border-color: rgba(197, 160, 91, 0.42);
+    color: var(--gum-accent-gold);
+}
+
+@media (max-width: 980px) {
+    .gum.sheet.actor .social-grid {
+        grid-template-columns: 1fr;
+    }
 }
 /* =================================================================== */
 /* 10. ABA BIOGRAFIA (LAYOUT VERTICAL: CABEÇALHO + HISTÓRIA)           */
@@ -1955,20 +2034,66 @@
     height: 100%;
     overflow-y: auto; /* Scroll na aba inteira se necessário */
     padding-right: 5px;
+    gap: 12px;
 }
 
 /* --- BLOCO SUPERIOR: DETALHES FÍSICOS (GRID HORIZONTAL) --- */
 .gum.sheet.actor .biography-details {
-    background: rgba(0,0,0,0.03);
-    border-radius: 4px;
-    padding: 10px;
+    background: transparent;
+    border-radius: 6px;
+    padding: 0;
     flex-shrink: 0; /* Não encolhe, mantém altura necessária */
+}
+
+.gum.sheet.actor .biography-profile-card,
+.gum.sheet.actor .biography-story-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(197, 160, 91, 0.22);
+    border-radius: 6px;
+    background:
+        linear-gradient(135deg, rgba(22, 20, 27, 0.97), rgba(37, 33, 43, 0.95)),
+        var(--item-panel-texture) repeat !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 2px 10px rgba(0, 0, 0, 0.24);
+}
+
+.gum.sheet.actor .biography-profile-card::before,
+.gum.sheet.actor .biography-story-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 10% 0%, rgba(197, 160, 91, 0.13), transparent 35%),
+        linear-gradient(90deg, rgba(255,255,255,0.035), transparent 36%);
+}
+
+.gum.sheet.actor .biography-profile-card > *,
+.gum.sheet.actor .biography-story-card > * {
+    position: relative;
+}
+
+.gum.sheet.actor .tab[data-tab="biography"] .block-header {
+    border-bottom-color: rgba(197, 160, 91, 0.22);
 }
 
 /* Título da Seção de Detalhes (Opcional, se houver no HTML) */
 .gum.sheet.actor .biography-details h4 {
     margin-top: 0;
-    color: var(--gum-text-subtitulo);
+        color: var(--gum-text-claro);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.gum.sheet.actor .tab[data-tab="biography"] .block-header a,
+.gum.sheet.actor .tab[data-tab="biography"] .block-header button {
+    color: rgba(248, 216, 148, 0.82);
+}
+
+.gum.sheet.actor .tab[data-tab="biography"] .block-header a:hover,
+.gum.sheet.actor .tab[data-tab="biography"] .block-header button:hover {
+    color: var(--gum-accent-gold);
 }
 
 /* Lista transformada em Grid de 4 colunas */
@@ -1976,8 +2101,8 @@
     display: grid;
     /* Cria colunas automáticas com largura mínima de 120px */
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
-    gap: 10px; 
-    padding: 0;
+    gap: 4px; 
+    padding: 5px;
     margin: 0;
     list-style: none;
 }
@@ -1986,24 +2111,27 @@
 .gum.sheet.actor .detail-item {
     display: flex;
     flex-direction: row;
-    background: #fff;
-    border: 1px solid rgba(0,0,0,0.1);
-    border-radius: 3px;
-    padding: 4px 8px;
+    align-items: baseline;
+    background: linear-gradient(180deg, rgba(8, 8, 10, 0.46), rgba(0, 0, 0, 0.28));
+    border: 1px solid rgba(197, 160, 91, 0.14);
+    border-radius: 5px;
+    padding: 5px 8px;
     gap: 5px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.035);
 }
 
 .gum.sheet.actor .detail-label {
-    font-size: 0.75em;
+    font-size: 0.70em;
     font-weight: 700;
     text-transform: uppercase;
-    color: var(--gum-text-medio);
+    color: rgba(247, 233, 215, 0.58);
     margin-bottom: 2px;
+    letter-spacing: 0.25px;
 }
 
 .gum.sheet.actor .detail-value {
     font-weight: 600;
-    color: var(--gum-text-escuro);
+        color: #f8d894;
     font-size: var(--gum-font-size-body);
     white-space: nowrap;
     overflow: hidden;
@@ -2015,8 +2143,7 @@
     flex-grow: 1; /* Ocupa todo o espaço restante */
     display: flex;
     flex-direction: column;
-    background: var(--gum-bg-body);
-    border-radius: 4px;
+border-radius: 6px;
     padding: 0.35rem;
 
 }
@@ -2033,10 +2160,16 @@
 
 /* O Texto da História (Ajustado: Mais Compacto) */
 .gum.sheet.actor .description-view {
-    line-height: 1.4; /* Reduzido de 1.8 para 1.4 (Mais denso) */
+        min-height: 260px;
+    line-height: 1.45; /* Reduzido de 1.8 para 1.45 (Mais denso) */
     font-size: 0.95em; /* Reduzido de 1.05em para 0.95em */
-    color: var(--gum-text-claro);
+    color: rgba(247, 233, 215, 0.9);
     text-align: justify;
+    padding: 10px 12px;
+    border: 1px solid rgba(197, 160, 91, 0.12);
+    border-radius: 5px;
+    background: linear-gradient(180deg, rgba(8, 8, 10, 0.38), rgba(0, 0, 0, 0.22));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.035);
     
     /* Quebra de linha correta */
     white-space: normal;
@@ -2059,7 +2192,8 @@
     border-radius: 4px;
     display: block;
     margin: 8px auto; /* Margem reduzida */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        border: 1px solid rgba(197, 160, 91, 0.18);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
 /* Títulos dentro do texto (H1, H2, etc se houver) */
@@ -2077,6 +2211,14 @@
 .gum.sheet.actor .description-view * {
     color: var(--gum-text-claro);
 }
+
+.gum.sheet.actor .description-view h1,
+.gum.sheet.actor .description-view h2,
+.gum.sheet.actor .description-view h3,
+.gum.sheet.actor .description-view h4 {
+    color: var(--gum-accent-gold);
+}
+
 
 .gum.sheet.actor .biography-story .toggle-editor.biography-story-toggle {
     margin-top: 0;
@@ -2097,18 +2239,18 @@
 
 /* Editor de História (TinyMCE) */
 .gum.sheet.actor .tox-tinymce {
-    border: 1px solid var(--gum-border);
+    border: 1px solid rgba(197, 160, 91, 0.28);
     border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.32);
     height: 320px !important;
 }
 .gum.sheet.actor .tox-toolbar,
 .gum.sheet.actor .tox-toolbar__primary {
-    background: var(--gum-bg-card-claro) !important;
-    border-bottom: 1px solid var(--gum-border-light) !important;
+    background: rgba(22, 20, 27, 0.96) !important;
+    border-bottom: 1px solid rgba(197, 160, 91, 0.22) !important;
 }
 .gum.sheet.actor .tox-edit-area__iframe {
-    background: #fffaf4 !important;
+    background: #16141b !important;
 }
 .gum.sheet.actor .tox-tinymce.expanded {
     height: 600px !important;
@@ -2123,9 +2265,9 @@
 .gum.sheet.actor .cancel-description {
     align-self: flex-start;
     margin-top: 10px;
-    background: var(--gum-bg-medium);
-    color: #fff;
-    border: none;
+    background: linear-gradient(180deg, rgba(197, 160, 91, 0.22), rgba(197, 160, 91, 0.1));
+    color: rgba(247, 233, 215, 0.92);
+    border: 1px solid rgba(197, 160, 91, 0.22);
     padding: 4px 12px; /* Botão levemente menor */
     border-radius: 3px;
     cursor: pointer;
@@ -2159,8 +2301,8 @@
     max-height: 300px;
     height: 300px;
     overflow: auto;
-    background: var(--gum-bg-body);
-    color: var(--gum-text-claro);
+    background: linear-gradient(180deg, rgba(8, 8, 10, 0.42), rgba(0, 0, 0, 0.24));
+    color: rgba(247, 233, 215, 0.9);
 }
 
 .gum.sheet.actor .description-editor .editor *,
@@ -2213,7 +2355,7 @@ background-color: var(--gum-accent-gold);
 
 .gum.sheet.actor .conditions-tab details.form-section[open] {
     margin-bottom: 5px;
-    padding-bottom: 10px;
+    /* padding-bottom: 10px; */
 }
 
 /* Cabeçalho do Bloco */
@@ -2274,8 +2416,8 @@ background-color: var(--gum-accent-gold);
     display: grid;
     /* Grid Responsivo: 2 colunas na maioria das vezes, 1 se muito estreito */
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 10px;
-    padding: 12px;
+    gap: 4px;
+    padding: 4px;
 }
 
 /* --- CARD DE EFEITO (Pílula Melhorada) --- */
@@ -3832,27 +3974,36 @@ background-color: var(--gum-accent-gold);
 }
 
 .gum.sheet.actor .gum-action-menu__panel {
+    --gum-action-menu-x: 0px;
+    --gum-action-menu-y: 0px;
     position: fixed;
-    right: auto;
-    top: auto;
-    display: none;
+    left: 0;
+    top: 0;
+    display: flex;
     flex-direction: column;
     min-width: 140px;
     background: #fff;
     border: 1px solid var(--gum-border-light);
     border-radius: 6px;
     box-shadow: 0 6px 18px rgba(0,0,0,0.18);
-    z-index: 9999;
+    z-index: 10000 !important;
     overflow: visible;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    contain: layout style paint;
+    transform: translate3d(var(--gum-action-menu-x), var(--gum-action-menu-y), 0);
+    backface-visibility: hidden;
 }
 
 .gum.sheet.actor .gum-action-menu.is-open .gum-action-menu__panel {
-    display: flex;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
 }
 
-.gum.sheet.actor .gum-action-menu.is-open.is-open-up .gum-action-menu__panel {
-    top: auto;
-    bottom: calc(100% + 4px);
+.gum.sheet.actor .gum-action-menu.is-open {
+    z-index: auto;
 }
 
 
@@ -3935,7 +4086,7 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .attack-group-list-v2 {
     display: flex;
     flex-direction: column;
-    gap: 10px; /* Mais espaço entre os grupos para respirar */
+    gap: 6px; /* Mais espaço entre os grupos para respirar */
 }
 
 /* O Container do Grupo (Detalhes) */
@@ -5629,15 +5780,7 @@ background-color: var(--gum-accent-gold);
 }
 
 .gum.sheet.actor .tab[data-tab="skills"] .skill-tree-item.action-menu-open-row {
-    z-index: 95;
-}
-
-.gum.sheet.actor .tab[data-tab="skills"] .skill-tree-item .gum-action-menu.is-open {
-    z-index: 80;
-}
-
-.gum.sheet.actor .tab[data-tab="skills"] .skill-tree-item .gum-action-menu__panel {
-    z-index: 90;
+    z-index: 120;
 }
 
 /* Na aba de combate, os atalhos favoritos também precisam liberar o dropdown dos menus. */
@@ -5659,14 +5802,6 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .tab[data-tab="combat"] .combat-favorites-list .spell-row-main {
     position: relative;
     margin-bottom: 4px;
-}
-
-.gum.sheet.actor .tab[data-tab="combat"] .combat-favorites-list .gum-action-menu.is-open {
-    z-index: 80;
-}
-
-.gum.sheet.actor .tab[data-tab="combat"] .combat-favorites-list .gum-action-menu__panel {
-    z-index: 90;
 }
 
 .gum.sheet.actor .conditions-tab details.form-section.gum-unified-section,
@@ -5804,7 +5939,7 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .gum-unified-section .group-content,
 .gum.sheet.actor .gum-unified-section .effects-grid-container,
 .gum.sheet.actor .gum-unified-section .flex-wrap-container {
-    background: #262b33;
+    background: var(--gum-bg-darkest);
     border-top: 1px dotted rgba(255,255,255,0.12);
 }
 
@@ -5839,6 +5974,198 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .gum-unified-section .attack-line-sub {
     color: rgba(247,233,215,0.6);
 }
+
+/* Ataques: card premium em duas linhas, distinto de Magias/Poderes */
+.gum.sheet.actor .attack-group-list-v2:not(.combat-favorites-list) .group-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.gum.sheet.actor .attack-group-list-v2:not(.combat-favorites-list) .attack-card-two-line {
+    --attack-card-accent: #c7814a;
+    position: relative;
+    display: flex;
+    grid-template-columns: none;
+    flex-direction: column;
+    gap: 5px;
+    padding: 7px 8px;
+    border: 1px solid rgba(199, 129, 74, 0.22);
+    border-radius: 4px;
+    background:
+        linear-gradient(135deg, rgba(24, 22, 24, 0.96), rgba(39, 35, 33, 0.96)),
+        var(--item-panel-texture) repeat;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 2px 8px rgba(0, 0, 0, 0.24);
+    overflow: visible;
+}
+
+.gum.sheet.actor .attack-group-list-v2:not(.combat-favorites-list) .attack-card-two-line--ranged {
+    --attack-card-accent: #6fa6c8;
+    border-color: rgba(111, 166, 200, 0.24);
+    background:
+        linear-gradient(135deg, rgba(19, 23, 28, 0.96), rgba(30, 38, 45, 0.96)),
+        var(--item-panel-texture) repeat;
+}
+
+.gum.sheet.actor .attack-group-list-v2:not(.combat-favorites-list) .attack-card-two-line::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background:
+        radial-gradient(circle at 10% 0%, color-mix(in srgb, var(--attack-card-accent) 25%, transparent), transparent 36%),
+        linear-gradient(90deg, rgba(255,255,255,0.03), transparent 40%);
+}
+
+.gum.sheet.actor .attack-group-list-v2:not(.combat-favorites-list) .attack-card-two-line:hover {
+    border-color: color-mix(in srgb, var(--attack-card-accent) 55%, transparent);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 3px 12px rgba(0, 0, 0, 0.32);
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-card-primary {
+    position: relative;
+    display: grid;
+    grid-template-columns: 24px minmax(150px, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+    min-width: 0;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-icon {
+    width: 24px;
+    height: 24px;
+    color: var(--attack-card-accent);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.65);
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-name-stack {
+    min-width: 0;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-name {
+    margin: 0;
+    color: var(--gum-text-claro);
+    font-size: 12px;
+    line-height: 1.15;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.55);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-source-line {
+    color: rgba(247, 233, 215, 0.62);
+    font-size: 10px;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-primary-stats {
+    display: flex;
+    align-items: stretch;
+    justify-content: flex-end;
+    gap: 5px;
+    min-width: 0;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-pill-stat {
+    min-width: 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    padding: 3px 6px;
+    border: 1px solid color-mix(in srgb, var(--attack-card-accent) 28%, transparent);
+    border-radius: 5px;
+    background: linear-gradient(180deg, rgba(8, 8, 10, 0.44), rgba(0, 0, 0, 0.28));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.035);
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-pill-stat.damage {
+    min-width: 76px;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-pill-stat.defense .attack-value {
+    color: #9ec8ff;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-label {
+    color: rgba(247, 233, 215, 0.58);
+    font-size: 9px;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-value {
+    color: #f8d894;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 0;
+    white-space: nowrap;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-damage-main {
+    color: #f07a82;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-card-secondary {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    padding-left: 32px;
+    padding-top: 5px;
+    border-top: 1px solid color-mix(in srgb, var(--attack-card-accent) 20%, transparent);
+    color: rgba(247, 233, 215, 0.62);
+    font-size: 10px;
+    line-height: 1.2;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-card-secondary strong {
+    color: color-mix(in srgb, var(--attack-card-accent) 70%, #f8d894 30%);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-secondary-flag {
+    color: rgba(247, 233, 215, 0.78);
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-damage-extra {
+    color: #f07a82;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-value.rollable:hover,
+.gum.sheet.actor .attack-card-two-line .attack-value.rollable-damage:hover {
+    background: transparent;
+    color: #fff2d8 !important;
+    text-decoration: none;
+}
+
+@media (max-width: 980px) {
+    .gum.sheet.actor .attack-card-two-line .attack-card-primary {
+        grid-template-columns: 24px minmax(0, 1fr);
+        align-items: start;
+    }
+
+    .gum.sheet.actor .attack-card-two-line .attack-primary-stats {
+        grid-column: 2 / -1;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .gum.sheet.actor .attack-card-two-line .attack-card-secondary {
+        padding-left: 32px;
+    }
+}
+
 
 /* Cards em Equipamentos/Características/Condições */
 .gum.sheet.actor .gum-unified-section .equipment-card,
