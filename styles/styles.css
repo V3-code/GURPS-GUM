@@ -1502,6 +1502,7 @@
   display: inline-flex;
   align-items: center;
   line-height: 1;
+  justify-content: center;
 
   font-size: 0.70rem;
   font-weight: 800;
@@ -3492,7 +3493,7 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .energy-reserves-box .meter-card .meter-main {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto auto;
-    align-items: start;
+    align-items: center;
     gap: 8px;
 }
 

@@ -1676,7 +1676,7 @@
             </ol>
           </div>
                     {{!-- Bloco de Registros de Combate (Agora no topo da direita) --}}
- <div class="gum-block combat-meters-box">
+          <div class="gum-block combat-meters-box">
             <div class="block-header">
               <h4>Registros de Combate</h4>
               <div class="header-controls">
@@ -1694,6 +1694,11 @@
                       {{this.meter.name}}
                       {{#if this.meter.hidden}}<small>(oculto)</small>{{/if}}
                     </span>
+                                      <div class="meter-inputs">
+                    <input type="number" name="system.combat.combat_meters.{{this.id}}.current" value="{{this.meter.current}}"/>
+                    <span>/</span>
+                    <input type="number" name="system.combat.combat_meters.{{this.id}}.max" value="{{this.meter.max}}"/>
+                  </div>
                     <div class="item-controls meter-controls">
                       <div class="gum-action-menu js-action-menu">
                         <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções do registro" aria-label="Opções do registro" role="button" aria-haspopup="true" aria-expanded="false">
@@ -1709,11 +1714,6 @@
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div class="meter-inputs">
-                    <input type="number" name="system.combat.combat_meters.{{this.id}}.current" value="{{this.meter.current}}"/>
-                    <span>/</span>
-                    <input type="number" name="system.combat.combat_meters.{{this.id}}.max" value="{{this.meter.max}}"/>
                   </div>
                 </div>
               {{/each}}

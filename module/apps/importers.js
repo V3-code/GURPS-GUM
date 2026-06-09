@@ -850,6 +850,38 @@ function normalizeGCSDefault(gcsDefault) {
     };
 }
 
+function formatGCSDefaultRollReference(gcsDefault) {
+    const normalizedDefault = normalizeGCSDefault(gcsDefault);
+    if (!normalizedDefault?.name) return "";
+
+    const baseName = normalizedDefault.specialization
+        ? `${normalizedDefault.name} (${normalizedDefault.specialization})`
+        : normalizedDefault.name;
+    const modifier = Number(normalizedDefault.modifier) || 0;
+    const signedModifier = modifier > 0 ? `+${modifier}` : (modifier < 0 ? String(modifier) : "");
+
+    return `${baseName}${signedModifier}`.trim();
+}
+
+function formatGCSDefaultsRollReferenceList(defaults) {
+    if (!Array.isArray(defaults) || defaults.length === 0) return "";
+
+    const seen = new Set();
+    const references = [];
+
+    for (const gcsDefault of defaults) {
+        const reference = formatGCSDefaultRollReference(gcsDefault);
+        const key = reference.toLowerCase();
+        if (!reference || seen.has(key)) continue;
+
+        seen.add(key);
+        references.push(reference);
+    }
+
+    return references.join(", ");
+}
+
+
 function parseGCSLibrarySpell(gcsSpell) {
     let template = getSystemTemplate("Item", "spell");
 
@@ -1060,11 +1092,7 @@ function parseGCSLibraryEquipment(gcsEquip) {
         for (const gcsWeapon of gcsEquip.weapons) {
             const newAttackId = foundry.utils.randomID();
             
-            const bestDefault = gcsWeapon.defaults?.reduce((best, current) => {
-                return (current.calc?.level > best.calc?.level) ? current : best;
-            }, gcsWeapon.defaults[0]);
-            
-            const defaultSkill = bestDefault?.name || bestDefault?.type || "DX";
+            const defaultSkill = formatGCSDefaultsRollReferenceList(gcsWeapon.defaults) || "DX";
             
             let gcsDamageTypeRaw = gcsWeapon.damage?.type || "";
             if (gcsDamageTypeRaw.includes('/')) {
@@ -1281,6 +1309,15 @@ function mergeHybridImportedData(sourceItem, parsedItem, { gcsNode = null, mode 
         inplace: false,
         overwrite: true
     });
+
+    if (parsedItem.type === "equipment" && Array.isArray(gcsNode?.weapons) && gcsNode.weapons.length > 0) {
+        // Ataques são objetos indexados por IDs aleatórios. No merge híbrido, mesclar a
+        // coleção do item-base com a coleção recém-parseada duplica modos equivalentes.
+        // Quando o GCS informa armas/modos, a importação deve usar essas coleções como
+        // fonte final e substituir integralmente os modos vindos do item encontrado.
+        mergedSystem.melee_attacks = foundry.utils.deepClone(parsedItem.system?.melee_attacks || {});
+        mergedSystem.ranged_attacks = foundry.utils.deepClone(parsedItem.system?.ranged_attacks || {});
+    }
 
     const merged = {
         ...base,

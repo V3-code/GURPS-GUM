@@ -634,22 +634,70 @@
         {{/if}}
 
 {{!-- ===================================================================== --}}
-{{!-- 		ABA DETALHES: MODIFICADOR DO MESTRE (LAYOUT COMPACTO)        --}}
+{{!--       ABA DETALHES: MODIFICADOR DO MESTRE (FORMULÁRIO TÉCNICO)      --}}
 {{!-- ===================================================================== --}}
 {{#if (eq item.type "gm_modifier")}}
 
-
-        <div class="form-section">
-            <h4 class="section-title">Organização</h4>
-            <div class="effect-row-grid effect-duration-grid is-two-col-rows">
-                <div class="effect-field effect-field-row-auto">
-                    <label class="effect-label">Grupo na Ficha e no Roll Prompt</label>
-                    <input type="text" name="system.group" value="{{system.group}}" placeholder="Ex: Combate, Magia, Condições"/>
+        <div class="form-section skill-details-compact gm-modifier-details-form">
+            <h4 class="section-title">Referência</h4>
+            <div class="skill-compact-rows">
+                <div class="skill-compact-row">
+                    <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> Ref. Página</label>
+                    <div class="skill-compact-controls">
+                        <input type="text" name="system.ref" value="{{system.ref}}" placeholder="Ex: B345"/>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="form-section">
+        <div class="form-section skill-details-compact gm-modifier-details-form">
+            <h4 class="section-title">Organização e Apresentação</h4>
+            <div class="skill-compact-rows">
+                <div class="skill-compact-row">
+                    <label>Grupo na Ficha e no Roll Prompt</label>
+                    <div class="skill-compact-controls">
+                        <input type="text" name="system.group" value="{{system.group}}" placeholder="Ex: Combate, Magia, Condições"/>
+                    </div>
+                </div>
+                <div class="skill-compact-row">
+                    <label>Categoria no Navegador</label>
+                    <div class="skill-compact-controls">
+                        <select name="system.ui_category">
+                            <option value="location" {{#if (eq system.ui_category "location")}}selected{{/if}}>Pontos de Impacto</option>
+                            <option value="maneuver" {{#if (eq system.ui_category "maneuver")}}selected{{/if}}>Manobras</option>
+                            <option value="attack_opt" {{#if (eq system.ui_category "attack_opt")}}selected{{/if}}>Opções de Ataque</option>
+                            <option value="defense_opt" {{#if (eq system.ui_category "defense_opt")}}selected{{/if}}>Opções de Defesa</option>
+                            <option value="posture" {{#if (eq system.ui_category "posture")}}selected{{/if}}>Cobertura e Postura</option>
+                            <option value="range" {{#if (eq system.ui_category "range")}}selected{{/if}}>Distância e Velocidade</option>
+                            <option value="terrain_light" {{#if (eq system.ui_category "terrain_light")}}selected{{/if}}>Terreno e Iluminação</option>
+                            <option value="state_affliction" {{#if (eq system.ui_category "state_affliction")}}selected{{/if}}>Estado e Atribulações</option>
+                            <option value="task_difficulty" {{#if (eq system.ui_category "task_difficulty")}}selected{{/if}}>Dificuldade da Tarefa</option>
+                            <option value="ritual" {{#if (eq system.ui_category "ritual")}}selected{{/if}}>Operação Mágica</option>
+                            <option value="power_operation" {{#if (eq system.ui_category "power_operation")}}selected{{/if}}>Operação de Poderes</option>
+                            <option value="time" {{#if (eq system.ui_category "time")}}selected{{/if}}>Modo de Execução</option>
+                            <option value="effort" {{#if (eq system.ui_category "effort")}}selected{{/if}}>Esforço Adicional</option>
+                            <option value="situation" {{#if (or (eq system.ui_category "situation") (not system.ui_category))}}selected{{/if}}>Cenário</option>
+                            <option value="equipment" {{#if (eq system.ui_category "equipment")}}selected{{/if}}>Equipamento</option>
+                            <option value="other" {{#if (eq system.ui_category "other")}}selected{{/if}}>Customizado</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="skill-compact-row">
+                    <label>Duração / Escopo</label>
+                    <div class="skill-compact-controls">
+                        <input type="text" name="system.duration" value="{{system.duration}}" placeholder="Ex: próxima rolagem, cena, enquanto mirar"/>
+                    </div>
+                </div>
+                <div class="skill-compact-row">
+                    <label>Observação</label>
+                    <div class="skill-compact-controls">
+                        <input type="text" name="system.observation" value="{{system.observation}}" placeholder="Nota curta para uso pelo mestre"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section skill-details-compact gm-modifier-details-form">
             <h4 class="section-title">Entradas de Modificador</h4>
             <p class="notes">Adicione uma linha para cada bônus/penalidade deste efeito.</p>
             <div class="form-group modifier-entry-toolbar">
@@ -661,7 +709,7 @@
                 {{/each}}
             </datalist>
 
-             {{#each gmModifierEntries as |entry|}}
+            {{#each gmModifierEntries as |entry|}}
                 <div class="modifier-entry-row gm-mod-entry">
                     <div class="modifier-entry-topline">
                         <div class="effect-field modifier-entry-field">
@@ -696,65 +744,86 @@
         </div>
 
 {{/if}}
-        {{!-- ===================================================================== --}}
-        {{!-- 		ABA DETALHES: ITEM VANTAGENS E DESVANTAGENS				 --}}
+                {{!-- ===================================================================== --}}
+        {{!--           ABA DETALHES: ITEM VANTAGENS E DESVANTAGENS              --}}
         {{!-- ===================================================================== --}}
         {{#if (or (eq item.type "advantage") (eq item.type "disadvantage"))}}
 
-            {{!-- Grupo 1: Organização --}}
-            <div class="form-section"><h4 class="section-title">Organização na Ficha</h4>
-            <div class="form-group">
-                <label>Bloco na Ficha de Personagem</label>
-                <select name="system.block_id">{{selectOptions characteristic_blocks selected=system.block_id}}</select>
-                <p class="notes">"Nenhuma" mantém a organização padrão por tipo (vantagem/desvantagem).</p>
-            </div>
+            <div class="form-section skill-details-compact characteristic-details-form">
+                <h4 class="section-title">Referência</h4>
+                <div class="skill-compact-rows">
+                    <div class="skill-compact-row">
+                        <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> Ref. Página</label>
+                        <div class="skill-compact-controls">
+                            <input type="text" name="system.ref" value="{{system.ref}}" placeholder="Ex: B33"/>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            {{!-- Grupo 2: Custo e Pontos --}}
-            <div class="form-section"><h4 class="section-title">Custo e Pontos</h4>
-            <div class="form-grid-2">
-                <div class="form-group">
-                    <label>Pontos Base</label>
-                    <input type="number" name="system.points" value="{{system.points}}"/>
+            <div class="form-section skill-details-compact characteristic-details-form">
+                <h4 class="section-title">Organização na Ficha</h4>
+                <div class="skill-compact-rows">
+                    <div class="skill-compact-row">
+                        <label>Bloco na Ficha de Personagem</label>
+                        <div class="skill-compact-controls">
+                            <select name="system.block_id">{{selectOptions characteristic_blocks selected=system.block_id}}</select>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group calculated-cost">
-                    <label>Custo Final (c/ Modificadores)</label>
-                    <div class="value">
-                        <span>{{calculatedCost.finalPoints}}</span>
-                        <small> (Mod: {{calculatedCost.totalModifier}}%)</small>
+                <p class="notes">"Nenhuma" mantém a organização padrão por tipo (vantagem/desvantagem).</p>
+            </div>
+
+            <div class="form-section skill-details-compact characteristic-details-form">
+                <h4 class="section-title">Nível e Pontos</h4>
+                <div class="skill-compact-rows">
+                    <div class="skill-compact-row">
+                        <label>Nível</label>
+                        <div class="skill-compact-controls">
+                            <input type="text" name="system.level" value="{{system.level}}"/>
+                        </div>
+                    </div>
+                    <div class="skill-compact-row">
+                        <label>Pontos Base</label>
+                        <div class="skill-compact-controls">
+                            <input type="number" name="system.points" value="{{system.points}}"/>
+                        </div>
+                    </div>
+                    <div class="skill-compact-row">
+                        <label>Custo Final (c/ Modificadores)</label>
+                        <div class="skill-compact-controls">
+                            <div class="calculated-cost value">
+                                <span>{{calculatedCost.finalPoints}}</span>
+                                <small>(Mod: {{calculatedCost.totalModifier}}%)</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            </div>
-            {{!-- Grupo 3: Mecânica e Contexto --}}
-            <div class="form-section"><h4 class="section-title">Mecânica e Contexto</h4>
-            <div class="form-grid-3">
-                <div class="form-group">
-                    <label>Nível</label>
-                    <input type="text" name="system.level" value="{{system.level}}"/>
-                </div>
-                <div class="form-group">
-                    <label>Rolagem de Auto-Controle</label>
-                    <input type="text" name="system.self_control_roll" value="{{system.self_control_roll}}"/>
-                </div>
-                <div class="form-group">
-                    <label>Especialização</label>
-                    <input type="text" name="system.specialization" value="{{system.specialization}}" placeholder="Ex: Espadas, Fogo, Social"/>
-                </div>
-            </div>
-            <div class="form-grid-2" style="margin-top: 10px;">
-                <div class="form-group">
-                    <label>Características</label>
-                    <input type="text" name="system.characteristics" value="{{system.characteristics}}" placeholder="Notas curtas para exibir na ficha"/>
-                </div>
-                {{!-- Campo REF com botão --}}
-                <div class="form-group">
-                    <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a>Ref. Página</label>
-                    <div class="input-with-button">
-                        <input type="text" name="system.ref" value="{{system.ref}}"/>
+
+            <div class="form-section skill-details-compact characteristic-details-form">
+                <h4 class="section-title">Mecânica e Contexto</h4>
+                <div class="skill-compact-rows">
+
+                    <div class="skill-compact-row">
+                        <label>Rolagem de Auto-Controle</label>
+                        <div class="skill-compact-controls">
+                            <input type="text" name="system.self_control_roll" value="{{system.self_control_roll}}"/>
+                        </div>
+                    </div>
+                    <div class="skill-compact-row">
+                        <label>Especialização</label>
+                        <div class="skill-compact-controls">
+                            <input type="text" name="system.specialization" value="{{system.specialization}}" placeholder="Ex: Espadas, Fogo, Social"/>
+                        </div>
+                    </div>
+                    <div class="skill-compact-row">
+                        <label>Características</label>
+                        <div class="skill-compact-controls">
+                            <input type="text" name="system.characteristics" value="{{system.characteristics}}" placeholder="Notas curtas para exibir na ficha"/>
+                        </div>
                     </div>
                 </div>
-            </div>
             </div>
         {{/if}}
        
@@ -2311,7 +2380,7 @@
               {{/if}}
 
               <div class="eqpmod-text">
-                <div class="eqpmod-name">{{mod.name}}</div>
+                <div class="eqpmod-name">{{mod.name}}{{#if (eq mod.source_type "effect")}} <span class="eqpmod-subline">Efeito</span>{{/if}}</div>
               </div>
             </div>
 
@@ -2332,10 +2401,11 @@
               <span class="eqpmod-controls">
                 {{!-- se você já tiver handler "view", mantenha essa classe; se não, deixa só o delete --}}
                 <a class="view-eqp-modifier" title="Visualizar"><i class="fas fa-eye"></i></a>
+                {{#unless (eq mod.source_type "effect")}}
                 <a class="delete-eqp-modifier" title="Remover"><i class="fas fa-trash"></i></a>
+                {{/unless}}
               </span>
             </div>
-
           </div>
 
           {{!-- Opcional: notas/efeitos em linha extra bem discreta --}}
