@@ -1039,43 +1039,40 @@
             <div class="group-content">
             <div class="spell-list-v2 grouped attack-style">
               {{#each spells}}
-              <div class="item-wrapper item spell-row-v3" data-item-id="{{this.id}}" draggable="true">
-                <div class="spell-row-main">
+              <div class="item-wrapper item spell-row-v3 spell-card-two-line" data-item-id="{{this.id}}" draggable="true">
+                <div class="spell-card-primary">
                   <img class="spell-thumb" src="{{this.img}}" alt="{{this.name}}">
 
                   <div class="spell-name-stack">
                     <h4 class="spell-name item-quick-view" title="Visualizar Card">{{this.name}}</h4>
-                    <div class="spell-school-line">{{this.system.spell_school}} · {{this.system.spell_class}}</div>
+                    <div class="spell-school-line">{{this.system.source}} · {{this.system.spell_class}} · {{this.system.spell_school}}</div>
                   </div>
 
-                  <div class="spell-meta-cell">
-                    <span class="spell-meta-label">NH</span>
-                    <a class="rollable spell-meta-value" data-type="spell" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
-                  </div>
+                  <div class="spell-primary-stats">
+                    <div class="spell-meta-cell spell-pill-stat">
+                      <span class="spell-meta-label">NH</span>
+                      <a class="rollable spell-meta-value" data-type="spell" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
+                    </div>
 
-                  <div class="spell-meta-cell damage">
-                    <span class="spell-meta-label">Dano</span>
-                    {{#if this.system.damage.formula}}
-                    <a class="rollable-damage spell-meta-value" title="Rolar Dano" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}</a>
-                    {{else}}
-                    <span class="spell-meta-value">—</span>
+                    {{#if this.system.uses_attack}}
+                    <div class="spell-meta-cell spell-pill-stat attack">
+                      <span class="spell-meta-label">Atq</span>
+                      {{#if this.system.attack_nh}}
+                      <a class="rollable spell-meta-value" data-type="attack" data-attack-type="{{this.system.attack_type}}" data-roll-value="{{this.system.attack_nh}}" data-label="Ataque de {{this.name}}" data-item-id="{{this.id}}" title="{{this.system.attack_roll.resolved_skill_name}}">{{this.system.attack_nh}}</a>
+                      {{else}}
+                      <span class="spell-meta-value" title="Configure uma perícia de ataque na magia.">—</span>
+                      {{/if}}
+                    </div>
                     {{/if}}
-                    {{#if this.system.damage.follow_up_damage.formula}}
-                    <span class="spell-meta-sub">FU: {{this.system.damage.follow_up_damage.formula}} {{this.system.damage.follow_up_damage.type}}</span>
-                    {{/if}}
-                    {{#if this.system.damage.fragmentation_damage.formula}}
-                    <span class="spell-meta-sub">FR: {{this.system.damage.fragmentation_damage.formula}} {{this.system.damage.fragmentation_damage.type}}</span>
-                    {{/if}}
-                  </div>
 
-                  <div class="spell-meta-cell">
-                    <span class="spell-meta-label">TxD</span>
-                    <span class="spell-meta-value">{{this.system.casting_time}} × {{this.system.duration}}</span>
-                  </div>
-
-                  <div class="spell-meta-cell">
-                    <span class="spell-meta-label">CCxCM</span>
-                    <span class="spell-meta-value">{{this.system.mana_cost}} × {{this.system.mana_maint}}</span>
+                    <div class="spell-meta-cell spell-pill-stat damage">
+                      <span class="spell-meta-label">Dano</span>
+                      {{#if this.system.damage.formula}}
+                      <a class="rollable-damage spell-meta-value" title="Rolar Dano" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}</a>
+                      {{else}}
+                      <span class="spell-meta-value">—</span>
+                      {{/if}}
+                    </div>
                   </div>
 
                   <div class="item-controls spell-controls-row">
@@ -1092,6 +1089,21 @@
                   </div>
                 </div>
 
+                <div class="spell-card-secondary">
+                  <span><strong>Conj.</strong> {{this.system.casting_time}}</span>
+                  <span><strong>Duração</strong> {{this.system.duration}}</span>
+                  <span><strong>Custo</strong> {{this.system.mana_cost}}</span>
+                  <span><strong>Mant.</strong> {{this.system.mana_maint}}</span>
+                  {{#if this.system.uses_attack}}
+                  <span class="spell-attack-source"><strong>Perícia</strong> {{#if this.system.attack_roll.resolved_skill_name}}{{this.system.attack_roll.resolved_skill_name}}{{else}}{{this.system.attack_roll.skill_name}}{{/if}}</span>
+                  {{/if}}
+                  {{#if this.system.damage.follow_up_damage.formula}}
+                  <span class="spell-damage-extra"><strong>FU</strong> {{this.system.damage.follow_up_damage.formula}} {{this.system.damage.follow_up_damage.type}}</span>
+                  {{/if}}
+                  {{#if this.system.damage.fragmentation_damage.formula}}
+                  <span class="spell-damage-extra"><strong>FR</strong> {{this.system.damage.fragmentation_damage.formula}} {{this.system.damage.fragmentation_damage.type}}</span>
+                  {{/if}}
+                </div>
               </div>
               {{/each}}
             </div>
@@ -1230,8 +1242,8 @@
             <div class="group-content">
             <div class="spell-list-v2 grouped attack-style">
               {{#each powers}}
-              <div class="item-wrapper item spell-row-v3" data-item-id="{{this.id}}" draggable="true">
-                <div class="spell-row-main">
+              <div class="item-wrapper item spell-row-v3 spell-card-two-line" data-item-id="{{this.id}}" draggable="true">
+                <div class="spell-card-primary">
                   <img class="spell-thumb" src="{{this.img}}" alt="{{this.name}}">
 
                   <div class="spell-name-stack">
@@ -1239,34 +1251,31 @@
                     <div class="spell-school-line">{{this.system.source}} · {{this.system.spell_class}}</div>
                   </div>
 
-                  <div class="spell-meta-cell">
-                    <span class="spell-meta-label">NH</span>
-                    <a class="rollable spell-meta-value" data-type="power" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
-                  </div>
+                  <div class="spell-primary-stats">
+                    <div class="spell-meta-cell spell-pill-stat">
+                      <span class="spell-meta-label">NH</span>
+                      <a class="rollable spell-meta-value" data-type="power" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
+                    </div>
 
-                  <div class="spell-meta-cell damage">
-                    <span class="spell-meta-label">Dano</span>
-                    {{#if this.system.damage.formula}}
-                    <a class="rollable-damage spell-meta-value" title="Rolar Dano" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}</a>
-                    {{else}}
-                    <span class="spell-meta-value">—</span>
+                    {{#if this.system.uses_attack}}
+                    <div class="spell-meta-cell spell-pill-stat attack">
+                      <span class="spell-meta-label">Atq</span>
+                      {{#if this.system.attack_nh}}
+                      <a class="rollable spell-meta-value" data-type="attack" data-attack-type="{{this.system.attack_type}}" data-roll-value="{{this.system.attack_nh}}" data-label="Ataque de {{this.name}}" data-item-id="{{this.id}}" title="{{this.system.attack_roll.resolved_skill_name}}">{{this.system.attack_nh}}</a>
+                      {{else}}
+                      <span class="spell-meta-value" title="Configure uma perícia de ataque no poder.">—</span>
+                      {{/if}}
+                    </div>
                     {{/if}}
-                    {{#if this.system.damage.follow_up_damage.formula}}
-                    <span class="spell-meta-sub">FU: {{this.system.damage.follow_up_damage.formula}} {{this.system.damage.follow_up_damage.type}}</span>
-                    {{/if}}
-                    {{#if this.system.damage.fragmentation_damage.formula}}
-                    <span class="spell-meta-sub">FR: {{this.system.damage.fragmentation_damage.formula}} {{this.system.damage.fragmentation_damage.type}}</span>
-                    {{/if}}
-                  </div>
 
-                  <div class="spell-meta-cell">
-                    <span class="spell-meta-label">TxD</span>
-                    <span class="spell-meta-value">{{this.system.activation_time}} × {{this.system.duration}}</span>
-                  </div>
-
-                  <div class="spell-meta-cell">
-                    <span class="spell-meta-label">CCxCM</span>
-                    <span class="spell-meta-value">{{this.system.activation_cost}} × {{this.system.maint_cost}}</span>
+                    <div class="spell-meta-cell spell-pill-stat damage">
+                      <span class="spell-meta-label">Dano</span>
+                      {{#if this.system.damage.formula}}
+                      <a class="rollable-damage spell-meta-value" title="Rolar Dano" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}</a>
+                      {{else}}
+                      <span class="spell-meta-value">—</span>
+                      {{/if}}
+                    </div>
                   </div>
 
                   <div class="item-controls spell-controls-row">
@@ -1281,6 +1290,22 @@
                       </div>
                     </div>
                   </div>
+                </div>
+
+                <div class="spell-card-secondary">
+                  <span><strong>Ativ.</strong> {{this.system.activation_time}}</span>
+                  <span><strong>Duração</strong> {{this.system.duration}}</span>
+                  <span><strong>Custo</strong> {{this.system.activation_cost}}</span>
+                  <span><strong>Mant.</strong> {{this.system.maint_cost}}</span>
+                  {{#if this.system.uses_attack}}
+                  <span class="spell-attack-source"><strong>Perícia</strong> {{#if this.system.attack_roll.resolved_skill_name}}{{this.system.attack_roll.resolved_skill_name}}{{else}}{{this.system.attack_roll.skill_name}}{{/if}}</span>
+                  {{/if}}
+                  {{#if this.system.damage.follow_up_damage.formula}}
+                  <span class="spell-damage-extra"><strong>FU</strong> {{this.system.damage.follow_up_damage.formula}} {{this.system.damage.follow_up_damage.type}}</span>
+                  {{/if}}
+                  {{#if this.system.damage.fragmentation_damage.formula}}
+                  <span class="spell-damage-extra"><strong>FR</strong> {{this.system.damage.fragmentation_damage.formula}} {{this.system.damage.fragmentation_damage.type}}</span>
+                  {{/if}}
                 </div>
               </div>
               {{/each}}
@@ -1808,42 +1833,45 @@
                     {{/if}}
 
                     {{#if (or (eq this.type "spell") (eq this.type "power"))}}
-                    <div class="item-wrapper item spell-row-v3" data-item-id="{{this.id}}" draggable="true">
-                      <div class="spell-row-main">
+                    <div class="item-wrapper item spell-row-v3 spell-card-two-line" data-item-id="{{this.id}}" draggable="true">
+                      <div class="spell-card-primary">
                         <img class="spell-thumb" src="{{this.img}}" alt="{{this.name}}">
+
                         <div class="spell-name-stack">
                           <h4 class="spell-name item-quick-view" title="Visualizar Card">{{this.name}}</h4>
                           <div class="spell-school-line">
-                            {{#if (eq this.type "spell")}}{{this.system.spell_school}} · {{this.system.spell_class}}{{/if}}
+                            {{#if (eq this.type "spell")}}{{this.system.source}} · {{this.system.spell_class}} · {{this.system.spell_school}}{{/if}}
                             {{#if (eq this.type "power")}}{{this.system.source}} · {{this.system.spell_class}}{{/if}}
                           </div>
                         </div>
-                        <div class="spell-meta-cell">
-                          <span class="spell-meta-label">NH</span>
-                          <a class="rollable spell-meta-value" data-type="{{this.type}}" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
-                        </div>
-                        <div class="spell-meta-cell damage">
-                          <span class="spell-meta-label">Dano</span>
-                          {{#if this.system.damage.formula}}
-                          <a class="rollable-damage spell-meta-value" title="Rolar Dano" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}</a>
-                          {{else}}
-                          <span class="spell-meta-value">—</span>
+
+                        <div class="spell-primary-stats">
+                          <div class="spell-meta-cell spell-pill-stat">
+                            <span class="spell-meta-label">NH</span>
+                            <a class="rollable spell-meta-value" data-type="{{this.type}}" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
+                          </div>
+
+                          {{#if this.system.uses_attack}}
+                          <div class="spell-meta-cell spell-pill-stat attack">
+                            <span class="spell-meta-label">Atq</span>
+                            {{#if this.system.attack_nh}}
+                            <a class="rollable spell-meta-value" data-type="attack" data-attack-type="{{this.system.attack_type}}" data-roll-value="{{this.system.attack_nh}}" data-label="Ataque de {{this.name}}" data-item-id="{{this.id}}" title="{{this.system.attack_roll.resolved_skill_name}}">{{this.system.attack_nh}}</a>
+                            {{else}}
+                            <span class="spell-meta-value" title="Configure uma perícia de ataque.">—</span>
+                            {{/if}}
+                          </div>
                           {{/if}}
+
+                          <div class="spell-meta-cell spell-pill-stat damage">
+                            <span class="spell-meta-label">Dano</span>
+                            {{#if this.system.damage.formula}}
+                            <a class="rollable-damage spell-meta-value" title="Rolar Dano" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}</a>
+                            {{else}}
+                            <span class="spell-meta-value">—</span>
+                            {{/if}}
+                          </div>
                         </div>
-                        <div class="spell-meta-cell">
-                          <span class="spell-meta-label">TxD</span>
-                          <span class="spell-meta-value">
-                            {{#if (eq this.type "spell")}}{{this.system.casting_time}} × {{this.system.duration}}{{/if}}
-                            {{#if (eq this.type "power")}}{{this.system.activation_time}} × {{this.system.duration}}{{/if}}
-                          </span>
-                        </div>
-                        <div class="spell-meta-cell">
-                          <span class="spell-meta-label">CCxCM</span>
-                          <span class="spell-meta-value">
-                            {{#if (eq this.type "spell")}}{{this.system.mana_cost}} × {{this.system.mana_maint}}{{/if}}
-                            {{#if (eq this.type "power")}}{{this.system.activation_cost}} × {{this.system.maint_cost}}{{/if}}
-                          </span>
-                        </div>
+
                         <div class="item-controls spell-controls-row">
                           <div class="gum-action-menu js-action-menu">
                             <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções" aria-label="Opções" role="button" aria-haspopup="true" aria-expanded="false">
@@ -1856,6 +1884,30 @@
                             </div>
                           </div>
                         </div>
+                      </div>
+
+                      <div class="spell-card-secondary">
+                        {{#if (eq this.type "spell")}}
+                        <span><strong>Conj.</strong> {{this.system.casting_time}}</span>
+                        <span><strong>Duração</strong> {{this.system.duration}}</span>
+                        <span><strong>Custo</strong> {{this.system.mana_cost}}</span>
+                        <span><strong>Mant.</strong> {{this.system.mana_maint}}</span>
+                        {{/if}}
+                        {{#if (eq this.type "power")}}
+                        <span><strong>Ativ.</strong> {{this.system.activation_time}}</span>
+                        <span><strong>Duração</strong> {{this.system.duration}}</span>
+                        <span><strong>Custo</strong> {{this.system.activation_cost}}</span>
+                        <span><strong>Mant.</strong> {{this.system.maint_cost}}</span>
+                        {{/if}}
+                        {{#if this.system.uses_attack}}
+                        <span class="spell-attack-source"><strong>Perícia</strong> {{#if this.system.attack_roll.resolved_skill_name}}{{this.system.attack_roll.resolved_skill_name}}{{else}}{{this.system.attack_roll.skill_name}}{{/if}}</span>
+                        {{/if}}
+                        {{#if this.system.damage.follow_up_damage.formula}}
+                        <span class="spell-damage-extra"><strong>FU</strong> {{this.system.damage.follow_up_damage.formula}} {{this.system.damage.follow_up_damage.type}}</span>
+                        {{/if}}
+                        {{#if this.system.damage.fragmentation_damage.formula}}
+                        <span class="spell-damage-extra"><strong>FR</strong> {{this.system.damage.fragmentation_damage.formula}} {{this.system.damage.fragmentation_damage.type}}</span>
+                        {{/if}}
                       </div>
                     </div>
                     {{/if}}

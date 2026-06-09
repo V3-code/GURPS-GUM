@@ -21,7 +21,7 @@ const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? 
         return foundry.utils.mergeObject(super.defaultOptions, {
           classes: ["gum", "sheet", "actor", "character"],
           template: "systems/gum/templates/actors/characters.hbs",
-          width: 940,
+          width: 1020,
           height: 820,
           tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "combat" }]
         });
@@ -4197,7 +4197,7 @@ _onActionMenuToggle(ev) {
     menu.classList.add("is-open");
     const controls = menu.closest(".item-controls");
     if (controls) controls.classList.add("menu-open");
-    const row = menu.closest(".skill-tree-item, .item-row, .spell-row-v3, .spell-row-main, .item");
+    const row = menu.closest(".skill-tree-item, .casting-ability-card, .item-row, .spell-row-v3, .spell-row-main, .item");
     if (row) row.classList.add("action-menu-open-row");
     const toggle = menu.querySelector(".js-action-menu-toggle");
     if (toggle) toggle.setAttribute("aria-expanded", "true");
@@ -4213,28 +4213,32 @@ _positionActionMenu(menu) {
   const toggle = menu.querySelector(".js-action-menu-toggle");
   if (!panel || !toggle) return;
 
-  const preferredBoundary = menu.closest(".skills-scroll-area, .spells-scroll-area, .powers-scroll-area, .combat-favorites-list");
-  const boundaryRect = preferredBoundary?.getBoundingClientRect?.() ?? {
-    top: 0,
-    bottom: window.innerHeight
-  };
+
 
   const toggleRect = toggle.getBoundingClientRect();
   const panelRect = panel.getBoundingClientRect();
+  const panelWidth = panelRect.width || panel.offsetWidth || 140;
   const panelHeight = panelRect.height || panel.offsetHeight || 0;
   const gap = 4;
+  const viewportPadding = 8;
 
-  const spaceBelow = boundaryRect.bottom - toggleRect.bottom;
-  const spaceAbove = toggleRect.top - boundaryRect.top;
+  const spaceBelow = window.innerHeight - toggleRect.bottom - viewportPadding;
+  const spaceAbove = toggleRect.top - viewportPadding;
   const shouldOpenUp = spaceBelow < (panelHeight + gap) && spaceAbove > spaceBelow;
 
-  if (shouldOpenUp) {
-    menu.classList.add("is-open-up");
-    const upRect = panel.getBoundingClientRect();
-    if (upRect.top < boundaryRect.top && spaceBelow > 0) {
-      menu.classList.remove("is-open-up");
-    }
-  }
+  const left = Math.min(
+    Math.max(toggleRect.right - panelWidth, viewportPadding),
+    Math.max(window.innerWidth - panelWidth - viewportPadding, viewportPadding)
+  );
+  const top = shouldOpenUp
+    ? Math.max(toggleRect.top - panelHeight - gap, viewportPadding)
+    : Math.min(toggleRect.bottom + gap, Math.max(window.innerHeight - panelHeight - viewportPadding, viewportPadding));
+
+  if (shouldOpenUp) menu.classList.add("is-open-up");
+  panel.style.left = `${left}px`;
+  panel.style.top = `${top}px`;
+  panel.style.right = "auto";
+  panel.style.bottom = "auto";
 }
 
 _closeAllActionMenus() {

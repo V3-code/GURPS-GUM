@@ -845,11 +845,15 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                     i.system.final_nh = nhOverride !== null && nhOverride !== "" && nhOverride !== undefined
                         ? Number(nhOverride) || 0
                         : nhBase + nhLevel + nhMod + nhPassive + nhTemp;
-                    if (i.system.attack_roll?.skill_name) {
+                   if (i.system.uses_attack && i.system.attack_roll?.skill_name) {
                         const resolvedAttackBase = evaluateRollReference(i.system.attack_roll.skill_name, rollReferences);
-                        const attackBaseVal = resolvedAttackBase.value;
-                        i.system.attack_nh = attackBaseVal + (i.system.attack_roll.skill_level_mod || 0);
+                        const attackBaseVal = Number(resolvedAttackBase.value) || 0;
+                        const attackMod = Number(i.system.attack_roll.skill_level_mod) || 0;
+                        i.system.attack_nh = attackBaseVal + attackMod;
                         i.system.attack_roll.resolved_skill_name = resolvedAttackBase.label;
+                        } else {
+                        i.system.attack_nh = null;
+                        if (i.system.attack_roll) i.system.attack_roll.resolved_skill_name = "";
                     }
                 } catch (e) { console.error(`GUM | Erro ao calcular NH para ${i.name}:`, e); }
             }

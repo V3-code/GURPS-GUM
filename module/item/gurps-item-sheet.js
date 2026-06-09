@@ -1847,7 +1847,7 @@ new Dialog({
         skills = skills.sort((a,b) => a.name.localeCompare(b.name)); 
  
         const explicitPath = trigger.data('link-target'); 
-        const scopedInput = trigger.closest('.form-group, .skill-hierarchy-card').find('input[type="text"]').first(); 
+        const scopedInput = trigger.closest('.form-group, .skill-hierarchy-card, .skill-compact-row').find('input[type="text"]').first();
         const input = scopedInput.length ? scopedInput : trigger.closest('label').siblings('input[type="text"]').first(); 
         let path = explicitPath || input.attr('name') || input.data('name'); 
         if (!path) return; 
