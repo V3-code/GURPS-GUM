@@ -3802,7 +3802,8 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .combat-meters-box .meter-list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
+    margin-top: 4px;
 }
 
 .gum.sheet.actor .energy-reserves-box .meter-list {

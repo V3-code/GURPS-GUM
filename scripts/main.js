@@ -2266,10 +2266,28 @@ Hooks.once('init', async function() {
     // ▼▼▼ BLOCO DE HOOKS CENTRALIZADOS AQUI ▼▼▼
     // ==================================================================
     
-// ✅ HOOK DE CRIAÇÃO DE ATOR (POPULA CONDIÇÕES E MODIFICADORES)
+// ✅ HOOKS DE CRIAÇÃO DE ATOR
+    Hooks.on("preCreateActor", (actor, data, options, userId) => {
+        if (game.user.id !== userId) return;
+        if (actor.type !== "character") return;
+
+        const source = actor._source ?? data ?? {};
+        const hasDefaultModifierFlag = foundry.utils.getProperty(source, "flags.gum.useDefaultModifiers") !== undefined;
+        if (!hasDefaultModifierFlag) {
+            actor.updateSource({ "flags.gum.useDefaultModifiers": true });
+        }
+    });
+
+    // Popula novos personagens apenas com regras/condições passivas.
+    // Modificadores de rolagem ficam disponíveis via compêndio quando
+    // flags.gum.useDefaultModifiers está marcado, sem serem copiados para a ficha.
     Hooks.on("createActor", async (actor, options, userId) => {
         if (game.user.id !== userId) return;
         if (actor.type !== "character") return;
+
+        if (!actor.getFlag("gum", "useDefaultModifiers")) {
+            await actor.setFlag("gum", "useDefaultModifiers", true);
+        }
         
         // Verifica configuração global (se existir)
         if (!game.settings.get("gum", "addDefaultRules")) return;
@@ -2304,22 +2322,7 @@ Hooks.once('init', async function() {
             console.warn("GUM | Compêndio de Condições Passivas não encontrado.");
         }
 
-        // 2. MODIFICADORES BÁSICOS (A Correção que você pediu)
-        // Tenta achar pelo ID do sistema ou pelo Nome
-        const modsPack = game.packs.get("gum.gm_modifiers") || game.packs.find(p => p.metadata.label === "[GUM] Modificadores Básicos");
-        
-        if (modsPack) {
-            const mods = await modsPack.getDocuments();
-            mods.forEach(item => {
-                const data = normalizeItemForV13(item.toObject(), item.uuid);
-                itemsToCreate.push(data);
-            });
-            console.log(`GUM | Preparados ${mods.length} modificadores básicos para cópia.`);
-        } else {
-            console.warn("GUM | Compêndio de Modificadores Básicos não encontrado.");
-        }
-
-        // 3. CRIAÇÃO EM LOTE (Muito mais rápido)
+        // 2. CRIAÇÃO EM LOTE (Muito mais rápido)
         if (itemsToCreate.length > 0) {
             try {
                 await actor.createEmbeddedDocuments("Item", itemsToCreate);

@@ -1,8 +1,10 @@
 import { performGURPSRoll } from "../../scripts/main.js";
 
+const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
+
 export class GurpsRollPrompt extends FormApplication {
     static COLLAPSED_WIDTH = 380;
-    static EXPANDED_WIDTH = 780;
+    static EXPANDED_WIDTH = 980;
     
  constructor(actor, rollData, options = {}) {
         super(options);
@@ -926,6 +928,8 @@ return 'default';
                         desc: item.system.description || "",
                         nh_cap: entry?.nh_cap ?? entry?.cap ?? "",
                         duration: item.system.duration,
+                        ref: item.system.ref || "",
+                        img: item.img || "icons/svg/d20.svg",
                         active: this.selectedModifiers.some(m => m.id === entryId),
                         isNative: false
                     });
@@ -942,6 +946,8 @@ return 'default';
                 desc: item.system.description || "",
                 nh_cap: item.system.nh_cap,
                 duration: item.system.duration,
+                ref: item.system.ref || "",
+                img: item.img || "icons/svg/d20.svg",
                 active: this.selectedModifiers.some(m => m.id === item.id),
                 isNative: false
             });
@@ -1062,33 +1068,47 @@ return 'default';
                 value: parseInt(rawValue) || 0,
                 cap: icon.data('cap') || button.data('cap'),
                 duration: icon.data('duration') || button.data('duration'),
+                 ref: icon.data('ref') || button.data('ref') || "",
+                img: icon.data('img') || button.data('img') || "icons/svg/d20.svg",
                 desc: icon.data('desc') || "<i>Sem descrição.</i>",
-                type: "Modificador" 
+                type: "Modificador GM"
             };
 
+            const escapeHtml = (value) => foundry.utils.escapeHTML((value ?? "").toString());
             const createTag = (label, value) => {
-                if (value) return `<div class="property-tag"><label>${label}</label><span>${value}</span></div>`;
+                if (value !== null && value !== undefined && value !== '' && value.toString().trim() !== '') {
+                    return `<div class="property-tag"><label>${escapeHtml(label)}</label><span>${value}</span></div>`;
+                }
                 return '';
             };
 
-            let tagsHtml = createTag('MOD:', `${data.value > 0 ? '+' : ''}${data.value}`);
-            if (data.cap) tagsHtml += createTag('Teto (Cap):', data.cap);
-            if (data.duration) tagsHtml += createTag('Duração:', data.duration);
+            const refTags = this._parseReferenceCodes(data.ref)
+                .map(ref => `<a class="open-reference-link" data-ref="${ref.label}" title="Abrir referência">${ref.label}</a>`)
+                .join(', ');
 
-            const enrichedDesc = await TextEditor.enrichHTML(data.desc, { async: true });
+            let tagsHtml = createTag('MOD', `${data.value > 0 ? '+' : ''}${data.value}`);
+            tagsHtml += createTag('Cap NH', data.cap);
+            tagsHtml += createTag('Duração', escapeHtml(data.duration));
+            tagsHtml += createTag('REF', refTags);
+
+            const enrichedDesc = await TextEditorImpl.enrichHTML(data.desc, {
+                secrets: this.actor.isOwner,
+                async: true
+            });
 
             const content = `
                 <div class="gurps-dialog-canvas">
-                    <div class="gurps-item-preview-card" style="border:none; box-shadow:none;">
+                    <div class="gurps-item-preview-card">
                         <header class="preview-header">
-                            <h3>${data.name}</h3>
-                            <div class="header-controls">
-                                <span class="preview-item-type">${data.type}</span>
+                            <img src="${escapeHtml(data.img)}" class="header-icon"/>
+                            <div class="header-text">
+                                <h3>${escapeHtml(data.name)}</h3>
+                                <span class="preview-item-type">${escapeHtml(data.type)}</span>
                             </div>
                         </header>
                         <div class="preview-content">
                             <div class="preview-properties">${tagsHtml}</div>
-                            <hr class="preview-divider">
+                            ${(enrichedDesc && enrichedDesc.trim() !== "<i>Sem descrição.</i>") ? '<hr class="preview-divider">' : ''}
                             <div class="preview-description">${enrichedDesc}</div>
                         </div>
                     </div>
@@ -1097,8 +1117,16 @@ return 'default';
             new Dialog({
                 title: `Detalhes: ${data.name}`,
                 content: content,
-                buttons: { close: { icon: '<i class="fas fa-times"></i>', label: "Fechar" } },
-                options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 400 }
+                buttons: {},
+                default: "",
+                render: (dialogHtml) => {
+                    dialogHtml.find('.open-reference-link').on('click', this._onOpenReferenceLink.bind(this));
+                }
+            }, {
+                classes: ["gurps-item-preview-dialog"],
+                width: 480,
+                height: "auto",
+                resizable: true
             }).render(true);
         });
 
@@ -1308,6 +1336,220 @@ const color = totalMod > 0 ? 'var(--c-accent-gold)' : (totalMod < 0 ? '#e57373' 
             finalEl.attr('title', '');
         }
     }
+
+     async _onOpenReferenceLink(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const rawRef = (event.currentTarget?.dataset?.ref ?? '').toString().trim();
+        if (!rawRef) return ui.notifications.warn("Preencha o campo REF antes de abrir a referência.");
+
+        const parsedList = this._parseReferenceCodes(rawRef);
+        if (!parsedList.length) return ui.notifications.warn("Formato de REF inválido. Use ex.: BA23 ou BA23, MA45.");
+
+        if (parsedList.length === 1) return this._openSingleReference(parsedList[0]);
+        return this._promptMultipleReferences(parsedList);
+    }
+
+    _parseReferenceCodes(rawRef) {
+        const text = (rawRef ?? "").toString().trim().toUpperCase();
+        if (!text) return [];
+
+        const parts = text.split(/[,;]+|\s+/).map(s => s.trim()).filter(Boolean);
+        const out = [];
+        for (const part of parts) {
+            const normalized = part.replace(/\s+/g, "");
+            const delimitedMatch = normalized.match(/^([A-Z]+\d*)[:.](\d+)$/);
+            const compactMatch = normalized.match(/^([A-Z]+)(\d+)$/);
+            const match = delimitedMatch || compactMatch;
+            if (!match) continue;
+            out.push({ code: match[1], page: Number(match[2]), label: normalized });
+        }
+        return out;
+    }
+
+    _findPdfPageByCode(code) {
+        const journals = game.journal ? Array.from(game.journal) : [];
+
+        for (const journal of journals) {
+            const pages = journal?.pages ? Array.from(journal.pages) : [];
+            for (const page of pages) {
+                if (page?.type !== 'pdf') continue;
+
+                const pageCode = (page.getFlag('gum', 'pdfCode') ?? '').toString().trim().toUpperCase();
+                if (!pageCode || pageCode !== code) continue;
+
+                return {
+                    journal,
+                    page,
+                    pageOffset: Number(page.getFlag('gum', 'pageOffset') ?? 0)
+                };
+            }
+        }
+
+        return null;
+    }
+
+    _findPdfViewerIframesBySource(sourcePath) {
+        const iframes = Array.from(document.querySelectorAll("iframe"));
+        if (!iframes.length) return [];
+
+        const want = (sourcePath || "").toString();
+        const wantName = want.split("/").pop();
+
+        const matches = (candidate) => {
+            if (!candidate) return false;
+            if (!want) return true;
+
+            if (candidate.includes(want)) return true;
+
+            if (wantName && (candidate.includes(wantName) || candidate.includes(encodeURIComponent(wantName)))) return true;
+
+            try {
+                const u = new URL(candidate, window.location.origin);
+                const file = u.searchParams.get("file");
+                if (!file) return false;
+                const decoded = decodeURIComponent(file);
+                return decoded.includes(want) || (wantName && decoded.includes(wantName));
+            } catch (_e) {
+                return false;
+            }
+        };
+
+        return iframes.filter((f) => {
+            const src = f.getAttribute("src") || "";
+            const dataSrc = f.getAttribute("data-src") || f.getAttribute("data-url") || f.dataset?.src || f.dataset?.url || "";
+            const cand = src || dataSrc;
+            if (!cand) return false;
+
+            const looksLikePdfViewer = /pdfjs|viewer\.html/i.test(cand);
+            if (!looksLikePdfViewer) return false;
+
+            return matches(cand);
+        });
+    }
+
+    _setPageOnPdfViewerIframe(iframe, page) {
+        if (!(iframe instanceof HTMLIFrameElement)) return false;
+        const target = Math.max(1, Number(page) || 1);
+
+        try {
+            const app = iframe.contentWindow?.PDFViewerApplication;
+            if (app?.pdfViewer) {
+                app.pdfViewer.currentPageNumber = target;
+                app.page = target;
+                return true;
+            }
+        } catch (_e) {
+            // sandbox/cross-origin ou ainda não carregou
+        }
+
+        const current = iframe.getAttribute("src") || "";
+        const dataSrc = iframe.getAttribute("data-src") || iframe.getAttribute("data-url") || iframe.dataset?.src || iframe.dataset?.url || "";
+        const candidate = current || dataSrc;
+        if (!candidate) return false;
+
+        const updated = (() => {
+            const [base, rawHash = ""] = candidate.split("#");
+            const params = new URLSearchParams(rawHash);
+            params.set("page", String(target));
+            return `${base}#${params.toString()}`;
+        })();
+
+        if (dataSrc) {
+            iframe.setAttribute("data-src", updated);
+            iframe.setAttribute("data-url", updated);
+            iframe.dataset.src = updated;
+            iframe.dataset.url = updated;
+        }
+        iframe.setAttribute("src", updated);
+
+        return true;
+    }
+
+    async _openPdfReferencePage(page, targetPage) {
+        const journal = page?.parent;
+        if (!journal) return false;
+
+        const target = Math.max(1, Number(targetPage) || 1);
+        const sourcePath = (page.src ?? page.system?.src ?? "").toString();
+
+        await journal.sheet.render(true, { pageId: page.id, mode: "view" });
+
+        const tryPosition = () => {
+            const frames = this._findPdfViewerIframesBySource(sourcePath);
+            const fallback = frames.length
+                ? frames
+                : Array.from(document.querySelectorAll('iframe[src*="pdfjs" i], iframe[src*="viewer.html" i]'));
+            if (!fallback.length) return false;
+
+            let ok = false;
+            for (const f of fallback) ok = this._setPageOnPdfViewerIframe(f, target) || ok;
+            return ok;
+        };
+
+        const delays = [0, 80, 180, 350, 600, 900, 1300, 1800, 2500];
+        for (const d of delays) {
+            await new Promise(r => setTimeout(r, d));
+            if (tryPosition()) return true;
+        }
+
+        const frames = this._findPdfViewerIframesBySource(sourcePath);
+        for (const f of frames) {
+            f.addEventListener("load", () => {
+                try { this._setPageOnPdfViewerIframe(f, target); } catch (_e) {}
+            }, { once: true });
+        }
+
+        return false;
+    }
+
+    async _openSingleReference(parsed) {
+        const match = this._findPdfPageByCode(parsed.code);
+        if (!match) {
+            return ui.notifications.warn(`Nenhum PDF com código "${parsed.code}" foi encontrado nos periódicos.`);
+        }
+
+        const pageNumber = Math.max(1, parsed.page + (Number(match.pageOffset) || 0));
+        await this._openPdfReferencePage(match.page, pageNumber);
+    }
+
+    _promptMultipleReferences(parsedList) {
+        const buttons = {};
+        const missing = [];
+
+        for (const parsed of parsedList) {
+            const match = this._findPdfPageByCode(parsed.code);
+            if (!match) {
+                missing.push(parsed.label || `${parsed.code}${parsed.page}`);
+                continue;
+            }
+
+            const pageNumber = Math.max(1, parsed.page + (Number(match.pageOffset) || 0));
+            const key = parsed.label || `${parsed.code}${parsed.page}`;
+
+            buttons[key] = {
+                label: key,
+                callback: () => this._openPdfReferencePage(match.page, pageNumber)
+            };
+        }
+
+        if (!Object.keys(buttons).length) {
+            return ui.notifications.warn("Nenhuma das referências informadas foi encontrada nos periódicos.");
+        }
+
+        const missingHtml = missing.length
+            ? `<p style="opacity:.8;margin-top:.5rem"><b>Não encontradas:</b> ${missing.join(", ")}</p>`
+            : "";
+
+        new Dialog({
+            title: "Múltiplas Referências",
+            content: `<p>Escolha qual referência deseja abrir:</p>${missingHtml}`,
+            buttons,
+            default: Object.keys(buttons)[0]
+        }).render(true);
+    }
+
 
 async _updateObject(event, formData) {
         const manualMod = parseInt(formData.manualMod) || 0;
