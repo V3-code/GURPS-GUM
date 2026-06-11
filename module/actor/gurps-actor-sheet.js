@@ -4194,14 +4194,18 @@ _onActionMenuToggle(ev) {
   this._closeAllActionMenus();
 
    if (!isOpen) {
-    menu.classList.add("is-open");
     const controls = menu.closest(".item-controls");
     if (controls) controls.classList.add("menu-open");
-    const skillRow = menu.closest(".skill-tree-item");
-    if (skillRow) skillRow.classList.add("action-menu-open-row");
+    const actionMenuRow = menu.closest(".skill-tree-item, .spell-row-v3, .meter-card");
+    if (actionMenuRow) actionMenuRow.classList.add("action-menu-open-row");
     const toggle = menu.querySelector(".js-action-menu-toggle");
     if (toggle) toggle.setAttribute("aria-expanded", "true");
     this._positionActionMenu(menu);
+  
+    // Posiciona enquanto o painel ainda está invisível para evitar um frame
+    // inicial renderizado abaixo dos cards antes do cálculo final.
+    this._positionActionMenu(menu);
+    menu.classList.add("is-open");
   }
 }
 
