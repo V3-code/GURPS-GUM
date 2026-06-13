@@ -1656,7 +1656,72 @@ function collectGCSCharacterLeafEntries(nodes, path = [], collector = []) {
         collector.push({ node, path: [...path] });
     }
 
+return collector;
+}
+
+function isGCSNaturalAttacksTrait(node) {
+    const name = String(node?.name || node?.description || "").trim();
+    return /^(natural attacks|ataques naturais)$/i.test(name);
+}
+
+function collectGCSTraitsWithWeapons(nodes, collector = []) {
+    for (const node of nodes || []) {
+        if (Array.isArray(node?.weapons) && node.weapons.length > 0) {
+            collector.push(node);
+        }
+
+        const children = getGCSChildren(node);
+        if (children.length > 0) {
+            collectGCSTraitsWithWeapons(children, collector);
+        }
+    }
+
     return collector;
+}
+
+function buildGCSTraitAttackEquipmentItem(gcsTrait) {
+    const weapons = Array.isArray(gcsTrait?.weapons) ? gcsTrait.weapons : [];
+    if (weapons.length === 0) return null;
+
+    const sourceName = String(gcsTrait?.name || "").trim();
+    const fallbackName = /^ataques naturais$/i.test(sourceName) ? "Ataques Naturais" : "Natural Attacks";
+    const itemName = sourceName || fallbackName;
+    const notes = [
+        gcsTrait?.notes,
+        gcsTrait?.local_notes,
+        `Criado automaticamente a partir da vantagem "${itemName}" do GCS para representar seus modos de ataque.`
+    ].filter(Boolean).join("\n\n");
+
+    const item = parseGCSLibraryEquipment({
+        ...gcsTrait,
+        description: itemName,
+        quantity: 1,
+        value: 0,
+        base_value: 0,
+        weight: "0",
+        base_weight: "0",
+        notes,
+        weapons
+    });
+
+    if (!item) return null;
+
+    item.system = item.system || {};
+    item.system.location = "equipped";
+    item.system.equipped = true;
+    item.system.stored = false;
+    item.flags = foundry.utils.mergeObject(item.flags || {}, {
+        gum: {
+            gcs: {
+                traitAttackEquipment: true,
+                naturalAttacks: isGCSNaturalAttacksTrait(gcsTrait),
+                sourceTraitName: sourceName || itemName,
+                sourceTraitId: gcsTrait?.id || null
+            }
+        }
+    }, { inplace: false, overwrite: true });
+
+    return item;
 }
 
 function applyGCSContainerPathMetadata(itemData, path = [], { groupFromPath = false } = {}) {
@@ -2139,14 +2204,20 @@ async function parseGCSCharacter(gcsData) {
     // --- 3. Mapeamento de Itens (VANTAGENS, PERÍCIAS, EQUIPAMENTOS) ---
     const itemsToCreate = [];
     
-    // =============================================================
+ // =============================================================
     // MAPEAMENTO DE VANTAGENS E DESVANTAGENS
     // =============================================================
     ui.notifications.info("Mapeando Vantagens e Desvantagens...");
-    const traitRoots = (gcsData.traits || []).filter(gcsTrait => gcsTrait?.name !== "Natural Attacks");
+    const traitAttackEntries = collectGCSTraitsWithWeapons(gcsData.traits || []);
+    for (const gcsTrait of traitAttackEntries) {
+        const item = buildGCSTraitAttackEquipmentItem(gcsTrait);
+        if (item) itemsToCreate.push(item);
+    }
+
+    const traitRoots = (gcsData.traits || []).filter(gcsTrait => !isGCSNaturalAttacksTrait(gcsTrait));
     const traitEntries = collectGCSCharacterLeafEntries(traitRoots);
     for (const { node: gcsTrait, path } of traitEntries) {
-        if (gcsTrait?.name === "Natural Attacks") continue;
+        if (isGCSNaturalAttacksTrait(gcsTrait)) continue;
 
         const item = await buildHybridActorItemFromGCS(gcsTrait, parseGCSLibraryTrait);
         if (item) {
