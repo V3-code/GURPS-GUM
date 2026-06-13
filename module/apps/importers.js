@@ -560,16 +560,98 @@ function addGCSDrBonusToLocations(target, locations, amount, specialization = ""
     }
 }
 
+function getGCSBodyLocationReferenceIds(location) {
+    const label = normalizeGCSLocationId(`${location?.table_name || ""} ${location?.choice_name || ""}`);
+    const sideMatch = label.match(/(?:^|_)(left|right)_(arm|hand|leg|foot)(?:_|$)/);
+    if (sideMatch) return [`${sideMatch[1]}_${sideMatch[2]}`];
+    return [location?.id];
+}
+
 function collectGCSBodyTypeDR(bodyType, target = {}, profileId = "humanoid") {
     for (const location of bodyType?.locations || []) {
         if (location?.dr_bonus) {
-            addGCSDrBonusToLocations(target, [location.id], location.dr_bonus, "", profileId);
+            addGCSDrBonusToLocations(target, getGCSBodyLocationReferenceIds(location), location.dr_bonus, "", profileId);
         }
         if (location?.sub_table) {
             collectGCSBodyTypeDR(location.sub_table, target, profileId);
         }
     }
     return target;
+}
+
+function addGCSDrObjectToLocations(target, locations, drObject, profileId = "humanoid") {
+    if (drObject === null || drObject === undefined) return;
+
+    if (typeof drObject !== "object") {
+        addGCSDrBonusToLocations(target, locations, drObject, "", profileId);
+        return;
+    }
+
+    for (const [specialization, amount] of Object.entries(drObject)) {
+        addGCSDrBonusToLocations(target, locations, amount, specialization, profileId);
+    }
+}
+
+function collectGCSBodyTypeCalculatedDR(bodyType, target = {}, profileId = "humanoid") {
+    for (const location of bodyType?.locations || []) {
+        const calculatedDR = location?.calc?.dr;
+        if (calculatedDR !== null && calculatedDR !== undefined) {
+            addGCSDrObjectToLocations(target, getGCSBodyLocationReferenceIds(location), calculatedDR, profileId);
+        }
+        if (location?.sub_table) {
+            collectGCSBodyTypeCalculatedDR(location.sub_table, target, profileId);
+        }
+    }
+    return target;
+}
+
+function collectGCSEquipmentDRBonuses(equipment, target = {}, profileId = "humanoid", inheritedEquipped = false) {
+    for (const node of equipment || []) {
+        const isEquipped = node?.equipped === true || (inheritedEquipped && node?.equipped !== false);
+        if (isEquipped) {
+            for (const feature of node?.features || []) {
+                if (feature?.type !== "dr_bonus") continue;
+                addGCSDrBonusToLocations(
+                    target,
+                    feature.locations || (feature.location ? [feature.location] : ["torso"]),
+                    getGCSFeatureAmount(feature, node),
+                    feature.specialization,
+                    profileId
+                );
+            }
+        }
+
+        if (Array.isArray(node?.children)) {
+            collectGCSEquipmentDRBonuses(node.children, target, profileId, isEquipped);
+        }
+    }
+    return target;
+}
+
+function subtractGCSDrObjects(totalDR, armorDR) {
+    const nativeDR = {};
+    const locationKeys = new Set([
+        ...Object.keys(totalDR || {}),
+        ...Object.keys(armorDR || {})
+    ]);
+
+    for (const locationKey of locationKeys) {
+        const totalLocationDR = totalDR?.[locationKey] || {};
+        const armorLocationDR = armorDR?.[locationKey] || {};
+        const drKeys = new Set([
+            ...Object.keys(totalLocationDR),
+            ...Object.keys(armorLocationDR)
+        ]);
+
+        for (const drKey of drKeys) {
+            const nativeAmount = (Number(totalLocationDR[drKey]) || 0) - (Number(armorLocationDR[drKey]) || 0);
+            if (nativeAmount <= 0) continue;
+            nativeDR[locationKey] = nativeDR[locationKey] || {};
+            nativeDR[locationKey][drKey] = nativeAmount;
+        }
+    }
+
+    return nativeDR;
 }
 
 function collectGCSTraitDRBonuses(traits, target = {}, profileId = "humanoid") {
@@ -593,9 +675,21 @@ function collectGCSTraitDRBonuses(traits, target = {}, profileId = "humanoid") {
 }
 
 function collectImportedGCSNativeDR(gcsData, profileId = "humanoid") {
-    const nativeDR = {};
-    collectGCSBodyTypeDR(gcsData?.settings?.body_type || gcsData?.body_type, nativeDR, profileId);
-    collectGCSTraitDRBonuses(gcsData?.traits || [], nativeDR, profileId);
+    const bodyType = gcsData?.settings?.body_type || gcsData?.body_type;
+    const calculatedTotalDR = {};
+    collectGCSBodyTypeCalculatedDR(bodyType, calculatedTotalDR, profileId);
+
+    let nativeDR = {};
+    if (Object.keys(calculatedTotalDR).length > 0) {
+        const equippedArmorDR = {};
+        collectGCSEquipmentDRBonuses(gcsData?.equipment || [], equippedArmorDR, profileId);
+        collectGCSEquipmentDRBonuses(gcsData?.other_equipment || [], equippedArmorDR, profileId);
+        nativeDR = subtractGCSDrObjects(calculatedTotalDR, equippedArmorDR);
+    } else {
+        collectGCSBodyTypeDR(bodyType, nativeDR, profileId);
+        collectGCSTraitDRBonuses(gcsData?.traits || [], nativeDR, profileId);
+    }
+
     return Object.fromEntries(Object.entries(nativeDR).filter(([, drObject]) => Object.keys(drObject || {}).length > 0));
 }
 
@@ -1618,6 +1712,15 @@ async function buildGCSCharacterEquipmentItems(nodes, { location = "carried", pa
 
             if (hasChildren) {
                 item.system.is_container = true;
+
+                const hasOwnGCSArmorDR = (node.features || []).some(feature => feature?.type === "dr_bonus");
+                if (!hasOwnGCSArmorDR) {
+                    // Containers in GCS can share the same name as complete armor items in the
+                    // compendium (for example, a suit that contains individual armor pieces).
+                    // In hybrid import mode, avoid inheriting DR from that matched source item
+                    // unless the GCS container itself explicitly provides DR features.
+                    item.system.dr_locations = {};
+                }
                 nextParentContainerId = ensureImportedEmbeddedItemId(item);
             }
 
