@@ -1615,7 +1615,7 @@ new Dialog({
                 <div class="form-row"> 
                     <div class="row-label">ST Mín.</div> 
                     <div class="row-fields"> 
-                        <input type="number" data-name="${basePath}.min_strength" value="${safe(attackData.min_strength)}"/> 
+                        <input type="text" data-name="${basePath}.min_strength" value="${safe(attackData.min_strength)}"/> 
                     </div> 
                 </div> 
             </div> 

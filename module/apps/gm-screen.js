@@ -828,10 +828,10 @@ activateListeners(html) {
             const rawDmg = atk.damage || atk.damage_formula || "";
             const resolvedDmg = this._resolveDamageFormula(actor, rawDmg);
             const defaultDefense = calculateDefaultDefense(nh);
-            const parryValue = atk.parry_default && defaultDefense !== null ? defaultDefense : atk.parry;
-            const blockValue = atk.block_default && defaultDefense !== null ? defaultDefense : atk.block;
-            const parry = normalizeDefenseValue(parryValue);
-            const block = normalizeDefenseValue(blockValue);
+            const fallbackParry = atk.parry_default && defaultDefense !== null ? defaultDefense : atk.parry;
+            const fallbackBlock = atk.block_default && defaultDefense !== null ? defaultDefense : atk.block;
+            const parry = normalizeDefenseValue(atk.final_parry ?? fallbackParry);
+            const block = normalizeDefenseValue(atk.final_block ?? fallbackBlock);
 
             attackGroups[item.id].modes.push({
                 label: atk.mode,
@@ -1615,7 +1615,7 @@ async _applySelectionToActor(actor, tokenId) {
     _getBestDefense(actor, type) { 
         let best = 0;
         actor.items.filter(i => i.system.equipped).forEach(i => {
-            if (i.system.melee_attacks) { Object.values(i.system.melee_attacks).forEach(atk => { const val = type === 'parry' ? atk.final_parry : atk.final_block; if (Number(val) > best) best = Number(val); }); }
+if (i.system.melee_attacks) { Object.values(i.system.melee_attacks).forEach(atk => { const raw = type === 'parry' ? atk.final_parry : atk.final_block; const val = Number.parseInt(String(raw || ""), 10); if (Number.isFinite(val) && val > best) best = val; }); }
         });
         return best || "-"; 
     }

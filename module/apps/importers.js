@@ -1,3 +1,4 @@
+import { getBodyLocationDefinition, getBodyProfile } from "../config/body-profiles.js";
 /**
  * Lida com a importação de um arquivo JSON (formato customizado) OU
  * um arquivo de Biblioteca GCS (.skl, .spl, .eqp, .adq, .adm, .eqm) para um compêndio.
@@ -451,6 +452,154 @@ async function ensureCompendiumFolderPath(pack, folderPath = [], folderCache = n
 // =============================================================
 // DICIONÁRIO DE TRADUÇÃO DE DANOS
 // =============================================================
+
+const GCS_ALL_DR_KEY = "all";
+
+const GCS_LOCATION_ID_MAP = {
+    skull: ["head"],
+    brain: ["head"],
+    head: ["head"],
+    eye: ["eyes"],
+    eyes: ["eyes"],
+    face: ["face"],
+    jaw: ["face"],
+    nose: ["face"],
+    ear: ["face"],
+    neck: ["neck"],
+    torso: ["torso"],
+    chest: ["torso"],
+    abdomen: ["torso"],
+    vitals: ["vitals"],
+    groin: ["groin"],
+    arm: ["arm_l", "arm_r"],
+    arms: ["arm_l", "arm_r"],
+    left_arm: ["arm_l"],
+    right_arm: ["arm_r"],
+    hand: ["hand_l", "hand_r"],
+    hands: ["hand_l", "hand_r"],
+    left_hand: ["hand_l"],
+    right_hand: ["hand_r"],
+    leg: ["leg_l", "leg_r"],
+    legs: ["leg_l", "leg_r"],
+    left_leg: ["leg_l"],
+    right_leg: ["leg_r"],
+    foot: ["foot_l", "foot_r"],
+    feet: ["foot_l", "foot_r"],
+    left_foot: ["foot_l"],
+    right_foot: ["foot_r"]
+};
+
+function normalizeGCSLocationId(locationId) {
+    return String(locationId || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[\s-]+/g, "_");
+}
+
+function getGUMBodyLocationKeysForGCS(locationId, profileId = "humanoid") {
+    const normalized = normalizeGCSLocationId(locationId);
+    const profile = getBodyProfile(profileId);
+    const profileKeys = Object.keys(profile?.locations || {});
+
+    if (!normalized || normalized === GCS_ALL_DR_KEY) return profileKeys;
+    if (profile?.locations?.[normalized] || getBodyLocationDefinition(normalized)) return [normalized];
+    if (GCS_LOCATION_ID_MAP[normalized]) return GCS_LOCATION_ID_MAP[normalized];
+
+    const numberedMatch = normalized.match(/^(arm|hand|leg|foot|wing|tail|tentacle|pincer|fin|horn|shoulder|chest|abdomen|joint|spine|artery|jaw|nose|ear)_(\d+)$/);
+    if (numberedMatch) {
+        const [, base, index] = numberedMatch;
+        const extraKey = `${base}_${index}`;
+        if (profile?.locations?.[extraKey] || getBodyLocationDefinition(extraKey)) return [extraKey];
+    }
+
+    const sideMatch = normalized.match(/^(left|right)_(arm|hand|leg|foot)$/);
+    if (sideMatch) {
+        const side = sideMatch[1] === "left" ? "l" : "r";
+        const base = sideMatch[2];
+        const exact = `${base}_${side}`;
+        const numbered = `${base}_${side}_1`;
+        if (profile?.locations?.[exact] || getBodyLocationDefinition(exact)) return [exact];
+        if (profile?.locations?.[numbered] || getBodyLocationDefinition(numbered)) return [numbered];
+    }
+
+    return [];
+}
+
+function getGCSFeatureAmount(feature, owner = null) {
+    const rawAmount = feature?.amount ?? feature?.bonus ?? feature?.value ?? 0;
+    let amount = Number(rawAmount) || 0;
+    if (feature?.per_level) {
+        const levels = Number(owner?.levels ?? owner?.level ?? 0) || 0;
+        amount *= Math.max(0, levels);
+    }
+    return amount;
+}
+
+function getGCSDrKey(specialization) {
+    const spec = String(specialization || "").trim().toLowerCase();
+    if (!spec || spec === GCS_ALL_DR_KEY) return "base";
+    return GCS_DAMAGE_TYPE_MAP[spec] || spec;
+}
+
+function addGCSDrBonusToLocations(target, locations, amount, specialization = "", profileId = "humanoid") {
+    const numericAmount = Number(amount) || 0;
+    if (!numericAmount) return;
+
+    const drKey = getGCSDrKey(specialization);
+    const locationIds = Array.isArray(locations) && locations.length ? locations : ["torso"];
+    const resolvedKeys = new Set();
+    for (const locationId of locationIds) {
+        for (const key of getGUMBodyLocationKeysForGCS(locationId, profileId)) {
+            resolvedKeys.add(key);
+        }
+    }
+
+    for (const key of resolvedKeys) {
+        target[key] = target[key] || {};
+        target[key][drKey] = (Number(target[key][drKey]) || 0) + numericAmount;
+    }
+}
+
+function collectGCSBodyTypeDR(bodyType, target = {}, profileId = "humanoid") {
+    for (const location of bodyType?.locations || []) {
+        if (location?.dr_bonus) {
+            addGCSDrBonusToLocations(target, [location.id], location.dr_bonus, "", profileId);
+        }
+        if (location?.sub_table) {
+            collectGCSBodyTypeDR(location.sub_table, target, profileId);
+        }
+    }
+    return target;
+}
+
+function collectGCSTraitDRBonuses(traits, target = {}, profileId = "humanoid") {
+    for (const trait of traits || []) {
+        if (trait?.disabled) continue;
+        for (const feature of trait?.features || []) {
+            if (feature?.type !== "dr_bonus") continue;
+            addGCSDrBonusToLocations(
+                target,
+                feature.locations || (feature.location ? [feature.location] : ["torso"]),
+                getGCSFeatureAmount(feature, trait),
+                feature.specialization,
+                profileId
+            );
+        }
+        if (Array.isArray(trait?.children)) {
+            collectGCSTraitDRBonuses(trait.children, target, profileId);
+        }
+    }
+    return target;
+}
+
+function collectImportedGCSNativeDR(gcsData, profileId = "humanoid") {
+    const nativeDR = {};
+    collectGCSBodyTypeDR(gcsData?.settings?.body_type || gcsData?.body_type, nativeDR, profileId);
+    collectGCSTraitDRBonuses(gcsData?.traits || [], nativeDR, profileId);
+    return Object.fromEntries(Object.entries(nativeDR).filter(([, drObject]) => Object.keys(drObject || {}).length > 0));
+}
+
+
 const GCS_DAMAGE_TYPE_MAP = {
     // PT-BR (GCS) -> PT-BR (Sistema)
     "cont": "cont",
@@ -1024,6 +1173,44 @@ function parseGCSLibraryEquipmentModifier(gcsMod) {
     };
 }
 
+
+
+function normalizeGCSDamageFormula(value) {
+    return String(value || "")
+        .trim()
+        .replace(/\bthr\b/gi, "gdp")
+        .replace(/\bsw\b/gi, "gdb")
+        .replace(/d(?!b|p|\d)/gi, "d6");
+}
+
+function parseGCSDamageType(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+
+    const baseType = raw
+        .split("+")[0]
+        .split("/")[0]
+        .trim();
+
+    return GCS_DAMAGE_TYPE_MAP[baseType.toLowerCase()] || baseType;
+}
+
+
+function parseGCSDamageParts(damage = {}) {
+    let formula = String(damage.base || "").trim();
+    let type = parseGCSDamageType(damage.type);
+
+    if (!type && formula) {
+        const combinedMatch = formula.match(/^([+\-]?(?:\d+)?d(?:\d+)?(?:[+\-]\d+)?|[+\-]?\d+)\s+(.+)$/i);
+        if (combinedMatch) {
+            formula = combinedMatch[1].trim();
+            type = parseGCSDamageType(combinedMatch[2]);
+        }
+    }
+
+    return { formula, type };
+}
+
 function parseGCSLibraryEquipment(gcsEquip) {
     if (!gcsEquip.description) return null; 
     
@@ -1040,26 +1227,12 @@ function parseGCSLibraryEquipment(gcsEquip) {
         
         for (const feature of gcsEquip.features || []) {
             if (feature.type === "dr_bonus") {
-                const drValue = feature.amount || 0;
-                let drKey = "base";
-                if (feature.specialization) {
-                    const spec = feature.specialization.toLowerCase();
-                    drKey = GCS_DAMAGE_TYPE_MAP[spec] || spec;
-                }
-                let locationsToApply = [];
-                if (feature.locations) { 
-                    locationsToApply = feature.locations;
-                } else if (feature.location) { 
-                    locationsToApply = [feature.location];
-                }
-                for (const loc of locationsToApply) {
-                    const systemLocs = (loc === "arm") ? ["arm_l", "arm_r"] : (loc === "leg") ? ["leg_l", "leg_r"] : [loc];
-                                      for (const finalLoc of systemLocs) {
-                        let drObject = template.dr_locations[finalLoc] || {};
-                        drObject[drKey] = (drObject[drKey] || 0) + drValue;
-                        template.dr_locations[finalLoc] = drObject;
-                    }
-                }
+                addGCSDrBonusToLocations(
+                    template.dr_locations,
+                    feature.locations || (feature.location ? [feature.location] : ["torso"]),
+                    getGCSFeatureAmount(feature, gcsEquip),
+                    feature.specialization
+                );
             }
         }
     }
@@ -1094,14 +1267,10 @@ function parseGCSLibraryEquipment(gcsEquip) {
             
             const defaultSkill = formatGCSDefaultsRollReferenceList(gcsWeapon.defaults) || "DX";
             
-            let gcsDamageTypeRaw = gcsWeapon.damage?.type || "";
-            if (gcsDamageTypeRaw.includes('/')) {
-                gcsDamageTypeRaw = gcsDamageTypeRaw.split('/')[0];
-            }
-            const gcsDamageType = GCS_DAMAGE_TYPE_MAP[gcsDamageTypeRaw.toLowerCase()] || gcsDamageTypeRaw;
+            const gcsDamage = parseGCSDamageParts(gcsWeapon.damage);
 
             let damageFormula = "";
-            const gcsBase = gcsWeapon.damage?.base || ""; 
+             const gcsBase = gcsDamage.formula;
             const gcsSt = gcsWeapon.damage?.st;
             
             if (gcsSt) {
@@ -1124,7 +1293,7 @@ function parseGCSLibraryEquipment(gcsEquip) {
                 mode: gcsWeapon.usage || "Ataque",
                 skill_name: defaultSkill,
                 damage_formula: damageFormula,
-                damage_type: gcsDamageType,
+                damage_type: gcsDamage.type,
                 min_strength: gcsWeapon.strength || "0"
             };
 
@@ -1132,6 +1301,8 @@ function parseGCSLibraryEquipment(gcsEquip) {
                 attackData.reach = gcsWeapon.reach || "C";
                 attackData.parry = gcsWeapon.calc?.parry || gcsWeapon.parry || "0";
                 attackData.block = gcsWeapon.calc?.block || gcsWeapon.block || "0";
+                if (gcsWeapon.calc?.parry) attackData.gcs_calculated_parry = gcsWeapon.calc.parry;
+                if (gcsWeapon.calc?.block) attackData.gcs_calculated_block = gcsWeapon.calc.block;
                 
                 template.melee_attacks[newAttackId] = {
                     ...(getSystemTemplate("Item", "attack_melee") || {}),
@@ -1677,6 +1848,7 @@ async function parseGCSCharacter(gcsData) {
     ensureObjectPath(systemData, "details");
     ensureObjectPath(systemData, "points");
     ensureObjectPath(systemData, "attributes");
+    ensureObjectPath(systemData, "combat");
     for (const attrKey of [
         "st", "dx", "iq", "ht", "lifting_st", "per", "vont", "hp", "fp",
         "vision", "hearing", "tastesmell", "touch", "basic_speed", "basic_move", "dodge", "enhanced_move"
@@ -1696,6 +1868,15 @@ async function parseGCSCharacter(gcsData) {
     systemData.details.height = gcsData.profile?.height || "";
     systemData.points.total = gcsData.total_points || 0;
     systemData.points.unspent = gcsData.total_points || 0; 
+        const bodyProfileId = systemData.combat.body_profile || "humanoid";
+    const importedNativeDR = collectImportedGCSNativeDR(gcsData, bodyProfileId);
+    if (Object.keys(importedNativeDR).length > 0) {
+        systemData.combat.dr_mods = foundry.utils.mergeObject(systemData.combat.dr_mods || {}, importedNativeDR, {
+            inplace: false,
+            overwrite: true
+        });
+        systemData.combat.gcs_imported_native_dr = foundry.utils.deepClone(importedNativeDR);
+    }
 
     // =============================================================
     // MAPEAMENTO DE IMAGEM (PORTRAIT)
@@ -1823,10 +2004,7 @@ async function parseGCSCharacter(gcsData) {
     }
     
   if (gcsData.calc) {
-        const formatDamageString = (dmg) => {
-            if (!dmg) return "";
-            return dmg.replace(/d(?!b|p|\d)/g, "d6");
-        };
+        const formatDamageString = (dmg) => normalizeGCSDamageFormula(dmg);
         const calcBasicSpeed = getNumericCandidate(gcsData.calc.basic_speed, gcsData.calc.speed);
         const calcBasicMove = getNumericCandidate(gcsData.calc.basic_move, gcsData.calc.move);
         const calcDodge = getNumericCandidate(gcsData.calc.dodge);
@@ -1855,8 +2033,6 @@ async function parseGCSCharacter(gcsData) {
             }
         }
     }
-
-
     // --- 3. Mapeamento de Itens (VANTAGENS, PERÍCIAS, EQUIPAMENTOS) ---
     const itemsToCreate = [];
     

@@ -871,21 +871,41 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                         attack.final_nh = attackSkillNh + attackNhBonuses.passive + attackNhBonuses.temp;
                         attack.resolved_skill_name = resolvedAttackBase.label;
 
-                        const calculateFinalDefense = (rawDefense, defenseType, useDefault = false) => {
+const splitDefenseValue = (value) => {
+                            const raw = String(value ?? "").trim();
+                            if (!raw) return null;
+                            const match = raw.match(/^([+-]?\d+)(.*)$/);
+                            if (!match) return null;
+                            return { number: Number(match[1]), suffix: match[2] || "" };
+                        };
+
+                        const addBonusesToDefenseValue = (value, bonuses) => {
+                            const parsed = splitDefenseValue(value);
+                            if (!parsed || !Number.isFinite(parsed.number)) return null;
+                            const bonus = (Number(bonuses?.passive) || 0) + (Number(bonuses?.temp) || 0);
+                            return `${parsed.number + bonus}${parsed.suffix}`;
+                        };
+
+                        const calculateFinalDefense = (rawDefense, defenseType, useDefault = false, importedFinalDefense = null) => {
+                            const defenseNhBonuses = collectNhBonusesForDefense(i, attack, "melee", defenseType);
+                            const importedParsed = splitDefenseValue(importedFinalDefense);
+                            if (importedParsed) return addBonusesToDefenseValue(importedFinalDefense, defenseNhBonuses);
+
                             if (!useDefault && (rawDefense === "0" || rawDefense === "No")) return null;
                             const defenseBase = Math.floor(attackSkillNh / 2) + 3;
-                            const defenseMod = useDefault ? 0 : Number(rawDefense) || 0;
+                            const parsedDefense = splitDefenseValue(rawDefense);
+                            const defenseMod = useDefault ? 0 : (parsedDefense?.number ?? (Number(rawDefense) || 0));
                             const baseValue = defenseMod > 5 ? defenseMod : defenseBase + defenseMod;
-                            const defenseNhBonuses = collectNhBonusesForDefense(i, attack, "melee", defenseType);
-                            return baseValue + defenseNhBonuses.passive + defenseNhBonuses.temp;
+                            const suffix = !useDefault && parsedDefense?.suffix ? parsedDefense.suffix : "";
+                            return `${baseValue + defenseNhBonuses.passive + defenseNhBonuses.temp}${suffix}`;
                         };
 
                         // Aparar (Parry) - modificadores de rolagem podem afetar o grupo/modo também como defesa.
-                        const finalParry = calculateFinalDefense(attack.parry, "parry", attack.parry_default === true);
+                        const finalParry = calculateFinalDefense(attack.parry, "parry", attack.parry_default === true, attack.gcs_calculated_parry);
                         if (finalParry !== null) attack.final_parry = finalParry;
 
                         // Bloqueio (Block) - modificadores de rolagem podem afetar o grupo/modo também como defesa.
-                        const finalBlock = calculateFinalDefense(attack.block, "block", attack.block_default === true);
+                        const finalBlock = calculateFinalDefense(attack.block, "block", attack.block_default === true, attack.gcs_calculated_block);
                         if (finalBlock !== null) attack.final_block = finalBlock;
                     }
                 }
