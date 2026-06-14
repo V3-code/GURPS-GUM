@@ -1434,18 +1434,21 @@ _onAddAttack(ev) {
             skill_level_mod: 0, 
             damage_formula: "", 
             damage_type: "", 
+            damage_scaling: "", 
             armor_divisor: null, 
             min_strength: null, 
             unbalanced: false, 
             fencing: false, 
             follow_up_damage: { 
                 formula: "", 
-                type: "", 
+                type: "",
+                scaling: "",  
                 armor_divisor: null 
             }, 
             fragmentation_damage: { 
                 formula: "", 
-                type: "", 
+                type: "",
+                scaling: "",  
                 armor_divisor: null 
             } 
         }; 
@@ -1455,7 +1458,8 @@ _onAddAttack(ev) {
                 ...baseAttack, 
                 mode: "Novo Ataque", 
                 damage_formula: "GdB", 
-                damage_type: "cort", 
+                damage_type: "cort",
+                damage_scaling: "", 
                 reach: "C", 
                 parry: "0", 
                 block: "", 
@@ -1469,7 +1473,8 @@ _onAddAttack(ev) {
             ...baseAttack, 
             mode: "Novo Tiro", 
             damage_formula: "GdP", 
-            damage_type: "perf", 
+            damage_type: "perf",
+            damage_scaling: "",  
             accuracy: "", 
             range: "100/200", 
             rof: "1", 
@@ -1508,7 +1513,9 @@ new Dialog({
             }, 
             default: "save" 
         }, { 
-            classes: ["dialog", "gum-dialog", "attack-editor-dialog", "gum", "sheet", "item"] 
+            classes: ["dialog", "gum-dialog", "attack-editor-dialog", "gum", "sheet", "item"],
+            width: 560,
+            resizable: true
         }).render(true); 
     } 
  
@@ -1592,7 +1599,7 @@ new Dialog({
                     </div> 
                 </div> 
                 <div class="form-row"> 
-                    <div class="row-label">Mod. NH</div> 
+                    <div class="row-label">Modificador Base de NH </div> 
                     <div class="row-fields"> 
                         <input type="number" data-name="${basePath}.skill_level_mod" value="${safe(attackData.skill_level_mod)}"/> 
                     </div> 
@@ -1613,7 +1620,7 @@ new Dialog({
                 </div> 
                 `} 
                 <div class="form-row"> 
-                    <div class="row-label">ST Mín.</div> 
+                    <div class="row-label">Força Mínima(ST min)</div> 
                     <div class="row-fields"> 
                         <input type="text" data-name="${basePath}.min_strength" value="${safe(attackData.min_strength)}"/> 
                     </div> 
@@ -1621,64 +1628,32 @@ new Dialog({
             </div> 
             <div class="form-section"> 
                 <h4 class="section-title">Dano</h4> 
-                <div class="form-row"> 
-                    <div class="row-label">Dano Primário</div> 
-                    <div class="row-fields"> 
-                        <div class="form-grid-3"> 
-                            <div class="form-group"> 
-                                <label>Fórmula</label> 
-                                <input type="text" data-name="${basePath}.damage_formula" value="${safe(attackData.damage_formula)}"/> 
-                            </div> 
-                            <div class="form-group"> 
-                                <label>Tipo</label> 
-                                <input type="text" data-name="${basePath}.damage_type" value="${safe(attackData.damage_type)}"/> 
-                            </div> 
-                            <div class="form-group" title="Divisor de Armadura"> 
-                                <label>Divisor</label> 
-                                <input type="number" step="0.1" data-name="${basePath}.armor_divisor" value="${safe(attackData.armor_divisor)}"/> 
-                            </div> 
-                        </div> 
-                    </div> 
-                </div> 
-                <div class="form-row"> 
-                    <div class="row-label">Dano Acompanh.</div> 
-                    <div class="row-fields"> 
-                        <div class="form-grid-3"> 
-                            <div class="form-group"> 
-                                <label>Fórmula</label> 
-                                <input type="text" data-name="${basePath}.follow_up_damage.formula" value="${safe(followUp.formula)}"/> 
-                            </div> 
-                            <div class="form-group"> 
-                                <label>Tipo</label> 
-                                <input type="text" data-name="${basePath}.follow_up_damage.type" value="${safe(followUp.type)}"/> 
-                            </div> 
-                            <div class="form-group" title="Divisor"> 
-                                <label>Divisor</label> 
-                                <input type="number" step="0.1" data-name="${basePath}.follow_up_damage.armor_divisor" value="${safe(followUp.armor_divisor)}"/> 
-                            </div> 
-                        </div> 
-                    </div> 
-                </div> 
-                <div class="form-row"> 
-                    <div class="row-label">Dano Frag.</div> 
-                    <div class="row-fields"> 
-                        <div class="form-grid-3"> 
-                            <div class="form-group"> 
-                                <label>Fórmula</label> 
-                                <input type="text" data-name="${basePath}.fragmentation_damage.formula" value="${safe(fragmentation.formula)}"/> 
-                            </div> 
-                            <div class="form-group"> 
-                                <label>Tipo</label> 
-                                <input type="text" data-name="${basePath}.fragmentation_damage.type" value="${safe(fragmentation.type)}"/> 
-                            </div> 
-                            <div class="form-group" title="Divisor"> 
-                                <label>Divisor</label> 
-                                <input type="number" step="0.1" data-name="${basePath}.fragmentation_damage.armor_divisor" value="${safe(fragmentation.armor_divisor)}"/> 
-                            </div> 
-                        </div> 
-                    </div> 
-                </div> 
-            </div> 
+                <div class="attack-damage-table">
+                    <div class="damage-table-spacer"></div>
+                    <div class="damage-col-label">Fórmula</div>
+                    <div class="damage-col-label">Tipo</div>
+                    <div class="damage-col-label">Escala</div>
+                    <div class="damage-col-label">Div.</div>
+
+                    <div class="row-label">Dano Primário</div>
+                    <input type="text" data-name="${basePath}.damage_formula" value="${safe(attackData.damage_formula)}"/>
+                    <input type="text" data-name="${basePath}.damage_type" value="${safe(attackData.damage_type)}"/>
+                    <input type="text" data-name="${basePath}.damage_scaling" value="${safe(attackData.damage_scaling)}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/>
+                    <input type="number" step="0.1" data-name="${basePath}.armor_divisor" value="${safe(attackData.armor_divisor)}" title="Divisor de Armadura"/>
+
+                    <div class="row-label">Dano Acompanhamento</div>
+                    <input type="text" data-name="${basePath}.follow_up_damage.formula" value="${safe(followUp.formula)}"/>
+                    <input type="text" data-name="${basePath}.follow_up_damage.type" value="${safe(followUp.type)}"/>
+                    <input type="text" data-name="${basePath}.follow_up_damage.scaling" value="${safe(followUp.scaling)}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/>
+                    <input type="number" step="0.1" data-name="${basePath}.follow_up_damage.armor_divisor" value="${safe(followUp.armor_divisor)}" title="Divisor"/>
+
+                    <div class="row-label">Dano de Fragmentação</div>
+                    <input type="text" data-name="${basePath}.fragmentation_damage.formula" value="${safe(fragmentation.formula)}"/>
+                    <input type="text" data-name="${basePath}.fragmentation_damage.type" value="${safe(fragmentation.type)}"/>
+                    <input type="text" data-name="${basePath}.fragmentation_damage.scaling" value="${safe(fragmentation.scaling)}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/>
+                    <input type="number" step="0.1" data-name="${basePath}.fragmentation_damage.armor_divisor" value="${safe(fragmentation.armor_divisor)}" title="Divisor"/>
+                </div>
+            </div>
         `; 
  
         const meleeFields = ` 
@@ -1726,41 +1701,41 @@ new Dialog({
             </div> 
         `; 
  
-        const rangedFields = ` 
-            <div class="form-section  form-grid-3"> 
-                <h4 class="section-title">Precisão & Alcance</h4> 
-                <div class="form-row"> 
-                    <div class="row-label">Precisão</div> 
-                    <div class="row-fields"> 
-                        <input type="text" data-name="${basePath}.accuracy" value="${safe(attackData.accuracy)}"/> 
-                    </div> 
-                </div> 
-                <div class="form-row"> 
-                    <div class="row-label">CdT</div> 
-                    <div class="row-fields"> 
-                        <input type="text" data-name="${basePath}.rof" value="${safe(attackData.rof)}"/> 
-                    </div> 
-                </div> 
-                <div class="form-row"> 
-                    <div class="row-label">Tiros</div> 
-                    <div class="row-fields"> 
-                        <input type="text" data-name="${basePath}.shots" value="${safe(attackData.shots)}"/> 
-                    </div> 
-                </div> 
-                <div class="form-row"> 
-                    <div class="row-label">Recuo</div> 
-                    <div class="row-fields"> 
-                        <input type="text" data-name="${basePath}.rcl" value="${safe(attackData.rcl)}"/> 
-                    </div> 
-                </div> 
-                <div class="form-row"> 
-                    <div class="row-label">Mag.</div> 
-                    <div class="row-fields"> 
-                        <input type="text" data-name="${basePath}.mag" value="${safe(attackData.mag)}"/> 
-                    </div> 
-                </div> 
+const rangedFields = ` 
+    <div class="form-section"> 
+        <h4 class="section-title">Precisão & Alcance</h4> 
+        <div class="form-row"> 
+            <div class="row-label">Precisão(PREC)</div> 
+            <div class="row-fields"> 
+                <input type="text" data-name="${basePath}.accuracy" value="${safe(attackData.accuracy)}"/> 
             </div> 
-        `; 
+        </div> 
+        <div class="form-row"> 
+            <div class="row-label">Cadência de Tiros(CdT)</div> 
+            <div class="row-fields"> 
+                <input type="text" data-name="${basePath}.rof" value="${safe(attackData.rof)}"/> 
+            </div> 
+        </div> 
+        <div class="form-row"> 
+            <div class="row-label">Tiros(T)</div> 
+            <div class="row-fields"> 
+                <input type="text" data-name="${basePath}.shots" value="${safe(attackData.shots)}"/> 
+            </div> 
+        </div> 
+        <div class="form-row"> 
+            <div class="row-label">Recuo(RCO)</div> 
+            <div class="row-fields"> 
+                <input type="text" data-name="${basePath}.rcl" value="${safe(attackData.rcl)}"/> 
+            </div> 
+        </div> 
+        <div class="form-row"> 
+            <div class="row-label">Magnitude(Mag)</div> 
+            <div class="row-fields"> 
+                <input type="text" data-name="${basePath}.mag" value="${safe(attackData.mag)}"/> 
+            </div> 
+        </div> 
+    </div> 
+`; 
  
                return ` 
             <div class="attack-editor-dialog gum sheet item"> 

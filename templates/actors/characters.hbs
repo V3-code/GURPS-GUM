@@ -1068,7 +1068,7 @@
                     <div class="spell-meta-cell spell-pill-stat damage">
                       <span class="spell-meta-label">Dano</span>
                       {{#if this.system.damage.formula}}
-                      <a class="rollable-damage spell-meta-value" title="Rolar Dano" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}</a>
+                      <a class="rollable-damage spell-meta-value" title="Rolar Dano" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}{{#if this.system.damage.scaling}} ({{this.system.damage.scaling}}){{/if}}</a>
                       {{else}}
                       <span class="spell-meta-value">—</span>
                       {{/if}}
@@ -1098,10 +1098,10 @@
                   <span class="spell-attack-source"><strong>Perícia</strong> {{#if this.system.attack_roll.resolved_skill_name}}{{this.system.attack_roll.resolved_skill_name}}{{else}}{{this.system.attack_roll.skill_name}}{{/if}}</span>
                   {{/if}}
                   {{#if this.system.damage.follow_up_damage.formula}}
-                  <span class="spell-damage-extra"><strong>FU</strong> {{this.system.damage.follow_up_damage.formula}} {{this.system.damage.follow_up_damage.type}}</span>
+                  <span class="spell-damage-extra"><strong>FU</strong> {{this.system.damage.follow_up_damage.formula}} {{this.system.damage.follow_up_damage.type}}{{#if this.system.damage.follow_up_damage.scaling}} ({{this.system.damage.follow_up_damage.scaling}}){{/if}}</span>
                   {{/if}}
                   {{#if this.system.damage.fragmentation_damage.formula}}
-                  <span class="spell-damage-extra"><strong>FR</strong> {{this.system.damage.fragmentation_damage.formula}} {{this.system.damage.fragmentation_damage.type}}</span>
+                  <span class="spell-damage-extra"><strong>FR</strong> {{this.system.damage.fragmentation_damage.formula}} {{this.system.damage.fragmentation_damage.type}}{{#if this.system.damage.fragmentation_damage.scaling}} ({{this.system.damage.fragmentation_damage.scaling}}){{/if}}</span>
                   {{/if}}
                 </div>
               </div>
@@ -1271,7 +1271,7 @@
                     <div class="spell-meta-cell spell-pill-stat damage">
                       <span class="spell-meta-label">Dano</span>
                       {{#if this.system.damage.formula}}
-                      <a class="rollable-damage spell-meta-value" title="Rolar Dano" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}</a>
+                      <a class="rollable-damage spell-meta-value" title="Rolar Dano" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}{{#if this.system.damage.scaling}} ({{this.system.damage.scaling}}){{/if}}</a>
                       {{else}}
                       <span class="spell-meta-value">—</span>
                       {{/if}}
@@ -1301,10 +1301,10 @@
                   <span class="spell-attack-source"><strong>Perícia</strong> {{#if this.system.attack_roll.resolved_skill_name}}{{this.system.attack_roll.resolved_skill_name}}{{else}}{{this.system.attack_roll.skill_name}}{{/if}}</span>
                   {{/if}}
                   {{#if this.system.damage.follow_up_damage.formula}}
-                  <span class="spell-damage-extra"><strong>FU</strong> {{this.system.damage.follow_up_damage.formula}} {{this.system.damage.follow_up_damage.type}}</span>
+                  <span class="spell-damage-extra"><strong>FU</strong> {{this.system.damage.follow_up_damage.formula}} {{this.system.damage.follow_up_damage.type}}{{#if this.system.damage.follow_up_damage.scaling}} ({{this.system.damage.follow_up_damage.scaling}}){{/if}}</span>
                   {{/if}}
                   {{#if this.system.damage.fragmentation_damage.formula}}
-                  <span class="spell-damage-extra"><strong>FR</strong> {{this.system.damage.fragmentation_damage.formula}} {{this.system.damage.fragmentation_damage.type}}</span>
+                  <span class="spell-damage-extra"><strong>FR</strong> {{this.system.damage.fragmentation_damage.formula}} {{this.system.damage.fragmentation_damage.type}}{{#if this.system.damage.fragmentation_damage.scaling}} ({{this.system.damage.fragmentation_damage.scaling}}){{/if}}</span>
                   {{/if}}
                 </div>
               </div>
@@ -1865,7 +1865,7 @@
                           <div class="spell-meta-cell spell-pill-stat damage">
                             <span class="spell-meta-label">Dano</span>
                             {{#if this.system.damage.formula}}
-                            <a class="rollable-damage spell-meta-value" title="Rolar Dano" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}</a>
+                            <a class="rollable-damage spell-meta-value" title="Rolar Dano" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}{{#if this.system.damage.scaling}} ({{this.system.damage.scaling}}){{/if}}</a>
                             {{else}}
                             <span class="spell-meta-value">—</span>
                             {{/if}}
@@ -1903,10 +1903,10 @@
                         <span class="spell-attack-source"><strong>Perícia</strong> {{#if this.system.attack_roll.resolved_skill_name}}{{this.system.attack_roll.resolved_skill_name}}{{else}}{{this.system.attack_roll.skill_name}}{{/if}}</span>
                         {{/if}}
                         {{#if this.system.damage.follow_up_damage.formula}}
-                        <span class="spell-damage-extra"><strong>FU</strong> {{this.system.damage.follow_up_damage.formula}} {{this.system.damage.follow_up_damage.type}}</span>
+                        <span class="spell-damage-extra"><strong>FU</strong> {{this.system.damage.follow_up_damage.formula}} {{this.system.damage.follow_up_damage.type}}{{#if this.system.damage.follow_up_damage.scaling}} ({{this.system.damage.follow_up_damage.scaling}}){{/if}}</span>
                         {{/if}}
                         {{#if this.system.damage.fragmentation_damage.formula}}
-                        <span class="spell-damage-extra"><strong>FR</strong> {{this.system.damage.fragmentation_damage.formula}} {{this.system.damage.fragmentation_damage.type}}</span>
+                        <span class="spell-damage-extra"><strong>FR</strong> {{this.system.damage.fragmentation_damage.formula}} {{this.system.damage.fragmentation_damage.type}}{{#if this.system.damage.fragmentation_damage.scaling}} ({{this.system.damage.fragmentation_damage.scaling}}){{/if}}</span>
                         {{/if}}
                       </div>
                     </div>
@@ -1982,7 +1982,7 @@
                               data-followup-type="{{this.type}}"
                             {{/if}}
                           {{/with}}>
-                          {{attack.damage_formula}}{{#if (gt attack.armor_divisor 1)}}({{attack.armor_divisor}}){{/if}} {{attack.damage_type}}
+                          {{attack.damage_formula}}{{#if (gt attack.armor_divisor 1)}}({{attack.armor_divisor}}){{/if}} {{attack.damage_type}}{{#if attack.damage_scaling}} ({{attack.damage_scaling}}){{/if}}
                       </a>
                     </div>
 

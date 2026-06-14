@@ -421,6 +421,7 @@
       "skill_level_mod": 0,
       "damage_formula": "GdB",
       "damage_type": "cort",
+      "damage_scaling": "",
       "armor_divisor": 1,
       "reach": "C",
       "parry": "0",
@@ -430,11 +431,13 @@
       "follow_up_damage": {
         "formula": "",
         "type": "",
+        "scaling": "",
         "armor_divisor": 1
       },
       "fragmentation_damage": {
         "formula": "",
         "type": "",
+        "scaling": "",
         "armor_divisor": 1
       }
     },
@@ -446,6 +449,7 @@
       "skill_level_mod": 0,
       "damage_formula": "GdP",
       "damage_type": "perf",
+      "damage_scaling": "",
       "armor_divisor": 1,
       "accuracy": "0",
       "range": "100/1500",
@@ -458,11 +462,13 @@
       "follow_up_damage": {
         "formula": "",
         "type": "",
+        "scaling": "",
         "armor_divisor": 1
       },
       "fragmentation_damage": {
         "formula": "",
         "type": "",
+        "scaling": "",
         "armor_divisor": 1
       }
     },
@@ -600,15 +606,18 @@
       "damage": {
         "formula": "",
         "type": "",
+        "scaling": "",
         "armor_divisor": 1,
         "follow_up_damage": {
           "formula": "",
           "type": "",
+          "scaling": "",
           "armor_divisor": 1
         },
         "fragmentation_damage": {
           "formula": "",
           "type": "",
+          "scaling": "",
           "armor_divisor": 1
         }
       }
@@ -651,15 +660,18 @@
       "damage": {
         "formula": "",
         "type": "",
+        "scaling": "",
         "armor_divisor": 1,
         "follow_up_damage": {
           "formula": "",
           "type": "",
+          "scaling": "",
           "armor_divisor": 1
         },
         "fragmentation_damage": {
           "formula": "",
           "type": "",
+          "scaling": "",
           "armor_divisor": 1
         }
       }

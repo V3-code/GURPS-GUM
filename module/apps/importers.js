@@ -1158,14 +1158,11 @@ function parseGCSLibrarySpell(gcsSpell) {
         
         template.attack_roll.skill_name = defaultSkill;
 
-        let gcsDamageTypeRaw = gcsWeapon.damage?.type || "";
-        if (gcsDamageTypeRaw.includes('/')) {
-            gcsDamageTypeRaw = gcsDamageTypeRaw.split('/')[0];
-        }
-        const gcsDamageType = GCS_DAMAGE_TYPE_MAP[gcsDamageTypeRaw.toLowerCase()] || gcsDamageTypeRaw;
+        const gcsDamage = parseGCSDamageParts(gcsWeapon.damage);
+        const gcsDamageType = gcsDamage.type;
         
         let damageFormula = "";
-        const gcsBase = gcsWeapon.damage?.base || ""; 
+        const gcsBase = gcsDamage.formula || ""; 
         const gcsSt = gcsWeapon.damage?.st;
         
         if (gcsSt) {
@@ -1189,6 +1186,7 @@ function parseGCSLibrarySpell(gcsSpell) {
         }
         template.damage.formula = damageFormula;
         template.damage.type = gcsDamageType;
+        template.damage.scaling = gcsDamage.scaling || "";
     }
 
     return applyAutoPointsBaselineOnImport({
@@ -1277,6 +1275,21 @@ function normalizeGCSDamageFormula(value) {
         .replace(/d(?!b|p|\d)/gi, "d6");
 }
 
+function extractGCSDamageScaling(value) {
+    const raw = String(value || "");
+    if (!raw.trim()) return { cleaned: "", scaling: "" };
+
+    const scalingPattern = /([+\-]\s*(?:(?:\d+)?d(?:\d+)?|\d+)(?:[+\-]\d+)?\s*(?:\/\s*[\p{L}_-]+|\b(?:per|por)\s+[\p{L}_-]+))/iu;
+    const match = raw.match(scalingPattern);
+    if (!match) return { cleaned: raw.trim(), scaling: "" };
+
+    return {
+        cleaned: raw.replace(match[0], "").replace(/\s{2,}/g, " ").trim(),
+        scaling: normalizeGCSDamageFormula(match[1].replace(/\s*\/\s*/g, "/").replace(/\s+/g, " ").trim())
+    };
+}
+
+
 function parseGCSDamageType(value) {
     const raw = String(value || "").trim();
     if (!raw) return "";
@@ -1291,8 +1304,12 @@ function parseGCSDamageType(value) {
 
 
 function parseGCSDamageParts(damage = {}) {
-    let formula = String(damage.base || "").trim();
-    let type = parseGCSDamageType(damage.type);
+    const baseScaling = extractGCSDamageScaling(damage.base);
+    const typeScaling = extractGCSDamageScaling(damage.type);
+
+    let formula = baseScaling.cleaned;
+    let type = parseGCSDamageType(typeScaling.cleaned);
+    const scaling = baseScaling.scaling || typeScaling.scaling;
 
     if (!type && formula) {
         const combinedMatch = formula.match(/^([+\-]?(?:\d+)?d(?:\d+)?(?:[+\-]\d+)?|[+\-]?\d+)\s+(.+)$/i);
@@ -1302,7 +1319,7 @@ function parseGCSDamageParts(damage = {}) {
         }
     }
 
-    return { formula, type };
+    return { formula, type, scaling };
 }
 
 function parseGCSLibraryEquipment(gcsEquip) {
@@ -1388,6 +1405,7 @@ function parseGCSLibraryEquipment(gcsEquip) {
                 skill_name: defaultSkill,
                 damage_formula: damageFormula,
                 damage_type: gcsDamage.type,
+                damage_scaling: gcsDamage.scaling || "",
                 min_strength: gcsWeapon.strength || "0"
             };
 

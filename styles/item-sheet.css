@@ -311,10 +311,40 @@
 .gum.sheet.item .form-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .gum.sheet.item .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .gum.sheet.item .form-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.gum.sheet.item .damage-fields-grid {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.15fr) minmax(80px, 0.75fr) minmax(130px, 1.2fr) minmax(70px, 0.6fr);
+  gap: 10px;
+}
+
+
+.gum.sheet.item .item-damage-table {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.95fr) minmax(120px, 1.1fr) minmax(80px, 0.75fr) minmax(130px, 1.2fr) minmax(70px, 0.55fr);
+  gap: 10px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.gum.sheet.item .item-damage-table .damage-col-label {
+  font-family: var(--item-font-condensed);
+  font-size: var(--item-font-size-xs);
+  font-weight: 700;
+  color: var(--item-text-muted);
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item .item-damage-table .effect-label {
+  align-self: center;
+  margin: 0;
+}
 
 .gum.sheet.item .form-section .form-grid-2,
 .gum.sheet.item .form-section .form-grid-3,
-.gum.sheet.item .form-section .form-grid-4 {
+.gum.sheet.item .form-section .form-grid-4,
+.gum.sheet.item .form-section .damage-fields-grid {
   margin-top: 4px;
 }
 
@@ -1339,6 +1369,8 @@ color:#121114;
 .gum-dialog.attack-editor-dialog .dialog-content {
   padding: 0;
   background: var(--item-bg-panel);
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
 }
 
 .window-app.attack-editor-dialog .dialog-buttons,
@@ -1348,6 +1380,7 @@ color:#121114;
   gap: 8px;
   padding: 10px 14px 14px;
   background: var(--item-bg-panel);
+  max-height: 64px;
 }
 
 .window-app.attack-editor-dialog .dialog-buttons button,
@@ -1445,10 +1478,39 @@ color:#121114;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
+.attack-editor-dialog .damage-fields-grid {
+  display: grid;
+  grid-template-columns: minmax(95px, 1.1fr) minmax(70px, 0.75fr) minmax(110px, 1.2fr) minmax(60px, 0.55fr);
+  gap: 10px;
+}
+
+
+.attack-editor-dialog .attack-damage-table {
+  display: grid;
+  grid-template-columns: minmax(115px, 0.9fr) minmax(105px, 1.05fr) minmax(76px, 0.75fr) minmax(120px, 1.15fr) minmax(58px, 0.5fr);
+  gap: 8px 10px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.attack-editor-dialog .attack-damage-table .damage-col-label {
+  font-family: var(--item-font-condensed);
+  font-size: var(--item-font-size-xs);
+  font-weight: 700;
+  color: var(--item-text-muted);
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.attack-editor-dialog .attack-damage-table .row-label {
+  align-self: center;
+}
 
 .attack-editor-dialog .form-row .form-grid-2,
 .attack-editor-dialog .form-row .form-grid-3,
-.attack-editor-dialog .form-row .form-grid-4 {
+.attack-editor-dialog .form-row .form-grid-4,
+.attack-editor-dialog .form-row .damage-fields-grid {
   margin-top: 2px;
 }
 
