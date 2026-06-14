@@ -2011,6 +2011,30 @@ async function parseGCSTemplate(gcsData, fileName = "") {
 /**
  * A função "Tradutora" (Mapper) principal para um Personagem GCS.
  */
+
+function formatGCSCharacterNotes(notes) {
+    if (!notes) return "";
+    if (typeof notes === "string") return notes;
+
+    const formatNote = (note) => {
+        if (!note) return "";
+        if (typeof note === "string") return note;
+
+        const text = String(note.text || note.notes || note.note || note.description || "").trim();
+        const reference = String(note.reference || note.ref || "").trim();
+        if (text && reference) return `${text}\nReferência: ${reference}`;
+        return text || reference;
+    };
+
+    if (Array.isArray(notes)) {
+        return notes.map(formatNote).filter(Boolean).join("\n\n");
+    }
+
+    if (typeof notes === "object") return formatNote(notes);
+
+    return String(notes || "");
+}
+
 async function parseGCSCharacter(gcsData) {
     ui.notifications.info("Lendo dados do GCS... Mapeando atributos.");
     
@@ -2052,6 +2076,11 @@ async function parseGCSCharacter(gcsData) {
     systemData.details.skin = gcsData.profile?.skin || "";
     systemData.details.weight = gcsData.profile?.weight || "";
     systemData.details.height = gcsData.profile?.height || "";
+    const importedCharacterNotes = formatGCSCharacterNotes(gcsData.notes ?? gcsData.profile?.notes ?? "");
+    systemData.details.backstory = importedCharacterNotes;
+    if (Object.prototype.hasOwnProperty.call(systemData.details, "notes")) {
+        systemData.details.notes = importedCharacterNotes;
+    }
     systemData.points.total = gcsData.total_points || 0;
     systemData.points.unspent = gcsData.total_points || 0; 
         const bodyProfileId = systemData.combat.body_profile || "humanoid";
