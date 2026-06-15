@@ -5974,14 +5974,14 @@ background-color: var(--gum-accent-gold);
     --attack-card-accent: #c7814a;
     position: relative;
     display: flex;
-    grid-template-columns: none;
+    grid-template-columns: none !important; 
     flex-direction: column;
     gap: 5px;
     padding: 7px 8px;
     border: 1px solid rgba(199, 129, 74, 0.22);
     border-radius: 4px;
     background:
-        linear-gradient(135deg, rgba(24, 22, 24, 0.96), rgba(39, 35, 33, 0.96)),
+        linear-gradient(270deg, rgba(24, 22, 24, 0.96), rgba(39, 35, 33, 0.96)),
         var(--item-panel-texture) repeat;
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.04),

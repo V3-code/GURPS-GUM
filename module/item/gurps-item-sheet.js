@@ -1514,7 +1514,8 @@ new Dialog({
             default: "save" 
         }, { 
             classes: ["dialog", "gum-dialog", "attack-editor-dialog", "gum", "sheet", "item"],
-            width: 560,
+            width: 460,
+            height: 660,
             resizable: true
         }).render(true); 
     } 
