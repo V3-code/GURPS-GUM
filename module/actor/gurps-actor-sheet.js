@@ -2960,7 +2960,9 @@ default: 'save'
                 }
             },
             default: 'save'
-        }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog"] }).render(true);
+        }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog"], 
+        width: 450,
+        }).render(true);
     });
 
     // EDITOR DE ATRIBUTOS SECUNDÁRIOS
@@ -3201,7 +3203,7 @@ default: 'save'
                 }
             },
             default: 'save'
-       }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog"], width: 600 }).render(true);
+       }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog"], width: 510}).render(true);
     });
 
     // QUICK VIEW ORIGIN
@@ -3912,6 +3914,8 @@ async _onRecalculateSecondaryStats(ev) {
     "system.attributes.fp.max": ht,
     "system.attributes.basic_speed.value": basicSpeed,
     "system.attributes.basic_move.value": basicMove,
+    "system.attributes.dodge.value": Math.floor(basicSpeed) + 3,
+    "system.attributes.dodge.-=gcs_imported_fixed": null,
     "system.attributes.lifting_st.value": st,
     "system.attributes.vision.value": per,
     "system.attributes.hearing.value": per,
@@ -5714,6 +5718,8 @@ _buildTemplateAttributeUpdateData(attributeDeltas, { recalculateSecondaryBases =
   updateData["system.attributes.tastesmell.value"] = per;
   updateData["system.attributes.basic_speed.value"] = basicSpeedBase + (Number(attributeDeltas.basic_speed) || 0);
   updateData["system.attributes.basic_move.value"] = basicMoveBase + (Number(attributeDeltas.basic_move) || 0);
+  updateData["system.attributes.dodge.value"] = Math.floor(updateData["system.attributes.basic_speed.value"]) + 3;
+  updateData["system.attributes.dodge.-=gcs_imported_fixed"] = null;
   updateData["system.attributes.hp.max"] += (Number(attributeDeltas.hp) || 0);
   updateData["system.attributes.fp.max"] += (Number(attributeDeltas.fp) || 0);
   updateData["system.attributes.thrust_damage"] = damage.thrust;

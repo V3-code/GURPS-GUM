@@ -2061,7 +2061,7 @@ async function parseGCSCharacter(gcsData) {
     ensureObjectPath(systemData, "combat");
     for (const attrKey of [
         "st", "dx", "iq", "ht", "lifting_st", "per", "vont", "hp", "fp",
-        "vision", "hearing", "tastesmell", "touch", "basic_speed", "basic_move", "dodge", "enhanced_move"
+        "vision", "hearing", "tastesmell", "touch", "basic_speed", "basic_move", "dodge", "enhanced_move", "mt"
     ]) {
         ensureObjectPath(systemData, `attributes.${attrKey}`);
     }
@@ -2182,10 +2182,29 @@ async function parseGCSCharacter(gcsData) {
 
     // --- 2.1. Mapeamento de Atributos Secundários ---
     const getNumericCandidate = (...values) => {
-        for (const value of values) {
-            if (value === null || value === undefined || value === "") continue;
+        const coerceNumeric = (value) => {
+            if (value === null || value === undefined || value === "") return null;
+            if (Array.isArray(value)) {
+                for (const entry of value) {
+                    const numericEntry = coerceNumeric(entry);
+                    if (numericEntry !== null) return numericEntry;
+                }
+                return null;
+            }
+            if (typeof value === "object") {
+                return getNumericCandidate(value.value, value.current, value.score);
+            }
             const numeric = Number(value);
             if (Number.isFinite(numeric)) return numeric;
+            const match = String(value).match(/[-+]?\d+(?:\.\d+)?/);
+            if (!match) return null;
+            const parsed = Number(match[0]);
+            return Number.isFinite(parsed) ? parsed : null;
+        };
+
+        for (const value of values) {
+            const numeric = coerceNumeric(value);
+            if (numeric !== null) return numeric;
         }
         return null;
     };
@@ -2205,6 +2224,7 @@ async function parseGCSCharacter(gcsData) {
         basic_move: ["basic_move", "move"],
         enhanced_move: ["enhanced_move"],
         dodge: ["dodge"],
+        mt: ["sm", "size_modifier", "size"],
         vision: ["vision"],
         hearing: ["hearing"],
         tastesmell: ["taste_smell", "tastesmell"],
@@ -2216,6 +2236,18 @@ async function parseGCSCharacter(gcsData) {
         if (mappedValue !== null) {
             systemData.attributes[targetKey].value = mappedValue;
         }
+    }
+
+    const importedSizeModifier = getNumericCandidate(
+        gcsData.calc?.size_modifier,
+        gcsData.calc?.sm,
+        gcsData.profile?.size_modifier,
+        gcsData.profile?.sm,
+        gcsData.profile?.SM,
+        gcsData.profile?.size
+    );
+    if (importedSizeModifier !== null) {
+        systemData.attributes.mt.value = importedSizeModifier;
     }
     
   if (gcsData.calc) {
@@ -2232,6 +2264,7 @@ async function parseGCSCharacter(gcsData) {
         }
         if (calcDodge !== null) {
             systemData.attributes.dodge.value = calcDodge;
+            systemData.attributes.dodge.gcs_imported_fixed = calcDodge;
         }
 
         systemData.attributes.thrust_damage = formatDamageString(gcsData.calc.thrust) || "1d6-2";

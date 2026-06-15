@@ -3608,65 +3608,119 @@ background-color: var(--gum-accent-gold);
     min-width: 0;
 }
 
-/* --- Tabela de RD (Estilo "Livro de Regras") --- */
+/* --- Tabela de RD (Dark Premium) --- */
 .gum.sheet.actor .dr-location-block {
-    background: var(--gum-bg-body);
-    border: none;
-    padding: 0; /* Remove padding para o header encostar */
-    border-radius: 4px;
-    overflow: hidden; /* Para os cantos arredondados */
-    box-shadow:  0 4px 14px rgba(0,0,0,0.45),
-    inset 0 0 0 1px rgba(201,161,94,0.15);
+    position: relative;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid rgba(197, 160, 91, 0.24);
+    border-radius: 8px;
+    background:
+        linear-gradient(135deg, rgba(18, 17, 22, 0.98), rgba(39, 35, 45, 0.96)),
+        var(--item-panel-texture) repeat;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.025),
+        0 8px 24px rgba(0, 0, 0, 0.42);
+}
+
+.gum.sheet.actor .dr-location-block::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 14% 0%, rgba(197, 160, 91, 0.16), transparent 34%),
+        linear-gradient(90deg, rgba(255,255,255,0.045), transparent 42%);
+}
+
+.gum.sheet.actor .dr-location-block > * {
+    position: relative;
 }
 
 .gum.sheet.actor .dr-location-block .block-header {
-    background: var(--gum-bg-cabecalho);
-    padding: 6px 10px;
+    background: linear-gradient(180deg, rgba(52, 22, 27, 0.92), rgba(32, 19, 22, 0.88));
+    padding: 8px 10px;
     margin: 0;
-    border-bottom: none;
+ border-bottom: 1px solid rgba(197, 160, 91, 0.22);
+    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+}
+
+.gum.sheet.actor .dr-location-block .block-header h4 {
+    color: var(--gum-text-claro);
+
+}
+
+.gum.sheet.actor .dr-location-block .dr-header-subtitle {
+    color: rgba(248, 216, 148, 0.74);
+}
+
+.gum.sheet.actor .dr-location-block .header-controls a {
+    color: rgba(248, 216, 148, 0.8);
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.gum.sheet.actor .dr-location-block .header-controls a:hover {
+    color: var(--gum-accent-gold);
+    transform: translateY(-1px) scale(1.08);
 }
 
 .gum.sheet.actor .dr-location-list {
     list-style: none;
-    padding: 0;
+    padding: 2px;
     margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--gum-bg-sidebar);
 }
 
 .gum.sheet.actor .dr-location-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 4px 10px;
-    border-bottom: 1px solid rgba(0,0,0,0.03);
-    font-size: 11px; /* Fonte mais sutil */
-  transition: background 0.1s;
+    gap: 8px;
+    padding: 6px 8px;
+    border: 1px solid rgba(197, 160, 91, 0.12);
+    border-radius: 6px;
+    background: linear-gradient(180deg, rgba(8, 8, 10, 0.46), rgba(0, 0, 0, 0.28));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.035);
+    font-size: 11px;
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
-.gum.sheet.actor .dr-location-row.dr-group {
+.gum.sheet.actor .dr-location-row.dr-group,
+.gum.sheet.actor .dr-location-row.has-extra {
     flex-direction: column;
     align-items: stretch;
-    gap: 4px;
+    gap: 2px;
 }
 .gum.sheet.actor .dr-row-main {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 6px;
+    gap: 8px;
+    width: 100%;
 }
 
 .gum.sheet.actor .dr-row-start{
-    align-items: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
 }
 .gum.sheet.actor .dr-group-toggle {
     border: none;
+    border-radius: 4px;
     background: transparent;
-    color: var(--gum-text-medio);
+    color: rgba(248, 216, 148, 0.78);
     cursor: pointer;
     padding: 0;
-    width: 16px;
-    height: 16px;
+    width: 17px;
+    height: 17px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex: 0 0 17px;
 }
 .gum.sheet.actor .dr-group-toggle i {
     transition: transform 0.2s ease;
@@ -3676,54 +3730,89 @@ background-color: var(--gum-accent-gold);
 }
 .gum.sheet.actor .dr-group-children {
     list-style: none;
-    padding: 0 0 4px 18px;
+   padding: 0 0 2px 22px;
     margin: 0;
     display: none;
 }
 .gum.sheet.actor .dr-group.is-expanded .dr-group-children {
-    display: block;
+        display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 .gum.sheet.actor .dr-location-row.is-child {
     padding: 3px 0;
     border-bottom: none;
+    padding: 4px 7px;
+    border-color: rgba(197, 160, 91, 0.08);
+    border-radius: 5px;
     font-size: 10px;
+    background: rgba(0, 0, 0, 0.22);
 }
 .gum.sheet.actor .dr-row-extra {
-    padding: 0 10px 4px;
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 5px;
+    max-width: 100%;
+    margin-top: 1px;
+    padding: 3px 7px;
+    border: none;
+    border-radius: 4px;
+    background: linear-gradient(180deg, rgba(86, 129, 156, 0.16), rgba(0, 0, 0, 0.18));
+    color: rgba(214, 229, 238, 0.82);
     font-size: 10px;
-    color: var(--gum-text-medio);
+    line-height: 1;
+    letter-spacing: 0.01em;
 }
 .gum.sheet.actor .dr-row-extra.is-child {
-    padding: 0 0 4px 0;
+    margin-left: 0;
 }
 
 /* Efeito Zebrado Sutil */
 .gum.sheet.actor .dr-location-row:nth-child(even) {
-    background: rgba(0,0,0,0.02);
+    background: linear-gradient(180deg, rgba(18, 17, 22, 0.54), rgba(0, 0, 0, 0.3));
 }
 .gum.sheet.actor .dr-location-row:last-child {
-    border-bottom: none;
+    border-bottom: 1px solid rgba(197, 160, 91, 0.12);
 }
 .gum.sheet.actor .dr-location-row:hover {
-    background: rgba(197, 160, 91, 0.1); /* Dourado muito leve */
+    background: linear-gradient(180deg, rgba(197, 160, 91, 0.13), rgba(0, 0, 0, 0.3));
+    border-color: rgba(197, 160, 91, 0.34);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.055),
+        0 3px 10px rgba(0, 0, 0, 0.24);
     cursor: pointer;
+    transform: translateY(-1px);
 }
 
 .gum.sheet.actor .location-name {
-    color: var(--gum-border);
+    color: rgba(243, 234, 220, 0.88);
+    min-width: 0;
+    font-family: 'Roboto Condensed';
+    text-transform: uppercase;
+    letter-spacing: 0.35px;
+    FONT-WEIGHT: 550;
+    font-size: 10px;
 }
-/* O número pequeno do dado (ex: 3-4) */
+
 .gum.sheet.actor .location-name span {
-    color: var(--gum-text-medio);
+     color: rgba(169, 166, 160, 0.8);
     font-size: 0.85em;
     margin-left: 4px;
 }
 
 .gum.sheet.actor .location-dr-value {
+    min-width: 20px;
+    padding: 2px 7px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(197, 160, 91, 0.1);
     font-family: var(--gum-font-condensed);
-    font-weight: 700;
-    color: var(--gum-text-medio); 
-    font-size: 1.1em;
+    font-weight: 800;
+    color: #f8d894;
+    font-size: 1.08em;
+    text-align: center;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
 /* --- Card de Dano Básico (GdP/GeB) --- */
@@ -5413,6 +5502,7 @@ background-color: var(--gum-accent-gold);
 .dialog.gum.gum-sheet-edit-dialog .window-content {
     background: var(--gum-bg-body);
     color: var(--gum-text-claro);
+    padding: 6px 15px;
 }
 
 .dialog.gum.gum-sheet-edit-dialog .dialog-content {

@@ -513,7 +513,15 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
 
         // --- DEFESAS ATIVAS ---
         const finalBasicSpeedComputed = attributes.basic_speed.final_computed;
-        attributes.dodge.value = Math.floor(finalBasicSpeedComputed) + 3;
+        const importedFixedDodgeRaw = attributes.dodge.gcs_imported_fixed;
+        const importedFixedDodge = Number(importedFixedDodgeRaw);
+        const hasImportedFixedDodge = importedFixedDodgeRaw !== null
+            && importedFixedDodgeRaw !== undefined
+            && importedFixedDodgeRaw !== ""
+            && Number.isFinite(importedFixedDodge);
+        attributes.dodge.value = hasImportedFixedDodge
+            ? importedFixedDodge
+            : Math.floor(finalBasicSpeedComputed) + 3;
         attributes.dodge.final_computed = attributes.dodge.value 
                                         + enc.penalty 
                                         + (attributes.dodge.mod || 0) 
