@@ -418,13 +418,14 @@ const add_sub_modifiers = {};
         
         let totalWeight = 0;
         const ignoreCarried = this.system.encumbrance.ignore_carried_weight;
+        const ignoreEquipped = this.system.encumbrance.ignore_equipped_weight;
         for (let i of this.items) { 
             if ((i.type === 'equipment' || i.system.hasOwnProperty('weight'))) {
                 const weight = i.system.effectiveWeight !== undefined ? i.system.effectiveWeight : (i.system.weight || 0);
                 const quantity = i.system.quantity || 1;
                 const loc = i.system.location;
                 
-                if (loc === 'equipped' || (loc === 'carried' && !ignoreCarried)) {
+                if ((loc === 'equipped' && !ignoreEquipped) || (loc === 'carried' && !ignoreCarried)) {
                     totalWeight += weight * quantity;
                 }
             }

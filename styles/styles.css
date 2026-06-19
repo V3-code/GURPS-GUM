@@ -1357,362 +1357,727 @@
 /* 8. ABA DE EQUIPAMENTOS (Refinada)                                  */
 /* =================================================================== */
 /* =================================================================== */
-/* SUMÁRIO DE CARGA — 2 LINHAS / PREMIUM (BLINDADO)                    */
-/* Depende de: .encumbrance-inline[data-enc="0..4"]                     */
+/* SUMÁRIO DE CARGA — RÉGUA TÉCNICA INTEGRADA                          */
+/* Sem painel de fundo e sem bordas externas fortes                     */
 /* =================================================================== */
 
-.encumbrance-inline {
-    padding: 4px 0px;
-    margin-bottom: 10px;
-    background: transparent;
-    border-bottom: 2px solid var(--gum-border-gold);
-    border-radius: 4px;
+.gum.sheet.actor .tab[data-tab="equipment"] .encumbrance-inline {
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+
+    margin: 0 5px 13px;
+    padding: 6px 8px 9px;
+
+    border: none;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+
+    color: var(--gum-text-claro);
 }
 
-/* ---------- Linhas ---------- */
-.encumbrance-row {
-  display: grid;
-  align-items: center;
-  gap: 10px;
-}
+/* Linha inferior em gradiente */
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-inline::after {
+    content: "";
 
-.encumbrance-row-top {
-  grid-template-columns: auto minmax(200px, 320px) auto auto;
-}
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
 
-.encumbrance-row-bottom {
-  grid-template-columns: auto auto auto;
-  justify-content: center;
-  gap: 8px;
-}
+    height: 1px;
 
-/* ---------- Label ---------- */
-.encumbrance-inline-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+    pointer-events: none;
 
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--gum-text-medio);
-  white-space: nowrap;
-}
-
-/* ---------- Barra (TRILHO) ---------- */
-.encumbrance-inline-meter {
-  position: relative;
-  height: 14px;
-  width: 100%;
-  justify-self: center;
-
-  border-radius: 999px;
-  overflow: hidden;
-
-  background: rgba(0,0,0,0.33);
-  border: 1px solid rgba(197,160,91,0.22);
-
-  /* “bevel” premium */
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.06),
-    inset 0 -1px 0 rgba(0,0,0,0.45),
-    inset 0 0 0 1px rgba(0,0,0,0.35),
-    0 0 0 1px rgba(0,0,0,0.18);
-}
-
-/* brilho interno no trilho (DnD-like) */
-.encumbrance-inline-meter::before{
-  content: "";
-  position: absolute;
-  inset: 1px;
-  border-radius: 999px;
-  pointer-events: none;
-
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255,255,255,0.10) 0%,
-      rgba(255,255,255,0.03) 35%,
-      rgba(0,0,0,0.12) 70%,
-      rgba(0,0,0,0.30) 100%
+    background: linear-gradient(
+        90deg,
+        rgba(197, 160, 91, 0.42) 0%,
+        rgba(197, 160, 91, 0.20) 42%,
+        rgba(197, 160, 91, 0.06) 78%,
+        transparent 100%
     );
-  opacity: 0.9;
 }
 
-/* highlight fino no topo */
-.encumbrance-inline-meter::after{
-  content: "";
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  top: 2px;
-  height: 1px;
-  border-radius: 999px;
-  pointer-events: none;
-  background: rgba(255,255,255,0.08);
+/* =================================================================== */
+/* ESTRUTURA DAS LINHAS                                                 */
+/* =================================================================== */
+
+.gum.sheet.actor .tab[data-tab="equipment"] .encumbrance-row {
+    display: grid;
+    align-items: center;
+    min-width: 0;
 }
 
-/* ---------- Preenchimento (FILL) ---------- */
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-row-top {
+    grid-template-columns:
+        minmax(155px, auto)
+        minmax(260px, 1fr)
+        auto
+        minmax(100px, auto);
+
+    gap: 14px;
+}
+
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-row-bottom {
+    grid-template-columns: auto auto auto;
+    justify-content: center;
+
+    gap: 5px 11px;
+    min-height: 18px;
+}
+
+/* =================================================================== */
+/* TÍTULO                                                               */
+/* =================================================================== */
+
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-inline-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+
+    color: rgba(247, 233, 215, 0.60);
+
+    font-family: var(--gum-font-condensed);
+    font-size: 0.73rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+
+    white-space: nowrap;
+}
+
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-inline-label i {
+    color: rgba(197, 160, 91, 0.70);
+    font-size: 0.72rem;
+
+    filter: drop-shadow(
+        0 1px 2px rgba(0, 0, 0, 0.72)
+    );
+}
+
+/* =================================================================== */
+/* BARRA PRINCIPAL                                                      */
+/* =================================================================== */
+
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-inline-meter {
+    position: relative;
+
+    width: 100%;
+    height: 15px;
+    min-width: 0;
+
+    overflow: hidden;
+
+    border: none;
+    border-radius: 4px;
+
+    /*
+     * Trilho escuro com uma linha central levemente iluminada.
+     * Não há borda externa.
+     */
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.035) 0%,
+            rgba(0, 0, 0, 0.12) 28%,
+            rgba(0, 0, 0, 0.42) 54%,
+            rgba(0, 0, 0, 0.27) 100%
+        );
+
+    box-shadow:
+        inset 0 2px 3px rgba(0, 0, 0, 0.58),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.035),
+        0 1px 2px rgba(0, 0, 0, 0.28);
+}
+
+/* Linha interna superior */
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-inline-meter::before {
+    content: "";
+
+    position: absolute;
+    z-index: 4;
+
+    left: 6px;
+    right: 6px;
+    top: 2px;
+
+    height: 1px;
+
+    border-radius: 999px;
+
+    pointer-events: none;
+
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.10) 18%,
+        rgba(255, 255, 255, 0.055) 76%,
+        transparent
+    );
+}
+
+/* Escurecimento progressivo no fim da barra */
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-inline-meter::after {
+    content: "";
+
+    position: absolute;
+    z-index: 3;
+
+    inset: 0;
+
+    pointer-events: none;
+
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        transparent 72%,
+        rgba(0, 0, 0, 0.13) 100%
+    );
+}
+
+/* =================================================================== */
+/* PREENCHIMENTO                                                        */
+/* =================================================================== */
+
+.gum.sheet.actor .tab[data-tab="equipment"]
 .encumbrance-inline-fill {
-  position: relative;
-  height: 100%;
-  border-radius: 999px;
-  transition: width 0.25s ease;
+    position: absolute;
+    z-index: 2;
 
-  /* default (caso falhe data-enc) */
-  background: linear-gradient(90deg, #6fa86b 0%, #c9a24d 60%, #a53541 100%);
+    top: 2px;
+    left: 2px;
+    bottom: 2px;
 
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.16),
-    inset 0 -1px 0 rgba(0,0,0,0.25),
-    0 0 10px rgba(0,0,0,0.20);
+    height: auto;
+    max-width: calc(100% - 4px);
+
+    border-radius: 3px;
+
+    transition:
+        width 0.3s ease,
+        background 0.2s ease,
+        box-shadow 0.2s ease;
+
+    background: linear-gradient(
+        90deg,
+        rgba(146, 146, 146, 0.72),
+        rgba(110, 110, 110, 0.42)
+    );
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+        2px 0 8px rgba(0, 0, 0, 0.28);
 }
 
-/* brilho no fill */
-.encumbrance-inline-fill::before{
-  content:"";
-  position:absolute;
-  inset: 1px 1px auto 1px;
-  height: 55%;
-  border-radius: 999px;
-  pointer-events: none;
-  background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.00));
-  opacity: 0.9;
+/* Brilho do preenchimento */
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-inline-fill::before {
+    content: "";
+
+    position: absolute;
+
+    left: 2px;
+    right: 2px;
+    top: 1px;
+
+    height: 38%;
+
+    border-radius: 2px;
+
+    pointer-events: none;
+
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.16),
+        transparent
+    );
 }
 
-/* ---------- Marcadores ---------- */
+/* Ponta iluminada da carga atual */
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-inline-fill::after {
+    content: "";
+
+    position: absolute;
+    right: 0;
+    top: 1px;
+    bottom: 1px;
+
+    width: 2px;
+
+    border-radius: 2px;
+
+    background: rgba(255, 255, 255, 0.25);
+
+    box-shadow:
+        0 0 5px rgba(255, 255, 255, 0.10);
+}
+
+/* =================================================================== */
+/* MARCADORES DE NÍVEL                                                  */
+/* =================================================================== */
+
+.gum.sheet.actor .tab[data-tab="equipment"]
 .encumbrance-inline-marker {
-  position: absolute;
-  top: -2px;
-  width: 4px;
-  height: 18px;
-  background: rgba(255,255,255,0.22);
-  z-index: 3;
+    position: absolute;
+    z-index: 5;
+
+    top: 1px;
+    bottom: 1px;
+
+    width: 1px;
+    height: auto;
+
+    transform: translateX(-50%);
+
+    background: rgba(247, 233, 215, 0.17);
+
+    box-shadow:
+        1px 0 0 rgba(0, 0, 0, 0.30);
 }
 
+/*
+ * O nível atual recebe uma marca mais quente,
+ * mas continua discreto.
+ */
+.gum.sheet.actor .tab[data-tab="equipment"]
 .encumbrance-inline-marker.active {
-  background: var(--gum-accent-gold);
-  width: 2px;
-  box-shadow: 0 0 6px rgba(197,160,91,0.25);
+    width: 2px;
+
+    background: rgba(248, 216, 148, 0.82);
+
+    box-shadow:
+        0 0 4px rgba(197, 160, 91, 0.42);
 }
 
+/* =================================================================== */
+/* LETRAS DOS SEGMENTOS                                                 */
+/* =================================================================== */
+
+.gum.sheet.actor .tab[data-tab="equipment"]
 .encumbrance-inline-segment-label {
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 2;
+    position: absolute;
+    z-index: 6;
 
-  font-size: 0.56rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.78);
-  text-shadow: 0 1px 1px rgba(0,0,0,0.65);
-  pointer-events: none;
+    top: 50%;
+
+    transform: translate(-50%, -50%);
+
+    color: rgba(255, 255, 255, 0.62);
+
+    font-family: var(--gum-font-condensed);
+    font-size: 0.51rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+
+    text-shadow:
+        0 1px 1px rgba(0, 0, 0, 0.95),
+        0 0 3px rgba(0, 0, 0, 0.75);
+
+    pointer-events: none;
 }
 
-/* ---------- Valor e Estado ---------- */
+/* =================================================================== */
+/* VALOR NUMÉRICO                                                       */
+/* =================================================================== */
+
+.gum.sheet.actor .tab[data-tab="equipment"]
 .encumbrance-inline-value {
-  font-size: 0.75rem;
-  font-weight: 650;
-  color: var(--gum-text-claro);
-  white-space: nowrap;
-}
+    display: inline-flex;
+    align-items: baseline;
+    justify-content: flex-end;
 
-/* Badge (sem ícone) */
-.encumbrance-inline-state{
-  display: inline-flex;
-  align-items: center;
-  line-height: 1;
-  justify-content: center;
+    color: rgba(247, 233, 215, 0.94);
 
-  font-size: 0.70rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  white-space: nowrap;
+    font-family: var(--gum-font-condensed);
+    font-size: 0.79rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.01em;
 
-  padding: 3px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(197,160,91,0.22);
-  background: rgba(0,0,0,0.22);
+    white-space: nowrap;
 
-  color: var(--gum-accent-gold);
+    text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.78);
 }
 
 /* =================================================================== */
-/* CORES POR NÍVEL (fill + borda do trilho + badge)                     */
+/* ESTADO                                                               */
 /* =================================================================== */
 
-/* nível 0 - neutro */
-.encumbrance-inline[data-enc="0"] .encumbrance-inline-state{
-  color: rgba(243,234,220,0.82);
-  border-color: rgba(197,160,91,0.16);
-  background: rgba(0,0,0,0.16);
-}
-.encumbrance-inline[data-enc="0"] .encumbrance-inline-meter{
-  border-color: rgba(197,160,91,0.16);
-}
-.encumbrance-inline[data-enc="0"] .encumbrance-inline-fill{
-  background: linear-gradient(90deg, rgba(160,160,160,0.50), rgba(160,160,160,0.18));
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-inline-state {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 7px;
+
+    min-width: 0;
+    padding: 0;
+
+    border: none;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+
+    color: rgba(247, 233, 215, 0.68);
+
+    font-family: var(--gum-font-condensed);
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+
+    white-space: nowrap;
 }
 
-/* nível 1 - verde */
-.encumbrance-inline[data-enc="1"] .encumbrance-inline-state{
-  color: rgba(180,220,170,0.95);
-  border-color: rgba(111,168,107,0.32);
-  background: rgba(18,30,18,0.34);
-}
-.encumbrance-inline[data-enc="1"] .encumbrance-inline-meter{
-  border-color: rgba(111,168,107,0.30);
-}
-.encumbrance-inline[data-enc="1"] .encumbrance-inline-fill{
-  background: linear-gradient(90deg, rgba(111,168,107,0.95), rgba(111,168,107,0.55));
-}
+/* Indicador de estado */
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-inline-state::before {
+    content: "";
 
-/* nível 2 - ouro */
-.encumbrance-inline[data-enc="2"] .encumbrance-inline-state{
-  color: rgba(240,216,160,0.96);
-  border-color: rgba(201,162,77,0.36);
-  background: rgba(35,28,12,0.38);
-}
-.encumbrance-inline[data-enc="2"] .encumbrance-inline-meter{
-  border-color: rgba(201,162,77,0.34);
-}
-.encumbrance-inline[data-enc="2"] .encumbrance-inline-fill{
-  background: linear-gradient(90deg, rgba(201,162,77,0.95), rgba(201,162,77,0.55));
-}
+    width: 5px;
+    height: 5px;
 
-/* nível 3 - âmbar */
-.encumbrance-inline[data-enc="3"] .encumbrance-inline-state{
-  color: rgba(245,190,150,0.96);
-  border-color: rgba(197,120,70,0.40);
-  background: rgba(40,18,10,0.42);
-}
-.encumbrance-inline[data-enc="3"] .encumbrance-inline-meter{
-  border-color: rgba(197,120,70,0.38);
-}
-.encumbrance-inline[data-enc="3"] .encumbrance-inline-fill{
-  background: linear-gradient(90deg, rgba(197,120,70,0.98), rgba(197,120,70,0.55));
-}
+    flex: 0 0 5px;
 
-/* nível 4 - vermelho */
-.encumbrance-inline[data-enc="4"] .encumbrance-inline-state{
-  color: rgba(255,205,205,0.96);
-  border-color: rgba(165,53,65,0.48);
-  background: rgba(45,10,14,0.52);
-}
-.encumbrance-inline[data-enc="4"] .encumbrance-inline-meter{
-  border-color: rgba(165,53,65,0.46);
-}
-.encumbrance-inline[data-enc="4"] .encumbrance-inline-fill{
-  background: linear-gradient(90deg, rgba(165,53,65,0.98), rgba(165,53,65,0.55));
-}
+    border-radius: 50%;
 
-/* alerta extra (3+) */
-.encumbrance-inline[data-enc="3"],
-.encumbrance-inline[data-enc="4"]{
-  box-shadow:
-    0 0 0 1px rgba(165,53,65,0.12),
-    inset 0 0 0 1px rgba(0,0,0,0.25);
+    background: currentColor;
+
+    opacity: 0.82;
+
+    box-shadow:
+        0 0 5px currentColor;
 }
 
 /* =================================================================== */
-/* LINHA 2 (Ignorar)                                                    */
+/* CORES DOS NÍVEIS                                                     */
 /* =================================================================== */
 
+/* Nível 0 — aço envelhecido */
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-inline[data-enc="0"]
+.encumbrance-inline-fill {
+    background: linear-gradient(
+        90deg,
+        rgba(156, 151, 139, 0.74),
+        rgba(113, 109, 102, 0.43)
+    );
+}
+
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-inline[data-enc="0"]
+.encumbrance-inline-state {
+    color: rgba(219, 213, 201, 0.72);
+}
+
+/* Nível 1 — verde desaturado */
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-inline[data-enc="1"]
+.encumbrance-inline-fill {
+    background: linear-gradient(
+        90deg,
+        rgba(105, 143, 103, 0.92),
+        rgba(70, 102, 71, 0.62)
+    );
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+        2px 0 8px rgba(73, 117, 76, 0.18);
+}
+
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-inline[data-enc="1"]
+.encumbrance-inline-state {
+    color: rgba(165, 198, 159, 0.88);
+}
+
+/* Nível 2 — bronze */
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-inline[data-enc="2"]
+.encumbrance-inline-fill {
+    background: linear-gradient(
+        90deg,
+        rgba(181, 142, 73, 0.95),
+        rgba(128, 93, 47, 0.68)
+    );
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+        2px 0 9px rgba(181, 142, 73, 0.20);
+}
+
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-inline[data-enc="2"]
+.encumbrance-inline-state {
+    color: rgba(226, 195, 128, 0.92);
+}
+
+/* Nível 3 — cobre queimado */
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-inline[data-enc="3"]
+.encumbrance-inline-fill {
+    background: linear-gradient(
+        90deg,
+        rgba(176, 101, 58, 0.97),
+        rgba(117, 57, 39, 0.72)
+    );
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.15),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.27),
+        2px 0 10px rgba(176, 101, 58, 0.22);
+}
+
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-inline[data-enc="3"]
+.encumbrance-inline-state {
+    color: rgba(229, 159, 113, 0.94);
+}
+
+/* Nível 4 — carmim escuro */
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-inline[data-enc="4"]
+.encumbrance-inline-fill {
+    background: linear-gradient(
+        90deg,
+        rgba(151, 49, 60, 0.98),
+        rgba(91, 26, 36, 0.78)
+    );
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.30),
+        2px 0 11px rgba(165, 53, 65, 0.26);
+}
+
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-inline[data-enc="4"]
+.encumbrance-inline-state {
+    color: rgba(232, 132, 142, 0.96);
+}
+
+/* =================================================================== */
+/* LINHA SECUNDÁRIA                                                     */
+/* =================================================================== */
+
+.gum.sheet.actor .tab[data-tab="equipment"]
 .encumbrance-inline-subtitle {
-  font-size: var(--gum-font-size-body);
-  color: var(--gum-text-medio);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
+    color: rgba(247, 233, 215, 0.43);
+
+    font-family: var(--gum-font-condensed);
+    font-size: 0.63rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+
+    white-space: nowrap;
 }
 
-/* pill (única versão — sem duplicação) */
-.encumbrance-pill{
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 
-  padding: 3px 10px;
+    min-height: 18px;
+    padding: 0 4px;
 
-  background: rgba(0,0,0,0.14);
+    border: none;
+    border-radius: 3px;
+    background: none;
 
-  font-size: 0.70rem;
-  color: var(--gum-text-medio);
-  white-space: nowrap;
+    color: rgba(247, 233, 215, 0.51);
 
-  transition: border-color 0.15s ease, background 0.15s ease;
+    font-family: var(--gum-font-primary);
+    font-size: 0.66rem;
+    line-height: 1;
+
+    white-space: nowrap;
+    cursor: pointer;
+
+    transition:
+        color 0.15s ease,
+        background-color 0.15s ease;
 }
 
-.encumbrance-pill:hover{
-  border-color: rgba(197,160,91,0.28);
-  background: rgba(0,0,0,0.18);
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-pill:hover {
+    color: rgba(247, 233, 215, 0.80);
+    background: rgba(255, 255, 255, 0.025);
 }
 
-/* círculo com check ✓ */
-.encumbrance-pill input{
-  appearance: none;
-  -webkit-appearance: none;
+/* Checkbox circular simples e centralizado */
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-pill input {
+    appearance: none;
+    -webkit-appearance: none;
 
-  width: 13px;
-  height: 13px;
-  flex: 1 1 6px;
-  border-radius: 999px;
+    display: inline-grid;
+    place-items: center;
 
-  border: 1px solid rgba(197,160,91,0.38);
-  background: rgba(0,0,0,0.22);
-  display: inline-grid;
-  place-content: center;
-  margin: 0;
+    width: 13px;
+    height: 13px;
+    min-width: 13px;
+    min-height: 13px;
+    flex: 0 0 13px;
 
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.08),
-    inset 0 -1px 0 rgba(0,0,0,0.35);
+    margin: 0;
+    padding: 0;
 
-  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+    border: 1px solid rgba(197, 160, 91, 0.42);
+    border-radius: 50%;
+
+    background: rgba(0, 0, 0, 0.24);
+    box-shadow: none;
+
+    vertical-align: middle;
+    cursor: pointer;
+
+    transition:
+        border-color 0.15s ease,
+        background-color 0.15s ease;
 }
 
-.encumbrance-pill input:checked{
-  border-color: rgba(197,160,91,0.70);
-  background: rgba(197,160,91,0.12);
-  box-shadow:
-    0 0 0 2px rgba(197,160,91,0.12),
-    inset 0 1px 0 rgba(255,255,255,0.10),
-    inset 0 -1px 0 rgba(0,0,0,0.30);
+/* Bolinha interna */
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-pill input::before {
+    content: "";
+
+    display: block;
+
+    width: 5px;
+    height: 5px;
+
+    margin: 0;
+
+    border-radius: 50%;
+    background: var(--gum-accent-gold);
+
+    transform: scale(0);
+    transform-origin: center;
+
+    transition: transform 0.14s ease;
 }
 
-.encumbrance-pill input:checked::before{
-  content: "●";
-  font-size: 10px;
-  line-height: 1;
-  font-weight: 900;
-  color: var(--gum-accent-gold);
-  transform: translateY(-0.5px);
-  display: contents;
+/* Estado marcado */
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-pill input:checked {
+    border-color: rgba(197, 160, 91, 0.78);
+    background: rgba(197, 160, 91, 0.08);
 }
 
+/* Mostra a bolinha interna */
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-pill input:checked::before {
+    transform: scale(1);
+}
 
-/* placeholder desativado */
+/* Estado desativado */
+.gum.sheet.actor .tab[data-tab="equipment"]
 .encumbrance-pill.is-disabled {
-  opacity: 0.45;
-  filter: grayscale(0.4);
+    opacity: 0.32;
+    cursor: not-allowed;
 }
 
-/* ---------- Responsivo ---------- */
-@media (max-width: 840px) {
-  .encumbrance-row-top {
-    grid-template-columns: 1fr;
-    gap: 6px;
-  }
-
-  .encumbrance-row-bottom {
-    grid-template-columns: 1fr;
-    gap: 6px;
-  }
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-pill.is-disabled:hover {
+    color: rgba(247, 233, 215, 0.51);
+    background: none;
 }
 
+.gum.sheet.actor .tab[data-tab="equipment"]
+.encumbrance-pill input:disabled {
+    cursor: not-allowed;
+}
+
+/* =================================================================== */
+/* RESPONSIVIDADE                                                       */
+/* =================================================================== */
+
+@media (max-width: 980px) {
+    .gum.sheet.actor .tab[data-tab="equipment"]
+    .encumbrance-row-top {
+        grid-template-columns:
+            minmax(135px, auto)
+            minmax(190px, 1fr)
+            auto;
+
+        gap: 8px 11px;
+    }
+
+    .gum.sheet.actor .tab[data-tab="equipment"]
+    .encumbrance-inline-state {
+        grid-column: 1 / -1;
+        justify-self: end;
+    }
+}
+
+@media (max-width: 720px) {
+    .gum.sheet.actor .tab[data-tab="equipment"]
+    .encumbrance-inline {
+        padding-inline: 4px;
+    }
+
+    .gum.sheet.actor .tab[data-tab="equipment"]
+    .encumbrance-row-top {
+        grid-template-columns: 1fr auto;
+        gap: 8px 10px;
+    }
+
+    .gum.sheet.actor .tab[data-tab="equipment"]
+    .encumbrance-inline-label {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .gum.sheet.actor .tab[data-tab="equipment"]
+    .encumbrance-inline-value {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .gum.sheet.actor .tab[data-tab="equipment"]
+    .encumbrance-inline-meter {
+        grid-column: 1 / -1;
+        grid-row: 2;
+
+        height: 16px;
+    }
+
+    .gum.sheet.actor .tab[data-tab="equipment"]
+    .encumbrance-inline-state {
+        grid-column: 1 / -1;
+        grid-row: 3;
+
+        justify-self: end;
+    }
+
+    .gum.sheet.actor .tab[data-tab="equipment"]
+    .encumbrance-row-bottom {
+        grid-template-columns: auto auto auto;
+    }
+}
 
 /* --- Colunas Colapsáveis (Details/Summary) --- */
 .gum-details.equipment-column {

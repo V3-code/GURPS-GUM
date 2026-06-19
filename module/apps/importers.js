@@ -329,6 +329,52 @@ function parseCostAdjustmentValue(rawValue) {
     return Number.isFinite(parsed) ? parsed : 0;
 }
 
+
+function formatGCSImportNoteValue(value) {
+    if (!value) return "";
+    if (typeof value === "string") return value.trim();
+    if (Array.isArray(value)) {
+        return value.map(formatGCSImportNoteValue).filter(Boolean).join("\n\n");
+    }
+    if (typeof value === "object") {
+        return String(value.text || value.notes || value.note || value.description || value.value || "").trim();
+    }
+    return String(value || "").trim();
+}
+
+function getGCSItemNotes(gcsNode) {
+    const noteFields = [
+        gcsNode?.notes,
+        gcsNode?.local_notes,
+        gcsNode?.note,
+        gcsNode?.vtt_notes,
+        gcsNode?.vtt_note,
+        gcsNode?.vttNotes,
+        gcsNode?.vttNote
+    ];
+
+    const seen = new Set();
+    return noteFields
+        .map(formatGCSImportNoteValue)
+        .filter(Boolean)
+        .filter(text => {
+            const key = text.toLowerCase();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        })
+        .join("\n\n");
+}
+
+function applyGCSImportedDescriptions(template, notes) {
+    const text = String(notes || "").trim();
+    if (!text) return template;
+
+    template.description = text;
+    template.chat_description = text;
+    return template;
+}
+
 function expandChoiceModifiersAsIndividualRows(row) {
     const modifiers = Array.isArray(row?.modifiers) ? row.modifiers : [];
     if (!modifiers.length) return [row];
@@ -352,8 +398,8 @@ function expandChoiceModifiersAsIndividualRows(row) {
             points: optionPoints
         };
         clone.modifiers = [];
-        if (mod?.local_notes || mod?.notes) {
-            const notes = [clone.local_notes || clone.notes || "", mod.local_notes || mod.notes || ""]
+        if (getGCSItemNotes(mod)) {
+            const notes = [getGCSItemNotes(clone), getGCSItemNotes(mod)]
                 .map(text => String(text || "").trim())
                 .filter(Boolean)
                 .join("\n");
@@ -372,6 +418,11 @@ function isImportableGCSRow(row, hadChildren = false) {
         row.reference ||
         row.notes ||
         row.local_notes ||
+        row.note ||
+        row.vtt_notes ||
+        row.vtt_note ||
+        row.vttNotes ||
+        row.vttNote ||
         row.features ||
         row.cost !== undefined ||
         row.cost_adj !== undefined ||
@@ -775,7 +826,7 @@ function parseGCSLibraryTrait(gcsTrait) {
     template.points = points;
     template.ref = gcsTrait.reference || "";
     template.level = gcsTrait.levels || "";
-    template.description = gcsTrait.notes || gcsTrait.local_notes || ""; 
+    applyGCSImportedDescriptions(template, getGCSItemNotes(gcsTrait));  
 
     if (gcsTrait.modifiers) {
         template.modifiers = {}; 
@@ -787,7 +838,7 @@ function parseGCSLibraryTrait(gcsTrait) {
                 name: gcsMod.name,
                 cost: (gcsMod.cost_adj ?? gcsMod.cost ?? 0).toString(), 
                 ref: gcsMod.reference || "",
-                description: gcsMod.local_notes || gcsMod.notes ||  ""
+                description: getGCSItemNotes(gcsMod)
             };
         }
     }
@@ -871,7 +922,7 @@ function parseGCSLibrarySkill(gcsSkill) {
     template.skill_level = resolvedRelativeLevel;
     template.ref = gcsSkill.reference || "";
     template.group = gcsSkill.specialization || gcsSkill.tags?.[0] || template.group || "";
-    template.description = gcsSkill.notes || "";
+    applyGCSImportedDescriptions(template, getGCSItemNotes(gcsSkill));
     template.difficulty_manual = gcsSkill.difficulty || "";
 
     if (gcsSkill.difficulty) {
@@ -1130,7 +1181,7 @@ function parseGCSLibrarySpell(gcsSpell) {
 
     template.points = gcsSpell.points || 1;
     template.ref = gcsSpell.reference || "";
-    template.description = gcsSpell.notes || "";
+    applyGCSImportedDescriptions(template, getGCSItemNotes(gcsSpell));
     
     template.spell_class = gcsSpell.spell_class || "Regular";
     template.spell_school = gcsSpell.college?.[0] || "Geral"; 
@@ -1211,10 +1262,11 @@ function parseGCSLibraryModifier(gcsMod) {
 
     // O GCS às vezes traz notas locais pedindo preenchimento manual ou explicação do efeito.
     // Vamos usar applied_effect como campo principal curto
-    template.applied_effect = gcsMod.local_notes || "";
+    const notes = getGCSItemNotes(gcsMod);
+    template.applied_effect = notes;
 
     // Se quiser manter também uma descrição mais completa:
-    template.description = gcsMod.local_notes || "";
+    applyGCSImportedDescriptions(template, notes);
 
     return {
         name: gcsMod.name || "Modificador",
@@ -1229,7 +1281,7 @@ function parseGCSLibraryEquipmentModifier(gcsMod) {
     const rawCost = gcsMod.cost || "";
     const rawCostType = gcsMod.cost_type || "";
     const rawRef = gcsMod.reference || "";
-    const rawNotes = gcsMod.local_notes || gcsMod.notes || "";
+    const rawNotes = getGCSItemNotes(gcsMod);
 
     // Interpretação simples e explícita de custo para já mapear para expressão utilizável.
     const rawCostStr = String(rawCost).trim();
@@ -1367,7 +1419,8 @@ function parseGCSLibraryEquipment(gcsEquip) {
     
     template.tech_level = gcsEquip.tech_level || "";
     template.legality_class = gcsEquip.legality_class || "";
-    template.description = gcsEquip.notes || "";
+    const equipmentNotes = getGCSItemNotes(gcsEquip);
+    applyGCSImportedDescriptions(template, equipmentNotes);
     
     if (gcsEquip.weapons?.length > 0) {
         template.melee_attacks = {};
@@ -1379,6 +1432,7 @@ function parseGCSLibraryEquipment(gcsEquip) {
             const defaultSkill = formatGCSDefaultsRollReferenceList(gcsWeapon.defaults) || "DX";
             
             const gcsDamage = parseGCSDamageParts(gcsWeapon.damage);
+            const weaponNotes = getGCSItemNotes(gcsWeapon);
 
             let damageFormula = "";
              const gcsBase = gcsDamage.formula;
@@ -1400,13 +1454,16 @@ function parseGCSLibraryEquipment(gcsEquip) {
             damageFormula = damageFormula.replace("sw", "gdb").replace("thr", "gdp");
             damageFormula = damageFormula.replace(/d(?!b|p|\d)/g, "d6");
 
+            const attackNotes = weaponNotes || equipmentNotes;
             const attackData = {
                 mode: gcsWeapon.usage || "Ataque",
                 skill_name: defaultSkill,
                 damage_formula: damageFormula,
                 damage_type: gcsDamage.type,
                 damage_scaling: gcsDamage.scaling || "",
-                min_strength: gcsWeapon.strength || "0"
+                min_strength: gcsWeapon.strength || "0",
+                description: attackNotes,
+                chat_description: attackNotes
             };
 
             if (gcsWeapon.reach !== undefined || gcsWeapon.parry !== undefined) {
@@ -1705,8 +1762,7 @@ function buildGCSTraitAttackEquipmentItem(gcsTrait) {
     const fallbackName = /^ataques naturais$/i.test(sourceName) ? "Ataques Naturais" : "Natural Attacks";
     const itemName = sourceName || fallbackName;
     const notes = [
-        gcsTrait?.notes,
-        gcsTrait?.local_notes,
+        getGCSItemNotes(gcsTrait),
         `Criado automaticamente a partir da vantagem "${itemName}" do GCS para representar seus modos de ataque.`
     ].filter(Boolean).join("\n\n");
 
@@ -1918,7 +1974,7 @@ async function buildTemplateOptionEntryFromNode(node, parserFn, itemType, path =
         quantity: 1,
         level: "",
         cost: Number(node.calc?.points ?? node.base_points ?? node.points ?? 0) || 0,
-        localNotes: node.local_notes || "",
+        localNotes: getGCSItemNotes(node),
         subBlocks
     };
 }

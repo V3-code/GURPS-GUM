@@ -236,7 +236,8 @@
         "value": 0
       },
       "encumbrance": {
-        "ignore_carried_weight": false
+        "ignore_carried_weight": false,
+        "ignore_equipped_weight": false
       },
       "combat": {
         "body_profile": "humanoid",

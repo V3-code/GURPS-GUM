@@ -1391,9 +1391,11 @@
       <span>Carregado</span>
     </label>
 
-    {{!-- Placeholder visual (você implementa depois) --}}
-    <label class="encumbrance-pill is-disabled" title="(Ainda não implementado)">
-      <input type="checkbox" disabled />
+    {{!-- Ignora o peso dos itens equipados/em uso no cálculo de carga --}}
+    <label class="encumbrance-pill">
+      <input type="checkbox"
+             name="system.encumbrance.ignore_equipped_weight"
+             {{checked actor.system.encumbrance.ignore_equipped_weight}} />
       <span>Em uso</span>
     </label>
   </div>
