@@ -12,6 +12,23 @@ const normalizeLookupKey = (value) => value
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "");
 
+const getActiveEffectChangeType = (operation) => {
+    return operation === "OVERRIDE" ? "override" : "add";
+};
+
+const buildActiveEffectChange = ({ key, operation, value }) => {
+    const change = {
+        key,
+        value
+    };
+    if (CONST.ACTIVE_EFFECT_CHANGE_TYPES) {
+        change.type = getActiveEffectChangeType(operation);
+    } else {
+        change.mode = operation === "OVERRIDE" ? CONST.ACTIVE_EFFECT_MODES.OVERRIDE : CONST.ACTIVE_EFFECT_MODES.ADD;
+    }
+    return change;
+};
+
 const resolveRollBaseValue = (actor, rollAttribute) => {
     if (!actor || !rollAttribute) return null;
     const normalizedKey = normalizeLookupKey(rollAttribute);
@@ -92,6 +109,11 @@ const shouldShowTokenIcon = (effectSystem = {}, duration = {}) => {
     if (policy === "never") return false;
     return !isEffectDurationPermanent(duration);
 };
+
+const getActiveEffectShowIconMode = (effectSystem = {}, duration = {}) => {
+    return shouldShowTokenIcon(effectSystem, duration) ? 2 : 0;
+};
+
 
 const resolveTokenIconImage = (effectItem, effectSystem = {}, duration = {}) => {
     if (!shouldShowTokenIcon(effectSystem, duration)) return null;
@@ -283,6 +305,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
         const activeEffectData = {
             name: effectItem.name,
             img: null,
+            showIcon: 0,
             origin: context.origin ? context.origin.uuid : (context.actor ? context.actor.uuid : null),
             changes: [],
             statuses: [],
@@ -347,16 +370,17 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     const isIconCarrier = shouldShowTokenIcon(effectSystem, gumDuration) && baseIconCarrierIndex === actionIndex;
                     if (isIconCarrier) {
                         activeEffectData.img = resolveTokenIconImage(effectItem, effectSystem, gumDuration);
+                        activeEffectData.showIcon = getActiveEffectShowIconMode(effectSystem, gumDuration);
                     }
 
                     if (action.type === "attribute") {
                         if (!action.path) throw new Error("Ação de atributo sem caminho.");
                         const { value: computedValue, roll, formula } = await evaluateEffectValue(action.value, targetActor);
-                        activeEffectData.changes.push({
+                        activeEffectData.changes.push(buildActiveEffectChange({
                             key: action.path,
-                            mode: action.operation === "OVERRIDE" ? CONST.ACTIVE_EFFECT_MODES.OVERRIDE : CONST.ACTIVE_EFFECT_MODES.ADD,
+                            operation: action.operation,
                             value: computedValue
-                        });
+                        }));
                         if (roll) {
                             await roll.toMessage({
                                 speaker: ChatMessage.getSpeaker({ actor: targetActor }),
@@ -402,6 +426,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     if (action.type === "status" && action.statusId) {
                         const statusEffect = (CONFIG.statusEffects || []).find((status) => status.id === action.statusId);
                         activeEffectData.img = statusEffect?.icon ?? statusEffect?.img ?? activeEffectData.img;
+                        activeEffectData.showIcon = getActiveEffectShowIconMode(effectSystem, gumDuration);
                         activeEffectData.statuses.push(action.statusId);
                         foundry.utils.setProperty(activeEffectData, "flags.core.statusId", action.statusId);
                     }

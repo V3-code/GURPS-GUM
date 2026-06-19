@@ -61,6 +61,10 @@ const shouldShowTokenIconForSystem = (effectSystem = {}, duration = {}) => {
     return !isEffectDurationPermanent(duration);
 };
 
+const getActiveEffectShowIconModeForSystem = (effectSystem = {}, duration = {}) => {
+    return shouldShowTokenIconForSystem(effectSystem, duration) ? 2 : 0;
+};
+
 const resolveTokenIconImageForSystem = (effectItem, effectSystem = {}, duration = {}) => {
     if (!shouldShowTokenIconForSystem(effectSystem, duration)) return null;
     const statusId = effectSystem.type === "status" ? effectSystem.statusId : effectSystem.attachedStatusId;
@@ -245,6 +249,33 @@ _prepareCharacterItems() {
             }
             return normalized;
         };
+        const getEffectChangeType = (change) => {
+            if (change?.type) return change.type;
+            const legacyMode = change?._source?.mode ?? change?.toObject?.()?.mode;
+            if (legacyMode !== undefined) {
+                switch (legacyMode) {
+                    case 5:
+                        return "override";
+                    case 1:
+                        return "multiply";
+                    case 2:
+                        return "add";
+                    default:
+                        return null;
+                }
+            }
+            if (CONST.ACTIVE_EFFECT_CHANGE_TYPES) return null;
+            switch (change?.mode) {
+                case CONST.ACTIVE_EFFECT_MODES?.OVERRIDE:
+                    return "override";
+                case CONST.ACTIVE_EFFECT_MODES?.MULTIPLY:
+                    return "multiply";
+                case CONST.ACTIVE_EFFECT_MODES?.ADD:
+                    return "add";
+                default:
+                    return null;
+            }
+        };
 
         // --- ETAPA 0: RESETAR VALORES ---
 const allAttributes = ['st', 'dx', 'iq', 'ht', 'vont', 'per', 'hp', 'fp', 'mt', 'basic_speed', 'basic_move', 'enhanced_move', 'lifting_st', 'dodge',
@@ -271,12 +302,13 @@ const activeEffects = Array.isArray(this.effects) ? this.effects : Array.from(th
                     value = Number(value);
                 }
                 const currentVal = foundry.utils.getProperty(this, normalizedPath) ?? 0;
-                if (change.mode === CONST.ACTIVE_EFFECT_MODES.OVERRIDE) {
+                const changeType = getEffectChangeType(change);
+                if (changeType === "override") {
                     foundry.utils.setProperty(this, normalizedPath, value);
-                } else if (change.mode === CONST.ACTIVE_EFFECT_MODES.MULTIPLY) {
+                } else if (changeType === "multiply") {
                     const numericValue = Number(value) || 0;
                     foundry.utils.setProperty(this, normalizedPath, currentVal * numericValue);
-                } else if (change.mode === CONST.ACTIVE_EFFECT_MODES.ADD) {
+                } else if (changeType === "add") {
                     const numericValue = Number(value) || 0;
                     foundry.utils.setProperty(this, normalizedPath, currentVal + numericValue);
                 }
@@ -4355,6 +4387,7 @@ const rebalanceEffectCarrier = async (actor, effectUuid) => {
                 const carrierStatusId = `${effectItem.name.slugify({ strict: true })}-carrier`;
                 nextStatuses.push(carrierStatusId);
                 updateData.img = effectItem.img;
+                updateData.showIcon = getActiveEffectShowIconModeForSystem(effectItem.system || {}, carrierDuration);
                 updateData["flags.core.statusId"] = nativeStatuses[0] || carrierStatusId;
             } else {
                 updateData.img = nativeStatuses[0]
@@ -4362,6 +4395,7 @@ const rebalanceEffectCarrier = async (actor, effectUuid) => {
                         || (CONFIG.statusEffects || []).find(status => status.id === nativeStatuses[0])?.img
                         || null)
                     : null;
+                updateData.showIcon = nativeStatuses[0] ? 1 : 0;
                 if (nativeStatuses[0]) updateData["flags.core.statusId"] = nativeStatuses[0];
                 else setCoreStatusIdDeletion(updateData);
             }
