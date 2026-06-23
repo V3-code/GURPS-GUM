@@ -1371,7 +1371,7 @@ try {
         }; 
  
         if (normalized === "TecM") return Math.max(0, rl * 1); 
-        if (normalized === "TecD") return Math.max(0, rl * 2); 
+        if (normalized === "TecD") return rl > 0 ? rl + 1 : 0; 
  
         const table = tables[normalized] || tables["M"]; 
         const keys = Object.keys(table).map(k => parseInt(k)); 

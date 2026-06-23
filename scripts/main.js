@@ -3075,14 +3075,17 @@ $('body').on('click', '.resistance-roll-button', async ev => {
             resultClass = 'crit-failure';
         }
 
-        // Comunica o resultado de volta para a janela de dano
+        // Comunica o resultado de volta para a janela de dano.
+        // Rolagens originadas da janela de dano devem apenas resolver o card;
+        // qualquer botão de aplicação (publicar, fechar ou manter) passa por _onApplyDamage.
+        const shouldAutoApplyResistanceEffect = mode !== "damage";
         if (game.gum.activeDamageApplication) {
             // ✅ CORREÇÃO AQUI: Passamos apenas o 'system' do efeito, que é o que a função espera.
             game.gum.activeDamageApplication.updateEffectCard(effectLinkId, {
                 isSuccess: success,
                 resultText: resultText,
                 shouldApply: shouldApply
-            }, effectItemData.system); // Passamos os dados do sistema como terceiro argumento
+            }, effectItemData.system, { autoApply: mode !== "damage" }); // Passamos os dados do sistema como terceiro argumento
         }
 
         // Aplica o efeito no alvo

@@ -1117,7 +1117,7 @@ export class TemplateItemSheet extends ItemSheet {
         })[difficulty] || difficulty;
 
         if (normalized === "TecM") return "Progressão técnica: +1 ponto por nível";
-        if (normalized === "TecD") return "Progressão técnica: +2 pontos por nível";
+        if (normalized === "TecD") return "Progressão técnica difícil: 2 pontos no primeiro nível, +1 ponto por nível adicional";
 
         const tables = {
             "F": "Tabela Fácil (1, 2, 4, 8, 12, 16...)",
@@ -1145,7 +1145,7 @@ export class TemplateItemSheet extends ItemSheet {
         };
 
         if (normalized === "TecM") return Math.max(0, level * 1);
-        if (normalized === "TecD") return Math.max(0, level * 2);
+        if (normalized === "TecD") return level > 0 ? level + 1 : 0;
 
         const table = tables[normalized] || tables["M"];
         const rl = Number(level) || 0;

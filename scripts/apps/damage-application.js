@@ -800,7 +800,7 @@ async _onNpcResistanceRoll(effectId) {
             const effectTargets = this._resolveEffectTargets();
             for (const effect of this.availableOnDamageEffects || []) {
                 const state = this.effectState[effect.id];
-                if (!state?.checked || !effect.meetsRequirements || !effect.item) continue;
+                if (!state?.checked || !effect.meetsRequirements || !effect.item || state.applied) continue;
 
                 if (effect.activationChance < 100) {
                     const chanceRoll = await (new Roll("1d100")).evaluate({ async: true });

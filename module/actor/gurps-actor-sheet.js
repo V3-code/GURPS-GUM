@@ -6088,7 +6088,7 @@ _calculateRelativeLevelFromPoints(rawDifficulty, points = 0) {
   })[rawDifficulty] || rawDifficulty || "M";
 
   if (normalized === "TecM") return Math.floor(pts);
-  if (normalized === "TecD") return Math.floor(pts / 2);
+  if (normalized === "TecD") return pts >= 2 ? Math.floor(pts - 1) : 0;
 
   const tables = {
     "F": { 0: 1, 1: 2, 2: 4, 3: 8, 4: 12, 5: 16 },
