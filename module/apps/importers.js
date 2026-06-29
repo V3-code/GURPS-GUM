@@ -167,21 +167,51 @@ async function importToCompendium(pack, importEntries) {
         // Pastas de compêndio também respeitam lock; precisamos liberar antes de criar a árvore.
         await pack.configure({ locked: false });
 
-        const folderCache = new Map();
-        for (const entry of importEntries) {
-            const gcsItemData = entry?.itemData;
-            const folderPath = Array.isArray(entry?.folderPath) ? entry.folderPath : [];
-            if (!gcsItemData) continue;
-            let foundryItemData = null;
+const folderCache = new Map();
+let lastGCSBaseSkill = null;
 
-            // Se for genérico (ou pré-formatado), não traduza
-            if (isGenericJson) {
-                foundryItemData = gcsItemData;
-            } 
-            // Caso contrário, traduza
-            else if (itemType === "skill") {
-                foundryItemData = parseGCSLibrarySkill(gcsItemData);
-            } else if (itemType === "advantage" || itemType === "disadvantage") {
+for (const entry of importEntries) {
+    let gcsItemData = entry?.itemData;
+    const folderPath = Array.isArray(entry?.folderPath) ? entry.folderPath : [];
+
+    if (!gcsItemData) continue;
+
+    let foundryItemData = null;
+
+    // Se for genérico ou pré-formatado, não traduz.
+    if (isGenericJson) {
+        foundryItemData = gcsItemData;
+    }
+
+    // Caso contrário, traduz.
+    else if (itemType === "skill") {
+        gcsItemData = resolveGCSImportSkill(
+            gcsItemData,
+            lastGCSBaseSkill
+        );
+
+    foundryItemData =
+        parseGCSLibrarySkill(gcsItemData);
+
+    /*
+    * Garante o nome da perícia-base também quando
+    * uma técnica é importada diretamente para
+    * o compêndio de perícias.
+    */
+    enforceGCSTechniqueBaseOnImportedItem(
+        foundryItemData,
+        gcsItemData
+    );
+
+// Guarda a última perícia normal como possível base
+        // para técnicas que usam marcadores como @perícia@.
+        if (!isGCSTechnique(gcsItemData)) {
+            lastGCSBaseSkill = {
+                name: gcsItemData.name,
+                specialization: gcsItemData.specialization || ""
+            };
+        }
+    } else if (itemType === "advantage" || itemType === "disadvantage") {
                 foundryItemData = parseGCSLibraryTrait(gcsItemData);
             } else if (itemType === "equipment") {
                 foundryItemData = parseGCSLibraryEquipment(gcsItemData);
@@ -910,32 +940,747 @@ function parseAttributeTemplateEntryFromGCSTrait(gcsTrait) {
     };
 }
 
-function parseGCSLibrarySkill(gcsSkill) {
-    let template = getSystemTemplate("Item", "skill");
-    
-    const skillName = gcsSkill.specialization 
-        ? `${gcsSkill.name} (${gcsSkill.specialization})` 
-        : gcsSkill.name;
+/**
+ * Reúne os pré-definidos do GCS.
+ *
+ * Perícias comuns normalmente utilizam "defaults".
+ * Técnicas normalmente utilizam "default", no singular.
+ */
+function getGCSDefaults(gcsSkill) {
+    const defaults = [];
 
-    const resolvedRelativeLevel = extractGCSRelativeLevel(gcsSkill);
-    template.points = Number(gcsSkill.points) || 0;
-    template.skill_level = resolvedRelativeLevel;
-    template.ref = gcsSkill.reference || "";
-    template.group = gcsSkill.specialization || gcsSkill.tags?.[0] || template.group || "";
-    applyGCSImportedDescriptions(template, getGCSItemNotes(gcsSkill));
-    template.difficulty_manual = gcsSkill.difficulty || "";
+    if (
+        gcsSkill?.default &&
+        typeof gcsSkill.default === "object"
+    ) {
+        defaults.push(gcsSkill.default);
+    }
 
-    if (gcsSkill.difficulty) {
-        const parts = gcsSkill.difficulty.toLowerCase().split('/');
-        if (parts.length === 2) {
-            template.base_attribute = parts[0].trim();
-            template.difficulty = normalizeGCSDifficulty(parts[1]);
+    if (Array.isArray(gcsSkill?.defaults)) {
+        defaults.push(...gcsSkill.defaults);
+    }
+
+    return defaults.filter(Boolean);
+}
+
+/**
+ * Identifica se uma entrada de perícia do GCS é uma técnica.
+ *
+ * Perícias comuns:
+ * difficulty: "dx/e", "iq/h", "ht/a" etc.
+ *
+ * Técnicas:
+ * difficulty: "a" ou "h".
+ */
+function isGCSTechnique(gcsSkill) {
+    const difficulty = String(
+        gcsSkill?.difficulty || ""
+    ).trim().toLowerCase();
+
+    if (!difficulty) return false;
+
+    return (
+        !difficulty.includes("/") &&
+        ["a", "h", "e", "vh"].includes(difficulty)
+    );
+}
+
+/**
+ * Preenche o campo da perícia-base da técnica.
+ *
+ * O código procura diferentes nomes possíveis porque o template
+ * do sistema pode ter mudado entre versões.
+ */
+function setGCSImportedTechniqueBaseSkill(template, skillName) {
+    const resolvedName = String(skillName || "").trim();
+
+    if (!resolvedName) return;
+
+    const candidates = [
+        "base_skill",
+        "base_skill_name",
+        "technique_base_skill",
+        "parent_skill",
+        "skill_name"
+    ];
+
+    const existingKey = candidates.find(key =>
+        Object.prototype.hasOwnProperty.call(template, key)
+    );
+
+    template[existingKey || "base_skill"] = resolvedName;
+}
+
+/**
+ * Normaliza o nome de uma chave de substituição do GCS.
+ *
+ * Isso permite reconhecer igualmente:
+ * "perícia", "Perícia", "pericia" etc.
+ */
+function normalizeGCSReplacementKey(value) {
+    return String(value ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim()
+        .toLowerCase();
+}
+
+/**
+ * Aplica os valores do campo "replacements" do GCS.
+ *
+ * Exemplo:
+ *
+ * replacements: {
+ *     "GdB ou GdP": "GdP",
+ *     "perícia": "Faca"
+ * }
+ *
+ * Nome:
+ * Ataque Direcionado (@perícia@/@GdB ou GdP@/Frestas Vitais)
+ *
+ * Resultado:
+ * Ataque Direcionado (Faca/GdP/Frestas Vitais)
+ */
+function applyGCSNamedReplacements(
+    value,
+    replacements = {}
+) {
+    let text = String(value ?? "").trim();
+
+    if (!text || !replacements) {
+        return text;
+    }
+
+    const replacementMap = new Map();
+
+    /*
+     * Formato padrão atual do GCS:
+     *
+     * replacements: {
+     *     "perícia": "Faca"
+     * }
+     */
+    if (
+        typeof replacements === "object" &&
+        !Array.isArray(replacements)
+    ) {
+        for (const [
+            rawKey,
+            rawValue
+        ] of Object.entries(replacements)) {
+            const key =
+                normalizeGCSReplacementKey(rawKey);
+
+            const value =
+                typeof rawValue === "object"
+                    ? String(
+                        rawValue?.value ??
+                        rawValue?.replacement ??
+                        rawValue?.text ??
+                        rawValue?.name ??
+                        ""
+                    ).trim()
+                    : String(rawValue ?? "").trim();
+
+            if (key && value) {
+                replacementMap.set(key, value);
+            }
         }
     }
-    
-    mapGCSDefaultsToPredefined(template, gcsSkill.defaults);
 
-return applyAutoPointsBaselineOnImport({
+    /*
+     * Compatibilidade defensiva com uma possível lista:
+     *
+     * replacements: [
+     *     { key: "perícia", value: "Faca" }
+     * ]
+     */
+    if (Array.isArray(replacements)) {
+        for (const entry of replacements) {
+            const rawKey =
+                entry?.key ??
+                entry?.placeholder ??
+                entry?.name ??
+                "";
+
+            const rawValue =
+                entry?.value ??
+                entry?.replacement ??
+                entry?.text ??
+                "";
+
+            const key =
+                normalizeGCSReplacementKey(rawKey);
+
+            const replacement =
+                String(rawValue ?? "").trim();
+
+            if (key && replacement) {
+                replacementMap.set(
+                    key,
+                    replacement
+                );
+            }
+        }
+    }
+
+    if (!replacementMap.size) {
+        return text;
+    }
+
+    /*
+     * Procura qualquer trecho entre arrobas:
+     *
+     * @perícia@
+     * @GdB ou GdP@
+     * @especialização@
+     */
+    return text.replace(
+        /@([^@]+)@/gu,
+        (fullMatch, placeholderName) => {
+            const key =
+                normalizeGCSReplacementKey(
+                    placeholderName
+                );
+
+            return replacementMap.has(key)
+                ? replacementMap.get(key)
+                : fullMatch;
+        }
+    );
+}
+
+/**
+ * Substitui marcadores de perícia, especialização
+ * e valores registrados no campo replacements do GCS.
+ */
+function replaceGCSSkillPlaceholders(
+    value,
+    {
+        baseSkill = "",
+        specialization = "",
+        replacements = {}
+    } = {}
+) {
+    /*
+     * Primeiro usa as substituições específicas gravadas
+     * no próprio item do GCS.
+     */
+    let text = applyGCSNamedReplacements(
+        value,
+        replacements
+    );
+
+    if (!text) return "";
+
+    const resolvedBaseSkill = String(
+        baseSkill || ""
+    ).trim();
+
+    const resolvedSpecialization = String(
+        specialization || ""
+    ).trim();
+
+    /*
+     * Fallback para arquivos que usam marcadores, mas não
+     * registram o campo replacements.
+     */
+    if (resolvedBaseSkill) {
+        text = text.replace(
+            /@(?:perícia|pericia|skill)@/giu,
+            resolvedBaseSkill
+        );
+    }
+
+    if (resolvedSpecialization) {
+        text = text.replace(
+            /@(?:especialização|especializacao|specialization)@/giu,
+            resolvedSpecialization
+        );
+    }
+
+    return text
+        .replace(/\(\s*\)/g, "")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+}
+
+/**
+ * Normaliza uma perícia ou técnica recebida do GCS.
+ *
+ * Também usa a perícia anterior como contexto quando o GCS
+ * deixa o nome-base representado apenas por @perícia@.
+ */
+function resolveGCSImportSkill(
+    gcsSkill,
+    contextBaseSkill = null
+) {
+    const clone =
+        foundry.utils.deepClone(
+            gcsSkill || {}
+        );
+
+    const technique =
+        isGCSTechnique(clone);
+
+    const defaults =
+        getGCSDefaults(clone);
+
+    const replacements =
+        clone.replacements || {};
+
+    const primaryDefault =
+        defaults.find(entry =>
+            String(entry?.type || "")
+                .trim()
+                .toLowerCase() === "skill"
+        ) ||
+        defaults[0] ||
+        null;
+
+    /*
+     * Aplica replacements antes de decidir qual é
+     * a perícia-base.
+     *
+     * @perícia@ passa a ser "Faca", por exemplo.
+     */
+    const defaultNameRaw =
+        applyGCSNamedReplacements(
+            primaryDefault?.name || "",
+            replacements
+        ).trim();
+
+    const defaultIsPlaceholder =
+        /@(?:perícia|pericia|skill)@/iu
+            .test(defaultNameRaw);
+
+    const contextName = String(
+        contextBaseSkill?.name ||
+        contextBaseSkill ||
+        ""
+    ).trim();
+
+    const contextSpecialization = String(
+        contextBaseSkill?.specialization || ""
+    ).trim();
+
+    const baseSkill =
+        defaultNameRaw &&
+        !defaultIsPlaceholder
+            ? defaultNameRaw
+            : contextName;
+
+    const rawSpecialization = String(
+        clone.specialization ||
+        primaryDefault?.specialization ||
+        contextSpecialization ||
+        ""
+    ).trim();
+
+    const specialization =
+        applyGCSNamedReplacements(
+            rawSpecialization,
+            replacements
+        ).trim();
+
+    /*
+     * Resolve o nome completo do item.
+     *
+     * Exemplo:
+     *
+     * Ataque Direcionado
+     * (@perícia@/@GdB ou GdP@/Frestas Vitais)
+     *
+     * torna-se:
+     *
+     * Ataque Direcionado
+     * (Faca/GdP/Frestas Vitais)
+     */
+    clone.name =
+        replaceGCSSkillPlaceholders(
+            clone.name,
+            {
+                baseSkill,
+                specialization,
+                replacements
+            }
+        );
+
+    if (clone.specialization) {
+        clone.specialization =
+            replaceGCSSkillPlaceholders(
+                clone.specialization,
+                {
+                    baseSkill,
+                    specialization,
+                    replacements
+                }
+            );
+    }
+
+    /*
+     * Resolve também os nomes dos pré-definidos.
+     */
+    for (const entry of defaults) {
+        if (
+            !entry ||
+            typeof entry !== "object"
+        ) {
+            continue;
+        }
+
+        entry.name =
+            replaceGCSSkillPlaceholders(
+                entry.name,
+                {
+                    baseSkill,
+                    specialization,
+                    replacements
+                }
+            );
+
+        if (entry.specialization) {
+            entry.specialization =
+                replaceGCSSkillPlaceholders(
+                    entry.specialization,
+                    {
+                        baseSkill,
+                        specialization,
+                        replacements
+                    }
+                );
+        }
+    }
+
+    if (
+        clone.default &&
+        defaults.length
+    ) {
+        clone.default =
+            defaults[0];
+    }
+
+    if (Array.isArray(clone.defaults)) {
+        clone.defaults =
+            defaults.slice(
+                clone.default ? 1 : 0
+            );
+    }
+
+    clone._gumTechniqueImport = {
+        isTechnique: technique,
+        baseSkill,
+        specialization
+    };
+
+    return clone;
+}
+
+/**
+ * Obtém os dados definitivos da perícia-base de uma técnica do GCS.
+ *
+ * Exemplo do GCS:
+ *
+ * default: {
+ *     type: "skill",
+ *     name: "Faca",
+ *     specialization: "",
+ *     modifier: -4
+ * }
+ */
+function getGCSTechniqueBaseImportData(gcsSkill) {
+    if (!isGCSTechnique(gcsSkill)) return null;
+
+    const defaults = getGCSDefaults(gcsSkill);
+
+    const skillDefault =
+        defaults.find(entry =>
+            String(entry?.type || "")
+                .trim()
+                .toLowerCase() === "skill"
+        ) ||
+        defaults[0] ||
+        null;
+
+    const importInfo =
+        gcsSkill?._gumTechniqueImport || {};
+
+    let baseSkillName = String(
+        skillDefault?.name ||
+        importInfo.baseSkill ||
+        ""
+    ).trim();
+
+    // Caso ainda exista um marcador como @perícia@,
+    // usa o nome já resolvido durante a importação.
+    if (
+        /@(?:perícia|pericia|skill)@/iu.test(
+            baseSkillName
+        )
+    ) {
+        baseSkillName = String(
+            importInfo.baseSkill || ""
+        ).trim();
+    }
+
+    const baseSpecialization = String(
+        skillDefault?.specialization || ""
+    ).trim();
+
+    // Monta, por exemplo:
+    // Arma de Arremesso (Faca)
+    if (
+        baseSkillName &&
+        baseSpecialization &&
+        !baseSkillName.toLowerCase().endsWith(
+            `(${baseSpecialization.toLowerCase()})`
+        )
+    ) {
+        baseSkillName =
+            `${baseSkillName} (${baseSpecialization})`;
+    }
+
+    const parsedModifier = Number(
+        skillDefault?.modifier ?? 0
+    );
+
+    return {
+        baseSkillName,
+
+        modifier:
+            Number.isFinite(parsedModifier)
+                ? parsedModifier
+                : 0
+    };
+}
+
+/**
+ * Reaplica os dados da técnica sobre o item final.
+ *
+ * Esta função é executada depois da importação híbrida,
+ * impedindo que uma versão antiga do item restaure
+ * "skill" no lugar do nome real da perícia-base.
+ */
+function enforceGCSTechniqueBaseOnImportedItem(
+    itemData,
+    gcsSkill
+) {
+    if (
+        !itemData ||
+        itemData.type !== "skill"
+    ) {
+        return itemData;
+    }
+
+    const techniqueBase =
+        getGCSTechniqueBaseImportData(gcsSkill);
+
+    if (!techniqueBase?.baseSkillName) {
+        return itemData;
+    }
+
+    itemData.system =
+        itemData.system || {};
+
+    itemData.system.base_attribute =
+        techniqueBase.baseSkillName;
+
+    itemData.system.nh_mod =
+        techniqueBase.modifier;
+
+    /*
+    * Reaplica também o nível adquirido da técnica,
+    * impedindo que uma versão antiga do compêndio
+    * restaure o calc.rsl final diretamente.
+    */
+    itemData.system.skill_level =
+        extractGCSTechniqueImprovementLevel(
+            gcsSkill
+        );
+
+    return itemData;
+}
+
+function parseGCSLibrarySkill(gcsSkill) {
+    const resolvedSkill = resolveGCSImportSkill(gcsSkill);
+    let template = getSystemTemplate("Item", "skill");
+
+    const importInfo =
+        resolvedSkill._gumTechniqueImport || {};
+
+    const isTechnique = Boolean(
+        importInfo.isTechnique
+    );
+
+    const specialization = String(
+        resolvedSkill.specialization ||
+        importInfo.specialization ||
+        ""
+    ).trim();
+
+    const rawName = String(
+        resolvedSkill.name || "Perícia"
+    ).trim();
+
+    // Impede que o nome fique, por exemplo:
+    // "Arma de Arremesso (Faca) (Faca)".
+    const alreadyHasSpecialization =
+        specialization &&
+        rawName.toLowerCase().endsWith(
+            `(${specialization.toLowerCase()})`
+        );
+
+    const skillName =
+        specialization && !alreadyHasSpecialization
+            ? `${rawName} (${specialization})`
+            : rawName;
+
+    const resolvedRelativeLevel =
+    isTechnique
+        ? extractGCSTechniqueImprovementLevel(
+            resolvedSkill
+        )
+        : extractGCSRelativeLevel(
+            resolvedSkill
+        );
+
+    template.points =
+        Number(resolvedSkill.points) || 0;
+
+    template.skill_level =
+        resolvedRelativeLevel;
+
+    template.ref =
+        resolvedSkill.reference || "";
+
+    template.group =
+        specialization ||
+        resolvedSkill.tags?.[0] ||
+        template.group ||
+        "";
+
+    applyGCSImportedDescriptions(
+        template,
+        getGCSItemNotes(resolvedSkill)
+    );
+
+    template.difficulty_manual =
+        resolvedSkill.difficulty || "";
+
+// Técnicas usam uma perícia como base.
+if (isTechnique) {
+    const rawDifficulty = String(
+        resolvedSkill.difficulty || "h"
+    ).trim().toLowerCase();
+
+    /*
+     * Técnicas do GCS normalmente armazenam sua perícia-base
+     * no campo "default", no formato:
+     *
+     * default: {
+     *     type: "skill",
+     *     name: "Faca",
+     *     specialization: "",
+     *     modifier: -4
+     * }
+     */
+    const techniqueDefaults = getGCSDefaults(resolvedSkill);
+
+    const techniqueBaseDefault =
+        techniqueDefaults.find(gcsDefault =>
+            String(gcsDefault?.type || "")
+                .trim()
+                .toLowerCase() === "skill"
+        ) ||
+        techniqueDefaults[0] ||
+        null;
+
+    const rawBaseSkillName = String(
+        techniqueBaseDefault?.name ||
+        importInfo.baseSkill ||
+        ""
+    ).trim();
+
+    const baseSkillSpecialization = String(
+        techniqueBaseDefault?.specialization || ""
+    ).trim();
+
+    /*
+     * Caso a perícia-base também tenha especialização,
+     * monta o nome no formato esperado pelo sistema:
+     *
+     * Arma de Arremesso (Faca)
+     */
+    const alreadyHasSpecialization =
+        baseSkillSpecialization &&
+        rawBaseSkillName.toLowerCase().endsWith(
+            `(${baseSkillSpecialization.toLowerCase()})`
+        );
+
+    const resolvedBaseSkillName =
+        baseSkillSpecialization &&
+        !alreadyHasSpecialization
+            ? `${rawBaseSkillName} (${baseSkillSpecialization})`
+            : rawBaseSkillName;
+
+    const rawBaseModifier =
+        techniqueBaseDefault?.modifier;
+
+    const parsedBaseModifier =
+        Number(rawBaseModifier);
+
+    /*
+     * IMPORTANTE:
+     *
+     * system.base_attribute guarda diretamente o nome da
+     * perícia-base. Não deve receber a palavra "skill".
+     *
+     * A própria ficha reconhece esse texto como uma perícia
+     * e seleciona automaticamente "Perícia" no seletor.
+     */
+    template.base_attribute =
+        resolvedBaseSkillName;
+
+    /*
+     * O modificador informado no default da técnica do GCS
+     * vai para o campo "Modificador Base" do GUM.
+     */
+    template.nh_mod =
+        Number.isFinite(parsedBaseModifier)
+            ? parsedBaseModifier
+            : 0;
+
+    // Técnica média ou técnica difícil.
+    template.difficulty =
+        rawDifficulty === "a"
+            ? "TecM"
+            : "TecD";
+}
+
+    // Perícias normais continuam usando atributo/dificuldade.
+    else if (resolvedSkill.difficulty) {
+        const parts = String(
+            resolvedSkill.difficulty
+        ).toLowerCase().split("/");
+
+        if (parts.length === 2) {
+            template.base_attribute =
+                parts[0].trim();
+
+            template.difficulty =
+                normalizeGCSDifficulty(parts[1]);
+        }
+    }
+
+    // Agora considera tanto "default" quanto "defaults".
+    mapGCSDefaultsToPredefined(
+        template,
+        getGCSDefaults(resolvedSkill)
+    );
+
+    delete resolvedSkill._gumTechniqueImport;
+
+    return applyAutoPointsBaselineOnImport({
         name: skillName,
         type: "skill",
         system: template
@@ -978,6 +1723,124 @@ function extractGCSRelativeLevel(gcsNode) {
 
     return 0;
 }
+
+/**
+ * Converte o nível relativo final de uma técnica no GCS
+ * para o nível de aprimoramento utilizado pelo GUM.
+ *
+ * No GCS:
+ *   perícia-base 17
+ *   modificador do pré-definido -4
+ *   nível final da técnica 16
+ *   calc.rsl = -1
+ *
+ * No GUM:
+ *   base_attribute = "Faca"
+ *   nh_mod = -4
+ *   skill_level = 3
+ *
+ * Resultado:
+ *   17 - 4 + 3 = 16
+ */
+function extractGCSTechniqueImprovementLevel(gcsSkill) {
+    const defaults = getGCSDefaults(gcsSkill);
+
+    const techniqueBaseDefault =
+        defaults.find(gcsDefault =>
+            String(gcsDefault?.type || "")
+                .trim()
+                .toLowerCase() === "skill"
+        ) ||
+        defaults[0] ||
+        null;
+
+    const parsedDefaultModifier = Number(
+        techniqueBaseDefault?.modifier ?? 0
+    );
+
+    const defaultModifier =
+        Number.isFinite(parsedDefaultModifier)
+            ? parsedDefaultModifier
+            : 0;
+
+    /*
+     * Verifica se o GCS realmente forneceu um nível relativo.
+     * Isso é necessário porque extractGCSRelativeLevel()
+     * devolve 0 também quando não encontra nenhum valor.
+     */
+    const relativeCandidates = [
+        gcsSkill?.relative_level,
+        gcsSkill?.levels,
+        gcsSkill?.calc?.relative_level,
+        gcsSkill?.calc?.rsl,
+        gcsSkill?.calc?.relative
+    ];
+
+    const hasExplicitRelativeLevel =
+        relativeCandidates.some(candidate => {
+            if (
+                candidate === null ||
+                candidate === undefined
+            ) {
+                return false;
+            }
+
+            if (
+                typeof candidate === "number"
+            ) {
+                return Number.isFinite(candidate);
+            }
+
+            return String(candidate).trim() !== "";
+        });
+
+    if (hasExplicitRelativeLevel) {
+        const finalRelativeLevel =
+            extractGCSRelativeLevel(gcsSkill);
+
+        /*
+         * O GCS fornece o resultado final em relação
+         * à perícia-base.
+         *
+         * O GUM já aplica nh_mod separadamente, então
+         * precisamos retirar o modificador-base:
+         *
+         * -1 - (-4) = 3
+         */
+        return Math.max(
+            0,
+            finalRelativeLevel - defaultModifier
+        );
+    }
+
+    /*
+     * Fallback para arquivos antigos do GCS que não tragam
+     * calc.rsl. Nesse caso, recuperamos o aprimoramento
+     * por meio dos pontos investidos.
+     */
+    const points = Number(
+        gcsSkill?.points ??
+        gcsSkill?.calc?.points ??
+        0
+    ) || 0;
+
+    const difficulty = String(
+        gcsSkill?.difficulty || ""
+    ).trim().toLowerCase();
+
+    // Técnica Média: 1 ponto por nível comprado.
+    if (difficulty === "a") {
+        return Math.max(0, points);
+    }
+
+    /*
+     * Técnica Difícil:
+     * o primeiro ponto mantém a técnica no nível inicial;
+     * cada ponto seguinte representa +1.
+     */
+    return Math.max(0, points - 1);
+}
+
 
 function calculateAutoSkillPointsForImport(rawDifficulty, relativeLevel = 0) {
     const rl = parseInt(relativeLevel, 10) || 0;
@@ -1104,6 +1967,73 @@ function mapGCSDefaultsToPredefined(template, defaults) {
         template.predefined[slotKey] = normalizedDefault;
         slotIndex += 1;
     }
+}
+
+/**
+ * Reaplica os pré-definidos do GCS sobre o item final
+ * criado durante a importação de uma ficha de personagem.
+ *
+ * Isso é necessário porque a importação de personagem pode
+ * mesclar o item traduzido com uma versão existente no mundo
+ * ou em um compêndio.
+ */
+function applyGCSDefaultsToImportedCharacterSkill(
+    itemData,
+    gcsSkill
+) {
+    if (
+        !itemData ||
+        itemData.type !== "skill"
+    ) {
+        return itemData;
+    }
+
+    const defaults =
+        getGCSDefaults(gcsSkill);
+
+    /*
+     * Se o GCS não informou nenhum pré-definido,
+     * preservamos os dados existentes no item.
+     */
+    if (!defaults.length) {
+        return itemData;
+    }
+
+    itemData.system =
+        itemData.system || {};
+
+    /*
+     * Cria uma estrutura limpa com os seis campos usados
+     * pelo sistema. Isso evita que pré-definidos antigos
+     * de um item do compêndio permaneçam após a mesclagem.
+     */
+    const predefined = {};
+
+    for (let index = 1; index <= 6; index++) {
+        predefined[`slot${index}`] = {
+            name: "",
+            specialization: "",
+            modifier: 0
+        };
+    }
+
+    itemData.system.predefined =
+        predefined;
+
+    /*
+     * Usa a função já existente para normalizar:
+     *
+     * - atributos, como DX, IQ e HT;
+     * - nomes de perícias;
+     * - especializações;
+     * - modificadores.
+     */
+    mapGCSDefaultsToPredefined(
+        itemData.system,
+        defaults
+    );
+
+    return itemData;
 }
 
 function normalizeGCSDefault(gcsDefault) {
@@ -1681,32 +2611,105 @@ function mergeHybridImportedData(sourceItem, parsedItem, { gcsNode = null, mode 
     return applyAutoPointsBaselineOnImport(merged);
 }
 
-async function buildHybridActorItemFromGCS(gcsNode, parserFn) {
-    if (!gcsNode || typeof parserFn !== "function") return null;
-
-    const parsedItem = parserFn(gcsNode);
-    if (!parsedItem) return null;
-
-    const { item: sourceItem, matchedBy } = await resolveHybridSourceItem({ gcsNode, parsedItem });
-    if (!sourceItem) {
-        const fallback = foundry.utils.deepClone(parsedItem);
-        fallback.flags = foundry.utils.mergeObject(fallback.flags || {}, {
-            gum: {
-                hybridImport: {
-                    mode: "character",
-                    sourceUuid: null,
-                    sourceId: null,
-                    matchedBy: null,
-                    gcsId: gcsNode?.id || null,
-                    importedAt: new Date().toISOString()
-                }
-            }
-        }, { inplace: false, overwrite: true });
-        return applyAutoPointsBaselineOnImport(fallback);
+async function buildHybridActorItemFromGCS(
+    gcsNode,
+    parserFn
+) {
+    if (
+        !gcsNode ||
+        typeof parserFn !== "function"
+    ) {
+        return null;
     }
 
-    const merged = mergeHybridImportedData(sourceItem, parsedItem, { gcsNode, mode: "character" });
-    merged.flags.gum.hybridImport.matchedBy = matchedBy;
+    const parsedItem =
+        parserFn(gcsNode);
+
+    if (!parsedItem) return null;
+
+    const {
+        item: sourceItem,
+        matchedBy
+    } = await resolveHybridSourceItem({
+        gcsNode,
+        parsedItem
+    });
+
+    /*
+     * Nenhum item correspondente encontrado:
+     * utiliza diretamente o item traduzido do GCS.
+     */
+    if (!sourceItem) {
+        const fallback =
+            foundry.utils.deepClone(parsedItem);
+
+        fallback.flags =
+            foundry.utils.mergeObject(
+                fallback.flags || {},
+                {
+                    gum: {
+                        hybridImport: {
+                            mode: "character",
+                            sourceUuid: null,
+                            sourceId: null,
+                            matchedBy: null,
+                            gcsId:
+                                gcsNode?.id || null,
+                            importedAt:
+                                new Date().toISOString()
+                        }
+                    }
+                },
+                {
+                    inplace: false,
+                    overwrite: true
+                }
+            );
+
+        /*
+         * Garante que uma técnica receba o nome da
+         * perícia-base e o modificador do GCS.
+         */
+        enforceGCSTechniqueBaseOnImportedItem(
+            fallback,
+            gcsNode
+        );
+
+        return applyAutoPointsBaselineOnImport(
+            fallback
+        );
+    }
+
+    /*
+     * Um item equivalente foi encontrado no mundo
+     * ou em um compêndio.
+     */
+    const merged =
+        mergeHybridImportedData(
+            sourceItem,
+            parsedItem,
+            {
+                gcsNode,
+                mode: "character"
+            }
+        );
+
+    merged.flags.gum.hybridImport.matchedBy =
+        matchedBy;
+
+    /*
+     * IMPORTANTE:
+     *
+     * Depois da mesclagem, reaplica os dados vindos
+     * diretamente do GCS. Assim, uma versão antiga
+     * de Fintar com base_attribute = "skill" não
+     * consegue sobrescrever "Faca".
+     */
+    enforceGCSTechniqueBaseOnImportedItem(
+        merged,
+        gcsNode
+    );
+
     return merged;
 }
 
@@ -2362,18 +3365,67 @@ async function parseGCSCharacter(gcsData) {
         }
     }
 
-    // =============================================================
-    // MAPEAMENTO DE PERÍCIAS
-    // =============================================================
-    ui.notifications.info("Mapeando Perícias...");
-    const skillEntries = collectGCSCharacterLeafEntries(gcsData.skills || []);
-    for (const { node: gcsSkill, path } of skillEntries) {
-        const item = await buildHybridActorItemFromGCS(gcsSkill, parseGCSLibrarySkill);
-        if (item) {
-            applyGCSContainerPathMetadata(item, path, { groupFromPath: true });
-            itemsToCreate.push(item);
-        }
+// =============================================================
+// MAPEAMENTO DE PERÍCIAS E TÉCNICAS
+// =============================================================
+ui.notifications.info("Mapeando Perícias...");
+
+const skillEntries = collectGCSCharacterLeafEntries(
+    gcsData.skills || []
+);
+
+// Guarda a última perícia normal encontrada.
+// Isso permite resolver técnicas que chegam do GCS
+// com nomes como @perícia@ ou @especialização@.
+let lastGCSBaseSkill = null;
+
+for (const {
+    node: rawGCSSkill,
+    path
+} of skillEntries) {
+    const gcsSkill = resolveGCSImportSkill(
+        rawGCSSkill,
+        lastGCSBaseSkill
+    );
+
+    const item = await buildHybridActorItemFromGCS(
+        gcsSkill,
+        parseGCSLibrarySkill
+    );
+
+    if (item) {
+        /*
+        * Reaplica os pré-definidos depois da importação híbrida.
+        *
+        * Nesse ponto, "item" já é o resultado definitivo da
+        * tradução e da eventual mesclagem com o compêndio.
+        */
+        applyGCSDefaultsToImportedCharacterSkill(
+            item,
+            gcsSkill
+        );
+
+        applyGCSContainerPathMetadata(
+            item,
+            path,
+            {
+                groupFromPath: true
+            }
+        );
+
+        itemsToCreate.push(item);
     }
+
+    // Técnicas não substituem o contexto.
+    // Somente uma perícia normal passa a ser a nova base.
+    if (!isGCSTechnique(gcsSkill)) {
+        lastGCSBaseSkill = {
+            name: gcsSkill.name,
+            specialization:
+                gcsSkill.specialization || ""
+        };
+    }
+}
 
     // =============================================================
     // MAPEAMENTO DE EQUIPAMENTOS (Armas e Armaduras)
