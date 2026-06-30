@@ -120,6 +120,27 @@ const resolveTokenIconImage = (effectItem, effectSystem = {}, duration = {}) => 
     return effectItem?.img ?? null;
 };
 
+
+const applyFoundryRollModePrivacy = (chatData, rollMode = game?.settings?.get?.("core", "rollMode")) => {
+    const mode = rollMode || "publicroll";
+    if (mode === "gmroll") {
+        chatData.whisper = ChatMessage.getWhisperRecipients("GM");
+    } else if (mode === "blindroll") {
+        chatData.whisper = ChatMessage.getWhisperRecipients("GM");
+        chatData.blind = true;
+    } else if (mode === "selfroll") {
+        chatData.whisper = [game.user.id];
+    }
+    return chatData;
+};
+
+const escapeHtml = (value) => String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
 const DEFAULT_EFFECT_ACTION = {
     label: "",
     type: "attribute",
@@ -446,22 +467,36 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
 
                 if (action.confirm_prompt) {
                     const confirmed = await Dialog.confirm({
-                        title: "Confirmar Ação",
-                        content: `<p>Deseja aplicar o efeito "${effectItem.name}"?</p>`,
+                        title: "Confirmar Alteração de Recurso",
+                        content: `<div class="gum-resource-change-dialog__content"><p>Deseja aplicar o efeito <strong>"${escapeHtml(effectItem.name)}"</strong>?</p></div>`,
                         yes: () => true,
                         no: () => false,
-                        defaultYes: true
+                        defaultYes: true,
+                        options: {
+                            classes: ["dialog", "gum", "gum-dialog", "gum-resource-change-dialog"]
+                        }
                     });
                     if (!confirmed) continue;
                 }
                 if (action.variable_value) {
                     const newAmount = await new Promise(resolve => {
                         new Dialog({
-                            title: "Definir Valor",
-                            content: `<p>Qual o valor para "${effectItem.name}"?</p><input type="text" name="amount" value="${valueToChange}"/>`,
-                            buttons: { apply: { label: "Aplicar", callback: (html) => resolve(html.find('input[name=\"amount\"]').val()) } },
+                            title: "Definir Alteração de Recurso",
+                            content: `
+                                <div class="gum-resource-change-dialog__content">
+                                    <p class="gum-resource-change-dialog__prompt">Qual o valor para <strong>"${escapeHtml(effectItem.name)}"</strong>?</p>
+                                    <div class="gum-resource-change-dialog__field">
+                                        <label for="gum-resource-change-amount">Valor</label>
+                                        <input id="gum-resource-change-amount" type="text" name="amount" value="${escapeHtml(valueToChange)}" autocomplete="off"/>
+                                    </div>
+                                </div>
+                            `,
+                            buttons: { apply: { icon: '<i class="fas fa-check"></i>', label: "Aplicar", callback: (html) => resolve(html.find('input[name=\"amount\"]').val()) } },
                             default: "apply",
                             close: () => resolve(null)
+                        }, {
+                            classes: ["dialog", "gum", "gum-dialog", "gum-resource-change-dialog"],
+                            width: 380
                         }).render(true);
                     });
                     if (newAmount === null) continue;
@@ -508,10 +543,11 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                         await targetActor.update({ [updatePath]: currentValue + finalValue });
                     }
                     if (action.chat_notice) {
-                        ChatMessage.create({
+                        const chatData = applyFoundryRollModePrivacy({
                             speaker: ChatMessage.getSpeaker({ actor: targetActor }),
-                            content: `<strong>${effectItem.name}:</strong> ${finalValue >= 0 ? "+" : ""}${finalValue} aplicado em ${action.name || action.category}.`
+                            content: `<strong>${escapeHtml(effectItem.name)}:</strong> ${finalValue >= 0 ? "+" : ""}${finalValue} aplicado em ${escapeHtml(action.name || action.category)}.`
                         });
+                        ChatMessage.create(chatData);
                     }
                 }
                 continue;

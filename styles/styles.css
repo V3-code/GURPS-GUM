@@ -4641,20 +4641,7 @@ background-color: var(--gum-accent-gold);
     padding: 0; /* Remove padding extra do container */
 }
 
-/* Linha Individual de Ataque */
-.gum.sheet.actor .attack-row {
-    display: grid; /* Mudança para Grid para melhor alinhamento */
-    grid-template-columns: 24px 1fr; /* Ícone | Info */
-    gap: 12px;
-    padding: 10px 12px;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
-    align-items: start; /* Alinha no topo para casos de texto longo */
-    transition: background 0.1s;
-}
-.gum.sheet.actor .attack-row:last-child { border-bottom: none; }
-.gum.sheet.actor .attack-row:hover {
-    background: rgba(0,0,0,0.02); /* Highlight sutil ao passar o mouse */
-}
+
 
 /* Ícone do Tipo (Espada/Alvo) */
 .gum.sheet.actor .attack-icon {
@@ -6997,4 +6984,102 @@ background-color: var(--gum-accent-gold);
 .container-section .container-children-list .equipment-card {
   width: calc(50% - 8px);
   min-width: 280px;
+}
+
+/* =================================================================== */
+/* Dialog: Alteração de Recurso de Efeito                              */
+/* =================================================================== */
+.app.window-app.dialog.gum-resource-change-dialog {
+    border: 1px solid rgba(197, 160, 91, 0.38);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+}
+
+.app.window-app.dialog.gum-resource-change-dialog .window-header {
+    border-bottom: 1px solid rgba(197, 160, 91, 0.24);
+    background: linear-gradient(135deg, rgba(25, 24, 19, 0.98), rgba(52, 22, 27, 0.94));
+    color: var(--gum-text-claro);
+}
+
+.app.window-app.dialog.gum-resource-change-dialog .window-title {
+    color: var(--gum-accent-gold);
+    font-family: var(--gum-font-condensed);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.app.window-app.dialog.gum-resource-change-dialog .window-content {
+    padding: 14px;
+    background: linear-gradient(160deg, rgba(30, 29, 27, 0.98), rgba(18, 18, 16, 0.98));
+    color: var(--gum-text-claro);
+}
+
+.gum-resource-change-dialog__content {
+    display: grid;
+    gap: 12px;
+}
+
+.gum-resource-change-dialog__prompt,
+.gum-resource-change-dialog__content p {
+    margin: 0;
+    color: rgba(243, 234, 220, 0.9);
+    line-height: 1.45;
+    text-align: center;
+}
+
+.gum-resource-change-dialog__content strong {
+    color: var(--gum-accent-gold);
+    font-weight: 700;
+}
+
+.gum-resource-change-dialog__field {
+    display: grid;
+    gap: 6px;
+    justify-content: center;
+}
+
+.gum-resource-change-dialog__field label {
+    color: var(--gum-text-label);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.app.window-app.dialog.gum-resource-change-dialog input[name="amount"] {
+    height: 34px;
+    color: var(--gum-text-claro);
+    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid rgba(197, 160, 91, 0.34);
+    border-radius: 7px;
+    padding: 6px 9px;
+    text-align: center;
+}
+
+.app.window-app.dialog.gum-resource-change-dialog input[name="amount"]:focus {
+    color: var(--gum-text-claro);
+    border-color: rgba(197, 160, 91, 0.78);
+    box-shadow: 0 0 0 2px rgba(197, 160, 91, 0.14);
+}
+
+.app.window-app.dialog.gum-resource-change-dialog .dialog-buttons {
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.app.window-app.dialog.gum-resource-change-dialog .dialog-button {
+    height: 34px;
+    border: 1px solid rgba(197, 160, 91, 0.45);
+    border-radius: 8px;
+    background: linear-gradient(180deg, rgba(74, 61, 42, 0.94), rgba(39, 35, 29, 0.98));
+    color: var(--gum-text-claro);
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+.app.window-app.dialog.gum-resource-change-dialog .dialog-button:hover {
+    border-color: rgba(197, 160, 91, 0.78);
+    box-shadow: 0 0 10px rgba(197, 160, 91, 0.16);
 }
