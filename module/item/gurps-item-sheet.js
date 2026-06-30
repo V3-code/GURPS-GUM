@@ -485,7 +485,10 @@ _promptMultipleReferences(parsedList) {
         // 3. CUSTO DE VANTAGENS 
         // ======================================================= 
         if (['advantage', 'disadvantage', 'power'].includes(this.item.type)) { 
-            const basePoints = Number(this.item.system.points) || 0; 
+                        const usesAlternativeCost = this.item.type === 'power' && this.item.system.cost_paid === "alternative";
+            const basePoints = usesAlternativeCost
+                ? (Number(this.item.system.alternative_points) || 0)
+                : (Number(this.item.system.points) || 0);
             const modifiers = this.item.system.modifiers || {}; 
             let totalModPercent = 0; 
             for (const modifier of Object.values(modifiers)) { 

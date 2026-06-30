@@ -790,7 +790,7 @@
                         </div>
                     </div>
                     <div class="skill-compact-row">
-                        <label>Custo Final (c/ Modificadores)</label>
+                        <label>Custo Final</label>
                         <div class="skill-compact-controls">
                             <div class="calculated-cost value">
                                 <span>{{calculatedCost.finalPoints}}</span>
@@ -1280,18 +1280,33 @@
                         </div>
                     </div>
                     <div class="skill-compact-row">
-                        <label>Pontos Base</label>
+                        <label>Custo Integral</label>
                         <div class="skill-compact-controls">
                             <input type="number" name="system.points" value="{{system.points}}"/>
                         </div>
                     </div>
                     <div class="skill-compact-row">
-                        <label>Custo Final</label>
+                        <label>Custo com Modificador</label>
                         <div class="skill-compact-controls">
                             <div class="calculated-cost value">
                                 <span>{{calculatedCost.finalPoints}}</span>
-                                <small>(Mod: {{calculatedCost.totalModifier}}%)</small>
+                                 <small>{{#if (eq system.cost_paid "alternative")}}Alternativo{{else}}Integral{{/if}} · Mod: {{calculatedCost.totalModifier}}%</small>
                             </div>
+                        </div>
+                    </div>
+                    <div class="skill-compact-row">
+                        <label>Custo Alternativo</label>
+                        <div class="skill-compact-controls">
+                            <input type="number" name="system.alternative_points" value="{{system.alternative_points}}"/>
+                        </div>
+                    </div>
+                    <div class="skill-compact-row">
+                        <label>Custo Pago</label>
+                        <div class="skill-compact-controls">
+                            <select name="system.cost_paid">
+                                <option value="full" {{#if (eq system.cost_paid "full")}}selected{{/if}}>Integral</option>
+                                <option value="alternative" {{#if (eq system.cost_paid "alternative")}}selected{{/if}}>Alternativo</option>
+                            </select>
                         </div>
                     </div>
                 </div>

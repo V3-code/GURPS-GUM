@@ -4102,6 +4102,7 @@ color:#121114;
   grid-template-columns: 140px minmax(0, 1fr);
   gap: 10px;
   align-items: center;
+  margin-bottom: 5px;
 }
 
 .gum.sheet.item .skill-line-field > label,

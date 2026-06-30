@@ -593,7 +593,8 @@ async getData(options) {
         });
 
         const getCharacteristicFinalPoints = (item) => {
-            const basePoints = Number(item.system?.points) || 0;
+                        const usesAlternativeCost = item.type === "power" && item.system?.cost_paid === "alternative";
+            const basePoints = usesAlternativeCost ? (Number(item.system?.alternative_points) || 0) : (Number(item.system?.points) || 0);
             const modifiers = item.system?.modifiers || {};
             let totalModPercent = 0;
 

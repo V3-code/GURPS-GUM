@@ -3407,7 +3407,8 @@ Handlebars.registerHelper("characteristicPoints", function (item) {
   if (displayPoints !== undefined && displayPoints !== null && displayPoints !== "") return displayPoints;
 
   const system = item?.system || {};
-  const basePoints = Number(system.points) || 0;
+    const usesAlternativeCost = item?.type === "power" && system.cost_paid === "alternative";
+  const basePoints = usesAlternativeCost ? (Number(system.alternative_points) || 0) : (Number(system.points) || 0);
   const modifiers = system.modifiers || {};
   let totalModPercent = 0;
 
