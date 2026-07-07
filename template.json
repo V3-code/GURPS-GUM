@@ -216,7 +216,15 @@
       },
       "points": {
         "total": 100,
-        "unspent": 100
+                "unspent": 100,
+        "attribute_costs": {
+          "st": 10,
+          "dx": 20,
+          "iq": 20,
+          "ht": 10,
+          "vont": 5,
+          "per": 5
+        }
       },
       "details": {
         "concept": "",

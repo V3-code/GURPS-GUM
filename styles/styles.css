@@ -461,7 +461,7 @@
 }
 
 .gum.sheet.actor .points-cluster { display: flex; gap: 1rem; }
-.gum.sheet.actor .points-display { display: flex; flex-direction: column; text-align: center; }
+.gum.sheet.actor .points-display { display: flex; flex-direction: column; text-align: center; align-items: center;}
 .gum.sheet.actor .points-display label { 
     font-family: var(--gum-font-secondary); font-size: 0.6rem; text-transform: uppercase; color: var(--gum-text-medio); 
 }
@@ -7264,4 +7264,95 @@ background-color: var(--gum-accent-gold);
 
 .gum-preview-card .preview-chip b {
   font-size: 0.58rem;
+}
+
+/* =================================================================== */
+/* Distribuição de Pontos                                              */
+/* =================================================================== */
+.gum.sheet.actor .points-cluster {
+  align-items: center;
+}
+
+.gum.sheet.actor .points-summary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(197, 160, 91, 0.45);
+  border-radius: 50%;
+  color: var(--gum-accent-gold);
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: var(--gum-shadow-suave);
+}
+
+.gum.sheet.actor .points-summary-btn:hover {
+  color: #fff;
+  border-color: var(--gum-accent-gold);
+  text-shadow: 0 0 8px var(--gum-accent-gold);
+}
+
+.points-summary-dialog .points-summary-dialog-form h3 {
+  margin: 0 0 10px;
+  text-align: center;
+  font-family: var(--gum-font-secondary);
+  color: var(--gum-accent-gold);
+  text-transform: uppercase;
+}
+
+.points-summary-dialog .points-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.points-summary-dialog .points-summary-row,
+.points-summary-dialog .points-summary-total,
+.points-summary-dialog .points-attribute-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.points-summary-dialog .points-summary-row.negative strong {
+  color: #f07a82;
+}
+
+.points-summary-dialog .points-summary-dots {
+  flex: 1;
+  border-bottom: 1px dotted rgba(247, 233, 215, 0.35);
+  transform: translateY(-2px);
+}
+
+.points-summary-dialog .points-summary-total {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(197, 160, 91, 0.35);
+  justify-content: space-between;
+  font-weight: 700;
+}
+
+.points-summary-dialog .hint {
+  margin: 8px 0;
+  color: rgba(247, 233, 215, 0.68);
+  font-size: 0.8rem;
+}
+
+.points-summary-dialog .points-attribute-costs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+}
+
+.points-summary-dialog .points-attribute-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
+.points-summary-dialog .points-attribute-row input {
+  text-align: center;
+}
+
+.points-summary-dialog .points-attribute-row small {
+  color: rgba(247, 233, 215, 0.62);
 }

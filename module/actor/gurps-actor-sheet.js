@@ -1442,6 +1442,7 @@ activateListeners(html) {
     if (!this.isEditable) return;
 
 html.on('click', '.recalc-secondary-stats-btn', (ev) => this._onRecalculateSecondaryStats(ev));
+html.on('click', '.points-summary-btn', (ev) => this._onOpenPointsSummary(ev));
 html.on("click", ".add-character-model-btn", (ev) => this._onAddCharacterModel(ev));
 html.on("click", ".remove-character-model-btn", (ev) => this._onRemoveCharacterModel(ev));
 
@@ -5107,7 +5108,8 @@ _getSocialEntryConfig(type) {
         { name: "society", label: "Sociedade", type: "text", placeholder: "Ex: Nobreza, Guilda" },
         { name: "status_name", label: "Status", type: "text", placeholder: "Ex: Cavaleiro, Membro" },
         { name: "level", label: "Nível", type: "number" },
-        { name: "monthly_cost", label: "Custo Mensal", type: "text", placeholder: "Ex: 50" }
+                { name: "monthly_cost", label: "Custo Mensal", type: "text", placeholder: "Ex: 50" },
+        { name: "points", label: "Pontos", type: "number" }
       ]
     },
     organization: {
@@ -5117,7 +5119,8 @@ _getSocialEntryConfig(type) {
         { name: "organization_name", label: "Organização", type: "text" },
         { name: "status_name", label: "Status", type: "text" },
         { name: "level", label: "Nível", type: "number" },
-        { name: "salary", label: "Salário", type: "text" }
+                { name: "salary", label: "Salário", type: "text" },
+        { name: "points", label: "Pontos", type: "number" }
       ]
     },
     culture: {
@@ -5125,7 +5128,8 @@ _getSocialEntryConfig(type) {
       path: "system.culture_entries",
       fields: [
         { name: "culture_name", label: "Cultura", type: "text" },
-        { name: "level", label: "Nível", type: "number" }
+                { name: "level", label: "Nível", type: "number" },
+        { name: "points", label: "Pontos", type: "number" }
       ]
     },
     language: {
@@ -5134,7 +5138,8 @@ _getSocialEntryConfig(type) {
       fields: [
         { name: "language_name", label: "Idioma", type: "text" },
         { name: "written_level", label: "Escrita", type: "text", placeholder: "Ex: Nenhuma, Básica, Fluente" },
-        { name: "spoken_level", label: "Fala", type: "text", placeholder: "Ex: Nenhuma, Básica, Fluente" }
+                { name: "spoken_level", label: "Fala", type: "text", placeholder: "Ex: Nenhuma, Básica, Fluente" },
+        { name: "points", label: "Pontos", type: "number" }
       ]
     },
     reputation: {
@@ -5144,7 +5149,8 @@ _getSocialEntryConfig(type) {
         { name: "title", label: "Título", type: "text" },
         { name: "reaction_modifier", label: "Modificador de Reação", type: "text", placeholder: "Ex: +2" },
         { name: "scope", label: "Escopo", type: "text", placeholder: "Ex: Cidade, Reino" },
-        { name: "recognition_frequency", label: "Frequência de Reconhecimento", type: "text" }
+                { name: "recognition_frequency", label: "Frequência de Reconhecimento", type: "text" },
+        { name: "points", label: "Pontos", type: "number" }
       ]
     },
     wealth: {
@@ -5152,7 +5158,8 @@ _getSocialEntryConfig(type) {
       path: "system.wealth_entries",
       fields: [
         { name: "wealth_level", label: "Nível de Riqueza", type: "text" },
-        { name: "effects", label: "Efeitos", type: "textarea" }
+                { name: "effects", label: "Efeitos", type: "textarea" },
+        { name: "points", label: "Pontos", type: "number" }
       ]
     },
     bond: {
@@ -5161,7 +5168,8 @@ _getSocialEntryConfig(type) {
       fields: [
         { name: "name", label: "Nome", type: "text" },
         { name: "bond_type", label: "Tipo", type: "text", placeholder: "Ex: Familiar, Juramento" },
-        { name: "description", label: "Descrição", type: "textarea" }
+                { name: "description", label: "Descrição", type: "textarea" },
+        { name: "points", label: "Pontos", type: "number" }
       ]
     }
   };
@@ -5187,7 +5195,7 @@ async _promptSocialEntryData(type, initialData = {}, { isEdit = false } = {}) {
     }
 
     const placeholder = field.placeholder ? `placeholder="${field.placeholder}"` : "";
-    const min = field.type === "number" ? "min=\"0\"" : "";
+    const min = field.type === "number" && field.name !== "points" ? "min=\"0\"" : "";
     const inputClass = field.type === "number" ? "" : "gum-input-left";
 
     return `
@@ -5246,6 +5254,157 @@ async _promptSocialEntryData(type, initialData = {}, { isEdit = false } = {}) {
       close: () => finish(null)
     }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-social-edit-dialog"] }).render(true);
   });
+}
+
+
+_getPointsNumber(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+_getCharacteristicFinalPoints(item) {
+  const usesAlternativeCost = item.type === "power" && item.system?.cost_paid === "alternative";
+  const basePoints = usesAlternativeCost ? this._getPointsNumber(item.system?.alternative_points) : this._getPointsNumber(item.system?.points);
+  const modifiers = item.system?.modifiers || {};
+  let totalModPercent = 0;
+
+  for (const modifier of Object.values(modifiers)) {
+    totalModPercent += parseInt(modifier.cost, 10) || 0;
+  }
+
+  const cappedModPercent = Math.max(-80, totalModPercent);
+  const finalPoints = Math.round(basePoints * (1 + cappedModPercent / 100));
+
+  if (basePoints > 0 && finalPoints < 1) return 1;
+  if (basePoints < 0 && finalPoints > -1) return -1;
+  return finalPoints;
+}
+
+_calculateAttributePoints() {
+  const attrs = this.actor.system.attributes || {};
+  const costs = this.actor.system.points?.attribute_costs || {};
+  const definitions = [
+    ["st", "ST", 10],
+    ["dx", "DX", 20],
+    ["iq", "IQ", 20],
+    ["ht", "HT", 10],
+    ["vont", "Vontade", 5],
+    ["per", "Percepção", 5]
+  ];
+
+  return definitions.map(([key, label, defaultCost]) => {
+    const current = this._getPointsNumber(attrs[key]?.value ?? 10);
+    const base = 10;
+    const cost = this._getPointsNumber(costs[key] ?? defaultCost);
+    const points = (current - base) * cost;
+    return { key, label, base, current, cost, points };
+  });
+}
+
+_calculateSocialPoints() {
+  const system = this.actor.system || {};
+  const entryGroups = [
+    system.social_status_entries,
+    system.organization_entries,
+    system.culture_entries,
+    system.language_entries,
+    system.reputation_entries,
+    system.wealth_entries,
+    system.bond_entries
+  ];
+
+  return entryGroups.reduce((total, group) => {
+    if (!group) return total;
+    return total + Object.values(group).reduce((subtotal, entry) => subtotal + this._getPointsNumber(entry?.points), 0);
+  }, 0);
+}
+
+_calculatePointsSummary() {
+  const items = Array.from(this.actor.items || []);
+  const attributeRows = this._calculateAttributePoints();
+  const secondaryKeys = ["basic_speed", "basic_move", "enhanced_move", "dodge", "vision", "hearing", "tastesmell", "touch", "mt"];
+  const attrs = this.actor.system.attributes || {};
+
+  const totals = {
+    primary: attributeRows.reduce((total, row) => total + row.points, 0),
+    secondary: secondaryKeys.reduce((total, key) => total + this._getPointsNumber(attrs[key]?.points), 0),
+    skills: items.filter((item) => item.type === "skill").reduce((total, item) => total + this._getPointsNumber(item.system?.points), 0),
+    advantages: 0,
+    disadvantages: 0,
+    spells: items.filter((item) => item.type === "spell").reduce((total, item) => total + this._getPointsNumber(item.system?.points), 0),
+    powers: items.filter((item) => item.type === "power").reduce((total, item) => total + this._getCharacteristicFinalPoints(item) + this._getPointsNumber(item.system?.points_skill), 0),
+    social: this._calculateSocialPoints()
+  };
+
+  for (const item of items.filter((item) => ["advantage", "disadvantage"].includes(item.type))) {
+    const points = this._getCharacteristicFinalPoints(item);
+    if (points >= 0) totals.advantages += points;
+    else totals.disadvantages += points;
+  }
+
+  const rows = [
+    ["Atributos Primários", totals.primary],
+    ["Atributos Secundários", totals.secondary],
+    ["Perícias", totals.skills],
+    ["Vantagens", totals.advantages],
+    ["Desvantagens", totals.disadvantages],
+    ["Magias", totals.spells],
+    ["Poderes", totals.powers],
+    ["Aspectos Sociais", totals.social]
+  ];
+
+  return { rows, attributeRows, spent: rows.reduce((total, [, points]) => total + points, 0) };
+}
+
+async _onOpenPointsSummary(ev) {
+  ev.preventDefault();
+  const summary = this._calculatePointsSummary();
+  const attrRows = summary.attributeRows.map((row) => `
+    <div class="points-attribute-row">
+      <span>${row.label}</span>
+      <input type="number" name="${row.key}" value="${row.cost}" />
+      <small>${row.current} - ${row.base} = ${row.current - row.base}</small>
+      <strong>${row.points} pts</strong>
+    </div>`).join("");
+
+  const rowsHtml = summary.rows.map(([label, points]) => `
+    <div class="points-summary-row ${points < 0 ? "negative" : ""}">
+      <span class="points-summary-label">${label}</span>
+      <span class="points-summary-dots"></span>
+      <strong>${points} pts</strong>
+    </div>`).join("");
+
+  const content = `
+    <form class="points-summary-dialog-form">
+      <h3>Distribuição de Pontos na Ficha do Personagem</h3>
+      <div class="points-summary-list">${rowsHtml}</div>
+      <div class="points-summary-total"><span>Total gasto calculado</span><strong>${summary.spent} pts</strong></div>
+      <hr>
+      <p class="hint">Custos por nível dos atributos primários. Estes valores ficam salvos apenas nesta ficha.</p>
+      <div class="points-attribute-costs">${attrRows}</div>
+    </form>`;
+
+  new Dialog({
+    title: "Distribuição de Pontos",
+    content,
+    buttons: {
+      save: {
+        icon: '<i class="fas fa-save"></i>',
+        label: "Salvar custos",
+        callback: (html) => {
+          const form = html.find("form")[0];
+          const formData = new FormDataExtended(form).object;
+          const updates = {};
+          for (const key of ["st", "dx", "iq", "ht", "vont", "per"]) {
+            updates[`system.points.attribute_costs.${key}`] = this._getPointsNumber(formData[key]);
+          }
+          return this.actor.update(updates);
+        }
+      },
+      close: { icon: '<i class="fas fa-times"></i>', label: "Fechar" }
+    },
+    default: "save"
+  }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "points-summary-dialog"], width: 520 }).render(true);
 }
 
 async _onAddSocialEntry(ev) {
