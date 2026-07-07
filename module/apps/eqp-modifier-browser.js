@@ -1,3 +1,4 @@
+import { GumPreviewDialog } from "./preview-dialog.js";
 // systems/gum/module/apps/eqp-modifier-browser.js
 
 export class EqpModifierBrowser extends FormApplication {
@@ -245,6 +246,19 @@ el.style.display = isVisible ? "grid" : "none";
   async _showQuickView(modifierData) {
       const modifier = modifierData?.uuid ? (await fromUuid(modifierData.uuid).catch(() => null)) || modifierData : modifierData;
       const system = modifier?.system || {};
+      return GumPreviewDialog.show({
+        title: modifier?.name || "Modificador",
+        type: "Mod. Equipamento",
+        img: modifier?.img || "icons/svg/upgrade.svg",
+        description: await GumPreviewDialog.enrichDescription(system.features || system.description || "<i>Sem descrição.</i>"),
+        tags: [
+          { label: "Custo", value: this._getCostDisplay(system) },
+          { label: "Peso", value: system.weight_mod },
+          { label: "TL", value: system.tech_level_mod },
+          { label: "Categorias", value: Object.keys(system.target_type || {}).filter(k => system.target_type[k]).join(", ") }
+        ],
+        width: 500
+      });
       const createTag = (label, value) => value ? `<div class="property-tag"><label>${label}</label><span>${value}</span></div>` : "";
       const tags = [
         createTag("Custo", this._getCostDisplay(system)),

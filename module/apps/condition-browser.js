@@ -1,3 +1,4 @@
+import { GumPreviewDialog } from "./preview-dialog.js";
 // GUM/module/apps/condition-browser.js
 
 export class ConditionBrowser extends FormApplication {
@@ -146,6 +147,14 @@ const pack = game.packs.get("gum.conditions");
       const condition = conditionData?.uuid ? (await fromUuid(conditionData.uuid).catch(() => null)) || conditionData : conditionData;
       const system = condition?.system || {};
       const effectsList = Array.isArray(system.effects) ? system.effects : Object.values(system.effects || {});
+      return GumPreviewDialog.show({
+        title: condition?.name || "Condição",
+        type: "Condição",
+        img: condition?.img || "icons/svg/terror.svg",
+        description: await GumPreviewDialog.enrichDescription(system.description || "<i>Sem descrição.</i>"),
+        tags: [{ label: "Efeitos", value: effectsList.length || null }],
+        width: 500
+      });
       const createTag = (label, value) => value ? `<div class="property-tag"><label>${label}</label><span>${value}</span></div>` : "";
       const tags = [
         createTag("Efeitos", effectsList.length ? effectsList.length : null)

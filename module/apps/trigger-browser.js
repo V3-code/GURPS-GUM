@@ -1,3 +1,4 @@
+import { GumPreviewDialog } from "./preview-dialog.js";
 // GUM/module/apps/trigger-browser.js
 
 // ✅ Alterado para FormApplication para lidar com o envio do formulário
@@ -132,6 +133,14 @@ async getData() {
       const trigger = triggerData?.uuid ? (await fromUuid(triggerData.uuid).catch(() => null)) || triggerData : triggerData;
       const system = trigger?.system || {};
       const description = await TextEditor.enrichHTML(system.description || "<i>Sem descrição.</i>", { async: true });
+      return GumPreviewDialog.show({
+        title: trigger?.name || "Gatilho",
+        type: "Gatilho",
+        img: trigger?.img || "icons/svg/dice-target.svg",
+        description: `${description}${system.code ? `<pre class="preview-code">${foundry.utils.escapeHTML(system.code)}</pre>` : ""}`,
+        tags: [{ label: "Código", value: system.code ? "Configurado" : "Vazio" }],
+        width: 500
+      });
 
       const content = `
         <div class="gurps-dialog-canvas">

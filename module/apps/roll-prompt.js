@@ -1,3 +1,4 @@
+import { GumPreviewDialog } from "./preview-dialog.js";
 import { performGURPSRoll } from "../../scripts/main.js";
 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -1094,6 +1095,20 @@ return 'default';
             const enrichedDesc = await TextEditorImpl.enrichHTML(data.desc, {
                 secrets: this.actor.isOwner,
                 async: true
+            });
+
+            return GumPreviewDialog.show({
+                title: data.name,
+                type: data.type,
+                img: data.img,
+                description: enrichedDesc,
+                tags: [
+                    { label: "MOD", value: `${data.value > 0 ? "+" : ""}${data.value}` },
+                    { label: "Cap NH", value: data.cap },
+                    { label: "Duração", value: data.duration },
+                    { label: "REF", value: data.ref }
+                ],
+                width: 500
             });
 
             const content = `

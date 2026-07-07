@@ -4,6 +4,7 @@ import { performGURPSRoll } from "../../scripts/main.js";
 import { applySingleEffect } from "../../scripts/effects-engine.js";
 import { GurpsRollPrompt } from "./roll-prompt.js";
 import { GurpsDamageRollPrompt } from "./damage-roll-prompt.js";
+import { GumPreviewDialog } from "./preview-dialog.js";
 import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
 
 export class GumGMScreen extends Application {
@@ -1277,190 +1278,12 @@ async _applySelectionToActor(actor, tokenId) {
     }
     
        async _showQuickView(item) {
-        const s = item?.system ?? {};
         if (!item) return;
-
-        const typeMap = {
-            gm_modifier: "Modificador GM",
-            effect: "Efeito"
-        };
-
-        const createTag = (label, value) => {
-            if (value !== null && value !== undefined && value !== '' && value.toString().trim() !== '') {
-                return `<div class="property-tag"><label>${label}</label><span>${value}</span></div>`;
-            }
-            return '';
-        };
-        const createRefTag = (value) => {
-            const ref = (value ?? "").toString().trim();
-            if (!ref) return "";
-            return `<div class="property-tag"><label>REF</label><span><a href="#" class="quick-open-reference" data-ref="${foundry.utils.escapeHTML(ref)}">${foundry.utils.escapeHTML(ref)}</a></span></div>`;
-        };
-        const parseReferenceCodes = (rawRef) => {
-            const text = (rawRef ?? "").toString().trim().toUpperCase();
-            if (!text) return [];
-            return text
-                .split(/[,;]+|\s+/)
-                .map((part) => part.trim())
-                .filter(Boolean)
-                .map((part) => {
-                    const match = part.replace(/\s+/g, "").match(/^([A-Z]+)(\d+)$/);
-                    if (!match) return null;
-                    return { code: match[1], page: Number(match[2]) };
-                })
-                .filter(Boolean);
-        };
-
-        const catLabels = {
-            location: "Pontos de Impacto",
-            maneuver: "Manobras",
-            attack_opt: "Opções de Ataque",
-            defense_opt: "Opções de Defesa",
-            posture: "Cobertura e Postura",
-            range: "Distância e Velocidade",
-            terrain_light: "Terreno e Iluminação",
-            state_affliction: "Estado e Atribulações",
-            task_difficulty: "Dificuldade da Tarefa",
-            ritual: "Operação Mágica",
-            power_operation: "Operação de Poderes",
-            time: "Modo de Execução",
-            effort: "Esforço Adicional",
-            situation: "Cenário",
-            equipment: "Equipamento",
-            other: "Customizado"
-        };
-
-        let tagsHtml = '';
-        if (item.type === 'gm_modifier') {
-            const modValue = Number(s.modifier) || 0;
-            tagsHtml += createTag('Valor', `${modValue > 0 ? '+' : ''}${modValue}`);
-            tagsHtml += createTag('Cap NH', s.nh_cap);
-            tagsHtml += createTag('Categoria', catLabels[s.ui_category] || "Outros");
-        }
-
-        if (item.type === 'effect') {
-            const effectTypeLabels = { attribute: 'Atributo', flag: 'Flag', roll_modifier: 'Modificador de Rolagem', status: 'Status' };
-            const primaryEntry = Array.isArray(s.roll_modifier_entries) && s.roll_modifier_entries.length ? s.roll_modifier_entries[0] : null;
-            const rawModValue = primaryEntry?.value ?? s.roll_modifier_value ?? s.roll_modifier;
-            const modValue = (rawModValue !== null && rawModValue !== undefined && `${rawModValue}`.trim() !== '')
-                ? ((typeof rawModValue === 'number' && rawModValue > 0) ? `+${rawModValue}` : `${rawModValue}`)
-                : null;
-            tagsHtml += createTag('Tipo', effectTypeLabels[s.type] || s.type);
-            tagsHtml += createTag('Modificador', modValue);
-            tagsHtml += createRefTag(s.ref ?? s.reference);
-        }
-
-        const descriptionSource = item.type === "effect"
-            ? (((s.chat_description ?? "").toString().trim())
-                ? s.chat_description
-                : (s.description || s.notes || "<i>Sem descrição.</i>"))
-            : (s.chat_description || s.description || "<i>Sem descrição.</i>");
-        const description = await TextEditor.enrichHTML(descriptionSource, { async: true });
-        const hasMeaningfulDescription = description && description.trim() !== "<i>Sem descrição.</i>";
-
-        const content = `
-            <div class="gurps-dialog-canvas">
-                <div class="gurps-item-preview-card" data-item-id="${item.id}">
-                    <header class="preview-header">
-                        <img src="${item.img}" class="header-icon"/>
-                        <div class="header-text">
-                            <h3>${item.name}</h3>
-                            <span class="preview-item-type">${typeMap[item.type] || item.type}</span>
-                        </div>
-                        <div class="header-controls">
-                            <a class="send-to-chat" title="Enviar para o Chat"><i class="fas fa-comment"></i></a>
-                        </div>
-                    </header>
-                    <div class="preview-content">
-                        <div class="preview-properties">${tagsHtml}</div>
-                        ${(hasMeaningfulDescription) ? '<hr class="preview-divider">' : ''}
-                        <div class="preview-description">${description}</div>
-                    </div>
-                </div>
-            </div>`;
-
-        new Dialog({
-            title: `Detalhes: ${item.name}`,
-            content,
-            buttons: {},
-            default: "",
-            render: (dlgHtml) => {
-                dlgHtml.on('click', '.send-to-chat', async (e) => {
-                    e.preventDefault();
-
-                    const chatDescriptionBlock = hasMeaningfulDescription
-                        ? `
-                            <div class="chat-description-actions">
-                                <button type="button" class="chat-show-details" aria-label="Ver detalhes do item">
-                                    <i class="fas fa-align-left"></i>
-                                    <span>Ver detalhes</span>
-                                </button>
-                                <div class="chat-description-payload" hidden>${description}</div>
-                            </div>
-                          `
-                        : '<div class="preview-description"><i>Sem descrição.</i></div>';
-
-                    const chatContent = `
-                        <div class="gurps-item-preview-card chat-card" data-item-id="${item.id}">
-                            <header class="preview-header">
-                                <img src="${item.img}" class="header-icon"/>
-                                <div class="header-text">
-                                    <h3>${item.name}</h3>
-                                    <span class="preview-item-type">${typeMap[item.type] || item.type}</span>
-                                </div>
-                            </header>
-                            <div class="preview-content">
-                                <div class="preview-properties">${tagsHtml}</div>
-                                ${chatDescriptionBlock}
-                            </div>
-                        </div>
-                    `;
-
-                    await ChatMessage.create({
-                        user: game.user.id,
-                        speaker: { alias: "Escudo do Mestre" },
-                        content: chatContent,
-                        style: CONST.CHAT_MESSAGE_STYLES.OTHER
-                    });
-                    ui.notifications.info("Enviado para o chat.");
-                });
-                dlgHtml.on("click", ".quick-open-reference", async (event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    const rawRef = (event.currentTarget?.dataset?.ref ?? "").toString().trim();
-                    const parsed = parseReferenceCodes(rawRef);
-                    if (!parsed.length) return ui.notifications.warn("Formato de REF inválido. Use ex.: BA23 ou BA23, MA45.");
-                    const target = parsed[0];
-                    const journals = game.journal ? Array.from(game.journal) : [];
-                    for (const journal of journals) {
-                        const pages = journal?.pages ? Array.from(journal.pages) : [];
-                        const pdfPage = pages.find((p) => p?.type === "pdf" && ((p.getFlag("gum", "pdfCode") ?? "").toString().trim().toUpperCase() === target.code));
-                        if (!pdfPage) continue;
-                        const pageOffset = Number(pdfPage.getFlag("gum", "pageOffset") ?? 0);
-                        const targetPage = Math.max(1, target.page + pageOffset);
-                        await journal.sheet.render(true, { pageId: pdfPage.id, mode: "view" });
-                        Hooks.once("renderJournalSheet", () => {
-                            const frames = Array.from(document.querySelectorAll('iframe[src*="pdfjs" i], iframe[src*="viewer.html" i]'));
-                            for (const frame of frames) {
-                                const src = frame.getAttribute("src") || "";
-                                if (!src.includes("#")) continue;
-                                const [base, hash = ""] = src.split("#");
-                                const params = new URLSearchParams(hash);
-                                params.set("page", String(targetPage));
-                                frame.setAttribute("src", `${base}#${params.toString()}`);
-                            }
-                        });
-                        return;
-                    }
-                    ui.notifications.warn(`Nenhum PDF com código "${target.code}" foi encontrado nos periódicos.`);
-                });
-            }
-        }, {
-            classes: ["gurps-item-preview-dialog"],
-            width: 480,
-            height: "auto",
-            resizable: true
-        }).render(true);
+        return GumPreviewDialog.showItem(item, {
+            actor: null,
+            sendToChat: true,
+            speaker: { alias: "Escudo do Mestre" }
+        });
  }
     
     _extractGroupsFromConfig(config) {

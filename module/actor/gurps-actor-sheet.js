@@ -5,6 +5,7 @@ import { GurpsDamageRollPrompt } from "../apps/damage-roll-prompt.js";
 import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
 import { getBodyProfile, getBodyLocationDefinition, listBodyProfiles } from "../config/body-profiles.js";
 import { TemplateBrowser } from "../apps/template-browser.js";
+import { GumPreviewDialog } from "../apps/preview-dialog.js";
 
 const { ActorSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -3403,6 +3404,8 @@ _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
   // ================================================================== //
   async _renderItemQuickView(item) {
     if (!item) return;
+    return GumPreviewDialog.showItem(item, { actor: this.actor, sendToChat: true });
+
 
     // 1. Mapa de Nomes Legíveis
     const getTypeName = (type) => {

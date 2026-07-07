@@ -1,3 +1,4 @@
+import { GumPreviewDialog } from "./preview-dialog.js";
 // GUM/module/apps/gm-modifier-browser.js
 
 export class GMModifierBrowser extends FormApplication {
@@ -119,6 +120,18 @@ export class GMModifierBrowser extends FormApplication {
         // Como allModifiers tem 'system', podemos usar direto.
         
         const s = itemData.system;
+        return GumPreviewDialog.show({
+            title: itemData.name,
+            type: "Modificador GM",
+            img: itemData.img || "icons/svg/d20.svg",
+            description: await GumPreviewDialog.enrichDescription(s.description || "<i>Sem descrição.</i>"),
+            tags: [
+                { label: "Valor", value: itemData.formattedVal },
+                { label: "Teto", value: s.nh_cap },
+                { label: "Duração", value: s.duration }
+            ],
+            width: 500
+        });
         const createTag = (label, value) => {
              if (value) return `<div class="property-tag"><label>${label}</label><span>${value}</span></div>`;
              return '';

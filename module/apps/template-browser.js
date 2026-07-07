@@ -1,3 +1,4 @@
+import { GumPreviewDialog } from "./preview-dialog.js";
 export class TemplateBrowser extends FormApplication {
   constructor(actor, options = {}) {
     super({}, options);
@@ -130,6 +131,19 @@ export class TemplateBrowser extends FormApplication {
     const template = templateData?.uuid ? (await fromUuid(templateData.uuid).catch(() => null)) || templateData : templateData;
     const system = template?.system || {};
     const blocks = system.blocks || [];
+    return GumPreviewDialog.show({
+      title: template?.name || "Modelo",
+      type: "Modelo",
+      img: template?.img || "icons/svg/book.svg",
+      description: await GumPreviewDialog.enrichDescription(system.description || "<i>Modelo de personagem.</i>"),
+      tags: [
+        { label: "Categoria", value: system.model_category || "generic" },
+        { label: "Blocos", value: blocks.length },
+        { label: "Origem", value: templateData.sourceLabel || "-" },
+        { label: "Pasta", value: templateData.folderLabel || "Sem pasta" }
+      ],
+      width: 500
+    });
 
     const content = `
       <div class="gurps-dialog-canvas">

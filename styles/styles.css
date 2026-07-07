@@ -7083,3 +7083,185 @@ background-color: var(--gum-accent-gold);
     border-color: rgba(197, 160, 91, 0.78);
     box-shadow: 0 0 10px rgba(197, 160, 91, 0.16);
 }
+/* -------------------------------------------------------------------------- */
+/* GUM unified quick preview - dark premium minimalista                       */
+/* -------------------------------------------------------------------------- */
+.dialog.gum-premium-preview-dialog,
+.window-app.gum-premium-preview-dialog {
+  background: linear-gradient(145deg, #101114 0%, #17191e 52%, #0d0e11 100%);
+  border: 1px solid rgba(214, 181, 109, 0.22);
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.72), inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.dialog.gum-premium-preview-dialog .window-header,
+.window-app.gum-premium-preview-dialog .window-header {
+  background: rgba(8, 9, 12, 0.92);
+  border-bottom: 1px solid rgba(214, 181, 109, 0.18);
+  color: #d9d2c3;
+}
+
+.dialog.gum-premium-preview-dialog .window-content,
+.window-app.gum-premium-preview-dialog .window-content,
+.dialog.gum-premium-preview-dialog .dialog-content {
+  background: transparent;
+  padding: 0;
+  color: #ded8cb;
+}
+
+.gum-preview-canvas {
+  padding: 0;
+  background: radial-gradient(circle at top left, rgba(214, 181, 109, 0.08), transparent 34%), #111217;
+}
+
+.gum-preview-card.gurps-item-preview-card {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: #ded8cb;
+}
+
+.gum-preview-card .preview-header {
+  display: grid;
+  grid-template-columns: 46px 1fr auto;
+  gap: 13px;
+  align-items: center;
+  padding: 18px 20px 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0));
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.gum-preview-card .header-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 11px;
+  border: 1px solid rgba(214, 181, 109, 0.28);
+  object-fit: cover;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.38);
+}
+
+.gum-preview-card .header-text h3 {
+  margin: 0;
+  color: #f4ead8;
+  font-size: 1.12rem;
+  font-weight: 700;
+  letter-spacing: .01em;
+}
+
+.gum-preview-card .preview-item-type {
+  display: inline-block;
+  margin-top: 4px;
+  color: #b7aa94;
+  background: rgba(255,255,255,0.055);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: .68rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.gum-preview-card .header-controls a {
+  color: #d6b56d;
+  border: 1px solid rgba(214,181,109,.22);
+  background: rgba(214,181,109,.08);
+  border-radius: 9px;
+  width: 32px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+}
+
+.gum-preview-card .header-controls a:hover {
+  color: #fff1c8;
+  background: rgba(214,181,109,.16);
+  text-shadow: 0 0 10px rgba(214,181,109,.45);
+}
+
+.gum-preview-card .preview-content {
+  padding: 18px 20px 20px;
+}
+
+.gum-preview-card .preview-description {
+  color: #ddd6ca;
+  line-height: 1.55;
+  font-size: .94rem;
+}
+
+.gum-preview-card .preview-description p:first-child { margin-top: 0; }
+.gum-preview-card .preview-description p:last-child { margin-bottom: 0; }
+
+.gum-preview-card .preview-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,.075);
+}
+
+.gum-preview-card .preview-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 8px;
+  border: 1px solid rgba(214,181,109,.18);
+  border-radius: 999px;
+  background: rgba(255,255,255,.045);
+  color: #d8d0c3;
+  font-size: .73rem;
+}
+
+.gum-preview-card .preview-chip b {
+  color: #d6b56d;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .055em;
+  font-size: .65rem;
+}
+
+.gum-preview-card .preview-code {
+  margin: 14px 0 0;
+  padding: 12px;
+  white-space: pre-wrap;
+  color: #d9c99c;
+  background: rgba(0,0,0,.28);
+  border: 1px solid rgba(214,181,109,.16);
+  border-radius: 10px;
+}
+
+.chat-message .gum-preview-chat-card .preview-content {
+  padding: 10px 12px 12px;
+}
+/* GUM preview typography refinements */
+.gum-premium-preview-dialog,
+.gum-preview-card,
+.gum-preview-chat-card {
+  font-family: var(--gum-font-condensed, "Roboto Condensed", "Roboto", "Arial Narrow", Arial, sans-serif);
+}
+
+.gum-preview-card .header-text h3 {
+  font-size: 0.98rem;
+  line-height: 1.15;
+}
+
+.gum-preview-card .preview-item-type {
+  font-size: 0.58rem;
+  padding: 1px 7px;
+}
+
+.gum-preview-card .preview-description {
+  font-size: 0.82rem;
+  line-height: 1.42;
+}
+
+.gum-preview-card .preview-chip {
+  font-size: 0.66rem;
+  padding: 3px 7px;
+}
+
+.gum-preview-card .preview-chip b {
+  font-size: 0.58rem;
+}

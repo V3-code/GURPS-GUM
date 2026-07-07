@@ -1,3 +1,4 @@
+import { GumPreviewDialog } from "./preview-dialog.js";
 // GUM/module/apps/modifier-browser.js
 
 export class ModifierBrowser extends FormApplication {
@@ -110,6 +111,18 @@ if (showEnhancements && showLimitations && !isEnhancement && !isLimitation) isVi
   async _showQuickView(modifierData) {
       const modifier = modifierData?.uuid ? (await fromUuid(modifierData.uuid).catch(() => null)) || modifierData : modifierData;
       const system = modifier?.system || {};
+      return GumPreviewDialog.show({
+        title: modifier?.name || "Modificador",
+        type: "Modificador",
+        img: modifier?.img || "icons/svg/aura.svg",
+        description: await GumPreviewDialog.enrichDescription(system.description || "<i>Sem descrição.</i>"),
+        tags: [
+          { label: "Custo", value: system.cost },
+          { label: "REF", value: system.ref },
+          { label: "Efeito", value: system.applied_effect }
+        ],
+        width: 500
+      });
       const createTag = (label, value) => value ? `<div class="property-tag"><label>${label}</label><span>${value}</span></div>` : "";
       const tags = [
         createTag("Custo", system.cost),

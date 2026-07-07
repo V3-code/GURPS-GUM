@@ -1,4 +1,5 @@
 // GUM/module/apps/effect-browser.js
+import { GumPreviewDialog } from "./preview-dialog.js";
 
 // ✅ PASSO 1: Mudar o nome da classe de ModifierBrowser para EffectBrowser
 
@@ -179,98 +180,28 @@ _onFilterResults(event) {
     }
 }
 
-  async _showQuickView(effectData) {
+    async _showQuickView(effectData) {
       const effect = effectData?.uuid ? (await fromUuid(effectData.uuid).catch(() => null)) || effectData : effectData;
       const system = effect?.system || {};
-      const createTag = (label, value) => {
-        if (value !== null && value !== undefined && value !== "") {
-            return `<div class="property-tag"><label>${label}</label><span>${value}</span></div>`;
-        }
-        return "";
-      };
-      const createRefTag = (value) => {
-        const ref = (value ?? "").toString().trim();
-        if (!ref) return "";
-        return `<div class="property-tag"><label>REF</label><span><a href="#" class="quick-open-reference" data-ref="${foundry.utils.escapeHTML(ref)}">${foundry.utils.escapeHTML(ref)}</a></span></div>`;
-      };
-
       const effectRef = system.ref ?? system.reference;
-      const tags = [
-        createTag("Tipo", getEffectTypeLabel(system.type)),
-        createTag("Modificador", getPrimaryRollModifierValue(system)),
-        createRefTag(effectRef)
-      ].join("");
-
       const quickDescriptionSource = (system.chat_description ?? "").toString().trim()
         ? system.chat_description
         : (system.description || system.notes || "<i>Sem descrição.</i>");
-      const description = await TextEditor.enrichHTML(quickDescriptionSource, { async: true });
 
-      const content = `
-        <div class="gurps-dialog-canvas">
-            <div class="gurps-item-preview-card" data-item-id="${effect?.id ?? ""}">
-                <header class="preview-header">
-                    <img src="${effect?.img || "icons/svg/mystery-man.svg"}" class="header-icon"/>
-                    <div class="header-text">
-                        <h3>${effect?.name || "Efeito"}</h3>
-                        <span class="preview-item-type">Efeito</span>
-                    </div>
-                    <div class="header-controls">
-                        <a class="send-to-chat" title="Enviar para o Chat"><i class="fas fa-comment"></i></a>
-                    </div>
-                </header>
-                <div class="preview-content">
-                    <div class="preview-properties">${tags}</div>
-                    <hr class="preview-divider">
-                    <div class="preview-description">${description}</div>
-                </div>
-            </div>
-        </div>
-      `;
-
-      new Dialog({
-        title: `Detalhes: ${effect?.name || "Efeito"}`,
-        content,
-        buttons: {},
-        default: "",
-        render: (dlgHtml) => {
-          dlgHtml.on("click", ".quick-open-reference", async (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            const rawRef = (event.currentTarget?.dataset?.ref ?? "").toString().trim();
-            const parsed = parseReferenceCodes(rawRef);
-            if (!parsed.length) return ui.notifications.warn("Formato de REF inválido. Use ex.: BA23 ou BA23, MA45.");
-            const target = parsed[0];
-            const journals = game.journal ? Array.from(game.journal) : [];
-            for (const journal of journals) {
-              const pages = journal?.pages ? Array.from(journal.pages) : [];
-              const pdfPage = pages.find((p) => p?.type === "pdf" && ((p.getFlag("gum", "pdfCode") ?? "").toString().trim().toUpperCase() === target.code));
-              if (!pdfPage) continue;
-              const pageOffset = Number(pdfPage.getFlag("gum", "pageOffset") ?? 0);
-              const targetPage = Math.max(1, target.page + pageOffset);
-              await journal.sheet.render(true, { pageId: pdfPage.id, mode: "view" });
-              Hooks.once("renderJournalSheet", () => {
-                const frames = Array.from(document.querySelectorAll('iframe[src*="pdfjs" i], iframe[src*="viewer.html" i]'));
-                for (const frame of frames) {
-                  const src = frame.getAttribute("src") || "";
-                  if (!src.includes("#")) continue;
-                  const [base, hash = ""] = src.split("#");
-                  const params = new URLSearchParams(hash);
-                  params.set("page", String(targetPage));
-                  frame.setAttribute("src", `${base}#${params.toString()}`);
-                }
-              });
-              return;
-            }
-            ui.notifications.warn(`Nenhum PDF com código "${target.code}" foi encontrado nos periódicos.`);
-          });
-        }
-      }, {
-        classes: ["gurps-item-preview-dialog"],
-        width: 480,
-        height: "auto",
-        resizable: true
-      }).render(true);
+      return GumPreviewDialog.show({
+        title: effect?.name || "Efeito",
+        type: "Efeito",
+        img: effect?.img || "icons/svg/mystery-man.svg",
+        description: await GumPreviewDialog.enrichDescription(quickDescriptionSource),
+        tags: [
+          { label: "Tipo", value: getEffectTypeLabel(system.type) },
+          { label: "Modificador", value: getPrimaryRollModifierValue(system) },
+          { label: "REF", value: effectRef }
+        ],
+        sendToChat: true,
+        sourceUuid: effect?.uuid || "",
+        width: 500
+      });
   }
 
   // ✅ PASSO 3: Reescrever a lógica de salvamento
