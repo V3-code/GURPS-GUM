@@ -948,9 +948,9 @@
 }
 
 .attack-summary-card .actor-line {
-    display: flex;
-    align-items: center;
-    gap: 7px;
+    display: grid;
+    justify-items: center;
+    gap: 4px;
     font-weight: 700;
     color: #2f2b28;
 }

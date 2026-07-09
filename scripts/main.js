@@ -3731,20 +3731,7 @@ async function processConditions(actor, eventData = null) {
                                     && effect?.flags?.gum?.effectUuid === effectItem.uuid;
                                 if (!sameConditionSource) return false;
 
-                                const gumDuration = foundry.utils.getProperty(effect, "flags.gum.duration") || {};
-                                const finiteGumDuration = !isEffectDurationPermanent(gumDuration)
-                                    && (
-                                        (Number.isFinite(Number(gumDuration.value)) && Number(gumDuration.value) > 0)
-                                        || effect.duration?.rounds
-                                        || effect.duration?.turns
-                                        || effect.duration?.seconds
-                                    );
-
-                                // Efeitos temporários devem expirar pela própria duração, não
-                                // por desligamento da condição (evita remoção precoce em fluxos
-                                // acionados por evento, ex.: dano + resistência).
-                                if (finiteGumDuration) return false;
-                                return true;
+ 
                             });
                             if (effectsToRemove.length) {
                                 await actor.deleteEmbeddedDocuments("ActiveEffect", effectsToRemove.map(effect => effect.id));

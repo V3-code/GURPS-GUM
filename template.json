@@ -101,6 +101,7 @@
           "mod": 0,
           "temp": 0,
           "passive": 0,
+          "points": 0,
           "override": null,
           "final": 10,
           "final_computed": 10
@@ -111,6 +112,7 @@
           "mod": 0,
           "temp": 0,
           "passive": 0,
+          "points": 0,
           "override": null,
           "final": 10,
           "final_computed": 10

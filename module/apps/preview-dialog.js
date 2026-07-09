@@ -293,21 +293,23 @@ export class GumPreviewDialog {
   }
 
   static registerChatDetailsHandler() {
-    Hooks.on("renderChatMessage", (_message, html) => {
-      html.find(".chat-show-details").on("click", async (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-        const card = event.currentTarget.closest(".gum-preview-chat-card, .gurps-item-preview-card");
-        const rawPayload = card?.dataset?.previewPayload;
-        if (!rawPayload) return;
-        try {
-          const data = JSON.parse(decodeURIComponent(rawPayload));
-          await this.show({ ...data, sendToChat: false });
-        } catch (err) {
-          console.error("GUM | Falha ao abrir detalhes do chat", err);
-          ui.notifications.error("Não foi possível abrir os detalhes desse item.");
-        }
+     Hooks.on("renderChatMessageHTML", (_message, html) => {
+      html.querySelectorAll(".chat-show-details").forEach((button) => {
+        button.addEventListener("click", async (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+          const card = event.currentTarget.closest(".gum-preview-chat-card, .gurps-item-preview-card");
+          const rawPayload = card?.dataset?.previewPayload;
+          if (!rawPayload) return;
+          try {
+            const data = JSON.parse(decodeURIComponent(rawPayload));
+            await this.show({ ...data, sendToChat: false });
+          } catch (err) {
+            console.error("GUM | Falha ao abrir detalhes do chat", err);
+            ui.notifications.error("Não foi possível abrir os detalhes desse item.");
+          }
+        });
       });
     });
   }

@@ -2979,6 +2979,8 @@ default: 'save'
         const hearing = getAttr('hearing');
         const tastesmell = getAttr('tastesmell');
         const touch = getAttr('touch');
+        const hp = getAttr('hp');
+        const fp = getAttr('fp');
         const thrustDamage = attrs.thrust_damage ?? "";
         const swingDamage = attrs.swing_damage ?? "";
         const thrustDamageAlt = attrs.thrust_damage_alt ?? "";
@@ -3042,6 +3044,24 @@ default: 'save'
                     <span class="read-only">${fmt(attrs.dodge.temp)}</span>
                     <input type="number" name="dodge.points" value="${attrs.dodge.points || 0}"/>
                     <span class="final-display">${attrs.dodge.final}</span>
+                </div>
+                                <div class="form-row">
+                    <label>PV</label>
+                    <input type="number" name="hp.max" value="${hp.max ?? hp.value ?? 10}"/>
+                    <input type="number" name="hp.mod" value="${hp.mod || 0}"/>
+                    <span class="read-only">${fmt(hp.passive)}</span>
+                    <span class="read-only">${fmt(hp.temp)}</span>
+                    <input type="number" name="hp.points" value="${hp.points || 0}"/>
+                    <span class="final-display">${hp.final}</span>
+                </div>
+                <div class="form-row">
+                    <label>PF</label>
+                    <input type="number" name="fp.max" value="${fp.max ?? fp.value ?? 10}"/>
+                    <input type="number" name="fp.mod" value="${fp.mod || 0}"/>
+                    <span class="read-only">${fmt(fp.passive)}</span>
+                    <span class="read-only">${fmt(fp.temp)}</span>
+                    <input type="number" name="fp.points" value="${fp.points || 0}"/>
+                    <span class="final-display">${fp.final}</span>
                 </div>
 
                 <hr style="grid-column: 1 / -1; border-color: #aaa;">
@@ -3176,6 +3196,8 @@ default: 'save'
                             "enhanced_move.value", "enhanced_move.mod", "enhanced_move.points",
                             "mt.value", "mt.mod", "mt.points",
                             "dodge.mod", "dodge.points",
+                            "hp.max", "hp.mod", "hp.points",
+                            "fp.max", "fp.mod", "fp.points",
                             "vision.value", "vision.mod", "vision.points",
                             "hearing.value", "hearing.mod", "hearing.points",
                             "tastesmell.value", "tastesmell.mod", "tastesmell.points",
@@ -5322,7 +5344,7 @@ _calculateSocialPoints() {
 _calculatePointsSummary() {
   const items = Array.from(this.actor.items || []);
   const attributeRows = this._calculateAttributePoints();
-  const secondaryKeys = ["basic_speed", "basic_move", "enhanced_move", "dodge", "vision", "hearing", "tastesmell", "touch", "mt"];
+  const secondaryKeys = ["hp", "fp", "basic_speed", "basic_move", "enhanced_move", "dodge", "vision", "hearing", "tastesmell", "touch", "mt"];
   const attrs = this.actor.system.attributes || {};
 
   const totals = {

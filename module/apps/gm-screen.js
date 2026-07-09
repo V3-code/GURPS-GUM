@@ -29,11 +29,11 @@ export class GumGMScreen extends Application {
         };
 
         this.gmTabs = [
-            { id: "tab-1", name: "Aba 1" },
-            { id: "tab-2", name: "Aba 2" },
-            { id: "tab-3", name: "Aba 3" },
-            { id: "tab-4", name: "Aba 4" },
-            { id: "tab-5", name: "Aba 5" }
+            { id: "tab-1", name: "1" },
+            { id: "tab-2", name: "2" },
+            { id: "tab-3", name: "3" },
+            { id: "tab-4", name: "4" },
+            { id: "tab-5", name: "5" }
         ];
     }
 
