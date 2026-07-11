@@ -4,7 +4,7 @@ Sistema para Foundry Virtual Tabletop inspirado no GURPS, mantido pela comunidad
 
 **Autor:** Victor Valentim  
 **Versão:** `1.0.0`  
-**Compatibilidade Foundry VTT:** `12` (mínimo) / `13` (verificado)
+**Compatibilidade Foundry VTT:** `13` (mínimo) / `14` (verificado)
 
 > Projeto não oficial e sem fins lucrativos. GURPS é marca registrada de Steve Jackson Games. Este repositório não é afiliado, licenciado ou endossado pela Steve Jackson Games.
 

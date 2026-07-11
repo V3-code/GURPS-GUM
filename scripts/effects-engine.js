@@ -335,6 +335,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     effectUuid: effectItem.uuid,
                     source: context.source || null,
                     originItemId: context.originItemId ?? null,
+                    conditionActivationMode: context.conditionActivationMode ?? null,
                     statusBindingRuleUuid: context.statusBindingRuleUuid ?? null,
                     statusBindingStatusId: context.statusBindingStatusId ?? null,
                     duration: gumDuration,

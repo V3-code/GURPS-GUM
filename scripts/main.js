@@ -2187,7 +2187,12 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
     const rollData = effectItem.system?.resistanceRoll || {};
     const suppressResistanceCard = rollData.skipPromptCard || options.suppressResistanceCard;
     if (suppressResistanceCard) {
-        const conditionContext = options.conditionId ? { conditionId: options.conditionId } : {};
+                const conditionContext = options.conditionId
+            ? {
+                conditionId: options.conditionId,
+                conditionActivationMode: options.conditionActivationMode || null
+            }
+            : {};
         await applySingleEffect(effectItem, [targetToken], {
             actor: sourceActor,
             origin: originItem || effectItem,
@@ -2216,7 +2221,8 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
         sourceActorId: sourceActor?.id || null,
         originItemUuid: originItem?.uuid || null,
         effectLinkId: effectLinkId || null,
-        conditionId: options.conditionId || null
+                conditionId: options.conditionId || null,
+        conditionActivationMode: options.conditionActivationMode || null
     };
 
  const content = `
@@ -3082,7 +3088,10 @@ $('body').on('click', '.resistance-roll-button', async ev => {
 
                     ui.notifications.info(`${resistingActor.name} foi afetado por: ${effectItem.name}!`);
                   const conditionContext = mode === "condition" && rollData.conditionId
-                        ? { conditionId: rollData.conditionId }
+                        ? {
+                            conditionId: rollData.conditionId,
+                            conditionActivationMode: rollData.conditionActivationMode || null
+                        }
                         : {};
                     await applySingleEffect(effectItem, targets, {
                         actor: originActor,
@@ -3661,6 +3670,7 @@ async function processConditions(actor, eventData = null) {
              const shouldExecuteActivation = (stateChanged && isEffectivelyActiveNow)
                 || (isPulseEvent && isEffectivelyActiveNow)
                 || (isTurnStartEvent && shouldRepeatOnTurnStart && isCurrentCombatantTurn && isEffectivelyActiveNow);
+             const conditionActivationMode = (isEventDriven || isPulseEvent) ? "trigger" : "continuous";
 
              if (stateChanged) {
                  // Salva o novo estado
@@ -3685,7 +3695,11 @@ async function processConditions(actor, eventData = null) {
                                     actor,
                                     condition,
                                     link.id || null,
-                                    { mode: "condition", conditionId: condition.id }
+                                                                        {
+                                        mode: "condition",
+                                        conditionId: condition.id,
+                                        conditionActivationMode
+                                    }
                                 );
                             }
                             continue;
@@ -3707,6 +3721,7 @@ async function processConditions(actor, eventData = null) {
                                 origin: condition,
                                 source: "condition",
                                 conditionId: condition.id,
+                                conditionActivationMode,
                                 skipPersistentEffects
                             });
                         }
@@ -3725,12 +3740,30 @@ async function processConditions(actor, eventData = null) {
                                 await actor.unsetFlag("gum", action.key);
                             }
                         }
-                        if (actions.some((action) => ["attribute", "roll_modifier", "status", "flag"].includes(action.type))) {
-                            const effectsToRemove = actor.effects.filter((effect) => {
-                                const sameConditionSource = effect?.flags?.gum?.conditionId === condition.id
-                                    && effect?.flags?.gum?.effectUuid === effectItem.uuid;
-                                if (!sameConditionSource) return false;
+                            if (actions.some((action) => ["attribute", "roll_modifier", "status", "flag"].includes(action.type))) {
+                                const effectsToRemove = actor.effects.filter((effect) => {
+                                    const sameConditionSource = effect?.flags?.gum?.conditionId === condition.id
+                                        && effect?.flags?.gum?.effectUuid === effectItem.uuid;
+                                    if (!sameConditionSource) return false;
+                                    
+                                    const gumDuration = foundry.utils.getProperty(effect, "flags.gum.duration") || {};
+                                    const isPermanentGumDuration = isEffectDurationPermanent(gumDuration);
+                                    const finiteGumDuration = !isPermanentGumDuration
+                                        && (
+                                            (Number.isFinite(Number(gumDuration.value)) && Number(gumDuration.value) > 0)
+                                            || effect.duration?.rounds
+                                            || effect.duration?.turns
+                                            || effect.duration?.seconds
+                                        );
+                                    const activationMode = foundry.utils.getProperty(effect, "flags.gum.conditionActivationMode") || "continuous";
+                                    const isTriggeredConditionEffect = activationMode === "trigger";
 
+                                    // Condições contínuas devem voltar a desligar até efeitos permanentes
+                                    // quando o gatilho sai. Já efeitos aplicados por gatilhos de evento
+                                    // (ex.: dano + resistência) carregam o próprio ciclo de vida: duração
+                                    // temporária ou permanência até remoção manual/regra explícita.
+                                    if (finiteGumDuration || (isTriggeredConditionEffect && isPermanentGumDuration)) return false;
+                                    return true;
  
                             });
                             if (effectsToRemove.length) {
