@@ -7356,3 +7356,170 @@ background-color: var(--gum-accent-gold);
 .points-summary-dialog .points-attribute-row small {
   color: rgba(247, 233, 215, 0.62);
 }
+/* Combate: grupos fixos da coluna direita e registros premium */
+.gum.sheet.actor .combat-fixed-groups-list,
+.gum.sheet.actor .combat-favorites-list {
+    margin-bottom: 0;
+}
+
+.gum.sheet.actor .combat-fixed-group > .group-summary .summary-right a {
+    color: rgba(248, 216, 148, 0.82);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.gum.sheet.actor .combat-fixed-group > .group-summary .summary-right a:hover {
+    background: rgba(197, 160, 91, 0.16);
+    color: var(--gum-accent-gold);
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
+.gum.sheet.actor .combat-meter-group-content,
+.gum.sheet.actor .combat-favorites-root-content {
+    padding: 6px;
+    background:
+        linear-gradient(180deg, rgba(18, 17, 22, 0.96), rgba(8, 8, 10, 0.94)),
+        var(--item-panel-texture) repeat;
+}
+
+.gum.sheet.actor .combat-favorites-root-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.gum.sheet.actor .combat-favorites-root-content > .attack-group-details {
+    border-color: rgba(197, 160, 91, 0.18);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.gum.sheet.actor .combat-favorites-root-content > .attack-group-details > .group-summary {
+    padding: 7px 10px;
+}
+
+.gum.sheet.actor .combat-meters-box .meter-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 0;
+}
+
+.gum.sheet.actor .combat-meters-box .combat-meter-card {
+    position: relative;
+    min-width: 0;
+    padding: 9px 10px 9px 14px;
+    border: 1px solid rgba(197, 160, 91, 0.24);
+    border-radius: 8px;
+    background:
+        radial-gradient(circle at 0% 50%, rgba(197, 160, 91, 0.16), transparent 34%),
+        linear-gradient(135deg, rgba(24, 22, 29, 0.99), rgba(35, 31, 42, 0.97)),
+        var(--item-panel-texture) repeat;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.055),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+        0 4px 14px rgba(0, 0, 0, 0.28);
+}
+
+.gum.sheet.actor .combat-meters-box .combat-meter-card:hover {
+    border-color: rgba(248, 216, 148, 0.44);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.07),
+        0 6px 18px rgba(0, 0, 0, 0.36);
+}
+
+.gum.sheet.actor .combat-meters-box .combat-meter-card .meter-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 10px;
+}
+
+.gum.sheet.actor .combat-meters-box .meter-identity {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.gum.sheet.actor .combat-meters-box .combat-meter-card .item-name {
+    min-width: 0;
+    font-family: var(--gum-font-secondary);
+    font-size: 12px;
+    letter-spacing: 0.2px;
+    color: var(--gum-text-claro);
+}
+
+.gum.sheet.actor .combat-meters-box .combat-meter-card .item-name small {
+    width: fit-content;
+    color: rgba(247, 233, 215, 0.66);
+}
+
+.gum.sheet.actor .combat-meters-box .combat-meter-card .meter-inputs {
+    padding: 3px 6px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.24));
+    border: 1px solid rgba(197, 160, 91, 0.22);
+}
+
+.gum.sheet.actor .combat-meters-box .combat-meter-card .meter-inputs input {
+    width: 34px;
+    font-family: var(--gum-font-condensed);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.gum.sheet.actor .combat-meters-box .combat-meter-card .meter-inputs span {
+    color: rgba(248, 216, 148, 0.62);
+    font-weight: 700;
+}
+
+.gum.sheet.actor .combat-meters-box .combat-meter-placeholder {
+    grid-column: 1 / -1;
+    padding: 10px;
+    color: rgba(247, 233, 215, 0.68);
+    border: 1px dashed rgba(197, 160, 91, 0.22);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.18);
+}
+
+.gum.sheet.actor .combat-meters-box .combat-meter-card.is-hidden {
+    opacity: 0.72;
+    border-style: dashed;
+    background:
+        radial-gradient(circle at 10% 0%, rgba(197, 160, 91, 0.08), transparent 36%),
+        linear-gradient(135deg, rgba(32, 31, 35, 0.96), rgba(48, 47, 51, 0.94));
+}
+
+.gum.sheet.actor .combat-meters-box .combat-meter-card::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 8px;
+    width: 3px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(248, 216, 148, 0.95), rgba(197, 160, 91, 0.32));
+    box-shadow: 0 0 10px rgba(197, 160, 91, 0.22);
+}
+
+.gum.sheet.actor .combat-meters-box .combat-meter-card .meter-identity::before {
+    content: "REGISTRO";
+    align-self: stretch;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 7px;
+    border: 1px solid rgba(197, 160, 91, 0.2);
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.24);
+    color: rgba(248, 216, 148, 0.72);
+    font-family: var(--gum-font-condensed);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.55px;
+}

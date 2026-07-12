@@ -1709,60 +1709,84 @@
               {{/each}}
             </ol>
           </div>
-                    {{!-- Bloco de Registros de Combate (Agora no topo da direita) --}}
-          <div class="gum-block combat-meters-box">
-            <div class="block-header">
-              <h4>Registros de Combate</h4>
-              <div class="header-controls">
-                <a class="show-hidden-meters" title="{{#if showHiddenMeters}}Ocultar Registros Ocultos{{else}}Mostrar Registros Ocultos{{/if}}">
-                  <i class="fas {{#if showHiddenMeters}}fa-eye{{else}}fa-eye-low-vision{{/if}}"></i>
-                </a>
-                <a class="add-combat-meter" title="Adicionar Registro"><i class="fas fa-plus"></i></a>
-              </div>
-            </div>
-            <div class="meter-list">
-              {{#each preparedCombatMeters}}
-                <div class="item-row meter-card {{#if this.meter.hidden}}is-hidden{{/if}}" data-meter-id="{{this.id}}">
-                  <div class="meter-main">
-                    <span class="item-name">
-                      {{this.meter.name}}
-                      {{#if this.meter.hidden}}<small>(oculto)</small>{{/if}}
-                    </span>
-                                      <div class="meter-inputs">
-                    <input type="number" name="system.combat.combat_meters.{{this.id}}.current" value="{{this.meter.current}}"/>
-                    <span>/</span>
-                    <input type="number" name="system.combat.combat_meters.{{this.id}}.max" value="{{this.meter.max}}"/>
-                  </div>
-                    <div class="item-controls meter-controls">
-                      <div class="gum-action-menu js-action-menu">
-                        <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções do registro" aria-label="Opções do registro" role="button" aria-haspopup="true" aria-expanded="false">
-                          <i class="fas fa-ellipsis-v"></i>
-                        </a>
-                        <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações do registro">
-                          <a class="item-control edit-combat-meter gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>Editar</span></a>
-                          <a class="item-control hide-combat-meter gum-action-menu__item" role="menuitem" title="{{#if this.meter.hidden}}Reexibir Registro{{else}}Ocultar Registro{{/if}}">
-                            <i class="fas {{#if this.meter.hidden}}fa-eye{{else}}fa-eye-slash{{/if}}"></i>
-                            <span>{{#if this.meter.hidden}}Reexibir{{else}}Ocultar{{/if}}</span>
-                          </a>
-                          <a class="item-control delete-combat-meter gum-action-menu__item is-danger" role="menuitem" title="Deletar Registro"><i class="fas fa-trash"></i><span>Deletar</span></a>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              {{/each}}
-              {{#unless preparedCombatMeters}}
-                <li class="placeholder-text" style="padding: 5px 10px; opacity: 0.7;">Nenhum registro visível.</li>
-              {{/unless}}
-            </div>
-          </div>
-        </div>
+</div>
 
         {{! --- COLUNA DA DIREITA (LARGA) --- }}
         <div class="combat-right-column">
-          
-                  {{!-- Bloco de Favoritos de Combate --}}
+
+          {{!-- Grupo fixo de Registros de Combate --}}
+          <div class="attack-group-list-v2 combat-fixed-groups-list">
+            <details class="attack-group-details gum-unified-section combat-meters-box combat-fixed-group" data-group-id="combat-meters-group" {{collapsibleState "combat-meters-group" @root.collapsedData}}>
+              <summary class="group-summary gum-unified-header">
+                <div class="summary-left">
+                  <i class="fas fa-chevron-right indicator"></i>
+                  <i class="fas fa-clipboard-list item-icon"></i>
+                  <span class="group-name">Registros de Combate</span>
+                </div>
+                <div class="summary-right">
+                  <span class="group-tag">{{preparedCombatMeters.length}} registro(s)</span>
+                  <a class="show-hidden-meters" title="{{#if showHiddenMeters}}Ocultar Registros Ocultos{{else}}Mostrar Registros Ocultos{{/if}}">
+                    <i class="fas {{#if showHiddenMeters}}fa-eye{{else}}fa-eye-low-vision{{/if}}"></i>
+                  </a>
+                  <a class="add-combat-meter" title="Adicionar Registro"><i class="fas fa-plus"></i></a>
+                </div>
+              </summary>
+              <div class="group-content combat-meter-group-content">
+                <div class="meter-list">
+                  {{#each preparedCombatMeters}}
+                    <div class="item-row meter-card combat-meter-card {{#if this.meter.hidden}}is-hidden{{/if}}" data-meter-id="{{this.id}}">
+                      <div class="meter-main">
+                        <div class="meter-identity">
+                          <span class="item-name">
+                            {{this.meter.name}}
+                            {{#if this.meter.hidden}}<small>(oculto)</small>{{/if}}
+                          </span>
+                        </div>
+                        <div class="meter-inputs" aria-label="Valor atual e máximo do registro">
+                          <input type="number" name="system.combat.combat_meters.{{this.id}}.current" value="{{this.meter.current}}"/>
+                          <span>/</span>
+                          <input type="number" name="system.combat.combat_meters.{{this.id}}.max" value="{{this.meter.max}}"/>
+                        </div>
+                        <div class="item-controls meter-controls">
+                          <div class="gum-action-menu js-action-menu">
+                            <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções do registro" aria-label="Opções do registro" role="button" aria-haspopup="true" aria-expanded="false">
+                              <i class="fas fa-ellipsis-v"></i>
+                            </a>
+                            <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações do registro">
+                              <a class="item-control edit-combat-meter gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>Editar</span></a>
+                              <a class="item-control hide-combat-meter gum-action-menu__item" role="menuitem" title="{{#if this.meter.hidden}}Reexibir Registro{{else}}Ocultar Registro{{/if}}">
+                                <i class="fas {{#if this.meter.hidden}}fa-eye{{else}}fa-eye-slash{{/if}}"></i>
+                                <span>{{#if this.meter.hidden}}Reexibir{{else}}Ocultar{{/if}}</span>
+                              </a>
+                              <a class="item-control delete-combat-meter gum-action-menu__item is-danger" role="menuitem" title="Deletar Registro"><i class="fas fa-trash"></i><span>Deletar</span></a>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  {{/each}}
+                  {{#unless preparedCombatMeters}}
+                    <div class="placeholder-text combat-meter-placeholder">Nenhum registro visível.</div>
+                  {{/unless}}
+                </div>
+              </div>
+            </details>
+          </div>
+
+          {{!-- Grupo fixo de Favoritos de Combate --}}
           <div class="attack-group-list-v2 combat-favorites-list">
+            <details class="attack-group-details gum-unified-section combat-fixed-group combat-favorites-wrapper" data-group-id="combat-favorites-root" {{collapsibleState "combat-favorites-root" @root.collapsedData}}>
+              <summary class="group-summary gum-unified-header">
+                <div class="summary-left">
+                  <i class="fas fa-chevron-right indicator"></i>
+                  <i class="fas fa-star item-icon"></i>
+                  <span class="group-name">Favoritos</span>
+                </div>
+                <div class="summary-right">
+                  <span class="group-tag">{{combatFavoriteGroupKeys.length}} grupo(s)</span>
+                </div>
+              </summary>
+              <div class="group-content combat-favorites-root-content">
             {{#each combatFavoriteGroupKeys as |groupName groupIndex|}}
               {{#with (lookup @root.combatFavoritesByGroup groupName)}}
               <details class="attack-group-details gum-unified-section" data-group-id="combat-favorites-group-{{groupIndex}}" {{collapsibleState (concat "combat-favorites-group-" groupIndex) @root.collapsedData}}>
@@ -1925,9 +1949,11 @@
               </details>
               {{/with}}
             {{/each}}
-            {{#unless combatFavoriteGroupKeys}}
-              <div class="placeholder-text" style="color:#c2c2c2">Nenhum favorito marcado para combate.</div>
-            {{/unless}}
+                {{#unless combatFavoriteGroupKeys}}
+                  <div class="placeholder-text" style="color:#c2c2c2">Nenhum favorito marcado para combate.</div>
+                {{/unless}}
+              </div>
+            </details>
           </div>
 
           {{!-- Bloco de Lista de ataque --}}
