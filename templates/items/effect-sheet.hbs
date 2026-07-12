@@ -1,19 +1,36 @@
 <form class="{{cssClass}} gum-item-sheet effect-sheet" autocomplete="off">
 
-    {{!-- CABEÇALHO --}}
+    {{!-- ========================================================= --}}
+    {{!-- CABEÇALHO                                                  --}}
+    {{!-- ========================================================= --}}
     <header class="sheet-header">
-        <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
-    <div class="header-info">
-        <div class="header-main-line">
-            <textarea name="name" rows="1" placeholder="Nome do Item">{{item.name}}</textarea>
+        <img
+            class="profile-img"
+            src="{{item.img}}"
+            data-edit="img"
+            title="{{item.name}}"
+        />
+
+        <div class="header-info">
+            <div class="header-main-line">
+                <textarea
+                    name="name"
+                    rows="1"
+                    placeholder="Nome do Item"
+                >{{item.name}}</textarea>
+            </div>
+
+            <div class="header-subline">
+                <span class="item-type-tag">Efeito</span>
+            </div>
+
+            <span class="header-divider" aria-hidden="true"></span>
         </div>
-        <div class="header-subline">
-            <span class="item-type-tag">Efeito</span>
-        </div>
-        <span class="header-divider" aria-hidden="true"></span>
-    </div>
     </header>
 
+    {{!-- ========================================================= --}}
+    {{!-- ABAS                                                       --}}
+    {{!-- ========================================================= --}}
     <nav class="sheet-tabs tabs" data-group="primary">
         <a class="item active" data-tab="description">Descrição</a>
         <a class="item" data-tab="configuracao">Configuração</a>
@@ -22,223 +39,808 @@
 
     <main class="sheet-body">
         <div class="sheet-body-content effect-sheet-body">
-           <div class="tab" data-tab="efeitos-ativos" data-group="primary">
-  <section class="effect-card effect-section">
-                    <div class="effect-section-header effect-actions-header">
-                        <h4 class="effect-section-title">Ações do Efeito</h4>
-                        <button type="button" class="add-effect-action effect-actions-add-button"><i class="fas fa-plus"></i> Adicionar Ação</button>
-                    </div>
-                    {{#if effectActions.length}}
-                    <div class="conditional-fields modern">
-                        {{#each effectActions as |action|}}
-                        <div class="conditional-card effect-action-card">
-                            <details class="effect-action-details" open>
-                                <summary class="effect-action-summary">
-                                    <h5 class="effect-section-title">Ação {{action.displayIndex}}{{#if action.label}} — {{action.label}}{{/if}}</h5>
-                                </summary>
-                                <div class="effect-action-summary-controls">
-                                    <button type="button" class="remove-effect-action modifier-entry-inline-action danger js-summary-action" data-index="{{action.index}}" title="Remover ação"><i class="fas fa-trash"></i></button>
-                                </div>
-                                <div class="effect-action-body">
-                            <div class="effect-row-grid effect-duration-grid is-two-col-rows">
-                                <div class="effect-field effect-field-row">
-                                    <label class="effect-label">Rótulo (ficha do personagem)</label>
-                                    <input type="text" name="system.actions.{{action.index}}.label" value="{{action.label}}" placeholder="Ex: Penalidade em ST"/>
-                                </div>
-                                <div class="effect-field effect-field-row">
-                                    <label class="effect-label">Tipo</label>
-                                    <select name="system.actions.{{action.index}}.type">
-                                        <option value="attribute" {{#if (eq action.type 'attribute')}}selected{{/if}}>Modificador de Atributo</option>
-                                        <option value="status" {{#if (eq action.type 'status')}}selected{{/if}}>Status</option>
-                                        <option value="resource_change" {{#if (eq action.type 'resource_change')}}selected{{/if}}>Alteração de Recurso</option>
-                                        <option value="roll_modifier" {{#if (eq action.type 'roll_modifier')}}selected{{/if}}>Modificador de Rolagem</option>
-                                        <option value="chat" {{#if (eq action.type 'chat')}}selected{{/if}}>Mensagem de Chat</option>
-                                        <option value="macro" {{#if (eq action.type 'macro')}}selected{{/if}}>Macro</option>
-                                        <option value="flag" {{#if (eq action.type 'flag')}}selected{{/if}}>Flag</option>
-                                    </select>
-                                </div>
+
+            {{! ===================================================== }}
+            {{! ABA: EFEITOS ATIVOS                                   }}
+            {{! ===================================================== }}
+            <div class="tab" data-tab="efeitos-ativos" data-group="primary">
+                <section class="effect-premium-workspace">
+
+                    <div class="effect-premium-toolbar">
+                        <div class="effect-premium-toolbar-title">
+                            <span class="effect-premium-toolbar-icon">
+                                <i class="fas fa-list" aria-hidden="true"></i>
+                            </span>
+
+                            <div class="effect-premium-toolbar-copy">
+                                <h4>Ações do Efeito</h4>
+                                <span class="effect-premium-toolbar-subtitle">
+                                    Configure os resultados aplicados por este efeito
+                                </span>
                             </div>
 
-                            {{#if (eq action.type 'attribute')}}
-                            <div class="effect-row-grid effect-duration-grid is-two-col-rows">
-                                <div class="effect-field effect-field-row">
-                                    <label class="effect-label">Caminho</label>
-                                    <input type="text" name="system.actions.{{action.index}}.path" value="{{action.path}}" placeholder="Ex: system.attributes.dx.mod"/>
-                                </div>
-                                <div class="effect-field effect-field-row">
-                                    <label class="effect-label">Operação</label>
-                                    <select name="system.actions.{{action.index}}.operation">
-                                        <option value="ADD" {{#if (eq action.operation 'ADD')}}selected{{/if}}>ADD/SUB</option>
-                                        <option value="OVERRIDE" {{#if (eq action.operation 'OVERRIDE')}}selected{{/if}}>Definir</option>
-                                    </select>
-                                </div>
-                                <div class="effect-field effect-field-row">
-                                    <label class="effect-label">Valor</label>
-                                    <input type="text" name="system.actions.{{action.index}}.value" value="{{action.value}}"/>
-                                </div>
-                            </div>
-                            {{/if}}
-
-                            {{#if (eq action.type 'status')}}
-                            <div class="effect-row-grid effect-duration-grid is-two-col-rows">
-                                <div class="effect-field effect-field-row">
-                                    <label class="effect-label">Ícone de Status</label>
-                                    <select name="system.actions.{{action.index}}.statusId">
-                                        {{#each ../statusEffects as |status|}}
-                                            <option value="{{status.id}}" {{#if (eq ../statusId status.id)}}selected{{/if}}>{{status.label}}</option>
-                                        {{/each}}
-                                    </select>
-                                </div>
-                            </div>
-                            {{/if}}
-
-                            {{#if (eq action.type 'resource_change')}}
-                            <div class="effect-row-grid effect-duration-grid is-two-col-rows">
-                                <div class="effect-field effect-field-row">
-                                    <label class="effect-label">Alvo</label>
-                                    <select name="system.actions.{{action.index}}.category">
-                                        <option value="hp" {{#if (eq action.category 'hp')}}selected{{/if}}>Pontos de Vida</option>
-                                        <option value="fp" {{#if (eq action.category 'fp')}}selected{{/if}}>Pontos de Fadiga</option>
-                                        <option value="energy_reserve" {{#if (eq action.category 'energy_reserve')}}selected{{/if}}>Reserva de Energia</option>
-                                        <option value="combat_tracker" {{#if (eq action.category 'combat_tracker')}}selected{{/if}}>Registro de Combate</option>
-                                        <option value="item_quantity" {{#if (eq action.category 'item_quantity')}}selected{{/if}}>Quantidade de Equipamento</option>
-                                    </select>
-                                </div>
-                                <div class="effect-field effect-field-row">
-                                    <label class="effect-label">Nome específico (se aplicável)</label>
-                                    <input type="text" name="system.actions.{{action.index}}.name" value="{{action.name}}"/>
-                                </div>
-                                <div class="effect-field effect-field-row">
-                                    <label class="effect-label">Valor</label>
-                                    <input type="text" name="system.actions.{{action.index}}.value" value="{{action.value}}"/>
-                                </div>
-                            </div>
-                            <div class="checkbox-options">
-                                <label class="custom-checkbox"><input type="checkbox" name="system.actions.{{action.index}}.chat_notice" {{checked action.chat_notice}}/><span>Aviso no chat</span></label>
-                                <label class="custom-checkbox"><input type="checkbox" name="system.actions.{{action.index}}.confirm_prompt" {{checked action.confirm_prompt}}/><span>Pedir confirmação</span></label>
-                                <label class="custom-checkbox"><input type="checkbox" name="system.actions.{{action.index}}.variable_value" {{checked action.variable_value}}/><span>Valor variável</span></label>
-                            </div>
-                            {{/if}}
-
-                            {{#if (eq action.type 'roll_modifier')}}
-                            <div class="advanced-options">
-                                <h6>Entradas de Modificador</h6>
-                                {{#each action.rollModifierEntries as |entry|}}
-                                <div class="modifier-entry-row roll-mod-entry">
-                                    <div class="modifier-entry-topline">
-                                        <div class="effect-field modifier-entry-field">
-                                            <label class="effect-label">Rótulo</label>
-                                            <input type="text" name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.label" value="{{entry.label}}"/>
-                                        </div>
-                                        <button type="button" class="remove-roll-mod-entry modifier-entry-inline-action danger" data-action-index="{{../index}}" data-entry-index="{{entry.index}}"><i class="fas fa-trash"></i></button>
-                                    </div>
-                                    <div class="modifier-entry-midline">
-                                        <div class="effect-field modifier-entry-field modifier-entry-field-value">
-                                            <label class="effect-label">Valor</label>
-                                            <input type="text" name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.value" value="{{entry.value}}" placeholder="Ex: -2 ou menor(dx,per)"/>
-                                        </div>
-                                        <div class="effect-field modifier-entry-field modifier-entry-field-cap">
-                                            <label class="effect-label">Cap NH</label>
-                                            <input type="text" name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.cap" value="{{entry.cap}}"/>
-                                        </div>
-                                    </div>
-                                    <div class="modifier-entry-bottomline">
-                                        <div class="effect-field modifier-entry-field modifier-entry-field-context">
-                                            <label class="effect-label">Contextos (csv)</label>
-                                            <input type="text" class="context-csv-input" list="roll-mod-context-options" name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.contexts" value="{{entry.contexts}}"/>
-                                        </div>
-                                        <div class="effect-field modifier-entry-field" style="margin-top: 5px;">
-                                            <label class="effect-label">Aplicação</label>
-                                            <select name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.application_side">
-                                                {{#each ../../rollModifierApplicationOptions as |opt|}}
-                                                <option value="{{opt.id}}" {{#if (eq opt.id entry.application_side)}}selected{{/if}}>{{opt.label}}</option>
-                                                {{/each}}
-                                            </select>
-                                        </div>
-                                        <hr/>
-                                        <p style="color: #a9a6a0; font-size: smaller;">Utilize essas opções abaixo se quiser aplicar o modificador em habilidades específicas.</p>  
-                                    </div>
-                                    <div class="modifier-entry-bottomline">
-                                        <div class="effect-field modifier-entry-field">
-                                            <label class="effect-label">Habilidade(s) alvo (CSV)</label>
-                                            <input type="text" name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.target_values" value="{{entry.target_values}}" placeholder="Ex: Furtividade,Acrobacia"/>
-                                        </div>
-                                    </div>
-                                    <div class="modifier-entry-bottomline">
-                                        <div class="effect-field modifier-entry-field">
-                                            <label class="effect-label">Item/grupo de origem (ID, UUID ou nome; CSV)</label>
-                                            <input type="text" name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.source_item_ids" value="{{entry.source_item_ids}}" placeholder="Ex: Alabarda, abc123 ou Item.xxxxx"/>
-                                        </div>
-                                    </div>
-                                    <div class="modifier-entry-bottomline">
-                                        <div class="effect-field modifier-entry-field">
-                                            <label class="effect-label">Modo(s) de ataque (ID ou nome; CSV)</label>
-                                            <input type="text" name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.source_attack_ids" value="{{entry.source_attack_ids}}" placeholder="Ex: Corte, Estocada ou atkA"/>
-                                        </div>
-                                    </div>
-                                    <div class="modifier-entry-bottomline">
-                                        <div class="effect-field modifier-entry-field">
-                                            <label class="effect-label">Exibição NH</label>
-                                            <select name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.nh_display_mode">
-                                                <option value="roll_only" {{#if (eq entry.nh_display_mode "roll_only")}}selected{{/if}}>Apenas rolagem</option>
-                                                <option value="include_in_nh" {{#if (eq entry.nh_display_mode "include_in_nh")}}selected{{/if}}>Incluir no NH</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                {{/each}}
-                                <button type="button" class="add-roll-mod-entry" data-action-index="{{action.index}}"><i class="fas fa-plus"></i> Adicionar entrada</button>
-                            </div>
-                            {{/if}}
-
-                            {{#if (eq action.type 'macro')}}
-                            <div class="effect-row-grid effect-duration-grid is-two-col-rows">
-                                <div class="effect-field effect-field-row">
-                                    <label class="effect-label">Nome da Macro</label>
-                                    <input type="text" name="system.actions.{{action.index}}.value" value="{{action.value}}" list="macro-list" autocomplete="off"/>
-                                </div>
-                            </div>
-                            {{/if}}
-
-                            {{#if (eq action.type 'chat')}}
-                            <div class="effect-row-grid effect-duration-grid is-two-col-rows">
-                                <div class="effect-field effect-field-row">
-                                    <label class="effect-label">Texto</label>
-                                    <textarea name="system.actions.{{action.index}}.chat_text" rows="1">{{action.chat_text}}</textarea>
-                                </div>
-                                <label class="custom-checkbox block effect-inline-checkbox">
-                                    <input type="checkbox" name="system.actions.{{action.index}}.has_roll" {{checked action.has_roll}}/>
-                                    <span>Incluir teste?</span>
-                                </label>
-                                {{#if action.has_roll}}
-                                <div class="form-grid-3">
-                                    <div class="form-group"><label>Rótulo</label><input type="text" name="system.actions.{{action.index}}.roll_label" value="{{action.roll_label}}"/></div>
-                                    <div class="form-group"><label>Atributo/Perícia</label><input type="text" name="system.actions.{{action.index}}.roll_attribute" value="{{action.roll_attribute}}"/></div>
-                                    <div class="form-group"><label>Modificador</label><input type="text" name="system.actions.{{action.index}}.roll_modifier" value="{{action.roll_modifier}}"/></div>
-                                </div>
-                                {{/if}}
-                            </div>
-                            {{/if}}
-
-                            {{#if (eq action.type 'flag')}}
- <div class="effect-row-grid effect-duration-grid is-two-col-rows">
-                                <div class="effect-field effect-field-row">
-                                    <label class="effect-label">Chave</label>
-                                    <input type="text" name="system.actions.{{action.index}}.key" value="{{action.key}}"/>
-                                </div>
-                                <div class="effect-field effect-field-row">
-                                    <label class="effect-label">Valor</label>
-                                    <input type="text" name="system.actions.{{action.index}}.flag_value" value="{{action.flag_value}}"/>
-                                </div>
-                            </div>
-                            {{/if}}
-                                </div>
-                            </details>
+                            <span class="effect-premium-count">
+                                {{effectActionsCountLabel}}
+                            </span>
                         </div>
-                        {{/each}}
+
+                        <button
+                            type="button"
+                            class="add-effect-action effect-premium-add-action"
+                        >
+                            <i class="fas fa-plus" aria-hidden="true"></i>
+                            Adicionar Ação
+                        </button>
                     </div>
+
+                    {{#if effectActions.length}}
+                        <div class="effect-premium-action-list">
+
+                            {{#each effectActions as |action|}}
+                                <details
+                                    class="effect-action-details effect-premium-action"
+                                    data-action-index="{{action.index}}"
+                                    {{#if action.isExpanded}}open{{/if}}
+                                >
+                                    <summary class="effect-premium-action-header">
+                                        <span class="effect-premium-action-number">
+                                            {{action.displayIndex}}
+                                        </span>
+
+                                        <div class="effect-premium-action-copy">
+                                            <div class="effect-premium-action-title-row">
+                                                <span class="effect-premium-action-title">
+                                                    {{action.titleText}}
+                                                </span>
+
+                                                <span class="effect-premium-action-type {{action.typeClass}}">
+                                                    <i class="{{action.typeIcon}}" aria-hidden="true"></i>
+                                                    {{action.typeLabel}}
+                                                </span>
+                                            </div>
+
+                                            <span class="effect-premium-action-meta">
+                                                {{action.summaryText}}
+                                            </span>
+                                        </div>
+
+                                        <div class="effect-premium-action-controls">
+                                            <button
+                                                type="button"
+                                                class="remove-effect-action js-summary-action effect-premium-icon-button"
+                                                data-index="{{action.index}}"
+                                                title="Remover ação"
+                                                aria-label="Remover ação {{action.displayIndex}}"
+                                            >
+                                                <i class="fas fa-trash" aria-hidden="true"></i>
+                                            </button>
+
+                                            <i
+                                                class="fas fa-chevron-down effect-premium-chevron"
+                                                aria-hidden="true"
+                                            ></i>
+                                        </div>
+                                    </summary>
+
+                                    <div class="effect-premium-action-body">
+
+                                        {{!-- IDENTIFICAÇÃO DA AÇÃO --}}
+                                        <div class="effect-premium-identification-grid">
+
+                                            <div class="effect-premium-field">
+                                                <label class="effect-premium-field-label">
+                                                    <i class="fas fa-tag" aria-hidden="true"></i>
+                                                    Rótulo (ficha do personagem)
+                                                </label>
+
+                                                <div class="effect-premium-field-control">
+                                                    <input
+                                                        type="text"
+                                                        name="system.actions.{{action.index}}.label"
+                                                        value="{{action.label}}"
+                                                        placeholder="Ex: Penalidade em ST"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div class="effect-premium-field">
+                                                <label class="effect-premium-field-label">
+                                                    <i class="fas fa-layer-group" aria-hidden="true"></i>
+                                                    Tipo
+                                                </label>
+
+                                                <div class="effect-premium-field-control">
+                                                    <select name="system.actions.{{action.index}}.type">
+                                                        <option
+                                                            value="attribute"
+                                                            {{#if (eq action.type "attribute")}}selected{{/if}}
+                                                        >
+                                                            Modificador de Atributo
+                                                        </option>
+
+                                                        <option
+                                                            value="status"
+                                                            {{#if (eq action.type "status")}}selected{{/if}}
+                                                        >
+                                                            Status
+                                                        </option>
+
+                                                        <option
+                                                            value="resource_change"
+                                                            {{#if (eq action.type "resource_change")}}selected{{/if}}
+                                                        >
+                                                            Alteração de Recurso
+                                                        </option>
+
+                                                        <option
+                                                            value="roll_modifier"
+                                                            {{#if (eq action.type "roll_modifier")}}selected{{/if}}
+                                                        >
+                                                            Modificador de Rolagem
+                                                        </option>
+
+                                                        <option
+                                                            value="chat"
+                                                            {{#if (eq action.type "chat")}}selected{{/if}}
+                                                        >
+                                                            Mensagem de Chat
+                                                        </option>
+
+                                                        <option
+                                                            value="macro"
+                                                            {{#if (eq action.type "macro")}}selected{{/if}}
+                                                        >
+                                                            Macro
+                                                        </option>
+
+                                                        <option
+                                                            value="flag"
+                                                            {{#if (eq action.type "flag")}}selected{{/if}}
+                                                        >
+                                                            Flag
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            class="
+                                                effect-premium-type-panel
+                                                {{#if (eq action.type "roll_modifier")}}is-complex{{/if}}
+                                                {{#if (eq action.type "chat")}}is-chat{{/if}}
+                                            "
+                                        >
+                                            {{! ============================================= }}
+                                            {{! TIPO: MODIFICADOR DE ATRIBUTO                  }}
+                                            {{! ============================================= }}
+                                            {{#if (eq action.type "attribute")}}
+                                                <div class="effect-premium-grid effect-premium-grid-attribute-main">
+
+                                                    <div class="effect-premium-field is-primary">
+                                                        <label class="effect-premium-field-label">
+                                                            <i class="fas fa-code-branch" aria-hidden="true"></i>
+                                                            Caminho
+                                                        </label>
+
+                                                        <div class="effect-premium-field-control">
+                                                            <input
+                                                                type="text"
+                                                                class="effect-code-input"
+                                                                name="system.actions.{{action.index}}.path"
+                                                                value="{{action.path}}"
+                                                                placeholder="Ex: system.attributes.dx.mod"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="effect-premium-field">
+                                                        <label class="effect-premium-field-label">
+                                                            <i class="fas fa-calculator" aria-hidden="true"></i>
+                                                            Operação
+                                                        </label>
+
+                                                        <div class="effect-premium-field-control">
+                                                            <select name="system.actions.{{action.index}}.operation">
+                                                                <option
+                                                                    value="ADD"
+                                                                    {{#if (eq action.operation "ADD")}}selected{{/if}}
+                                                                >
+                                                                    ADD/SUB
+                                                                </option>
+
+                                                                <option
+                                                                    value="OVERRIDE"
+                                                                    {{#if (eq action.operation "OVERRIDE")}}selected{{/if}}
+                                                                >
+                                                                    Definir
+                                                                </option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="effect-premium-grid effect-premium-grid-single">
+                                                    <div class="effect-premium-field effect-premium-expression-card">
+                                                        <label class="effect-premium-field-label">
+                                                            <i class="fas fa-code" aria-hidden="true"></i>
+                                                            Valor ou expressão
+                                                        </label>
+
+                                                        <div class="effect-premium-field-control">
+                                                            <input
+                                                                type="text"
+                                                                class="effect-code-input effect-expression-input"
+                                                                name="system.actions.{{action.index}}.value"
+                                                                value="{{action.value}}"
+                                                                placeholder="Ex: 2, -1, 1d6+2 ou expressão"
+                                                                title="Aceita valor fixo, fórmula ou rolagem de dados, conforme o interpretador do sistema."
+                                                                aria-describedby="effect-attribute-value-help-{{action.index}}"
+                                                            />
+
+                                                            <p
+                                                                id="effect-attribute-value-help-{{action.index}}"
+                                                                class="effect-premium-field-hint"
+                                                            >
+                                                                Aceita valor fixo, fórmula ou rolagem de dados.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {{/if}}
+
+                                            {{! ============================================= }}
+                                            {{! TIPO: STATUS                                  }}
+                                            {{! ============================================= }}
+                                            {{#if (eq action.type "status")}}
+                                                <div class="effect-premium-grid effect-premium-grid-single">
+
+                                                    <div class="effect-premium-field">
+                                                        <label class="effect-premium-field-label">
+                                                            <i class="fas fa-heartbeat" aria-hidden="true"></i>
+                                                            Ícone de Status
+                                                        </label>
+
+                                                        <div class="effect-premium-field-control">
+                                                            <select name="system.actions.{{action.index}}.statusId">
+                                                                {{#each ../statusEffects as |status|}}
+                                                                    <option
+                                                                        value="{{status.id}}"
+                                                                        {{#if (eq ../statusId status.id)}}selected{{/if}}
+                                                                    >
+                                                                        {{status.label}}
+                                                                    </option>
+                                                                {{/each}}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {{/if}}
+
+                                            {{! ============================================= }}
+                                            {{! TIPO: ALTERAÇÃO DE RECURSO                    }}
+                                            {{! ============================================= }}
+                                            {{#if (eq action.type "resource_change")}}
+                                                <div class="effect-premium-grid effect-premium-grid-resource">
+
+                                                    <div class="effect-premium-field">
+                                                        <label class="effect-premium-field-label">
+                                                            <i class="fas fa-bullseye" aria-hidden="true"></i>
+                                                            Alvo
+                                                        </label>
+
+                                                        <div class="effect-premium-field-control">
+                                                            <select name="system.actions.{{action.index}}.category">
+                                                                <option
+                                                                    value="hp"
+                                                                    {{#if (eq action.category "hp")}}selected{{/if}}
+                                                                >
+                                                                    Pontos de Vida
+                                                                </option>
+
+                                                                <option
+                                                                    value="fp"
+                                                                    {{#if (eq action.category "fp")}}selected{{/if}}
+                                                                >
+                                                                    Pontos de Fadiga
+                                                                </option>
+
+                                                                <option
+                                                                    value="energy_reserve"
+                                                                    {{#if (eq action.category "energy_reserve")}}selected{{/if}}
+                                                                >
+                                                                    Reserva de Energia
+                                                                </option>
+
+                                                                <option
+                                                                    value="combat_tracker"
+                                                                    {{#if (eq action.category "combat_tracker")}}selected{{/if}}
+                                                                >
+                                                                    Registro de Combate
+                                                                </option>
+
+                                                                <option
+                                                                    value="item_quantity"
+                                                                    {{#if (eq action.category "item_quantity")}}selected{{/if}}
+                                                                >
+                                                                    Quantidade de Equipamento
+                                                                </option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="effect-premium-field">
+                                                        <label class="effect-premium-field-label">
+                                                            <i class="fas fa-signature" aria-hidden="true"></i>
+                                                            Nome específico
+                                                        </label>
+
+                                                        <div class="effect-premium-field-control">
+                                                            <input
+                                                                type="text"
+                                                                name="system.actions.{{action.index}}.name"
+                                                                value="{{action.name}}"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="effect-premium-field">
+                                                        <label class="effect-premium-field-label">
+                                                            <i class="fas fa-hashtag" aria-hidden="true"></i>
+                                                            Valor
+                                                        </label>
+
+                                                        <div class="effect-premium-field-control">
+                                                            <input
+                                                                type="text"
+                                                                class="effect-compact-value"
+                                                                name="system.actions.{{action.index}}.value"
+                                                                value="{{action.value}}"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="effect-premium-options-row">
+
+                                                    <label class="effect-premium-checkbox">
+                                                        <input
+                                                            type="checkbox"
+                                                            name="system.actions.{{action.index}}.chat_notice"
+                                                            {{checked action.chat_notice}}
+                                                        />
+                                                        <span>Aviso no chat</span>
+                                                    </label>
+
+                                                    <label class="effect-premium-checkbox">
+                                                        <input
+                                                            type="checkbox"
+                                                            name="system.actions.{{action.index}}.confirm_prompt"
+                                                            {{checked action.confirm_prompt}}
+                                                        />
+                                                        <span>Pedir confirmação</span>
+                                                    </label>
+
+                                                    <label class="effect-premium-checkbox">
+                                                        <input
+                                                            type="checkbox"
+                                                            name="system.actions.{{action.index}}.variable_value"
+                                                            {{checked action.variable_value}}
+                                                        />
+                                                        <span>Valor variável</span>
+                                                    </label>
+                                                </div>
+                                            {{/if}}
+                                            {{! ============================================= }}
+                                            {{! TIPO: MODIFICADOR DE ROLAGEM                  }}
+                                            {{! ============================================= }}
+                                            {{#if (eq action.type "roll_modifier")}}
+                                                <div class="effect-premium-roll-compact">
+
+                                                    {{#each action.rollModifierEntries as |entry|}}
+                                                        <div
+                                                            class="
+                                                                effect-premium-roll-flat-entry
+                                                                {{#unless @first}}is-extra-entry{{/unless}}
+                                                            "
+                                                            data-action-index="{{../index}}"
+                                                            data-entry-index="{{entry.index}}"
+                                                        >
+                                                            {{#unless @first}}
+                                                                <div class="effect-premium-roll-extra-header">
+                                                                    <div>
+                                                                        <span class="effect-premium-roll-extra-title">
+                                                                            Entrada adicional {{entry.displayIndex}}
+                                                                        </span>
+
+                                                                        <span class="effect-premium-roll-extra-meta">
+                                                                            Registro antigo com múltiplas entradas
+                                                                        </span>
+                                                                    </div>
+
+                                                                    <button
+                                                                        type="button"
+                                                                        class="remove-roll-mod-entry effect-premium-icon-button"
+                                                                        data-action-index="{{../index}}"
+                                                                        data-entry-index="{{entry.index}}"
+                                                                        title="Remover entrada adicional"
+                                                                        aria-label="Remover entrada adicional {{entry.displayIndex}}"
+                                                                    >
+                                                                        <i class="fas fa-trash" aria-hidden="true"></i>
+                                                                    </button>
+                                                                </div>
+                                                            {{/unless}}
+
+                                                            <div class="effect-premium-grid effect-premium-grid-entry-primary">
+
+                                                                <div class="effect-premium-field">
+                                                                    <label class="effect-premium-field-label">
+                                                                        <i class="fas fa-tag" aria-hidden="true"></i>
+                                                                        Rótulo
+                                                                    </label>
+
+                                                                    <div class="effect-premium-field-control">
+                                                                        <input
+                                                                            type="text"
+                                                                            name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.label"
+                                                                            value="{{entry.label}}"
+                                                                            placeholder="Ex: Penalidade em ataques"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="effect-premium-field">
+                                                                    <label class="effect-premium-field-label">
+                                                                        <i class="fas fa-plus" aria-hidden="true"></i>
+                                                                        Valor
+                                                                    </label>
+
+                                                                    <div class="effect-premium-field-control">
+                                                                        <input
+                                                                            type="text"
+                                                                            class="effect-code-input"
+                                                                            name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.value"
+                                                                            value="{{entry.value}}"
+                                                                            placeholder="Ex: -2, 1d6 ou fórmula"
+                                                                            title="Aceita valor fixo, fórmula ou rolagem de dados, conforme o interpretador do sistema."
+                                                                        />
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="effect-premium-field">
+                                                                    <label class="effect-premium-field-label">
+                                                                        <i class="fas fa-tachometer-alt" aria-hidden="true"></i>
+                                                                        Cap NH
+                                                                    </label>
+
+                                                                    <div class="effect-premium-field-control">
+                                                                        <input
+                                                                            type="text"
+                                                                            class="effect-compact-value"
+                                                                            name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.cap"
+                                                                            value="{{entry.cap}}"
+                                                                            placeholder="Opcional"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="effect-premium-grid effect-premium-grid-entry-context">
+
+                                                                <div class="effect-premium-field">
+                                                                    <label class="effect-premium-field-label">
+                                                                        <i class="fas fa-crosshairs" aria-hidden="true"></i>
+                                                                        Contextos
+                                                                    </label>
+
+                                                                    <div class="effect-premium-field-control">
+                                                                        <input
+                                                                            type="text"
+                                                                            class="context-csv-input"
+                                                                            list="roll-mod-context-options"
+                                                                            name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.contexts"
+                                                                            value="{{entry.contexts}}"
+                                                                            placeholder="Ex: all, attack, defense"
+                                                                        />
+
+                                                                        <p class="effect-premium-field-hint">
+                                                                            Separe múltiplos contextos por vírgula.
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="effect-premium-field">
+                                                                    <label class="effect-premium-field-label">
+                                                                        <i class="fas fa-location-arrow" aria-hidden="true"></i>
+                                                                        Aplicar o modificador em
+                                                                    </label>
+
+                                                                    <div class="effect-premium-field-control">
+                                                                        <select
+                                                                            name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.application_side"
+                                                                        >
+                                                                            {{#each ../../rollModifierApplicationOptions as |opt|}}
+                                                                                <option
+                                                                                    value="{{opt.id}}"
+                                                                                    {{#if (eq opt.id ../application_side)}}selected{{/if}}
+                                                                                >
+                                                                                    {{opt.label}}
+                                                                                </option>
+                                                                            {{/each}}
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <details class="effect-premium-advanced">
+                                                                <summary class="effect-premium-advanced-header">
+                                                                    <span>
+                                                                        <i class="fas fa-shield-alt" aria-hidden="true"></i>
+                                                                        Restrições específicas
+                                                                    </span>
+
+                                                                    <i
+                                                                        class="fas fa-chevron-down effect-premium-chevron"
+                                                                        aria-hidden="true"
+                                                                    ></i>
+                                                                </summary>
+
+                                                                <div class="effect-premium-advanced-body">
+                                                                    <p class="effect-premium-field-hint">
+                                                                        Use estas opções apenas quando o modificador
+                                                                        precisar ser limitado a habilidades, itens ou
+                                                                        modos específicos.
+                                                                    </p>
+
+                                                                    <div class="effect-premium-grid effect-premium-grid-advanced">
+
+                                                                        <div class="effect-premium-field">
+                                                                            <label class="effect-premium-field-label">
+                                                                                <i class="fas fa-bullseye" aria-hidden="true"></i>
+                                                                                Habilidade(s) alvo (CSV)
+                                                                            </label>
+
+                                                                            <div class="effect-premium-field-control">
+                                                                                <input
+                                                                                    type="text"
+                                                                                    name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.target_values"
+                                                                                    value="{{entry.target_values}}"
+                                                                                    placeholder="Ex: Furtividade,Acrobacia"
+                                                                                />
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div class="effect-premium-field">
+                                                                            <label class="effect-premium-field-label">
+                                                                                <i class="fas fa-archive" aria-hidden="true"></i>
+                                                                                Item/grupo de origem (ID, UUID ou nome; CSV)
+                                                                            </label>
+
+                                                                            <div class="effect-premium-field-control">
+                                                                                <input
+                                                                                    type="text"
+                                                                                    name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.source_item_ids"
+                                                                                    value="{{entry.source_item_ids}}"
+                                                                                    placeholder="Ex: Alabarda, abc123 ou Item.xxxxx"
+                                                                                />
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div class="effect-premium-field">
+                                                                            <label class="effect-premium-field-label">
+                                                                                <i class="fas fa-gavel" aria-hidden="true"></i>
+                                                                                Modo(s) de ataque (ID ou nome; CSV)
+                                                                            </label>
+
+                                                                            <div class="effect-premium-field-control">
+                                                                                <input
+                                                                                    type="text"
+                                                                                    name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.source_attack_ids"
+                                                                                    value="{{entry.source_attack_ids}}"
+                                                                                    placeholder="Ex: Corte, Estocada ou atkA"
+                                                                                />
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div class="effect-premium-field">
+                                                                            <label class="effect-premium-field-label">
+                                                                                <i class="fas fa-eye" aria-hidden="true"></i>
+                                                                                Exibição NH
+                                                                            </label>
+
+                                                                            <div class="effect-premium-field-control">
+                                                                                <select
+                                                                                    name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.nh_display_mode"
+                                                                                >
+                                                                                    <option
+                                                                                        value="roll_only"
+                                                                                        {{#if (eq entry.nh_display_mode "roll_only")}}selected{{/if}}
+                                                                                    >
+                                                                                        Apenas rolagem
+                                                                                    </option>
+
+                                                                                    <option
+                                                                                        value="include_in_nh"
+                                                                                        {{#if (eq entry.nh_display_mode "include_in_nh")}}selected{{/if}}
+                                                                                    >
+                                                                                        Incluir no NH
+                                                                                    </option>
+                                                                                </select>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </details>
+                                                        </div>
+                                                    {{else}}
+                                                        <p class="effect-premium-empty">
+                                                            Esta ação não possui uma entrada de modificador válida.
+                                                            Remova a ação e crie uma nova.
+                                                        </p>
+                                                    {{/each}}
+                                                </div>
+                                            {{/if}}
+
+                                            {{! ============================================= }}
+                                            {{! TIPO: MACRO                                   }}
+                                            {{! ============================================= }}
+                                            {{#if (eq action.type "macro")}}
+                                                <div class="effect-premium-grid effect-premium-grid-single">
+
+                                                    <div class="effect-premium-field">
+                                                        <label class="effect-premium-field-label">
+                                                            <i class="fas fa-code" aria-hidden="true"></i>
+                                                            Nome da Macro
+                                                        </label>
+
+                                                        <div class="effect-premium-field-control">
+                                                            <input
+                                                                type="text"
+                                                                name="system.actions.{{action.index}}.value"
+                                                                value="{{action.value}}"
+                                                                list="macro-list"
+                                                                autocomplete="off"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {{/if}}
+
+                                            {{! ============================================= }}
+                                            {{! TIPO: MENSAGEM DE CHAT                        }}
+                                            {{! ============================================= }}
+                                            {{#if (eq action.type "chat")}}
+                                                <div class="effect-premium-grid effect-premium-grid-chat">
+
+                                                    <div class="effect-premium-field">
+                                                        <label class="effect-premium-field-label">
+                                                            <i class="fas fa-comment" aria-hidden="true"></i>
+                                                            Texto
+                                                        </label>
+
+                                                        <div class="effect-premium-field-control">
+                                                            <textarea
+                                                                class="effect-chat-textarea"
+                                                                name="system.actions.{{action.index}}.chat_text"
+                                                                rows="3"
+                                                                placeholder="Texto publicado no chat"
+                                                            >{{action.chat_text}}</textarea>
+                                                        </div>
+                                                    </div>
+
+                                                    <label class="effect-premium-checkbox effect-premium-checkbox-card">
+                                                        <input
+                                                            type="checkbox"
+                                                            name="system.actions.{{action.index}}.has_roll"
+                                                            {{checked action.has_roll}}
+                                                        />
+                                                        <span>Incluir teste?</span>
+                                                    </label>
+                                                </div>
+
+                                                {{#if action.has_roll}}
+                                                    <div class="effect-premium-roll-config">
+                                                        <h6>Configuração do Teste</h6>
+
+                                                        <div class="effect-premium-grid effect-premium-grid-chat-roll">
+
+                                                            <div class="effect-premium-field">
+                                                                <label class="effect-premium-field-label">
+                                                                    <i class="fas fa-tag" aria-hidden="true"></i>
+                                                                    Rótulo
+                                                                </label>
+
+                                                                <div class="effect-premium-field-control">
+                                                                    <input
+                                                                        type="text"
+                                                                        name="system.actions.{{action.index}}.roll_label"
+                                                                        value="{{action.roll_label}}"
+                                                                    />
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="effect-premium-field">
+                                                                <label class="effect-premium-field-label">
+                                                                    <i class="fas fa-dice-d20" aria-hidden="true"></i>
+                                                                    Atributo/Perícia
+                                                                </label>
+
+                                                                <div class="effect-premium-field-control">
+                                                                    <input
+                                                                        type="text"
+                                                                        name="system.actions.{{action.index}}.roll_attribute"
+                                                                        value="{{action.roll_attribute}}"
+                                                                    />
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="effect-premium-field">
+                                                                <label class="effect-premium-field-label">
+                                                                    <i class="fas fa-plus" aria-hidden="true"></i>
+                                                                    Modificador
+                                                                </label>
+
+                                                                <div class="effect-premium-field-control">
+                                                                    <input
+                                                                        type="text"
+                                                                        name="system.actions.{{action.index}}.roll_modifier"
+                                                                        value="{{action.roll_modifier}}"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                {{/if}}
+                                            {{/if}}
+
+                                            {{! ============================================= }}
+                                            {{! TIPO: FLAG                                    }}
+                                            {{! ============================================= }}
+                                            {{#if (eq action.type "flag")}}
+                                                <div class="effect-premium-grid effect-premium-grid-flag">
+
+                                                    <div class="effect-premium-field">
+                                                        <label class="effect-premium-field-label">
+                                                            <i class="fas fa-key" aria-hidden="true"></i>
+                                                            Chave
+                                                        </label>
+
+                                                        <div class="effect-premium-field-control">
+                                                            <input
+                                                                type="text"
+                                                                name="system.actions.{{action.index}}.key"
+                                                                value="{{action.key}}"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="effect-premium-field">
+                                                        <label class="effect-premium-field-label">
+                                                            <i class="fas fa-toggle-on" aria-hidden="true"></i>
+                                                            Valor
+                                                        </label>
+
+                                                        <div class="effect-premium-field-control">
+                                                            <input
+                                                                type="text"
+                                                                name="system.actions.{{action.index}}.flag_value"
+                                                                value="{{action.flag_value}}"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {{/if}}
+                                        </div>
+                                    </div>
+                                </details>
+                            {{/each}}
+                        </div>
+
                     {{else}}
-                    <p class="hint">Nenhuma ação configurada. Clique em <strong>Adicionar Ação</strong>.</p>
+                        <p class="hint effect-premium-empty">
+                            Nenhuma ação configurada. Clique em
+                            <strong>Adicionar Ação</strong>.
+                        </p>
                     {{/if}}
 
                     <datalist id="roll-mod-context-options">
@@ -246,6 +848,7 @@
                             <option value="{{ctx.id}}">{{ctx.label}}</option>
                         {{/each}}
                     </datalist>
+
                     <datalist id="macro-list">
                         {{#each macros as |macroName|}}
                             <option value="{{macroName}}">
@@ -254,41 +857,97 @@
                 </section>
             </div>
 
-                {{! ========================================================= }}
-                {{!  ABA "DESCRIÇÃO" (COM O EDITOR CORRETO)     }}
-                {{! ========================================================= }}
-                <div class="tab active" data-tab="description" data-group="primary">
-                    <div class="description-tab">
-                        <div class="description-grid">
-                        <div class="form-group" style="flex-direction: row; text-align:center;">
+            {{! ===================================================== }}
+            {{! ABA: DESCRIÇÃO                                        }}
+            {{! ===================================================== }}
+            <div class="tab active" data-tab="description" data-group="primary">
+                <div class="description-tab">
+                    <div class="description-grid">
+
+                        <div
+                            class="form-group"
+                            style="flex-direction: row; text-align: center;"
+                        >
                             <label title="Livro e Página de Referência">
-                                <a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> REF
+                                <a class="open-reference-link" title="Abrir Referência">
+                                    <i class="fas fa-book-open"></i>
+                                </a>
+                                REF
                             </label>
+
                             <div class="input-row">
-                                <input type="text" name="system.ref" value="{{system.ref}}" placeholder="Ex: BA23, MA45"/>
+                                <input
+                                    type="text"
+                                    name="system.ref"
+                                    value="{{system.ref}}"
+                                    placeholder="Ex: BA23, MA45"
+                                />
                             </div>
                         </div>
-  <div class="form-section description-section itemdesc-block">
+
+                        <div class="form-section description-section itemdesc-block">
                             <details class="itemdesc-panel" open>
                                 <summary class="itemdesc-block-header">
-                                    <h4 class="itemdesc-block-title">Descrição Resumida (Chat)</h4>
+                                    <h4 class="itemdesc-block-title">
+                                        Descrição Resumida (Chat)
+                                    </h4>
                                 </summary>
+
                                 {{#if editable}}
-                                <span class="itemdesc-header-actions">
-                                        <button type="button" class="toggle-editor itemdesc-edit-button" data-field="system.chat_description">
+                                    <span class="itemdesc-header-actions">
+                                        <button
+                                            type="button"
+                                            class="toggle-editor itemdesc-edit-button"
+                                            data-field="system.chat_description"
+                                        >
                                             <i class="fas fa-pen"></i>
                                         </button>
-                                </span>
+                                    </span>
                                 {{/if}}
-                                <div class="itemdesc-content">
-                                    <div class="description-view itemdesc-inner">{{{enrichedChatDescription}}}</div>
 
-                                    <div class="description-editor itemdesc-inner" style="display:none;">
-                                        {{editor system.chat_description target="system.chat_description" engine="prosemirror" owner=owner editable=editable}}
+                                <div class="itemdesc-content">
+                                    <div class="description-view itemdesc-inner">
+                                        {{{enrichedChatDescription}}}
+                                    </div>
+
+                                    <div
+                                        class="description-editor itemdesc-inner"
+                                        style="display: none;"
+                                    >
+                                        {{editor
+                                            system.chat_description
+                                            target="system.chat_description"
+                                            engine="prosemirror"
+                                            owner=owner
+                                            editable=editable
+                                        }}
+
                                         <div class="description-actions">
-                                            <button type="button" class="save-description" data-field="system.chat_description"><i class="fas fa-save"></i> Salvar</button>
-                                            <button type="button" class="expand-description" data-expanded="false"><i class="fas fa-expand"></i> Expandir</button>
-                                            <button type="button" class="cancel-description"><i class="fas fa-times"></i> Cancelar</button>
+                                            <button
+                                                type="button"
+                                                class="save-description"
+                                                data-field="system.chat_description"
+                                            >
+                                                <i class="fas fa-save"></i>
+                                                Salvar
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                class="expand-description"
+                                                data-expanded="false"
+                                            >
+                                                <i class="fas fa-expand"></i>
+                                                Expandir
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                class="cancel-description"
+                                            >
+                                                <i class="fas fa-times"></i>
+                                                Cancelar
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -298,157 +957,345 @@
                         <div class="form-section description-section itemdesc-block">
                             <details class="itemdesc-panel" open>
                                 <summary class="itemdesc-block-header">
-                                    <h4 class="itemdesc-block-title">Descrição Completa</h4>
+                                    <h4 class="itemdesc-block-title">
+                                        Descrição Completa
+                                    </h4>
                                 </summary>
+
                                 {{#if editable}}
-                                <span class="itemdesc-header-actions">
-                                        <button type="button" class="toggle-editor itemdesc-edit-button" data-field="system.description">
+                                    <span class="itemdesc-header-actions">
+                                        <button
+                                            type="button"
+                                            class="toggle-editor itemdesc-edit-button"
+                                            data-field="system.description"
+                                        >
                                             <i class="fas fa-pen"></i>
                                         </button>
-                                </span>
+                                    </span>
                                 {{/if}}
-                                <div class="itemdesc-content">
-                                    <div class="description-view itemdesc-inner">{{{enrichedDescription}}}</div>
 
-                                    <div class="description-editor itemdesc-inner" style="display:none;">
-                                        {{editor system.description target="system.description" engine="prosemirror" owner=owner editable=editable}}
+                                <div class="itemdesc-content">
+                                    <div class="description-view itemdesc-inner">
+                                        {{{enrichedDescription}}}
+                                    </div>
+
+                                    <div
+                                        class="description-editor itemdesc-inner"
+                                        style="display: none;"
+                                    >
+                                        {{editor
+                                            system.description
+                                            target="system.description"
+                                            engine="prosemirror"
+                                            owner=owner
+                                            editable=editable
+                                        }}
+
                                         <div class="description-actions">
-                                            <button type="button" class="save-description" data-field="system.description"><i class="fas fa-save"></i> Salvar</button>
-                                            <button type="button" class="expand-description" data-expanded="false"><i class="fas fa-expand"></i> Expandir</button>
-                                            <button type="button" class="cancel-description"><i class="fas fa-times"></i> Cancelar</button>
+                                            <button
+                                                type="button"
+                                                class="save-description"
+                                                data-field="system.description"
+                                            >
+                                                <i class="fas fa-save"></i>
+                                                Salvar
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                class="expand-description"
+                                                data-expanded="false"
+                                            >
+                                                <i class="fas fa-expand"></i>
+                                                Expandir
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                class="cancel-description"
+                                            >
+                                                <i class="fas fa-times"></i>
+                                                Cancelar
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
                             </details>
                         </div>
-                        </div>
                     </div>
-              </div>
+                </div>
+            </div>
 
-                {{!-- ABA CONFIGURAÇÃO --}}
+            {{! ===================================================== }}
+            {{! ABA: CONFIGURAÇÃO                                     }}
+            {{! ===================================================== }}
+            <div class="tab" data-tab="configuracao" data-group="primary">
 
-              <div class="tab" data-tab="configuracao" data-group="primary">
+                <div
+                    class="effect-row-grid effect-duration-grid is-two-col-rows"
+                    style="margin: 5px;"
+                >
+                    <div class="effect-field effect-field-row">
+                        <div class="effect-label">Ícone no Token</div>
 
-                    <div class="effect-row-grid effect-duration-grid is-two-col-rows" style="margin: 5px;">
-                        <div class="effect-field effect-field-row">
-                            <div class="effect-label">Ícone no Token</div>
-                                <select name="system.tokenIconPolicy">
-                                    {{#each tokenIconPolicyOptions as |policy|}}
-                                        <option value="{{policy.id}}" {{#if (eq ../system.tokenIconPolicy policy.id)}}selected{{/if}}>
-                                            {{policy.label}}
-                                        </option>
-                                    {{/each}}
-                                </select>
-                        </div>
+                        <select name="system.tokenIconPolicy">
+                            {{#each tokenIconPolicyOptions as |policy|}}
+                                <option
+                                    value="{{policy.id}}"
+                                    {{#if (eq ../system.tokenIconPolicy policy.id)}}selected{{/if}}
+                                >
+                                    {{policy.label}}
+                                </option>
+                            {{/each}}
+                        </select>
                     </div>
+                </div>
 
-                    {{!-- SEÇÃO BARREIRA DE RESISTÊNCIA --}}
-                    <section class="effect-card effect-section">
-                        <div class="effect-section-header">
-                            <h4 class="effect-section-title">Barreira de Resistência</h4>
+                {{!-- BARREIRA DE RESISTÊNCIA --}}
+                <section class="effect-card effect-section">
+                    <div class="effect-section-header">
+                        <h4 class="effect-section-title">
+                            Barreira de Resistência
+                        </h4>
 
-                            <label class="effect-section-toggle" title="Ativar registro de barreira">
-                            <input type="checkbox" name="system.resistanceRoll.isResisted" {{checked system.resistanceRoll.isResisted}}/>
+                        <label
+                            class="effect-section-toggle"
+                            title="Ativar registro de barreira"
+                        >
+                            <input
+                                type="checkbox"
+                                name="system.resistanceRoll.isResisted"
+                                {{checked system.resistanceRoll.isResisted}}
+                            />
                             <span></span>
-                            </label>
-                        </div>
+                        </label>
+                    </div>
 
-                        <div class="effect-section-body {{#unless system.resistanceRoll.isResisted}}is-muted{{/unless}}">
-                            <div class="effect-field effect-field-full" style="margin-bottom: 10px;">
-                                <div class="effect-label">Texto no card de resistência</div>
-                                <textarea name="system.resistanceRoll.chatText" rows="2" placeholder="Opcional" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}>{{system.resistanceRoll.chatText}}</textarea>
-                            </div>
-                            
-                            <div class="effect-row-grid effect-resistance-grid">
-                                <div class="effect-field">
-                                    <div class="effect-label">Aplicar efeito em</div>
-                                    <select name="system.resistanceRoll.applyOn" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}>
-                                    <option value="failure" {{#if (eq system.resistanceRoll.applyOn 'failure')}}selected{{/if}}>Em Falha</option>
-                                    <option value="success" {{#if (eq system.resistanceRoll.applyOn 'success')}}selected{{/if}}>Em Sucesso</option>
-                                    </select>
-                                </div>
-
-                                <div class="effect-field">
-                                    <div class="effect-label">Atributo</div>
-                                    <input type="text" name="system.resistanceRoll.attribute" value="{{system.resistanceRoll.attribute}}" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
-                                </div>
-
-
-
-                                <div class="effect-field">
-                                    <div class="effect-label">Margem Min</div>
-                                    <input type="text" name="system.resistanceRoll.margin" value="{{system.resistanceRoll.margin}}" placeholder="Opcional" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
-                                </div>
+                    <div
+                        class="
+                            effect-section-body
+                            {{#unless system.resistanceRoll.isResisted}}is-muted{{/unless}}
+                        "
+                    >
+                        <div
+                            class="effect-field effect-field-full"
+                            style="margin-bottom: 10px;"
+                        >
+                            <div class="effect-label">
+                                Texto no card de resistência
                             </div>
 
-                                <div class="effect-field" style="margin-bottom: 15px;">
-                                    <div class="effect-label">Modificador</div>
-                                    <input type="text" name="system.resistanceRoll.modifier" value="{{system.resistanceRoll.modifier}}" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
+                            <textarea
+                                name="system.resistanceRoll.chatText"
+                                rows="2"
+                                placeholder="Opcional"
+                                {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}
+                            >{{system.resistanceRoll.chatText}}</textarea>
+                        </div>
+
+                        <div class="effect-row-grid effect-resistance-grid">
+
+                            <div class="effect-field">
+                                <div class="effect-label">
+                                    Aplicar efeito em
                                 </div>
 
-                            <label class="custom-checkbox block effect-inline-checkbox">
-                            <input type="checkbox" name="system.resistanceRoll.skipPromptCard" {{checked system.resistanceRoll.skipPromptCard}} {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}/>
-                            <span>Realizar o teste automaticamente, mas não publicar no chat.</span>
-                            </label>
+                                <select
+                                    name="system.resistanceRoll.applyOn"
+                                    {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}
+                                >
+                                    <option
+                                        value="failure"
+                                        {{#if (eq system.resistanceRoll.applyOn "failure")}}selected{{/if}}
+                                    >
+                                        Em Falha
+                                    </option>
+
+                                    <option
+                                        value="success"
+                                        {{#if (eq system.resistanceRoll.applyOn "success")}}selected{{/if}}
+                                    >
+                                        Em Sucesso
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="effect-field">
+                                <div class="effect-label">Atributo</div>
+
+                                <input
+                                    type="text"
+                                    name="system.resistanceRoll.attribute"
+                                    value="{{system.resistanceRoll.attribute}}"
+                                    {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}
+                                />
+                            </div>
+
+                            <div class="effect-field">
+                                <div class="effect-label">Margem Min</div>
+
+                                <input
+                                    type="text"
+                                    name="system.resistanceRoll.margin"
+                                    value="{{system.resistanceRoll.margin}}"
+                                    placeholder="Opcional"
+                                    {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}
+                                />
+                            </div>
                         </div>
-                    </section>
 
+                        <div
+                            class="effect-field"
+                            style="margin-bottom: 15px;"
+                        >
+                            <div class="effect-label">Modificador</div>
 
-                    {{!-- SEÇÃO DURAÇÃO E EXPIRAÇÃO--}}
-                 {{#if hasTimedActions}}
+                            <input
+                                type="text"
+                                name="system.resistanceRoll.modifier"
+                                value="{{system.resistanceRoll.modifier}}"
+                                {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}
+                            />
+                        </div>
+
+                        <label class="custom-checkbox block effect-inline-checkbox">
+                            <input
+                                type="checkbox"
+                                name="system.resistanceRoll.skipPromptCard"
+                                {{checked system.resistanceRoll.skipPromptCard}}
+                                {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}
+                            />
+
+                            <span>
+                                Realizar o teste automaticamente, mas não publicar no chat.
+                            </span>
+                        </label>
+                    </div>
+                </section>
+
+                {{!-- DURAÇÃO E EXPIRAÇÃO --}}
+                {{#if hasTimedActions}}
                     <section class="effect-card effect-section">
                         <div class="effect-section-header">
-                            <h4 class="effect-section-title">Duração do Efeito</h4>
+                            <h4 class="effect-section-title">
+                                Duração do Efeito
+                            </h4>
+
                             <div class="effect-section-select">
-                                <select class="duration-mode-select" name="system.duration._uiMode">
-                                    <option value="permanent" {{#if system.duration.isPermanent}}selected{{/if}}>Permanente</option>
-                                    <option value="combat" {{#if (and (not system.duration.isPermanent) system.duration.inCombat)}}selected{{/if}}>Temporária/Combate</option>
+                                <select
+                                    class="duration-mode-select"
+                                    name="system.duration._uiMode"
+                                >
+                                    <option
+                                        value="permanent"
+                                        {{#if system.duration.isPermanent}}selected{{/if}}
+                                    >
+                                        Permanente
+                                    </option>
+
+                                    <option
+                                        value="combat"
+                                        {{#if (and (not system.duration.isPermanent) system.duration.inCombat)}}selected{{/if}}
+                                    >
+                                        Temporária/Combate
+                                    </option>
                                 </select>
                             </div>
                         </div>
 
+                        <input
+                            type="checkbox"
+                            class="duration-hidden"
+                            name="system.duration.isPermanent"
+                            {{checked system.duration.isPermanent}}
+                        />
 
-
-                        <input type="checkbox" class="duration-hidden" name="system.duration.isPermanent" {{checked system.duration.isPermanent}}/>
-                        <input type="checkbox" class="duration-hidden" name="system.duration.inCombat" {{checked system.duration.inCombat}}/>
+                        <input
+                            type="checkbox"
+                            class="duration-hidden"
+                            name="system.duration.inCombat"
+                            {{checked system.duration.inCombat}}
+                        />
 
                         <div class="effect-section-body">
+
                             {{#if system.duration.isPermanent}}
-                            <p class="hint">O efeito aparecerá no campo "Efeitos Passivos" da ficha do personagem</p>
+                                <p class="hint">
+                                    O efeito aparecerá no campo "Efeitos Passivos"
+                                    da ficha do personagem.
+                                </p>
                             {{/if}}
+
                             {{#unless system.duration.isPermanent}}
-                            {{#if system.duration.inCombat}}
-                                <div class="effect-row-grid effect-duration-grid is-two-col-rows">
+                                {{#if system.duration.inCombat}}
+                                    <div class="effect-row-grid effect-duration-grid is-two-col-rows">
 
-                                <div class="effect-field effect-field-row">
-                                    <div class="effect-label">Início da contagem</div>
-                                    <select class="effect-dropmenu-text" name="system.duration.startMode">
-                                    <option value="apply" {{#if (eq system.duration.startMode 'apply')}}selected{{/if}}>Ao aplicar</option>
-                                    <option value="nextTurnStart" {{#if (eq system.duration.startMode 'nextTurnStart')}}selected{{/if}}>No início do próximo turno</option>
-                                    </select>
-                                </div>
+                                        <div class="effect-field effect-field-row">
+                                            <div class="effect-label">
+                                                Início da contagem
+                                            </div>
 
-                                <div class="effect-field effect-field-row">
-                                    <div class="effect-label">Rodadas (seg)</div>
-                                    <input type="number" name="system.duration.value" value="{{system.duration.value}}" min="1"/>
-                                </div>
+                                            <select
+                                                class="effect-dropmenu-text"
+                                                name="system.duration.startMode"
+                                            >
+                                                <option
+                                                    value="apply"
+                                                    {{#if (eq system.duration.startMode "apply")}}selected{{/if}}
+                                                >
+                                                    Ao aplicar
+                                                </option>
 
-                                <div class="effect-field effect-field-row">
-                                    <div class="effect-label">Fim da contagem</div>
-                                    <select name="system.duration.endMode">
-                                    <option value="turnStart" {{#if (eq system.duration.endMode 'turnStart')}}selected{{/if}}>No início do turno final</option>
-                                    <option value="turnEnd" {{#if (eq system.duration.endMode 'turnEnd')}}selected{{/if}}>No fim do turno final</option>
-                                    </select>
-                                </div>
+                                                <option
+                                                    value="nextTurnStart"
+                                                    {{#if (eq system.duration.startMode "nextTurnStart")}}selected{{/if}}
+                                                >
+                                                    No início do próximo turno
+                                                </option>
+                                            </select>
+                                        </div>
 
-                                </div>
-                            {{/if}}
+                                        <div class="effect-field effect-field-row">
+                                            <div class="effect-label">
+                                                Rodadas (seg)
+                                            </div>
+
+                                            <input
+                                                type="number"
+                                                name="system.duration.value"
+                                                value="{{system.duration.value}}"
+                                                min="1"
+                                            />
+                                        </div>
+
+                                        <div class="effect-field effect-field-row">
+                                            <div class="effect-label">
+                                                Fim da contagem
+                                            </div>
+
+                                            <select name="system.duration.endMode">
+                                                <option
+                                                    value="turnStart"
+                                                    {{#if (eq system.duration.endMode "turnStart")}}selected{{/if}}
+                                                >
+                                                    No início do turno final
+                                                </option>
+
+                                                <option
+                                                    value="turnEnd"
+                                                    {{#if (eq system.duration.endMode "turnEnd")}}selected{{/if}}
+                                                >
+                                                    No fim do turno final
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                {{/if}}
                             {{/unless}}
                         </div>
                     </section>
-                    {{/if}}
-              </div>
-           </div>
+                {{/if}}
+            </div>
         </div>
     </main>
 </form>

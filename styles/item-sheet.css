@@ -743,7 +743,6 @@ color:#121114;
 }
 .gum.sheet.item .description-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 10px;
 }
 .gum.sheet.item .itemdesc-block {
@@ -4885,4 +4884,677 @@ color:#121114;
   box-shadow:
     0 10px 22px rgba(0, 0, 0, 0.30),
     inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+/* =================================================================== */
+/* EFFECT ACTIVE ACTIONS — PREMIUM SOLID EDITOR V3                     */
+/* SUBSTITUIR integralmente o bloco antigo:                            */
+/* "EFFECT ACTIVE ACTIONS — CLEAN PREMIUM WORKSPACE"                   */
+/* =================================================================== */
+
+.gum.sheet.item.effect-sheet .effect-premium-workspace {
+  --fx-workspace-bg: #111015;
+  --fx-action-bg: #17161b;
+  --fx-action-body: #121116;
+  --fx-field-bg: #19181e;
+  --fx-field-bg-hover: #1d1b22;
+  --fx-input-bg: #0f0e12;
+  --fx-border: rgba(255, 255, 255, 0.07);
+  --fx-border-soft: rgba(255, 255, 255, 0.045);
+  --fx-border-gold: rgba(201, 161, 94, 0.22);
+  --fx-gold-soft: rgba(201, 161, 94, 0.08);
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  padding: 12px 14px 18px;
+  background:
+    radial-gradient(100% 70% at 50% 0%, rgba(201, 161, 94, 0.035), transparent 58%),
+    linear-gradient(180deg, #141318 0%, var(--fx-workspace-bg) 100%);
+  container-type: inline-size;
+  overflow-x: hidden;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-workspace *,
+.gum.sheet.item.effect-sheet .effect-premium-workspace *::before,
+.gum.sheet.item.effect-sheet .effect-premium-workspace *::after {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 2px 11px;
+  border-bottom: 1px solid var(--fx-border);
+  background: transparent;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-toolbar-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-toolbar-icon {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--fx-border);
+  border-radius: 8px;
+  background: #1a181f;
+  color: var(--item-accent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    0 4px 10px rgba(0, 0, 0, 0.18);
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-toolbar-copy {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  min-width: 0;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-toolbar h4 {
+  margin: 0;
+  color: var(--item-text);
+  font-family: var(--item-font-condensed);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.075em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-toolbar-subtitle {
+  display: none;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-count {
+  min-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border: 1px solid rgba(201, 161, 94, 0.1);
+  border-radius: 999px;
+  background: rgba(201, 161, 94, 0.075);
+  color: var(--item-accent);
+  font-family: var(--item-font-condensed);
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-add-action {
+  width: auto;
+  min-width: 0;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border: 1px solid rgba(201, 161, 94, 0.18);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(201, 161, 94, 0.20), rgba(201, 161, 94, 0.10));
+  color: var(--item-text);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    0 5px 12px rgba(0, 0, 0, 0.20);
+  font-family: var(--item-font-condensed);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.035em;
+  cursor: pointer;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-add-action:hover {
+  border-color: rgba(201, 161, 94, 0.34);
+  background: linear-gradient(180deg, rgba(201, 161, 94, 0.28), rgba(201, 161, 94, 0.14));
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-action {
+  overflow: hidden;
+  border: 1px solid var(--fx-border);
+  border-radius: 10px;
+  background: var(--fx-action-bg);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-action[open] {
+  border-color: var(--fx-border-gold);
+  box-shadow:
+    inset 3px 0 0 rgba(201, 161, 94, 0.48),
+    0 12px 26px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-action-header,
+.gum.sheet.item.effect-sheet .effect-premium-advanced-header {
+  list-style: none;
+  cursor: pointer;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-action-header::-webkit-details-marker,
+.gum.sheet.item.effect-sheet .effect-premium-advanced-header::-webkit-details-marker {
+  display: none;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-action-header {
+  min-height: 56px;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  background: linear-gradient(90deg, rgba(201, 161, 94, 0.065), transparent 52%);
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-action[open] > .effect-premium-action-header {
+  border-bottom: 1px solid var(--fx-border-soft);
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-action-number {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(201, 161, 94, 0.12);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.24);
+  color: var(--item-accent);
+  font-family: var(--item-font-condensed);
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-action-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-action-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  min-width: 0;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-action-title {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--item-text);
+  font-family: var(--item-font-condensed);
+  font-size: 0.87rem;
+  font-weight: 800;
+  letter-spacing: 0.045em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-action-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border: 1px solid rgba(201, 161, 94, 0.1);
+  border-radius: 999px;
+  background: rgba(201, 161, 94, 0.075);
+  color: var(--item-accent);
+  font-family: var(--item-font-condensed);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.055em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-action-meta,
+.gum.sheet.item.effect-sheet .effect-premium-field-hint {
+  color: var(--item-text-soft);
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-action-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-icon-button {
+  width: 27px;
+  height: 27px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--item-text-muted);
+  cursor: pointer;
+  opacity: 0.76;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-icon-button:hover {
+  border-color: rgba(196, 94, 94, 0.24);
+  background: rgba(196, 94, 94, 0.12);
+  color: #f2cccc;
+  opacity: 1;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-chevron {
+  color: var(--item-text-soft);
+  font-size: 0.7rem;
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-action[open] > .effect-premium-action-header .effect-premium-chevron,
+.gum.sheet.item.effect-sheet .effect-premium-advanced[open] > .effect-premium-advanced-header .effect-premium-chevron {
+  transform: rotate(180deg);
+  color: var(--item-accent);
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-action-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.012), transparent 80px),
+    var(--fx-action-body);
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-type-panel,
+.gum.sheet.item.effect-sheet .effect-premium-type-panel.is-complex,
+.gum.sheet.item.effect-sheet .effect-premium-type-panel.is-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-identification-grid,
+.gum.sheet.item.effect-sheet .effect-premium-grid {
+  display: grid;
+  align-items: stretch;
+  gap: 9px;
+  min-width: 0;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-identification-grid {
+  grid-template-columns: minmax(240px, 1.25fr) minmax(220px, 0.95fr);
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-grid-attribute-main {
+  grid-template-columns: minmax(280px, 1fr) minmax(150px, 0.38fr);
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-expression-card {
+  border-color: rgba(201, 161, 94, 0.14);
+  background:
+    linear-gradient(90deg, rgba(201, 161, 94, 0.045), transparent 42%),
+    var(--fx-field-bg);
+}
+
+.gum.sheet.item.effect-sheet .effect-expression-input {
+  min-height: 36px;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-grid-resource {
+  grid-template-columns: minmax(165px, 0.86fr) minmax(235px, 1.35fr) minmax(85px, 0.43fr);
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-grid-entry-primary {
+  grid-template-columns: minmax(210px, 1.25fr) minmax(190px, 1fr) minmax(85px, 0.42fr);
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-grid-entry-context {
+  grid-template-columns: minmax(250px, 1.2fr) minmax(220px, 1fr);
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-grid-advanced {
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-grid-chat {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-grid-chat-roll {
+  grid-template-columns: minmax(180px, 1fr) minmax(190px, 1fr) minmax(100px, 0.55fr);
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-grid-flag {
+  grid-template-columns: minmax(240px, 1.25fr) minmax(180px, 0.75fr);
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-grid-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-field {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px 9px;
+  border: 1px solid var(--fx-border);
+  border-radius: 8px;
+  background: var(--fx-field-bg);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.022),
+    0 3px 9px rgba(0, 0, 0, 0.13);
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-field:hover {
+  border-color: rgba(201, 161, 94, 0.16);
+  background: var(--fx-field-bg-hover);
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-field:focus-within {
+  border-color: rgba(201, 161, 94, 0.32);
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 12px;
+  margin: 0;
+  color: rgba(240, 235, 227, 0.66);
+  font-family: var(--item-font-condensed);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.085em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-field-label i {
+  display: none;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-field-control {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-workspace input,
+.gum.sheet.item.effect-sheet .effect-premium-workspace select,
+.gum.sheet.item.effect-sheet .effect-premium-workspace textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 32px;
+  padding: 5px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 7px;
+  background: linear-gradient(180deg, rgba(9, 9, 12, 0.94), rgba(16, 15, 19, 0.96));
+  color: var(--item-input-text);
+  font-family: var(--item-font-base);
+  font-size: 0.78rem;
+  line-height: 1.25;
+  box-shadow:
+    inset 0 1px 5px rgba(0, 0, 0, 0.38),
+    0 1px 0 rgba(255, 255, 255, 0.018);
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-workspace input:hover,
+.gum.sheet.item.effect-sheet .effect-premium-workspace select:hover,
+.gum.sheet.item.effect-sheet .effect-premium-workspace textarea:hover {
+  border-color: rgba(201, 161, 94, 0.24);
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-workspace input:focus,
+.gum.sheet.item.effect-sheet .effect-premium-workspace select:focus,
+.gum.sheet.item.effect-sheet .effect-premium-workspace textarea:focus {
+  border-color: rgba(201, 161, 94, 0.58);
+  outline: none;
+  background: #0d0c10;
+  box-shadow:
+    0 0 0 2px rgba(201, 161, 94, 0.10),
+    inset 0 1px 5px rgba(0, 0, 0, 0.42);
+}
+
+.gum.sheet.item.effect-sheet .effect-code-input {
+  font-family: "Roboto Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 0.74rem;
+}
+
+.gum.sheet.item.effect-sheet .effect-compact-value {
+  text-align: center;
+}
+
+.gum.sheet.item.effect-sheet .effect-chat-textarea,
+.gum.sheet.item.effect-sheet .effect-premium-grid-chat textarea {
+  min-height: 78px;
+  resize: vertical;
+  line-height: 1.4;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-options-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-checkbox {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 1px solid var(--fx-border);
+  border-radius: 8px;
+  background: #18171c;
+  color: var(--item-text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-checkbox:hover {
+  border-color: rgba(201, 161, 94, 0.24);
+  background: #1c1a20;
+  color: var(--item-text);
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-checkbox input {
+  width: auto;
+  min-width: auto;
+  min-height: auto;
+  margin: 0;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-grid-chat .effect-premium-checkbox {
+  width: fit-content;
+  justify-self: start;
+  justify-content: flex-start;
+  padding-right: 14px;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-roll-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-roll-flat-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-roll-flat-entry.is-extra-entry {
+  margin-top: 2px;
+  padding-top: 11px;
+  border-top: 1px solid var(--fx-border);
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-roll-extra-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 1px 2px;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-roll-extra-header > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-roll-extra-title {
+  color: var(--item-text);
+  font-family: var(--item-font-condensed);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-roll-extra-meta {
+  color: var(--item-text-soft);
+  font-size: 0.68rem;
+  line-height: 1.2;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-advanced {
+  overflow: visible;
+  margin-top: 1px;
+  padding-top: 2px;
+  border-top: 1px solid var(--fx-border);
+  border-radius: 0;
+  background: transparent;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-advanced-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 2px 6px;
+  color: var(--item-text-muted);
+  font-size: 0.75rem;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-advanced-header span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-advanced-header span i {
+  color: var(--item-accent);
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-advanced-body {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 4px 0 0;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-field-hint {
+  margin: 0;
+  color: var(--item-text-soft);
+  font-size: 0.71rem;
+  line-height: 1.35;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-roll-config h6 {
+  margin: 0;
+  color: var(--item-text);
+  font-family: var(--item-font-condensed);
+  font-size: 0.79rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-roll-config {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid var(--fx-border);
+  border-radius: 9px;
+  background: #151419;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.02),
+    0 4px 12px rgba(0, 0, 0, 0.16);
+}
+
+
+.gum.sheet.item.effect-sheet .effect-premium-empty {
+  margin: 0;
+  padding: 14px;
+  border: 1px dashed rgba(201, 161, 94, 0.16);
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.12);
+  color: var(--item-text-muted);
+  text-align: center;
+}
+
+@container (max-width: 620px) {
+  .gum.sheet.item.effect-sheet .effect-premium-identification-grid,
+  .gum.sheet.item.effect-sheet .effect-premium-grid-attribute-main,
+  .gum.sheet.item.effect-sheet .effect-premium-grid-resource,
+  .gum.sheet.item.effect-sheet .effect-premium-grid-entry-primary,
+  .gum.sheet.item.effect-sheet .effect-premium-grid-entry-context,
+  .gum.sheet.item.effect-sheet .effect-premium-grid-advanced,
+  .gum.sheet.item.effect-sheet .effect-premium-grid-chat-roll,
+  .gum.sheet.item.effect-sheet .effect-premium-grid-flag {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gum.sheet.item.effect-sheet .effect-premium-options-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gum.sheet.item.effect-sheet .effect-premium-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .gum.sheet.item.effect-sheet .effect-premium-add-action {
+    align-self: flex-end;
+  }
 }

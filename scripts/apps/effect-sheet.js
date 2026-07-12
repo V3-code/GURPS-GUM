@@ -38,6 +38,61 @@ const ROLL_MODIFIER_APPLICATION_OPTIONS = [
     { id: "vs_targeter", label: "Em quem marcar este ator como alvo" }
 ];
 
+
+const EFFECT_ACTION_TYPE_PRESENTATION = {
+    attribute: { label: "Modificador de Atributo", icon: "fas fa-chart-line", className: "is-attribute" },
+    status: { label: "Status", icon: "fas fa-heartbeat", className: "is-status" },
+    resource_change: { label: "Alteração de Recurso", icon: "fas fa-battery-half", className: "is-resource-change" },
+    roll_modifier: { label: "Modificador de Rolagem", icon: "fas fa-dice", className: "is-roll-modifier" },
+    chat: { label: "Mensagem de Chat", icon: "fas fa-comment", className: "is-chat" },
+    macro: { label: "Macro", icon: "fas fa-code", className: "is-macro" },
+    flag: { label: "Flag", icon: "fas fa-flag", className: "is-flag" }
+};
+
+const RESOURCE_CATEGORY_LABELS = {
+    hp: "Pontos de Vida",
+    fp: "Pontos de Fadiga",
+    energy_reserve: "Reserva de Energia",
+    combat_tracker: "Registro de Combate",
+    item_quantity: "Quantidade de Equipamento"
+};
+
+const compactParts = (...parts) => parts
+    .map(part => (part ?? "").toString().trim())
+    .filter(Boolean);
+
+const formatActionCount = (count) => `${count} ${count === 1 ? "ação" : "ações"}`;
+const formatEntryCount = (count) => `${count} ${count === 1 ? "entrada" : "entradas"}`;
+
+const getApplicationSideLabel = (id) => ROLL_MODIFIER_APPLICATION_OPTIONS.find(opt => opt.id === id)?.label || id || "Próprio portador";
+const getShortApplicationSideLabel = (id) => id === "vs_targeter" ? "Quem mira o portador" : "Próprio portador";
+
+const buildRollEntrySummary = (entry = {}) => {
+    const parts = compactParts(entry.label, entry.value, entry.contexts || "all", getShortApplicationSideLabel(entry.application_side || "self"));
+    return parts.length ? parts.join(" · ") : "Modificador sem rótulo";
+};
+
+const buildActionSummary = (action = {}) => {
+    switch (action.type) {
+        case "attribute":
+            return compactParts(action.path, action.operation, action.value).join(" · ") || "Modificador de atributo";
+        case "status":
+            return `Status: ${action.statusLabel || action.statusId || "não definido"}`;
+        case "resource_change":
+            return compactParts(RESOURCE_CATEGORY_LABELS[action.category] || action.category, action.value).join(" · ") || "Alteração de recurso";
+        case "roll_modifier":
+            return compactParts(action.rollModifierPrimaryContext || "Qualquer rolagem", action.rollModifierPrimarySide || "Próprio portador", formatEntryCount(action.entryCount || 0)).join(" · ");
+        case "chat":
+            return action.chat_text ? "Mensagem no chat" : "Mensagem de chat";
+        case "macro":
+            return compactParts("Macro:", action.value).join(" ") || "Macro";
+        case "flag":
+            return compactParts(action.key, action.flag_value).join(" · ") || "Flag";
+        default:
+            return "Ação configurada";
+    }
+};
+
 const DEFAULT_EFFECT_ACTION = {
     label: "",
     type: "attribute",
@@ -120,12 +175,19 @@ const getEffectActionsFromSystem = (system = {}) => {
 };
 
 export class EffectSheet extends ItemSheet {
-    
+
+    constructor(...args) {
+        super(...args);
+        this._expandedActions = null;
+        this._expandedRollEntries = new Map();
+        this._pendingScrollSelector = null;
+    }
+
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
             classes: ["gum", "sheet", "item", "effect-sheet", "theme-dark"],
-            width: "450",
-            height: "495",
+            width: 686,
+            height: 620,
             resizable: true,
             template: "systems/gum/templates/items/effect-sheet.hbs",
             tabs: [{
@@ -169,25 +231,53 @@ export class EffectSheet extends ItemSheet {
         context.rollModifierContextOptions = ROLL_MODIFIER_CONTEXT_OPTIONS;
         context.rollModifierApplicationOptions = ROLL_MODIFIER_APPLICATION_OPTIONS;
         const actions = getEffectActionsFromSystem(context.system);
-        context.effectActions = actions.map((action, index) => ({
-            ...action,
-            index,
-            displayIndex: index + 1,
-            rollModifierEntries: (action.roll_modifier_entries || []).map((entry, entryIndex) => ({
-                index: entryIndex,
-                label: entry?.label || "",
-                value: entry?.value ?? 0,
-                cap: entry?.cap ?? "",
-                contexts: Array.isArray(entry?.contexts) ? entry.contexts.join(",") : (entry?.contexts || "all"),
-                application_side: entry?.application_side || "self",
-                target_kind: entry?.target_kind || "any",
-                target_mode: entry?.target_mode || "all",
-                target_values: entry?.target_values || "",
-                source_item_ids: entry?.source_item_ids || "",
-                source_attack_ids: entry?.source_attack_ids || "",
-                nh_display_mode: entry?.nh_display_mode || "roll_only"
-            }))
-        }));
+        const statusLabels = new Map(context.statusEffects.map(status => [status.id, status.label]));
+        const contextLabels = new Map(ROLL_MODIFIER_CONTEXT_OPTIONS.map(opt => [opt.id, opt.label]));
+        context.effectActionsCountLabel = formatActionCount(actions.length);
+        context.effectActions = actions.map((action, index) => {
+            const entries = (action.roll_modifier_entries || []).map((entry, entryIndex) => {
+                const normalizedEntry = {
+                    index: entryIndex,
+                    displayIndex: entryIndex + 1,
+                    label: entry?.label || "",
+                    value: entry?.value ?? 0,
+                    cap: entry?.cap ?? "",
+                    contexts: Array.isArray(entry?.contexts) ? entry.contexts.join(",") : (entry?.contexts || "all"),
+                    application_side: entry?.application_side || "self",
+                    applicationSideLabel: getApplicationSideLabel(entry?.application_side || "self"),
+                    target_kind: entry?.target_kind || "any",
+                    target_mode: entry?.target_mode || "all",
+                    target_values: entry?.target_values || "",
+                    source_item_ids: entry?.source_item_ids || "",
+                    source_attack_ids: entry?.source_attack_ids || "",
+                    nh_display_mode: entry?.nh_display_mode || "roll_only"
+                };
+                normalizedEntry.summaryText = buildRollEntrySummary(normalizedEntry);
+                normalizedEntry.isExpanded = this._isRollEntryExpanded(index, entryIndex);
+                return normalizedEntry;
+            });
+            const presentation = EFFECT_ACTION_TYPE_PRESENTATION[action.type] || EFFECT_ACTION_TYPE_PRESENTATION.attribute;
+            const primaryEntry = entries[0] || {};
+            const firstContext = (primaryEntry.contexts || "all").split(',').map(part => part.trim()).filter(Boolean)[0] || "all";
+            const decoratedAction = {
+                ...action,
+                index,
+                displayIndex: index + 1,
+                titleText: action.label ? `Ação ${index + 1} — ${action.label}` : `Ação ${index + 1}`,
+                typeLabel: presentation.label,
+                typeClass: presentation.className,
+                typeIcon: presentation.icon,
+                statusLabel: statusLabels.get(action.statusId),
+                entryCount: entries.length,
+                entryCountLabel: formatEntryCount(entries.length),
+                rollModifierPrimaryContext: contextLabels.get(firstContext) || firstContext,
+                rollModifierPrimarySide: getShortApplicationSideLabel(primaryEntry.application_side || "self"),
+                isExpanded: this._isActionExpanded(index),
+                rollModifierEntries: entries
+            };
+            decoratedAction.summaryText = buildActionSummary(decoratedAction);
+            return decoratedAction;
+        });
         context.hasTimedActions = actions.some((action) => ["attribute", "flag", "roll_modifier", "status"].includes(action.type));
 
         return context;
@@ -202,9 +292,12 @@ export class EffectSheet extends ItemSheet {
         const container = this.element?.[0]?.querySelector('.sheet-body-content');
         const scrollTop = container?.scrollTop ?? null;
         const result = await super._render(force, options);
-        if (scrollTop !== null) {
-            const refreshed = this.element?.[0]?.querySelector('.sheet-body-content');
-            if (refreshed) refreshed.scrollTop = scrollTop;
+        const refreshed = this.element?.[0]?.querySelector('.sheet-body-content');
+        if (this._pendingScrollSelector) {
+            this.element?.[0]?.querySelector(this._pendingScrollSelector)?.scrollIntoView({ block: "nearest" });
+            this._pendingScrollSelector = null;
+        } else if (scrollTop !== null && refreshed) {
+            refreshed.scrollTop = scrollTop;
         }
         return result;
     }
@@ -277,6 +370,9 @@ activateListeners(html) {
         ev.preventDefault();
         const actions = getEffectActionsFromSystem(this.item.system);
         actions.push(normalizeAction({}));
+        const newIndex = actions.length - 1;
+        this._ensureExpandedActions().add(newIndex);
+        this._pendingScrollSelector = `.effect-premium-action[data-action-index="${newIndex}"]`;
         await this.item.update({ "system.actions": actions });
     });
 
@@ -287,6 +383,7 @@ activateListeners(html) {
         const actions = getEffectActionsFromSystem(this.item.system);
         if (Number.isNaN(index) || index < 0 || index >= actions.length) return;
         actions.splice(index, 1);
+        this._reindexExpandedActionsAfterRemoval(index);
         await this.item.update({ "system.actions": actions });
     });
 
@@ -348,10 +445,12 @@ activateListeners(html) {
 
  html.on("click", ".add-roll-mod-entry", async (ev) => {
         ev.preventDefault();
+        ev.stopPropagation();
         const actionIndex = Number(ev.currentTarget.dataset.actionIndex);
         const actions = getEffectActionsFromSystem(this.item.system);
         if (Number.isNaN(actionIndex) || !actions[actionIndex]) return;
         const entries = Array.isArray(actions[actionIndex].roll_modifier_entries) ? foundry.utils.deepClone(actions[actionIndex].roll_modifier_entries) : [];
+        const newEntryIndex = entries.length;
         entries.push({
             label: "",
             value: 0,
@@ -366,11 +465,15 @@ activateListeners(html) {
             nh_display_mode: "roll_only"
         });
         actions[actionIndex].roll_modifier_entries = entries;
+        this._ensureExpandedActions().add(actionIndex);
+        this._setRollEntryExpanded(actionIndex, newEntryIndex, true);
+        this._pendingScrollSelector = `.roll-mod-entry-details[data-action-index="${actionIndex}"][data-entry-index="${newEntryIndex}"]`;
         await this.item.update({ "system.actions": actions });
     });
 
     html.on("click", ".remove-roll-mod-entry", async (ev) => {
         ev.preventDefault();
+        ev.stopPropagation();
         const actionIndex = Number(ev.currentTarget.dataset.actionIndex);
         const entryIndex = Number(ev.currentTarget.dataset.entryIndex);
         const actions = getEffectActionsFromSystem(this.item.system);
@@ -393,11 +496,72 @@ activateListeners(html) {
                 source_attack_ids: "",
                 nh_display_mode: "roll_only"
             }];
+        this._reindexExpandedRollEntriesAfterRemoval(actionIndex, entryIndex);
         await this.item.update({ "system.actions": actions });
+    });
+
+    html.on("toggle", ".effect-action-details", (ev) => {
+        const index = Number(ev.currentTarget.dataset.actionIndex);
+        if (!Number.isNaN(index)) {
+            const expandedActions = this._ensureExpandedActions();
+            ev.currentTarget.open ? expandedActions.add(index) : expandedActions.delete(index);
+        }
+    });
+
+    html.on("toggle", ".roll-mod-entry-details", (ev) => {
+        const actionIndex = Number(ev.currentTarget.dataset.actionIndex);
+        const entryIndex = Number(ev.currentTarget.dataset.entryIndex);
+        if (!Number.isNaN(actionIndex) && !Number.isNaN(entryIndex)) this._setRollEntryExpanded(actionIndex, entryIndex, ev.currentTarget.open);
     });
 
 
 }
+
+    _ensureExpandedActions() {
+        if (!this._expandedActions) this._expandedActions = new Set();
+        return this._expandedActions;
+    }
+
+    _isActionExpanded(index) {
+        return this._expandedActions ? this._expandedActions.has(index) : index === 0;
+    }
+
+    _isRollEntryExpanded(actionIndex, entryIndex) {
+        const entries = this._expandedRollEntries.get(actionIndex);
+        return entries ? entries.has(entryIndex) : entryIndex === 0;
+    }
+
+    _setRollEntryExpanded(actionIndex, entryIndex, expanded) {
+        if (!this._expandedRollEntries.has(actionIndex)) this._expandedRollEntries.set(actionIndex, new Set());
+        const entries = this._expandedRollEntries.get(actionIndex);
+        expanded ? entries.add(entryIndex) : entries.delete(entryIndex);
+    }
+
+    _reindexExpandedActionsAfterRemoval(removedIndex) {
+        const nextActions = new Set();
+        const nextEntries = new Map();
+        for (const index of (this._expandedActions || new Set([0]))) {
+            if (index < removedIndex) nextActions.add(index);
+            else if (index > removedIndex) nextActions.add(index - 1);
+        }
+        for (const [actionIndex, entries] of this._expandedRollEntries.entries()) {
+            if (actionIndex === removedIndex) continue;
+            nextEntries.set(actionIndex > removedIndex ? actionIndex - 1 : actionIndex, entries);
+        }
+        this._expandedActions = nextActions;
+        this._expandedRollEntries = nextEntries;
+    }
+
+    _reindexExpandedRollEntriesAfterRemoval(actionIndex, removedEntryIndex) {
+        const entries = this._expandedRollEntries.get(actionIndex);
+        if (!entries) return;
+        const next = new Set();
+        for (const index of entries) {
+            if (index < removedEntryIndex) next.add(index);
+            else if (index > removedEntryIndex) next.add(index - 1);
+        }
+        this._expandedRollEntries.set(actionIndex, next.size ? next : new Set([0]));
+    }
 
      // ✅ FUNÇÃO AUXILIAR PARA ABRIR O EDITOR DE TEXTO (A PARTE QUE FALTAVA) ✅
     _onEditText(event) {
