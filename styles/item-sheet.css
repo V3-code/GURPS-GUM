@@ -4191,3 +4191,698 @@ color:#121114;
     flex-basis: auto;
   }
 }
+/* ------------------------------------------------------------------- */
+/* EQUIPMENT DETAILS — TECHNICAL CARD LAYOUT                           */
+/* ------------------------------------------------------------------- */
+.gum.sheet.item .equipment-details-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-details-form {
+  gap: 9px;
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-general-grid,
+.gum.sheet.item .equipment-details-layout .equipment-text-grid,
+.gum.sheet.item .equipment-details-layout .equipment-physical-grid,
+.gum.sheet.item .equipment-details-layout .equipment-defense-grid,
+.gum.sheet.item .equipment-details-layout .equipment-capacity-grid {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-general-grid {
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-text-grid {
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-physical-grid,
+.gum.sheet.item .equipment-details-layout .equipment-capacity-grid {
+  grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-defense-grid {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-stat-card,
+.gum.sheet.item .equipment-details-layout .equipment-field-card,
+.gum.sheet.item .equipment-details-layout .equipment-container-toggle {
+  min-width: 0;
+  border: 1px solid rgba(201, 161, 94, 0.28);
+  border-radius: 8px;
+  background:
+    linear-gradient(145deg, rgba(18, 17, 20, 0.86), rgba(26, 24, 32, 0.94)),
+    var(--item-panel-texture-contrast) repeat;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 5px 14px rgba(0, 0, 0, 0.24);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease, background 0.18s ease;
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-stat-card,
+.gum.sheet.item .equipment-details-layout .equipment-field-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 7px;
+  padding: 8px;
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-field-card {
+  background:
+    linear-gradient(145deg, rgba(22, 20, 27, 0.9), rgba(31, 28, 37, 0.92)),
+    var(--item-panel-texture) repeat;
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-reference-card {
+  display: grid;
+  grid-template-columns: minmax(56px, 0.28fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-stat-card:hover,
+.gum.sheet.item .equipment-details-layout .equipment-field-card:hover,
+.gum.sheet.item .equipment-details-layout .equipment-container-toggle:hover {
+  border-color: rgba(201, 161, 94, 0.48);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), 0 7px 17px rgba(0, 0, 0, 0.30);
+  transform: translateY(-1px);
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-stat-heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  margin: 0;
+  color: var(--item-text-muted);
+  font-family: var(--item-font-condensed);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.15;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-stat-heading i,
+.gum.sheet.item .equipment-details-layout .equipment-container-toggle i,
+.gum.sheet.item .equipment-details-layout .open-reference-link {
+  color: var(--item-accent);
+  flex: 0 0 auto;
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-stat-heading span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-stat-control {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+  width: 100%;
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-stat-control input {
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  border-color: var(--item-border);
+  border-radius: 7px;
+  background: var(--item-input-bg);
+  color: var(--item-text);
+  font-weight: 800;
+  text-align: center;
+  box-shadow: inset 0 1px 5px rgba(0, 0, 0, 0.28);
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-field-card .equipment-stat-control input,
+.gum.sheet.item .equipment-details-layout .equipment-reference-card .equipment-stat-control input {
+  text-align: left;
+  font-weight: 700;
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-stat-control input:focus {
+  border-color: var(--item-accent);
+  outline: 2px solid rgba(201, 161, 94, 0.28);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 2px rgba(201, 161, 94, 0.12), inset 0 1px 5px rgba(0, 0, 0, 0.32);
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-calculated-value {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-calculated-value input {
+  opacity: 0.78;
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-final-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  color: var(--item-accent);
+  font-family: var(--item-font-condensed);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-final-value i {
+  color: var(--item-text-muted);
+  font-size: 0.7em;
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-final-value span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-container-toggle {
+  padding: 8px 10px;
+  background:
+    linear-gradient(90deg, rgba(201, 161, 94, 0.12), rgba(18, 17, 20, 0.88)),
+    var(--item-panel-texture) repeat;
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-container-toggle .custom-checkbox {
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--item-text);
+  font-family: var(--item-font-condensed);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-container-toggle input:focus-visible + i,
+.gum.sheet.item .equipment-details-layout .equipment-container-toggle:focus-within {
+  outline: 2px solid rgba(201, 161, 94, 0.32);
+  outline-offset: 2px;
+}
+
+@media (max-width: 520px) {
+  .gum.sheet.item .equipment-details-layout .equipment-reference-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =================================================================== */
+/* ITEM DESCRIPTION — COMPACT REFERENCE FIELD                          */
+/* =================================================================== */
+.gum.sheet.item .item-description-reference {
+  display: grid;
+  grid-template-columns: minmax(108px, max-content) minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  margin: 0 0 8px;
+  padding: 6px 8px;
+  border: 1px solid rgba(201, 161, 94, 0.28);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(18, 17, 20, 0.82), rgba(26, 24, 32, 0.9)),
+    var(--item-panel-texture-contrast) repeat;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.gum.sheet.item .item-description-reference label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  color: var(--item-text-muted);
+  font-family: var(--item-font-condensed);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item .item-description-reference .open-reference-link {
+  color: var(--item-accent);
+}
+
+.gum.sheet.item .item-description-reference-control {
+  min-width: 0;
+}
+
+.gum.sheet.item .item-description-reference-control input {
+  width: 100%;
+  min-width: 0;
+  height: 26px;
+  border-color: var(--item-border);
+  border-radius: 7px;
+  background: var(--item-input-bg);
+  color: var(--item-text);
+}
+
+.gum.sheet.item .item-description-reference-control input:focus {
+  border-color: var(--item-accent);
+  outline: 2px solid rgba(201, 161, 94, 0.28);
+  outline-offset: 1px;
+}
+
+/* =================================================================== */
+/* SKILL DETAILS — DASHBOARD CARD LAYOUT                               */
+/* =================================================================== */
+.gum.sheet.item .skill-details-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-toggles,
+.gum.sheet.item .skill-details-dashboard .skill-standard-core-grid,
+.gum.sheet.item .skill-details-dashboard .skill-standard-result-grid,
+.gum.sheet.item .skill-details-dashboard .skill-tree-core-grid,
+.gum.sheet.item .skill-details-dashboard .skill-tree-result-grid {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-toggles {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-standard-core-grid {
+  grid-template-columns: minmax(130px, 0.9fr) minmax(230px, 1.35fr) minmax(150px, 1fr);
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-standard-result-grid,
+.gum.sheet.item .skill-details-dashboard .skill-tree-result-grid {
+  grid-template-columns: repeat(3, minmax(145px, 1fr));
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-tree-core-grid {
+  grid-template-columns: minmax(190px, 1fr) minmax(220px, 1.15fr) minmax(150px, 0.9fr);
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-toggle-card,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-section,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-card {
+  min-width: 0;
+  border: 1px solid rgba(201, 161, 94, 0.28);
+  border-radius: 8px;
+  background:
+    linear-gradient(145deg, rgba(18, 17, 20, 0.88), rgba(27, 25, 32, 0.94)),
+    var(--item-panel-texture-contrast) repeat;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 5px 14px rgba(0, 0, 0, 0.24);
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-toggle-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-toggle-card:hover,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-card:hover {
+  border-color: rgba(201, 161, 94, 0.48);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), 0 7px 17px rgba(0, 0, 0, 0.30);
+  transform: translateY(-1px);
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-toggle-icon,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-card-heading i,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-section-title i,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-linked-input a {
+  color: var(--item-accent);
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-toggle-icon {
+  font-size: 1rem;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-toggle-label {
+  min-width: 0;
+  color: var(--item-text);
+  font-family: var(--item-font-condensed);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  line-height: 1.15;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-toggle-card input[type="checkbox"] {
+  justify-self: end;
+  margin: 0;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background:
+    linear-gradient(135deg, rgba(17, 16, 20, 0.82), rgba(25, 23, 30, 0.92)),
+    var(--item-panel-texture) repeat;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin: 0;
+  padding: 4px 11px;
+  border: 1px solid rgba(201, 161, 94, 0.38);
+  border-radius: 999px;
+  background: rgba(201, 161, 94, 0.10);
+  color: var(--item-text);
+  font-family: var(--item-font-condensed);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 7px;
+  padding: 8px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-field-card {
+  min-height: 86px;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-stat-card {
+  min-height: 78px;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-card-heading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  color: var(--item-text-muted);
+  font-family: var(--item-font-condensed);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  line-height: 1.15;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-card-heading span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-card-control,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-stacked-control,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-linked-input {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-card-control {
+  justify-content: center;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-stacked-control {
+  flex-direction: column;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-card-control input,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-card-control select {
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  border-color: var(--item-border);
+  border-radius: 7px;
+  background: var(--item-input-bg);
+  color: var(--item-text);
+  font-weight: 700;
+  text-align: center;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-field-card input,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-field-card select {
+  text-align: left;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-card-control input:focus,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-card-control select:focus,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-toggle-card:focus-within {
+  border-color: var(--item-accent);
+  outline: 2px solid rgba(201, 161, 94, 0.28);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 2px rgba(201, 161, 94, 0.12), inset 0 1px 5px rgba(0, 0, 0, 0.28);
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-stepper {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 34px;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--item-border);
+  border-radius: 7px;
+  background: var(--item-input-bg);
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-stepper a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--item-text-muted);
+  line-height: 1;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-stepper a:hover {
+  color: var(--item-accent);
+  background: rgba(201, 161, 94, 0.10);
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-stepper input {
+  height: 30px;
+  border: none;
+  border-left: 1px solid var(--item-border);
+  border-right: 1px solid var(--item-border);
+  border-radius: 0;
+  background: transparent;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-tree-section.is-inactive {
+  border-color: rgba(201, 161, 94, 0.16);
+  background:
+    linear-gradient(135deg, rgba(17, 16, 20, 0.70), rgba(25, 23, 30, 0.78)),
+    var(--item-panel-texture-contrast) repeat;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-tree-section.is-inactive .skill-dashboard-card {
+  border-color: rgba(201, 161, 94, 0.16);
+  background: linear-gradient(145deg, rgba(18, 17, 20, 0.72), rgba(27, 25, 32, 0.78));
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-tree-section.is-inactive .skill-dashboard-card-heading,
+.gum.sheet.item .skill-details-dashboard .skill-tree-section.is-inactive .section-hint {
+  color: var(--item-text-soft);
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-tree-section.is-inactive .skill-dashboard-card-heading i {
+  opacity: 0.62;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-tree-section.is-inactive input:disabled {
+  opacity: 0.55;
+}
+
+@media (max-width: 760px) {
+  .gum.sheet.item .skill-details-dashboard .skill-standard-core-grid,
+  .gum.sheet.item .skill-details-dashboard .skill-tree-core-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+
+  .gum.sheet.item .skill-details-dashboard .skill-standard-result-grid,
+  .gum.sheet.item .skill-details-dashboard .skill-tree-result-grid {
+    grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .gum.sheet.item .item-description-reference,
+  .gum.sheet.item .skill-details-dashboard .skill-dashboard-toggles {
+    grid-template-columns: 1fr;
+  }
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-linked-input .link-skill-button.disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* =================================================================== */
+/* ITEM CARD LAYOUT — PREMIUM CONTRAST POLISH                          */
+/* =================================================================== */
+.gum.sheet.item .equipment-details-layout .equipment-stat-card,
+.gum.sheet.item .equipment-details-layout .equipment-field-card,
+.gum.sheet.item .equipment-details-layout .equipment-container-toggle,
+.gum.sheet.item .item-description-reference,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-toggle-card,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-section,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-card {
+  border-color: rgba(201, 161, 94, 0.13);
+  background:
+    radial-gradient(120% 120% at 12% 0%, rgba(201, 161, 94, 0.08), transparent 42%),
+    linear-gradient(145deg, rgba(14, 13, 17, 0.94), rgba(25, 23, 30, 0.90) 62%, rgba(17, 16, 21, 0.96)),
+    var(--item-panel-texture-contrast) repeat;
+  box-shadow:
+    0 14px 30px rgba(0, 0, 0, 0.36),
+    0 2px 8px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.025);
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-field-card,
+.gum.sheet.item .equipment-details-layout .equipment-container-toggle,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-section {
+  background:
+    radial-gradient(110% 95% at 18% 0%, rgba(201, 161, 94, 0.075), transparent 45%),
+    linear-gradient(145deg, rgba(17, 15, 20, 0.93), rgba(29, 26, 34, 0.88) 58%, rgba(18, 17, 22, 0.96)),
+    var(--item-panel-texture) repeat;
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-stat-card:hover,
+.gum.sheet.item .equipment-details-layout .equipment-field-card:hover,
+.gum.sheet.item .equipment-details-layout .equipment-container-toggle:hover,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-toggle-card:hover,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-card:hover {
+  border-color: rgba(201, 161, 94, 0.26);
+  box-shadow:
+    0 18px 34px rgba(0, 0, 0, 0.44),
+    0 0 18px rgba(201, 161, 94, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 0 0 1px rgba(201, 161, 94, 0.055);
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-stat-heading,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-card-heading,
+.gum.sheet.item .item-description-reference label {
+  color: rgba(240, 235, 227, 0.74);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-stat-heading i,
+.gum.sheet.item .equipment-details-layout .equipment-container-toggle i,
+.gum.sheet.item .equipment-details-layout .open-reference-link,
+.gum.sheet.item .item-description-reference .open-reference-link,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-toggle-icon,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-card-heading i,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-section-title i,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-linked-input a {
+  color: #d2a85f;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.42));
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-stat-control input,
+.gum.sheet.item .item-description-reference-control input,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-card-control input,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-card-control select,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-stepper {
+  border-color: rgba(255, 255, 255, 0.075);
+  background: linear-gradient(180deg, rgba(9, 9, 12, 0.88), rgba(19, 17, 23, 0.92));
+  box-shadow:
+    inset 0 1px 5px rgba(0, 0, 0, 0.48),
+    0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-stat-control input:focus,
+.gum.sheet.item .item-description-reference-control input:focus,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-card-control input:focus,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-card-control select:focus,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-toggle-card:focus-within {
+  border-color: rgba(201, 161, 94, 0.55);
+  outline-color: rgba(201, 161, 94, 0.22);
+  box-shadow:
+    0 0 0 2px rgba(201, 161, 94, 0.12),
+    0 10px 22px rgba(0, 0, 0, 0.32),
+    inset 0 1px 5px rgba(0, 0, 0, 0.50);
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-final-value,
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-toggle-label {
+  color: rgba(240, 235, 227, 0.88);
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-final-value span {
+  color: var(--item-accent);
+  text-shadow: 0 0 10px rgba(201, 161, 94, 0.18);
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-section-title {
+  border-color: rgba(201, 161, 94, 0.18);
+  background:
+    linear-gradient(90deg, rgba(201, 161, 94, 0.14), rgba(201, 161, 94, 0.045));
+  box-shadow:
+    0 8px 16px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-dashboard-stepper input {
+  border-left-color: rgba(255, 255, 255, 0.07);
+  border-right-color: rgba(255, 255, 255, 0.07);
+  box-shadow: none;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-tree-section.is-inactive {
+  border-color: rgba(255, 255, 255, 0.055);
+  background:
+    radial-gradient(100% 90% at 12% 0%, rgba(201, 161, 94, 0.035), transparent 42%),
+    linear-gradient(145deg, rgba(16, 15, 19, 0.86), rgba(25, 23, 30, 0.72)),
+    var(--item-panel-texture-contrast) repeat;
+}
+
+.gum.sheet.item .skill-details-dashboard .skill-tree-section.is-inactive .skill-dashboard-card {
+  border-color: rgba(255, 255, 255, 0.055);
+  background: linear-gradient(145deg, rgba(15, 14, 18, 0.78), rgba(24, 22, 28, 0.72));
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}

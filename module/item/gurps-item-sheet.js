@@ -86,7 +86,7 @@ export class GurpsItemSheet extends ItemSheet {
     static get defaultOptions() { 
         return foundry.utils.mergeObject(super.defaultOptions, { 
             classes: ["gum", "sheet", "item", "theme-dark"], 
-            width: 550, 
+            width: 620, 
             height: 600, 
             template: "systems/gum/templates/items/item-sheet.hbs", 
             tabs: [{ 

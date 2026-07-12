@@ -1,183 +1,185 @@
 {{!-- Definindo o partial 'inline' no topo do arquivo --}}
 {{#*inline "itemDetailsGeneral"}}
-    <div class="form-section skill-details-compact spell-details-form">
-        <h4 class="section-title">Referência</h4>
-            <div class="skill-compact-rows">
-                <div class="skill-compact-row">
-                    <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> REF</label>
-                    <div class="skill-compact-controls">
-                    <input type="text" name="system.ref" value="{{system.ref}}" placeholder="Ex: M123"/>
+    <div class="equipment-details-layout">
+        {{!-- Este bloco contém os campos gerais para equipamentos. --}}
+        <div class="form-section skill-details-compact equipment-details-form">
+            <h4 class="section-title">Geral</h4>
+            <div class="equipment-general-grid">
+                <div class="equipment-stat-card">
+                    <label class="equipment-stat-heading"><i class="fas fa-coins"></i><span>Custo ($)</span></label>
+                    <div class="equipment-stat-control">
+                        {{#if hasCostChange}}
+                            <div class="equipment-calculated-value">
+                                <input type="number" step="0.01" name="system.cost" value="{{system.cost}}" title="Custo Base"/>
+                                <div class="equipment-final-value" title="Custo Final">
+                                    <i class="fas fa-arrow-down"></i>
+                                    <span>{{finalCostString}}</span>
+                                </div>
+                            </div>
+                        {{else}}
+                            <input type="number" step="0.01" name="system.cost" value="{{system.cost}}"/>
+                        {{/if}}
+                    </div>
+                </div>
+
+                <div class="equipment-stat-card">
+                    <label class="equipment-stat-heading"><i class="fas fa-weight-hanging"></i><span>Peso (kg)</span></label>
+                    <div class="equipment-stat-control">
+                        {{#if hasWeightChange}}
+                            <div class="equipment-calculated-value">
+                                <input type="number" step="0.01" name="system.weight" value="{{system.weight}}" title="Peso Base"/>
+                                <div class="equipment-final-value" title="Peso Final">
+                                    <i class="fas fa-arrow-down"></i>
+                                    <span>{{finalWeightString}}</span>
+                                </div>
+                            </div>
+                        {{else}}
+                            <input type="number" step="0.01" name="system.weight" value="{{system.weight}}"/>
+                        {{/if}}
+                    </div>
+                </div>
+
+                <div class="equipment-stat-card">
+                    <label class="equipment-stat-heading"><i class="fas fa-cubes"></i><span>Quantidade</span></label>
+                    <div class="equipment-stat-control">
+                        <input type="number" name="system.quantity" value="{{system.quantity}}"/>
+                    </div>
+                </div>
+
+                <div class="equipment-stat-card">
+                    <label class="equipment-stat-heading" title="Nível Tecnológico"><i class="fas fa-microchip"></i><span>Nível Tecnológico</span></label>
+                    <div class="equipment-stat-control">
+                        <input type="text" name="system.tech_level" value="{{system.tech_level}}"/>
+                    </div>
+                </div>
+
+                <div class="equipment-stat-card">
+                    <label class="equipment-stat-heading" title="Classe de Legalidade"><i class="fas fa-balance-scale"></i><span>Classe de Legalidade</span></label>
+                    <div class="equipment-stat-control">
+                        <input type="text" name="system.legality_class" value="{{system.legality_class}}"/>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    {{!-- Este bloco contém os campos gerais para equipamentos. --}}
-    <div class="form-section skill-details-compact equipment-details-form">
-        <h4 class="section-title">Geral</h4>
-        <div class="skill-compact-rows">           
-            <div class="skill-compact-row">
-                <label>Custo ($)</label>
-                <div class="skill-compact-controls">
-                    {{#if hasCostChange}}
-                        <div class="calculated-value-group" style="display:flex; gap:5px; align-items:center;">
-                            <input type="number" step="0.01" name="system.cost" value="{{system.cost}}" style="width: 70px; opacity: 0.7;" title="Custo Base"/>
-                            <i class="fas fa-arrow-right" style="font-size: 0.8em; color: #666;"></i>
-                            <span style="font-weight:bold; color: #c5a05b;" title="Custo Final">{{finalCostString}}</span>
-                        </div>
-                    {{else}}
-                        <input type="number" step="0.01" name="system.cost" value="{{system.cost}}"/>
-                    {{/if}}
+
+        <div class="form-section skill-details-compact equipment-details-form">
+            <h4 class="section-title">Propriedades Físicas</h4>
+            <div class="equipment-text-grid">
+                <div class="equipment-field-card">
+                    <label class="equipment-stat-heading"><i class="fas fa-gem"></i><span>Qualidade</span></label>
+                    <div class="equipment-stat-control">
+                        <input type="text" name="system.quality" value="{{system.quality}}" placeholder="Ex: Fina, Barata"/>
+                    </div>
                 </div>
-            </div>
-            <div class="skill-compact-row">
-                <label>Peso (kg)</label>
-                <div class="skill-compact-controls">
-                    {{#if hasWeightChange}}
-                        <div class="calculated-value-group" style="display:flex; gap:5px; align-items:center;">
-                            <input type="number" step="0.01" name="system.weight" value="{{system.weight}}" style="width: 70px; opacity: 0.7;" title="Peso Base"/>
-                            <i class="fas fa-arrow-right" style="font-size: 0.8em; color: #666;"></i>
-                            <span style="font-weight:bold; color: #c5a05b;" title="Peso Final">{{finalWeightString}}</span>
-                        </div>
-                    {{else}}
-                        <input type="number" step="0.01" name="system.weight" value="{{system.weight}}"/>
-                    {{/if}}
-                </div>
-            </div>
-            <div class="skill-compact-row">
-                <label>Quantidade</label>
-                <div class="skill-compact-controls">
-                    <input type="number" name="system.quantity" value="{{system.quantity}}"/>
+
+                <div class="equipment-field-card">
+                    <label class="equipment-stat-heading"><i class="fas fa-cubes"></i><span>Material</span></label>
+                    <div class="equipment-stat-control">
+                        <input type="text" name="system.material" value="{{system.material}}" placeholder="Ex: Aço, Madeira"/>
+                    </div>
                 </div>
             </div>
 
-            <div class="skill-compact-row">
-                <label title="Nível Tecnológico">Nível Tecnológico</label>
-                <div class="skill-compact-controls">
-                    <input type="text" name="system.tech_level" value="{{system.tech_level}}"/>
+            <div class="equipment-physical-grid">
+                <div class="equipment-stat-card">
+                    <label class="equipment-stat-heading" title="Modificador de Tamanho (SM)"><i class="fas fa-expand-arrows-alt"></i><span>MT do Item</span></label>
+                    <div class="equipment-stat-control">
+                        <input type="number" name="system.tech_sm" value="{{system.tech_sm}}" placeholder="+0"/>
+                    </div>
                 </div>
-            </div>
 
-            <div class="skill-compact-row">
-                <label title="Classe de Legalidade">Classe de Legalidade</label>
-                <div class="skill-compact-controls">
-                    <input type="text" name="system.legality_class" value="{{system.legality_class}}"/>
+                <div class="equipment-stat-card">
+                    <label class="equipment-stat-heading" title="Resistência a Dano do próprio Item"><i class="fas fa-shield-alt"></i><span>RD do Item</span></label>
+                    <div class="equipment-stat-control">
+                        <input type="number" name="system.item_dr" value="{{system.item_dr}}"/>
+                    </div>
+                </div>
+
+                <div class="equipment-stat-card">
+                    <label class="equipment-stat-heading" title="Pontos de Vida do Item"><i class="fas fa-heart"></i><span>PV do Item</span></label>
+                    <div class="equipment-stat-control">
+                        <input type="number" name="system.item_hp" value="{{system.item_hp}}"/>
+                    </div>
+                </div>
+
+                <div class="equipment-stat-card">
+                    <label class="equipment-stat-heading" title="Vitalidade (HT) do Item"><i class="fas fa-heartbeat"></i><span>HT do Item</span></label>
+                    <div class="equipment-stat-control">
+                        <input type="number" name="system.item_ht" value="{{system.item_ht}}"/>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="form-section skill-details-compact equipment-details-form">
-        <h4 class="section-title">Propriedades Físicas</h4>
-        <div class="skill-compact-rows">
-            <div class="skill-compact-row">
-                <label>Qualidade</label>
-                <div class="skill-compact-controls">
-                    <input type="text" name="system.quality" value="{{system.quality}}" placeholder="Ex: Fina, Barata"/>
+        <div class="form-section skill-details-compact equipment-details-form">
+            <h4 class="section-title">Uso & Defesa</h4>
+            <div class="equipment-defense-grid">
+                <div class="equipment-stat-card">
+                    <label class="equipment-stat-heading" title="Penalidade de Ocultamento (Holdout)"><i class="fas fa-user-secret"></i><span>Ocultação</span></label>
+                    <div class="equipment-stat-control">
+                        <input type="number" name="system.holdout" value="{{system.holdout}}" placeholder="0"/>
+                    </div>
                 </div>
-            </div>
 
-            <div class="skill-compact-row">
-                <label>Material</label>
-                <div class="skill-compact-controls">
-                    <input type="text" name="system.material" value="{{system.material}}" placeholder="Ex: Aço, Madeira"/>
+                <div class="equipment-stat-card">
+                    <label class="equipment-stat-heading" title="Tempo para equipar/vestir em segundos"><i class="fas fa-stopwatch"></i><span>Tempo para Vestir (s)</span></label>
+                    <div class="equipment-stat-control">
+                        <input type="number" name="system.equip_time" value="{{system.equip_time}}"/>
+                    </div>
                 </div>
-            </div>
-            <div class="skill-compact-row">
-                <label title="Modificador de Tamanho (SM)">MT do Item</label>
-                <div class="skill-compact-controls">
-                    <input type="number" name="system.tech_sm" value="{{system.tech_sm}}" placeholder="+0"/>
-                </div>
-            </div>
 
-            <div class="skill-compact-row">
-                <label title="Resistência a Dano do próprio Item">RD do Item</label>
-                <div class="skill-compact-controls">
-                    <input type="number" name="system.item_dr" value="{{system.item_dr}}"/>
-                </div>
-            </div>
-
-            <div class="skill-compact-row">
-                <label title="Pontos de Vida do Item">PV do Item</label>
-                <div class="skill-compact-controls">
-                    <input type="number" name="system.item_hp" value="{{system.item_hp}}"/>
-                </div>
-            </div>
-
-            <div class="skill-compact-row">
-                <label title="Vitalidade (HT) do Item">HT do Item</label>
-                <div class="skill-compact-controls">
-                    <input type="number" name="system.item_ht" value="{{system.item_ht}}"/>
+                <div class="equipment-stat-card">
+                    <label class="equipment-stat-heading" title="Bônus de Defesa (DB) para Escudos ou Capas"><i class="fas fa-shield-alt"></i><span>Bônus de Defesa</span></label>
+                    <div class="equipment-stat-control">
+                        <input type="number" name="system.defense_bonus" value="{{system.defense_bonus}}"/>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="form-section skill-details-compact equipment-details-form">
-        <h4 class="section-title">Uso & Defesa</h4>
-        <div class="skill-compact-rows">
-            <div class="skill-compact-row">
-                <label title="Penalidade de Ocultamento (Holdout)">Ocultação</label>
-                <div class="skill-compact-controls">
-                    <input type="number" name="system.holdout" value="{{system.holdout}}" placeholder="0"/>
-                </div>
-            </div>
-
-            <div class="skill-compact-row">
-                <label title="Tempo para equipar/vestir em segundos">Tempo para Vestir (s)</label>
-                <div class="skill-compact-controls">
-                    <input type="number" name="system.equip_time" value="{{system.equip_time}}"/>
-                </div>
-            </div>
-
-            <div class="skill-compact-row">
-                <label title="Bônus de Defesa (DB) para Escudos ou Capas">Bônus de Defesa (Escudo/Capa)</label>
-                <div class="skill-compact-controls">
-                    <input type="number" name="system.defense_bonus" value="{{system.defense_bonus}}"/>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{#if (eq item.type "equipment")}}
-    <div class="form-section skill-details-compact equipment-details-form">
-        <h4 class="section-title">Capacidades</h4>
-        <div class="skill-compact-rows">
-            <div class="skill-ability-toggle">
+        {{#if (eq item.type "equipment")}}
+        <div class="form-section skill-details-compact equipment-details-form">
+            <h4 class="section-title">Capacidades</h4>
+            <div class="equipment-container-toggle">
                 <label class="custom-checkbox inline-checkbox">
                     <input type="checkbox" name="system.is_container" {{checked system.is_container}} />
-                    <span>É um item "conteiner" (mochila, bolsa ...)</span>
+                    <i class="fas fa-box-open"></i>
+                    <span>É um recipiente / contêiner</span>
                 </label>
             </div>
-            <div class="skill-compact-row">
-                <label>Capacidade de Peso (kg)</label>
-                <div class="skill-compact-controls">
-                    <input type="number" step="0.01" min="0" name="system.container.max_weight" value="{{system.container.max_weight}}" />
-                </div>
-            </div>
 
-            <div class="skill-compact-row">
-                <label>Largura (cm)</label>
-                <div class="skill-compact-controls">
-                    <input type="number" step="0.1" min="0" name="system.container.dimensions_cm.width" value="{{system.container.dimensions_cm.width}}" />
+            <div class="equipment-capacity-grid">
+                <div class="equipment-stat-card">
+                    <label class="equipment-stat-heading"><i class="fas fa-weight-hanging"></i><span>Capacidade de Peso (kg)</span></label>
+                    <div class="equipment-stat-control">
+                        <input type="number" step="0.01" min="0" name="system.container.max_weight" value="{{system.container.max_weight}}" />
+                    </div>
                 </div>
-            </div>
 
-            <div class="skill-compact-row">
-                <label>Altura (cm)</label>
-                <div class="skill-compact-controls">
-                    <input type="number" step="0.1" min="0" name="system.container.dimensions_cm.height" value="{{system.container.dimensions_cm.height}}" />
+                <div class="equipment-stat-card">
+                    <label class="equipment-stat-heading"><i class="fas fa-expand-arrows-alt"></i><span>Largura (cm)</span></label>
+                    <div class="equipment-stat-control">
+                        <input type="number" step="0.1" min="0" name="system.container.dimensions_cm.width" value="{{system.container.dimensions_cm.width}}" />
+                    </div>
                 </div>
-            </div>
 
-            <div class="skill-compact-row">
-                <label>Profundidade (cm)</label>
-                <div class="skill-compact-controls">
-                    <input type="number" step="0.1" min="0" name="system.container.dimensions_cm.depth" value="{{system.container.dimensions_cm.depth}}" />
+                <div class="equipment-stat-card">
+                    <label class="equipment-stat-heading"><i class="fas fa-expand-arrows-alt"></i><span>Altura (cm)</span></label>
+                    <div class="equipment-stat-control">
+                        <input type="number" step="0.1" min="0" name="system.container.dimensions_cm.height" value="{{system.container.dimensions_cm.height}}" />
+                    </div>
+                </div>
+
+                <div class="equipment-stat-card">
+                    <label class="equipment-stat-heading"><i class="fas fa-expand-arrows-alt"></i><span>Profundidade (cm)</span></label>
+                    <div class="equipment-stat-control">
+                        <input type="number" step="0.1" min="0" name="system.container.dimensions_cm.depth" value="{{system.container.dimensions_cm.depth}}" />
+                    </div>
                 </div>
             </div>
         </div>
+        {{/if}}
     </div>
-    {{/if}}
 {{/inline}}
 
 {{!-- ======================================================== --}}
@@ -831,167 +833,176 @@
 {{!--       ABA DETALHES: ITEM PERÍCIAS (USO PADRÃO + USO EM ÁRVORE)       --}}
 {{!-- ===================================================================== --}}
 {{#if (eq item.type "skill")}}
-    <div class="form-section skill-details-compact">
-  
-        <div class="skill-line-field skill-reference-field">
-            <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> Ref.</label>
-            <input type="text" name="system.ref" value="{{system.ref}}" placeholder="Ex: B182"/>
-        </div>
-        <div class="skill-details-header-grid">
-            <label class="custom-checkbox inline-checkbox skill-compact-checkbox">
+    <div class="skill-details-dashboard">
+        <div class="skill-dashboard-toggles">
+            <label class="skill-dashboard-toggle-card">
+                <span class="skill-dashboard-toggle-icon"><i class="fas fa-star" aria-hidden="true"></i></span>
+                <span class="skill-dashboard-toggle-label">Favorito</span>
                 <input type="checkbox" name="system.favorite_in_combat" {{checked system.favorite_in_combat}}/>
-                <span>Favorito</span>
             </label>
-            <label class="custom-checkbox inline-checkbox skill-compact-checkbox">
+
+            <label class="skill-dashboard-toggle-card">
+                <span class="skill-dashboard-toggle-icon"><i class="fas fa-cog" aria-hidden="true"></i></span>
+                <span class="skill-dashboard-toggle-label">Calcular Pontos Automaticamente</span>
                 <input type="checkbox" name="system.auto_points" {{checked (ne system.auto_points false)}}/>
-                <span>Calcular Pontos Automaticamente</span>
-            </label>         
+            </label>
         </div>
-    </div>
-<div class="form-section skill-details-compact skill-usage-block skill-standard-usage">
-        <h4 class="section-title">Uso Padrão</h4>
-        <div class="skill-compact-rows">
-            <div class="skill-compact-row">
-                <label>Grupo</label>
-                <div class="skill-compact-controls">
-                    <input type="text" name="system.group" value="{{system.group}}" placeholder="Ex: Combate, Social..." list="groups-list"/>
-                    <datalist id="groups-list">
-                        <option value="Animais">
-                        <option value="Artes">
-                        <option value="Atléticas">
-                        <option value="Combate Corpo a Corpo">
-                        <option value="Combate à Distância">
-                        <option value="Conhecimento">
-                        <option value="Criminosas">
-                        <option value="Influência">
-                        <option value="Mágicas">
-                        <option value="M militares">
-                        <option value="Natureza">
-                        <option value="Outras">
-                        <option value="Pessoais">
-                        <option value="Plantas">
-                        <option value="Profissionais">
-                        <option value="Sociais">
-                        <option value="Técnicas">
-                        <option value="Veículos">
-                    </datalist>
-                </div>
-            </div>
 
-           <div class="skill-compact-row">
-                <label>Atributo Base</label>
-                <div class="skill-compact-controls split-control">
-                    <select name="system.base_attribute_select" class="skill-base-attribute-select" data-custom-target=".skill-base-attribute-custom">
-                        <option value="st" {{#if (eq skillBaseAttributeSelect "st")}}selected{{/if}}>ST</option>
-                        <option value="dx" {{#if (eq skillBaseAttributeSelect "dx")}}selected{{/if}}>DX</option>
-                        <option value="iq" {{#if (eq skillBaseAttributeSelect "iq")}}selected{{/if}}>IQ</option>
-                        <option value="ht" {{#if (eq skillBaseAttributeSelect "ht")}}selected{{/if}}>HT</option>
-                        <option value="per" {{#if (eq skillBaseAttributeSelect "per")}}selected{{/if}}>Per</option>
-                        <option value="will" {{#if (eq skillBaseAttributeSelect "will")}}selected{{/if}}>Vont</option>
-                        <option value="skill" {{#if (eq skillBaseAttributeSelect "skill")}}selected{{/if}}>Perícia</option>
-                    </select>
-                    <input class="skill-base-attribute-custom" type="text" name="system.base_attribute_custom" value="{{skillBaseAttributeCustom}}" placeholder="Nome da perícia base" {{#unless (eq skillBaseAttributeSelect "skill")}}disabled{{/unless}}/>
+        <div class="skill-dashboard-section skill-standard-section">
+            <h4 class="skill-dashboard-section-title"><i class="fas fa-crosshairs" aria-hidden="true"></i> Uso Padrão</h4>
+            <div class="skill-standard-core-grid">
+                <div class="skill-dashboard-card skill-dashboard-field-card">
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-users" aria-hidden="true"></i><span>Grupo</span></label>
+                    <div class="skill-dashboard-card-control">
+                        <input type="text" name="system.group" value="{{system.group}}" placeholder="Ex: Combate, Social..." list="groups-list"/>
+                        <datalist id="groups-list">
+                            <option value="Animais">
+                            <option value="Artes">
+                            <option value="Atléticas">
+                            <option value="Combate Corpo a Corpo">
+                            <option value="Combate à Distância">
+                            <option value="Conhecimento">
+                            <option value="Criminosas">
+                            <option value="Influência">
+                            <option value="Mágicas">
+                            <option value="M militares">
+                            <option value="Natureza">
+                            <option value="Outras">
+                            <option value="Pessoais">
+                            <option value="Plantas">
+                            <option value="Profissionais">
+                            <option value="Sociais">
+                            <option value="Técnicas">
+                            <option value="Veículos">
+                        </datalist>
+                    </div>
                 </div>
-            </div>
 
- <div class="skill-compact-row">
-                <label>Dificuldade</label>
-                <div class="skill-compact-controls">
-                    <select name="system.difficulty">
-                        {{selectOptions config.difficulties selected=system.difficulty localize=true}}
-                    </select>
+                <div class="skill-dashboard-card skill-dashboard-field-card">
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-book-open" aria-hidden="true"></i><span>Atributo Base</span></label>
+                    <div class="skill-dashboard-card-control skill-dashboard-stacked-control">
+                        <select name="system.base_attribute_select" class="skill-base-attribute-select" data-custom-target=".skill-base-attribute-custom">
+                            <option value="st" {{#if (eq skillBaseAttributeSelect "st")}}selected{{/if}}>ST</option>
+                            <option value="dx" {{#if (eq skillBaseAttributeSelect "dx")}}selected{{/if}}>DX</option>
+                            <option value="iq" {{#if (eq skillBaseAttributeSelect "iq")}}selected{{/if}}>IQ</option>
+                            <option value="ht" {{#if (eq skillBaseAttributeSelect "ht")}}selected{{/if}}>HT</option>
+                            <option value="per" {{#if (eq skillBaseAttributeSelect "per")}}selected{{/if}}>Per</option>
+                            <option value="will" {{#if (eq skillBaseAttributeSelect "will")}}selected{{/if}}>Vont</option>
+                            <option value="skill" {{#if (eq skillBaseAttributeSelect "skill")}}selected{{/if}}>Perícia</option>
+                        </select>
+                        <div class="input-with-button skill-dashboard-linked-input">
+                            <input class="skill-base-attribute-custom" type="text" name="system.base_attribute_custom" value="{{skillBaseAttributeCustom}}" placeholder="Nome da perícia base" {{#unless (eq skillBaseAttributeSelect "skill")}}disabled{{/unless}}/>
+                            <a class="link-skill-button {{#unless (eq skillBaseAttributeSelect "skill")}}disabled{{/unless}}" data-link-target="system.base_attribute_custom" title="Buscar vínculo"><i class="fas fa-link" aria-hidden="true"></i></a>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-        <div class="skill-compact-row">
-                <label>Nível Relativo</label>
-                <div class="skill-compact-controls counter-wrapper compact-counter">
-                    <a class="adjust-value" data-action="decrease" data-target="system.skill_level"><i class="fas fa-minus"></i></a>
-                    <input type="number" name="system.skill_level" value="{{system.skill_level}}" data-dtype="Number">
-                    <a class="adjust-value" data-action="increase" data-target="system.skill_level"><i class="fas fa-plus"></i></a>
-                </div>
-            </div>
-
-            <div class="skill-compact-row">
-                <label>Modificador Base</label>
-                <div class="skill-compact-controls">
-                    <input type="number" name="system.nh_mod" value="{{system.nh_mod}}" placeholder="+0"/>
-                </div>
-            </div>
-           
-            <div class="skill-compact-row">
-                <label>Pontos Totais</label>
-                <div class="skill-compact-controls">
-                    <input type="number" name="system.points" value="{{system.points}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="form-section skill-details-compact skill-usage-block skill-tree-usage">
-        <h4 class="section-title">Uso em Árvore</h4>
-        <p class="section-hint">Campos independentes para a visualização em árvore. Itens antigos usam os dados padrão como fallback até que estes campos sejam preenchidos.</p>
-        <div class="skill-compact-rows">
-            <div class="skill-compact-row">
-                <label>Nível na Árvore</label>
-                <div class="skill-compact-controls split-control tree-parent-control">
-                    <select name="system.tree_hierarchy_type" class="hierarchy-select tree-hierarchy-select" >
-                        {{selectOptions config.hierarchyTypes selected=treeHierarchyType localize=true}}
-                    </select>
-                    <div class="input-with-button tree-parent-input-wrap">
-                        <input class="tree-parent-input" type="text" name="system.tree_parent" value="{{treeParentValue}}" placeholder="{{treeParentPlaceholder}}" {{#unless treeParentEnabled}}disabled{{/unless}}/>
-                        <a class="link-skill-button tree-parent-link {{#unless treeParentEnabled}}disabled{{/unless}}" data-link-target="system.tree_parent" data-skill-filter="{{treeParentSkillFilter}}" title="Buscar vínculo"><i class="fas fa-link"></i></a>
+                <div class="skill-dashboard-card skill-dashboard-field-card">
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>Dificuldade</span></label>
+                    <div class="skill-dashboard-card-control">
+                        <select name="system.difficulty">
+                            {{selectOptions config.difficulties selected=system.difficulty localize=true}}
+                        </select>
                     </div>
                 </div>
             </div>
 
-            <div class="skill-compact-row">
-                <label>Atributo Base</label>
-                <div class="skill-compact-controls split-control">
-                    <select name="system.tree_base_attribute_select" class="skill-base-attribute-select" data-custom-target=".tree-base-attribute-custom">
-                        <option value="st" {{#if (eq treeBaseAttributeSelect "st")}}selected{{/if}}>ST</option>
-                        <option value="dx" {{#if (eq treeBaseAttributeSelect "dx")}}selected{{/if}}>DX</option>
-                        <option value="iq" {{#if (eq treeBaseAttributeSelect "iq")}}selected{{/if}}>IQ</option>
-                        <option value="ht" {{#if (eq treeBaseAttributeSelect "ht")}}selected{{/if}}>HT</option>
-                        <option value="per" {{#if (eq treeBaseAttributeSelect "per")}}selected{{/if}}>Per</option>
-                        <option value="will" {{#if (eq treeBaseAttributeSelect "will")}}selected{{/if}}>Vont</option>
-                        <option value="skill" {{#if (eq treeBaseAttributeSelect "skill")}}selected{{/if}}>Perícia</option>
-                    </select>
-                    <input class="tree-base-attribute-custom" type="text" name="system.tree_base_attribute_custom" value="{{treeBaseAttributeCustom}}" placeholder="Nome da perícia base" {{#unless (eq treeBaseAttributeSelect "skill")}}disabled{{/unless}}/>
+            <div class="skill-standard-result-grid">
+                <div class="skill-dashboard-card skill-dashboard-stat-card">
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-balance-scale" aria-hidden="true"></i><span>Nível Relativo</span></label>
+                    <div class="skill-dashboard-card-control skill-dashboard-stepper counter-wrapper">
+                        <a class="adjust-value" data-action="decrease" data-target="system.skill_level"><i class="fas fa-minus" aria-hidden="true"></i></a>
+                        <input type="number" name="system.skill_level" value="{{system.skill_level}}" data-dtype="Number">
+                        <a class="adjust-value" data-action="increase" data-target="system.skill_level"><i class="fas fa-plus" aria-hidden="true"></i></a>
+                    </div>
+                </div>
+
+                <div class="skill-dashboard-card skill-dashboard-stat-card">
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>Modificador Base</span></label>
+                    <div class="skill-dashboard-card-control">
+                        <input type="number" name="system.nh_mod" value="{{system.nh_mod}}" placeholder="+0"/>
+                    </div>
+                </div>
+
+                <div class="skill-dashboard-card skill-dashboard-stat-card">
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-gem" aria-hidden="true"></i><span>Pontos Totais</span></label>
+                    <div class="skill-dashboard-card-control">
+                        <input type="number" name="system.points" value="{{system.points}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="skill-dashboard-section skill-tree-section {{#if (eq treeHierarchyType "normal")}}is-inactive{{/if}}">
+            <h4 class="skill-dashboard-section-title"><i class="fas fa-tree" aria-hidden="true"></i> Uso em Árvore</h4>
+            <p class="section-hint">Campos independentes para a visualização em árvore. Itens antigos usam os dados padrão como fallback até que estes campos sejam preenchidos.</p>
+            <div class="skill-tree-core-grid">
+                <div class="skill-dashboard-card skill-dashboard-field-card">
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-tree" aria-hidden="true"></i><span>Nível na Árvore</span></label>
+                    <div class="skill-dashboard-card-control skill-dashboard-stacked-control tree-parent-control">
+                        <select name="system.tree_hierarchy_type" class="hierarchy-select tree-hierarchy-select">
+                            {{selectOptions config.hierarchyTypes selected=treeHierarchyType localize=true}}
+                        </select>
+                        <div class="input-with-button tree-parent-input-wrap skill-dashboard-linked-input">
+                            <input class="tree-parent-input" type="text" name="system.tree_parent" value="{{treeParentValue}}" placeholder="{{treeParentPlaceholder}}" {{#unless treeParentEnabled}}disabled{{/unless}}/>
+                            <a class="link-skill-button tree-parent-link {{#unless treeParentEnabled}}disabled{{/unless}}" data-link-target="system.tree_parent" data-skill-filter="{{treeParentSkillFilter}}" title="Buscar vínculo"><i class="fas fa-link" aria-hidden="true"></i></a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="skill-dashboard-card skill-dashboard-field-card">
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-book-open" aria-hidden="true"></i><span>Atributo Base</span></label>
+                    <div class="skill-dashboard-card-control skill-dashboard-stacked-control">
+                        <select name="system.tree_base_attribute_select" class="skill-base-attribute-select" data-custom-target=".tree-base-attribute-custom">
+                            <option value="st" {{#if (eq treeBaseAttributeSelect "st")}}selected{{/if}}>ST</option>
+                            <option value="dx" {{#if (eq treeBaseAttributeSelect "dx")}}selected{{/if}}>DX</option>
+                            <option value="iq" {{#if (eq treeBaseAttributeSelect "iq")}}selected{{/if}}>IQ</option>
+                            <option value="ht" {{#if (eq treeBaseAttributeSelect "ht")}}selected{{/if}}>HT</option>
+                            <option value="per" {{#if (eq treeBaseAttributeSelect "per")}}selected{{/if}}>Per</option>
+                            <option value="will" {{#if (eq treeBaseAttributeSelect "will")}}selected{{/if}}>Vont</option>
+                            <option value="skill" {{#if (eq treeBaseAttributeSelect "skill")}}selected{{/if}}>Perícia</option>
+                        </select>
+                        <div class="input-with-button skill-dashboard-linked-input">
+                            <input class="tree-base-attribute-custom" type="text" name="system.tree_base_attribute_custom" value="{{treeBaseAttributeCustom}}" placeholder="Nome da perícia base" {{#unless (eq treeBaseAttributeSelect "skill")}}disabled{{/unless}}/>
+                            <a class="link-skill-button {{#unless (eq treeBaseAttributeSelect "skill")}}disabled{{/unless}}" data-link-target="system.tree_base_attribute_custom" title="Buscar vínculo"><i class="fas fa-link" aria-hidden="true"></i></a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="skill-dashboard-card skill-dashboard-field-card">
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-coins" aria-hidden="true"></i><span>Pontos por Nível</span></label>
+                    <div class="skill-dashboard-card-control">
+                        <input type="number" name="system.tree_points_per_level" value="{{treePointsPerLevel}}" placeholder="pts/nível"/>
+                    </div>
                 </div>
             </div>
 
-            <div class="skill-compact-row">
-                <label>Pontos por Nível</label>
-                <div class="skill-compact-controls">
-                    <input type="number" name="system.tree_points_per_level" value="{{treePointsPerLevel}}" placeholder="pts/nível"/>
+            <div class="skill-tree-result-grid">
+                <div class="skill-dashboard-card skill-dashboard-stat-card">
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-balance-scale" aria-hidden="true"></i><span>Nível Relativo</span></label>
+                    <div class="skill-dashboard-card-control skill-dashboard-stepper counter-wrapper">
+                        <a class="adjust-value" data-action="decrease" data-target="system.tree_skill_level"><i class="fas fa-minus" aria-hidden="true"></i></a>
+                        <input type="number" name="system.tree_skill_level" value="{{treeSkillLevel}}" data-dtype="Number">
+                        <a class="adjust-value" data-action="increase" data-target="system.tree_skill_level"><i class="fas fa-plus" aria-hidden="true"></i></a>
+                    </div>
                 </div>
-            </div>
 
-            <div class="skill-compact-row">
-                <label>Nível Relativo</label>
-                <div class="skill-compact-controls counter-wrapper compact-counter">
-                    <a class="adjust-value" data-action="decrease" data-target="system.tree_skill_level"><i class="fas fa-minus"></i></a>
-                    <input type="number" name="system.tree_skill_level" value="{{treeSkillLevel}}" data-dtype="Number">
-                    <a class="adjust-value" data-action="increase" data-target="system.tree_skill_level"><i class="fas fa-plus"></i></a>
+                <div class="skill-dashboard-card skill-dashboard-stat-card">
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>Modificador Base</span></label>
+                    <div class="skill-dashboard-card-control">
+                        <input type="number" name="system.tree_nh_mod" value="{{treeNhMod}}" placeholder="+0"/>
+                    </div>
                 </div>
-            </div>
 
-            <div class="skill-compact-row">
-                <label title="Modificador base próprio do uso em árvore">Modificador Base</label>
-                <div class="skill-compact-controls">
-                    <input type="number" name="system.tree_nh_mod" value="{{treeNhMod}}" placeholder="+0"/>
+                <div class="skill-dashboard-card skill-dashboard-stat-card">
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-gem" aria-hidden="true"></i><span>Pontos Totais</span></label>
+                    <div class="skill-dashboard-card-control">
+                        <input type="number" name="system.tree_points" value="{{treePoints}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/>
+                    </div>
                 </div>
-            </div>
-
-        <div class="skill-compact-row">
-            <label>Pontos Totais</label>
-            <div class="skill-compact-controls">
-                <input type="number" name="system.tree_points" value="{{treePoints}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/>
             </div>
         </div>
     </div>
- </div>
 {{/if}}
         
         {{!-- ===================================================================== --}}
