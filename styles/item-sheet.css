@@ -5558,3 +5558,152 @@ color:#121114;
     align-self: flex-end;
   }
 }
+/* =================================================================== */
+/* SPELL & POWER DASHBOARDS — MATCH SKILL ITEM DETAIL PATTERN          */
+/* =================================================================== */
+.gum.sheet.item .spell-power-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.gum.sheet.item .spell-power-dashboard .skill-dashboard-toggles,
+.gum.sheet.item .spell-power-dashboard .spell-power-core-grid,
+.gum.sheet.item .spell-power-dashboard .spell-power-result-grid {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.gum.sheet.item .spell-power-dashboard .skill-dashboard-toggles {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gum.sheet.item .spell-dashboard-details .skill-dashboard-toggles,
+.gum.sheet.item .power-dashboard-details .skill-dashboard-toggles,
+.gum.sheet.item .spell-casting-dashboard .skill-dashboard-toggles,
+.gum.sheet.item .power-activation-dashboard .skill-dashboard-toggles {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.gum.sheet.item .spell-power-dashboard .spell-power-core-grid {
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.gum.sheet.item .spell-power-dashboard .spell-power-result-grid {
+  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+}
+
+.gum.sheet.item .spell-power-dashboard .spell-power-two-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.gum.sheet.item .spell-power-dashboard .spell-power-single-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.gum.sheet.item .spell-power-dashboard .spell-power-inline-toggle {
+  min-height: 78px;
+}
+
+.gum.sheet.item .spell-power-dashboard .skill-dashboard-card-control input[type="text"],
+.gum.sheet.item .spell-power-dashboard .skill-dashboard-card-control select {
+  text-align: left;
+}
+
+.gum.sheet.item .spell-power-dashboard .skill-dashboard-stacked-control {
+  flex-direction: column;
+}
+
+.gum.sheet.item .spell-power-dashboard .calculated-cost.value {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  min-height: 30px;
+  color: rgba(240, 235, 227, 0.88);
+  font-family: var(--item-font-condensed);
+  font-weight: 800;
+  text-align: center;
+}
+
+.gum.sheet.item .spell-power-dashboard .calculated-cost.value small {
+  color: rgba(240, 235, 227, 0.55);
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item .spell-power-dashboard .spell-power-dashboard-damage {
+  width: 100%;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid rgba(201, 161, 94, 0.13);
+  border-radius: 8px;
+  background:
+    radial-gradient(120% 120% at 12% 0%, rgba(201, 161, 94, 0.08), transparent 42%),
+    linear-gradient(145deg, rgba(14, 13, 17, 0.94), rgba(25, 23, 30, 0.90) 62%, rgba(17, 16, 21, 0.96)),
+    var(--item-panel-texture-contrast) repeat;
+  box-shadow:
+    0 14px 30px rgba(0, 0, 0, 0.36),
+    0 2px 8px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.025);
+}
+
+.gum.sheet.item .spell-power-dashboard .spell-power-dashboard-damage .damage-col-label,
+.gum.sheet.item .spell-power-dashboard .spell-power-dashboard-damage .effect-label {
+  color: rgba(240, 235, 227, 0.74);
+  font-family: var(--item-font-condensed);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+  text-transform: uppercase;
+}
+
+.gum.sheet.item .spell-power-dashboard .spell-power-dashboard-damage input {
+  min-width: 0;
+  border-color: rgba(255, 255, 255, 0.075);
+  border-radius: 7px;
+  background: linear-gradient(180deg, rgba(9, 9, 12, 0.88), rgba(19, 17, 23, 0.92));
+  color: var(--item-text);
+  box-shadow: inset 0 1px 5px rgba(0, 0, 0, 0.48);
+}
+
+/* Spell/Power attack blocks keep the enable toggle on its own row. */
+.gum.sheet.item .spell-power-dashboard .spell-power-attack-grid .spell-power-inline-toggle {
+  grid-column: 1 / -1;
+  min-height: 54px;
+}
+
+.gum.sheet.item .spell-power-dashboard .skill-dashboard-card-control input:disabled,
+.gum.sheet.item .spell-power-dashboard .skill-dashboard-card-control select:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+@media (max-width: 760px) {
+  .gum.sheet.item .spell-power-dashboard .skill-dashboard-toggles,
+  .gum.sheet.item .spell-power-dashboard .spell-power-core-grid,
+  .gum.sheet.item .spell-power-dashboard .spell-power-result-grid,
+  .gum.sheet.item .spell-power-dashboard .spell-power-two-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .gum.sheet.item .spell-power-dashboard .skill-dashboard-toggles,
+  .gum.sheet.item .spell-power-dashboard .spell-power-core-grid,
+  .gum.sheet.item .spell-power-dashboard .spell-power-result-grid,
+  .gum.sheet.item .spell-power-dashboard .spell-power-two-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

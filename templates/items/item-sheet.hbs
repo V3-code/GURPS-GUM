@@ -476,6 +476,13 @@
   <nav class="sheet-tabs tabs" data-group="primary">
         <a class="item" data-tab="description">Descrição</a>
         <a class="item" data-tab="details">Detalhes</a>
+
+        {{#if (eq item.type "spell")}}
+        <a class="item" data-tab="casting">Conjuração</a>
+        {{/if}}
+        {{#if (eq item.type "power")}}
+        <a class="item" data-tab="activation">Ativação</a>
+        {{/if}}
        
         {{!-- Bloco 2: Aba "Modos de Ataque" para Equipamentos --}}
         {{#if (eq item.type "equipment")}}
@@ -514,7 +521,7 @@
      {{!-- Aba "Detalhes" --}}
      <div class="tab" data-tab="details">
 
-        {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "spell") (eq item.type "power"))}}
+        {{#if (or (eq item.type "advantage") (eq item.type "disadvantage"))}}
             <div class="skill-ability-toggle">
                 <label class="custom-checkbox inline-checkbox">
                     <input type="checkbox" name="system.favorite_in_combat" {{checked system.favorite_in_combat}}/>
@@ -1005,512 +1012,135 @@
     </div>
 {{/if}}
         
-        {{!-- ===================================================================== --}}
+                {{!-- ===================================================================== --}}
         {{!--           ABA DETALHES: ITEM MAGIAS (FORMULÁRIO TÉCNICO)                  --}}
         {{!-- ===================================================================== --}}
         {{#if (eq item.type "spell")}}
+    <div class="skill-details-dashboard spell-power-dashboard spell-dashboard-details">
+        <div class="skill-dashboard-toggles">
+            <label class="skill-dashboard-toggle-card">
+                <span class="skill-dashboard-toggle-icon"><i class="fas fa-star" aria-hidden="true"></i></span>
+                <span class="skill-dashboard-toggle-label">Favorito</span>
+                <input type="checkbox" name="system.favorite_in_combat" {{checked system.favorite_in_combat}}/>
+            </label>
+        </div>
 
-            <div class="form-section skill-details-compact spell-details-form">
-                <h4 class="section-title">Referência</h4>
-                <div class="skill-compact-rows">
-                    <div class="skill-compact-row">
-                        <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> REF</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.ref" value="{{system.ref}}" placeholder="Ex: M123"/>
-                        </div>
-                    </div>
+        <div class="skill-dashboard-section spell-dashboard-section">
+            <h4 class="skill-dashboard-section-title"><i class="fas fa-layer-group" aria-hidden="true"></i> Classificação</h4>
+            <div class="spell-power-core-grid">
+                <div class="skill-dashboard-card skill-dashboard-field-card">
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-users" aria-hidden="true"></i><span>Grupo</span></label>
+                    <div class="skill-dashboard-card-control"><input type="text" name="system.group" value="{{system.group}}" placeholder="Ex: Evocação"/></div>
+                </div>
+                <div class="skill-dashboard-card skill-dashboard-field-card">
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-school" aria-hidden="true"></i><span>Escola</span></label>
+                    <div class="skill-dashboard-card-control"><input type="text" name="system.spell_school" value="{{system.spell_school}}"/></div>
+                </div>
+                <div class="skill-dashboard-card skill-dashboard-field-card">
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-book" aria-hidden="true"></i><span>Fonte</span></label>
+                    <div class="skill-dashboard-card-control"><input type="text" name="system.source" value="{{system.source}}"/></div>
                 </div>
             </div>
-
-            <div class="form-section skill-details-compact spell-details-form">
-                <h4 class="section-title">Classificação</h4>
-                <div class="skill-compact-rows">
-                    <div class="skill-compact-row">
-                        <label>Grupo</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.group" value="{{system.group}}" placeholder="Ex: Evocação"/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Escola</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.spell_school" value="{{system.spell_school}}"/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Fonte</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.source" value="{{system.source}}"/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Classe</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.spell_class" value="{{system.spell_class}}"/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Tipo de Uso</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.usage_type" value="{{system.usage_type}}" placeholder="Ex: Ataque, Defesa, Aura, Passivo ..."/>
-                        </div>
-                    </div>
+            <div class="spell-power-result-grid spell-power-two-grid">
+                <div class="skill-dashboard-card skill-dashboard-field-card">
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-tags" aria-hidden="true"></i><span>Classe</span></label>
+                    <div class="skill-dashboard-card-control"><input type="text" name="system.spell_class" value="{{system.spell_class}}"/></div>
+                </div>
+                <div class="skill-dashboard-card skill-dashboard-field-card">
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-hand-sparkles" aria-hidden="true"></i><span>Tipo de Uso</span></label>
+                    <div class="skill-dashboard-card-control"><input type="text" name="system.usage_type" value="{{system.usage_type}}" placeholder="Ex: Ataque, Defesa, Aura, Passivo ..."/></div>
                 </div>
             </div>
+        </div>
 
-            <div class="form-section skill-details-compact spell-details-form">
-                <h4 class="section-title">Execução e Custo de Mana</h4>
-                <div class="skill-compact-rows">
-                    <div class="skill-compact-row">
-                        <label>Tempo de Conjuração</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.casting_time" value="{{system.casting_time}}"/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Duração</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.duration" value="{{system.duration}}"/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Custo de Mana</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.mana_cost" value="{{system.mana_cost}}"/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Custo de Manutenção</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.mana_maint" value="{{system.mana_maint}}"/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Requer Concentração</label>
-                        <div class="skill-compact-controls">
-                            <label class="custom-checkbox inline-checkbox">
-                                <input type="checkbox" name="system.requires_concentration" {{checked system.requires_concentration}}/>
-                                <span>Registrar concentração</span>
-                            </label>
-                        </div>
-                    </div>
+        <div class="skill-dashboard-section spell-dashboard-section">
+            <h4 class="skill-dashboard-section-title"><i class="fas fa-hourglass-half" aria-hidden="true"></i> Execução</h4>
+            <div class="spell-power-result-grid">
+                <div class="skill-dashboard-card skill-dashboard-field-card">
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-stopwatch" aria-hidden="true"></i><span>Tempo de Conjuração</span></label>
+                    <div class="skill-dashboard-card-control"><input type="text" name="system.casting_time" value="{{system.casting_time}}"/></div>
+                </div>
+                <div class="skill-dashboard-card skill-dashboard-field-card">
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-clock" aria-hidden="true"></i><span>Duração</span></label>
+                    <div class="skill-dashboard-card-control"><input type="text" name="system.duration" value="{{system.duration}}"/></div>
+                </div>
+                <label class="skill-dashboard-toggle-card spell-power-inline-toggle">
+                    <span class="skill-dashboard-toggle-icon"><i class="fas fa-brain" aria-hidden="true"></i></span>
+                    <span class="skill-dashboard-toggle-label">Requer Concentração</span>
+                    <input type="checkbox" name="system.requires_concentration" {{checked system.requires_concentration}}/>
+                </label>
+            </div>
+        </div>
+
+        <div class="skill-dashboard-section spell-dashboard-section">
+            <h4 class="skill-dashboard-section-title"><i class="fas fa-fire" aria-hidden="true"></i> Custo de Mana</h4>
+            <div class="spell-power-result-grid spell-power-two-grid">
+                <div class="skill-dashboard-card skill-dashboard-stat-card">
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-bolt" aria-hidden="true"></i><span>Custo de Mana</span></label>
+                    <div class="skill-dashboard-card-control"><input type="text" name="system.mana_cost" value="{{system.mana_cost}}"/></div>
+                </div>
+                <div class="skill-dashboard-card skill-dashboard-stat-card">
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-sync-alt" aria-hidden="true"></i><span>Custo de Manutenção</span></label>
+                    <div class="skill-dashboard-card-control"><input type="text" name="system.mana_maint" value="{{system.mana_maint}}"/></div>
                 </div>
             </div>
-
-            <div class="form-section skill-details-compact spell-details-form">
-                <h4 class="section-title">Conjuração</h4>
-                <div class="skill-compact-rows">
-                    <div class="skill-ability-toggle">
-                        <label class="custom-checkbox inline-checkbox">
-                            <input type="checkbox" name="system.auto_points" {{checked (ne system.auto_points false)}}/>
-                            <span>Calcular Pontos Automaticamente</span>
-                        </label>
-                    </div>
-
-                    <div class="skill-compact-row">
-                        <label>Atributo Base</label>
-                        <div class="skill-compact-controls split-control">
-                            <select name="system.base_attribute_select" class="skill-base-attribute-select spell-base-attribute-select" data-custom-target=".spell-base-attribute-custom">
-                                <option value="st" {{#if (eq spellBaseAttributeSelect "st")}}selected{{/if}}>ST</option>
-                                <option value="dx" {{#if (eq spellBaseAttributeSelect "dx")}}selected{{/if}}>DX</option>
-                                <option value="iq" {{#if (eq spellBaseAttributeSelect "iq")}}selected{{/if}}>IQ</option>
-                                <option value="ht" {{#if (eq spellBaseAttributeSelect "ht")}}selected{{/if}}>HT</option>
-                                <option value="per" {{#if (eq spellBaseAttributeSelect "per")}}selected{{/if}}>Per</option>
-                                <option value="vont" {{#if (or (eq spellBaseAttributeSelect "vont") (eq spellBaseAttributeSelect "will"))}}selected{{/if}}>Vont</option>
-                                <option value="skill" {{#if (eq spellBaseAttributeSelect "skill")}}selected{{/if}}>Perícia</option>
-                                <option value="spell" {{#if (eq spellBaseAttributeSelect "spell")}}selected{{/if}}>Magia</option>
-                                <option value="custom" {{#if (eq spellBaseAttributeSelect "custom")}}selected{{/if}}>Valor/Expressão</option>
-                            </select>
-                            <input class="skill-base-attribute-custom spell-base-attribute-custom" type="text" name="system.base_attribute_custom" value="{{spellBaseAttributeCustom}}" placeholder="{{spellBaseAttributePlaceholder}}" {{#unless spellBaseAttributeCustomEnabled}}disabled{{/unless}}/>
-                        </div>
-                    </div>
-
-                    <div class="skill-compact-row">
-                        <label>Dificuldade</label>
-                        <div class="skill-compact-controls split-control">
-                            <select name="system.difficulty" class="spell-difficulty-select">
-                                {{selectOptions spellDifficultyOptions selected=spellDifficultySelected}}
-                            </select>
-                            <input class="spell-linear-points" type="number" step="1" min="0" name="system.cost_per_level" value="{{system.cost_per_level}}" placeholder="pts/nível" {{#unless spellUsesLinearCost}}disabled{{/unless}}/>
-                        </div>
-                    </div>
-
-                    <div class="skill-compact-row">
-                        <label>Nível Relativo</label>
-                        <div class="skill-compact-controls counter-wrapper compact-counter">
-                            <a class="adjust-value" data-action="decrease" data-target="system.skill_level"><i class="fas fa-minus"></i></a>
-                            <input type="number" name="system.skill_level" value="{{system.skill_level}}" data-dtype="Number">
-                            <a class="adjust-value" data-action="increase" data-target="system.skill_level"><i class="fas fa-plus"></i></a>
-                        </div>
-                    </div>
-
-                    <div class="skill-compact-row">
-                        <label>Modificador Base</label>
-                        <div class="skill-compact-controls">
-                            <input type="number" name="system.nh_mod" value="{{system.nh_mod}}" placeholder="+0"/>
-                        </div>
-                    </div>
-
-                    <div class="skill-compact-row">
-                        <label>Pontos Totais</label>
-                        <div class="skill-compact-controls">
-                            <input type="number" name="system.points" value="{{system.points}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-section skill-details-compact spell-details-form">
-                <h4 class="section-title">Dano</h4>
-                <div class="item-damage-table">
-                    <div class="damage-table-spacer"></div>
-                    <div class="damage-col-label">Fórmula</div>
-                    <div class="damage-col-label">Tipo</div>
-                    <div class="damage-col-label">Escala</div>
-                    <div class="damage-col-label">Div.</div>
-
-                    <label class="effect-label">Dano Primário</label>
-                    <input type="text" name="system.damage.formula" value="{{system.damage.formula}}" placeholder="Ex: 3d6, 1d6-1"/>
-                    <input type="text" name="system.damage.type" value="{{system.damage.type}}" placeholder="Ex: qmd, cont, cort"/>
-                    <input type="text" name="system.damage.scaling" value="{{system.damage.scaling}}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/>
-                    <input type="number" step="0.1" name="system.damage.armor_divisor" value="{{system.damage.armor_divisor}}" title="Divisor de Armadura"/>
-
-                    <label class="effect-label">Dano de Acompanhamento</label>
-                    <input type="text" name="system.damage.follow_up_damage.formula" value="{{system.damage.follow_up_damage.formula}}"/>
-                    <input type="text" name="system.damage.follow_up_damage.type" value="{{system.damage.follow_up_damage.type}}"/>
-                    <input type="text" name="system.damage.follow_up_damage.scaling" value="{{system.damage.follow_up_damage.scaling}}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/>
-                    <input type="number" step="0.1" name="system.damage.follow_up_damage.armor_divisor" value="{{system.damage.follow_up_damage.armor_divisor}}" title="Divisor"/>
-
-                    <label class="effect-label">Dano de Fragmentação</label>
-                    <input type="text" name="system.damage.fragmentation_damage.formula" value="{{system.damage.fragmentation_damage.formula}}"/>
-                    <input type="text" name="system.damage.fragmentation_damage.type" value="{{system.damage.fragmentation_damage.type}}"/>
-                    <input type="text" name="system.damage.fragmentation_damage.scaling" value="{{system.damage.fragmentation_damage.scaling}}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/>
-                    <input type="number" step="0.1" name="system.damage.fragmentation_damage.armor_divisor" value="{{system.damage.fragmentation_damage.armor_divisor}}" title="Divisor"/>
-                </div>
-            </div>
-
-            <div class="form-section skill-details-compact spell-details-form">
-                <h4 class="section-title">Resultado</h4>
-                <div class="skill-compact-rows">
-                    <div class="skill-compact-row">
-                        <label>Resistido Por</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.resistance" value="{{system.resistance}}" placeholder="Ex: HT, Vontade, IQ-3"/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Resumo do Efeito</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.effect" value="{{system.effect}}" placeholder="Resumo curto para consulta"/>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-section skill-details-compact spell-details-form">
-                <h4 class="section-title">Ataque Após Conjuração</h4>
-                <div class="skill-compact-rows">
-
-                    <div class="skill-ability-toggle">
-                        <label class="custom-checkbox inline-checkbox">
-                                <input type="checkbox" name="system.uses_attack" class="spell-uses-attack-toggle" {{checked system.uses_attack}}/>
-                                <span>Exige rolagem de ataque</span>
-                            </label>
-                    </div>
-
-
-                    <div class="spell-attack-fields">
-                        <div class="skill-compact-row">
-                            <label>Tipo de Ataque</label>
-                            <div class="skill-compact-controls">
-                                <select name="system.attack_type">
-                                    <option value="melee" {{#if (eq system.attack_type "melee")}}selected{{/if}}>Corpo a corpo</option>
-                                    <option value="ranged" {{#if (eq system.attack_type "ranged")}}selected{{/if}}>À distância</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="skill-compact-row">
-                            <label>Perícia de Ataque <a class="link-skill-button" title="Vincular Perícia do Ator"><i class="fas fa-link"></i></a></label>
-                            <div class="skill-compact-controls">
-                                <input type="text" name="system.attack_roll.skill_name" value="{{system.attack_roll.skill_name}}" placeholder="Ex: Ataque Inato (Projétil), DX, 14"/>
-                            </div>
-                        </div>
-                        <div class="skill-compact-row">
-                            <label>Modificador Base de Ataque</label>
-                            <div class="skill-compact-controls">
-                                <input type="number" name="system.attack_roll.skill_level_mod" value="{{system.attack_roll.skill_level_mod}}"/>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {{/if}}
+        </div>
+    </div>
+{{/if}}
         
         {{!-- ===================================================================== --}}
         {{!--           ABA DETALHES: ITEM PODERES (FORMULÁRIO TÉCNICO)                 --}}
         {{!-- ===================================================================== --}}
         {{#if (eq item.type "power")}}
+    <div class="skill-details-dashboard spell-power-dashboard power-dashboard-details">
+        <div class="skill-dashboard-toggles">
+            <label class="skill-dashboard-toggle-card">
+                <span class="skill-dashboard-toggle-icon"><i class="fas fa-star" aria-hidden="true"></i></span>
+                <span class="skill-dashboard-toggle-label">Favorito</span>
+                <input type="checkbox" name="system.favorite_in_combat" {{checked system.favorite_in_combat}}/>
+            </label>
+        </div>
 
-            <div class="form-section skill-details-compact power-details-form">
-                <h4 class="section-title">Referência</h4>
-                <div class="skill-compact-rows">
-                    <div class="skill-compact-row">
-                        <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> REF</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.ref" value="{{system.ref}}" placeholder="Ex: PU4:12"/>
-                        </div>
-                    </div>
-                </div>
+        <div class="skill-dashboard-section power-dashboard-section">
+            <h4 class="skill-dashboard-section-title"><i class="fas fa-layer-group" aria-hidden="true"></i> Classificação</h4>
+            <div class="spell-power-core-grid">
+                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-book" aria-hidden="true"></i><span>Fonte</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.source" value="{{system.source}}"/></div></div>
+                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-users" aria-hidden="true"></i><span>Grupo</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.group" value="{{system.group}}" placeholder="Ex: Elemental, Psíquico..."/></div></div>
+                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-tags" aria-hidden="true"></i><span>Classe</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.spell_class" value="{{system.spell_class}}"/></div></div>
             </div>
-
-            <div class="form-section skill-details-compact power-details-form">
-                <h4 class="section-title">Classificação e Custo do Poder</h4>
-                <div class="skill-compact-rows">
-                    <div class="skill-compact-row">
-                        <label>Fonte</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.source" value="{{system.source}}"/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Grupo</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.group" value="{{system.group}}" placeholder="Ex: Elemental, Psíquico..."/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Classe</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.spell_class" value="{{system.spell_class}}"/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Tipo de Uso</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.usage_type" value="{{system.usage_type}}" placeholder="Ex: Ataque, Defesa, Aura, Passivo ..."/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Custo Integral</label>
-                        <div class="skill-compact-controls">
-                            <input type="number" name="system.points" value="{{system.points}}"/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Custo com Modificador</label>
-                        <div class="skill-compact-controls">
-                            <div class="calculated-cost value">
-                                <span>{{calculatedCost.finalPoints}}</span>
-                                 <small>{{#if (eq system.cost_paid "alternative")}}Alternativo{{else}}Integral{{/if}} · Mod: {{calculatedCost.totalModifier}}%</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Custo Alternativo</label>
-                        <div class="skill-compact-controls">
-                            <input type="number" name="system.alternative_points" value="{{system.alternative_points}}"/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Custo Pago</label>
-                        <div class="skill-compact-controls">
-                            <select name="system.cost_paid">
-                                <option value="full" {{#if (eq system.cost_paid "full")}}selected{{/if}}>Integral</option>
-                                <option value="alternative" {{#if (eq system.cost_paid "alternative")}}selected{{/if}}>Alternativo</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
+            <div class="spell-power-result-grid spell-power-single-grid">
+                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-hand-sparkles" aria-hidden="true"></i><span>Tipo de Uso</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.usage_type" value="{{system.usage_type}}" placeholder="Ex: Ataque, Defesa, Aura, Passivo ..."/></div></div>
             </div>
+        </div>
 
-            <div class="form-section skill-details-compact power-details-form">
-                <h4 class="section-title">Execução e Custo de Energia</h4>
-                <div class="skill-compact-rows">
-                    <div class="skill-compact-row">
-                        <label>Tempo de Ativação</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.activation_time" value="{{system.activation_time}}"/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Duração</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.duration" value="{{system.duration}}"/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Custo de Ativação</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.activation_cost" value="{{system.activation_cost}}"/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Custo de Manutenção</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.maint_cost" value="{{system.maint_cost}}"/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Requer Concentração</label>
-                        <div class="skill-compact-controls">
-                            <label class="custom-checkbox inline-checkbox">
-                                <input type="checkbox" name="system.requires_concentration" {{checked system.requires_concentration}}/>
-                                <span>Registrar concentração</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
+        <div class="skill-dashboard-section power-dashboard-section">
+            <h4 class="skill-dashboard-section-title"><i class="fas fa-gem" aria-hidden="true"></i> Custo do Poder</h4>
+            <div class="spell-power-result-grid">
+                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-coins" aria-hidden="true"></i><span>Custo Integral</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.points" value="{{system.points}}"/></div></div>
+                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>Custo com Modificador</span></label><div class="skill-dashboard-card-control"><div class="calculated-cost value"><span>{{calculatedCost.finalPoints}}</span><small>{{#if (eq system.cost_paid "alternative")}}Alternativo{{else}}Integral{{/if}} · Mod: {{calculatedCost.totalModifier}}%</small></div></div></div>
+                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-receipt" aria-hidden="true"></i><span>Custo Alternativo</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.alternative_points" value="{{system.alternative_points}}"/></div></div>
+                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-wallet" aria-hidden="true"></i><span>Custo Pago</span></label><div class="skill-dashboard-card-control"><select name="system.cost_paid"><option value="full" {{#if (eq system.cost_paid "full")}}selected{{/if}}>Integral</option><option value="alternative" {{#if (eq system.cost_paid "alternative")}}selected{{/if}}>Alternativo</option></select></div></div>
             </div>
+        </div>
 
-            <div class="form-section skill-details-compact power-details-form">
-                <h4 class="section-title">Ativação / Teste</h4>
-                <div class="skill-compact-rows">
-                    <div class="skill-ability-toggle">
-                        <label class="custom-checkbox inline-checkbox">
-                            <input type="checkbox" name="system.auto_points" {{checked (ne system.auto_points false)}}/>
-                            <span>Calcular Pontos Automaticamente</span>
-                        </label>
-                    </div>
-
-                    <div class="skill-compact-row">
-                        <label>Atributo Base</label>
-                        <div class="skill-compact-controls split-control">
-                            <select name="system.base_attribute_select" class="skill-base-attribute-select power-base-attribute-select" data-custom-target=".power-base-attribute-custom">
-                                <option value="st" {{#if (eq powerBaseAttributeSelect "st")}}selected{{/if}}>ST</option>
-                                <option value="dx" {{#if (eq powerBaseAttributeSelect "dx")}}selected{{/if}}>DX</option>
-                                <option value="iq" {{#if (eq powerBaseAttributeSelect "iq")}}selected{{/if}}>IQ</option>
-                                <option value="ht" {{#if (eq powerBaseAttributeSelect "ht")}}selected{{/if}}>HT</option>
-                                <option value="per" {{#if (eq powerBaseAttributeSelect "per")}}selected{{/if}}>Per</option>
-                                <option value="vont" {{#if (or (eq powerBaseAttributeSelect "vont") (eq powerBaseAttributeSelect "will"))}}selected{{/if}}>Vont</option>
-                                <option value="skill" {{#if (eq powerBaseAttributeSelect "skill")}}selected{{/if}}>Perícia</option>
-                                <option value="spell" {{#if (eq powerBaseAttributeSelect "spell")}}selected{{/if}}>Magia</option>
-                                <option value="power" {{#if (eq powerBaseAttributeSelect "power")}}selected{{/if}}>Poder</option>
-                                <option value="custom" {{#if (eq powerBaseAttributeSelect "custom")}}selected{{/if}}>Valor/Expressão</option>
-                            </select>
-                            <input class="skill-base-attribute-custom power-base-attribute-custom" type="text" name="system.base_attribute_custom" value="{{powerBaseAttributeCustom}}" placeholder="{{powerBaseAttributePlaceholder}}" {{#unless powerBaseAttributeCustomEnabled}}disabled{{/unless}}/>
-                        </div>
-                    </div>
-
-                    <div class="skill-compact-row">
-                        <label>Dificuldade</label>
-                        <div class="skill-compact-controls split-control">
-                            <select name="system.difficulty" class="power-difficulty-select">
-                                {{selectOptions powerDifficultyOptions selected=powerDifficultySelected}}
-                            </select>
-                            <input class="power-linear-points" type="number" step="1" min="0" name="system.cost_per_level" value="{{system.cost_per_level}}" placeholder="pts/nível" {{#unless powerUsesLinearCost}}disabled{{/unless}}/>
-                        </div>
-                    </div>
-
-                    <div class="skill-compact-row">
-                        <label>Nível Relativo</label>
-                        <div class="skill-compact-controls counter-wrapper compact-counter">
-                            <a class="adjust-value" data-action="decrease" data-target="system.skill_level"><i class="fas fa-minus"></i></a>
-                            <input type="number" name="system.skill_level" value="{{system.skill_level}}" data-dtype="Number">
-                            <a class="adjust-value" data-action="increase" data-target="system.skill_level"><i class="fas fa-plus"></i></a>
-                        </div>
-                    </div>
-
-                    <div class="skill-compact-row">
-                        <label>Modificador Base</label>
-                        <div class="skill-compact-controls">
-                            <input type="number" name="system.nh_mod" value="{{system.nh_mod}}" placeholder="+0"/>
-                        </div>
-                    </div>
-
-                    <div class="skill-compact-row">
-                        <label>Pontos da Habilidade</label>
-                        <div class="skill-compact-controls">
-                            <input type="number" name="system.points_skill" value="{{system.points_skill}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/>
-                        </div>
-                    </div>
-                </div>
+        <div class="skill-dashboard-section power-dashboard-section">
+            <h4 class="skill-dashboard-section-title"><i class="fas fa-hourglass-half" aria-hidden="true"></i> Execução</h4>
+            <div class="spell-power-result-grid">
+                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-stopwatch" aria-hidden="true"></i><span>Tempo de Ativação</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.activation_time" value="{{system.activation_time}}"/></div></div>
+                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-clock" aria-hidden="true"></i><span>Duração</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.duration" value="{{system.duration}}"/></div></div>
+                <label class="skill-dashboard-toggle-card spell-power-inline-toggle"><span class="skill-dashboard-toggle-icon"><i class="fas fa-brain" aria-hidden="true"></i></span><span class="skill-dashboard-toggle-label">Requer Concentração</span><input type="checkbox" name="system.requires_concentration" {{checked system.requires_concentration}}/></label>
             </div>
+        </div>
 
-            <div class="form-section skill-details-compact power-details-form">
-                <h4 class="section-title">Dano</h4>
-                <div class="item-damage-table">
-                    <div class="damage-table-spacer"></div>
-                    <div class="damage-col-label">Fórmula</div>
-                    <div class="damage-col-label">Tipo</div>
-                    <div class="damage-col-label">Escala</div>
-                    <div class="damage-col-label">Div.</div>
-
-                    <label class="effect-label">Dano Primário</label>
-                    <input type="text" name="system.damage.formula" value="{{system.damage.formula}}" placeholder="Ex: 3d6, 1d6-1"/>
-                    <input type="text" name="system.damage.type" value="{{system.damage.type}}" placeholder="Ex: qmd, cont, cort"/>
-                    <input type="text" name="system.damage.scaling" value="{{system.damage.scaling}}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/>
-                    <input type="number" step="0.1" name="system.damage.armor_divisor" value="{{system.damage.armor_divisor}}" title="Divisor de Armadura"/>
-
-                    <label class="effect-label">Dano de Acompanhamento</label>
-                    <input type="text" name="system.damage.follow_up_damage.formula" value="{{system.damage.follow_up_damage.formula}}"/>
-                    <input type="text" name="system.damage.follow_up_damage.type" value="{{system.damage.follow_up_damage.type}}"/>
-                    <input type="text" name="system.damage.follow_up_damage.scaling" value="{{system.damage.follow_up_damage.scaling}}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/>
-                    <input type="number" step="0.1" name="system.damage.follow_up_damage.armor_divisor" value="{{system.damage.follow_up_damage.armor_divisor}}" title="Divisor"/>
-
-                    <label class="effect-label">Dano de Fragmentação</label>
-                    <input type="text" name="system.damage.fragmentation_damage.formula" value="{{system.damage.fragmentation_damage.formula}}"/>
-                    <input type="text" name="system.damage.fragmentation_damage.type" value="{{system.damage.fragmentation_damage.type}}"/>
-                    <input type="text" name="system.damage.fragmentation_damage.scaling" value="{{system.damage.fragmentation_damage.scaling}}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/>
-                    <input type="number" step="0.1" name="system.damage.fragmentation_damage.armor_divisor" value="{{system.damage.fragmentation_damage.armor_divisor}}" title="Divisor"/>
-                </div>
+        <div class="skill-dashboard-section power-dashboard-section">
+            <h4 class="skill-dashboard-section-title"><i class="fas fa-bolt" aria-hidden="true"></i> Custo de Energia</h4>
+            <div class="spell-power-result-grid spell-power-two-grid">
+                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-battery-half" aria-hidden="true"></i><span>Custo de Ativação</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.activation_cost" value="{{system.activation_cost}}"/></div></div>
+                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-sync-alt" aria-hidden="true"></i><span>Custo de Manutenção</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.maint_cost" value="{{system.maint_cost}}"/></div></div>
             </div>
-
-            <div class="form-section skill-details-compact power-details-form">
-                <h4 class="section-title">Resultado</h4>
-                <div class="skill-compact-rows">
-                    <div class="skill-compact-row">
-                        <label>Resistido Por</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.resistance" value="{{system.resistance}}" placeholder="Ex: HT, Vontade, IQ-3"/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Resumo do Efeito</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.effect" value="{{system.effect}}" placeholder="Resumo curto para consulta"/>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-section skill-details-compact power-details-form">
-                <h4 class="section-title">Ataque Após Ativação</h4>
-                <div class="skill-compact-rows">
-
-                    <div class="skill-ability-toggle">
-                        <label class="custom-checkbox inline-checkbox">
-                                <input type="checkbox" name="system.uses_attack" class="power-uses-attack-toggle" {{checked system.uses_attack}}/>
-                                <span>Exige rolagem de ataque</span>
-                            </label>
-                        </div>
-
-
-                    <div class="power-attack-fields">
-                        <div class="skill-compact-row">
-                            <label>Tipo de Ataque</label>
-                            <div class="skill-compact-controls">
-                                <select name="system.attack_type">
-                                    <option value="melee" {{#if (eq system.attack_type "melee")}}selected{{/if}}>Corpo a corpo</option>
-                                    <option value="ranged" {{#if (eq system.attack_type "ranged")}}selected{{/if}}>À distância</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="skill-compact-row">
-                            <label>Perícia de Ataque <a class="link-skill-button" title="Vincular Perícia do Ator"><i class="fas fa-link"></i></a></label>
-                            <div class="skill-compact-controls">
-                                <input type="text" name="system.attack_roll.skill_name" value="{{system.attack_roll.skill_name}}" placeholder="Ex: Ataque Inato (Projétil), DX, 14"/>
-                            </div>
-                        </div>
-                        <div class="skill-compact-row">
-                            <label>Modificador Base de Ataque</label>
-                            <div class="skill-compact-controls">
-                                <input type="number" name="system.attack_roll.skill_level_mod" value="{{system.attack_roll.skill_level_mod}}"/>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {{/if}}
+        </div>
+    </div>
+{{/if}}
 
         {{!-- ===================================================================== --}}
         {{!-- 		ABA DETALHES: ITEM MODIFICADORES 				 --}}
@@ -1588,11 +1218,170 @@
      </div>
      {{/if}}
 
+
+          {{! ========================================================= }}
+     {{!  ABA "CONJURAÇÃO" (MAGIAS)     }}
      {{! ========================================================= }}
+     <div class="tab" data-tab="casting">
+        {{#if (eq item.type "spell")}}
+        <div class="skill-details-dashboard spell-power-dashboard spell-casting-dashboard">
+            <div class="skill-dashboard-toggles">
+                <label class="skill-dashboard-toggle-card">
+                    <span class="skill-dashboard-toggle-icon"><i class="fas fa-cog" aria-hidden="true"></i></span>
+                    <span class="skill-dashboard-toggle-label">Calcular Pontos Automaticamente</span>
+                    <input type="checkbox" name="system.auto_points" {{checked (ne system.auto_points false)}}/>
+                </label>
+            </div>
+
+            <div class="skill-dashboard-section spell-dashboard-section">
+                <h4 class="skill-dashboard-section-title"><i class="fas fa-magic" aria-hidden="true"></i> Conjuração</h4>
+                <div class="spell-power-core-grid">
+                    <div class="skill-dashboard-card skill-dashboard-field-card">
+                        <label class="skill-dashboard-card-heading"><i class="fas fa-book-open" aria-hidden="true"></i><span>Atributo Base</span></label>
+                        <div class="skill-dashboard-card-control skill-dashboard-stacked-control">
+                            <select name="system.base_attribute_select" class="skill-base-attribute-select spell-base-attribute-select" data-custom-target=".spell-base-attribute-custom">
+                                <option value="st" {{#if (eq spellBaseAttributeSelect "st")}}selected{{/if}}>ST</option>
+                                <option value="dx" {{#if (eq spellBaseAttributeSelect "dx")}}selected{{/if}}>DX</option>
+                                <option value="iq" {{#if (eq spellBaseAttributeSelect "iq")}}selected{{/if}}>IQ</option>
+                                <option value="ht" {{#if (eq spellBaseAttributeSelect "ht")}}selected{{/if}}>HT</option>
+                                <option value="per" {{#if (eq spellBaseAttributeSelect "per")}}selected{{/if}}>Per</option>
+                                <option value="vont" {{#if (or (eq spellBaseAttributeSelect "vont") (eq spellBaseAttributeSelect "will"))}}selected{{/if}}>Vont</option>
+                                <option value="skill" {{#if (eq spellBaseAttributeSelect "skill")}}selected{{/if}}>Perícia</option>
+                                <option value="spell" {{#if (eq spellBaseAttributeSelect "spell")}}selected{{/if}}>Magia</option>
+                                <option value="custom" {{#if (eq spellBaseAttributeSelect "custom")}}selected{{/if}}>Valor/Expressão</option>
+                            </select>
+                            <input class="skill-base-attribute-custom spell-base-attribute-custom" type="text" name="system.base_attribute_custom" value="{{spellBaseAttributeCustom}}" placeholder="{{spellBaseAttributePlaceholder}}" {{#unless spellBaseAttributeCustomEnabled}}disabled{{/unless}}/>
+                        </div>
+                    </div>
+
+                    <div class="skill-dashboard-card skill-dashboard-field-card">
+                        <label class="skill-dashboard-card-heading"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>Dificuldade</span></label>
+                        <div class="skill-dashboard-card-control skill-dashboard-stacked-control">
+                            <select name="system.difficulty" class="spell-difficulty-select">{{selectOptions spellDifficultyOptions selected=spellDifficultySelected}}</select>
+                            <input class="spell-linear-points" type="number" step="1" min="0" name="system.cost_per_level" value="{{system.cost_per_level}}" placeholder="pts/nível" {{#unless spellUsesLinearCost}}disabled{{/unless}}/>
+                        </div>
+                    </div>
+                </div>
+                <div class="spell-power-result-grid">
+                    <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-balance-scale" aria-hidden="true"></i><span>Nível Relativo</span></label><div class="skill-dashboard-card-control skill-dashboard-stepper counter-wrapper"><a class="adjust-value" data-action="decrease" data-target="system.skill_level"><i class="fas fa-minus" aria-hidden="true"></i></a><input type="number" name="system.skill_level" value="{{system.skill_level}}" data-dtype="Number"><a class="adjust-value" data-action="increase" data-target="system.skill_level"><i class="fas fa-plus" aria-hidden="true"></i></a></div></div>
+                    <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>Modificador Base</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.nh_mod" value="{{system.nh_mod}}" placeholder="+0"/></div></div>
+                    <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-gem" aria-hidden="true"></i><span>Pontos Totais</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.points" value="{{system.points}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/></div></div>
+                </div>
+            </div>
+
+            <div class="skill-dashboard-section spell-dashboard-section">
+                <h4 class="skill-dashboard-section-title"><i class="fas fa-crosshairs" aria-hidden="true"></i> Ataque Após Conjuração</h4>
+                <div class="spell-power-result-grid spell-power-attack-grid">
+                    <label class="skill-dashboard-toggle-card spell-power-inline-toggle"><span class="skill-dashboard-toggle-icon"><i class="fas fa-dice-d20" aria-hidden="true"></i></span><span class="skill-dashboard-toggle-label">Exige rolagem de ataque</span><input type="checkbox" name="system.uses_attack" class="spell-uses-attack-toggle" {{checked system.uses_attack}}/></label>
+                    <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-location-arrow" aria-hidden="true"></i><span>Tipo de Ataque</span></label><div class="skill-dashboard-card-control"><select name="system.attack_type" {{#unless system.uses_attack}}disabled{{/unless}}><option value="melee" {{#if (eq system.attack_type "melee")}}selected{{/if}}>Corpo a corpo</option><option value="ranged" {{#if (eq system.attack_type "ranged")}}selected{{/if}}>À distância</option></select></div></div>
+                    <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-link" aria-hidden="true"></i><span>Perícia de Ataque</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.skill_name" value="{{system.attack_roll.skill_name}}" placeholder="Ex: Ataque Inato (Projétil), DX, 14" {{#unless system.uses_attack}}disabled{{/unless}}/></div></div>
+                    <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>Modificador Base de Ataque</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.attack_roll.skill_level_mod" value="{{system.attack_roll.skill_level_mod}}" {{#unless system.uses_attack}}disabled{{/unless}}/></div></div>
+                </div>
+            </div>
+
+            <div class="skill-dashboard-section spell-dashboard-section spell-power-damage-section">
+                <h4 class="skill-dashboard-section-title"><i class="fas fa-burst" aria-hidden="true"></i> Dano</h4>
+                <div class="item-damage-table spell-power-dashboard-damage">
+                    <div class="damage-table-spacer"></div><div class="damage-col-label">Fórmula</div><div class="damage-col-label">Tipo</div><div class="damage-col-label">Escala</div><div class="damage-col-label">Div.</div>
+                    <label class="effect-label">Dano Primário</label><input type="text" name="system.damage.formula" value="{{system.damage.formula}}" placeholder="Ex: 3d6, 1d6-1"/><input type="text" name="system.damage.type" value="{{system.damage.type}}" placeholder="Ex: qmd, cont, cort"/><input type="text" name="system.damage.scaling" value="{{system.damage.scaling}}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/><input type="number" step="0.1" name="system.damage.armor_divisor" value="{{system.damage.armor_divisor}}" title="Divisor de Armadura"/>
+                    <label class="effect-label">Dano de Acompanhamento</label><input type="text" name="system.damage.follow_up_damage.formula" value="{{system.damage.follow_up_damage.formula}}"/><input type="text" name="system.damage.follow_up_damage.type" value="{{system.damage.follow_up_damage.type}}"/><input type="text" name="system.damage.follow_up_damage.scaling" value="{{system.damage.follow_up_damage.scaling}}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/><input type="number" step="0.1" name="system.damage.follow_up_damage.armor_divisor" value="{{system.damage.follow_up_damage.armor_divisor}}" title="Divisor"/>
+                    <label class="effect-label">Dano de Fragmentação</label><input type="text" name="system.damage.fragmentation_damage.formula" value="{{system.damage.fragmentation_damage.formula}}"/><input type="text" name="system.damage.fragmentation_damage.type" value="{{system.damage.fragmentation_damage.type}}"/><input type="text" name="system.damage.fragmentation_damage.scaling" value="{{system.damage.fragmentation_damage.scaling}}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/><input type="number" step="0.1" name="system.damage.fragmentation_damage.armor_divisor" value="{{system.damage.fragmentation_damage.armor_divisor}}" title="Divisor"/>
+                </div>
+            </div>
+
+            <div class="skill-dashboard-section spell-dashboard-section">
+                <h4 class="skill-dashboard-section-title"><i class="fas fa-clipboard-check" aria-hidden="true"></i> Resultado</h4>
+                <div class="spell-power-result-grid spell-power-two-grid">
+                    <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>Resistido Por</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.resistance" value="{{system.resistance}}" placeholder="Ex: HT, Vontade, IQ-3"/></div></div>
+                    <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-scroll" aria-hidden="true"></i><span>Resumo do Efeito</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.effect" value="{{system.effect}}" placeholder="Resumo curto para consulta"/></div></div>
+                </div>
+            </div>
+        </div>
+        {{/if}}
+     </div>
+
+     {{! ========================================================= }}
+     {{!  ABA "ATIVAÇÃO" (PODERES)     }}
+     {{! ========================================================= }}
+     <div class="tab" data-tab="activation">
+        {{#if (eq item.type "power")}}
+        <div class="skill-details-dashboard spell-power-dashboard power-activation-dashboard">
+            <div class="skill-dashboard-toggles">
+                <label class="skill-dashboard-toggle-card">
+                    <span class="skill-dashboard-toggle-icon"><i class="fas fa-cog" aria-hidden="true"></i></span>
+                    <span class="skill-dashboard-toggle-label">Calcular Pontos Automaticamente</span>
+                    <input type="checkbox" name="system.auto_points" {{checked (ne system.auto_points false)}}/>
+                </label>
+            </div>
+
+            <div class="skill-dashboard-section power-dashboard-section">
+                <h4 class="skill-dashboard-section-title"><i class="fas fa-bolt" aria-hidden="true"></i> Ativação</h4>
+                <div class="spell-power-core-grid">
+                    <div class="skill-dashboard-card skill-dashboard-field-card">
+                        <label class="skill-dashboard-card-heading"><i class="fas fa-book-open" aria-hidden="true"></i><span>Atributo Base</span></label>
+                        <div class="skill-dashboard-card-control skill-dashboard-stacked-control">
+                            <select name="system.base_attribute_select" class="skill-base-attribute-select power-base-attribute-select" data-custom-target=".power-base-attribute-custom">
+                                <option value="st" {{#if (eq powerBaseAttributeSelect "st")}}selected{{/if}}>ST</option><option value="dx" {{#if (eq powerBaseAttributeSelect "dx")}}selected{{/if}}>DX</option><option value="iq" {{#if (eq powerBaseAttributeSelect "iq")}}selected{{/if}}>IQ</option><option value="ht" {{#if (eq powerBaseAttributeSelect "ht")}}selected{{/if}}>HT</option><option value="per" {{#if (eq powerBaseAttributeSelect "per")}}selected{{/if}}>Per</option><option value="vont" {{#if (or (eq powerBaseAttributeSelect "vont") (eq powerBaseAttributeSelect "will"))}}selected{{/if}}>Vont</option><option value="skill" {{#if (eq powerBaseAttributeSelect "skill")}}selected{{/if}}>Perícia</option><option value="spell" {{#if (eq powerBaseAttributeSelect "spell")}}selected{{/if}}>Magia</option><option value="power" {{#if (eq powerBaseAttributeSelect "power")}}selected{{/if}}>Poder</option><option value="custom" {{#if (eq powerBaseAttributeSelect "custom")}}selected{{/if}}>Valor/Expressão</option>
+                            </select>
+                            <input class="skill-base-attribute-custom power-base-attribute-custom" type="text" name="system.base_attribute_custom" value="{{powerBaseAttributeCustom}}" placeholder="{{powerBaseAttributePlaceholder}}" {{#unless powerBaseAttributeCustomEnabled}}disabled{{/unless}}/>
+                        </div>
+                    </div>
+                    <div class="skill-dashboard-card skill-dashboard-field-card">
+                        <label class="skill-dashboard-card-heading"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>Dificuldade</span></label>
+                        <div class="skill-dashboard-card-control skill-dashboard-stacked-control"><select name="system.difficulty" class="power-difficulty-select">{{selectOptions powerDifficultyOptions selected=powerDifficultySelected}}</select><input class="power-linear-points" type="number" step="1" min="0" name="system.cost_per_level" value="{{system.cost_per_level}}" placeholder="pts/nível" {{#unless powerUsesLinearCost}}disabled{{/unless}}/></div>
+                    </div>
+                </div>
+                <div class="spell-power-result-grid">
+                    <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-balance-scale" aria-hidden="true"></i><span>Nível Relativo</span></label><div class="skill-dashboard-card-control skill-dashboard-stepper counter-wrapper"><a class="adjust-value" data-action="decrease" data-target="system.skill_level"><i class="fas fa-minus" aria-hidden="true"></i></a><input type="number" name="system.skill_level" value="{{system.skill_level}}" data-dtype="Number"><a class="adjust-value" data-action="increase" data-target="system.skill_level"><i class="fas fa-plus" aria-hidden="true"></i></a></div></div>
+                    <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>Modificador Base</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.nh_mod" value="{{system.nh_mod}}" placeholder="+0"/></div></div>
+                    <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-gem" aria-hidden="true"></i><span>Pontos da Habilidade</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.points_skill" value="{{system.points_skill}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/></div></div>
+                </div>
+            </div>
+
+            <div class="skill-dashboard-section power-dashboard-section">
+                <h4 class="skill-dashboard-section-title"><i class="fas fa-crosshairs" aria-hidden="true"></i> Ataque Após Ativação</h4>
+                <div class="spell-power-result-grid spell-power-attack-grid">
+                    <label class="skill-dashboard-toggle-card spell-power-inline-toggle"><span class="skill-dashboard-toggle-icon"><i class="fas fa-dice-d20" aria-hidden="true"></i></span><span class="skill-dashboard-toggle-label">Exige rolagem de ataque</span><input type="checkbox" name="system.uses_attack" class="power-uses-attack-toggle" {{checked system.uses_attack}}/></label>
+                    <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-location-arrow" aria-hidden="true"></i><span>Tipo de Ataque</span></label><div class="skill-dashboard-card-control"><select name="system.attack_type" {{#unless system.uses_attack}}disabled{{/unless}}><option value="melee" {{#if (eq system.attack_type "melee")}}selected{{/if}}>Corpo a corpo</option><option value="ranged" {{#if (eq system.attack_type "ranged")}}selected{{/if}}>À distância</option></select></div></div>
+                    <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-link" aria-hidden="true"></i><span>Perícia de Ataque</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.skill_name" value="{{system.attack_roll.skill_name}}" placeholder="Ex: Ataque Inato (Projétil), DX, 14" {{#unless system.uses_attack}}disabled{{/unless}}/></div></div>
+                    <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>Modificador Base de Ataque</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.attack_roll.skill_level_mod" value="{{system.attack_roll.skill_level_mod}}" {{#unless system.uses_attack}}disabled{{/unless}}/></div></div>
+                </div>
+            </div>
+
+            <div class="skill-dashboard-section power-dashboard-section spell-power-damage-section">
+                <h4 class="skill-dashboard-section-title"><i class="fas fa-burst" aria-hidden="true"></i> Dano</h4>
+                <div class="item-damage-table spell-power-dashboard-damage">
+                    <div class="damage-table-spacer"></div><div class="damage-col-label">Fórmula</div><div class="damage-col-label">Tipo</div><div class="damage-col-label">Escala</div><div class="damage-col-label">Div.</div>
+                    <label class="effect-label">Dano Primário</label><input type="text" name="system.damage.formula" value="{{system.damage.formula}}" placeholder="Ex: 3d6, 1d6-1"/><input type="text" name="system.damage.type" value="{{system.damage.type}}" placeholder="Ex: qmd, cont, cort"/><input type="text" name="system.damage.scaling" value="{{system.damage.scaling}}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/><input type="number" step="0.1" name="system.damage.armor_divisor" value="{{system.damage.armor_divisor}}" title="Divisor de Armadura"/>
+                    <label class="effect-label">Dano de Acompanhamento</label><input type="text" name="system.damage.follow_up_damage.formula" value="{{system.damage.follow_up_damage.formula}}"/><input type="text" name="system.damage.follow_up_damage.type" value="{{system.damage.follow_up_damage.type}}"/><input type="text" name="system.damage.follow_up_damage.scaling" value="{{system.damage.follow_up_damage.scaling}}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/><input type="number" step="0.1" name="system.damage.follow_up_damage.armor_divisor" value="{{system.damage.follow_up_damage.armor_divisor}}" title="Divisor"/>
+                    <label class="effect-label">Dano de Fragmentação</label><input type="text" name="system.damage.fragmentation_damage.formula" value="{{system.damage.fragmentation_damage.formula}}"/><input type="text" name="system.damage.fragmentation_damage.type" value="{{system.damage.fragmentation_damage.type}}"/><input type="text" name="system.damage.fragmentation_damage.scaling" value="{{system.damage.fragmentation_damage.scaling}}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/><input type="number" step="0.1" name="system.damage.fragmentation_damage.armor_divisor" value="{{system.damage.fragmentation_damage.armor_divisor}}" title="Divisor"/>
+                </div>
+            </div>
+
+            <div class="skill-dashboard-section power-dashboard-section">
+                <h4 class="skill-dashboard-section-title"><i class="fas fa-clipboard-check" aria-hidden="true"></i> Resultado</h4>
+                <div class="spell-power-result-grid spell-power-two-grid">
+                    <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>Resistido Por</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.resistance" value="{{system.resistance}}" placeholder="Ex: HT, Vontade, IQ-3"/></div></div>
+                    <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-scroll" aria-hidden="true"></i><span>Resumo do Efeito</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.effect" value="{{system.effect}}" placeholder="Resumo curto para consulta"/></div></div>
+                </div>
+            </div>
+        </div>
+        {{/if}}
+     </div>
+
+{{! ========================================================= }}
     {{!  ABA "DESCRIÇÃO" (COM O EDITOR CORRETO)     }}
     {{! ========================================================= }}
     <div class="tab" data-tab="description">
       <div class="description-tab">
+        {{#if (or (eq item.type "spell") (eq item.type "power"))}}
+        <div class="item-description-reference">
+          <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> REF</label>
+          <div class="item-description-reference-control">
+            <input type="text" name="system.ref" value="{{system.ref}}" placeholder="{{#if (eq item.type "spell")}}Ex: M123{{else}}Ex: PU4:12{{/if}}"/>
+          </div>
+        </div>
+        {{/if}}
      <div class="description-grid">
           <div class="form-section description-section itemdesc-block">
             <details class="itemdesc-panel" open>

@@ -620,7 +620,10 @@ _promptMultipleReferences(parsedList) {
 
         const toggleSpellAttackFields = () => {
             const usesAttack = html.find('.spell-uses-attack-toggle').is(':checked');
-            html.find('.spell-attack-fields').toggle(usesAttack);
+                        const grid = html.find('.spell-uses-attack-toggle').closest('.spell-power-attack-grid');
+            grid.find('select[name="system.attack_type"], input[name="system.attack_roll.skill_name"], input[name="system.attack_roll.skill_level_mod"]')
+                .prop('disabled', !usesAttack)
+                .toggleClass('is-disabled', !usesAttack);
         };
         html.find('.spell-uses-attack-toggle').on('change', toggleSpellAttackFields);
         toggleSpellAttackFields();
@@ -636,7 +639,10 @@ _promptMultipleReferences(parsedList) {
 
         const togglePowerAttackFields = () => {
             const usesAttack = html.find('.power-uses-attack-toggle').is(':checked');
-            html.find('.power-attack-fields').toggle(usesAttack);
+                        const grid = html.find('.power-uses-attack-toggle').closest('.spell-power-attack-grid');
+            grid.find('select[name="system.attack_type"], input[name="system.attack_roll.skill_name"], input[name="system.attack_roll.skill_level_mod"]')
+                .prop('disabled', !usesAttack)
+                .toggleClass('is-disabled', !usesAttack);
         };
         html.find('.power-uses-attack-toggle').on('change', togglePowerAttackFields);
         togglePowerAttackFields();
