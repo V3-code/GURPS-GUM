@@ -1374,11 +1374,11 @@
     {{! ========================================================= }}
     <div class="tab" data-tab="description">
       <div class="description-tab">
-        {{#if (or (eq item.type "spell") (eq item.type "power"))}}
+        {{#if (or (eq item.type "skill") (eq item.type "spell") (eq item.type "power"))}}
         <div class="item-description-reference">
           <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> REF</label>
           <div class="item-description-reference-control">
-            <input type="text" name="system.ref" value="{{system.ref}}" placeholder="{{#if (eq item.type "spell")}}Ex: M123{{else}}Ex: PU4:12{{/if}}"/>
+            <input type="text" name="system.ref" value="{{system.ref}}" placeholder="Ex: B174, M123, PU4:12"/>
           </div>
         </div>
         {{/if}}

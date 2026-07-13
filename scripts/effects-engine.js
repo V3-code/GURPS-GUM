@@ -166,6 +166,10 @@ const DEFAULT_EFFECT_ACTION = {
     chat_notice: true,
     confirm_prompt: false,
     variable_value: false,
+    max: "0",
+    source: "",
+    hidden: false,
+    exists_policy: "ignore",
     statusId: "dead"
 };
 
@@ -244,6 +248,8 @@ const buildFallbackActionLabel = (action = {}) => {
             return `Status: ${action.statusId || "indefinido"}`;
         case "resource_change":
             return "Alteração de Recurso";
+        case "resource_create":
+            return "Criar Recurso";
         case "flag":
             return "Flag";
         case "macro":
@@ -310,7 +316,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
         }
     };
     const persistentTypes = new Set(["attribute", "flag", "roll_modifier", "status"]);
-    const instantTypes = new Set(["resource_change", "macro", "chat"]);
+    const instantTypes = new Set(["resource_change", "resource_create", "macro", "chat"]);
 
     const buildCommonActiveEffectData = (targetActor, actionIndex = 0) => {
         const gumDuration = normalizeEffectDurationFlags(effectSystem.duration || {});
@@ -549,6 +555,79 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                             content: `<strong>${escapeHtml(effectItem.name)}:</strong> ${finalValue >= 0 ? "+" : ""}${finalValue} aplicado em ${escapeHtml(action.name || action.category)}.`
                         });
                         ChatMessage.create(chatData);
+                    }
+                }
+                continue;
+            }
+
+             if (action.type === "resource_create") {
+                const resourceName = (action.name || "").toString().trim();
+                if (!resourceName) {
+                    ui.notifications.warn(`[GUM] Ação Criar Recurso de "${effectItem.name}" sem nome definido.`);
+                    continue;
+                }
+
+                const existsPolicy = action.exists_policy || "ignore";
+
+                for (const targetToken of targets) {
+                    const targetActor = targetToken.actor;
+                    const { value: initialValue } = await evaluateEffectValue(action.value ?? 0, targetActor);
+                    const { value: maxValue } = await evaluateEffectValue(action.max ?? action.value ?? 0, targetActor);
+                    const current = Number(initialValue) || 0;
+                    const max = Number(maxValue) || 0;
+                    let collectionPath = null;
+                    const resourceData = { name: resourceName, current, max, value: current };
+
+                    if (action.category === "spell_reserve") {
+                        collectionPath = "system.spell_reserves";
+                        resourceData.source = action.source || effectItem.name;
+                    } else if (action.category === "power_reserve") {
+                        collectionPath = "system.power_reserves";
+                        resourceData.source = action.source || effectItem.name;
+                    } else if (action.category === "combat_tracker") {
+                        collectionPath = "system.combat.combat_meters";
+                        resourceData.hidden = Boolean(action.hidden);
+                    }
+
+                    if (!collectionPath) {
+                        ui.notifications.warn(`[GUM] Categoria de criação de recurso "${action.category}" não reconhecida.`);
+                        continue;
+                    }
+
+                    const collection = foundry.utils.getProperty(targetActor, collectionPath) || {};
+                    const existingEntry = Object.entries(collection).find(([, entry]) => entry?.name === resourceName);
+                    if (existingEntry) {
+                        const [existingKey, existing] = existingEntry;
+                        const basePath = `${collectionPath}.${existingKey}`;
+                        if (existsPolicy === "ignore") {
+                            if (action.chat_notice) {
+                                ChatMessage.create(applyFoundryRollModePrivacy({
+                                    speaker: ChatMessage.getSpeaker({ actor: targetActor }),
+                                    content: `<strong>${escapeHtml(effectItem.name)}:</strong> ${escapeHtml(resourceName)} já existe e foi mantido.`
+                                }));
+                            }
+                            continue;
+                        }
+                        if (existsPolicy === "replace") {
+                            await targetActor.update({ [basePath]: resourceData });
+                        } else if (existsPolicy === "sum_max") {
+                            const nextMax = (Number(existing.max ?? existing.value ?? 0) || 0) + max;
+                            await targetActor.update({ [`${basePath}.max`]: nextMax });
+                        } else if (existsPolicy === "update_max") {
+                            await targetActor.update({ [`${basePath}.max`]: max });
+                        } else if (existsPolicy === "restore") {
+                            const resolvedMax = Number(existing.max ?? max) || max;
+                            await targetActor.update({ [`${basePath}.current`]: resolvedMax, [`${basePath}.value`]: resolvedMax });
+                        }
+                    } else {
+                        await targetActor.update({ [`${collectionPath}.${foundry.utils.randomID()}`]: resourceData });
+                    }
+
+                    if (action.chat_notice) {
+                        ChatMessage.create(applyFoundryRollModePrivacy({
+                            speaker: ChatMessage.getSpeaker({ actor: targetActor }),
+                            content: `<strong>${escapeHtml(effectItem.name)}:</strong> recurso ${escapeHtml(resourceName)} criado/atualizado (${current}/${max}).`
+                        }));
                     }
                 }
                 continue;

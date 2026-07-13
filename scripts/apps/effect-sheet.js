@@ -43,6 +43,7 @@ const EFFECT_ACTION_TYPE_PRESENTATION = {
     attribute: { label: "Modificador de Atributo", icon: "fas fa-chart-line", className: "is-attribute" },
     status: { label: "Status", icon: "fas fa-heartbeat", className: "is-status" },
     resource_change: { label: "Alteração de Recurso", icon: "fas fa-battery-half", className: "is-resource-change" },
+    resource_create: { label: "Criar Recurso", icon: "fas fa-plus-circle", className: "is-resource-create" },
     roll_modifier: { label: "Modificador de Rolagem", icon: "fas fa-dice", className: "is-roll-modifier" },
     chat: { label: "Mensagem de Chat", icon: "fas fa-comment", className: "is-chat" },
     macro: { label: "Macro", icon: "fas fa-code", className: "is-macro" },
@@ -54,7 +55,9 @@ const RESOURCE_CATEGORY_LABELS = {
     fp: "Pontos de Fadiga",
     energy_reserve: "Reserva de Energia",
     combat_tracker: "Registro de Combate",
-    item_quantity: "Quantidade de Equipamento"
+    item_quantity: "Quantidade de Equipamento",
+    spell_reserve: "Reserva de Energia — Magia",
+    power_reserve: "Reserva de Energia — Poder"
 };
 
 const compactParts = (...parts) => parts
@@ -80,6 +83,8 @@ const buildActionSummary = (action = {}) => {
             return `Status: ${action.statusLabel || action.statusId || "não definido"}`;
         case "resource_change":
             return compactParts(RESOURCE_CATEGORY_LABELS[action.category] || action.category, action.value).join(" · ") || "Alteração de recurso";
+                case "resource_create":
+            return compactParts(RESOURCE_CATEGORY_LABELS[action.category] || action.category, action.name, `${action.value || 0}/${action.max || 0}`).join(" · ") || "Criar recurso";
         case "roll_modifier":
             return compactParts(action.rollModifierPrimaryContext || "Qualquer rolagem", action.rollModifierPrimarySide || "Próprio portador", formatEntryCount(action.entryCount || 0)).join(" · ");
         case "chat":
@@ -117,6 +122,10 @@ const DEFAULT_EFFECT_ACTION = {
     chat_notice: true,
     confirm_prompt: false,
     variable_value: false,
+    max: "0",
+    source: "",
+    hidden: false,
+    exists_policy: "ignore",
     statusId: "dead"
 };
 
@@ -748,6 +757,10 @@ activateListeners(html) {
             formData["system.chat_notice"] = Boolean(firstAction.chat_notice);
             formData["system.confirm_prompt"] = Boolean(firstAction.confirm_prompt);
             formData["system.variable_value"] = Boolean(firstAction.variable_value);
+            formData["system.max"] = firstAction.max;
+            formData["system.source"] = firstAction.source;
+            formData["system.hidden"] = Boolean(firstAction.hidden);
+            formData["system.exists_policy"] = firstAction.exists_policy;
             formData["system.statusId"] = firstAction.statusId;
         }
 

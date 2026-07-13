@@ -48,9 +48,6 @@
 
                     <div class="effect-premium-toolbar">
                         <div class="effect-premium-toolbar-title">
-                            <span class="effect-premium-toolbar-icon">
-                                <i class="fas fa-list" aria-hidden="true"></i>
-                            </span>
 
                             <div class="effect-premium-toolbar-copy">
                                 <h4>Ações do Efeito</h4>
@@ -170,6 +167,13 @@
                                                             {{#if (eq action.type "resource_change")}}selected{{/if}}
                                                         >
                                                             Alteração de Recurso
+                                                        </option>
+
+                                                        <option
+                                                            value="resource_create"
+                                                            {{#if (eq action.type "resource_create")}}selected{{/if}}
+                                                        >
+                                                            Criar Recurso
                                                         </option>
 
                                                         <option
@@ -431,6 +435,78 @@
                                                     </label>
                                                 </div>
                                             {{/if}}
+
+                                            {{! ============================================= }}
+                                            {{! TIPO: CRIAR RECURSO                           }}
+                                            {{! ============================================= }}
+                                            {{#if (eq action.type "resource_create")}}
+                                                <div class="effect-premium-grid effect-premium-grid-resource">
+                                                    <div class="effect-premium-field">
+                                                        <label class="effect-premium-field-label"><i class="fas fa-bullseye" aria-hidden="true"></i>Tipo</label>
+                                                        <div class="effect-premium-field-control">
+                                                            <select name="system.actions.{{action.index}}.category">
+                                                                <option value="spell_reserve" {{#if (eq action.category "spell_reserve")}}selected{{/if}}>Reserva de Magia</option>
+                                                                <option value="power_reserve" {{#if (eq action.category "power_reserve")}}selected{{/if}}>Reserva de Poder</option>
+                                                                <option value="combat_tracker" {{#if (eq action.category "combat_tracker")}}selected{{/if}}>Registro de Combate</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="effect-premium-field">
+                                                        <label class="effect-premium-field-label"><i class="fas fa-signature" aria-hidden="true"></i>Nome</label>
+                                                        <div class="effect-premium-field-control">
+                                                            <input type="text" name="system.actions.{{action.index}}.name" value="{{action.name}}" placeholder="Ex: Bateria, Mana, Tensão" />
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="effect-premium-field">
+                                                        <label class="effect-premium-field-label"><i class="fas fa-hashtag" aria-hidden="true"></i>Valor inicial</label>
+                                                        <div class="effect-premium-field-control">
+                                                            <input type="text" class="effect-compact-value" name="system.actions.{{action.index}}.value" value="{{action.value}}" />
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="effect-premium-field">
+                                                        <label class="effect-premium-field-label"><i class="fas fa-repeat" aria-hidden="true"></i>Se já existir</label>
+                                                        <div class="effect-premium-field-control">
+                                                            <select name="system.actions.{{action.index}}.exists_policy">
+                                                                <option value="ignore" {{#if (eq action.exists_policy "ignore")}}selected{{/if}}>Ignorar</option>
+                                                                <option value="update_max" {{#if (eq action.exists_policy "update_max")}}selected{{/if}}>Atualizar máximo</option>
+                                                                <option value="sum_max" {{#if (eq action.exists_policy "sum_max")}}selected{{/if}}>Somar ao máximo</option>
+                                                                <option value="replace" {{#if (eq action.exists_policy "replace")}}selected{{/if}}>Substituir</option>
+                                                                <option value="restore" {{#if (eq action.exists_policy "restore")}}selected{{/if}}>Restaurar atual até o máximo</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="effect-premium-field">
+                                                        <label class="effect-premium-field-label"><i class="fas fa-link" aria-hidden="true"></i>Fonte / origem</label>
+                                                        <div class="effect-premium-field-control">
+                                                            <input type="text" name="system.actions.{{action.index}}.source" value="{{action.source}}" placeholder="Opcional" />
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="effect-premium-field">
+                                                        <label class="effect-premium-field-label"><i class="fas fa-gauge-high" aria-hidden="true"></i>Máximo</label>
+                                                        <div class="effect-premium-field-control">
+                                                            <input type="text" class="effect-compact-value" name="system.actions.{{action.index}}.max" value="{{action.max}}" />
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+
+                                                <div class="effect-premium-options-row">
+                                                    <label class="effect-premium-checkbox">
+                                                        <input type="checkbox" name="system.actions.{{action.index}}.chat_notice" {{checked action.chat_notice}} />
+                                                        <span>Aviso no chat</span>
+                                                    </label>
+                                                    <label class="effect-premium-checkbox">
+                                                        <input type="checkbox" name="system.actions.{{action.index}}.hidden" {{checked action.hidden}} />
+                                                        <span>Ocultar na ficha (Registro)</span>
+                                                    </label>
+                                                </div>
+                                            {{/if}}
+
                                             {{! ============================================= }}
                                             {{! TIPO: MODIFICADOR DE ROLAGEM                  }}
                                             {{! ============================================= }}
