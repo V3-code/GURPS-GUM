@@ -120,7 +120,9 @@ async getData() {
                     return null;
                 }
             }));
-            group.enrichedItems = enrichedItems.filter(item => item !== null);
+            group.enrichedItems = enrichedItems
+                .filter(item => item !== null)
+                .sort((a, b) => this._compareGroupedItems(a, b));
         }));
 
         return {
@@ -211,6 +213,27 @@ async getData() {
             hasActiveGMBadges: activeGMMods.length > 0 || activeGMEffects.length > 0
         };
     }
+
+    _getGroupedItemModifierValue(item) {
+        if (item?.type !== "gm_modifier") return null;
+        const value = Number(item.system?.modifier);
+        return Number.isFinite(value) ? value : null;
+    }
+
+    _compareGroupedItems(a, b) {
+        const valueA = this._getGroupedItemModifierValue(a);
+        const valueB = this._getGroupedItemModifierValue(b);
+        const hasValueA = valueA !== null;
+        const hasValueB = valueB !== null;
+
+        if (hasValueA && hasValueB && valueA !== valueB) return valueA - valueB;
+        if (hasValueA !== hasValueB) return hasValueA ? -1 : 1;
+
+        const nameA = String(a?.name || "");
+        const nameB = String(b?.name || "");
+        return nameA.localeCompare(nameB, game.i18n?.lang || undefined, { sensitivity: "base" });
+    }
+    
 activateListeners(html) {
         super.activateListeners(html);
 

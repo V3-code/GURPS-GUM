@@ -1040,12 +1040,12 @@
                     <label class="skill-dashboard-card-heading"><i class="fas fa-book" aria-hidden="true"></i><span>Fonte</span></label>
                     <div class="skill-dashboard-card-control"><input type="text" name="system.source" value="{{system.source}}"/></div>
                 </div>
-            </div>
-            <div class="spell-power-result-grid spell-power-two-grid">
                 <div class="skill-dashboard-card skill-dashboard-field-card">
                     <label class="skill-dashboard-card-heading"><i class="fas fa-tags" aria-hidden="true"></i><span>Classe</span></label>
                     <div class="skill-dashboard-card-control"><input type="text" name="system.spell_class" value="{{system.spell_class}}"/></div>
                 </div>
+            </div>
+            <div class="spell-power-core-grid">
                 <div class="skill-dashboard-card skill-dashboard-field-card">
                     <label class="skill-dashboard-card-heading"><i class="fas fa-hand-sparkles" aria-hidden="true"></i><span>Tipo de Uso</span></label>
                     <div class="skill-dashboard-card-control"><input type="text" name="system.usage_type" value="{{system.usage_type}}" placeholder="Ex: Ataque, Defesa, Aura, Passivo ..."/></div>
@@ -1107,19 +1107,17 @@
                 <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-book" aria-hidden="true"></i><span>Fonte</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.source" value="{{system.source}}"/></div></div>
                 <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-users" aria-hidden="true"></i><span>Grupo</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.group" value="{{system.group}}" placeholder="Ex: Elemental, Psíquico..."/></div></div>
                 <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-tags" aria-hidden="true"></i><span>Classe</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.spell_class" value="{{system.spell_class}}"/></div></div>
-            </div>
-            <div class="spell-power-result-grid spell-power-single-grid">
                 <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-hand-sparkles" aria-hidden="true"></i><span>Tipo de Uso</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.usage_type" value="{{system.usage_type}}" placeholder="Ex: Ataque, Defesa, Aura, Passivo ..."/></div></div>
             </div>
         </div>
 
         <div class="skill-dashboard-section power-dashboard-section">
             <h4 class="skill-dashboard-section-title"><i class="fas fa-gem" aria-hidden="true"></i> Custo do Poder</h4>
-            <div class="spell-power-result-grid">
+            <div class="spell-power-core-grid">
                 <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-coins" aria-hidden="true"></i><span>Custo Integral</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.points" value="{{system.points}}"/></div></div>
-                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>Custo com Modificador</span></label><div class="skill-dashboard-card-control"><div class="calculated-cost value"><span>{{calculatedCost.finalPoints}}</span><small>{{#if (eq system.cost_paid "alternative")}}Alternativo{{else}}Integral{{/if}} · Mod: {{calculatedCost.totalModifier}}%</small></div></div></div>
                 <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-receipt" aria-hidden="true"></i><span>Custo Alternativo</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.alternative_points" value="{{system.alternative_points}}"/></div></div>
                 <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-wallet" aria-hidden="true"></i><span>Custo Pago</span></label><div class="skill-dashboard-card-control"><select name="system.cost_paid"><option value="full" {{#if (eq system.cost_paid "full")}}selected{{/if}}>Integral</option><option value="alternative" {{#if (eq system.cost_paid "alternative")}}selected{{/if}}>Alternativo</option></select></div></div>
+                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>Custo com Modificador</span></label><div class="skill-dashboard-card-control"><div class="calculated-cost value"><span>{{calculatedCost.finalPoints}}</span><small>{{#if (eq system.cost_paid "alternative")}}Alternativo{{else}}Integral{{/if}} · Mod: {{calculatedCost.totalModifier}}%</small></div></div></div>
             </div>
         </div>
 

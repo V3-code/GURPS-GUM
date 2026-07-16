@@ -2804,8 +2804,12 @@ Hooks.once('ready', async function() {
     const damagePackage = JSON.parse(damagePackageJSON);
     console.log("GUM | DEBUG: Etapa 2 OK. Pacote de dados lido:", damagePackage);
 
-    // 3. Encontra o ator atacante pela ID
-    const attackerActor = game.actors.get(damagePackage.attackerId);
+    // 3. Encontra o ator atacante pela ID.
+    // Rolagens rápidas do Escudo do Mestre não têm um ator atacante real;
+    // nesses casos, usamos um atacante sintético para manter a aplicação de dano disponível.
+    const attackerActor = damagePackage.attackerId
+        ? game.actors.get(damagePackage.attackerId)
+        : { id: null, name: damagePackage.attackerName || "Mestre", img: "icons/svg/mystery-man.svg" };
     if (!attackerActor) {
         console.error(`GUM | DEBUG: Falha na Etapa 3. Ator atacante com ID "${damagePackage.attackerId}" não encontrado.`);
         return ui.notifications.error("Erro: Ator atacante não encontrado. A mensagem de chat pode ser antiga.");
