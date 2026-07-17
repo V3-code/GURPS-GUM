@@ -635,3 +635,37 @@
   color: #a0a0a0;
   font-style: italic;
 }
+/* Large-area injury secondary DR marker */
+.damage-application-dialog .location-header,
+.damage-application-dialog .location-row {
+    grid-template-columns: 70px 1fr 30px 24px;
+}
+
+.damage-application-dialog .large-area-header,
+.damage-application-dialog .large-area-marker {
+    display: none;
+    text-align: center;
+}
+
+.damage-application-dialog .damage-application-window.large-area-mode .large-area-header,
+.damage-application-dialog .damage-application-window.large-area-mode .large-area-marker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.damage-application-dialog .large-area-marker {
+    color: #d9822b;
+    opacity: 0.55;
+}
+
+.damage-application-dialog .large-area-marker:hover,
+.damage-application-dialog .damage-application-window.large-area-mode .location-row.large-area-selected .large-area-marker {
+    color: #ff9f1c;
+    opacity: 1;
+    text-shadow: 0 0 6px rgba(255, 159, 28, 0.8);
+}
+
+.damage-application-dialog .damage-application-window.large-area-mode .location-row.large-area-selected {
+    box-shadow: inset 3px 0 0 #ff9f1c;
+}

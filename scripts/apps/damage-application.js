@@ -91,8 +91,31 @@ async _resolveOnDamageEffects() {
             if (numeric === 0) continue;
             normalized[key] = numeric;
         }
-        const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeCompare(b));
+const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeCompare(b));
         return JSON.stringify(sortedEntries);
+    }
+
+    _getLargeAreaInjuryDR(form, damageTypeKey) {
+        const torsoDR = this._getDynamicDR("torso", damageTypeKey);
+        const markedRow = form.querySelector(".location-row.large-area-selected")
+            || form.querySelector(".location-row.active")
+            || form.querySelector('.location-row[data-location-key="torso"]');
+        const markedLocationKey = markedRow?.dataset.locationKey || "torso";
+        let markedDR = torsoDR;
+
+        if (markedLocationKey === "custom") {
+            const customDR = parseInt(form.querySelector('input[name="custom_dr"]')?.value);
+            markedDR = isNaN(customDR) ? 0 : Math.max(0, customDR);
+        } else {
+            markedDR = Math.max(0, this._getDynamicDR(markedLocationKey, damageTypeKey));
+        }
+
+        return {
+            torsoDR,
+            markedDR,
+            markedLabel: markedRow?.querySelector(".label")?.textContent?.trim() || "Torso",
+            effectiveDR: Math.ceil((torsoDR + markedDR) / 2)
+        };
     }
 
     _buildLocationRows(profile, drLocations) {
@@ -290,6 +313,31 @@ const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
                 this._updateDamageCalculation(form);
             });
         });
+
+         form.querySelectorAll('.large-area-marker').forEach(marker => {
+            marker.addEventListener('click', ev => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                const row = ev.currentTarget.closest('.location-row');
+                form.querySelectorAll('.location-row.large-area-selected').forEach(r => r.classList.remove('large-area-selected'));
+                if (row) row.classList.add('large-area-selected');
+                this._updateDamageCalculation(form);
+            });
+        });
+
+        const largeAreaCheckbox = form.querySelector('[name="large_area_injury"]');
+        const syncLargeAreaMode = () => {
+            const enabled = largeAreaCheckbox?.checked;
+            form.classList.toggle('large-area-mode', !!enabled);
+            if (enabled && !form.querySelector('.location-row.large-area-selected')) {
+                const activeRow = form.querySelector('.location-row.active') || form.querySelector('.location-row[data-location-key="torso"]');
+                if (activeRow) activeRow.classList.add('large-area-selected');
+            }
+        };
+        largeAreaCheckbox?.addEventListener('change', () => {
+            syncLargeAreaMode();
+            this._updateDamageCalculation(form);
+        });
         
         form.querySelectorAll('.location-row').forEach(row => {
             row.addEventListener('click', ev => {
@@ -388,6 +436,7 @@ const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
         } else {
             this._updateDamageCalculation(form);
         }
+        syncLargeAreaMode();
     }
 
 async _updateDamageCalculation(form) {
@@ -410,6 +459,7 @@ async _updateDamageCalculation(form) {
     const damageReductionEnabled = form.querySelector('[name="damage_reduction_enabled"]')?.checked;
     const rawDamageReductionValue = parseInt(form.querySelector('[name="damage_reduction_value"]')?.value);
     const damageReductionValue = [2, 3, 4].includes(rawDamageReductionValue) ? rawDamageReductionValue : 2;
+    const largeAreaInjury = form.querySelector('[name="large_area_injury"]')?.checked;
     if (isNaN(damageRolled)) { damageRolled = activeDamage.total; if (damageRolledInput) damageRolledInput.value = damageRolled; }
     if (!armorDivisor || armorDivisor <= 0) { armorDivisor = activeDamage.armorDivisor || 1; if (armorDivisorInput) armorDivisorInput.value = armorDivisor; }
     const effects = [];
@@ -440,6 +490,12 @@ async _updateDamageCalculation(form) {
         const locKey = activeRow.dataset.locationKey;
         selectedLocationDR = this._getDynamicDR(locKey, damageTypeKey);
     }
+    let largeAreaDRData = null;
+    if (largeAreaInjury) {
+        largeAreaDRData = this._getLargeAreaInjuryDR(form, damageTypeKey);
+        selectedLocationDR = largeAreaDRData.effectiveDR;
+        effects.push(`🟠 Lesão em Larga Escala: RD efetiva ${selectedLocationDR} = ⌈(${largeAreaDRData.torsoDR} torso + ${largeAreaDRData.markedDR} ${largeAreaDRData.markedLabel}) ÷ 2⌉`);
+    }
     const ignoreDR = form.querySelector('[name="ignore_dr"]')?.checked;
     
     const effectiveDR = ignoreDR ? 0 : Math.floor(selectedLocationDR / armorDivisor);
@@ -459,7 +515,16 @@ async _updateDamageCalculation(form) {
     if (effectsOnlyChecked) { finalInjury = 0; } // Zera a lesão se a opção estiver marcada
 
     const selectedLocationLabel = form.querySelector('.location-row.active .label')?.textContent || '(Selecione)';
-    const drDisplay = (armorDivisor && armorDivisor !== 1) ? `${selectedLocationDR} ÷ ${armorDivisor} = ${effectiveDR}` : `${selectedLocationDR}`;
+    const drLabel = ignoreDR
+        ? 'Ignorar RD'
+        : largeAreaInjury
+            ? `Larga Escala: torso ${largeAreaDRData?.torsoDR ?? 0} + ${largeAreaDRData?.markedLabel ?? 'marcado'} ${largeAreaDRData?.markedDR ?? 0}`
+            : selectedLocationLabel;
+    const drDisplay = ignoreDR
+        ? '0'
+        : (armorDivisor && armorDivisor !== 1)
+            ? `${selectedLocationDR} ÷ ${armorDivisor} = ${effectiveDR}`
+            : `${selectedLocationDR}`;
     let modName = '';
         if (selectedModRadio) {
             // Pega o texto da linha inteira do radio button selecionado
@@ -478,7 +543,7 @@ async _updateDamageCalculation(form) {
     const field = (sel) => form.querySelector(`[data-field="${sel}"]`);
     if (field("base_damage_note")) { if (halfDamageChecked && explosionChecked && explosionDistance > 0) { field("base_damage_note").textContent = `÷ 2 ÷ ${3 * explosionDistance} = ${modifiedBase}`; } else if (halfDamageChecked) { field("base_damage_note").textContent = `÷ 2 = ${modifiedBase}`; } else if (explosionChecked && explosionDistance > 0) { field("base_damage_note").textContent = `÷ ${3 * explosionDistance} = ${modifiedBase}`; } else { field("base_damage_note").textContent = ''; } }
     if (field("damage_rolled")) field("damage_rolled").textContent = damageRolled;
-    if (field("target_dr")) field("target_dr").textContent = `${drDisplay} (${selectedLocationLabel})`;
+    if (field("target_dr")) field("target_dr").textContent = `${drDisplay} (${drLabel})`;
     if (field("armor_divisor")) field("armor_divisor").textContent = armorDivisor;
     if (field("penetrating_damage")) field("penetrating_damage").textContent = penetratingDamage;
     const reductionSuffix = damageReductionEnabled ? ` ÷ ${damageReductionValue}` : "";
@@ -515,6 +580,8 @@ async _updateDamageCalculation(form) {
 
     if (halfDamageChecked) { notesHtml += `<li>1/2D: Dano base reduzido.</li>`; }
     if (explosionChecked && explosionDistance > 0) { const divisor = Math.max(1, 3 * explosionDistance); notesHtml += `<li>Explosão: Dano dividido por ${divisor}.</li>`; }
+    if (largeAreaInjury) { notesHtml += `<li>Lesão em Larga Escala: usa a média arredondada para cima entre a RD do torso e a RD marcada em laranja.</li>`; }
+    if (ignoreDR) { notesHtml += `<li>Ignorar RD do Alvo: RD exibida e aplicada como 0.</li>`; }
     if (toleranceType) { const toleranceName = { "nao-vivo": "Não Vivo", "homogeneo": "Homogêneo", "difuso": "Difuso"}[toleranceType]; notesHtml += `<li>Tolerância: ${toleranceName} aplicada.</li>`; }
     if (damageReductionEnabled) { notesHtml += `<li>Redução de Dano aplicada por último: lesão ÷ ${damageReductionValue}.</li>`; }
 

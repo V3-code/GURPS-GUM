@@ -54,6 +54,7 @@
                     <span>Rolagem</span>
                     <span>Local</span>
                     <span>RD</span>
+                    <span class="large-area-header" title="Marcador usado na Lesão em Larga Escala">LE</span>
                 </div>
                 {{!-- Lista de Locais --}}
                 {{#each locations}}
@@ -67,13 +68,14 @@
                                 {{this.totalDR}}
                             {{/if}}
                         </span>
+                    <span class="large-area-marker" title="Usar esta RD junto da RD do torso para Lesão em Larga Escala"><i class="fas fa-bullseye"></i></span>
                 </div>
                 {{/each}}
             </div>
             <div class="damage-options">
                 <label class="custom-checkbox">
                     <input type="checkbox" name="large_area_injury"/>
-                    <span>Lesão em Larga Escala</span>
+                    <span title="Usa RD efetiva = (RD do torso + RD marcada em laranja) ÷ 2, arredondada para cima.">Lesão em Larga Escala</span>
                 </label>
                 <label class="custom-checkbox">
                     <input type="checkbox" name="ignore_dr"/>
