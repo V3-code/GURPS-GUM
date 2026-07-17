@@ -663,32 +663,19 @@
             <h4 class="section-title">Organização e Apresentação</h4>
             <div class="skill-compact-rows">
                 <div class="skill-compact-row">
-                    <label>Grupo na Ficha e no Roll Prompt</label>
+                    <label>Categoria principal</label>
                     <div class="skill-compact-controls">
-                        <input type="text" name="system.group" value="{{system.group}}" placeholder="Ex: Combate, Magia, Condições"/>
+                         <select name="system.ui_category">
+                            {{#each gmModifierCategoryOptions as |category|}}
+                                <option value="{{category.id}}" {{#if (or (eq ../system.ui_category category.id) (and (eq category.id "situation") (not ../system.ui_category)))}}selected{{/if}}>{{category.label}}</option>
+                            {{/each}}
+                        </select>
                     </div>
                 </div>
                 <div class="skill-compact-row">
-                    <label>Categoria no Navegador</label>
+                    <label>Grupo de exibição (opcional)</label>
                     <div class="skill-compact-controls">
-                        <select name="system.ui_category">
-                            <option value="location" {{#if (eq system.ui_category "location")}}selected{{/if}}>Pontos de Impacto</option>
-                            <option value="maneuver" {{#if (eq system.ui_category "maneuver")}}selected{{/if}}>Manobras</option>
-                            <option value="attack_opt" {{#if (eq system.ui_category "attack_opt")}}selected{{/if}}>Opções de Ataque</option>
-                            <option value="defense_opt" {{#if (eq system.ui_category "defense_opt")}}selected{{/if}}>Opções de Defesa</option>
-                            <option value="posture" {{#if (eq system.ui_category "posture")}}selected{{/if}}>Cobertura e Postura</option>
-                            <option value="range" {{#if (eq system.ui_category "range")}}selected{{/if}}>Distância e Velocidade</option>
-                            <option value="terrain_light" {{#if (eq system.ui_category "terrain_light")}}selected{{/if}}>Terreno e Iluminação</option>
-                            <option value="state_affliction" {{#if (eq system.ui_category "state_affliction")}}selected{{/if}}>Estado e Atribulações</option>
-                            <option value="task_difficulty" {{#if (eq system.ui_category "task_difficulty")}}selected{{/if}}>Dificuldade da Tarefa</option>
-                            <option value="ritual" {{#if (eq system.ui_category "ritual")}}selected{{/if}}>Operação Mágica</option>
-                            <option value="power_operation" {{#if (eq system.ui_category "power_operation")}}selected{{/if}}>Operação de Poderes</option>
-                            <option value="time" {{#if (eq system.ui_category "time")}}selected{{/if}}>Modo de Execução</option>
-                            <option value="effort" {{#if (eq system.ui_category "effort")}}selected{{/if}}>Esforço Adicional</option>
-                            <option value="situation" {{#if (or (eq system.ui_category "situation") (not system.ui_category))}}selected{{/if}}>Cenário</option>
-                            <option value="equipment" {{#if (eq system.ui_category "equipment")}}selected{{/if}}>Equipamento</option>
-                            <option value="other" {{#if (eq system.ui_category "other")}}selected{{/if}}>Customizado</option>
-                        </select>
+                                               <input type="text" name="system.group" value="{{system.group}}" placeholder="Vazio: usa a categoria principal"/>
                     </div>
                 </div>
                 <div class="skill-compact-row">

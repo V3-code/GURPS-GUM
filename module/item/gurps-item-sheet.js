@@ -1,7 +1,8 @@
 import { EffectBrowser } from "../apps/effect-browser.js"; 
 import { ConditionBrowser } from "../apps/condition-browser.js"; 
 import { EqpModifierBrowser } from "../apps/eqp-modifier-browser.js"; 
-import { ModifierBrowser } from "../apps/modifier-browser.js"; 
+import { ModifierBrowser } from "../apps/modifier-browser.js";
+import { GM_MODIFIER_CATEGORY_OPTIONS } from "../utils/gm-modifier-categories.js"; 
 import { listBodyLocations } from "../config/body-profiles.js"; 
  
 const { ItemSheet } = foundry.appv1.sheets; 
@@ -552,7 +553,8 @@ _promptMultipleReferences(parsedList) {
         context.sortedModifiers = modifiersArray; 
  
         if (this.item.type === "gm_modifier") { 
-            context.gmRollContextOptions = ROLL_CONTEXT_OPTIONS; 
+            context.gmRollContextOptions = ROLL_CONTEXT_OPTIONS;
+            context.gmModifierCategoryOptions = GM_MODIFIER_CATEGORY_OPTIONS; 
             const rawEntries = Array.isArray(this.item.system.modifier_entries) ? this.item.system.modifier_entries : []; 
             context.gmModifierEntries = rawEntries.length 
                 ? rawEntries.map((entry, index) => ({ 

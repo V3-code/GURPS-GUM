@@ -1,4 +1,5 @@
 import { GumPreviewDialog } from "./preview-dialog.js";
+import { GM_MODIFIER_CATEGORY_OPTIONS, getGMModifierCategoryLabel, normalizeGMModifierCategory } from "../utils/gm-modifier-categories.js";
 // GUM/module/apps/gm-modifier-browser.js
 
 export class GMModifierBrowser extends FormApplication {
@@ -39,7 +40,11 @@ export class GMModifierBrowser extends FormApplication {
         const content = await pack.getDocuments();
         this.allModifiers = content.map(item => {
             const formattedVal = (item.system.modifier > 0 ? '+' : '') + item.system.modifier;
-            const subtitleParts = [`Modificador: ${formattedVal}`];
+                        const category = normalizeGMModifierCategory(item.system.ui_category || "situation");
+            const categoryLabel = getGMModifierCategoryLabel(category);
+            const displayGroup = String(item.system.group || "").trim() || categoryLabel;
+            const subtitleParts = [`Modificador: ${formattedVal}`, `Categoria: ${categoryLabel}`];
+            if (displayGroup && displayGroup !== categoryLabel) subtitleParts.push(`Grupo: ${displayGroup}`);
             if (item.system.nh_cap) subtitleParts.push(`Teto ${item.system.nh_cap}`);
 
             return {
@@ -50,7 +55,9 @@ export class GMModifierBrowser extends FormApplication {
                 img: item.img,
                 displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null,
                 // Prepara dados para filtros
-                category: item.system.ui_category || "other",
+                                category,
+                categoryLabel,
+                displayGroup,
                 folderId: item.folder?.id ?? item.folder ?? item._source?.folder ?? null,
                 isBonus: item.system.modifier >= 0,
                 formattedVal,
@@ -67,9 +74,8 @@ export class GMModifierBrowser extends FormApplication {
     
     context.modifiers = this.allModifiers;
     context.folders = this.availableFolders;
-    
-    // Envia lista de categorias para gerar os checkboxes no HTML (Opcional, ou hardcoded no HBS)
-    // Aqui faremos hardcoded no HBS para ter controle dos rótulos bonitos.
+    const usedCategories = new Set(this.allModifiers.map(mod => mod.category));
+    context.categories = GM_MODIFIER_CATEGORY_OPTIONS.filter(category => usedCategories.has(category.id));
     
     return context;
   }
@@ -132,39 +138,6 @@ export class GMModifierBrowser extends FormApplication {
             ],
             width: 500
         });
-        const createTag = (label, value) => {
-             if (value) return `<div class="property-tag"><label>${label}</label><span>${value}</span></div>`;
-             return '';
-        };
-        
-        let tagsHtml = createTag('Valor', itemData.formattedVal);
-        if (s.nh_cap) tagsHtml += createTag('Teto', s.nh_cap);
-        if (s.duration) tagsHtml += createTag('Duração', s.duration);
-
-        const description = await TextEditor.enrichHTML(s.description || "<i>Sem descrição.</i>", { async: true });
-
-        const content = `
-            <div class="gurps-dialog-canvas">
-                <div class="gurps-item-preview-card">
-                    <header class="preview-header">
-                        <h3>${itemData.name}</h3>
-                        <div class="header-controls"><span class="preview-item-type">Modificador</span></div>
-                    </header>
-                    <div class="preview-content">
-                        <div class="preview-properties">${tagsHtml}</div>
-                        <hr class="preview-divider">
-                        <div class="preview-description">${description}</div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        new Dialog({
-            title: itemData.name,
-            content: content,
-            buttons: { close: { label: "Fechar" } },
-            options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 400 }
-        }).render(true);
     }
 
   _onFilterResults(event) {
@@ -193,13 +166,13 @@ export class GMModifierBrowser extends FormApplication {
         const modId = li.dataset.id; // Vamos colocar data-id no LI
         const modCategory = li.dataset.category;
         const modVal = parseFloat(li.dataset.val);
-        const modName = li.querySelector('.item-name').innerText.toLowerCase();
+        const modSearch = (li.dataset.search || li.querySelector('.item-name').innerText).toLowerCase();
         const modFolderId = li.dataset.folderId || null;
 
         let isVisible = true;
 
         // 1. Texto
-        if (searchQuery && !modName.includes(searchQuery)) isVisible = false;
+        if (searchQuery && !modSearch.includes(searchQuery)) isVisible = false;
 
         // 2. Valor (Bônus/Penalidade)
         if (isVisible) {
