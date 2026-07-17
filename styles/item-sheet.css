@@ -5707,3 +5707,236 @@ color:#121114;
     grid-template-columns: minmax(0, 1fr);
   }
 }
+/* Reuse the active-effect roll modifier card layout for GM modifier entries. */
+.gum.sheet.item .gm-modifier-roll-workspace.effect-premium-workspace {
+  --fx-workspace-bg: #111015;
+  --fx-field-bg: #19181e;
+  --fx-field-bg-hover: #1d1b22;
+  --fx-border: rgba(255, 255, 255, 0.07);
+  --fx-border-gold: rgba(201, 161, 94, 0.22);
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  padding: 12px 14px 18px;
+  background:
+    radial-gradient(100% 70% at 50% 0%, rgba(201, 161, 94, 0.035), transparent 58%),
+    linear-gradient(180deg, #141318 0%, var(--fx-workspace-bg) 100%);
+  container-type: inline-size;
+  overflow-x: hidden;
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace.effect-premium-workspace *,
+.gum.sheet.item .gm-modifier-roll-workspace.effect-premium-workspace *::before,
+.gum.sheet.item .gm-modifier-roll-workspace.effect-premium-workspace *::after {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 2px 11px;
+  border-bottom: 1px solid var(--fx-border);
+  background: transparent;
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-toolbar-title,
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-toolbar-copy {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  min-width: 0;
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-toolbar h4 {
+  margin: 0;
+  color: var(--item-text);
+  font-family: var(--item-font-condensed);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.075em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-toolbar-subtitle {
+  display: none;
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-add-action {
+  width: auto;
+  min-width: 0;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border: 1px solid rgba(201, 161, 94, 0.18);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(201, 161, 94, 0.20), rgba(201, 161, 94, 0.10));
+  color: var(--item-text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 5px 12px rgba(0, 0, 0, 0.20);
+  font-family: var(--item-font-condensed);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.035em;
+  cursor: pointer;
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-roll-compact,
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-roll-flat-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-roll-flat-entry {
+  padding: 10px;
+  border: 1px solid var(--fx-border);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-roll-extra-header,
+.gum.sheet.item .gm-modifier-roll-workspace .modifier-entry-label-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-roll-extra-header > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-roll-extra-title {
+  color: var(--item-text);
+  font-family: var(--item-font-condensed);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-roll-extra-meta,
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-field-hint {
+  margin: 0;
+  color: var(--item-text-soft);
+  font-size: 0.68rem;
+  line-height: 1.3;
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-grid {
+  display: grid;
+  align-items: stretch;
+  gap: 9px;
+  min-width: 0;
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-grid-entry-primary {
+  grid-template-columns: minmax(210px, 1.25fr) minmax(120px, 0.55fr) minmax(120px, 0.55fr);
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-grid-entry-context {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-field {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px 9px;
+  border: 1px solid var(--fx-border);
+  border-radius: 8px;
+  background: var(--fx-field-bg);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.022), 0 3px 9px rgba(0, 0, 0, 0.13);
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-field:hover {
+  border-color: rgba(201, 161, 94, 0.16);
+  background: var(--fx-field-bg-hover);
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 12px;
+  margin: 0;
+  color: rgba(240, 235, 227, 0.66);
+  font-family: var(--item-font-condensed);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.085em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-field-label i {
+  display: none;
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-field-control {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace input,
+.gum.sheet.item .gm-modifier-roll-workspace select,
+.gum.sheet.item .gm-modifier-roll-workspace textarea {
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.12);
+  color: var(--item-text-muted);
+  text-align: center;
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .context-csv-input {
+  flex: 1 1 auto;
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-icon-button {
+  width: 27px;
+  height: 27px;
+  flex: 0 0 27px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--item-text-muted);
+  cursor: pointer;
+  opacity: 0.76;
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .effect-premium-icon-button:hover {
+  border-color: rgba(196, 94, 94, 0.24);
+  background: rgba(196, 94, 94, 0.12);
+  color: #f2cccc;
+  opacity: 1;
+}
+
+@container (max-width: 620px) {
+  .gum.sheet.item .gm-modifier-roll-workspace .effect-premium-grid-entry-primary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gum.sheet.item .gm-modifier-roll-workspace .effect-premium-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

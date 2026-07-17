@@ -556,14 +556,16 @@ _promptMultipleReferences(parsedList) {
             const rawEntries = Array.isArray(this.item.system.modifier_entries) ? this.item.system.modifier_entries : []; 
             context.gmModifierEntries = rawEntries.length 
                 ? rawEntries.map((entry, index) => ({ 
-                    index, 
+                    index,
+                    displayIndex: index + 1, 
                     label: entry?.label || "", 
                     value: entry?.value ?? 0, 
                     nh_cap: entry?.nh_cap ?? entry?.cap ?? "", 
                     contexts: Array.isArray(entry?.contexts) ? entry.contexts.join(",") : (entry?.contexts || "all") 
                 })) 
                 : [{ 
-                    index: 0, 
+                    index: 0,
+                    displayIndex: index + 1, 
                     label: "", 
                     value: this.item.system.modifier ?? 0, 
                     nh_cap: this.item.system.nh_cap ?? "", 

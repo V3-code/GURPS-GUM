@@ -706,11 +706,21 @@
             </div>
         </div>
 
-        <div class="form-section skill-details-compact gm-modifier-details-form">
-            <h4 class="section-title">Entradas de Modificador</h4>
-            <p class="notes">Adicione uma linha para cada bônus/penalidade deste efeito.</p>
-            <div class="form-group modifier-entry-toolbar">
-                <button type="button" class="add-gm-mod-entry"><i class="fas fa-plus"></i> Adicionar Entrada</button>
+        <div class="form-section skill-details-compact gm-modifier-details-form gm-modifier-roll-workspace effect-premium-workspace">
+            <div class="effect-premium-toolbar modifier-entry-toolbar">
+                <div class="effect-premium-toolbar-title">
+                    <div class="effect-premium-toolbar-copy">
+                        <h4>Entradas de Modificador</h4>
+                        <span class="effect-premium-toolbar-subtitle">
+                            Adicione uma linha para cada bônus/penalidade deste efeito.
+                        </span>
+                    </div>
+                </div>
+
+                <button type="button" class="add-gm-mod-entry effect-premium-add-action">
+                    <i class="fas fa-plus" aria-hidden="true"></i>
+                    Adicionar Entrada
+                </button>
             </div>
             <datalist id="gm-mod-context-options">
                 {{#each gmRollContextOptions as |ctx|}}
@@ -718,38 +728,77 @@
                 {{/each}}
             </datalist>
 
-            {{#each gmModifierEntries as |entry|}}
-                <div class="modifier-entry-row gm-mod-entry">
-                    <div class="modifier-entry-topline">
-                        <div class="effect-field modifier-entry-field">
-                            <label class="effect-label">Rótulo (opcional)</label>
-                            <input type="text" name="system.modifier_entries.{{entry.index}}.label" value="{{entry.label}}" placeholder="Ex: Bônus de ataque"/>
-                        </div>
-                        <button type="button" class="remove-gm-mod-entry modifier-entry-inline-action danger" data-index="{{entry.index}}" title="Remover entrada" aria-label="Remover entrada"><i class="fas fa-trash"></i></button>
-                    </div>
+            <div class="effect-premium-roll-compact">
+                {{#each gmModifierEntries as |entry|}}
+                    <div class="effect-premium-roll-flat-entry modifier-entry-row gm-mod-entry" data-entry-index="{{entry.index}}">
+                        <div class="effect-premium-roll-extra-header">
+                            <div>
+                                <span class="effect-premium-roll-extra-title">
+                                    Entrada {{entry.displayIndex}}
+                                </span>
 
-                    <div class="modifier-entry-midline">
-                        <div class="effect-field modifier-entry-field modifier-entry-field-value">
-                            <label class="effect-label">Valor</label>
-                            <input type="number" name="system.modifier_entries.{{entry.index}}.value" value="{{entry.value}}"/>
-                        </div>
-                        <div class="effect-field modifier-entry-field modifier-entry-field-cap">
-                            <label class="effect-label">Cap NH (teto)</label>
-                            <input type="text" name="system.modifier_entries.{{entry.index}}.nh_cap" value="{{entry.nh_cap}}" placeholder="Opcional"/>
-                        </div>
-                    </div>
-
-                    <div class="modifier-entry-bottomline">
-                        <div class="effect-field modifier-entry-field modifier-entry-field-context">
-                            <div class="modifier-entry-label-line">
-                                <label class="effect-label">Contextos (csv)</label>
-                                <button type="button" class="open-context-picker modifier-entry-inline-action" data-target-input="system.modifier_entries.{{entry.index}}.contexts" title="Selecionar contextos" aria-label="Selecionar contextos"><i class="fas fa-search"></i></button>
+                                <span class="effect-premium-roll-extra-meta">
+                                    Modificador manual do mestre
+                                </span>
                             </div>
-                            <input type="text" class="context-csv-input" list="gm-mod-context-options" name="system.modifier_entries.{{entry.index}}.contexts" value="{{entry.contexts}}" placeholder="Ex: attack_melee,defense_parry"/>
+
+                            <button type="button" class="remove-gm-mod-entry effect-premium-icon-button" data-index="{{entry.index}}" title="Remover entrada" aria-label="Remover entrada {{entry.displayIndex}}">
+                                <i class="fas fa-trash" aria-hidden="true"></i>
+                            </button>
+                        </div>
+
+                        <div class="effect-premium-grid effect-premium-grid-entry-primary">
+                            <div class="effect-premium-field modifier-entry-field">
+                                <label class="effect-premium-field-label">
+                                    <i class="fas fa-tag" aria-hidden="true"></i>
+                                    Rótulo (opcional)
+                                </label>
+                                <div class="effect-premium-field-control">
+                                    <input type="text" name="system.modifier_entries.{{entry.index}}.label" value="{{entry.label}}" placeholder="Ex: Bônus de ataque"/>
+                                </div>
+                            </div>
+
+                            <div class="effect-premium-field modifier-entry-field modifier-entry-field-value">
+                                <label class="effect-premium-field-label">
+                                    <i class="fas fa-plus" aria-hidden="true"></i>
+                                    Valor
+                                </label>
+                                <div class="effect-premium-field-control">
+                                    <input type="number" name="system.modifier_entries.{{entry.index}}.value" value="{{entry.value}}"/>
+                                </div>
+                            </div>
+
+                            <div class="effect-premium-field modifier-entry-field modifier-entry-field-cap">
+                                <label class="effect-premium-field-label">
+                                    <i class="fas fa-tachometer-alt" aria-hidden="true"></i>
+                                    Cap NH (teto)
+                                </label>
+                                <div class="effect-premium-field-control">
+                                    <input type="text" name="system.modifier_entries.{{entry.index}}.nh_cap" value="{{entry.nh_cap}}" placeholder="Opcional"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="effect-premium-grid effect-premium-grid-entry-context">
+                            <div class="effect-premium-field modifier-entry-field modifier-entry-field-context">
+                                <label class="effect-premium-field-label">
+                                    <i class="fas fa-crosshairs" aria-hidden="true"></i>
+                                    Contextos (CSV)
+                                </label>
+                                <div class="effect-premium-field-control">
+                                    <div class="modifier-entry-label-line">
+                                        <input type="text" class="context-csv-input" list="gm-mod-context-options" name="system.modifier_entries.{{entry.index}}.contexts" value="{{entry.contexts}}" placeholder="Ex: attack_melee,defense_parry"/>
+                                        <button type="button" class="open-context-picker effect-premium-icon-button" data-target-input="system.modifier_entries.{{entry.index}}.contexts" title="Selecionar contextos" aria-label="Selecionar contextos">
+                                            <i class="fas fa-search" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                    <p class="effect-premium-field-hint">Separe múltiplos contextos por vírgula.</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            {{/each}}
+                {{/each}}
+            </div>
         </div>
 
 {{/if}}
