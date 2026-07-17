@@ -669,3 +669,114 @@
 .damage-application-dialog .damage-application-window.large-area-mode .location-row.large-area-selected {
     box-shadow: inset 3px 0 0 #ff9f1c;
 }
+/* --- Assistente de Aparar/Bloquear armas pesadas --- */
+.damage-application-dialog .heavy-defense-advisor {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(197, 160, 91, 0.32);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.damage-application-dialog .heavy-defense-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--c-accent-gold, #c5a05b);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: bold;
+  list-style-position: inside;
+  text-transform: uppercase;
+}
+
+.damage-application-dialog .heavy-defense-title::-webkit-details-marker {
+  color: var(--c-accent-gold, #c5a05b);
+}
+
+.damage-application-dialog .heavy-defense-title-hint {
+  color: #a0a0a0;
+  font-size: 10px;
+  font-weight: normal;
+  margin-left: auto;
+  text-transform: none;
+}
+
+.damage-application-dialog .heavy-defense-content {
+  margin-top: 9px;
+}
+
+.damage-application-dialog .heavy-defense-grid {
+  display: grid;
+  grid-template-columns: minmax(32px, 0.4fr) minmax(32px, 0.4fr) minmax(120px, 1.15fr) minmax(32px, 0.4fr) minmax(32px, 0.6fr) minmax(60px, 0.8fr);
+  gap: 8px;
+  align-items: end;
+}
+
+.damage-application-dialog .heavy-defense-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  color: #cfcfcf;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.damage-application-dialog .heavy-defense-grid input,
+.damage-application-dialog .heavy-defense-grid select {
+  width: 100%;
+  min-width: 0;
+  padding: 4px 5px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.28);
+  color: #e1e1e1;
+  font-size: 12px;
+}
+
+.damage-application-dialog .heavy-defense-grid input:disabled {
+  opacity: 0.75;
+}
+
+.damage-application-dialog .heavy-defense-item-select option {
+  background: #f2f0e6;
+  color: #1d1d1d;
+}
+
+
+.damage-application-dialog .heavy-defense-summary {
+  margin-top: 8px;
+  padding: 7px 9px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #d8d8d8;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.damage-application-dialog .heavy-defense-summary ul {
+  margin: 4px 0 0 16px;
+  padding: 0;
+}
+
+.damage-application-dialog .heavy-defense-advisor[data-status="ok"] {
+  border-color: rgba(91, 170, 105, 0.55);
+}
+
+.damage-application-dialog .heavy-defense-advisor[data-status="warning"] {
+  border-color: rgba(211, 169, 71, 0.75);
+  box-shadow: inset 0 0 0 1px rgba(211, 169, 71, 0.2);
+}
+
+.damage-application-dialog .heavy-defense-advisor[data-status="danger"] {
+  border-color: rgba(197, 52, 52, 0.85);
+  box-shadow: inset 0 0 0 1px rgba(197, 52, 52, 0.25);
+}
+
+
+@media (max-width: 760px) {
+  .damage-application-dialog .heavy-defense-grid {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
+}

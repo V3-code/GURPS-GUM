@@ -201,6 +201,52 @@
 
     </main>
 
+    <details class="heavy-defense-advisor" data-status="incomplete">
+    <summary class="heavy-defense-title"><i class="fas fa-weight-hanging"></i> Peso da Defesa <span class="heavy-defense-title-hint">Aparar/Bloquear armas pesadas</span></summary>
+    <div class="heavy-defense-content">
+      <div class="heavy-defense-grid">
+        <label>
+          <span>Peso ataque</span>
+          <input type="number" name="heavy_attack_weight" min="0" step="0.01" value="{{heavyDefense.attackWeight}}" />
+        </label>
+        <label>
+          <span>BC alvo</span>
+          <input type="number" name="heavy_basic_lift" min="0" step="0.01" value="{{heavyDefense.basicLift}}" />
+        </label>
+        <label>
+          <span>Defesa usada</span>
+          <select name="heavy_defense_item" class="heavy-defense-item-select">
+            <option value="manual" data-weight="0">Manual / Desarmado</option>
+            {{#each heavyDefense.defenseOptions}}
+              <option value="{{this.id}}" data-weight="{{this.weight}}">{{this.name}} ({{this.weight}} kg{{#if this.equipped}}){{/if}}</option>
+            {{/each}}
+          </select>
+        </label>
+        <label>
+          <span>Peso defesa</span>
+          <input type="number" name="heavy_defense_weight" min="0" step="0.01" value="0" />
+        </label>
+        <label>
+          <span>Modo</span>
+          <select name="heavy_defense_mode" class="heavy-defense-item-select">
+            <option value="one-handed">1 mão</option>
+            <option value="two-handed">2 mãos</option>
+          </select>
+        </label>
+        <label>
+          <span>Qualidade</span>
+          <select name="heavy_defense_quality" class="heavy-defense-item-select">
+            <option value="normal">Normal</option>
+            <option value="cheap">Barata (+2)</option>
+            <option value="fine">Superior (-1)</option>
+            <option value="veryFine">Altíssima (-2)</option>
+          </select>
+        </label>
+      </div>
+      <div class="heavy-defense-summary">Informe os pesos para avaliar Aparar/Bloquear armas pesadas.</div>
+    </div>
+  </details>
+
     <input type="hidden" name="target_dr" value="0" />
 
 {{!-- ================================== --}}

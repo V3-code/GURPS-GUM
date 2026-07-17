@@ -2402,7 +2402,12 @@ html.on("click", ".rollable-damage", async (ev) => {
       follow_up_damage: foundry.utils.duplicate(attack.follow_up_damage || {}),
       fragmentation_damage: foundry.utils.duplicate(attack.fragmentation_damage || {}),
       onDamageEffects: attack.onDamageEffects || {},
-      generalConditions: item.system.generalConditions || {}
+            generalConditions: item.system.generalConditions || {},
+      sourceItemId: item.id,
+      sourceItemUuid: item.uuid,
+      sourceWeight: Number(item.system?.weight) || 0,
+      sourceAttackId: attackId || null,
+      sourceAttackType: item.system.melee_attacks?.[attackId] ? "melee" : "ranged"
     };
 
   // B) Magias / Poderes
@@ -2417,7 +2422,12 @@ html.on("click", ".rollable-damage", async (ev) => {
       follow_up_damage: foundry.utils.duplicate(dmg.follow_up_damage || {}),
       fragmentation_damage: foundry.utils.duplicate(dmg.fragmentation_damage || {}),
       onDamageEffects: item.system.onDamageEffects || {},
-      generalConditions: item.system.generalConditions || {}
+      generalConditions: item.system.generalConditions || {},
+      sourceItemId: item.id,
+      sourceItemUuid: item.uuid,
+      sourceWeight: Number(item.system?.weight) || 0,
+      sourceAttackId: null,
+      sourceAttackType: item.type || "item"
     };
 
  } else {
@@ -2581,6 +2591,11 @@ html.on("click", ".rollable-damage", async (ev) => {
     const damagePackage = {
       attackerId: this.actor.id,
       sourceName: normalizedAttack.name,
+      sourceItemId: normalizedAttack.sourceItemId || null,
+      sourceItemUuid: normalizedAttack.sourceItemUuid || null,
+      sourceWeight: normalizedAttack.sourceWeight || 0,
+      sourceAttackId: normalizedAttack.sourceAttackId || null,
+      sourceAttackType: normalizedAttack.sourceAttackType || null,
       main: {
         total: mainRoll.total,
         type: normalizedAttack.type || "",

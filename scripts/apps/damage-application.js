@@ -66,6 +66,135 @@ async _resolveOnDamageEffects() {
         return resolved;
     }
 
+     _toNumber(value, fallback = 0) {
+        if (value === null || value === undefined || value === "") return fallback;
+        const normalized = String(value).replace(",", ".").replace(/[^0-9.+-]/g, "");
+        const parsed = Number(normalized);
+        return Number.isFinite(parsed) ? parsed : fallback;
+    }
+
+    _formatWeight(value) {
+        const numeric = this._toNumber(value, 0);
+        return numeric.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    }
+
+    _getSourceAttackWeight() {
+        const explicitWeight = this._toNumber(this.damageData?.sourceWeight, NaN);
+        if (Number.isFinite(explicitWeight) && explicitWeight > 0) return explicitWeight;
+
+        const sourceItemId = this.damageData?.sourceItemId || this.damageData?.itemId;
+        const item = sourceItemId && this.attackerActor?.items?.get ? this.attackerActor.items.get(sourceItemId) : null;
+        return this._toNumber(item?.system?.weight, 0);
+    }
+
+    _getDefenseOptions() {
+        if (!this.targetActor?.items) return [];
+
+        return this.targetActor.items
+            .filter(item => ["equipment", "melee_weapon", "ranged_weapon"].includes(item.type))
+            .filter(item => this._toNumber(item.system?.weight, 0) > 0)
+            .sort((a, b) => {
+                const aEquipped = a.system?.equipped === true ? 0 : 1;
+                const bEquipped = b.system?.equipped === true ? 0 : 1;
+                if (aEquipped !== bEquipped) return aEquipped - bEquipped;
+                return a.name.localeCompare(b.name);
+            })
+            .map(item => ({
+                id: item.id,
+                name: item.name,
+                weight: this._toNumber(item.system?.weight, 0),
+                equipped: item.system?.equipped === true,
+                defenseBonus: this._toNumber(item.system?.defense_bonus, 0)
+            }));
+    }
+
+    _evaluateHeavyWeaponDefense({ attackWeight, defenseWeight, basicLift, defenseMode, quality }) {
+        const absoluteLimit = defenseMode === "two-handed" ? basicLift * 2 : basicLift;
+        const exceedsAbsoluteLimit = attackWeight > 0 && absoluteLimit > 0 && attackWeight > absoluteLimit;
+        const ratio = defenseWeight > 0 ? attackWeight / defenseWeight : Infinity;
+
+        let baseBreakChance = 0;
+        if (ratio >= 7) baseBreakChance = 6;
+        else if (ratio >= 6) baseBreakChance = 5;
+        else if (ratio >= 5) baseBreakChance = 4;
+        else if (ratio >= 4) baseBreakChance = 3;
+        else if (ratio >= 3) baseBreakChance = 2;
+
+        const qualityModifier = {
+            cheap: 2,
+            normal: 0,
+            fine: -1,
+            veryFine: -2
+        }[quality] ?? 0;
+
+        const adjustedBreakChance = baseBreakChance > 0 ? baseBreakChance + qualityModifier : 0;
+
+        return {
+            absoluteLimit,
+            exceedsAbsoluteLimit,
+            ratio,
+            baseBreakChance,
+            adjustedBreakChance,
+            offersNoResistance: adjustedBreakChance > 6
+        };
+    }
+
+    _updateHeavyWeaponDefenseAdvisor(form) {
+        const advisor = form.querySelector(".heavy-defense-advisor");
+        if (!advisor) return null;
+
+        const attackWeightInput = form.querySelector('[name="heavy_attack_weight"]');
+        const defenseWeightInput = form.querySelector('[name="heavy_defense_weight"]');
+        const basicLiftInput = form.querySelector('[name="heavy_basic_lift"]');
+        const defenseModeInput = form.querySelector('[name="heavy_defense_mode"]');
+        const qualityInput = form.querySelector('[name="heavy_defense_quality"]');
+        const summaryEl = form.querySelector(".heavy-defense-summary");
+
+        const attackWeight = this._toNumber(attackWeightInput?.value, 0);
+        const defenseWeight = this._toNumber(defenseWeightInput?.value, 0);
+        const basicLift = this._toNumber(basicLiftInput?.value, this._toNumber(this.targetActor?.system?.attributes?.basic_lift?.value, 0));
+        const defenseMode = defenseModeInput?.value || "one-handed";
+        const quality = qualityInput?.value || "normal";
+
+        if (!attackWeight || !defenseWeight || !basicLift) {
+            advisor.dataset.status = "incomplete";
+            if (summaryEl) summaryEl.innerHTML = `<strong>Dados incompletos.</strong> Informe peso do ataque, peso da defesa e BC do alvo para avaliar Aparar/Bloquear armas pesadas.`;
+            return null;
+        }
+
+        const result = this._evaluateHeavyWeaponDefense({ attackWeight, defenseWeight, basicLift, defenseMode, quality });
+        const ratioText = Number.isFinite(result.ratio) ? result.ratio.toFixed(2).replace(".", ",") : "∞";
+        let status = "ok";
+        let headline = "Defesa dentro do limite de peso.";
+        const details = [
+            `Ataque ${this._formatWeight(attackWeight)} kg × defesa ${this._formatWeight(defenseWeight)} kg = ${ratioText}×.`,
+            `BC ${this._formatWeight(basicLift)} kg; limite absoluto ${this._formatWeight(result.absoluteLimit)} kg.`
+        ];
+
+        if (result.exceedsAbsoluteLimit) {
+            status = "danger";
+            headline = "Tentativa excede o limite absoluto.";
+            details.push("Pela regra, a tentativa falha automaticamente; o ataque acerta, e a arma aparadora pode ser derrubada se não quebrar.");
+        } else if (result.offersNoResistance) {
+            status = "danger";
+            headline = "Chance de quebra acima de 6 em 6.";
+            details.push(`Chance ajustada: ${result.adjustedBreakChance} em 6. A tentativa não oferece resistência; o ataque acerta.`);
+        } else if (result.adjustedBreakChance > 0) {
+            status = "warning";
+            headline = "Há risco de quebra da arma/escudo defensor.";
+            details.push(`Chance ajustada de quebra: ${result.adjustedBreakChance} em 6${result.adjustedBreakChance !== result.baseBreakChance ? ` (base ${result.baseBreakChance} em 6)` : ""}.`);
+            details.push("Se a defesa for bem-sucedida, normalmente ela ainda detém o ataque mesmo que a arma quebre.");
+        } else {
+            details.push("A proporção é menor que 3×; sem risco de quebra por peso nesta regra.");
+        }
+
+        advisor.dataset.status = status;
+        if (summaryEl) {
+            summaryEl.innerHTML = `<strong>${headline}</strong><ul>${details.map(detail => `<li>${detail}</li>`).join("")}</ul>`;
+        }
+        return { ...result, attackWeight, defenseWeight, basicLift, status, headline };
+    }
+
     _getDynamicDR(locationKey, damageType) {
         if (!locationKey) return 0;
         // Custom DR comes from user input
@@ -217,6 +346,11 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
         context.damage = this.damageData;
         context.attacker = this.attackerActor;
         context.target = this.targetActor;
+        context.heavyDefense = {
+            attackWeight: this._getSourceAttackWeight(),
+            basicLift: this._toNumber(this.targetActor?.system?.attributes?.basic_lift?.value, 0),
+            defenseOptions: this._getDefenseOptions()
+        };
         const damageablePools = [];
         damageablePools.push({ path: 'system.attributes.hp.value', label: `Pontos de Vida (PV)` });
         damageablePools.push({ path: 'system.attributes.fp.value', label: `Pontos de Fadiga (PF)` });
@@ -407,6 +541,15 @@ const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
             input.addEventListener('change', () => this._updateDamageCalculation(form));
             input.addEventListener('input', () => this._updateDamageCalculation(form));
         });
+
+        const defenseItemSelect = form.querySelector('[name="heavy_defense_item"]');
+        defenseItemSelect?.addEventListener('change', () => {
+            const selected = defenseItemSelect.selectedOptions?.[0];
+            const weightInput = form.querySelector('[name="heavy_defense_weight"]');
+            const weight = selected?.dataset?.weight;
+            if (weightInput && weight !== undefined) weightInput.value = weight;
+            this._updateDamageCalculation(form);
+        });
         
         // --- ✅ NOVOS LISTENERS ADICIONADOS AO FINAL ---
         html.on('change', '.contingent-effect-toggle', ev => {
@@ -584,6 +727,12 @@ async _updateDamageCalculation(form) {
     if (ignoreDR) { notesHtml += `<li>Ignorar RD do Alvo: RD exibida e aplicada como 0.</li>`; }
     if (toleranceType) { const toleranceName = { "nao-vivo": "Não Vivo", "homogeneo": "Homogêneo", "difuso": "Difuso"}[toleranceType]; notesHtml += `<li>Tolerância: ${toleranceName} aplicada.</li>`; }
     if (damageReductionEnabled) { notesHtml += `<li>Redução de Dano aplicada por último: lesão ÷ ${damageReductionValue}.</li>`; }
+    const heavyDefenseResult = this._updateHeavyWeaponDefenseAdvisor(form);
+    if (heavyDefenseResult?.status === "warning") {
+        notesHtml += `<li>Aviso de peso da defesa: ${heavyDefenseResult.headline}</li>`;
+    } else if (heavyDefenseResult?.status === "danger") {
+        notesHtml += `<li class="feedback-note">Atenção: ${heavyDefenseResult.headline}</li>`;
+    }
 
     if (notesContainer) { notesContainer.innerHTML = notesHtml ? `<ul>${notesHtml}</ul>` : ""; }
     
