@@ -87,11 +87,17 @@ async _resolveOnDamageEffects() {
         return this._toNumber(item?.system?.weight, 0);
     }
 
+    _hasDefenseAttackMode(item) {
+        const meleeAttacks = item?.system?.melee_attacks || {};
+        return Object.values(meleeAttacks).some(attack => attack && typeof attack === "object");
+    }
+
     _getDefenseOptions() {
         if (!this.targetActor?.items) return [];
 
         return this.targetActor.items
             .filter(item => ["equipment", "melee_weapon", "ranged_weapon"].includes(item.type))
+            .filter(item => this._hasDefenseAttackMode(item))
             .filter(item => this._toNumber(item.system?.weight, 0) > 0)
             .sort((a, b) => {
                 const aEquipped = a.system?.equipped === true ? 0 : 1;
