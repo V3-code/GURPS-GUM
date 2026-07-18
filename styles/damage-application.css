@@ -774,9 +774,86 @@
   box-shadow: inset 0 0 0 1px rgba(197, 52, 52, 0.25);
 }
 
+/* --- Assistente de Projeção --- */
+.damage-application-dialog .knockback-advisor {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(91, 158, 197, 0.35);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.damage-application-dialog .knockback-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--c-accent-blue, #5b9ec5);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: bold;
+  list-style-position: inside;
+  text-transform: uppercase;
+}
+
+.damage-application-dialog .knockback-title-hint {
+  color: #a0a0a0;
+  font-size: 10px;
+  font-weight: normal;
+  margin-left: auto;
+  text-transform: none;
+}
+
+.damage-application-dialog .knockback-content { margin-top: 9px; }
+.damage-application-dialog .knockback-grid {
+  display: grid;
+  grid-template-columns: minmax(90px, 0.6fr) minmax(150px, 1fr) minmax(150px, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.damage-application-dialog .knockback-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: #cfcfcf;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.damage-application-dialog .knockback-grid input[type="number"] {
+  width: 100%;
+  padding: 4px 5px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.28);
+  color: #e1e1e1;
+  font-size: 12px;
+}
+
+.damage-application-dialog .knockback-checkbox-label {
+  align-items: center;
+  flex-direction: row !important;
+  text-transform: none !important;
+}
+
+.damage-application-dialog .knockback-summary {
+  margin-top: 8px;
+  padding: 7px 9px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #d8d8d8;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.damage-application-dialog .knockback-summary ul { margin: 4px 0 0 16px; padding: 0; }
+.damage-application-dialog .knockback-advisor[data-status="ok"] { border-color: rgba(91, 170, 105, 0.55); }
+.damage-application-dialog .knockback-advisor[data-status="warning"] { border-color: rgba(91, 158, 197, 0.75); box-shadow: inset 0 0 0 1px rgba(91, 158, 197, 0.2); }
+
 
 @media (max-width: 760px) {
-  .damage-application-dialog .heavy-defense-grid {
+  .damage-application-dialog .heavy-defense-grid,
+  .damage-application-dialog .knockback-grid {
     grid-template-columns: repeat(2, minmax(120px, 1fr));
   }
 }

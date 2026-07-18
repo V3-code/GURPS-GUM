@@ -171,6 +171,11 @@
     <span>Mostrar efeitos do ponto de impacto</span>
   </label>
 
+    <label class="custom-checkbox">
+    <input type="checkbox" name="special_only_knockback"/>
+    <span title="Calcula projeção normalmente, mas zera o dano direto aplicado.">Apenas Projeção</span>
+  </label>
+
 
 <div class="injury-tolerance-section">
 <label class="custom-select">
@@ -244,6 +249,27 @@
         </label>
       </div>
       <div class="heavy-defense-summary">Informe os pesos para avaliar Aparar/Bloquear armas pesadas.</div>
+    </div>
+  </details>
+
+   <details class="knockback-advisor" data-status="incomplete">
+    <summary class="knockback-title"><i class="fas fa-person-falling"></i> Projeção <span class="knockback-title-hint">GURPS Básico, pág. 378</span></summary>
+    <div class="knockback-content">
+      <div class="knockback-grid">
+        <label>
+          <span>ST/PV alvo</span>
+          <input type="number" name="knockback_target_st" min="0" step="1" value="{{knockback.targetST}}" />
+        </label>
+        <label class="knockback-checkbox-label">
+          <input type="checkbox" name="knockback_use_hp" />
+          <span>Usar PV (sem ST/não resiste)</span>
+        </label>
+        <label class="knockback-checkbox-label">
+          <input type="checkbox" name="knockback_perfect_balance" {{#if knockback.hasPerfectBalance}}checked{{/if}} />
+          <span>Equilíbrio Perfeito (+4)</span>
+        </label>
+      </div>
+      <div class="knockback-summary">A projeção será estimada a partir do dano básico antes da RD.</div>
     </div>
   </details>
 

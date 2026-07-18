@@ -201,6 +201,85 @@ async _resolveOnDamageEffects() {
         return { ...result, attackWeight, defenseWeight, basicLift, status, headline };
     }
 
+
+    _normalizeLookupText(value) {
+        return String(value || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .trim();
+    }
+
+    _getTargetAttributeValue(attributeKey, fallback = 10) {
+        const attr = this.targetActor?.system?.attributes?.[attributeKey] || {};
+        return this._toNumber(attr.final ?? attr.value ?? attr.passive, fallback);
+    }
+
+    _getTargetSkillLevel(skillNames) {
+        const normalizedNames = skillNames.map(name => this._normalizeLookupText(name));
+        const skill = this.targetActor?.items?.find?.(item => {
+            if (item.type !== "skill") return false;
+            const itemName = this._normalizeLookupText(item.name);
+            return normalizedNames.some(name => itemName === name || itemName.includes(name));
+        });
+        return skill ? this._toNumber(skill.system?.final_nh ?? skill.system?.skill_level, 0) : 0;
+    }
+
+    _targetHasPerfectBalance() {
+        return !!this.targetActor?.items?.some?.(item => {
+            if (item.type !== "advantage") return false;
+            const name = this._normalizeLookupText(item.name);
+            return name.includes("equilibrio perfeito") || name.includes("perfect balance");
+        });
+    }
+
+    _evaluateKnockback({ basicDamage, targetST, useHP, damageType, penetratedDR, onlyKnockback, perfectBalance }) {
+        const normalizedType = this._normalizeLookupText(damageType);
+        const isCrushing = ["cont", "contusao", "cr", "crushing"].includes(normalizedType);
+        const isCutting = ["cort", "corte", "cut", "cutting"].includes(normalizedType);
+        const eligible = isCrushing || (isCutting && !penetratedDR) || onlyKnockback;
+        const resistanceValue = Math.max(0, this._toNumber(targetST, 0));
+        const threshold = resistanceValue <= 3 ? 1 : Math.max(1, resistanceValue - 2);
+        const distance = eligible ? Math.floor(Math.max(0, basicDamage) / threshold) : 0;
+        const fallPenalty = distance > 1 ? -(distance - 1) : 0;
+        const dx = this._getTargetAttributeValue("dx", 10);
+        const acrobatics = this._getTargetSkillLevel(["Acrobacia", "Acrobatics"]);
+        const judo = this._getTargetSkillLevel(["Judô", "Judo", "Judô"]);
+        const bestBase = Math.max(dx, acrobatics, judo);
+        const balanceBonus = perfectBalance ? 4 : 0;
+        return { eligible, isCrushing, isCutting, threshold, distance, fallPenalty, dx, acrobatics, judo, bestBase, balanceBonus, targetNumber: bestBase + fallPenalty + balanceBonus, usesHp: useHP };
+    }
+
+    _updateKnockbackAdvisor(form, { basicDamage, damageTypeKey, penetratingDamage } = {}) {
+        const advisor = form.querySelector(".knockback-advisor");
+        if (!advisor) return null;
+        const stInput = form.querySelector('[name="knockback_target_st"]');
+        const useHpInput = form.querySelector('[name="knockback_use_hp"]');
+        const onlyKnockbackInput = form.querySelector('[name="special_only_knockback"]');
+        const perfectBalanceInput = form.querySelector('[name="knockback_perfect_balance"]');
+        const summaryEl = form.querySelector(".knockback-summary");
+        const useHP = !!useHpInput?.checked;
+        const targetST = this._toNumber(stInput?.value, useHP ? this._toNumber(this.targetActor?.system?.attributes?.hp?.final, 0) : this._getTargetAttributeValue("st", 10));
+        const result = this._evaluateKnockback({ basicDamage: this._toNumber(basicDamage, 0), targetST, useHP, damageType: damageTypeKey, penetratedDR: penetratingDamage > 0, onlyKnockback: !!onlyKnockbackInput?.checked, perfectBalance: !!perfectBalanceInput?.checked });
+        let status = result.distance > 0 ? "warning" : "ok";
+        if (!result.eligible) status = "incomplete";
+        const typeReason = result.eligible
+            ? (onlyKnockbackInput?.checked ? "Ataque marcado como Apenas Projeção." : result.isCrushing ? "Contusão pode projetar mesmo sem penetrar a RD." : "Corte só projeta porque não penetrou a RD.")
+            : "Somente contusão projeta sempre; corte projeta apenas quando não penetra a RD.";
+        const details = [
+            typeReason,
+            `Distância: ${Math.floor(this._toNumber(basicDamage, 0))} ÷ ${result.threshold} = ${result.distance} m (múltiplos completos).`,
+            result.distance > 0
+                ? `Teste para não cair: maior entre DX ${result.dx}, Acrobacia ${result.acrobatics || "—"} ou Judô ${result.judo || "—"}; penalidade ${result.fallPenalty}. ${result.balanceBonus ? "Equilíbrio Perfeito +4. " : ""}Alvo efetivo: ${result.targetNumber}.`
+                : "Sem metros completos de projeção."
+        ];
+        if (result.distance > 0) details.push("Se atingir obstáculo, trate como colisão com velocidade igual à distância projetada.");
+        advisor.dataset.status = status;
+        if (summaryEl) summaryEl.innerHTML = `<strong>${result.distance} m de projeção estimada.</strong><ul>${details.map(detail => `<li>${detail}</li>`).join("")}</ul>`;
+        return { ...result, status };
+    }
+
+
     _getDynamicDR(locationKey, damageType) {
         if (!locationKey) return 0;
         // Custom DR comes from user input
@@ -357,6 +436,13 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
             basicLift: this._toNumber(this.targetActor?.system?.attributes?.basic_lift?.value, 0),
             defenseOptions: this._getDefenseOptions()
         };
+
+        context.knockback = {
+            targetST: this._getTargetAttributeValue("st", 10),
+            targetHP: this._toNumber(this.targetActor?.system?.attributes?.hp?.final, 0),
+            hasPerfectBalance: this._targetHasPerfectBalance()
+        };
+
         const damageablePools = [];
         damageablePools.push({ path: 'system.attributes.hp.value', label: `Pontos de Vida (PV)` });
         damageablePools.push({ path: 'system.attributes.fp.value', label: `Pontos de Fadiga (PF)` });
@@ -556,6 +642,17 @@ const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
             if (weightInput && weight !== undefined) weightInput.value = weight;
             this._updateDamageCalculation(form);
         });
+
+        const knockbackUseHp = form.querySelector('[name="knockback_use_hp"]');
+        knockbackUseHp?.addEventListener('change', () => {
+            const stInput = form.querySelector('[name="knockback_target_st"]');
+            if (stInput) {
+                stInput.value = knockbackUseHp.checked
+                    ? this._toNumber(this.targetActor?.system?.attributes?.hp?.final, stInput.value)
+                    : this._getTargetAttributeValue("st", stInput.value);
+            }
+            this._updateDamageCalculation(form);
+        });
         
         // --- ✅ NOVOS LISTENERS ADICIONADOS AO FINAL ---
         html.on('change', '.contingent-effect-toggle', ev => {
@@ -602,6 +699,8 @@ async _updateDamageCalculation(form) {
     const explosionChecked = form.querySelector('[name="special_explosion"]')?.checked;
     const effectsOnlyChecked = form.querySelector('[name="special_apply_effects_only"]')?.checked;
     const applyAsHeal = form.querySelector('[name="special_apply_as_heal"]')?.checked;
+    const onlyKnockbackChecked = form.querySelector('[name="special_only_knockback"]')?.checked;
+
 
     const explosionDistance = parseInt(form.querySelector('[name="special_explosion_distance"]')?.value) || 0;
     const toleranceType = form.querySelector('[name="tolerance_type"]')?.value || null;
@@ -662,6 +761,7 @@ async _updateDamageCalculation(form) {
         effects.push(`🛡️ Redução de Dano: ${preReductionInjury} ➜ ${finalInjury} (÷${damageReductionValue}, após RD + mod. ferimento)`);
     }
     if (effectsOnlyChecked) { finalInjury = 0; } // Zera a lesão se a opção estiver marcada
+    if (effectsOnlyChecked || onlyKnockbackChecked) { finalInjury = 0; } // Zera a lesão se a opção estiver marcada
 
     const selectedLocationLabel = form.querySelector('.location-row.active .label')?.textContent || '(Selecione)';
     const drLabel = ignoreDR
@@ -711,6 +811,11 @@ async _updateDamageCalculation(form) {
     if (effectsOnlyChecked) {
         notesHtml += `<li class="feedback-note">Apenas efeitos serão aplicados.</li>`;
     }
+
+    if (onlyKnockbackChecked) {
+        notesHtml += `<li class="feedback-note">Apenas Projeção: dano direto zerado, mas a distância usa o dano básico.</li>`;
+    }
+
     if (applyAsHeal) {
     notesHtml += `<li class="feedback-note">O valor final será aplicada como restauração.</li>`;
     if (injuryLabel) {
@@ -733,6 +838,10 @@ async _updateDamageCalculation(form) {
     if (ignoreDR) { notesHtml += `<li>Ignorar RD do Alvo: RD exibida e aplicada como 0.</li>`; }
     if (toleranceType) { const toleranceName = { "nao-vivo": "Não Vivo", "homogeneo": "Homogêneo", "difuso": "Difuso"}[toleranceType]; notesHtml += `<li>Tolerância: ${toleranceName} aplicada.</li>`; }
     if (damageReductionEnabled) { notesHtml += `<li>Redução de Dano aplicada por último: lesão ÷ ${damageReductionValue}.</li>`; }
+    const knockbackResult = this._updateKnockbackAdvisor(form, { basicDamage: damageRolled, damageTypeKey, penetratingDamage });
+    if (knockbackResult?.distance > 0) {
+        notesHtml += `<li>Projeção: ${knockbackResult.distance} m; teste para não cair em ${knockbackResult.targetNumber} ou menos.</li>`;
+    }
     const heavyDefenseResult = this._updateHeavyWeaponDefenseAdvisor(form);
     if (heavyDefenseResult?.status === "warning") {
         notesHtml += `<li>Aviso de peso da defesa: ${heavyDefenseResult.headline}</li>`;
