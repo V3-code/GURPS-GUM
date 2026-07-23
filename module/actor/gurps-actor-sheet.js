@@ -2881,6 +2881,7 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                     <span class="resource-col resource-col--label"></span>
                     <span class="resource-col">Base</span>
                     <span class="resource-col">Mod. Temp.</span>
+                    <span class="resource-col">Pontos</span>
                     <span class="resource-col">Final</span>
                 </div>
 
@@ -2888,6 +2889,7 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                     <label class="resource-col resource-col--label" for="${statKey}-max-input">${statLabel} (Máximo)</label>
                     <input id="${statKey}-max-input" type="number" name="${statKey}.max" value="${attrs[statKey].max}"/>
                     <input type="number" name="${statKey}.temp" value="${attrs[statKey].temp}"/>
+                    <input type="number" name="${statKey}.points" value="${attrs[statKey].points ?? 0}" aria-label="Pontos investidos em ${statLabel}"/>
                     <span class="final-display" title="Valor final atual">${attrs[statKey].final}</span>
                 </div>
             </form>
@@ -2904,14 +2906,18 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                         const form = html.find('form')[0];
                         const formData = new FormDataExtended(form).object;
                         this.actor.update({
-                            [`system.attributes.${statKey}.max`]: formData[`${statKey}.max`],
-                            [`system.attributes.${statKey}.temp`]: formData[`${statKey}.temp`]
+                            [`system.attributes.${statKey}.max`]: Number(formData[`${statKey}.max`]),
+                            [`system.attributes.${statKey}.temp`]: Number(formData[`${statKey}.temp`]),
+                            [`system.attributes.${statKey}.points`]: Number(formData[`${statKey}.points`])
                         });
                     }
                 }
             },
 default: 'save'
-      }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog"] }).render(true);
+      }, {
+        classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog"],
+        width: 650
+      }).render(true);
     });
 
     // EDITOR DE ST DE CARGA

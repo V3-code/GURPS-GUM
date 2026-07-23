@@ -1003,7 +1003,7 @@
               {{#each spellReserves}}
               <div class="item-row reserve-card meter-card" data-reserve-id="{{@key}}" data-reserve-type="spell">
                 <div class="meter-main">
-                  <span class="item-name">{{this.name}} <small>({{this.source}})</small></span>
+                  <span class="item-name">{{this.name}} <small>{{this.source}}</small></span>
                   <div class="meter-inputs">
                     <input type="number" data-property="current" value="{{this.current}}"/>
                     <span>/</span>
@@ -1211,7 +1211,7 @@
               {{#each powerReserves}}
               <div class="item-row reserve-card meter-card" data-reserve-id="{{@key}}" data-reserve-type="power">
                 <div class="meter-main">
-                  <span class="item-name">{{this.name}} <small>({{this.source}})</small></span>
+                  <span class="item-name">{{this.name}} <small>{{this.source}}</small></span>
                   <div class="meter-inputs">
                     <input type="number" data-property="current" value="{{this.current}}"/>
                     <span>/</span>
