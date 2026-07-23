@@ -3525,6 +3525,62 @@ background-color: var(--gum-accent-gold);
     align-items: start;
 }
 
+/* Magias e poderes usam uma hierarquia única: fonte, ferramentas, reserva e grupos. */
+.gum.sheet.actor .spells-tab-layout.spells-tab-layout--stacked {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.gum.sheet.actor .spells-tab-layout--stacked .casting-ability-box {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.gum.sheet.actor .spell-energy-reserves-list {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.gum.sheet.actor .spell-energy-reserves-group > .group-summary .summary-right a {
+    color: rgba(248, 216, 148, 0.82);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.gum.sheet.actor .spell-energy-reserves-group > .group-summary .summary-right a:hover {
+    background: rgba(197, 160, 91, 0.16);
+    color: var(--gum-accent-gold);
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
+.gum.sheet.actor .spell-energy-reserves-content {
+    padding: 6px;
+    background:
+        linear-gradient(180deg, rgba(18, 17, 22, 0.96), rgba(8, 8, 10, 0.94)),
+        var(--item-panel-texture) repeat;
+}
+
+.gum.sheet.actor .spell-energy-reserves-content .energy-reserves-list {
+    margin-top: 0;
+}
+/* As ferramentas ficam no topo e os grupos ocupam toda a largura disponível. */
+.gum.sheet.actor .spells-tab-layout--stacked > .skills-header-tools,
+.gum.sheet.actor .spells-tab-layout--stacked > .spell-groups-grid {
+    align-self: stretch;
+    width: 100%;
+}
+
+.gum.sheet.actor .spells-tab-layout--stacked > .spell-groups-grid > .spell-group-box {
+    width: 100%;
+}
+
 .gum.sheet.actor .spells-left-column,
 .gum.sheet.actor .spells-right-column {
     min-width: 0;

@@ -946,7 +946,9 @@ async getData(options) {
                 context.preparedCombatMeters = preparedCombatMeters;
                 context.showHiddenMeters = includeHiddenMeters;
                 context.spellReserves = this._normalizeResourceCollection(context.actor.system.spell_reserves || {}, { defaultName: "Reserva de Magia" });
-                                context.powerReserves = this._normalizeResourceCollection(context.actor.system.power_reserves || {}, { defaultName: "Reserva de Poder" });
+                context.powerReserves = this._normalizeResourceCollection(context.actor.system.power_reserves || {}, { defaultName: "Reserva de Poder" });
+                context.spellReserveCount = Object.keys(context.spellReserves).length;
+                context.powerReserveCount = Object.keys(context.powerReserves).length;
                 context.castingAbilities = this._prepareCastingAbilities();
                 context.powerSources = this._preparePowerSources();
                 context.appliedModels = this._prepareAppliedModels();

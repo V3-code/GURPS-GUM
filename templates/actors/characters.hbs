@@ -927,10 +927,22 @@
     {{!  ABA DE CONJURAÇÕES (ESTRUTURA REFINADA E PADRONIZADA)    }}
     {{! ========================================================= }}
     <div class="tab" data-group="primary" data-tab="spells">
-      <div class="spells-tab-layout">
-        <div class="spells-left-column">
+<div class="spells-tab-layout spells-tab-layout--stacked">
 
-            {{!-- Bloco da Habilidade de Conjuração (v3 - múltiplas entradas) --}}
+                  <div class="skills-header-tools">
+        <div class="skills-search-wrapper">
+          <i class="fas fa-search"></i>
+          <input type="text" class="spell-search-input" placeholder="Buscar magia..." autocomplete="off">
+        </div>
+
+        <div class="skills-header-buttons">
+          <a class="item-create" data-type="spell" title="Nova Magia"><i class="fas fa-plus"></i> Nova</a>
+          <a class="sort-control" data-item-type="spell" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
+        </div>
+      </div>
+
+
+            {{!-- Habilidades de conjuração: seção principal da aba. --}}
       <div class="casting-ability-box skill-block casting-abilities-box">
         <div class="block-header">
        <h4>Habilidade de Conjuração</h4>
@@ -972,56 +984,52 @@
         </div>
       </div>
 
-      {{!-- Bloco de Reservas (Mantido) --}}
-      <div class="energy-reserves-box skill-block combat-meters-box">
-        <div class="block-header">
-          <h4>Reservas de Energia</h4>
-          <div class="header-controls">
-            <a class="add-energy-reserve" data-reserve-type="spell" title="Adicionar Reserva"><i class="fas fa-plus"></i></a>
-          </div>
-        </div>
-                <div class="meter-list energy-reserves-list">
-          {{#each spellReserves}}
-          <div class="item-row reserve-card meter-card" data-reserve-id="{{@key}}" data-reserve-type="spell">
-            <div class="meter-main">
-              <span class="item-name">{{this.name}} <small>({{this.source}})</small></span>
-              <div class="meter-inputs">
-                <input type="number" data-property="current" value="{{this.current}}"/>
-                <span>/</span>
-                <input type="number" data-property="max" value="{{this.max}}"/>
-              </div>
-              <div class="item-controls meter-controls">
-                <div class="gum-action-menu js-action-menu">
-                  <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da reserva" aria-label="Opções da reserva" role="button" aria-haspopup="true" aria-expanded="false">
-                    <i class="fas fa-ellipsis-v"></i>
-                  </a>
-                  <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da reserva">
-                    <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>Editar</span></a>
-                    <a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem" title="Deletar"><i class="fas fa-trash"></i><span>Deletar</span></a>
+       {{!-- Grupo fixo de Reservas de Energia (Magias) --}}
+      <div class="attack-group-list-v2 spell-energy-reserves-list">
+        <details class="attack-group-details gum-unified-section combat-meters-box spell-energy-reserves-group" data-group-id="spell-energy-reserves-group" {{collapsibleState "spell-energy-reserves-group" @root.collapsedData}}>
+          <summary class="group-summary gum-unified-header">
+            <div class="summary-left">
+              <i class="fas fa-chevron-right indicator"></i>
+              <i class="fas fa-battery-three-quarters item-icon"></i>
+              <span class="group-name">Reservas de Energia</span>
+            </div>
+            <div class="summary-right">
+              <span class="group-tag sp_cl">{{spellReserveCount}} reserva(s)</span>
+              <a class="add-energy-reserve" data-reserve-type="spell" title="Adicionar Reserva" aria-label="Adicionar Reserva"><i class="fas fa-plus"></i></a>
+            </div>
+          </summary>
+          <div class="group-content spell-energy-reserves-content">
+            <div class="meter-list energy-reserves-list">
+              {{#each spellReserves}}
+              <div class="item-row reserve-card meter-card" data-reserve-id="{{@key}}" data-reserve-type="spell">
+                <div class="meter-main">
+                  <span class="item-name">{{this.name}} <small>({{this.source}})</small></span>
+                  <div class="meter-inputs">
+                    <input type="number" data-property="current" value="{{this.current}}"/>
+                    <span>/</span>
+                    <input type="number" data-property="max" value="{{this.max}}"/>
+                  </div>
+                  <div class="item-controls meter-controls">
+                    <div class="gum-action-menu js-action-menu">
+                      <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da reserva" aria-label="Opções da reserva" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+                      <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da reserva">
+                        <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>Editar</span></a>
+                        <a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem" title="Deletar"><i class="fas fa-trash"></i><span>Deletar</span></a>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
+                            {{/each}}
+              {{#unless spellReserveCount}}
+              <div class="placeholder-text combat-meter-placeholder">Nenhuma reserva de energia cadastrada.</div>
+              {{/unless}}
             </div>
           </div>
-          {{/each}}
-        </div>
-      </div>
+</details>
       </div>
 
       {{!-- LISTA DE MAGIAS (AGRUPADA EM BLOCOS / PADRÃO LISTA DE ATAQUES) --}}
-      <div class="spells-right-column">
-      <div class="skills-header-tools">
-        <div class="skills-search-wrapper">
-          <i class="fas fa-search"></i>
-          <input type="text" class="spell-search-input" placeholder="Buscar magia..." autocomplete="off">
-        </div>
-
-        <div class="skills-header-buttons">
-          <a class="item-create" data-type="spell" title="Nova Magia"><i class="fas fa-plus"></i> Nova</a>
-          <a class="sort-control" data-item-type="spell" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
-        </div>
-      </div>
-
       <div class="spell-groups-grid">
       {{#each spellGroupsKeys as |groupName|}}
           {{#with (lookup ../spellsByGroup groupName) as |spells|}}
@@ -1120,7 +1128,6 @@
         {{/unless}}
       </div>
       </div>
-      </div>
     </div>
     
     {{! ========================================================= }}
@@ -1128,8 +1135,19 @@
     {{! ========================================================= }}
     <div class="tab" data-group="primary" data-tab="powers">
 
-     <div class="spells-tab-layout">
-        <div class="spells-left-column">
+ <div class="spells-tab-layout spells-tab-layout--stacked">
+
+      <div class="skills-header-tools">
+        <div class="skills-search-wrapper">
+          <i class="fas fa-search"></i>
+          <input type="text" class="power-search-input" placeholder="Buscar poder..." autocomplete="off">
+        </div>
+
+        <div class="skills-header-buttons">
+          <a class="item-create" data-type="power" title="Novo Poder"><i class="fas fa-plus"></i> Novo</a>
+          <a class="sort-control" data-item-type="power" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
+        </div>
+      </div>
 
     <div class="casting-ability-box skill-block casting-abilities-box">
         <div class="block-header">
@@ -1174,56 +1192,52 @@
         </div>
     </div>
 
-      {{!-- Bloco das Reservas de Energia --}}
-      <div class="energy-reserves-box skill-block combat-meters-box">
-        <div class="block-header">
-          <h4>Reservas de Energia</h4>
-          <div class="header-controls">
-            <a class="add-energy-reserve" data-reserve-type="power" title="Adicionar Reserva"><i class="fas fa-plus"></i></a>
-          </div>
-        </div>
-        <div class="meter-list energy-reserves-list">
-          {{#each powerReserves}}
-          <div class="item-row reserve-card meter-card" data-reserve-id="{{@key}}" data-reserve-type="power">
-            <div class="meter-main">
-              <span class="item-name">{{this.name}} <small>({{this.source}})</small></span>
-              <div class="meter-inputs">
-                <input type="number" data-property="current" value="{{this.current}}"/>
-                <span>/</span>
-                <input type="number" data-property="max" value="{{this.max}}"/>
-              </div>
-              <div class="item-controls meter-controls">
-                <div class="gum-action-menu js-action-menu">
-                  <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da reserva" aria-label="Opções da reserva" role="button" aria-haspopup="true" aria-expanded="false">
-                    <i class="fas fa-ellipsis-v"></i>
-                  </a>
-                  <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da reserva">
-                    <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>Editar</span></a>
-                    <a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem" title="Deletar"><i class="fas fa-trash"></i><span>Deletar</span></a>
+       {{!-- Grupo fixo de Reservas de Energia (Poderes) --}}
+      <div class="attack-group-list-v2 spell-energy-reserves-list">
+        <details class="attack-group-details gum-unified-section combat-meters-box spell-energy-reserves-group" data-group-id="power-energy-reserves-group" {{collapsibleState "power-energy-reserves-group" @root.collapsedData}}>
+          <summary class="group-summary gum-unified-header">
+            <div class="summary-left">
+              <i class="fas fa-chevron-right indicator"></i>
+              <i class="fas fa-battery-three-quarters item-icon"></i>
+              <span class="group-name">Reservas de Energia</span>
+            </div>
+            <div class="summary-right">
+              <span class="group-tag pw">{{powerReserveCount}} reserva(s)</span>
+              <a class="add-energy-reserve" data-reserve-type="power" title="Adicionar Reserva" aria-label="Adicionar Reserva"><i class="fas fa-plus"></i></a>
+            </div>
+          </summary>
+          <div class="group-content spell-energy-reserves-content">
+            <div class="meter-list energy-reserves-list">
+              {{#each powerReserves}}
+              <div class="item-row reserve-card meter-card" data-reserve-id="{{@key}}" data-reserve-type="power">
+                <div class="meter-main">
+                  <span class="item-name">{{this.name}} <small>({{this.source}})</small></span>
+                  <div class="meter-inputs">
+                    <input type="number" data-property="current" value="{{this.current}}"/>
+                    <span>/</span>
+                    <input type="number" data-property="max" value="{{this.max}}"/>
+                  </div>
+                  <div class="item-controls meter-controls">
+                    <div class="gum-action-menu js-action-menu">
+                      <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da reserva" aria-label="Opções da reserva" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+                      <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da reserva">
+                        <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>Editar</span></a>
+                        <a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem" title="Deletar"><i class="fas fa-trash"></i><span>Deletar</span></a>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
+                            {{/each}}
+              {{#unless powerReserveCount}}
+              <div class="placeholder-text combat-meter-placeholder">Nenhuma reserva de energia cadastrada.</div>
+              {{/unless}}
             </div>
           </div>
-          {{/each}}
-        </div>
-      </div>
+</details>
       </div>
 
       {{!-- LISTA DE PODERES (AGRUPADA EM BLOCOS / PADRÃO LISTA DE ATAQUES) --}}
-      <div class="spells-right-column">
-
-      <div class="skills-header-tools">
-        <div class="skills-search-wrapper">
-          <i class="fas fa-search"></i>
-          <input type="text" class="power-search-input" placeholder="Buscar poder..." autocomplete="off">
-        </div>
-
-        <div class="skills-header-buttons">
-          <a class="item-create" data-type="power" title="Novo Poder"><i class="fas fa-plus"></i> Novo</a>
-          <a class="sort-control" data-item-type="power" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
-        </div>
-      </div>
 
       <div class="spell-groups-grid">
       {{#each powerGroupsKeys as |groupName|}}
@@ -1323,7 +1337,7 @@
         </div>
         {{/unless}}
       </div>
-      </div>
+
     </div>
     </div>
 
