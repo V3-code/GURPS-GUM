@@ -943,14 +943,19 @@
 
 
             {{!-- Habilidades de conjuração: seção principal da aba. --}}
-      <div class="casting-ability-box skill-block casting-abilities-box">
-        <div class="block-header">
-       <h4>Habilidade de Conjuração</h4>
-          <div class="header-controls">
-           <a class="add-casting-ability" title="Adicionar Habilidade"><i class="fas fa-plus"></i></a>
+      <details class="casting-ability-box skill-block casting-abilities-box gum-unified-section" data-group-id="spell-casting-abilities" {{collapsibleState "spell-casting-abilities" @root.collapsedData}}>
+        <summary class="block-header casting-ability-header gum-unified-header">
+          <div class="summary-left">
+            <i class="fas fa-chevron-right indicator" aria-hidden="true"></i>
+            <i class="fas fa-hat-wizard item-icon" aria-hidden="true"></i>
+            <h4>Habilidade de Conjuração</h4>
           </div>
-        </div>
- <div class="casting-abilities-list">
+          <div class="summary-right">
+            <span class="group-tag sp_cl">{{castingAbilities.length}} habilidade(s)</span>
+            <a class="add-casting-ability" title="Adicionar Habilidade" aria-label="Adicionar Habilidade"><i class="fas fa-plus"></i></a>
+          </div>
+        </summary>
+ <div class="casting-abilities-list group-content">
           {{#each castingAbilities}}
           <div class="casting-ability-card" data-ability-id="{{this.id}}">
             <div class="casting-ability-main">
@@ -982,7 +987,7 @@
           </div>
           {{/unless}}
         </div>
-      </div>
+      </details>
 
        {{!-- Grupo fixo de Reservas de Energia (Magias) --}}
       <div class="attack-group-list-v2 spell-energy-reserves-list">
@@ -1149,14 +1154,19 @@
         </div>
       </div>
 
-    <div class="casting-ability-box skill-block casting-abilities-box">
-        <div class="block-header">
-            <h4>Poder</h4>
-          <div class="header-controls">
-            <a class="add-power-source" title="Adicionar/Configurar Fonte de Poder"><i class="fas fa-plus"></i></a>
+    <details class="casting-ability-box skill-block casting-abilities-box power-sources-box gum-unified-section" data-group-id="power-sources" {{collapsibleState "power-sources" @root.collapsedData}}>
+        <summary class="block-header casting-ability-header gum-unified-header">
+          <div class="summary-left">
+            <i class="fas fa-chevron-right indicator" aria-hidden="true"></i>
+            <i class="fas fa-bolt item-icon" aria-hidden="true"></i>
+            <h4>Fonte de Poder</h4>
           </div>
-        </div>
- <div class="casting-abilities-list">
+          <div class="summary-right">
+            <span class="group-tag pw">{{powerSources.length}} fonte(s)</span>
+            <a class="add-power-source" title="Adicionar/Configurar Fonte de Poder" aria-label="Adicionar Fonte de Poder"><i class="fas fa-plus"></i></a>
+          </div>
+        </summary>
+ <div class="casting-abilities-list group-content">
           {{#each powerSources}}
         <div class="casting-ability-card power-source-card" data-power-source-id="{{this.id}}">
           <div class="casting-ability-main">
@@ -1190,7 +1200,7 @@
           </div>
           {{/unless}}
         </div>
-    </div>
+    </details>
 
        {{!-- Grupo fixo de Reservas de Energia (Poderes) --}}
       <div class="attack-group-list-v2 spell-energy-reserves-list">
