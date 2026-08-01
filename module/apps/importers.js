@@ -63,6 +63,28 @@ let importEntries = [];
             return ui.notifications.error("Nenhum item encontrado no arquivo.");
         }
 
+        const isCompendiumJson = Array.isArray(data) && importEntries.some(entry =>
+            entry?.itemData && typeof entry.itemData === "object" &&
+            (entry.itemData._id || entry.itemData.system)
+        );
+
+        if (isCompendiumJson) {
+            const missingIds = importEntries.filter(entry => !entry.itemData._id);
+            if (missingIds.length) {
+                return ui.notifications.error(`Importação cancelada: ${missingIds.length} documento(s) não possuem o campo "_id".`);
+            }
+
+            const seenIds = new Set();
+            const duplicateIds = new Set();
+            for (const { itemData } of importEntries) {
+                if (seenIds.has(itemData._id)) duplicateIds.add(itemData._id);
+                seenIds.add(itemData._id);
+            }
+            if (duplicateIds.size) {
+                return ui.notifications.error(`Importação cancelada: IDs repetidos no JSON: ${[...duplicateIds].join(", ")}.`);
+            }
+        }
+
         // 6. Pergunta ao usuário para qual compêndio importar
         const allItemPacks = game.packs.filter(p => p.metadata.type === "Item");
         if (allItemPacks.length === 0) {
@@ -83,8 +105,15 @@ let importEntries = [];
                         <label style="font-weight: bold;">Compêndio:</label>
                         <select name="compendium-target" style="width: 100%;">
                             ${packOptions}
-                        </select>
+                    </select>
                     </div>
+                    ${isCompendiumJson ? `
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label>
+                            <input type="checkbox" name="remove-missing">
+                            Remover do compêndio os itens ausentes deste JSON
+                        </label>
+                    </div>` : ""}
                 </div>
             `,
             buttons: {
@@ -100,7 +129,12 @@ let importEntries = [];
                             return ui.notifications.error(`Erro: Compêndio "${packName}" não pôde ser encontrado.`);
                         }
                         
-                       await importToCompendium(pack, importEntries);
+                        if (isCompendiumJson) {
+                           const removeMissing = Boolean(html.find('input[name="remove-missing"]').prop('checked'));
+                           await synchronizeCompendiumJson(pack, importEntries, { removeMissing });
+                       } else {
+                           await importToCompendium(pack, importEntries);
+                       }
                     }
                 },
                 cancel: {
@@ -3512,14 +3546,7 @@ export async function exportCompendiumToJson() {
                         return ui.notifications.error(`Erro: Compêndio "${packName}" não pôde ser encontrado.`);
                     }
 
-                    const documents = await pack.getDocuments();
-                    if (!documents.length) {
-                        return ui.notifications.warn(`O compêndio "${pack.title}" está vazio.`);
-                    }
-
-                    const data = documents.map(doc => doc.toObject());
-                    downloadJsonFile(data, `${sanitizeFileName(pack.metadata.label || pack.metadata.name)}.json`);
-                    ui.notifications.info(`Exportação concluída! ${data.length} registros de "${pack.title}" foram exportados.`);
+                    await exportSelectedCompendium(pack);
                 }
             },
             cancel: {
@@ -3598,4 +3625,117 @@ function sanitizeFileName(name = "export") {
         .trim()
         .replace(/\s+/g, "_")
         .toLowerCase() || "export";
+}
+
+async function exportSelectedCompendium(pack) {
+    try {
+        const documents = await pack.getDocuments();
+        if (!documents.length) {
+            return ui.notifications.warn(`O compêndio "${pack.title}" está vazio.`);
+        }
+
+        const data = documents.map(document => document.toObject());
+        const safeName = sanitizeFileName(pack.metadata.label || pack.metadata.name);
+        downloadJsonFile(data, `gum_${safeName}.json`);
+        ui.notifications.info(`Exportação concluída! ${data.length} registros de "${pack.title}" foram exportados.`);
+    } catch (err) {
+        console.error(`GUM | Falha ao exportar ${pack?.collection}:`, err);
+        ui.notifications.error(`Falha ao exportar "${pack?.title || "compêndio"}": ${err.message}`);
+    }
+}
+
+Hooks.on("getCompendiumDirectoryEntryContext", (_html, options) => {
+    if (options.some(option => option.name === "Exportar Compêndio")) return;
+
+    options.push({
+        name: "Exportar Compêndio",
+        icon: '<i class="fas fa-file-export"></i>',
+        condition: entry => {
+            const collection = getContextCompendiumCollection(entry);
+            return game.packs.get(collection)?.metadata.type === "Item";
+        },
+        callback: entry => {
+            const collection = getContextCompendiumCollection(entry);
+            const pack = game.packs.get(collection);
+            if (!pack) return ui.notifications.error("Não foi possível identificar o compêndio selecionado.");
+            return exportSelectedCompendium(pack);
+        }
+    });
+});
+
+function getContextCompendiumCollection(entry) {
+    const element = entry?.[0] || entry;
+    const directoryEntry = element?.closest?.("[data-pack], [data-entry-id]") || element;
+    return directoryEntry?.dataset?.pack || directoryEntry?.dataset?.entryId;
+}
+
+/** Sincroniza uma exportação do Foundry sem alterar IDs ou criar duplicatas. */
+async function synchronizeCompendiumJson(pack, importEntries, { removeMissing = false } = {}) {
+    const originalLocked = Boolean(pack.locked);
+    const incoming = importEntries.map(entry => entry.itemData);
+    const incomingIds = new Set(incoming.map(document => document._id));
+    let updated = 0;
+    let created = 0;
+    let removed = 0;
+    let ignored = 0;
+
+    try {
+        if (pack.metadata.type !== "Item") {
+            throw new Error(`O compêndio "${pack.title}" não aceita documentos do tipo Item.`);
+        }
+
+        const existingDocuments = await pack.getDocuments();
+        const expectedMappedType = {
+            skills: "skill", advantages: "advantage", disadvantages: "disadvantage",
+            spells: "spell", powers: "power", equipment: "equipment",
+            modifiers: "modifier", eqp_modifiers: "eqp_modifier"
+        }[pack.metadata.name];
+        const existingTypes = new Set(existingDocuments.map(document => document.type).filter(Boolean));
+        const allowedTypes = expectedMappedType ? new Set([expectedMappedType]) : existingTypes;
+        const incomingTypes = new Set(incoming.map(document => document.type).filter(Boolean));
+
+        if (incomingTypes.size !== 1) {
+            throw new Error("O JSON de compêndio deve conter um único tipo de Item.");
+        }
+        const [incomingType] = incomingTypes;
+        if (allowedTypes.size && !allowedTypes.has(incomingType)) {
+            throw new Error(`Tipo incompatível: o JSON contém "${incomingType}", mas o compêndio "${pack.title}" contém/espera ${[...allowedTypes].map(type => `"${type}"`).join(", ")}.`);
+        }
+
+        if (originalLocked) await pack.configure({ locked: false });
+
+        const existingIds = new Set(existingDocuments.map(document => document.id));
+        const toUpdate = incoming.filter(document => existingIds.has(document._id));
+        const toCreate = incoming.filter(document => !existingIds.has(document._id));
+        const toRemove = removeMissing
+            ? existingDocuments.filter(document => !incomingIds.has(document.id)).map(document => document.id)
+            : [];
+
+        if (toUpdate.length) {
+            await Item.updateDocuments(toUpdate, { pack: pack.collection });
+            updated = toUpdate.length;
+        }
+        if (toCreate.length) {
+            await Item.createDocuments(toCreate, { pack: pack.collection, keepId: true });
+            created = toCreate.length;
+        }
+        if (toRemove.length) {
+            await Item.deleteDocuments(toRemove, { pack: pack.collection });
+            removed = toRemove.length;
+        }
+
+        ui.notifications.info(`Importação concluída em "${pack.title}": ${updated} atualizado(s), ${created} criado(s), ${removed} removido(s) e ${ignored} ignorado(s).`);
+    } catch (err) {
+        console.error(`GUM | Falha ao sincronizar o compêndio ${pack.collection}:`, err);
+        ui.notifications.error(`Falha ao importar para "${pack.title}": ${err.message}`);
+    } finally {
+        if (pack.locked !== originalLocked) {
+            try {
+                await pack.configure({ locked: originalLocked });
+            } catch (lockError) {
+                console.error(`GUM | Não foi possível restaurar o bloqueio de ${pack.collection}:`, lockError);
+                ui.notifications.error(`Não foi possível restaurar o estado de bloqueio de "${pack.title}".`);
+            }
+        }
+    }
 }
