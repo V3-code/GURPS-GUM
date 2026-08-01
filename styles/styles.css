@@ -2806,6 +2806,71 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .effect-pill-enhanced.perm-effect { border-left-color: var(--gum-accent-blue); }
 .gum.sheet.actor .effect-pill-enhanced.passive-rule { border-left-color: var(--gum-accent-green); }
 
+.gum.sheet.actor .conditions-tab .effect-origin-group {
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px;
+    background: rgba(0,0,0,0.12);
+    overflow: hidden;
+}
+
+.gum.sheet.actor .conditions-tab .effect-origin-group + .effect-origin-group {
+    margin-top: 6px;
+}
+
+.gum.sheet.actor .conditions-tab .effect-origin-summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    color: rgba(247,233,215,0.9);
+    background: rgba(255,255,255,0.04);
+    cursor: pointer;
+    list-style: none;
+}
+
+.gum.sheet.actor .conditions-tab .effect-origin-summary::-webkit-details-marker {
+    display: none;
+}
+
+.gum.sheet.actor .conditions-tab .effect-origin-summary:hover {
+    background: rgba(255,255,255,0.07);
+}
+
+.gum.sheet.actor .conditions-tab .effect-origin-summary .origin-heading {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    font-family: var(--gum-font-secondary);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.35px;
+}
+
+.gum.sheet.actor .conditions-tab .effect-origin-summary .origin-heading > i {
+    width: 14px;
+    color: var(--gum-accent-gold);
+    text-align: center;
+}
+
+.gum.sheet.actor .conditions-tab .effect-origin-summary .indicator {
+    color: rgba(247,233,215,0.55);
+    font-size: 0.7rem;
+    transition: transform 0.2s ease;
+}
+
+.gum.sheet.actor .conditions-tab .effect-origin-group[open] > .effect-origin-summary .indicator {
+    transform: rotate(90deg);
+}
+
+.gum.sheet.actor .conditions-tab .effect-origin-list {
+    display: grid;
+    gap: 6px;
+    padding: 7px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+
 .gum.sheet.actor .effect-pill-enhanced:hover {
     transform: translateY(-2px);
     box-shadow: 0 3px 6px rgba(0,0,0,0.1);

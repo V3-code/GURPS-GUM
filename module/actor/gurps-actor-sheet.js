@@ -109,6 +109,7 @@ async getData(options) {
                 let fonteNome = "Origem Desconhecida";
                 let fonteIcon = "fas fa-question-circle";
                 let fonteUuid = null;
+                let fonteTipo = "unknown";
                 
                 let originalEffectItem = null;
                 const effectUuid = foundry.utils.getProperty(effect, "flags.gum.effectUuid");
@@ -131,7 +132,8 @@ async getData(options) {
                     const originItem = await fromUuid(effect.origin).catch(() => null);
                     if (originItem) {
                         fonteNome = originItem.name;
-                        fonteUuid = originItem.uuid; 
+                        fonteUuid = originItem.uuid;
+                        fonteTipo = originItem.type;
 
                         switch (originItem.type) {
                             case 'spell': fonteIcon = 'fas fa-magic'; break;
@@ -140,12 +142,28 @@ async getData(options) {
                             case 'disadvantage': fonteIcon = 'fas fa-star'; break;
                             case 'equipment':
                                                         default: fonteIcon = 'fas fa-archive';
-                        }
+ }
                     }
                 }
+                if (fonteTipo === "unknown" && effectData.appliedStatusLabel) {
+                    fonteTipo = "status";
+                    fonteNome = effectData.appliedStatusLabel;
+                    fonteIcon = "fas fa-heartbeat";
+                }
+                const fonteRotulos = {
+                    advantage: "Vantagem",
+                    disadvantage: "Desvantagem",
+                    spell: "Magia",
+                    power: "Poder",
+                    equipment: "Equipamento",
+                    condition: "Condição",
+                    status: "Status"
+                };
                 effectData.fonteNome = fonteNome;
                 effectData.fonteIcon = fonteIcon;
-                effectData.fonteUuid = fonteUuid; 
+                effectData.fonteUuid = fonteUuid;
+                effectData.fonteTipo = fonteTipo;
+                effectData.fonteRotulo = fonteRotulos[fonteTipo] || "Outra origem";
 
                 // --- Lógica de Duração ---
                 const d = effect.duration || {};
@@ -218,11 +236,46 @@ async getData(options) {
         });
         
         // Espera todas as promessas de processamento de efeitos terminarem
-        await Promise.allSettled(activeEffectsPromises);
+ await Promise.allSettled(activeEffectsPromises);
+
+        const effectOriginGroups = [
+            { key: "traits", label: "Vantagens e Desvantagens", icon: "fas fa-star", types: ["advantage", "disadvantage"] },
+            { key: "powers", label: "Poderes", icon: "fas fa-bolt", types: ["power"] },
+            { key: "spells", label: "Magias", icon: "fas fa-magic", types: ["spell"] },
+            { key: "equipment", label: "Equipamentos", icon: "fas fa-archive", types: ["equipment"] },
+            { key: "conditions", label: "Condições e Status", icon: "fas fa-heartbeat", types: ["condition", "status"] },
+            { key: "other", label: "Outros", icon: "fas fa-question-circle", types: [] }
+        ];
+
+        const groupEffectsByOrigin = (effects) => {
+            const sortedEffects = [...effects].sort((a, b) =>
+                (a.name || "").localeCompare((b.name || ""), "pt-BR", { sensitivity: "base" })
+            );
+
+            return effectOriginGroups
+                .map((group) => ({
+                    ...group,
+                    effects: sortedEffects.filter((effect) => {
+                        const sourceType = effect.fonteTipo === "unknown" && effect.appliedStatusLabel
+                            ? "status"
+                            : effect.fonteTipo;
+                        const belongsToKnownGroup = effectOriginGroups
+                            .slice(0, -1)
+                            .some((candidate) => candidate.types.includes(sourceType));
+
+                        return group.key === "other"
+                            ? !belongsToKnownGroup
+                            : group.types.includes(sourceType);
+                    })
+                }))
+                .filter((group) => group.effects.length > 0);
+        };
 
         // Salva as listas separadas no contexto para o .hbs usar
         context.temporaryEffects = temporaryEffects;
         context.permanentEffects = permanentEffects;
+        context.temporaryEffectGroups = groupEffectsByOrigin(temporaryEffects);
+        context.permanentEffectGroups = groupEffectsByOrigin(permanentEffects);
 
         // --- 2. Prepara a lista para "Condições Passivas" (Regras de Cenário) ---
         // Esta parte do seu código original já estava perfeita.
