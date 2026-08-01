@@ -18,7 +18,7 @@ Nome do arquivo esperado no release:
 - `gum.zip`
 
 > O campo `download` no `system.json` aponta para:
-> `https://github.com/V3-code/GUM/releases/latest/download/gum.zip`
+> `https://github.com/V3-code/GURPS-GUM/releases/latest/download/gum.zip`
 
 ## 3) Publicação no GitHub
 
