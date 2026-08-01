@@ -106,7 +106,7 @@ Passo a passo:
 3. Clique em "Install System"
 4. No campo "Manifest URL", cole o link abaixo:
 
- https://raw.githubusercontent.com/V3-code/GUM/master/system.json
+ https://raw.githubusercontent.com/V3-code/GURPS-GUM/master/system.json
 
 5. Clique em "Install"
 
@@ -146,7 +146,7 @@ Se algo não carregar corretamente:
 4. teste em um mundo limpo, sem módulos de terceiros.
 
 Se o problema persistir, abra uma issue:  
-https://github.com/V3-code/GUM/issues
+https://github.com/V3-code/GURPS-GUM/issues
 
 ## Versionamento
 
@@ -161,7 +161,7 @@ Detalhes em [`LICENSE.md`](LICENSE.md).
 ## Contato
 
 - GitHub: https://github.com/V3-code
-- Issues: https://github.com/V3-code/GUM/issues
+- Issues: https://github.com/V3-code/GURPS-GUM/issues
 
 ## Créditos e direitos
 
