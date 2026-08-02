@@ -288,8 +288,9 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
     const actions = getEffectActions(effectSystem);
     if (!actions.length) return;
     const conditionFlags = context.conditionId
-        ? { conditionEffect: true, conditionId: context.conditionId }
+        ? { conditionEffect: true, conditionId: context.conditionId, conditionIds: [context.conditionId] }
         : {};
+    const uniqueAcrossConditions = context.conditionId && effectSystem.conditionStackingMode === "unique";
     const evaluateEffectValue = async (value, actor) => {
         if (typeof value !== "string") {
             return { value, roll: null, formula: null };
@@ -390,6 +391,24 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                 if (context.skipPersistentEffects) continue;
                 for (const targetToken of targets) {
                     const targetActor = targetToken.actor;
+                    if (uniqueAcrossConditions) {
+                        const sharedEffect = Array.from(targetActor?.effects || []).find((effect) => {
+                            const gumFlags = effect?.flags?.gum || {};
+                            return gumFlags.conditionEffect === true
+                                && gumFlags.effectUuid === effectItem.uuid
+                                && Number(gumFlags.actionIndex ?? 0) === actionIndex;
+                        });
+                        if (sharedEffect) {
+                            const existingConditionIds = Array.isArray(sharedEffect.flags?.gum?.conditionIds)
+                                ? sharedEffect.flags.gum.conditionIds
+                                : [sharedEffect.flags?.gum?.conditionId].filter(Boolean);
+                            const conditionIds = [...new Set([...existingConditionIds, context.conditionId])];
+                            if (conditionIds.length !== existingConditionIds.length) {
+                                await sharedEffect.update({ "flags.gum.conditionIds": conditionIds });
+                            }
+                            continue;
+                        }
+                    }
                     const { activeEffectData, gumDuration, fallbackCoreStatusId } = buildCommonActiveEffectData(targetActor, actionIndex);
                     activeEffectData.name = (action.label || "").trim() || buildFallbackActionLabel(action) || effectItem.name;
                     activeEffectData.flags.gum.actionIndex = actionIndex;

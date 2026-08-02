@@ -211,10 +211,15 @@ export class EffectSheet extends ItemSheet {
         const context = await super.getData(options);
         context.system = this.item.system;
         context.system.tokenIconPolicy = context.system.tokenIconPolicy || "auto";
+        context.system.conditionStackingMode = context.system.conditionStackingMode || "stack";
         context.tokenIconPolicyOptions = [
             { id: "auto", label: "Automático (temporário mostra / permanente oculta)" },
             { id: "always", label: "Sempre mostrar no token" },
             { id: "never", label: "Nunca mostrar no token" }
+        ];
+        context.conditionStackingModeOptions = [
+            { id: "stack", label: "Acumular normalmente" },
+            { id: "unique", label: "Não acumular entre condições" }
         ];
         context.statusEffects = CONFIG.statusEffects
             .map(s => ({ id: s.id, label: s.name }))

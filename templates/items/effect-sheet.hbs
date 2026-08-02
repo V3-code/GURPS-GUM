@@ -1125,7 +1125,32 @@
                             {{/each}}
                         </select>
                     </div>
+
+                 <div class="effect-field effect-field-row">
+                        <div class="effect-label">Acúmulo por Condições</div>
+
+                        <select
+                            name="system.conditionStackingMode"
+                            title="Define se este mesmo Item Efeito pode ser acumulado quando condições diferentes estiverem ativas."
+                        >
+                            {{#each conditionStackingModeOptions as |mode|}}
+                                <option
+                                    value="{{mode.id}}"
+                                    {{#if (eq ../system.conditionStackingMode mode.id)}}selected{{/if}}
+                                >
+                                    {{mode.label}}
+                                </option>
+                            {{/each}}
+                        </select>
+                    </div>
                 </div>
+
+                {{#if (eq system.conditionStackingMode "unique")}}
+                    <p class="hint" style="margin: 0 10px 10px;">
+                        Enquanto duas ou mais condições vincularem este mesmo Item Efeito, somente uma cópia de cada ação persistente será aplicada ao personagem. O efeito permanece ativo até a última dessas condições ser desligada.
+                    </p>
+                {{/if}}
+
 
                 {{!-- BARREIRA DE RESISTÊNCIA --}}
                 <section class="effect-card effect-section">

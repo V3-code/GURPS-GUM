@@ -3758,39 +3758,59 @@ async function processConditions(actor, eventData = null) {
                         if (!effectItem?.system) continue;
 
                         const actions = getEffectActions(effectItem.system || {});
-                        for (const action of actions) {
-                            if (action.type === "flag" && action.key) {
-                                await actor.unsetFlag("gum", action.key);
-                            }
-                        }
-                            if (actions.some((action) => ["attribute", "roll_modifier", "status", "flag"].includes(action.type))) {
-                                const effectsToRemove = actor.effects.filter((effect) => {
-                                    const sameConditionSource = effect?.flags?.gum?.conditionId === condition.id
-                                        && effect?.flags?.gum?.effectUuid === effectItem.uuid;
-                                    if (!sameConditionSource) return false;
-                                    
-                                    const gumDuration = foundry.utils.getProperty(effect, "flags.gum.duration") || {};
-                                    const isPermanentGumDuration = isEffectDurationPermanent(gumDuration);
-                                    const finiteGumDuration = !isPermanentGumDuration
-                                        && (
-                                            (Number.isFinite(Number(gumDuration.value)) && Number(gumDuration.value) > 0)
-                                            || effect.duration?.rounds
-                                            || effect.duration?.turns
-                                            || effect.duration?.seconds
-                                        );
-                                    const activationMode = foundry.utils.getProperty(effect, "flags.gum.conditionActivationMode") || "continuous";
-                                    const isTriggeredConditionEffect = activationMode === "trigger";
+                        const uniqueAcrossConditions = effectItem.system.conditionStackingMode === "unique";
+                        let hasRemainingOwner = false;
+                        if (actions.some((action) => ["attribute", "roll_modifier", "status", "flag"].includes(action.type))) {
+                            const ownershipUpdates = [];
+                            const effectsToRemove = actor.effects.filter((effect) => {
+                                const conditionIds = Array.isArray(effect?.flags?.gum?.conditionIds)
+                                    ? effect.flags.gum.conditionIds
+                                    : [effect?.flags?.gum?.conditionId].filter(Boolean);
+                                const sameConditionSource = conditionIds.includes(condition.id)
+                                    && effect?.flags?.gum?.effectUuid === effectItem.uuid;
+                                if (!sameConditionSource) return false;
 
-                                    // Condições contínuas devem voltar a desligar até efeitos permanentes
-                                    // quando o gatilho sai. Já efeitos aplicados por gatilhos de evento
-                                    // (ex.: dano + resistência) carregam o próprio ciclo de vida: duração
-                                    // temporária ou permanência até remoção manual/regra explícita.
-                                    if (finiteGumDuration || (isTriggeredConditionEffect && isPermanentGumDuration)) return false;
-                                    return true;
- 
+                                if (uniqueAcrossConditions) {
+                                    const remainingConditionIds = conditionIds.filter((id) => id !== condition.id);
+                                    if (remainingConditionIds.length) {
+                                        hasRemainingOwner = true;
+                                        ownershipUpdates.push(effect.update({
+                                            "flags.gum.conditionIds": remainingConditionIds,
+                                            "flags.gum.conditionId": remainingConditionIds[0]
+                                        }));
+                                        return false;
+                                    }
+                                }
+
+                                const gumDuration = foundry.utils.getProperty(effect, "flags.gum.duration") || {};
+                                const isPermanentGumDuration = isEffectDurationPermanent(gumDuration);
+                                const finiteGumDuration = !isPermanentGumDuration
+                                    && (
+                                        (Number.isFinite(Number(gumDuration.value)) && Number(gumDuration.value) > 0)
+                                        || effect.duration?.rounds
+                                        || effect.duration?.turns
+                                        || effect.duration?.seconds
+                                    );
+                                const activationMode = foundry.utils.getProperty(effect, "flags.gum.conditionActivationMode") || "continuous";
+                                const isTriggeredConditionEffect = activationMode === "trigger";
+
+                                // Condições contínuas devem voltar a desligar até efeitos permanentes
+                                // quando o gatilho sai. Já efeitos aplicados por gatilhos de evento
+                                // (ex.: dano + resistência) carregam o próprio ciclo de vida: duração
+                                // temporária ou permanência até remoção manual/regra explícita.
+                                if (finiteGumDuration || (isTriggeredConditionEffect && isPermanentGumDuration)) return false;
+                                return true;
+
                             });
+                            if (ownershipUpdates.length) await Promise.all(ownershipUpdates);
                             if (effectsToRemove.length) {
                                 await actor.deleteEmbeddedDocuments("ActiveEffect", effectsToRemove.map(effect => effect.id));
+                            }
+                        }
+
+                        if (!hasRemainingOwner) {
+                            for (const action of actions) {
+                                if (action.type === "flag" && action.key) await actor.unsetFlag("gum", action.key);
                             }
                         }
                         // Outras ações de "desligar" poderiam ir aqui no futuro

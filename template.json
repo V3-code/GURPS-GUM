@@ -828,6 +828,7 @@
         "base"
       ],
       "schemaVersion": 2,
+      "conditionStackingMode": "stack",
       "actions": [],
       "type": "attribute",
       "path": "system.attributes.st.passive",
