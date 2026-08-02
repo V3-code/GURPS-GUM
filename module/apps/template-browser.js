@@ -14,8 +14,8 @@ export class TemplateBrowser extends FormApplication {
       title: "Navegador de Modelos",
       classes: ["gum", "template-browser", "theme-dark"],
       template: "systems/gum/templates/apps/template-browser.hbs",
-      width: 750,
-      height: 750,
+      width: 900,
+      height: 700,
       resizable: true
     });
   }

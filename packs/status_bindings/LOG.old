@@ -1,3 +1,5 @@
-2026/08/01-21:38:23.592 ed8 Recovering log #227
-2026/08/01-21:38:23.592 ed8 Delete type=0 #227
-2026/08/01-21:38:23.592 ed8 Delete type=3 #226
+2026/08/02-18:25:37.888 c2c Recovering log #231
+2026/08/02-18:25:37.888 c2c Level-0 table #233: started
+2026/08/02-18:25:37.900 c2c Level-0 table #233: 915 bytes OK
+2026/08/02-18:25:37.903 c2c Delete type=0 #231
+2026/08/02-18:25:37.907 c2c Delete type=3 #230

@@ -1,3 +1,4 @@
+import { prepareCompendiumFolderFilters, recordMatchesFolderFilter } from "./compendium-folder-filter.js";
 // GUM/module/apps/effect-browser.js
 import { GumPreviewDialog } from "./preview-dialog.js";
 
@@ -57,7 +58,7 @@ constructor(targetItem, options = {}) {
       title: "Navegador de Efeitos",
       classes: ["gum", "effect-browser", "theme-dark"], // Classe CSS atualizada
       template: "systems/gum/templates/apps/effect-browser.hbs", // Arquivo .hbs atualizado
-      width: 700, height: 500, resizable: true
+      width: 900, height: 700, resizable: true
     });
   }
 
@@ -67,10 +68,7 @@ async getData() {
     
     const pack = game.packs.get("gum.efeitos");
     if (pack) {
-        const folderMap = new Map();
-        for (const folder of pack.folders ?? []) {
-            folderMap.set(folder.id, folder.name);
-        }
+ 
 
         this.allEffects = await pack.getDocuments();
         this.allEffects = this.allEffects.map(item => ({
@@ -83,11 +81,7 @@ async getData() {
             displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null
         }));
         this.allEffects.sort((a, b) => a.name.localeCompare(b.name));
-
-        const usedFolderIds = new Set(this.allEffects.map(effect => effect.folderId).filter(Boolean));
-        this.availableFolders = Array.from(usedFolderIds)
-          .map(folderId => ({ id: folderId, name: folderMap.get(folderId) ?? "Pasta" }))
-          .sort((a, b) => a.name.localeCompare(b.name));
+        this.availableFolders = prepareCompendiumFolderFilters(this.allEffects, pack.folders ?? []);
     }
     context.effects = this.allEffects; 
     context.folders = this.availableFolders;
@@ -172,7 +166,7 @@ _onFilterResults(event) {
         }
 
         // 3. Aplica o filtro de pasta
-        if (isVisible && hasFolderFilter && !selectedFolders.has(effect.folderId)) {
+        if (isVisible && hasFolderFilter && !recordMatchesFolderFilter(effect, selectedFolders)) {
             isVisible = false;
         }
 

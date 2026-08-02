@@ -1,4 +1,5 @@
 import { GumPreviewDialog } from "./preview-dialog.js";
+import { prepareCompendiumFolderFilters, recordMatchesFolderFilter } from "./compendium-folder-filter.js";
 // GUM/module/apps/condition-browser.js
 
 export class ConditionBrowser extends FormApplication {
@@ -15,7 +16,7 @@ constructor(targetItem, options = {}) {
       title: "Navegador de Condições",
       classes: ["gum", "condition-browser", "theme-dark"],
       template: "systems/gum/templates/apps/condition-browser.hbs",
-      width: 750, height: 750, resizable: true
+      width: 900, height: 700, resizable: true
     });
   }
 
@@ -25,10 +26,6 @@ constructor(targetItem, options = {}) {
     
 const pack = game.packs.get("gum.conditions");
     if (pack) {
-        const folderMap = new Map();
-        for (const folder of pack.folders ?? []) {
-            folderMap.set(folder.id, folder.name);
-        }
 
         this.allConditions = await pack.getDocuments();
         this.allConditions = this.allConditions.map(item => ({
@@ -41,11 +38,7 @@ const pack = game.packs.get("gum.conditions");
             displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null
         }));
         this.allConditions.sort((a, b) => a.name.localeCompare(b.name));
-
-        const usedFolderIds = new Set(this.allConditions.map(condition => condition.folderId).filter(Boolean));
-        this.availableFolders = Array.from(usedFolderIds)
-          .map(folderId => ({ id: folderId, name: folderMap.get(folderId) ?? "Pasta" }))
-          .sort((a, b) => a.name.localeCompare(b.name));
+        this.availableFolders = prepareCompendiumFolderFilters(this.allConditions, pack.folders ?? []);
     }
     context.conditions = this.allConditions; 
     context.folders = this.availableFolders;
@@ -122,7 +115,7 @@ const pack = game.packs.get("gum.conditions");
       }
 
       // 4. Aplica filtro de pasta
-      if (isVisible && hasFolderFilter && !selectedFolders.has(condition.folderId)) {
+      if (isVisible && hasFolderFilter && !recordMatchesFolderFilter(condition, selectedFolders)) {
           isVisible = false;
       }
 

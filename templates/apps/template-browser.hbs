@@ -13,7 +13,7 @@
       <div class="filter-group">
         <h3 class="filter-title">Pastas e Subpastas</h3>
         {{#each folders as |folder|}}
-        <label class="filter-check">
+        <label class="filter-check folder-filter-check" style="--folder-depth: {{folder.depth}}">
           <input type="checkbox" name="filter-folder" value="{{folder.id}}" />
           <span>{{folder.name}}</span>
         </label>

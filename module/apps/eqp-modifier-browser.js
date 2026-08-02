@@ -1,4 +1,5 @@
 import { GumPreviewDialog } from "./preview-dialog.js";
+import { prepareCompendiumFolderFilters, recordMatchesFolderFilter } from "./compendium-folder-filter.js";
 // systems/gum/module/apps/eqp-modifier-browser.js
 
 export class EqpModifierBrowser extends FormApplication {
@@ -26,8 +27,8 @@ export class EqpModifierBrowser extends FormApplication {
       title: "Modificadores de Equipamento",
       classes: ["gum", "eqp-modifier-browser", "theme-dark"], 
       template: "systems/gum/templates/apps/eqp-modifier-browser.hbs",
-      width: 750, 
-      height: 750, 
+      width: 900, 
+      height: 700, 
       resizable: true,
       scrollY: [".browser-results"]
     });
@@ -75,10 +76,7 @@ export class EqpModifierBrowser extends FormApplication {
     
     const pack = game.packs.get("gum.eqp_modifiers");
     const packItems = await (pack ? pack.getDocuments() : []);
-    const folderMap = new Map();
-    for (const folder of pack?.folders ?? []) {
-        folderMap.set(folder.id, folder.name);
-    }
+
 
     this.allModifiers = packItems.map(item => ({
         id: item.id,
@@ -93,11 +91,7 @@ export class EqpModifierBrowser extends FormApplication {
     }));
 
     this.allModifiers.sort((a, b) => a.name.localeCompare(b.name));
-    
-    const usedFolderIds = new Set(this.allModifiers.map(mod => mod.folderId).filter(Boolean));
-    this.availableFolders = Array.from(usedFolderIds)
-      .map(folderId => ({ id: folderId, name: folderMap.get(folderId) ?? "Pasta" }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    this.availableFolders = prepareCompendiumFolderFilters(this.allModifiers, pack.folders ?? []);
 
     context.modifiers = this.allModifiers;
     context.filters = this.filters; 
@@ -208,7 +202,7 @@ html.find('input[name="cfMin"], input[name="cfMax"]').on('input', event => {
         // B. Pasta
         if (isVisible && folderIds.length > 0) {
             const folderId = (item.data('folder-id') || "").toString();
-            if (!folderIds.includes(folderId)) isVisible = false;
+                       if (!recordMatchesFolderFilter(this.allModifiers.find(mod => mod.id === item.data("id")), new Set(folderIds))) isVisible = false;
         }
 
         // D. Categorias (Lógica "OU")

@@ -14,7 +14,7 @@ export class ModifierBrowser extends FormApplication {
       title: "Navegador de Modificadores",
       classes: ["gum", "modifier-browser", "theme-dark"],
       template: "systems/gum/templates/apps/modifier-browser.hbs",
-      width: 750, height: 750, resizable: true
+      width: 900, height: 700, resizable: true
     });
   }
 
