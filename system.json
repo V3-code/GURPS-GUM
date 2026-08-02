@@ -185,11 +185,11 @@
       "private": false
     }
   ],
-  "license": "https://raw.githubusercontent.com/V3-code/GUM/master/LICENSE.md",
-  "url": "https://github.com/V3-code/GUM",
-  "manifest": "https://raw.githubusercontent.com/V3-code/GUM/master/system.json",
-  "download": "https://github.com/V3-code/GUM/releases/latest/download/gum.zip",
-  "readme": "https://raw.githubusercontent.com/V3-code/GUM/master/README.md",
-  "changelog": "https://raw.githubusercontent.com/V3-code/GUM/master/CHANGELOG.md",
-  "bugs": "https://github.com/V3-code/GUM/issues"
+  "license": "https://raw.githubusercontent.com/V3-code/GURPS-GUM/master/LICENSE.md",
+  "url": "https://github.com/V3-code/GURPS-GUM",
+  "manifest": "https://raw.githubusercontent.com/V3-code/GURPS-GUM/master/system.json",
+  "download": "https://github.com/V3-code/GURPS-GUM/releases/latest/download/gum.zip",
+  "readme": "https://raw.githubusercontent.com/V3-code/GURPS-GUM/master/README.md",
+  "changelog": "https://raw.githubusercontent.com/V3-code/GURPS-GUM/master/CHANGELOG.md",
+  "bugs": "https://github.com/V3-code/GURPS-GUM/issues"
 }
