@@ -1088,6 +1088,54 @@ async _onNpcResistanceRoll(effectId) {
         return nextShockValue;
     }
 
+     _buildAttackSummaryContent({ finalInjury, poolLabel, applyAsHeal, effectsOnlyChecked, appliedEffectNames = [], contingentApplied = [], pendingEffectNames = [] }) {
+        let resultLine = '';
+
+        if (applyAsHeal && finalInjury > 0) {
+            resultLine = `<p>${this.targetActor.name} Recuperou <strong>${finalInjury} em ${poolLabel}</strong>.</p>`;
+        } else if (finalInjury > 0 && !effectsOnlyChecked) {
+            resultLine = `<p>${this.targetActor.name} Sofreu <strong>${finalInjury} de lesão</strong> em ${poolLabel}.</p>`;
+        } else if (!applyAsHeal && finalInjury <= 0 && !effectsOnlyChecked) {
+            resultLine = `<p>O ataque não ultrapassou a resistência a dano do alvo.</p>`;
+        }
+
+        return `
+            <div class="gurps-roll-card premium attack-summary-card">
+                <header class="card-header">
+                    <h3>Resumo do Ataque</h3>
+                </header>
+                <div class="card-content">
+                    <div class="summary-actors vertical">
+                        <div class="actor-line">
+                            <img src="${this.attackerActor.img}" class="actor-token-icon">
+                            <strong>${this.attackerActor.name}</strong>
+                        </div>
+                        <div class="arrow-line"><i class="fas fa-arrow-right"></i></div>
+                        <div class="actor-line">
+                            <img src="${this.targetActor.img}" class="actor-token-icon">
+                            <strong>${this.targetActor.name}</strong>
+                        </div>
+                    </div>
+                    ${resultLine ? `
+                    <div class="summary-block result-card">
+                        <div class="minicard-title">Resultado</div>
+                        ${resultLine}
+                    </div>` : ''}
+                    ${appliedEffectNames.length > 0 || contingentApplied.length > 0 ? `
+                    <div class="summary-block effects-card">
+                        <div class="minicard-title">Efeitos Aplicados</div>
+                        ${[...appliedEffectNames, ...contingentApplied].map(name => `<p><strong>${name}</strong></p>`).join('')}
+                    </div>` : ''}
+                    ${pendingEffectNames.length > 0 ? `
+                    <div class="summary-block pending-card">
+                        <div class="minicard-title">Efeitos Pendentes</div>
+                        <p>Aguardando teste de resistência:</p>
+                        ${pendingEffectNames.map(name => `<p><strong>${name}</strong></p>`).join('')}
+                    </div>` : ''}
+                </div>
+            </div>`;
+    }
+
     async _onApplyDamage(form, shouldClose, shouldPublish) {
         const effectsOnlyChecked = form.querySelector('[name="special_apply_effects_only"]')?.checked;
         if (this.isApplying) return;
@@ -1099,7 +1147,19 @@ async _onNpcResistanceRoll(effectId) {
             const selectedPoolPath = form.querySelector('[name="damage_target_pool"]').value;
             if (!selectedPoolPath) { this.isApplying = false; return ui.notifications.error("Nenhum alvo para o dano foi selecionado."); }
             const currentPoolValue = foundry.utils.getProperty(this.targetActor, selectedPoolPath);
+            const poolLabel = form.querySelector('[name="damage_target_pool"] option:checked').textContent;
+            let summaryMessage = null;
             let eventData = null;
+            
+            // Reserve the chat position before updating the actor. Actor updates run
+            // passive-condition hooks, which may publish their own trigger cards.
+            if (shouldPublish) {
+                const summaryChatData = applyCurrentRollPrivacy({
+                    speaker: ChatMessage.getSpeaker({ actor: this.attackerActor }),
+                    content: this._buildAttackSummaryContent({ finalInjury, poolLabel, applyAsHeal, effectsOnlyChecked })
+                });
+                summaryMessage = await ChatMessage.create(summaryChatData);
+            }
 
             if (!applyAsHeal && finalInjury > 0 && !effectsOnlyChecked) {
                 const damagePayload = {
@@ -1188,71 +1248,19 @@ async _onNpcResistanceRoll(effectId) {
                 ui.notifications.info("Efeitos com resistência precisam de teste antes de serem aplicados. As solicitações foram enviadas para o chat.");
             }
 
-if (shouldPublish) {
-    const poolLabel = form.querySelector('[name="damage_target_pool"] option:checked').textContent;
-    let resultLine = '';
-
-    if (applyAsHeal && finalInjury > 0) {
-        resultLine = `<p>${this.targetActor.name} Recuperou <strong>${finalInjury} em ${poolLabel}</strong>.</p>`;
-    } else if (finalInjury > 0 && !effectsOnlyChecked) {
-        resultLine = `<p>${this.targetActor.name} Sofreu <strong>${finalInjury} de lesão</strong> em ${poolLabel}.</p>`;
-    } else if (!applyAsHeal && finalInjury <= 0 && !effectsOnlyChecked) {
-        resultLine = `<p>O ataque não ultrapassou a resistência a dano do alvo.</p>`;
-    }
-
-    // Monta o HTML final com a nova estrutura de texto
-    let messageContent = `
-        <div class="gurps-roll-card premium attack-summary-card">
-            <header class="card-header">
-                <h3>Resumo do Ataque</h3>
-            </header>
-            <div class="card-content">
-                <div class="summary-actors vertical">
-                    <div class="actor-line">
-                        <img src="${this.attackerActor.img}" class="actor-token-icon">
-                        <strong>${this.attackerActor.name}</strong>
-                    </div>
-                    <div class="arrow-line">
-                        <i class="fas fa-arrow-right"></i>
-                    </div>
-                    <div class="actor-line">
-                        <img src="${this.targetActor.img}" class="actor-token-icon">
-                        <strong>${this.targetActor.name}</strong>
-                    </div>
-                </div>
-
-                 ${resultLine ? `
-                <div class="summary-block result-card">
-                    <div class="minicard-title">Resultado</div>
-                    ${resultLine}
-                </div>
-                ` : ''}
-
-                ${appliedEffectNames.length > 0 || contingentApplied.length > 0 ? `
-                <div class="summary-block effects-card">
-                    <div class="minicard-title">Efeitos Aplicados</div>
-                    ${[...appliedEffectNames, ...contingentApplied].map(name => `<p><strong>${name}</strong></p>`).join('')}
-                </div>
-                ` : ''}
-
-                ${pendingEffectNames.length > 0 ? `
-                 <div class="summary-block pending-card">
-                    <div class="minicard-title">Efeitos Pendentes</div>
-                    <p>Aguardando teste de resistência:</p>
-                    ${pendingEffectNames.map(name => `<p><strong>${name}</strong></p>`).join('')}
-                </div>
-                ` : ''}
-            </div>
-        </div>
-    `;
-
-
-    const summaryChatData = applyCurrentRollPrivacy({
-        speaker: ChatMessage.getSpeaker({ actor: this.attackerActor }),
-        content: messageContent
-    });
-    ChatMessage.create(summaryChatData);
-}
+            if (summaryMessage) {
+                await summaryMessage.update({
+                    content: this._buildAttackSummaryContent({
+                        finalInjury,
+                        poolLabel,
+                        applyAsHeal,
+                        effectsOnlyChecked,
+                        appliedEffectNames,
+                        contingentApplied,
+                        pendingEffectNames
+                    })
+                });
+            }
 
             for (const effect of pendingResistanceQueue) {
                 await this._promptResistanceRoll(effect);
