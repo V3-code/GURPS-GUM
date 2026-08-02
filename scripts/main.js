@@ -3686,10 +3686,14 @@ async function processConditions(actor, eventData = null) {
              const stateChanged = isEventDriven
                  ? false
                  : isEffectivelyActiveNow !== wasActive;
+             // Pulsos representam um evento pontual (como uma rolagem de defesa) e
+             // só devem reexecutar condições que consultam esse evento. Uma condição
+             // contínua já ativa (por exemplo, PV abaixo de 1/3) conserva os efeitos
+             // existentes em vez de duplicá-los a cada rolagem.
              const shouldExecuteActivation = (stateChanged && isEffectivelyActiveNow)
-                || (isPulseEvent && isEffectivelyActiveNow)
+                || (isPulseEvent && isEventDriven && isEffectivelyActiveNow)
                 || (isTurnStartEvent && shouldRepeatOnTurnStart && isCurrentCombatantTurn && isEffectivelyActiveNow);
-             const conditionActivationMode = (isEventDriven || isPulseEvent) ? "trigger" : "continuous";
+             const conditionActivationMode = isEventDriven ? "trigger" : "continuous";
 
              if (stateChanged) {
                  // Salva o novo estado
