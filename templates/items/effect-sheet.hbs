@@ -127,7 +127,7 @@
                                             <div class="effect-premium-field">
                                                 <label class="effect-premium-field-label">
                                                     <i class="fas fa-tag" aria-hidden="true"></i>
-                                                    Rótulo (ficha do personagem)
+                                                    Nome do efeito aplicado
                                                 </label>
 
                                                 <div class="effect-premium-field-control">
@@ -135,8 +135,11 @@
                                                         type="text"
                                                         name="system.actions.{{action.index}}.label"
                                                         value="{{action.label}}"
-                                                        placeholder="Ex: Penalidade em ST"
+                                                         placeholder="Ex: Penalidade em ST"
                                                     />
+                                                    <p class="effect-premium-field-hint">
+                                                        Nome exibido na ficha do personagem.
+                                                    </p>
                                                 </div>
                                             </div>
 
@@ -552,7 +555,7 @@
                                                                 <div class="effect-premium-field">
                                                                     <label class="effect-premium-field-label">
                                                                         <i class="fas fa-tag" aria-hidden="true"></i>
-                                                                        Rótulo
+                                                                        Descrição na Janela de Rolagem
                                                                     </label>
 
                                                                     <div class="effect-premium-field-control">
@@ -562,6 +565,9 @@
                                                                             value="{{entry.label}}"
                                                                             placeholder="Ex: Penalidade em ataques"
                                                                         />
+                                                                        <p class="effect-premium-field-hint">
+                                                                            Nome mostrado na janela de rolagem. Deixe vazio para usar o nome do efeito aplicado.
+                                                                        </p>
                                                                     </div>
                                                                 </div>
 

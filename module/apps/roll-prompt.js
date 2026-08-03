@@ -97,9 +97,12 @@ export class GurpsRollPrompt extends FormApplication {
                 const applicationSide = this._resolveModifierApplicationSide(entry, data);
                 if (applicationSide !== "self") return;
 
-                 this.selectedModifiers.push({
+                this.selectedModifiers.push({
                     id: `${effect.id}::${index}`,
-                    label: entry?.label ? `${effect.name} — ${entry.label}` : effect.name,
+                    label: entry?.label?.toString().trim() || effect.name?.toString().trim() || "",
+                    sourceLabel: entry?.label?.toString().trim()
+                        ? effect.name?.toString().trim() || ""
+                        : "",
                     value: this._evaluateModifierValue(entry?.value),
                     nh_cap: (entry?.cap !== undefined && entry?.cap !== "") ? parseInt(entry.cap) : null,
                     isGM: true,
@@ -1300,8 +1303,12 @@ _updateTotals(html) {
         this.selectedModifiers.forEach(m => {
             let capBadge = m.nh_cap ? `<span class="stack-cap" style="font-size:0.8em; opacity:0.7; margin-right:3px;">[↓${m.nh_cap}]</span>` : '';
             const tagClass = m.isGM ? 'gm-locked' : (m.isEffect ? 'gm-locked' : '');
-            const title = m.isCounterEffect && m.counterSource ? ` title="Origem: ${m.counterSource}"` : '';
-            const tag = $(`<span class="mod-tag ${tagClass}"${title}>${capBadge}${m.label} <strong>${m.value > 0 ? '+' : ''}${m.value}</strong></span>`);
+            const sourceLabel = m.sourceLabel || (m.isCounterEffect ? m.counterSource : "");
+            const title = sourceLabel
+                ? ` title="Origem: ${foundry.utils.escapeHTML(sourceLabel)}"`
+                : '';
+            const safeLabel = foundry.utils.escapeHTML((m.label || "").toString());
+            const tag = $(`<span class="mod-tag ${tagClass}"${title}>${capBadge}${safeLabel} <strong>${m.value > 0 ? '+' : ''}${m.value}</strong></span>`);
             tag.click(() => {
                 const idx = this.selectedModifiers.findIndex(x => x.id === m.id);
                 if (idx >= 0) this.selectedModifiers.splice(idx, 1);
