@@ -3654,9 +3654,9 @@ async function processConditions(actor, eventData = null) {
         const isEventDrivenCondition = (condition) => {
             const when = condition?.system?.when;
             if (typeof when !== "string") return false;
-            // Condições que dependem de "eventData" devem ser tratadas como gatilhos pulsados:
-            // ativam no evento e não entram em ciclo ligar/desligar persistente.
-            return /(^|[^.\w])eventData([.\[]|$)/.test(when);
+            // Condições que dependem de "eventData" devem ser tratadas como gatilhos pulsados.
+            // Inclui optional chaining, usado pelas condições de defesas sucessivas.
+            return /(^|[^.\w])eventData(?:\?\.|[.\[]|$)/.test(when);
         };
 
         // --- Loop para avaliar Condições e disparar ações únicas ---
@@ -3674,7 +3674,10 @@ async function processConditions(actor, eventData = null) {
              }
 
              const isEffectivelyActiveNow = isConditionActiveNow && !isManuallyDisabled;
-             const isPulseEvent = Boolean(eventData?.pulse);
+             const hasEventPayload = eventData !== null && eventData !== undefined;
+             // Todo payload entregue a uma condição dirigida por eventData representa um pulso.
+             // `pulse` continua aceito para compatibilidade com emissores existentes.
+             const isPulseEvent = Boolean(eventData?.pulse) || (isEventDriven && hasEventPayload);
              const isTurnStartEvent = eventData?.reason === "turnStart";
              const shouldRepeatOnTurnStart = condition.system?.triggerOnTurnStartWhileActive === true;
              const isCurrentCombatantTurn = Boolean(

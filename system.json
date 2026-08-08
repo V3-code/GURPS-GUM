@@ -10,7 +10,7 @@
     }
   ],
   "compatibility": {
-    "minimum": "13",
+    "minimum": "12",
     "verified": "14"
   },
   "grid": {
