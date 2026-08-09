@@ -2283,9 +2283,14 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
         }
     });
 
-    // GATILHO PARA ACORDEÃO DE MAGIAS/COMBATE (NOME OU SETA)
-    html.find('.spell-main-info, .summary-left').click(async (ev) => {
-        ev.stopPropagation(); 
+// GATILHO PARA ACORDEÕES LEGADOS DE MAGIAS
+    // Os cabeçalhos unificados já são controlados pelo listener acima (ou pelo
+    // comportamento nativo do <summary>). Escutar `.summary-left` aqui fazia o
+    // clique no nome/ícone alternar o estado manualmente e, em seguida, outra
+    // vez pelo <summary>, anulando a interação.
+    html.find('.spell-main-info').click(async (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
         const trigger = $(ev.currentTarget);
         const details = trigger.closest('details');
         const wasOpen = details[0].hasAttribute('open');
