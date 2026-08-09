@@ -616,14 +616,26 @@
                                                                     </label>
 
                                                                     <div class="effect-premium-field-control">
-                                                                        <input
-                                                                            type="text"
-                                                                            class="context-csv-input"
-                                                                            list="roll-mod-context-options"
-                                                                            name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.contexts"
-                                                                            value="{{entry.contexts}}"
-                                                                            placeholder="Ex: all, attack, defense"
-                                                                        />
+<div class="modifier-entry-label-line">
+                                                                            <input
+                                                                                type="text"
+                                                                                class="context-csv-input"
+                                                                                list="roll-mod-context-options"
+                                                                                name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.contexts"
+                                                                                value="{{entry.contexts}}"
+                                                                                placeholder="Ex: all, attack, defense"
+                                                                            />
+                                                                            <button
+                                                                                type="button"
+                                                                                class="open-context-picker effect-premium-icon-button"
+                                                                                data-target-input="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.contexts"
+                                                                                title="Selecionar contextos"
+                                                                                aria-label="Selecionar contextos"
+                                                                            >
+                                                                                <i class="fas fa-search" aria-hidden="true"></i>
+                                                                            </button>
+                                                                        </div>
+
 
                                                                         <p class="effect-premium-field-hint">
                                                                             Separe múltiplos contextos por vírgula.
@@ -654,7 +666,12 @@
                                                                 </div>
                                                             </div>
 
-                                                            <details class="effect-premium-advanced">
+                                                            <details
+                                                                class="effect-premium-advanced roll-mod-entry-restrictions"
+                                                                data-action-index="{{../index}}"
+                                                                data-entry-index="{{entry.index}}"
+                                                                {{#if entry.areRestrictionsExpanded}}open{{/if}}
+                                                            >
                                                                 <summary class="effect-premium-advanced-header">
                                                                     <span>
                                                                         <i class="fas fa-shield-alt" aria-hidden="true"></i>

@@ -5940,3 +5940,10 @@ color:#121114;
     flex-direction: column;
   }
 }
+/* Keep the context selector usable when all roll contexts are displayed. */
+.gum-context-picker {
+  max-height: min(55vh, 360px);
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-gutter: stable;
+}

@@ -13,6 +13,7 @@ const ROLL_MODIFIER_CONTEXT_OPTIONS = [
     { id: "defense_dodge", label: "Esquiva" },
     { id: "defense_parry", label: "Aparar" },
     { id: "defense_block", label: "Bloqueio" },
+    { id: "skill", label: "Perícias (qualquer)" },
     { id: "spell", label: "Magias" },
     { id: "power", label: "Poderes" },
     { id: "sense_vision", label: "Visão" },
@@ -189,6 +190,7 @@ export class EffectSheet extends ItemSheet {
         super(...args);
         this._expandedActions = null;
         this._expandedRollEntries = new Map();
+        this._expandedRollEntryRestrictions = new Map();
         this._pendingScrollSelector = null;
     }
 
@@ -268,6 +270,7 @@ export class EffectSheet extends ItemSheet {
                 };
                 normalizedEntry.summaryText = buildRollEntrySummary(normalizedEntry);
                 normalizedEntry.isExpanded = this._isRollEntryExpanded(index, entryIndex);
+                normalizedEntry.areRestrictionsExpanded = this._areRollEntryRestrictionsExpanded(index, entryIndex);
                 return normalizedEntry;
             });
             const presentation = EFFECT_ACTION_TYPE_PRESENTATION[action.type] || EFFECT_ACTION_TYPE_PRESENTATION.attribute;
@@ -300,9 +303,47 @@ export class EffectSheet extends ItemSheet {
 
 
     /**
-     * Preserve scroll position when the sheet re-renders to avoid jumping to the top.
+     * Capture the real state of every nested details element immediately before
+     * Foundry replaces the sheet DOM. The native toggle event does not bubble
+     * consistently, so delegated listeners alone cannot preserve this state.
+     */
+    _captureExpansionState() {
+        const root = this.element?.[0] ?? this.element;
+        if (!root?.querySelectorAll) return;
+
+        const expandedActions = new Set();
+        for (const details of root.querySelectorAll('.effect-action-details[data-action-index]')) {
+            const actionIndex = Number(details.dataset.actionIndex);
+            if (details.open && !Number.isNaN(actionIndex)) expandedActions.add(actionIndex);
+        }
+
+        const expandedEntries = new Map();
+        const expandedRestrictions = new Map();
+        const captureEntry = (details, target) => {
+            const actionIndex = Number(details.dataset.actionIndex);
+            const entryIndex = Number(details.dataset.entryIndex);
+            if (!details.open || Number.isNaN(actionIndex) || Number.isNaN(entryIndex)) return;
+            if (!target.has(actionIndex)) target.set(actionIndex, new Set());
+            target.get(actionIndex).add(entryIndex);
+        };
+
+        for (const details of root.querySelectorAll('.roll-mod-entry-details[data-action-index][data-entry-index]')) {
+            captureEntry(details, expandedEntries);
+        }
+        for (const details of root.querySelectorAll('.roll-mod-entry-restrictions[data-action-index][data-entry-index]')) {
+            captureEntry(details, expandedRestrictions);
+        }
+
+        this._expandedActions = expandedActions;
+        this._expandedRollEntries = expandedEntries;
+        this._expandedRollEntryRestrictions = expandedRestrictions;
+    }
+
+    /**
+     * Preserve expansion and scroll position when the sheet re-renders.
      */
     async _render(force, options = {}) {
+        this._captureExpansionState();
         const container = this.element?.[0]?.querySelector('.sheet-body-content');
         const scrollTop = container?.scrollTop ?? null;
         const result = await super._render(force, options);
@@ -528,6 +569,13 @@ activateListeners(html) {
         if (!Number.isNaN(actionIndex) && !Number.isNaN(entryIndex)) this._setRollEntryExpanded(actionIndex, entryIndex, ev.currentTarget.open);
     });
 
+    html.on("toggle", ".roll-mod-entry-restrictions", (ev) => {
+        const actionIndex = Number(ev.currentTarget.dataset.actionIndex);
+        const entryIndex = Number(ev.currentTarget.dataset.entryIndex);
+        if (!Number.isNaN(actionIndex) && !Number.isNaN(entryIndex)) {
+            this._setRollEntryRestrictionsExpanded(actionIndex, entryIndex, ev.currentTarget.open);
+        }
+    });
 
 }
 
@@ -551,9 +599,20 @@ activateListeners(html) {
         expanded ? entries.add(entryIndex) : entries.delete(entryIndex);
     }
 
+     _areRollEntryRestrictionsExpanded(actionIndex, entryIndex) {
+        return this._expandedRollEntryRestrictions.get(actionIndex)?.has(entryIndex) ?? false;
+    }
+
+    _setRollEntryRestrictionsExpanded(actionIndex, entryIndex, expanded) {
+        if (!this._expandedRollEntryRestrictions.has(actionIndex)) this._expandedRollEntryRestrictions.set(actionIndex, new Set());
+        const entries = this._expandedRollEntryRestrictions.get(actionIndex);
+        expanded ? entries.add(entryIndex) : entries.delete(entryIndex);
+    }
+
     _reindexExpandedActionsAfterRemoval(removedIndex) {
         const nextActions = new Set();
         const nextEntries = new Map();
+        const nextRestrictions = new Map();
         for (const index of (this._expandedActions || new Set([0]))) {
             if (index < removedIndex) nextActions.add(index);
             else if (index > removedIndex) nextActions.add(index - 1);
@@ -562,8 +621,14 @@ activateListeners(html) {
             if (actionIndex === removedIndex) continue;
             nextEntries.set(actionIndex > removedIndex ? actionIndex - 1 : actionIndex, entries);
         }
+        for (const [actionIndex, entries] of this._expandedRollEntryRestrictions.entries()) {
+            if (actionIndex === removedIndex) continue;
+            nextRestrictions.set(actionIndex > removedIndex ? actionIndex - 1 : actionIndex, entries);
+        }
+
         this._expandedActions = nextActions;
         this._expandedRollEntries = nextEntries;
+        this._expandedRollEntryRestrictions = nextRestrictions;
     }
 
     _reindexExpandedRollEntriesAfterRemoval(actionIndex, removedEntryIndex) {
@@ -575,6 +640,15 @@ activateListeners(html) {
             else if (index > removedEntryIndex) next.add(index - 1);
         }
         this._expandedRollEntries.set(actionIndex, next.size ? next : new Set([0]));
+
+        const restrictions = this._expandedRollEntryRestrictions.get(actionIndex);
+        if (!restrictions) return;
+        const nextRestrictions = new Set();
+        for (const index of restrictions) {
+            if (index < removedEntryIndex) nextRestrictions.add(index);
+            else if (index > removedEntryIndex) nextRestrictions.add(index - 1);
+        }
+        this._expandedRollEntryRestrictions.set(actionIndex, nextRestrictions);
     }
 
      // ✅ FUNÇÃO AUXILIAR PARA ABRIR O EDITOR DE TEXTO (A PARTE QUE FALTAVA) ✅
