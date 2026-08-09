@@ -4356,7 +4356,8 @@ Hooks.on("createCombat", refreshGMScreen);
 Hooks.on("deleteCombat", refreshGMScreen); // ✅ Resolve o problema da lista não limpar
 
 // 3. MUDANÇAS NOS ATORES (HP, FP, Flags de Modificadores)
-Hooks.on("updateActor", (actor) => {
+Hooks.on("updateActor", (actor, changes, options = {}) => {
+    if (options.gumSkipGMScreenRefresh) return;
     // Renderiza se for PJ ou se houver um combate rolando (para monstros)
     if (actor.hasPlayerOwner || game.combat) {
         refreshGMScreen();

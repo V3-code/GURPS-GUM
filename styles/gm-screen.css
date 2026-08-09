@@ -705,13 +705,32 @@
 .gum-ctx-item:hover .gum-ctx-caret { color: #fff; }
 
 .gum-ctx-val {
-    background: rgba(0,0,0,0.3);
-    padding: 1px 6px;
+    /*background:rgba(46, 204, 113, 0.2);
+    padding: 1px 4px;
     border-radius: 3px;
     font-weight: 700;
-    font-size: 0.9em;
+    font-size: 0.9em;*/
+
+    font-size: 0.8em;
+
+    background: rgba(46, 204, 113, 0.2);
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid rgba(46, 204, 113, 0.5);
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 .gum-ctx-val.skill { color: #ccffcc; }
+
+.gum-ctx-val:hover {
+    background: var(--gum-accent-green);
+    color: #000;
+    border-color: #fff;
+    transform: scale(1.05);
+}
 
 .gum-ctx-separator {
     border-top: 1px solid #444;
@@ -792,10 +811,10 @@
 .def-roll-btn-ctx {
     font-size: 0.8em;
     color: #ccffcc;
-    background: rgba(46, 204, 113, 0.2);
+    background: rgba(54, 46, 204, 0.2);
     padding: 2px 6px;
     border-radius: 3px;
-    border: 1px solid rgba(46, 204, 113, 0.4);
+    border: 1px solid rgba(54, 46, 204, 0.4);
     cursor: pointer;
     white-space: nowrap;
     display: flex;
@@ -803,8 +822,8 @@
     gap: 4px;
 }
 .def-roll-btn-ctx:hover {
-    background: var(--gum-accent-green);
-    color: #000;
+    background: var(--gum-accent-blue);
+    color: #fff;
     border-color: #fff;
     transform: scale(1.05);
 }

@@ -198,9 +198,10 @@
 
 {{!-- PARTIAL ATUALIZADO: INICIATIVA DENTRO DO CARD --}}
 {{#*inline "monitorCard"}}
-<div class="monitor-card {{#if actor.isTurn}}active-turn{{/if}} {{#if actor.isDefeated}}defeated{{/if}}" 
-     data-actor-id="{{actor.id}}" 
-     data-token-id="{{actor.tokenId}}">
+<div class="monitor-card {{#if actor.isTurn}}active-turn{{/if}} {{#if actor.isDefeated}}defeated{{/if}}"
+     data-actor-id="{{actor.id}}"
+     data-token-id="{{actor.tokenId}}"
+     title="Clique para aplicar a seleção. Segure Shift para manter toda a seleção.">
 
     <div class="card-top">
         <div class="actor-identity">

@@ -289,6 +289,10 @@ activateListeners(html) {
 
             // 3. Aplica
             if (actor) {
+                // Shift funciona como uma ação temporária de "manter seleção" para
+                // permitir a aplicação da mesma seleção em outros personagens.
+                const keepSelection = ev.shiftKey;
+
                 // Atualiza cache do manual se necessário (caso tenha digitado e não ativado)
                 if (this.selectedModifiers.has("manual")) {
                     this.selectedModifiers.set("manual", { 
@@ -299,7 +303,16 @@ activateListeners(html) {
                     });
                 }
 
-                await this._applySelectionToActor(actor, tokenId);
+                await this._applySelectionToActor(actor, tokenId, { keepSelection });
+
+                // Atualiza o DOM atual mesmo se um hook de updateActor estiver
+                // ocupando o ciclo de renderizacao do Application.
+                if (!keepSelection) {
+                    const currentHtml = this.element;
+                    currentHtml.find('.palette-mod.active').removeClass('active');
+                    currentHtml.find('.manual-mod-toolbar.active').removeClass('active');
+                    this._updateQRDisplay(currentHtml);
+                }
                 
                 // Feedback visual (Piscar Verde)
                 card.addClass('flash-success');
@@ -1219,15 +1232,16 @@ activateListeners(html) {
     }
     
     // --- LÓGICA DE APLICAÇÃO ---
-async _applySelectionToActor(actor, tokenId) {
+async _applySelectionToActor(actor, tokenId, { keepSelection = false } = {}) {
         const currentMods = actor.getFlag("gum", "gm_modifiers") || [];
         let countMods = 0;
         let countEffects = 0;
 
         const effectUuids = [];
         const configuredUuids = this._getConfiguredItemUuids();
+        const selection = new Map(this.selectedModifiers);
 
-      for (const [key, mod] of this.selectedModifiers.entries()) {
+      for (const [key, mod] of selection.entries()) {
             if (key !== "manual" && !configuredUuids.has(key)) continue;
 
             if (mod?.type === "effect") {
@@ -1273,7 +1287,10 @@ async _applySelectionToActor(actor, tokenId) {
         }
 
         if (countMods > 0) {
-            await actor.setFlag("gum", "gm_modifiers", currentMods);
+            await actor.update(
+                { "flags.gum.gm_modifiers": currentMods },
+                { gumSkipGMScreenRefresh: true }
+            );
         }
 
         if (effectUuids.length) {
@@ -1291,6 +1308,10 @@ async _applySelectionToActor(actor, tokenId) {
                 });
                 countEffects++;
             }
+        }
+
+        if (!keepSelection) {
+            this.selectedModifiers.clear();
         }
 
         // Garante atualização visual imediata das badges do card no Escudo do Mestre,
