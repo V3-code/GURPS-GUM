@@ -857,7 +857,7 @@ activateListeners(html) {
             return trimmed;
         };
 
-      const processAttack = (item, atk, attackId) => {
+      const processAttack = (item, atk, attackId, attackType) => {
             if (!atk || !atk.mode) return;
             if (!attackGroups[item.id]) attackGroups[item.id] = { name: item.name, modes: [] };
             
@@ -881,13 +881,14 @@ activateListeners(html) {
                 fullLabel: `${item.name} (${atk.mode})`,
                 itemId: item.id,
                 itemUuid: item.uuid,
-                attackId
+                attackId,
+                attackType
             });
         };
 
         itemsArray.forEach(item => {
-            if (item.system.melee_attacks) Object.entries(item.system.melee_attacks).forEach(([atkId, atk]) => processAttack(item, atk, atkId));
-            if (item.system.ranged_attacks) Object.entries(item.system.ranged_attacks).forEach(([atkId, atk]) => processAttack(item, atk, atkId));
+            if (item.system.melee_attacks) Object.entries(item.system.melee_attacks).forEach(([atkId, atk]) => processAttack(item, atk, atkId, "melee"));
+            if (item.system.ranged_attacks) Object.entries(item.system.ranged_attacks).forEach(([atkId, atk]) => processAttack(item, atk, atkId, "ranged"));
         });
 
         if (Object.keys(attackGroups).length > 0) {
@@ -900,13 +901,13 @@ activateListeners(html) {
                         ${group.modes.map(mode => `
                             <div class="gum-ctx-item" style="cursor:default;">
                                 <div class="gum-ctx-attack-row">
-                                    <div class="attack-roll-btn roll-attack-ctx" style="cursor:pointer;" data-label="${mode.fullLabel}" data-nh="${mode.nh}" data-item-id="${mode.itemId}" data-item-uuid="${mode.itemUuid}" data-attack-id="${mode.attackId}">
+<div class="attack-roll-btn roll-attack-ctx" style="cursor:pointer;" data-label="${mode.fullLabel}" data-nh="${mode.nh}" data-item-id="${mode.itemId}" data-item-uuid="${mode.itemUuid}" data-attack-id="${mode.attackId}" data-attack-type="${mode.attackType}">
                                         <span>${mode.label}</span> <span class="gum-ctx-val skill">${mode.nh}</span>
                                     </div>
                                     <div class="ctx-actions-right">
                                         ${mode.damage ? `<div class="damage-roll-btn roll-damage-ctx" data-damage="${mode.damage}" data-display-damage="${mode.damageDisplay}" data-type="${mode.type}" data-label="${mode.fullLabel}" title="Dano: ${mode.damageDisplay}"><i class="fas fa-skull"></i> ${mode.damageDisplay}</div>` : ''}
-                                        ${mode.parry ? `<div class="def-roll-btn-ctx roll-def" data-def="Aparar" data-val="${mode.parry}" title="Aparar"><i class="fas fa-swords"></i> ${mode.parry}</div>` : ''}
-                                        ${mode.block ? `<div class="def-roll-btn-ctx roll-def" data-def="Bloqueio" data-val="${mode.block}" title="Bloqueio"><i class="fas fa-shield-alt"></i> ${mode.block}</div>` : ''}
+                                        ${mode.parry ? `<div class="def-roll-btn-ctx roll-def" data-def="Aparar" data-val="${mode.parry}" data-item-id="${mode.itemId}" data-item-uuid="${mode.itemUuid}" data-attack-id="${mode.attackId}" title="Aparar"><i class="fas fa-swords"></i> ${mode.parry}</div>` : ''}
+                                        ${mode.block ? `<div class="def-roll-btn-ctx roll-def" data-def="Bloqueio" data-val="${mode.block}" data-item-id="${mode.itemId}" data-item-uuid="${mode.itemUuid}" data-attack-id="${mode.attackId}" title="Bloqueio"><i class="fas fa-shield-alt"></i> ${mode.block}</div>` : ''}
                                     </div>
                                 </div>
                             </div>
@@ -992,7 +993,10 @@ activateListeners(html) {
             favoriteGroups[groupName].push({
                 name: item.name,
                 nh: normalizedLevel,
-                damage: extractFavoriteDamage(item)
+                damage: extractFavoriteDamage(item),
+                itemId: item.id,
+                itemUuid: item.uuid,
+                rollType: item.type === "spell" || item.type === "power" ? item.type : "skill"
             });
         });
 
@@ -1013,7 +1017,7 @@ activateListeners(html) {
                         ${sortedEntries.map(entry => `
                             <div class="gum-ctx-item" style="cursor:default;">
                                 <div class="gum-ctx-attack-row">
-                                    <div class="attack-roll-btn roll-attack-ctx" style="cursor:pointer;" data-label="${entry.name}" data-nh="${entry.nh}">
+                                    <div class="attack-roll-btn roll-attack-ctx" style="cursor:pointer;" data-label="${entry.name}" data-nh="${entry.nh}" data-roll-type="${entry.rollType}" data-item-id="${entry.itemId}" data-item-uuid="${entry.itemUuid}">
                                         <span>${entry.name}</span> <span class="gum-ctx-val skill">${entry.nh}</span>
                                     </div>
                                     <div class="ctx-actions-right">
@@ -1039,7 +1043,8 @@ activateListeners(html) {
             const el = $(ev.currentTarget);
             this._performContextRoll(actor, el.data('attr'), parseInt(el.data('val')), {
                 quick: ev.ctrlKey,
-                rollType: 'attribute'
+                                rollType: 'attribute',
+                attributeKey: this._resolveContextAttributeKey(el.data('attr'))
             });
             menu.remove();
         });
@@ -1049,7 +1054,10 @@ activateListeners(html) {
             const el = $(ev.currentTarget);
             this._performContextRoll(actor, el.data('def'), parseInt(el.data('val')), {
                 quick: ev.ctrlKey,
-                rollType: 'defense'
+                                rollType: 'defense',
+                itemId: el.data('itemId') || null,
+                itemUuid: el.data('itemUuid') || null,
+                attackId: el.data('attackId') || null
             });
             menu.remove();
         });
@@ -1059,10 +1067,11 @@ activateListeners(html) {
             const el = $(ev.currentTarget);
             this._performContextRoll(actor, el.data('label'), parseInt(el.data('nh')), {
                 quick: ev.ctrlKey,
-                rollType: 'attack',
+                rollType: el.data('rollType') || 'attack',
                 itemId: el.data('itemId') || null,
                 itemUuid: el.data('itemUuid') || null,
-                attackId: el.data('attackId') || null
+                attackId: el.data('attackId') || null,
+                attackType: el.data('attackType') || null
             });
             menu.remove();
         });
@@ -1118,7 +1127,7 @@ activateListeners(html) {
      * Executa a rolagem do menu somando Modificadores E aplicando Tetos (Caps)
      */
      _performContextRoll(actor, label, targetValue, options = {}) {
-        const { quick = false, rollType = 'skill', itemId = null, itemUuid = null, attackId = null } = options;
+        const { quick = false, rollType = 'skill', itemId = null, itemUuid = null, attackId = null, attackType = null, attributeKey = null } = options;
         
         let selectedModsTotal = 0;
         let lowestCap = Infinity; // Começa infinito (sem teto))
@@ -1146,7 +1155,9 @@ activateListeners(html) {
                 type: rollType,
                 itemId,
                 itemUuid,
-                attackId
+                                attackId,
+                attackType,
+                attributeKey
             };
 
             if (rollType === 'defense') {
@@ -1170,11 +1181,19 @@ activateListeners(html) {
             itemId,
             itemUuid,
             attackId,
+                        attackType,
+            attributeKey,
             img: actor.img || "icons/svg/d20.svg"
         }, {
             effectiveCap: lowestCap
         });
     }
+        _resolveContextAttributeKey(label) {
+        const normalized = String(label || "").trim().toLowerCase();
+        const aliases = { "percepção": "per", percepcao: "per", vontade: "vont" };
+        return aliases[normalized] || normalized;
+    }
+
     /**
      * Atualiza o visual do mostrador de modificadores no rodapé
      */
