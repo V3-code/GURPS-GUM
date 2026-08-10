@@ -1477,8 +1477,8 @@ _onAddAttack(ev) {
                 reach: "C", 
                 parry: "0", 
                 block: "", 
-                parry_default: false, 
-                block_default: false, 
+                parry_default: true, 
+                block_default: true, 
                 min_strength: "" 
             }; 
         } 

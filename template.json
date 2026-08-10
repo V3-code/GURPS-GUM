@@ -437,6 +437,8 @@
       "reach": "C",
       "parry": "0",
       "block": "0",
+      "parry_default": true,
+      "block_default": true,
       "min_strength": 0,
       "onDamageEffects": {},
       "follow_up_damage": {

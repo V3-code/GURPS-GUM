@@ -2434,6 +2434,8 @@ function parseGCSLibraryEquipment(gcsEquip) {
                 attackData.reach = gcsWeapon.reach || "C";
                 attackData.parry = gcsWeapon.calc?.parry || gcsWeapon.parry || "0";
                 attackData.block = gcsWeapon.calc?.block || gcsWeapon.block || "0";
+                attackData.parry_default = true;
+                attackData.block_default = true;
                 if (gcsWeapon.calc?.parry) attackData.gcs_calculated_parry = gcsWeapon.calc.parry;
                 if (gcsWeapon.calc?.block) attackData.gcs_calculated_block = gcsWeapon.calc.block;
                 
