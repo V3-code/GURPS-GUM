@@ -647,46 +647,67 @@
 {{!-- ===================================================================== --}}
 {{#if (eq item.type "gm_modifier")}}
 
-        <div class="form-section skill-details-compact gm-modifier-details-form">
-            <h4 class="section-title">Referência</h4>
-            <div class="skill-compact-rows">
-                <div class="skill-compact-row">
-                    <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> Ref. Página</label>
-                    <div class="skill-compact-controls">
-                        <input type="text" name="system.ref" value="{{system.ref}}" placeholder="Ex: B345"/>
+        <div class="form-section gm-modifier-config-workspace effect-premium-workspace">
+            <div class="effect-premium-toolbar">
+                <div class="effect-premium-toolbar-title">
+                    <div class="effect-premium-toolbar-icon" aria-hidden="true">
+                        <i class="fas fa-sliders-h"></i>
+                    </div>
+                    <div class="effect-premium-toolbar-copy">
+                        <h4>Configuração do Modificador</h4>
+                        <span class="effect-premium-toolbar-subtitle">Organização e apresentação para o mestre</span>
                     </div>
                 </div>
             </div>
-        </div>
+         <div class="gm-modifier-config-grid">
+                <div class="effect-premium-field">
+                    <label class="effect-premium-field-label">
+                        <a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open" aria-hidden="true"></i></a>
+                        Referência / Página
+                    </label>
+                    <div class="effect-premium-field-control">
+                        <input type="text" name="system.ref" value="{{system.ref}}" placeholder="Ex: B345"/>
+                    </div>
+                </div>
 
-        <div class="form-section skill-details-compact gm-modifier-details-form">
-            <h4 class="section-title">Organização e Apresentação</h4>
-            <div class="skill-compact-rows">
-                <div class="skill-compact-row">
-                    <label>Categoria principal</label>
-                    <div class="skill-compact-controls">
-                         <select name="system.ui_category">
+                <div class="effect-premium-field">
+                    <label class="effect-premium-field-label">
+                        <i class="fas fa-folder-open" aria-hidden="true"></i>
+                        Categoria principal
+                    </label>
+                    <div class="effect-premium-field-control">
+                        <select name="system.ui_category">
                             {{#each gmModifierCategoryOptions as |category|}}
                                 <option value="{{category.id}}" {{#if (or (eq ../system.ui_category category.id) (and (eq category.id "situation") (not ../system.ui_category)))}}selected{{/if}}>{{category.label}}</option>
                             {{/each}}
                         </select>
                     </div>
                 </div>
-                <div class="skill-compact-row">
-                    <label>Grupo de exibição (opcional)</label>
-                    <div class="skill-compact-controls">
-                                               <input type="text" name="system.group" value="{{system.group}}" placeholder="Vazio: usa a categoria principal"/>
+<div class="effect-premium-field">
+                    <label class="effect-premium-field-label">
+                        <i class="fas fa-layer-group" aria-hidden="true"></i>
+                        Grupo de exibição
+                    </label>
+                    <div class="effect-premium-field-control">
+                        <input type="text" name="system.group" value="{{system.group}}" placeholder="Opcional; vazio usa a categoria"/>
                     </div>
                 </div>
-                <div class="skill-compact-row">
-                    <label>Duração / Escopo</label>
-                    <div class="skill-compact-controls">
+                
+                <div class="effect-premium-field">
+                    <label class="effect-premium-field-label">
+                        <i class="fas fa-hourglass-half" aria-hidden="true"></i>
+                        Duração / Escopo
+                    </label>
+                    <div class="effect-premium-field-control">
                         <input type="text" name="system.duration" value="{{system.duration}}" placeholder="Ex: próxima rolagem, cena, enquanto mirar"/>
                     </div>
                 </div>
-                <div class="skill-compact-row">
-                    <label>Observação</label>
-                    <div class="skill-compact-controls">
+                <div class="effect-premium-field gm-modifier-observation-field">
+                    <label class="effect-premium-field-label">
+                        <i class="fas fa-sticky-note" aria-hidden="true"></i>
+                        Observação
+                    </label>
+                    <div class="effect-premium-field-control">
                         <input type="text" name="system.observation" value="{{system.observation}}" placeholder="Nota curta para uso pelo mestre"/>
                     </div>
                 </div>
@@ -738,7 +759,7 @@
                             <div class="effect-premium-field modifier-entry-field">
                                 <label class="effect-premium-field-label">
                                     <i class="fas fa-tag" aria-hidden="true"></i>
-                                    Rótulo (opcional)
+                                    TEXTO NA JANELA DE ROLAGEM
                                 </label>
                                 <div class="effect-premium-field-control">
                                     <input type="text" name="system.modifier_entries.{{entry.index}}.label" value="{{entry.label}}" placeholder="Ex: Bônus de ataque"/>

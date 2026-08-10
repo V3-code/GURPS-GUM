@@ -16,7 +16,8 @@ const ROLL_CONTEXT_OPTIONS = [
     { id: "defense", label: "Defesa (qualquer)" }, 
     { id: "defense_dodge", label: "Esquiva" }, 
     { id: "defense_parry", label: "Aparar" }, 
-    { id: "defense_block", label: "Bloqueio" }, 
+    { id: "defense_block", label: "Bloqueio" },
+    { id: "skill", label: "Perícias (qualquer)" }, 
     { id: "spell", label: "Magias" }, 
     { id: "power", label: "Poderes" }, 
     { id: "check_st", label: "Teste de ST" }, 
@@ -567,7 +568,7 @@ _promptMultipleReferences(parsedList) {
                 })) 
                 : [{ 
                     index: 0,
-                    displayIndex: index + 1, 
+                    displayIndex: 1, 
                     label: "", 
                     value: this.item.system.modifier ?? 0, 
                     nh_cap: this.item.system.nh_cap ?? "", 
