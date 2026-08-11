@@ -303,16 +303,17 @@ activateListeners(html) {
                     });
                 }
 
-                await this._applySelectionToActor(actor, tokenId, { keepSelection });
-
-                // Atualiza o DOM atual mesmo se um hook de updateActor estiver
-                // ocupando o ciclo de renderizacao do Application.
+                // Desmarca imediatamente no DOM. A aplicação de alguns tipos de
+                // ação (por exemplo, alteração de recurso) atualiza o ator durante
+                // o processamento e pode disparar uma renderização intermediária.
                 if (!keepSelection) {
                     const currentHtml = this.element;
                     currentHtml.find('.palette-mod.active').removeClass('active');
                     currentHtml.find('.manual-mod-toolbar.active').removeClass('active');
                     this._updateQRDisplay(currentHtml);
                 }
+
+                await this._applySelectionToActor(actor, tokenId, { keepSelection });
                 
                 // Feedback visual (Piscar Verde)
                 card.addClass('flash-success');
@@ -1260,6 +1261,14 @@ async _applySelectionToActor(actor, tokenId, { keepSelection = false } = {}) {
         const configuredUuids = this._getConfiguredItemUuids();
         const selection = new Map(this.selectedModifiers);
 
+        // Consome a seleção antes de qualquer operação assíncrona. Ações de efeito
+        // podem atualizar o ator e provocar renders enquanto ainda estão sendo
+        // executadas; nesses renders o estado já deve refletir o fluxo padrão de
+        // aplicação única. Shift mantém o mapa intacto para aplicações repetidas.
+        if (!keepSelection) {
+            this.selectedModifiers.clear();
+        }
+
       for (const [key, mod] of selection.entries()) {
             if (key !== "manual" && !configuredUuids.has(key)) continue;
 
@@ -1327,10 +1336,6 @@ async _applySelectionToActor(actor, tokenId, { keepSelection = false } = {}) {
                 });
                 countEffects++;
             }
-        }
-
-        if (!keepSelection) {
-            this.selectedModifiers.clear();
         }
 
         // Garante atualização visual imediata das badges do card no Escudo do Mestre,
