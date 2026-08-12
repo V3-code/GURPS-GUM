@@ -271,7 +271,7 @@
                                                     <div class="effect-premium-field effect-premium-expression-card">
                                                         <label class="effect-premium-field-label">
                                                             <i class="fas fa-code" aria-hidden="true"></i>
-                                                            Valor ou expressão
+                                                              {{#if (eq action.value_mode "per_origin_level")}}Valor por nível{{else}}Valor ou expressão{{/if}}
                                                         </label>
 
                                                         <div class="effect-premium-field-control">
@@ -291,6 +291,17 @@
                                                             >
                                                                 Aceita valor fixo, fórmula ou rolagem de dados.
                                                             </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                 <div class="effect-premium-grid effect-premium-grid-single">
+                                                    <div class="effect-premium-field">
+                                                        <label class="effect-premium-field-label">Escalonamento do valor</label>
+                                                        <div class="effect-premium-field-control">
+                                                            <select name="system.actions.{{action.index}}.value_mode">
+                                                                <option value="fixed" {{#if (eq action.value_mode "fixed")}}selected{{/if}}>Valor fixo</option>
+                                                                <option value="per_origin_level" {{#if (eq action.value_mode "per_origin_level")}}selected{{/if}}>Por nível do item de origem</option>
+                                                            </select>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -574,7 +585,7 @@
                                                                 <div class="effect-premium-field">
                                                                     <label class="effect-premium-field-label">
                                                                         <i class="fas fa-plus" aria-hidden="true"></i>
-                                                                        Valor
+                                                                        {{#if entry.isPerOriginLevel}}Valor por nível{{else}}Valor{{/if}}
                                                                     </label>
 
                                                                     <div class="effect-premium-field-control">
@@ -605,6 +616,41 @@
                                                                         />
                                                                     </div>
                                                                 </div>
+                                                                 </div>
+
+                                                            <div class="effect-premium-grid effect-premium-grid-entry-settings">
+
+                                                                <div class="effect-premium-field">
+                                                                    <label class="effect-premium-field-label">Escalonamento do valor</label>
+                                                                    <div class="effect-premium-field-control">
+                                                                        <select name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.value_mode">
+                                                                            <option value="fixed" {{#if (eq entry.value_mode "fixed")}}selected{{/if}}>Valor fixo</option>
+                                                                            <option value="per_origin_level" {{#if (eq entry.value_mode "per_origin_level")}}selected{{/if}}>Por nível do item de origem</option>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="effect-premium-field">
+                                                                    <label class="effect-premium-field-label">
+                                                                        <i class="fas fa-location-arrow" aria-hidden="true"></i>
+                                                                        Aplicar o modificador em
+                                                                    </label>
+
+                                                                    <div class="effect-premium-field-control">
+                                                                        <select
+                                                                            name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.application_side"
+                                                                        >
+                                                                            {{#each ../../rollModifierApplicationOptions as |opt|}}
+                                                                                <option
+                                                                                    value="{{opt.id}}"
+                                                                                    {{#if (eq opt.id ../application_side)}}selected{{/if}}
+                                                                                >
+                                                                                    {{opt.label}}
+                                                                                </option>
+                                                                            {{/each}}
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
                                                             </div>
 
                                                             <div class="effect-premium-grid effect-premium-grid-entry-context">
@@ -616,7 +662,7 @@
                                                                     </label>
 
                                                                     <div class="effect-premium-field-control">
-<div class="modifier-entry-label-line">
+                                                                    <div class="modifier-entry-label-line">
                                                                             <input
                                                                                 type="text"
                                                                                 class="context-csv-input"
@@ -643,27 +689,6 @@
                                                                     </div>
                                                                 </div>
 
-                                                                <div class="effect-premium-field">
-                                                                    <label class="effect-premium-field-label">
-                                                                        <i class="fas fa-location-arrow" aria-hidden="true"></i>
-                                                                        Aplicar o modificador em
-                                                                    </label>
-
-                                                                    <div class="effect-premium-field-control">
-                                                                        <select
-                                                                            name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.application_side"
-                                                                        >
-                                                                            {{#each ../../rollModifierApplicationOptions as |opt|}}
-                                                                                <option
-                                                                                    value="{{opt.id}}"
-                                                                                    {{#if (eq opt.id ../application_side)}}selected{{/if}}
-                                                                                >
-                                                                                    {{opt.label}}
-                                                                                </option>
-                                                                            {{/each}}
-                                                                        </select>
-                                                                    </div>
-                                                                </div>
                                                             </div>
 
                                                             <details

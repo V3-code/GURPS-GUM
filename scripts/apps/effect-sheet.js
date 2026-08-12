@@ -105,6 +105,7 @@ const DEFAULT_EFFECT_ACTION = {
     path: "system.attributes.st.passive",
     operation: "ADD",
     value: "1",
+    value_mode: "fixed",
     key: "",
     flag_value: "",
     chat_text: "",
@@ -149,6 +150,7 @@ const normalizeAction = (action = {}) => {
         ? rawEntries.map((entry) => ({
             label: (entry?.label || "").toString().trim(),
             value: normalizeRollModifierEntryValue(entry?.value),
+            value_mode: entry?.value_mode === "per_origin_level" ? "per_origin_level" : "fixed",
             cap: (entry?.cap ?? entry?.nh_cap ?? "").toString().trim(),
             contexts: (entry?.contexts || "all").toString().trim() || "all",
             application_side: (entry?.application_side || "self").toString().trim() || "self",
@@ -162,6 +164,7 @@ const normalizeAction = (action = {}) => {
         : [{
             label: "",
             value: normalizeRollModifierEntryValue(next.roll_modifier_value),
+            value_mode: next.roll_modifier_value_mode === "per_origin_level" ? "per_origin_level" : "fixed",
             cap: (next.roll_modifier_cap ?? "").toString().trim(),
             contexts: (next.roll_modifier_context || "all").toString().trim() || "all",
             application_side: (next.roll_modifier_application_side || "self").toString().trim() || "self",
@@ -257,6 +260,8 @@ export class EffectSheet extends ItemSheet {
                     displayIndex: entryIndex + 1,
                     label: entry?.label || "",
                     value: entry?.value ?? 0,
+                    value_mode: entry?.value_mode === "per_origin_level" ? "per_origin_level" : "fixed",
+                    isPerOriginLevel: entry?.value_mode === "per_origin_level",
                     cap: entry?.cap ?? "",
                     contexts: Array.isArray(entry?.contexts) ? entry.contexts.join(",") : (entry?.contexts || "all"),
                     application_side: entry?.application_side || "self",
@@ -509,6 +514,7 @@ activateListeners(html) {
         entries.push({
             label: "",
             value: 0,
+            value_mode: "fixed",
             cap: "",
             contexts: "all",
             application_side: "self",
@@ -541,6 +547,7 @@ activateListeners(html) {
             : [{
                 label: "",
                 value: 0,
+                value_mode: "fixed",
                 cap: "",
                 contexts: "all",
                 application_side: "self",
@@ -748,7 +755,7 @@ activateListeners(html) {
 
         for (const [key, value] of Object.entries(formData)) {
             const actionMatch = key.match(/^system\.actions\.(\d+)\.([a-zA-Z0-9_]+)$/);
-            const rollEntryMatch = key.match(/^system\.actions\.(\d+)\.roll_modifier_entries\.(\d+)\.(label|value|cap|contexts|application_side|target_kind|target_mode|target_values|source_item_ids|source_attack_ids|nh_display_mode)$/);
+            const rollEntryMatch = key.match(/^system\.actions\.(\d+)\.roll_modifier_entries\.(\d+)\.(label|value|value_mode|cap|contexts|application_side|target_kind|target_mode|target_values|source_item_ids|source_attack_ids|nh_display_mode)$/);
             if (rollEntryMatch) {
                 const actionIndex = Number(rollEntryMatch[1]);
                 const entryIndex = Number(rollEntryMatch[2]);
@@ -759,6 +766,7 @@ activateListeners(html) {
                     entryMap.set(entryIndex, {
                         label: "",
                         value: 0,
+                        value_mode: "fixed",
                         cap: "",
                         contexts: "all",
                         application_side: "self",
@@ -794,6 +802,7 @@ activateListeners(html) {
                         .map(([, entry]) => ({
                             label: (entry.label || "").toString().trim(),
                             value: normalizeRollModifierEntryValue(entry.value),
+                            value_mode: entry.value_mode === "per_origin_level" ? "per_origin_level" : "fixed",
                             cap: (entry.cap ?? "").toString().trim(),
                             contexts: (entry.contexts || "all").toString().trim() || "all",
                             application_side: (entry.application_side || "self").toString().trim() || "self",
@@ -818,6 +827,7 @@ activateListeners(html) {
             formData["system.path"] = firstAction.path;
             formData["system.operation"] = firstAction.operation;
             formData["system.value"] = firstAction.value;
+            formData["system.value_mode"] = firstAction.value_mode;
             formData["system.key"] = firstAction.key;
             formData["system.flag_value"] = firstAction.flag_value;
             formData["system.chat_text"] = firstAction.chat_text;

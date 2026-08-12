@@ -3062,6 +3062,7 @@ background-color: var(--gum-accent-gold);
     column-count: 2;
     column-gap: 10px; /* Gap entre as duas colunas principais */
     display: block;
+    margin-top: 5px;
 }
 .gum.sheet.actor .skills-scroll-area.tree {
     display: flex;

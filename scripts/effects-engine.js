@@ -5,6 +5,12 @@
  * - 'status': Usa toggleStatusEffect para controlar ícones no token.
  * - 'resource_change', 'macro', 'chat': Executam ações pontuais.
  */
+
+import {
+    normalizeEffectValueMode,
+    resolveEffectValueMetadata
+} from "../module/utils/effect-value-scaling.mjs";
+
 const normalizeLookupKey = (value) => value
     ?.toString()
     .trim()
@@ -206,6 +212,7 @@ const normalizeEffectAction = (action = {}) => {
         next.roll_modifier_entries = [{
             label: "",
             value: normalizeRollModifierEntryValue(next.roll_modifier_value),
+            value_mode: normalizeEffectValueMode(next.roll_modifier_value_mode ?? next.value_mode),
             cap: next.roll_modifier_cap ?? "",
             contexts: next.roll_modifier_context ?? "all",
             application_side: normalizeRollModifierApplicationSide(next.roll_modifier_application_side),
@@ -220,6 +227,7 @@ const normalizeEffectAction = (action = {}) => {
     next.roll_modifier_entries = next.roll_modifier_entries.map((entry) => ({
         label: (entry?.label || "").toString().trim(),
         value: normalizeRollModifierEntryValue(entry?.value),
+        value_mode: normalizeEffectValueMode(entry?.value_mode),
         cap: (entry?.cap ?? entry?.nh_cap ?? "").toString().trim(),
         contexts: (entry?.contexts || "all").toString().trim() || "all",
         application_side: normalizeRollModifierApplicationSide(entry?.application_side ?? entry?.applicationSide ?? next.roll_modifier_application_side),
@@ -423,11 +431,13 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     if (action.type === "attribute") {
                         if (!action.path) throw new Error("Ação de atributo sem caminho.");
                         const { value: computedValue, roll, formula } = await evaluateEffectValue(action.value, targetActor);
+                        const resolvedValue = resolveEffectValueMetadata(computedValue, action.value_mode, context.origin);
                         activeEffectData.changes.push(buildActiveEffectChange({
                             key: action.path,
                             operation: action.operation,
-                            value: computedValue
+                            value: resolvedValue.effectiveValue                            
                         }));
+                        activeEffectData.flags.gum.valueScaling = resolvedValue;
                         if (roll) {
                             await roll.toMessage({
                                 speaker: ChatMessage.getSpeaker({ actor: targetActor }),
@@ -443,10 +453,11 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     }
 
                     if (action.type === "roll_modifier") {
-                    const entries = Array.isArray(action.roll_modifier_entries) && action.roll_modifier_entries.length
+                    const canonicalEntries = Array.isArray(action.roll_modifier_entries) && action.roll_modifier_entries.length
                             ? action.roll_modifier_entries
                             : [{
                                 value: action.roll_modifier_value ?? 0,
+                                value_mode: action.roll_modifier_value_mode ?? action.value_mode,
                                 cap: action.roll_modifier_cap ?? "",
                                 contexts: action.roll_modifier_context ?? "all",
                                 application_side: action.roll_modifier_application_side ?? "self",
@@ -457,6 +468,18 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                                 source_attack_ids: action.roll_modifier_source_attack_ids ?? "",
                                 nh_display_mode: action.roll_modifier_nh_display_mode ?? "roll_only"
                             }];
+                        const entries = canonicalEntries.map((entry) => {
+                            const scaling = resolveEffectValueMetadata(entry.value, entry.value_mode, context.origin);
+                            return {
+                                ...foundry.utils.deepClone(entry),
+                                value: scaling.effectiveValue,
+                                value_mode: scaling.valueMode,
+                                base_value: scaling.baseValue,
+                                origin_level: scaling.originLevel,
+                                origin_item_id: scaling.originItemId,
+                                origin_item_uuid: scaling.originItemUuid
+                            };
+                        });
                         activeEffectData.flags.gum.rollModifier = {
                             entries,
                             value: entries[0]?.value ?? 0,
