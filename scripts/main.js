@@ -1132,7 +1132,9 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     // Só processa globais se NÃO tivermos instrução para ignorar
     if (!extraOptions.ignoreGlobals) {
         const rollContext = _determineRollContext(actor, rollData);
-        const globalMods = actor.getFlag("gum", "gm_modifiers") || [];
+        // Rolagens rápidas do Escudo do Mestre usam um apresentador sintético,
+        // não um documento Actor do Foundry. Nesse caso não há flags para ler.
+        const globalMods = actor?.getFlag?.("gum", "gm_modifiers") || [];
         
         globalMods.forEach(m => {
             const modContext = m?.contexts ?? m?.context ?? "all";

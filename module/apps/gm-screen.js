@@ -1,6 +1,6 @@
 import { GMModifierBrowser } from "./gm-modifier-browser.js";
 import { EffectBrowser } from "./effect-browser.js";
-import { performGURPSRoll } from "../../scripts/main.js";
+import { applyCurrentRollPrivacy, performGURPSRoll } from "../../scripts/main.js";
 import { applySingleEffect } from "../../scripts/effects-engine.js";
 import { GurpsRollPrompt } from "./roll-prompt.js";
 import { GurpsDamageRollPrompt } from "./damage-roll-prompt.js";
@@ -685,7 +685,7 @@ activateListeners(html) {
                 resultBox.removeClass("success failure").addClass(colorClass).html(resultHTML).slideDown(100);
             } else {
                 const gmActor = { name: "Mestre", img: "icons/svg/mystery-man.svg", id: null };
-                performGURPSRoll(gmActor, {
+                await performGURPSRoll(gmActor, {
                     label: "Teste Rápido (EM)",
                     value: effectiveLevel, 
                     originalValue: nhBase,
@@ -707,7 +707,13 @@ activateListeners(html) {
             
             const content = `<div class="gurps-damage-card"><header class="card-header"><h3>Dano Rápido</h3></header><div class="card-formula-container"><span class="formula-pill">${formula} ${type}</span></div><div class="card-content"><div class="card-main-flex"><div class="roll-column"><span class="column-label">Dados</span><div class="individual-dice-damage">${diceHtml}</div></div><div class="column-separator"></div><div class="target-column"><span class="column-label">Total</span><div class="damage-total"><span class="damage-value">${roll.total}</span><span class="damage-type" style="font-size:0.5em; vertical-align:middle;">${type}</span></div></div></div></div><footer class="card-actions"><button type="button" class="apply-damage-button" data-damage='${JSON.stringify({attackerId: null, sourceName: "Dano Rápido", main: { total: roll.total, type: type, armorDivisor: 1 }, onDamageEffects: {}, generalConditions: {}})}'><i class="fas fa-crosshairs"></i> Aplicar</button></footer></div>`;
 
-            ChatMessage.create({ user: game.user.id, speaker: { alias: "Mestre" }, content: content, rolls: [roll] });
+            const chatData = applyCurrentRollPrivacy({
+                user: game.user.id,
+                speaker: { alias: "Mestre" },
+                content,
+                rolls: [roll]
+            });
+            await ChatMessage.create(chatData);
         });
     
         // ===========================================================
