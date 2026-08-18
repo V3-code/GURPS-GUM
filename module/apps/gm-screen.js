@@ -52,6 +52,9 @@ export class GumGMScreen extends Application {
             height: 750,
             resizable: true,
             classes: ["gum", "gm-screen"],
+            // Preserva a posição das duas áreas roláveis quando uma seleção ou
+            // atualização de ator dispara uma nova renderização da janela.
+            scrollY: [".screen-body", ".monitor-body"],
             tabs: [{ navSelector: ".screen-tabs", contentSelector: ".screen-body", initial: "modifiers" },
                 { navSelector: ".monitor-tabs", contentSelector: ".monitor-body", initial: "characters" }
             ],
