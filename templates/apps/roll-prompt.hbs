@@ -2,6 +2,42 @@
 
     {{!-- COLUNA DA ESQUERDA: MENU DE OPÇÕES (SCROLL) --}}
     <div class="prompt-menu-column">
+        <section class="roll-purpose-panel" aria-labelledby="roll-purpose-heading">
+            <div class="purpose-heading-row">
+                <h3 id="roll-purpose-heading" class="column-header"><i class="fas fa-bullseye"></i> Finalidades do Teste</h3>
+                <button type="button" class="purpose-clear">Limpar</button>
+            </div>
+            {{#each purposeGroups as |group|}}
+            <details class="option-group purpose-group" data-group-id="{{group.id}}" {{#if group.isOpen}}open{{/if}}>
+                <summary class="group-summary purpose-group-summary">
+                    <span class="summary-title">{{group.label}}</span>
+                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                </summary>
+                <div class="group-content">
+                    <div class="purpose-buttons">
+                        {{#each group.purposes as |purpose|}}
+                        <div class="purpose-item-wrapper {{#if purpose.selected}}active{{/if}} {{#if purpose.suggested}}suggested{{/if}}">
+                            <button type="button" class="purpose-btn {{#if purpose.selected}}active{{/if}}"
+                                    data-purpose-id="{{purpose.id}}"
+                                    aria-pressed="{{#if purpose.selected}}true{{else}}false{{/if}}"
+                                    title="{{purpose.tooltip}}">
+                                <span class="purpose-card-icon"><i class="fas fa-bullseye" aria-hidden="true"></i></span>
+                                <span class="purpose-card-copy">
+                                    <span class="purpose-card-label">{{purpose.label}}</span>
+                                    {{#if purpose.suggested}}<span class="purpose-card-hint">Atributo usual</span>{{/if}}
+                                </span>
+                                <span class="purpose-check" aria-hidden="true"><i class="fas fa-check"></i></span>
+                            </button>
+                            <span class="purpose-view" title="{{purpose.tooltip}}" aria-label="Informações sobre {{purpose.label}}">
+                                <i class="fas fa-info-circle" aria-hidden="true"></i>
+                            </span>
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+            </details>
+            {{/each}}
+        </section>
         <h3 class="column-header"><i class="fas fa-list"></i> Modificadores</h3>
         
         <div class="roll-blocks-container">
@@ -43,7 +79,7 @@
 
         {{!-- 1. CABEÇALHO (Compacto) --}}
         <div class="command-header">
-            <button type="button" class="menu-toggle-btn" title="Mostrar/Ocultar modificadores" aria-expanded="{{#if menuCollapsed}}false{{else}}true{{/if}}">
+            <button type="button" class="menu-toggle-btn" title="Mostrar/Ocultar opções de rolagem" aria-label="Mostrar ou ocultar opções de rolagem" aria-expanded="{{#if menuCollapsed}}false{{else}}true{{/if}}">
                 <i class="fas fa-bars"></i>
             </button>
             <div class="roll-icon-small">
@@ -53,6 +89,11 @@
                 <h2 class="roll-title-compact">{{label}}</h2>
                 <div class="roll-subtitle">{{actor.name}}</div>
             </div>
+        </div>
+
+        <div class="purpose-summary" aria-live="polite">
+            <strong>Finalidades:</strong>
+            {{#if hasPurposes}}{{#each purposeLabels as |purpose|}}<span>{{purpose}}</span>{{/each}}{{else}}<em>Teste Geral</em>{{/if}}
         </div>
 
         {{!-- 2. ATRIBUTO BASE (SELETOR) --}}

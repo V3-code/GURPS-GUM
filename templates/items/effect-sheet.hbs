@@ -688,8 +688,25 @@
                                                                         </p>
                                                                     </div>
                                                                 </div>
+                                                                        <div class="effect-premium-field">
+                                                                            <label class="effect-premium-field-label"><i class="fas fa-tags"></i> Marcadores da rolagem</label>
+                                                                            <div class="effect-premium-field-control">
+                                                                                <input type="text" name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.roll_tags"
+                                                                                    value="{{entry.roll_tags}}" placeholder="Ex: poison, pain, fear" />
+                                                                                <p class="effect-premium-field-hint">Separe por vírgula. Marcadores personalizados são aceitos e tornam a entrada exclusiva da rolagem.</p>
+                                                                            </div>
+                                                                        </div>
 
-                                                            </div>
+                                                                        <div class="effect-premium-field">
+                                                                            <label class="effect-premium-field-label"><i class="fas fa-filter"></i> Correspondência</label>
+                                                                            <div class="effect-premium-field-control">
+                                                                                <select name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.roll_tag_match">
+                                                                                    <option value="any" {{#if (eq entry.roll_tag_match "any")}}selected{{/if}}>Qualquer um</option>
+                                                                                    <option value="all" {{#if (eq entry.roll_tag_match "all")}}selected{{/if}}>Todos</option>
+                                                                                </select>
+                                                                            </div>
+                                                                        </div>
+                                                                </div>
 
                                                             <details
                                                                 class="effect-premium-advanced roll-mod-entry-restrictions"

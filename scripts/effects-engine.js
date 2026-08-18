@@ -221,6 +221,8 @@ const normalizeEffectAction = (action = {}) => {
             target_values: (next.roll_modifier_target_values || "").toString().trim(),
             source_item_ids: (next.roll_modifier_source_item_ids || "").toString().trim(),
             source_attack_ids: (next.roll_modifier_source_attack_ids || "").toString().trim(),
+            roll_tags: (next.roll_modifier_roll_tags || "").toString().trim(),
+            roll_tag_match: next.roll_modifier_roll_tag_match === "all" ? "all" : "any",
             nh_display_mode: (next.roll_modifier_nh_display_mode || "roll_only").toString().trim() || "roll_only"
         }];
     }
@@ -236,7 +238,9 @@ const normalizeEffectAction = (action = {}) => {
         target_values: (entry?.target_values || "").toString().trim(),
         source_item_ids: (entry?.source_item_ids || "").toString().trim(),
         source_attack_ids: (entry?.source_attack_ids || "").toString().trim(),
-        nh_display_mode: (entry?.nh_display_mode || "roll_only").toString().trim() || "roll_only"
+         roll_tags: Array.isArray(entry?.roll_tags) ? entry.roll_tags.join(",") : (entry?.roll_tags || "").toString().trim(),
+        roll_tag_match: entry?.roll_tag_match === "all" ? "all" : "any",
+        nh_display_mode: (entry?.roll_tags?.length || String(entry?.roll_tags || "").trim()) ? "roll_only" : (entry?.nh_display_mode || "roll_only").toString().trim() || "roll_only"
     }));
     next.roll_modifier_value = next.roll_modifier_entries[0]?.value ?? 0;
     next.roll_modifier_cap = next.roll_modifier_entries[0]?.cap ?? "";
@@ -466,6 +470,8 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                                 target_values: action.roll_modifier_target_values ?? "",
                                 source_item_ids: action.roll_modifier_source_item_ids ?? "",
                                 source_attack_ids: action.roll_modifier_source_attack_ids ?? "",
+                                roll_tags: action.roll_modifier_roll_tags ?? "",
+                                roll_tag_match: action.roll_modifier_roll_tag_match ?? "any",
                                 nh_display_mode: action.roll_modifier_nh_display_mode ?? "roll_only"
                             }];
                         const entries = canonicalEntries.map((entry) => {

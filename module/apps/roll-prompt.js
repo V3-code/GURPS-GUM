@@ -1,5 +1,6 @@
 import { GumPreviewDialog } from "./preview-dialog.js";
 import { performGURPSRoll } from "../../scripts/main.js";
+import { getGroupedRollPurposes, getPurposeLabels, matchesRollTags, resolveRollMetadata } from "../utils/roll-purposes.mjs";
 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
@@ -27,6 +28,8 @@ export class GurpsRollPrompt extends FormApplication {
         this.isMenuCollapsed = true;
         this.defenseMode = "normal";
         this.defenseTiming = "before";
+        this.purposeIds = resolveRollMetadata({ purposeIds: rollData.purposeIds }).purposeIds;
+        this.collapsedPurposeGroups = new Set();
 
         this.context = this._determineContext();
         this.counterEffectsNotice = null;
@@ -66,6 +69,7 @@ export class GurpsRollPrompt extends FormApplication {
         gmMods.forEach(mod => {
             const context = mod?.contexts ?? mod?.context ?? "all";
             if (!this._matchesEffectContext(context, this.context)) return;
+            if (!matchesRollTags(mod, this._getRollMetadata().rollTags)) return;
 
             this.selectedModifiers.push({
                 id: mod.id || foundry.utils.randomID(),
@@ -92,6 +96,7 @@ export class GurpsRollPrompt extends FormApplication {
             entries.forEach((entry, index) => {
                 const context = entry?.contexts ?? entry?.context ?? "all";
                 if (!this._matchesEffectContext(context, this.context)) return;
+                if (!matchesRollTags(entry, this._getRollMetadata().rollTags)) return;
                 if (!this._matchesTargetFilter(entry)) return;
                 if ((entry?.nh_display_mode || "roll_only") === "include_in_nh") return;
                 const applicationSide = this._resolveModifierApplicationSide(entry, data);
@@ -148,6 +153,7 @@ export class GurpsRollPrompt extends FormApplication {
             configuredEntries.forEach((entry, entryIndex) => {
                 const context = entry?.contexts ?? entry?.context ?? "all";
                 if (!this._matchesEffectContext(context, this.context)) return;
+                if (!matchesRollTags(entry, this._getRollMetadata().rollTags)) return;
                 if (!this._matchesTargetFilter(entry)) return;
                 if ((entry?.nh_display_mode || "roll_only") === "include_in_nh") return;
                 if (this._resolveModifierApplicationSide(entry, data) !== "vs_targeter") return;
@@ -572,6 +578,7 @@ export class GurpsRollPrompt extends FormApplication {
 
         if (normalized === "attack") return rollContext.startsWith("attack");
         if (normalized === "defense") return rollContext.startsWith("defense");
+        if (normalized === "check") return rollContext.startsWith("check_") || rollContext.startsWith("sense_");
         if (normalized === "skill") {
             return rollContext === "skill" || rollContext.startsWith("skill_") || rollContext.startsWith("check_") || rollContext.startsWith("sense_");
         }
@@ -704,6 +711,10 @@ export class GurpsRollPrompt extends FormApplication {
         if (type === 'skill' || type === 'attribute') return 'skill';
 
 return 'default';
+    }
+
+        _getRollMetadata() {
+        return resolveRollMetadata({ context: this.context, purposeIds: this.purposeIds, attributeKey: this.currentBaseKey });
     }
 
     _normalizeAttributeKey(key) {
@@ -923,6 +934,7 @@ return 'default';
                 entryList.forEach((entry, index) => {
                     const contexts = this._normalizeContexts(entry?.contexts);
                     if (contexts.length && !this._matchesEffectContext(contexts, contextKey)) return;
+                    if (!matchesRollTags(entry, this._getRollMetadata().rollTags)) return;
 
                     const entryId = `${item.id}::${index}`;
                     block.items.push({
@@ -942,6 +954,7 @@ return 'default';
             }
 
             if (!this._isValidForContext(item, contextKey)) continue;
+            if (!matchesRollTags(item.system, this._getRollMetadata().rollTags)) continue;
 
             block.items.push({
                 id: item.id,
@@ -1014,6 +1027,7 @@ return 'default';
 
    async getData() {
         const context = await super.getData();
+        const preservedBaseKey = this._basePrepared ? this.currentBaseKey : null;
         context.actor = this.actor;
         context.label = this.rollData.label || "Teste";
         context.img = this.rollData.img || this.actor.img || "icons/svg/d20.svg";
@@ -1024,11 +1038,23 @@ return 'default';
         context.fixedModifier = parseInt(this.rollData.fixedModifier) || 0;
         context.fixedModifierLabel = this.rollData.fixedModifierLabel || "Fixo";
         context.baseAttributeOptions = this._prepareBaseAttributeOptions();
+        if (preservedBaseKey && this.baseAttributeOptionsMap.has(preservedBaseKey)) {
+            const preserved = this.baseAttributeOptionsMap.get(preservedBaseKey);
+            this.currentBaseKey = preserved.key;
+            this.currentBaseLabel = preserved.label;
+            this.currentBaseValue = this._computeBaseValueFromOption(preserved);
+            context.baseAttributeOptions.forEach(option => option.isSelected = option.key === preservedBaseKey);
+        }
+        this._basePrepared = true;
         context.baseAttributePrimary = context.baseAttributeOptions.filter(option => option.type === "attribute");
         context.baseAttributeSecondary = context.baseAttributeOptions.filter(option => option.type !== "attribute");
         const currentOption = this.baseAttributeOptionsMap.get(this.currentBaseKey);
         context.baseAttributeLabel = this._buildBaseDetailLabel(currentOption);
         context.menuCollapsed = this.isMenuCollapsed;
+        context.purposeGroups = getGroupedRollPurposes(this.currentBaseKey, this.purposeIds)
+            .map(group => ({ ...group, isOpen: !this.collapsedPurposeGroups.has(group.id) }));
+        context.purposeLabels = getPurposeLabels(this.purposeIds, { short: true });
+        context.hasPurposes = context.purposeLabels.length > 0;
         
         context.blocks = await this._fetchAndOrganizeModifiers();
         return context;
@@ -1172,7 +1198,7 @@ return 'default';
            this._updateTotals(html);
         });
 
-        html.find('.base-attr-btn').click(ev => {
+        html.find('.base-attr-btn').click(async ev => {
             ev.preventDefault();
             const btn = $(ev.currentTarget);
             const key = btn.data('key');
@@ -1186,14 +1212,37 @@ return 'default';
             this.currentBaseKey = option.key;
             this.currentBaseLabel = option.label;
             this.currentBaseValue = this._computeBaseValueFromOption(option);
-
-            this._updateTotals(html);
+            this.rollData.attributeKey = option.type === "attribute" ? option.key : this.rollData.attributeKey;
+            if (option.type === "attribute" && (this.context.startsWith("check_") || this.rollData.type === "attribute")) this.context = `check_${option.key}`;
+            this.rollData.modifier = parseInt(inputManual.val()) || 0;
+            await this._reloadSemanticModifiers();
+            await this.render(false);
         });
 
-  html.find('.menu-toggle-btn').click(ev => {
+        html.find('.menu-toggle-btn').click(ev => {
             ev.preventDefault();
             this.isMenuCollapsed = !this.isMenuCollapsed;
             this._applyMenuState(html);
+        });
+
+        html.find('.purpose-btn, .purpose-clear').click(async ev => {
+            ev.preventDefault();
+            const id = `${$(ev.currentTarget).data('purpose-id') || ''}`;
+            const selected = new Set(this.purposeIds);
+            if (!id || id === 'general') selected.clear();
+            else if (selected.has(id)) selected.delete(id);
+            else selected.add(id);
+            this.purposeIds = [...selected];
+            this.rollData.modifier = parseInt(inputManual.val()) || 0;
+            await this._reloadSemanticModifiers();
+            await this.render(false);
+        });
+
+        html.find('.purpose-group').on('toggle', ev => {
+            const groupId = `${ev.currentTarget.dataset.groupId || ''}`;
+            if (!groupId) return;
+            if (ev.currentTarget.open) this.collapsedPurposeGroups.delete(groupId);
+            else this.collapsedPurposeGroups.add(groupId);
         });
 
         html.find('.defense-mode-btn').click(ev => {
@@ -1228,7 +1277,14 @@ return 'default';
         this.setPosition({ width });
     }
 
-_updateTotals(html) {
+    async _reloadSemanticModifiers() {
+        this.selectedModifiers = this.selectedModifiers.filter(mod => !mod.isGM && !mod.isEffect && !mod.isCounterEffect);
+        this._loadGMModifiers();
+        this._loadEffectModifiers();
+        this._loadTargetCounterModifiers();
+    }
+
+    _updateTotals(html) {
         const base = parseInt(this.currentBaseValue) || parseInt(this.rollData.value) || 10;
         let manual = parseInt(html.find('input[name="manualMod"]').val()) || 0;
         const fixedModifier = parseInt(this.rollData.fixedModifier) || 0;
@@ -1615,6 +1671,7 @@ const rollPayload = {
             defenseMode: this.defenseMode,
             defenseTiming: this.defenseTiming
         };
+        Object.assign(rollPayload, this._getRollMetadata());
         const rollOptions = {
             ignoreGlobals: true, // Já processamos os globais aqui no prompt
             effectiveCap: lowestCap // ✅ O SEGREDO: Enviamos o teto calculado aqui!

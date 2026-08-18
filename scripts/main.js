@@ -21,6 +21,7 @@ import { importFromGCS } from "../module/apps/importers.js";
 import { GumGMScreen } from "../module/apps/gm-screen.js";
 import { GurpsRollPrompt } from "../module/apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../module/apps/damage-roll-prompt.js";
+import { getPurposeLabels, matchesRollTags, resolveRollMetadata, shouldIncludeInPermanentNh } from "../module/utils/roll-purposes.mjs";
 import { getBodyProfile, getBodyLocationDefinition } from "../module/config/body-profiles.js";
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
@@ -764,7 +765,7 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                 const gumDuration = foundry.utils.getProperty(effect, "flags.gum.duration") || {};
                 const isPermanent = gumDuration._uiMode === "permanent" || gumDuration.isPermanent === true;
                 entries.forEach((entry) => {
-                    if ((entry?.nh_display_mode || "roll_only") !== "include_in_nh") return;
+                    if (!shouldIncludeInPermanentNh(entry)) return;
                     if (!matchesEntryTargetForItem(entry, item)) return;
                     if (!matchesEntryContextForItem(entry, item)) return;
                     const value = _evaluateModifierValue(this, entry?.value, { itemId: item.id, type: item.type, itemName: item.name });
@@ -787,7 +788,7 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                 const gumDuration = foundry.utils.getProperty(effect, "flags.gum.duration") || {};
                 const isPermanent = gumDuration._uiMode === "permanent" || gumDuration.isPermanent === true;
                 entries.forEach((entry) => {
-                    if ((entry?.nh_display_mode || "roll_only") !== "include_in_nh") return;
+                    if (!shouldIncludeInPermanentNh(entry)) return;
                     if (!matchesEntryTargetForItem(entry, item)) return;
                     if (!_matchesRollModifierAttackFilter(entry, attack)) return;
                     if (!matchesEntryContextForAttack(entry, attackType)) return;
@@ -817,7 +818,7 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                 const gumDuration = foundry.utils.getProperty(effect, "flags.gum.duration") || {};
                 const isPermanent = gumDuration._uiMode === "permanent" || gumDuration.isPermanent === true;
                 entries.forEach((entry) => {
-                    if ((entry?.nh_display_mode || "roll_only") !== "include_in_nh") return;
+                    if (!shouldIncludeInPermanentNh(entry)) return;
                     if (!matchesEntryTargetForItem(entry, item)) return;
                     if (!_matchesRollModifierAttackFilter(entry, attack)) return;
                     if (!matchesEntryContextForDefense(entry, defenseType)) return;
@@ -1132,6 +1133,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     // Só processa globais se NÃO tivermos instrução para ignorar
     if (!extraOptions.ignoreGlobals) {
         const rollContext = _determineRollContext(actor, rollData);
+        const rollMetadata = resolveRollMetadata({ context: rollContext, purposeIds: rollData.purposeIds, attributeKey: rollData.attributeKey ?? rollData.attribute });
         // Rolagens rápidas do Escudo do Mestre usam um apresentador sintético,
         // não um documento Actor do Foundry. Nesse caso não há flags para ler.
         const globalMods = actor?.getFlag?.("gum", "gm_modifiers") || [];
@@ -1139,6 +1141,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
         globalMods.forEach(m => {
             const modContext = m?.contexts ?? m?.context ?? "all";
             if (!_matchesRollContext(modContext, rollContext)) return;
+            if (!matchesRollTags(m, rollMetadata.rollTags)) return;
 
             // Soma o valor
             globalModValue += _evaluateModifierValue(actor, m.value, rollData);
@@ -1153,7 +1156,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
             }
         });
 
-        const effectMods = _collectEffectRollModifiers(actor, rollContext, rollData);
+        const effectMods = _collectEffectRollModifiers(actor, rollContext, { ...rollData, ...rollMetadata });
         effectMods.forEach(m => {
             globalModValue += _evaluateModifierValue(actor, m.value, rollData);
             if (m.cap !== undefined && m.cap !== null && m.cap !== "") {
@@ -1164,7 +1167,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
             }
         });
 
-        const counterEffectMods = _collectTargetCounterRollModifiers(actor, rollContext, rollData);
+        const counterEffectMods = _collectTargetCounterRollModifiers(actor, rollContext, { ...rollData, ...rollMetadata });
         counterEffectMods.forEach(m => {
             globalModValue += _evaluateModifierValue(actor, m.value, rollData);
             if (m.cap !== undefined && m.cap !== null && m.cap !== "") {
@@ -1234,11 +1237,15 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
         ? encodeURIComponent(JSON.stringify(damageActionData))
         : "";
 
+    const purposeLabels = getPurposeLabels(rollData.purposeIds);
+    const purposeHtml = purposeLabels.length ? `<div class="roll-purposes"><strong>Finalidades:</strong> ${purposeLabels.map(label => foundry.utils.escapeHTML(label)).join(", ")}</div>` : "";
+
     const content = `
         <div class="gurps-roll-card premium">
             <header class="card-header">
                 <h3>${label}</h3>
                 <small>${actor.name}</small>
+                ${purposeHtml}
             </header>
 
             <div class="card-formula-container">
@@ -1717,6 +1724,7 @@ function _matchesRollContext(modContext, rollContext) {
     }
     if (modContext === 'attack') return rollContext.startsWith('attack');
     if (modContext === 'defense') return rollContext.startsWith('defense');
+    if (modContext === 'check') return rollContext.startsWith('check_') || rollContext.startsWith('sense_');
  if (modContext === 'skill') return rollContext.startsWith('skill_') || rollContext === 'skill';
     return modContext === rollContext;
 }
@@ -2008,6 +2016,7 @@ function _collectEffectRollModifiers(actor, rollContext, rollData = {}) {
         entries.forEach((entry, index) => {
             const context = entry?.contexts ?? entry?.context ?? data.context ?? "all";
             if (!_matchesRollContext(context, rollContext)) return;
+            if (!matchesRollTags(entry, rollData.rollTags)) return;
             if (!_matchesRollTargetFilter(actor, rollData, entry)) return;
             if ((entry?.nh_display_mode || "roll_only") === "include_in_nh") return;
             const applicationSide = _resolveRollModifierApplicationSide(entry, data);
@@ -2062,6 +2071,7 @@ function _collectCounterCandidatesFromTarget(targetActor, rollContext, rollData 
         entries.forEach((entry, entryIndex) => {
             const context = entry?.contexts ?? entry?.context ?? data.context ?? "all";
             if (!_matchesRollContext(context, rollContext)) return;
+            if (!matchesRollTags(entry, rollData.rollTags)) return;
             if (!_matchesRollTargetFilter(targetActor, rollData, entry)) return;
             if ((entry?.nh_display_mode || "roll_only") === "include_in_nh") return;
             if (_resolveRollModifierApplicationSide(entry, data) !== "vs_targeter") return;
