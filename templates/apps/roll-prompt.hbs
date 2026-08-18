@@ -4,8 +4,13 @@
     <div class="prompt-menu-column">
         <section class="roll-purpose-panel" aria-labelledby="roll-purpose-heading">
             <div class="purpose-heading-row">
-                <h3 id="roll-purpose-heading" class="column-header"><i class="fas fa-bullseye"></i> Finalidades do Teste</h3>
-                <button type="button" class="purpose-clear">Limpar</button>
+                <h3 id="roll-purpose-heading" class="column-header">Finalidades do Teste</h3>
+                <button type="button" class="purpose-general {{#unless hasPurposes}}active{{/unless}}"
+                        data-purpose-id="general"
+                        aria-pressed="{{#if hasPurposes}}false{{else}}true{{/if}}">
+                    <span>Teste Geral</span>
+                    <i class="fas fa-check" aria-hidden="true"></i>
+                </button>
             </div>
             {{#each purposeGroups as |group|}}
             <details class="option-group purpose-group" data-group-id="{{group.id}}" {{#if group.isOpen}}open{{/if}}>
@@ -21,7 +26,6 @@
                                     data-purpose-id="{{purpose.id}}"
                                     aria-pressed="{{#if purpose.selected}}true{{else}}false{{/if}}"
                                     title="{{purpose.tooltip}}">
-                                <span class="purpose-card-icon"><i class="fas fa-bullseye" aria-hidden="true"></i></span>
                                 <span class="purpose-card-copy">
                                     <span class="purpose-card-label">{{purpose.label}}</span>
                                     {{#if purpose.suggested}}<span class="purpose-card-hint">Atributo usual</span>{{/if}}
@@ -38,7 +42,7 @@
             </details>
             {{/each}}
         </section>
-        <h3 class="column-header"><i class="fas fa-list"></i> Modificadores</h3>
+        <h3 class="column-header modifiers-heading">Modificadores</h3>
         
         <div class="roll-blocks-container">
             {{#each blocks as |block|}}

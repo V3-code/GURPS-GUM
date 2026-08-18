@@ -29,7 +29,8 @@ export class GurpsRollPrompt extends FormApplication {
         this.defenseMode = "normal";
         this.defenseTiming = "before";
         this.purposeIds = resolveRollMetadata({ purposeIds: rollData.purposeIds }).purposeIds;
-        this.collapsedPurposeGroups = new Set();
+        // As finalidades começam recolhidas para manter o menu compacto.
+        this.collapsedPurposeGroups = new Set(["survival", "resistances", "mental", "senses"]);
 
         this.context = this._determineContext();
         this.counterEffectsNotice = null;
@@ -1052,6 +1053,7 @@ return 'default';
         context.baseAttributeLabel = this._buildBaseDetailLabel(currentOption);
         context.menuCollapsed = this.isMenuCollapsed;
         context.purposeGroups = getGroupedRollPurposes(this.currentBaseKey, this.purposeIds)
+            .filter(group => group.id !== "general")
             .map(group => ({ ...group, isOpen: !this.collapsedPurposeGroups.has(group.id) }));
         context.purposeLabels = getPurposeLabels(this.purposeIds, { short: true });
         context.hasPurposes = context.purposeLabels.length > 0;
@@ -1225,7 +1227,7 @@ return 'default';
             this._applyMenuState(html);
         });
 
-        html.find('.purpose-btn, .purpose-clear').click(async ev => {
+        html.find('.purpose-btn, .purpose-general').click(async ev => {
             ev.preventDefault();
             const id = `${$(ev.currentTarget).data('purpose-id') || ''}`;
             const selected = new Set(this.purposeIds);
