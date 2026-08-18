@@ -4322,6 +4322,7 @@ Hooks.on("getSceneControlButtons", (controls) => {
 // Função auxiliar para renderizar apenas se aberto
 function refreshGMScreen() {
     if (game.gum && game.gum.gmScreen && game.gum.gmScreen.rendered) {
+        if (game.gum.gmScreen._isApplyingSelection) return;
         game.gum.gmScreen.render(false);
     }
 }
@@ -4460,14 +4461,15 @@ Hooks.on("updateActiveEffect", async (effect, changes) => {
     const effectUuid = foundry.utils.getProperty(effect, "flags.gum.effectUuid");
     if (effectUuid) await rebalanceEffectCarrier(actor, effectUuid);
     await processStatusBindings(actor);
+    if (actor.hasPlayerOwner || game.combat) refreshGMScreen();
 });
 
 
-Hooks.on("deleteActiveEffect", refreshFromDeletedActiveEffect);
 Hooks.on("createActiveEffect", async (effect) => {
     const actor = effect?.parent;
     if (!actor) return;
     await processStatusBindings(actor);
+    if (actor.hasPlayerOwner || game.combat) refreshGMScreen();
 });
 
 // 6. MUDANÇAS NA CENA (Adicionar/Remover tokens)

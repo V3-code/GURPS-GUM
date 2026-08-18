@@ -6,6 +6,8 @@ import { GurpsRollPrompt } from "./roll-prompt.js";
 import { GurpsDamageRollPrompt } from "./damage-roll-prompt.js";
 import { GumPreviewDialog } from "./preview-dialog.js";
 import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
+import { resolveGMScreenCardTarget } from "../utils/gm-screen-target.mjs";
+import { getGMScreenEffectState } from "../utils/gm-screen-effect-state.mjs";
 
 export class GumGMScreen extends Application {
     
@@ -27,6 +29,10 @@ export class GumGMScreen extends Application {
             actorId: null,
             at: 0
         };
+
+        // Evita renderizações intermediárias enquanto um lote de itens está
+        // sendo aplicado. O render final é feito pela própria operação.
+        this._isApplyingSelection = false;
 
         this.gmTabs = [
             { id: "tab-1", name: "1" },
@@ -142,8 +148,26 @@ async getData() {
     /**
      * Helper para extrair dados vitais de um ator (Reuso de código)
      */
-    _prepareActorData(actor) {
+ _prepareActorData(actor) {
         const attr = actor.system.attributes;
+        const encumbranceNames = ["Nenhuma", "Leve", "Média", "Pesada", "Muito Pesada"];
+        const encumbranceLevel = Math.min(4, Math.max(0, Number(actor.system.encumbrance?.level_value) || 0));
+        const getFinalValue = (attribute, fallback = 0) => {
+            const value = attribute?.final ?? attribute?.final_computed ?? attribute?.value ?? fallback;
+            return Number.isFinite(Number(value)) ? Number(value) : fallback;
+        };
+        const formatSignedValue = (value) => value > 0 ? `+${value}` : String(value);
+        const prepareResource = (attribute) => {
+            const value = Number(attribute?.value) || 0;
+            const max = getFinalValue(attribute, Number(attribute?.max) || 0);
+            const percent = max > 0 ? (value / max) * 100 : 0;
+
+            return {
+                value,
+                max,
+                percent: Math.min(100, Math.max(0, percent))
+            };
+        };
         const activeGMModsRaw = actor.getFlag("gum", "gm_modifiers") || [];
         const activeGMMods = [];
         const groupedMods = new Map();
@@ -185,33 +209,48 @@ async getData() {
             grouped.displayValueText = grouped.displayValues.join(" | ");
         }
 
-        activeGMMods.push(...groupedMods.values());
+ activeGMMods.push(...groupedMods.values());
         const activeGMEffects = Array.from(actor.effects || [])
-            .filter(effect => {
-                if (effect.disabled) return false;
-                const source = foundry.utils.getProperty(effect, "flags.gum.source");
-                return source === "GM Screen";
-            })
-            .map(effect => ({
+            .map(effect => ({ effect, state: getGMScreenEffectState(effect) }))
+            .filter(({ state }) => state.visible)
+            .map(({ effect, state }) => ({
                 id: effect.id,
-                name: effect.name
+                name: effect.name,
+                isPending: state.pending,
+                statusLabel: state.pendingReason
             }));
 
         return {
             id: actor.id,
             name: actor.name,
             img: actor.img,
-            hp: { value: attr.hp.value, max: attr.hp.max, percent: Math.min(100, Math.max(0, (attr.hp.value / attr.hp.max) * 100)) },
-            fp: { value: attr.fp.value, max: attr.fp.max, percent: Math.min(100, Math.max(0, (attr.fp.value / attr.fp.max) * 100)) },
+            hp: prepareResource(attr.hp),
+            fp: prepareResource(attr.fp),
             defenses: {
-                dodge: attr.dodge.final,
-                parry: this._getBestDefense(actor, 'parry'),
-                block: this._getBestDefense(actor, 'block')
+                dodge: getFinalValue(attr.dodge)
             },
+            move: getFinalValue(attr.basic_move),
+            encumbrance: encumbranceNames[encumbranceLevel],
+            sizeModifier: formatSignedValue(getFinalValue(attr.mt)),
             activeGMMods,
             activeGMEffects,
             hasActiveGMBadges: activeGMMods.length > 0 || activeGMEffects.length > 0
         };
+    }
+
+    /**
+     * Resolve o alvo de um card sem depender de haver uma cena ativa.
+     * Combatentes têm prioridade para preservar atores sintéticos de tokens
+     * não vinculados; cards da aba PJs recaem no ator global.
+     */
+    _resolveCardTarget(card) {
+        const actorId = card.data('actor-id');
+        const tokenId = card.data('token-id');
+        const combatantId = card.data('combatant-id');
+        return resolveGMScreenCardTarget(
+            { actorId, tokenId, combatantId },
+            { gameRef: game, canvasRef: globalThis.canvas }
+        );
     }
 
     _getGroupedItemModifierValue(item) {
@@ -270,22 +309,7 @@ activateListeners(html) {
             if (this.selectedModifiers.size === 0) return;
 
             const card = $(ev.currentTarget);
-            const actorId = card.data('actor-id');
-            const tokenId = card.data('token-id'); // IMPORTANTE: Pega o Token ID se existir
-
-            // --- BUSCA INTELIGENTE (Token > Ator) ---
-            let actor;
-
-            // 1. Tenta pegar pelo Token na Cena Atual (Prioridade para Monstros/Combate)
-            if (tokenId) {
-                const token = canvas.tokens.get(tokenId);
-                if (token) actor = token.actor;
-            }
-
-            // 2. Se falhou (token em outra cena ou aba PJs), pega pelo ID do Ator Global
-            if (!actor && actorId) {
-                actor = game.actors.get(actorId);
-            }
+            const { actor, token } = this._resolveCardTarget(card);
 
             // 3. Aplica
             if (actor) {
@@ -313,13 +337,13 @@ activateListeners(html) {
                     this._updateQRDisplay(currentHtml);
                 }
 
-                await this._applySelectionToActor(actor, tokenId, { keepSelection });
+                await this._applySelectionToActor(actor, token, { keepSelection });
                 
                 // Feedback visual (Piscar Verde)
                 card.addClass('flash-success');
                 setTimeout(() => card.removeClass('flash-success'), 500);
             } else {
-                ui.notifications.warn("Ator não encontrado na cena atual.");
+                ui.notifications.warn("Ator não encontrado para aplicação.");
             }
         });
 
@@ -335,19 +359,7 @@ activateListeners(html) {
             
             // Busca o card pai para pegar os IDs
             const card = tag.closest('.monitor-card');
-            const actorId = card.data('actor-id');
-            const tokenId = card.data('token-id'); 
-
-            // --- BUSCA INTELIGENTE (Mesma lógica do Apply) ---
-            let actor;
-            
-            if (tokenId) {
-                const token = canvas.tokens.get(tokenId);
-                if (token) actor = token.actor;
-            }
-            if (!actor && actorId) {
-                actor = game.actors.get(actorId);
-            }
+            const { actor } = this._resolveCardTarget(card);
 
             if (actor) {
                 // Remove o item do array de flags
@@ -379,18 +391,7 @@ activateListeners(html) {
             const effectId = tag.data('effect-id');
 
             const card = tag.closest('.monitor-card');
-            const actorId = card.data('actor-id');
-            const tokenId = card.data('token-id');
-
-            let actor;
-
-            if (tokenId) {
-                const token = canvas.tokens.get(tokenId);
-                if (token) actor = token.actor;
-            }
-            if (!actor && actorId) {
-                actor = game.actors.get(actorId);
-            }
+            const { actor } = this._resolveCardTarget(card);
 
             if (!actor || !effectId) {
                 return ui.notifications.warn("Não foi possível encontrar o efeito para remoção.");
@@ -720,16 +721,7 @@ activateListeners(html) {
             $('.gum-ctx-menu').remove();
 
             const card = $(ev.currentTarget);
-            const actorId = card.data('actor-id');
-            const tokenId = card.data('token-id');
-
-            // Busca Inteligente (Mesma do Apply)
-            let actor;
-            if (tokenId) {
-                const token = canvas.tokens.get(tokenId);
-                if (token) actor = token.actor;
-            }
-            if (!actor && actorId) actor = game.actors.get(actorId);
+            const { actor } = this._resolveCardTarget(card);
 
             if (actor) {
                 const now = Date.now();
@@ -1252,7 +1244,17 @@ activateListeners(html) {
     }
     
     // --- LÓGICA DE APLICAÇÃO ---
-async _applySelectionToActor(actor, tokenId, { keepSelection = false } = {}) {
+async _applySelectionToActor(actor, targetToken = null, { keepSelection = false } = {}) {
+        this._isApplyingSelection = true;
+        try {
+            await this._applySelectionBatch(actor, targetToken, { keepSelection });
+        } finally {
+            this._isApplyingSelection = false;
+            this.render(false);
+        }
+    }
+
+    async _applySelectionBatch(actor, targetToken = null, { keepSelection = false } = {}) {
         const currentMods = actor.getFlag("gum", "gm_modifiers") || [];
         let countMods = 0;
         let countEffects = 0;
@@ -1322,7 +1324,6 @@ async _applySelectionToActor(actor, tokenId, { keepSelection = false } = {}) {
         }
 
         if (effectUuids.length) {
-            const targetToken = tokenId ? canvas.tokens.get(tokenId) : null;
             const targets = targetToken ? [targetToken] : [{ actor }];
 
             for (const effectUuid of effectUuids) {
@@ -1340,8 +1341,6 @@ async _applySelectionToActor(actor, tokenId, { keepSelection = false } = {}) {
 
         // Garante atualização visual imediata das badges do card no Escudo do Mestre,
         // mesmo quando a criação de ActiveEffect não dispara updateActor instantaneamente.
-        this.render(false);
-
         ui.notifications.info(`Aplicado em ${actor.name}: ${countMods} modificador(es) e ${countEffects} efeito(s).`);
     }
     
@@ -1503,13 +1502,7 @@ async _applySelectionToActor(actor, tokenId, { keepSelection = false } = {}) {
         }
         await this._addItemsToGroup(groupId, [item]);
     }
-    _getBestDefense(actor, type) { 
-        let best = 0;
-        actor.items.filter(i => i.system.equipped).forEach(i => {
-if (i.system.melee_attacks) { Object.values(i.system.melee_attacks).forEach(atk => { const raw = type === 'parry' ? atk.final_parry : atk.final_block; const val = Number.parseInt(String(raw || ""), 10); if (Number.isFinite(val) && val > best) best = val; }); }
-        });
-        return best || "-"; 
-    }
+
 /**
      * Adiciona botões ao cabeçalho da janela (Ao lado do X)
      */

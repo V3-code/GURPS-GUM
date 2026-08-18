@@ -8,6 +8,25 @@ Sistema para Foundry Virtual Tabletop inspirado no GURPS, mantido pela comunidad
 
 > Projeto não oficial e sem fins lucrativos. GURPS é marca registrada de Steve Jackson Games. Este repositório não é afiliado, licenciado ou endossado pela Steve Jackson Games.
 
+**Instalação**
+
+Como o GURPS GUM ainda não está na lista oficial de sistemas do Foundry, a instalação deve ser feita manualmente via Manifest URL.
+
+Passo a passo:
+
+1. Abra o Foundry VTT
+2. Vá até a aba "Game Systems"
+3. Clique em "Install System"
+4. No campo "Manifest URL", cole o link abaixo:
+
+ https://raw.githubusercontent.com/V3-code/GURPS-GUM/master/system.json
+
+5. Clique em "Install"
+
+Pronto! O sistema será instalado automaticamente.
+
+Sempre que uma nova versão for publicada, o Foundry detectará automaticamente e permitirá atualizar o sistema.
+
 ## Visão geral
 
 O GUM oferece uma base completa para campanhas no estilo GURPS dentro do Foundry VTT, com:

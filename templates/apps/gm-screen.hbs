@@ -201,16 +201,25 @@
 <div class="monitor-card {{#if actor.isTurn}}active-turn{{/if}} {{#if actor.isDefeated}}defeated{{/if}}"
      data-actor-id="{{actor.id}}"
      data-token-id="{{actor.tokenId}}"
+     data-combatant-id="{{actor.combatantId}}"
      title="Clique para aplicar a seleção. Segure Shift para manter toda a seleção.">
 
     <div class="card-top">
         <div class="actor-identity">
             <img src="{{actor.img}}" />
             <span class="actor-name">{{actor.name}}</span>
-        </div>
+</div>
         <div class="vital-bars">
-            <div class="mini-bar hp"><div class="fill" style="width: {{actor.hp.percent}}%;"></div></div>
-            <div class="mini-bar fp"><div class="fill" style="width: {{actor.fp.percent}}%;"></div></div>
+            <div class="vital-row" title="Pontos de Vida: {{actor.hp.value}} de {{actor.hp.max}}">
+                <span class="vital-label">PV</span>
+                <div class="mini-bar hp"><div class="fill" style="width: {{actor.hp.percent}}%;"></div></div>
+                <span class="vital-value">{{actor.hp.value}}/{{actor.hp.max}}</span>
+            </div>
+            <div class="vital-row" title="Pontos de Fadiga: {{actor.fp.value}} de {{actor.fp.max}}">
+                <span class="vital-label">PF</span>
+                <div class="mini-bar fp"><div class="fill" style="width: {{actor.fp.percent}}%;"></div></div>
+                <span class="vital-value">{{actor.fp.value}}/{{actor.fp.max}}</span>
+            </div>
         </div>
     </div>
     
@@ -222,9 +231,10 @@
             <span class="sep">|</span>
         {{/if}}
         
-        <span class="def-tag" title="Esquiva"><i class="fas fa-running"></i> {{actor.defenses.dodge}}</span>
-        <span class="def-tag" title="Aparar"><i class="fas fa-swords"></i> {{actor.defenses.parry}}</span>
-        <span class="def-tag" title="Bloqueio"><i class="fas fa-shield-alt"></i> {{actor.defenses.block}}</span>
+        <span class="def-tag" title="Deslocamento atual"><i class="fas fa-running"></i> {{actor.move}}</span>
+        <span class="def-tag encumbrance-tag" title="Nível de carga"><i class="fas fa-weight-hanging"></i> {{actor.encumbrance}}</span>
+        <span class="def-tag" title="Modificador de Tamanho">MT {{actor.sizeModifier}}</span>
+        <span class="def-tag" title="Esquiva atual"><i class="fas fa-shoe-prints"></i> {{actor.defenses.dodge}}</span>
     </div>
 
     <div class="active-mods-zone">
@@ -239,8 +249,11 @@
 
         {{#if actor.activeGMEffects.length}}
             {{#each actor.activeGMEffects}}
-            <span class="active-mod-tag" data-effect-id="{{this.id}}">
-                <i class="fas fa-sparkles"></i> {{this.name}}
+            <span class="active-mod-tag {{#if this.isPending}}pending-effect{{/if}}"
+                  data-effect-id="{{this.id}}"
+                  {{#if this.isPending}}title="Efeito aplicado: {{this.statusLabel}}"{{/if}}>
+                <i class="fas {{#if this.isPending}}fa-clock{{else}}fa-sparkles{{/if}}"></i> {{this.name}}
+                {{#if this.isPending}}<small>(Pendente)</small>{{/if}}
                 <i class="fas fa-times remove-effect"></i>
             </span>
             {{/each}}

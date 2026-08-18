@@ -202,18 +202,22 @@
 .gum.gm-screen .actor-identity .actor-name { font-weight: 700; font-size: 1em; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Barras */
-.gum.gm-screen .vital-bars { display: flex; flex-direction: column; gap: 3px; width: 70px; flex-shrink: 0; }
-.gum.gm-screen .mini-bar { height: 10px; background: #000; border-radius: 5px; position: relative; overflow: hidden; border: 1px solid #333; }
+.gum.gm-screen .vital-bars { display: flex; flex-direction: column; gap: 3px; width: 112px; flex-shrink: 0; }
+.gum.gm-screen .vital-row { display: grid; grid-template-columns: 17px 1fr 38px; align-items: center; gap: 3px; }
+.gum.gm-screen .vital-label { color: #aaa; font-size: 0.65rem; font-weight: 700; }
+.gum.gm-screen .vital-value { color: #ddd; font-size: 0.68rem; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.gum.gm-screen .mini-bar { height: 8px; background: #000; border-radius: 5px; position: relative; overflow: hidden; border: 1px solid #333; }
 .gum.gm-screen .mini-bar .fill { height: 100%; transition: width 0.5s ease; }
 .gum.gm-screen .mini-bar.hp .fill { background: var(--gum-accent-green); }
 .gum.gm-screen .mini-bar.fp .fill { background: var(--gum-accent-blue); }
 
 /* Defesas */
 .gum.gm-screen .passive-defenses {
-    display: flex; justify-content: space-between; align-items: center;
+    display: flex; justify-content: space-between; align-items: center; gap: 6px;
     background: rgba(0,0,0,0.3); padding: 3px 6px; border-radius: 3px; border-top: 1px solid rgba(255,255,255,0.05);
 }
-.gum.gm-screen .def-tag { font-size: 0.8em; color: #ccc; font-weight: 500; }
+.gum.gm-screen .def-tag { font-size: 0.75em; color: #ccc; font-weight: 500; white-space: nowrap; }
+.gum.gm-screen .def-tag.encumbrance-tag { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .gum.gm-screen .def-tag i { color: #888; margin-right: 2px; }
 .gum.gm-screen .def-tag.init { color: var(--gum-accent-gold); font-weight: 700; }
 .gum.gm-screen .def-tag.init i { color: var(--gum-accent-gold); }
@@ -907,3 +911,9 @@
       grid-template-columns: 1fr;
   }
 }
+.gum.gm-screen .active-mod-tag.pending-effect {
+    background: rgba(197, 160, 91, 0.18);
+    border-color: var(--gum-accent-gold);
+    color: var(--gum-text-claro);
+}
+.gum.gm-screen .active-mod-tag.pending-effect small { color: var(--gum-accent-gold); font-size: 0.82em; }
