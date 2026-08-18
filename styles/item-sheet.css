@@ -6096,3 +6096,14 @@ color:#121114;
   padding-right: 6px;
   scrollbar-gutter: stable;
 }
+
+.gum-roll-tag-picker { display: flex; flex-direction: column; gap: 8px; }
+.gum-roll-tag-picker .roll-tag-picker-search { width: 100%; }
+.gum-roll-tag-picker .roll-tag-picker-results { max-height: min(60vh, 460px); overflow-y: auto; padding-right: 6px; scrollbar-gutter: stable; }
+.gum-roll-tag-picker .roll-tag-picker-group { margin: 0 0 6px; border: 1px solid rgba(255,255,255,.12); border-radius: 5px; padding: 5px 8px; }
+.gum-roll-tag-picker .roll-tag-picker-group summary { cursor: pointer; font-weight: 700; }
+.gum-roll-tag-picker .roll-tag-picker-option { display: flex; gap: 8px; align-items: flex-start; padding: 5px 2px; }
+.gum-roll-tag-picker .roll-tag-picker-option[hidden] { display: none; }
+.gum-roll-tag-picker .roll-tag-picker-option > span { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; }
+.gum-roll-tag-picker .roll-tag-picker-option code { opacity: .72; }
+.gum-roll-tag-picker .roll-tag-picker-option small { grid-column: 1 / -1; opacity: .75; }

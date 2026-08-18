@@ -691,9 +691,14 @@
                                                                         <div class="effect-premium-field">
                                                                             <label class="effect-premium-field-label"><i class="fas fa-tags"></i> Marcadores de finalidade da rolagem</label>
                                                                             <div class="effect-premium-field-control">
-                                                                                <input type="text" name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.roll_tags"
-                                                                                    value="{{entry.roll_tags}}" placeholder="Ex: poison, pain, fear" />
-                                                                                <p class="effect-premium-field-hint">Separe por vírgula. Marcadores personalizados são aceitos e tornam a entrada exclusiva da rolagem.</p>
+                                                                               <div class="modifier-entry-label-line">
+                                                                                    <input type="text" name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.roll_tags"
+                                                                                        value="{{entry.roll_tags}}" placeholder="Ex: resistance.poison, source.magic" />
+                                                                                    <button type="button" class="open-roll-tag-picker effect-premium-icon-button"
+                                                                                        data-target-input="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.roll_tags"
+                                                                                        title="Selecionar marcadores" aria-label="Selecionar marcadores"><i class="fas fa-tags" aria-hidden="true"></i></button>
+                                                                                </div>
+                                                                                <p class="effect-premium-field-hint">Separe por vírgula. Tags personalizadas são aceitas. Use “Pelo menos um” para qualquer tag ou “Todos” para exigir todas.</p>
                                                                             </div>
                                                                         </div>
 

@@ -1,4 +1,5 @@
 // GUM/scripts/apps/effect-sheet.js
+import { getGroupedRollTags, isKnownRollTag, normalizeRollTags } from "../../module/utils/roll-tags.mjs";
 
 const { ItemSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -495,6 +496,37 @@ activateListeners(html) {
                 cancel: { icon: '<i class="fas fa-times"></i>', label: 'Cancelar' }
             },
             default: 'ok'
+        }).render(true);
+    });
+    html.on('click', '.open-roll-tag-picker', (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const input = this.form?.querySelector(`[name="${ev.currentTarget.dataset.targetInput}"]`);
+        if (!input) return;
+        const selected = normalizeRollTags(input.value);
+        const custom = selected.filter(tag => !isKnownRollTag(tag));
+        const esc = value => String(value).replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[char]);
+        const groups = getGroupedRollTags(selected).map(group => `<details class="roll-tag-picker-group" open><summary>${esc(group.label)}</summary>${group.tags.map(tag => `
+          <label class="roll-tag-picker-option" data-search="${esc(`${tag.label} ${tag.id} ${tag.description}`.toLowerCase())}">
+            <input type="checkbox" name="roll-tag" value="${esc(tag.id)}" ${tag.selected ? "checked" : ""}>
+            <span><strong>${esc(tag.label)}</strong><code>${esc(tag.id)}</code><small>${esc(tag.description)}</small></span>
+          </label>`).join("")}</details>`).join("");
+        const customContent = custom.length ? `<details class="roll-tag-picker-group" open><summary>Personalizadas/legadas</summary>${custom.map(tag => `<label class="roll-tag-picker-option" data-search="${esc(tag)}"><input type="checkbox" name="roll-tag" value="${esc(tag)}" checked><span><strong>${esc(tag)}</strong><small>Tag personalizada (correspondência exata).</small></span></label>`).join("")}</details>` : "";
+        new Dialog({
+            title: "Selecionar marcadores de finalidade",
+            content: `<div class="gum-roll-tag-picker"><input type="search" class="roll-tag-picker-search" placeholder="Buscar por nome, identificador ou descrição"><div class="roll-tag-picker-results">${customContent}${groups}</div></div>`,
+            render: dlgHtml => dlgHtml.find('.roll-tag-picker-search').on('input', searchEvent => {
+                const query = searchEvent.currentTarget.value.trim().toLowerCase();
+                dlgHtml.find('.roll-tag-picker-option').each((_index, option) => option.hidden = Boolean(query && !option.dataset.search.includes(query)));
+            }),
+            buttons: {
+                ok: { icon: '<i class="fas fa-check"></i>', label: 'Aplicar', callback: dlgHtml => {
+                    input.value = normalizeRollTags(dlgHtml.find('input[name="roll-tag"]:checked').toArray().map(element => element.value)).join(', ');
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                }},
+                cancel: { icon: '<i class="fas fa-times"></i>', label: 'Cancelar' }
+            }, default: 'ok'
         }).render(true);
     });
     html.find(".duration-mode-select").on("change", async (ev) => {

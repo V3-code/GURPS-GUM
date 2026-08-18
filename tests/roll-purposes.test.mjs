@@ -1,80 +1,80 @@
-import test from "node:test";
-import assert from "node:assert/strict";
-import {
-  getGroupedRollPurposes,
-  getPurposeLabels,
-  matchesRollTags,
-  normalizePurposeIds,
-  resolveRollMetadata,
-  shouldIncludeInPermanentNh
-} from "../module/utils/roll-purposes.mjs";
+import test from "node:test"; 
+import assert from "node:assert/strict"; 
+import { ROLL_PURPOSES, getGroupedRollPurposes, getPurposeLabels, matchesRollTags, normalizePurposeIds, resolveRollMetadata, shouldIncludeInPermanentNh } from "../module/utils/roll-purposes.mjs";
+import { ROLL_TAG_ALIASES, ROLL_TAG_CATALOG, expandRollTags, getGroupedRollTags, normalizeRollTags } from "../module/utils/roll-tags.mjs";
 
-test("uma finalidade resolve seus metadados canônicos", () => {
-  assert.deepEqual(resolveRollMetadata({ context: "check_ht", attributeKey: "ht", purposeIds: ["resist_poison"] }), {
-    context: "check_ht", attributeKey: "ht", purposeIds: ["resist_poison"], rollTags: ["resistance", "poison"]
-  });
+const requiredPurposes = `general knockdown_stun recover_physical_stun consciousness regain_consciousness death resist_bleeding natural_recovery crippling_recovery pain resist_torture resist_metabolic_hazard resist_poison resist_disease resist_infection resist_paralysis resist_incapacitation resist_unconsciousness resist_nausea resist_seizure resist_addiction fright_check resist_fear resist_intimidation avoid_mental_stun recover_mental_stun self_control resist_mental_influence resist_possession maintain_concentration resist_confusion maintain_balance avoid_fall controlled_fall resist_takedown resist_knockback_fall stay_mounted break_free resist_suffocation resist_exertion resist_heat resist_cold resist_altitude resist_pressure resist_vacuum resist_radiation resist_acceleration resist_sleep_deprivation sleep_rest aging_check sense_general sense_vision sense_hearing sense_taste_smell sense_touch sense_detection resist_magic resist_psionic resist_supernatural_power resist_power resist_telepathy reaction_roll influence_roll resist_deception resist_interrogation`.split(" ");
+
+test("catálogo contém todas as finalidades obrigatórias e preserva os 16 IDs antigos", () => {
+  const ids = new Set(ROLL_PURPOSES.map(p => p.id));
+  requiredPurposes.forEach(id => assert.ok(ids.has(id), id));
+  `general knockdown_stun consciousness death pain resist_poison resist_disease resist_paralysis resist_incapacitation fright_check resist_fear resist_intimidation sense_vision sense_hearing sense_taste_smell sense_touch`.split(" ").forEach(id => assert.ok(ids.has(id)));
+  assert.equal(getGroupedRollPurposes().flatMap(g => g.purposes).length, requiredPurposes.length);
 });
 
-test("múltiplas finalidades unem e deduplicam tags em ordem estável", () => {
-  const result = resolveRollMetadata({ purposeIds: ["resist_poison", "resist_disease", "pain", "resist_poison"] });
-  assert.deepEqual(result.purposeIds, ["resist_poison", "resist_disease", "pain"]);
-  assert.deepEqual(result.rollTags, ["resistance", "poison", "disease", "pain"]);
+test("normalização resolve aliases, personalizadas, ordem, deduplicação e idempotência", () => {
+  const expected = ["resistance.poison", "minha_tag"];
+  assert.deepEqual(normalizeRollTags(" Poison, minha_tag, poison "), expected);
+  assert.deepEqual(normalizeRollTags(normalizeRollTags(expected)), expected);
+  Object.entries(ROLL_TAG_ALIASES).forEach(([old, canonical]) => assert.deepEqual(normalizeRollTags(old), [canonical]));
 });
 
-test("Teste Geral limpa e finalidades desconhecidas são ignoradas", () => {
-  assert.deepEqual(normalizePurposeIds(["general", "unknown"]), []);
-  assert.deepEqual(resolveRollMetadata({ purposeIds: [] }).rollTags, []);
+test("veneno expande hierarquia em ordem estável sem duplicatas", () => {
+  const tags = expandRollTags(["resistance.poison", "resistance.poison"]);
+  assert.deepEqual(tags, ["resistance.poison", "resistance.metabolic", "resistance.physical", "test.resistance"]);
+  assert.equal(new Set(tags).size, tags.length);
 });
 
-test("filtro any aceita ao menos um marcador", () => {
-  assert.equal(matchesRollTags({ roll_tags: "poison, disease", roll_tag_match: "any" }, ["poison"]), true);
-  assert.equal(matchesRollTags({ roll_tags: "poison, disease", roll_tag_match: "any" }, ["pain"]), false);
+test("any/all usam igualdade canônica e tags ancestrais", () => {
+  const poison = resolveRollMetadata({ purposeIds:["resist_poison"] }).rollTags;
+  assert.equal(matchesRollTags({roll_tags:"poison, resistance.magic",roll_tag_match:"any"}, poison), true);
+  assert.equal(matchesRollTags({roll_tags:"resistance.metabolic"}, poison), true);
+  assert.equal(matchesRollTags({roll_tags:"resistance.poison, resistance.magic",roll_tag_match:"all"}, poison), false);
+  const magicPoison = resolveRollMetadata({purposeIds:["resist_poison","resist_magic"]}).rollTags;
+  assert.equal(matchesRollTags({roll_tags:"resistance.poison, resistance.magic",roll_tag_match:"all"}, magicPoison), true);
+  assert.equal(matchesRollTags({roll_tags:"resistance.poison"}, resolveRollMetadata({purposeIds:["resist_disease"]}).rollTags), false);
 });
 
-test("filtro all exige todos os marcadores", () => {
-  assert.equal(matchesRollTags({ roll_tags: ["resistance", "poison"], roll_tag_match: "all" }, ["poison", "resistance"]), true);
-  assert.equal(matchesRollTags({ roll_tags: ["resistance", "poison"], roll_tag_match: "all" }, ["poison"]), false);
+test("Teste Geral é neutro; sem filtro preserva legado", () => {
+  assert.deepEqual(normalizePurposeIds(["general","unknown"]), []);
+  assert.deepEqual(resolveRollMetadata({purposeIds:[]}).rollTags, []);
+  assert.equal(matchesRollTags({contexts:"check"}, []), true);
+  assert.equal(matchesRollTags({roll_tags:"poison"}, []), false);
 });
 
-test("entrada antiga sem tags continua aplicável", () => {
-  assert.equal(matchesRollTags({ contexts: "check" }, []), true);
+test("nocaute e atordoamento formam um teste conjunto, separado das recuperações", () => {
+  const initial = resolveRollMetadata({purposeIds:["knockdown_stun"]}).rollTags;
+  for (const tag of ["injury.knockdown","injury.stun.physical","injury.knockdown_stun","test.survival"]) assert.ok(initial.includes(tag));
+  for (const tag of ["injury.knockdown_stun","injury.knockdown","injury.stun.physical"]) assert.equal(matchesRollTags({roll_tags:tag},initial),true);
+  for (const tag of ["recovery.stun.physical","injury.stay_conscious","recovery.consciousness","resistance.unconsciousness"]) assert.equal(matchesRollTags({roll_tags:tag},initial),false);
+  const recovery=resolveRollMetadata({purposeIds:["recover_physical_stun"]}).rollTags;
+  assert.equal(matchesRollTags({roll_tags:"injury.stun.physical"},recovery),false);
+  assert.equal(matchesRollTags({roll_tags:"knockdown, stun, injury",roll_tag_match:"all"},initial),true);
+}); 
+
+test("sentido e vetor sensorial são conceitos separados", () => {
+  const vision=resolveRollMetadata({purposeIds:["sense_vision"]}).rollTags;
+  assert.equal(matchesRollTags({roll_tags:"vector.sensory.vision"},vision),false);
+  assert.ok(ROLL_TAG_CATALOG.some(t=>t.id==="vector.sensory.vision"));
 });
 
-test("entrada com tags não se aplica ao Teste Geral", () => {
-  assert.equal(matchesRollTags({ roll_tags: "poison" }, resolveRollMetadata({ purposeIds: [] }).rollTags), false);
+test("metadados, serialização e atributo preservam finalidades combináveis", () => {
+  const ids=["resist_poison","resist_magic"];
+  const restored=JSON.parse(JSON.stringify({purposeIds:ids}));
+  assert.deepEqual(resolveRollMetadata({...restored,attributeKey:"ht"}).purposeIds,ids);
+  assert.deepEqual(resolveRollMetadata({...restored,attributeKey:"vont"}).purposeIds,ids);
+  assert.equal(ROLL_PURPOSES.find(p=>p.id==="resist_magic").role,"qualifier");
 });
 
-test("modificador semântico nunca entra no NH permanente", () => {
-  assert.equal(shouldIncludeInPermanentNh({ nh_display_mode: "include_in_nh", roll_tags: "poison" }), false);
+test("todas as tags dos perfis existem no catálogo e picker preserva personalizadas", () => {
+  const known=new Set(ROLL_TAG_CATALOG.map(t=>t.id));
+  ROLL_PURPOSES.flatMap(p=>p.tags).forEach(tag=>assert.ok(known.has(tag),tag));
+  assert.deepEqual(getGroupedRollTags("resistance.poison, minha_tag").flatMap(g=>g.tags).find(t=>t.id==="resistance.poison").selected,true);
+  assert.deepEqual(normalizeRollTags("resistance.poison, minha_tag"),["resistance.poison","minha_tag"]);
 });
 
-test("Talento legado include_in_nh permanece inalterado", () => {
-  assert.equal(shouldIncludeInPermanentNh({ nh_display_mode: "include_in_nh" }), true);
-});
-
-test("metadados preservam finalidades ao trocar HT por Vontade", () => {
-  const ids = ["resist_poison", "pain"];
-  assert.deepEqual(resolveRollMetadata({ context: "check_vont", attributeKey: "vont", purposeIds: ids }).purposeIds, ids);
-});
-
-test("seleções repetidas são idempotentes e não duplicam", () => {
-  assert.deepEqual(normalizePurposeIds(["pain", "pain", "resist_poison", "pain"]), ["pain", "resist_poison"]);
-});
-
-test("registro mantém todas as finalidades visíveis e apenas sugere atributo", () => {
-  const ht = getGroupedRollPurposes("ht", ["resist_poison"]);
-  const vont = getGroupedRollPurposes("vont", ["resist_poison"]);
-  assert.equal(ht.flatMap(group => group.purposes).length, 16);
-  assert.equal(vont.flatMap(group => group.purposes).length, 16);
-  assert.equal(vont.flatMap(group => group.purposes).find(p => p.id === "resist_poison").selected, true);
-});
-
-test("labels amigáveis não expõem identificadores", () => {
-  assert.deepEqual(getPurposeLabels(["resist_poison", "pain"]), ["Resistência a Veneno", "Dor"]);
-});
-
-test("purposeIds serializam sem perda para macros e rolagens rápidas", () => {
-  const rollData = { quick: true, purposeIds: ["fright_check", "pain"] };
-  assert.deepEqual(JSON.parse(JSON.stringify(rollData)).purposeIds, rollData.purposeIds);
-  assert.deepEqual(resolveRollMetadata(JSON.parse(JSON.stringify(rollData))).rollTags, ["resistance", "fright", "fear", "pain"]);
+test("modificador por finalidade não entra no NH permanente", () => {
+  assert.equal(shouldIncludeInPermanentNh({nh_display_mode:"include_in_nh",roll_tags:"poison"}),false);
+  assert.equal(shouldIncludeInPermanentNh({nh_display_mode:"include_in_nh"}),true);
+  assert.deepEqual(getPurposeLabels(["resist_poison"]),["Resistência a Veneno"]);
 });
