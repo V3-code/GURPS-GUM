@@ -1,5 +1,5 @@
 // GUM/scripts/apps/effect-sheet.js
-import { getGroupedRollTags, isKnownRollTag, normalizeRollTags } from "../../module/utils/roll-tags.mjs";
+import { getGroupedRollTags, isKnownRollTag, normalizeRollTags, ROLL_TAG_ALIASES } from "../../module/utils/roll-tags.mjs";
 
 const { ItemSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -503,30 +503,105 @@ activateListeners(html) {
         ev.stopPropagation();
         const input = this.form?.querySelector(`[name="${ev.currentTarget.dataset.targetInput}"]`);
         if (!input) return;
-        const selected = normalizeRollTags(input.value);
+       const selected = normalizeRollTags(input.value);
         const custom = selected.filter(tag => !isKnownRollTag(tag));
+        const matchInputName = ev.currentTarget.dataset.targetInput.replace(/\.roll_tags$/, ".roll_tag_match");
+        const matchInput = this.form?.querySelector(`[name="${matchInputName}"]`);
+        const initialMatch = matchInput?.value === "all" ? "all" : "any";
         const esc = value => String(value).replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[char]);
-        const groups = getGroupedRollTags(selected).map(group => `<details class="roll-tag-picker-group" open><summary>${esc(group.label)}</summary>${group.tags.map(tag => `
-          <label class="roll-tag-picker-option" data-search="${esc(`${tag.label} ${tag.id} ${tag.description}`.toLowerCase())}">
-            <input type="checkbox" name="roll-tag" value="${esc(tag.id)}" ${tag.selected ? "checked" : ""}>
-            <span><strong>${esc(tag.label)}</strong><code>${esc(tag.id)}</code><small>${esc(tag.description)}</small></span>
-          </label>`).join("")}</details>`).join("");
-        const customContent = custom.length ? `<details class="roll-tag-picker-group" open><summary>Personalizadas/legadas</summary>${custom.map(tag => `<label class="roll-tag-picker-option" data-search="${esc(tag)}"><input type="checkbox" name="roll-tag" value="${esc(tag)}" checked><span><strong>${esc(tag)}</strong><small>Tag personalizada (correspondência exata).</small></span></label>`).join("")}</details>` : "";
+        const fold = value => String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+        const aliasText = id => Object.entries(ROLL_TAG_ALIASES).filter(([, canonical]) => canonical === id).map(([alias]) => alias).join(" ");
+        let optionIndex = 0;
+        const optionMarkup = (tag, isCustom = false) => {
+            const checkboxId = `gum-roll-tag-${Date.now()}-${optionIndex++}`;
+            const description = isCustom ? "Tag personalizada (correspondência exata)." : tag.description;
+            const search = fold(`${tag.label} ${tag.id} ${description} ${aliasText(tag.id)} ${(tag.keywords || []).join(" ")}`);
+            return `<div class="roll-tag-picker-option${tag.selected ? " is-selected" : ""}" data-search="${esc(search)}" tabindex="0">
+              <input id="${checkboxId}" type="checkbox" name="roll-tag" value="${esc(tag.id)}" ${tag.selected ? "checked" : ""}>
+              <label for="${checkboxId}"><strong>${esc(tag.label)}</strong><code>${esc(tag.id)}</code></label>
+              <button type="button" class="roll-tag-picker-info" aria-label="Informações sobre ${esc(tag.label)}" aria-expanded="false"><i class="fas fa-info-circle" aria-hidden="true"></i><span role="tooltip">${esc(description)}</span></button>
+            </div>`;
+        };
+        const groups = getGroupedRollTags(selected).map(group => {
+            const label = group.id === "tests" ? "Categorias abrangentes" : group.label;
+            const help = group.id === "tests" ? `<span class="roll-tag-group-help" title="Categorias abrangentes alcançam todas as finalidades relacionadas." aria-label="Categorias abrangentes alcançam todas as finalidades relacionadas."><i class="fas fa-circle-info" aria-hidden="true"></i></span>` : "";
+            const selectedCount = group.tags.filter(tag => tag.selected).length;
+            return `<details class="roll-tag-picker-group" data-group="${esc(group.id)}" ${selectedCount ? "open" : ""}><summary><span>${esc(label)} ${help}</span><span class="roll-tag-group-count"><b>${selectedCount}</b>/${group.tags.length}</span></summary><div class="roll-tag-group-options">${group.tags.map(tag => optionMarkup(tag)).join("")}</div></details>`;
+        }).join("");
+        const customContent = custom.length ? `<details class="roll-tag-picker-group" data-group="custom" open><summary><span>Personalizadas e legadas</span><span class="roll-tag-group-count"><b>${custom.length}</b>/${custom.length}</span></summary><div class="roll-tag-group-options">${custom.map(id => optionMarkup({ id, label: id, selected: true }, true)).join("")}</div></details>` : "";
         new Dialog({
             title: "Selecionar marcadores de finalidade",
-            content: `<div class="gum-roll-tag-picker"><input type="search" class="roll-tag-picker-search" placeholder="Buscar por nome, identificador ou descrição"><div class="roll-tag-picker-results">${customContent}${groups}</div></div>`,
-            render: dlgHtml => dlgHtml.find('.roll-tag-picker-search').on('input', searchEvent => {
-                const query = searchEvent.currentTarget.value.trim().toLowerCase();
-                dlgHtml.find('.roll-tag-picker-option').each((_index, option) => option.hidden = Boolean(query && !option.dataset.search.includes(query)));
-            }),
+            content: `<div class="gum-roll-tag-picker">
+              <div class="roll-tag-picker-searchbox"><i class="fas fa-search" aria-hidden="true"></i><input type="search" class="roll-tag-picker-search" placeholder="Buscar marcador por nome, chave ou descrição..." aria-label="Buscar marcadores"><button type="button" class="roll-tag-search-clear" aria-label="Limpar pesquisa"><i class="fas fa-times" aria-hidden="true"></i></button></div>
+              <div class="roll-tag-picker-tools"><strong class="roll-tag-selected-summary"></strong><button type="button" class="roll-tag-clear-selection">Limpar</button><label><input type="checkbox" class="roll-tag-selected-only"> Mostrar somente selecionados</label><span class="roll-tag-result-count" aria-live="polite"></span></div>
+              <fieldset class="roll-tag-match"><legend>Correspondência</legend><label title="O modificador é aplicado quando ao menos um marcador corresponde."><input type="radio" name="picker-roll-tag-match" value="any" ${initialMatch === "any" ? "checked" : ""}> Pelo menos um</label><label title="O modificador só é aplicado quando todos os marcadores selecionados estão presentes na rolagem."><input type="radio" name="picker-roll-tag-match" value="all" ${initialMatch === "all" ? "checked" : ""}> Todas</label></fieldset>
+              <div class="roll-tag-picker-results">${customContent}${groups}<div class="roll-tag-picker-empty" hidden><strong>Nenhum marcador encontrado.</strong><span>Tente outro termo ou utilize uma tag personalizada no campo do efeito.</span></div></div>
+            </div>`,
+            render: dlgHtml => {
+                const root = dlgHtml.find('.gum-roll-tag-picker');
+                const windowElement = root.closest('.window-app').addClass('gum-roll-tag-picker-window');
+                windowElement.find('.window-header .close').attr({ title: 'Fechar', 'aria-label': 'Fechar' });
+                const search = root.find('.roll-tag-picker-search');
+                let expansionBeforeFilter = null;
+                const refresh = () => {
+                    const query = fold(search.val().trim());
+                    const selectedOnly = root.find('.roll-tag-selected-only').prop('checked');
+                    const filtering = Boolean(query || selectedOnly);
+                    if (filtering && !expansionBeforeFilter) expansionBeforeFilter = root.find('.roll-tag-picker-group').toArray().map(group => group.open);
+                    let visibleCount = 0;
+                    root.find('.roll-tag-picker-group').each((groupIndex, group) => {
+                        let groupVisible = 0, groupSelected = 0;
+                        $(group).find('.roll-tag-picker-option').each((_index, option) => {
+                            const checked = $(option).find('input[name="roll-tag"]').prop('checked');
+                            groupSelected += checked ? 1 : 0;
+                            option.hidden = Boolean((query && !option.dataset.search.includes(query)) || (selectedOnly && !checked));
+                            groupVisible += option.hidden ? 0 : 1;
+                        });
+                        group.hidden = filtering && !groupVisible;
+                        if (filtering && groupVisible) group.open = true;
+                        $(group).find('.roll-tag-group-count b').text(groupSelected);
+                        visibleCount += groupVisible;
+                    });
+                    if (!filtering && expansionBeforeFilter) {
+                        root.find('.roll-tag-picker-group').each((index, group) => group.open = expansionBeforeFilter[index]);
+                        expansionBeforeFilter = null;
+                    }
+                    const count = root.find('input[name="roll-tag"]:checked').length;
+                    root.find('.roll-tag-selected-summary').text(`${count} ${count === 1 ? "marcador selecionado" : "marcadores selecionados"}`);
+                    root.find('.roll-tag-result-count').text(`${visibleCount} ${visibleCount === 1 ? "resultado" : "resultados"}`);
+                    root.find('.roll-tag-picker-empty').prop('hidden', visibleCount !== 0);
+                    windowElement.find('[data-button="ok"]').html(`<i class="fas fa-check"></i> ${count ? `Aplicar ${count} ${count === 1 ? "marcador" : "marcadores"}` : "Aplicar"}`);
+                };
+                root.on('change', 'input[name="roll-tag"]', event => { $(event.currentTarget).closest('.roll-tag-picker-option').toggleClass('is-selected', event.currentTarget.checked); refresh(); });
+                root.on('input', '.roll-tag-picker-search', refresh);
+                root.on('change', '.roll-tag-selected-only', refresh);
+                root.on('click', '.roll-tag-search-clear', () => { search.val('').trigger('input').trigger('focus'); });
+                root.on('click', '.roll-tag-clear-selection', () => { root.find('input[name="roll-tag"]').prop('checked', false).trigger('change'); });
+                root.on('click', '.roll-tag-picker-option', event => { if ($(event.target).is('input, label, label *, button, button *')) return; $(event.currentTarget).find('input').trigger('click'); });
+                root.on('keydown', '.roll-tag-picker-option', event => { if (event.key === ' ' && event.target === event.currentTarget) { event.preventDefault(); $(event.currentTarget).find('input').trigger('click'); } });
+                root.on('click', '.roll-tag-picker-info', event => { event.stopPropagation(); const button = $(event.currentTarget); button.attr('aria-expanded', button.attr('aria-expanded') !== 'true' ? 'true' : 'false'); });
+                search.on('keydown', event => {
+                    if (event.key === 'Escape' && search.val()) { event.preventDefault(); event.stopPropagation(); search.val('').trigger('input'); }
+                    if (event.key === 'Enter') { const visible = root.find('.roll-tag-picker-option:visible'); if (visible.length === 1) { event.preventDefault(); visible.find('input').trigger('click'); } }
+                });
+                refresh();
+                search.trigger('focus');
+            },
             buttons: {
                 ok: { icon: '<i class="fas fa-check"></i>', label: 'Aplicar', callback: dlgHtml => {
                     input.value = normalizeRollTags(dlgHtml.find('input[name="roll-tag"]:checked').toArray().map(element => element.value)).join(', ');
                     input.dispatchEvent(new Event('input', { bubbles: true }));
                     input.dispatchEvent(new Event('change', { bubbles: true }));
+                    if (matchInput) {
+                        matchInput.value = dlgHtml.find('input[name="picker-roll-tag-match"]:checked').val() === "all" ? "all" : "any";
+                        matchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        matchInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
                 }},
                 cancel: { icon: '<i class="fas fa-times"></i>', label: 'Cancelar' }
             }, default: 'ok'
+        }, {
+            width: 740
         }).render(true);
     });
     html.find(".duration-mode-select").on("change", async (ev) => {
