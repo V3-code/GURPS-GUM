@@ -69,6 +69,8 @@
 .damage-application-dialog .custom-checkbox:hover {
   color: #fff;
 }
+.damage-application-dialog .custom-checkbox.is-disabled { cursor: not-allowed; opacity: 0.65; }
+.damage-application-dialog .shock-option small { color: #c5a05b; font-size: 10px; margin-left: 2px; }
 
 /* Esconde o checkbox padrão do navegador */
 .damage-application-dialog .custom-checkbox input[type="checkbox"] {

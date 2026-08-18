@@ -1,6 +1,7 @@
 import { applyContingentCondition, applyCurrentRollPrivacy, evaluateNumericFormula } from "../main.js";
 import { applySingleEffect } from "../effects-engine.js";
 import { getBodyLocationDefinition, getBodyProfile } from "../../module/config/body-profiles.js";
+import { getActiveEffectFlagSources, hasActiveEffectFlag } from "../../module/utils/active-effect-flags.mjs";
 
 export default class DamageApplicationWindow extends Application {
     
@@ -431,6 +432,12 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
         context.damage = this.damageData;
         context.attacker = this.attackerActor;
         context.target = this.targetActor;
+        const ignoreShockSources = getActiveEffectFlagSources(this.targetActor, "ignoreShock");
+        context.targetIgnoresShock = ignoreShockSources.length > 0;
+        context.ignoreShockSourceNames = ignoreShockSources
+            .map(effect => effect.name)
+            .filter(Boolean)
+            .join(", ");
         context.heavyDefense = {
             attackWeight: this._getSourceAttackWeight(),
             basicLift: this._toNumber(this.targetActor?.system?.attributes?.basic_lift?.value, 0),
@@ -1023,7 +1030,8 @@ async _onNpcResistanceRoll(effectId) {
         if (this.form) this._updateDamageCalculation(this.form);
     }
     
-      async _applyShockEffect(injury) {
+    async _applyShockEffect(injury) {
+        if (hasActiveEffectFlag(this.targetActor, "ignoreShock", true)) return 0;
         if (!this.targetActor || !game.combat) return 0;
 
         const injuryAmount = Math.max(0, Math.floor(Number(injury) || 0));
@@ -1088,7 +1096,7 @@ async _onNpcResistanceRoll(effectId) {
         return nextShockValue;
     }
 
-     _buildAttackSummaryContent({ finalInjury, poolLabel, applyAsHeal, effectsOnlyChecked, appliedEffectNames = [], contingentApplied = [], pendingEffectNames = [] }) {
+     _buildAttackSummaryContent({ finalInjury, poolLabel, applyAsHeal, effectsOnlyChecked, appliedEffectNames = [], contingentApplied = [], pendingEffectNames = [], preventedEffectNames = [] }) {
         let resultLine = '';
 
         if (applyAsHeal && finalInjury > 0) {
@@ -1132,6 +1140,11 @@ async _onNpcResistanceRoll(effectId) {
                         <p>Aguardando teste de resistência:</p>
                         ${pendingEffectNames.map(name => `<p><strong>${name}</strong></p>`).join('')}
                     </div>` : ''}
+                    ${preventedEffectNames.length > 0 ? `
+                    <div class="summary-block prevented-card">
+                        <div class="minicard-title">Efeitos Impedidos</div>
+                        ${preventedEffectNames.map(name => `<p><strong>${name}</strong></p>`).join('')}
+                    </div>` : ''}
                 </div>
             </div>`;
     }
@@ -1143,7 +1156,9 @@ async _onNpcResistanceRoll(effectId) {
         try {
             const finalInjury = this.finalInjury || 0;
             const applyAsHeal = form.querySelector('[name="special_apply_as_heal"]')?.checked;
-            const applyShock = form.querySelector('[name="special_apply_shock"]')?.checked ?? true;
+            const ignoreShockSources = getActiveEffectFlagSources(this.targetActor, "ignoreShock");
+            const targetIgnoresShock = ignoreShockSources.length > 0;
+            const applyShock = !targetIgnoresShock && (form.querySelector('[name="special_apply_shock"]')?.checked ?? true);
             const selectedPoolPath = form.querySelector('[name="damage_target_pool"]').value;
             if (!selectedPoolPath) { this.isApplying = false; return ui.notifications.error("Nenhum alvo para o dano foi selecionado."); }
             const currentPoolValue = foundry.utils.getProperty(this.targetActor, selectedPoolPath);
@@ -1183,8 +1198,13 @@ async _onNpcResistanceRoll(effectId) {
                 await this.targetActor.update({ [selectedPoolPath]: newPoolValue });
             }
 
-           const appliedEffectNames = [];
+            const appliedEffectNames = [];
             const pendingEffectNames = [];
+            const preventedEffectNames = [];
+            if (targetIgnoresShock && game.combat && !applyAsHeal && finalInjury > 0 && !effectsOnlyChecked) {
+                const sourceNames = ignoreShockSources.map(effect => effect.name).filter(Boolean).join(", ");
+                preventedEffectNames.push(sourceNames ? `Choque ignorado: ${sourceNames}` : "Choque ignorado por efeito ativo");
+            }
             let shockAppliedValue = 0;
             const pendingResistanceQueue = [];
             let pendingResistance = false;
@@ -1257,7 +1277,8 @@ async _onNpcResistanceRoll(effectId) {
                         effectsOnlyChecked,
                         appliedEffectNames,
                         contingentApplied,
-                        pendingEffectNames
+                        pendingEffectNames,
+                        preventedEffectNames
                     })
                 });
             }

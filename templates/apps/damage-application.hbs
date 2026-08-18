@@ -161,9 +161,10 @@
     <input type="number" name="special_explosion_distance" min="0" step="1" value="1" style="width: 40px; margin-left: 6px;" title="Distância em metros/hex do centro da explosão"/>
   </label>
 
-  <label class="custom-checkbox">
-    <input type="checkbox" name="special_apply_shock" checked/>
-    <span title="Aplica Choque automaticamente no próximo turno do alvo (máx. -4).">Aplicar Choque (GURPS)</span>
+  <label class="custom-checkbox shock-option {{#if targetIgnoresShock}}is-disabled{{/if}}">
+    <input type="checkbox" name="special_apply_shock" {{#unless targetIgnoresShock}}checked{{/unless}} {{#if targetIgnoresShock}}disabled{{/if}}/>
+    <span title="{{#if targetIgnoresShock}}Choque ignorado por efeito ativo{{#if ignoreShockSourceNames}}: {{ignoreShockSourceNames}}{{/if}}{{else}}Aplica Choque automaticamente no próximo turno do alvo (máx. -4).{{/if}}">Aplicar Choque (GURPS)</span>
+    {{#if targetIgnoresShock}}<small title="{{ignoreShockSourceNames}}">Ignorado por efeito ativo</small>{{/if}}
   </label>
 
   <label class="custom-checkbox">
