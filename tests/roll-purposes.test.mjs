@@ -1,6 +1,23 @@
 import test from "node:test"; 
 import assert from "node:assert/strict"; 
-import { ROLL_PURPOSES, getGroupedRollPurposes, getPurposeLabels, matchesRollTags, normalizePurposeIds, resolveRollMetadata, shouldIncludeInPermanentNh } from "../module/utils/roll-purposes.mjs";
+import { ROLL_PURPOSES, getGroupedRollPurposes, getPurposeLabels, matchesRollTags, normalizePurposeIds, normalizePurposeSearch, registerRollPurpose, resolveRollMetadata, searchRollPurposes, shouldIncludeInPermanentNh } from "../module/utils/roll-purposes.mjs";
+
+test("busca finalidades por texto, metadados e sem diferenciar acentos ou caixa", () => {
+  assert.equal(normalizePurposeSearch("  NÁUSEA "), "nausea");
+  assert.deepEqual(searchRollPurposes("NÁUSEA").map(p => p.id), ["resist_nausea"]);
+  assert.ok(searchRollPurposes("resist_poison").some(p => p.id === "resist_poison"));
+  assert.ok(searchRollPurposes("resistance.poison").some(p => p.id === "resist_poison"));
+  assert.ok(searchRollPurposes("consequencias fisicas").some(p => p.id === "resist_magic"));
+});
+
+test("keywords localizam a finalidade sem se tornarem tags", () => {
+  const original={...ROLL_PURPOSES.find(p => p.id === "resist_poison")};
+  const purpose=registerRollPurpose({...original,keywords:["apelido secreto"]});
+  assert.ok(searchRollPurposes("APELIDO").some(p => p.id === purpose.id));
+  assert.deepEqual(resolveRollMetadata({purposeIds:[purpose.id]}).rollTags, ["resistance.poison", "resistance.metabolic", "resistance.physical", "test.resistance"]);
+  assert.deepEqual(getGroupedRollPurposes(null, [], "secreto").find(group => group.id === "resistances").purposes.map(p => p.id), [purpose.id]);
+  registerRollPurpose(original);
+});
 import { ROLL_TAG_ALIASES, ROLL_TAG_CATALOG, expandRollTags, getGroupedRollTags, normalizeRollTags } from "../module/utils/roll-tags.mjs";
 
 const requiredPurposes = `general knockdown_stun recover_physical_stun consciousness regain_consciousness death resist_bleeding natural_recovery crippling_recovery pain resist_torture resist_metabolic_hazard resist_poison resist_disease resist_infection resist_paralysis resist_incapacitation resist_unconsciousness resist_nausea resist_seizure resist_addiction fright_check resist_fear resist_intimidation avoid_mental_stun recover_mental_stun self_control resist_mental_influence resist_possession maintain_concentration resist_confusion maintain_balance avoid_fall controlled_fall resist_takedown resist_knockback_fall stay_mounted break_free resist_suffocation resist_exertion resist_heat resist_cold resist_altitude resist_pressure resist_vacuum resist_radiation resist_acceleration resist_sleep_deprivation sleep_rest aging_check sense_general sense_vision sense_hearing sense_taste_smell sense_touch sense_detection resist_magic resist_psionic resist_supernatural_power resist_power resist_telepathy reaction_roll influence_roll resist_deception resist_interrogation`.split(" ");

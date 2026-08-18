@@ -5,6 +5,15 @@
         <section class="roll-purpose-panel" aria-labelledby="roll-purpose-heading">
             <div class="purpose-heading-row">
                 <h3 id="roll-purpose-heading" class="column-header">Finalidades do Teste</h3>
+                <div class="purpose-search" role="search" aria-label="Buscar finalidades">
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                    <input type="search" class="purpose-search-input" value="{{purposeSearchQuery}}"
+                           placeholder="Buscar finalidade" autocomplete="off">
+                    <button type="button" class="purpose-search-clear {{#if purposeSearchActive}}visible{{/if}}"
+                            aria-label="Limpar busca" title="Limpar busca" {{#unless purposeSearchActive}}disabled{{/unless}}>
+                        <i class="fas fa-times" aria-hidden="true"></i>
+                    </button>
+                </div>
                 <button type="button" class="purpose-general {{#unless hasPurposes}}active{{/unless}}"
                         data-purpose-id="general"
                         aria-pressed="{{#if hasPurposes}}false{{else}}true{{/if}}">
@@ -40,7 +49,8 @@
                     </div>
                 </div>
             </details>
-            {{/each}}
+             {{/each}}
+            <p class="purpose-search-empty" style="display: none;">Nenhuma finalidade encontrada.</p>
         </section>
         <h3 class="column-header modifiers-heading">Modificadores</h3>
         

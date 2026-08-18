@@ -1,6 +1,6 @@
 import { GumPreviewDialog } from "./preview-dialog.js";
 import { performGURPSRoll } from "../../scripts/main.js";
-import { getGroupedRollPurposes, getPurposeLabels, matchesRollTags, resolveRollMetadata } from "../utils/roll-purposes.mjs";
+ import { getGroupedRollPurposes, getPurposeLabels, matchesRollTags, normalizePurposeSearch, resolveRollMetadata, searchRollPurposes } from "../utils/roll-purposes.mjs";
 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
@@ -29,6 +29,7 @@ export class GurpsRollPrompt extends FormApplication {
         this.defenseMode = "normal";
         this.defenseTiming = "before";
         this.purposeIds = resolveRollMetadata({ purposeIds: rollData.purposeIds }).purposeIds;
+        this.purposeSearchQuery = "";
         // As finalidades começam recolhidas para manter o menu compacto.
         this.collapsedPurposeGroups = new Set(["survival", "resistances", "mental", "movement", "environment", "senses", "sources", "social"]);
 
@@ -1052,9 +1053,12 @@ return 'default';
         const currentOption = this.baseAttributeOptionsMap.get(this.currentBaseKey);
         context.baseAttributeLabel = this._buildBaseDetailLabel(currentOption);
         context.menuCollapsed = this.isMenuCollapsed;
+        const purposeSearchActive = Boolean(normalizePurposeSearch(this.purposeSearchQuery));
         context.purposeGroups = getGroupedRollPurposes(this.currentBaseKey, this.purposeIds)
             .filter(group => group.id !== "general")
-            .map(group => ({ ...group, isOpen: !this.collapsedPurposeGroups.has(group.id) }));
+            .map(group => ({ ...group, isOpen: purposeSearchActive || !this.collapsedPurposeGroups.has(group.id) }));
+        context.purposeSearchQuery = this.purposeSearchQuery;
+        context.purposeSearchActive = purposeSearchActive;
         context.purposeLabels = getPurposeLabels(this.purposeIds, { short: true });
         context.hasPurposes = context.purposeLabels.length > 0;
         
@@ -1221,6 +1225,8 @@ return 'default';
             await this.render(false);
         });
 
+        
+
         html.find('.menu-toggle-btn').click(ev => {
             ev.preventDefault();
             this.isMenuCollapsed = !this.isMenuCollapsed;
@@ -1240,7 +1246,55 @@ return 'default';
             await this.render(false);
         });
 
+        const purposeSearch = html.find('.purpose-search-input');
+        const applyPurposeSearch = () => {
+            const active = Boolean(normalizePurposeSearch(this.purposeSearchQuery));
+            const matches = new Set(searchRollPurposes(this.purposeSearchQuery).map(purpose => purpose.id));
+            let resultCount = 0;
+            html.find('.purpose-group').each((_, element) => {
+                const group = $(element);
+                let groupHasResults = false;
+                group.find('.purpose-item-wrapper').each((__, wrapperElement) => {
+                    const wrapper = $(wrapperElement);
+                    const matchesQuery = !active || matches.has(`${wrapper.find('.purpose-btn').data('purpose-id') || ''}`);
+                    wrapper.toggle(matchesQuery);
+                    if (matchesQuery) { groupHasResults = true; resultCount += 1; }
+                });
+                group.toggle(!active || groupHasResults);
+                element.open = active ? groupHasResults : !this.collapsedPurposeGroups.has(`${element.dataset.groupId || ''}`);
+            });
+            html.find('.purpose-search-clear').toggleClass('visible', active).prop('disabled', !active);
+            html.find('.purpose-search-empty').toggle(active && resultCount === 0);
+            return resultCount;
+        };
+        purposeSearch.on('input', ev => {
+            this.purposeSearchQuery = `${ev.currentTarget.value || ''}`;
+            applyPurposeSearch();
+        }).on('keydown', ev => {
+            if (ev.key === 'Escape') {
+                ev.preventDefault();
+                this.purposeSearchQuery = '';
+                purposeSearch.val('');
+                applyPurposeSearch();
+            } else if (ev.key === 'Enter') {
+                ev.preventDefault();
+                if (applyPurposeSearch() === 1) html.find('.purpose-item-wrapper:visible .purpose-btn').first().trigger('click');
+            }
+        });
+        html.find('.purpose-search-clear').click(ev => {
+            ev.preventDefault();
+            this.purposeSearchQuery = '';
+            purposeSearch.val('').trigger('focus');
+            applyPurposeSearch();
+        });
+        applyPurposeSearch();
+        if (normalizePurposeSearch(this.purposeSearchQuery)) {
+            purposeSearch.trigger('focus');
+            purposeSearch[0]?.setSelectionRange(this.purposeSearchQuery.length, this.purposeSearchQuery.length);
+        }
+
         html.find('.purpose-group').on('toggle', ev => {
+            if (normalizePurposeSearch(this.purposeSearchQuery)) return;
             const groupId = `${ev.currentTarget.dataset.groupId || ''}`;
             if (!groupId) return;
             if (ev.currentTarget.open) this.collapsedPurposeGroups.delete(groupId);

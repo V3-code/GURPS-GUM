@@ -568,7 +568,16 @@
 
 .roll-purpose-panel { display: flex; flex-direction: column; gap: 8px; }
 .purpose-heading-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.purpose-heading-row .column-header { flex: 3 1 0; }
+.purpose-heading-row .column-header { flex: 0 1 auto; white-space: nowrap; }
+.purpose-search { display: flex; flex: 1 1 180px; align-items: center; min-width: 120px; height: 30px; padding-left: 8px; border: 1px solid #444; border-radius: 3px; background: var(--gum-bg-dark); color: #777; }
+.purpose-search:focus-within { border-color: var(--gum-accent-gold); color: var(--gum-accent-gold); }
+.purpose-search-input { flex: 1 1 auto; min-width: 0; height: 100%; padding: 0 5px; border: 0; background: transparent; color: #ddd !important; caret-color: #ddd; box-shadow: none; -webkit-text-fill-color: #ddd; }
+.purpose-search-input:hover, .purpose-search-input:focus { color: #ddd !important; box-shadow: none; outline: 0; -webkit-text-fill-color: #ddd; }
+.purpose-search-input::placeholder { color: #888; opacity: 1; -webkit-text-fill-color: #888; }
+.purpose-search-clear { visibility: hidden; flex: 0 0 26px; width: 26px; height: 26px; margin: 0; padding: 0; border: 0; background: transparent; color: #999; }
+.purpose-search-clear.visible { visibility: visible; }
+.purpose-search-clear:hover { color: #fff; }
+.purpose-search-empty { margin: 6px 0 0; color: #999; font-size: .85em; font-style: italic; text-align: center; }
 .purpose-general { display: flex; flex: 1 1 0; align-items: center; justify-content: center; gap: 6px; min-width: 112px; margin: 0; border: 1px solid #444; border-radius: 3px; background: var(--gum-bg-dark); color: #bbb; cursor: pointer; font-size: .95em; font-weight: 700; }
 .purpose-general:hover { border-color: var(--gum-accent-gold); color: #fff; }
 .purpose-general i { visibility: hidden; }

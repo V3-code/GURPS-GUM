@@ -106,9 +106,18 @@ export const ROLL_PURPOSES = [
   {"id": "resist_interrogation", "label": "Resistência a Interrogatório", "shortLabel": "Resistência a Interrogatório", "group": "social", "tags": ["social.resist_interrogation"], "suggestedAttributes": [], "role": "primary", "description": "Teste relacionado a resistência a interrogatório."}
 ];
 const PURPOSE_BY_ID = new Map(ROLL_PURPOSES.map(p => [p.id,p]));
+export function normalizePurposeSearch(value="") { return String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR").trim(); }
+export function searchRollPurposes(query="") {
+  const terms=normalizePurposeSearch(query).split(/\s+/).filter(Boolean);
+  if (!terms.length) return [...ROLL_PURPOSES];
+  return ROLL_PURPOSES.filter(purpose => {
+    const searchable=[purpose.label,purpose.description,purpose.id,...(purpose.tags||[]),...(purpose.keywords||[])].map(normalizePurposeSearch).join(" ");
+    return terms.every(term=>searchable.includes(term));
+  });
+}
 export function registerRollPurpose(purpose) {
   if (!purpose?.id || !purpose?.label || !purpose?.group) throw new Error("Finalidade inválida: id, label e group são obrigatórios.");
-  const normalized={...purpose,id:String(purpose.id).trim(),tags:normalizeRollTags(purpose.tags),suggestedAttributes:normalizeRollTags(purpose.suggestedAttributes),role:purpose.role === "qualifier" ? "qualifier" : "primary",description:String(purpose.description||"")};
+  const normalized={...purpose,id:String(purpose.id).trim(),tags:normalizeRollTags(purpose.tags),keywords:[...new Set((Array.isArray(purpose.keywords)?purpose.keywords:[]).map(keyword=>String(keyword).trim()).filter(Boolean))],suggestedAttributes:normalizeRollTags(purpose.suggestedAttributes),role:purpose.role === "qualifier" ? "qualifier" : "primary",description:String(purpose.description||"")};
   const previous=PURPOSE_BY_ID.get(normalized.id); if(previous) ROLL_PURPOSES.splice(ROLL_PURPOSES.indexOf(previous),1,normalized); else ROLL_PURPOSES.push(normalized); PURPOSE_BY_ID.set(normalized.id,normalized); return normalized;
 }
 export function normalizePurposeIds(value) { const values=Array.isArray(value)?value:value?String(value).split(","):[]; return [...new Set(values.map(id=>String(id).trim()).filter(id=>id&&id!=="general"&&PURPOSE_BY_ID.has(id)))]; }
@@ -116,4 +125,4 @@ export function resolveRollMetadata({context="default",purposeIds=[],attributeKe
 export { matchesRollTags, normalizeRollTags };
 export function shouldIncludeInPermanentNh(entry={}) { return String(entry.nh_display_mode||"roll_only")==="include_in_nh" && normalizeRollTags(entry.roll_tags??entry.rollTags).length===0; }
 export function getPurposeLabels(ids=[],{short=false}={}) { return normalizePurposeIds(ids).map(id=>short?PURPOSE_BY_ID.get(id).shortLabel:PURPOSE_BY_ID.get(id).label); }
-export function getGroupedRollPurposes(attributeKey=null,selectedIds=[]) { const selected=new Set(normalizePurposeIds(selectedIds)); return ROLL_PURPOSE_GROUPS.map(group=>({...group,purposes:ROLL_PURPOSES.filter(p=>p.group===group.id).map(p=>({...p,selected:p.id==="general"?selected.size===0:selected.has(p.id),suggested:Boolean(attributeKey&&p.suggestedAttributes.includes(String(attributeKey).toLowerCase())),tooltip:`${p.description}${p.suggestedAttributes.length?` Atributo usual: ${p.suggestedAttributes.map(k=>k==="vont"?"Vont":k.toUpperCase()).join("/")}.`:""}`}))})); }
+export function getGroupedRollPurposes(attributeKey=null,selectedIds=[],searchQuery="") { const selected=new Set(normalizePurposeIds(selectedIds)); const matches=new Set(searchRollPurposes(searchQuery).map(p=>p.id)); return ROLL_PURPOSE_GROUPS.map(group=>({...group,purposes:ROLL_PURPOSES.filter(p=>p.group===group.id&&matches.has(p.id)).map(p=>({...p,selected:p.id==="general"?selected.size===0:selected.has(p.id),suggested:Boolean(attributeKey&&p.suggestedAttributes.includes(String(attributeKey).toLowerCase())),tooltip:`${p.description}${p.suggestedAttributes.length?` Atributo usual: ${p.suggestedAttributes.map(k=>k==="vont"?"Vont":k.toUpperCase()).join("/")}.`:""}`}))})); }
