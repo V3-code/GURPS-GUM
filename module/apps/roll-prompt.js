@@ -36,7 +36,7 @@ export class GurpsRollPrompt extends FormApplication {
         this.purposeIds = resolveRollMetadata({ purposeIds: rollData.purposeIds }).purposeIds;
         this.purposeSearchQuery = "";
         // As finalidades começam recolhidas para manter o menu compacto.
-        this.collapsedPurposeGroups = new Set(["survival", "resistances", "mental", "movement", "environment", "senses", "sources", "social"]);
+        this.collapsedPurposeGroups = new Set(["survival", "resistances", "mental", "movement", "environment", "senses", "sources", "vectors", "social", "circumstances"]);
 
         this.context = this._determineContext();
         this.counterEffectsNotice = null;

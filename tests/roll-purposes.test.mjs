@@ -21,7 +21,7 @@ test("keywords localizam a finalidade sem se tornarem tags", () => {
 import { ROLL_TAG_ALIASES, ROLL_TAG_CATALOG, expandRollTags, getGroupedRollTags, normalizeRollTags } from "../module/utils/roll-tags.mjs";
 import { buildPurposeQuickView, buildPurposeQuickViewContent, calculatePurposePreviewHeight, getRollPurposeById, PurposeQuickView } from "../module/apps/purpose-quick-view.mjs";
 
-const requiredPurposes = `general knockdown_stun recover_physical_stun consciousness regain_consciousness death resist_bleeding natural_recovery crippling_recovery pain resist_torture resist_metabolic_hazard resist_poison resist_disease resist_infection resist_paralysis resist_incapacitation resist_unconsciousness resist_nausea resist_seizure resist_addiction fright_check resist_fear resist_intimidation avoid_mental_stun recover_mental_stun self_control resist_mental_influence resist_possession maintain_concentration resist_confusion maintain_balance avoid_fall controlled_fall resist_takedown resist_knockback_fall stay_mounted break_free resist_suffocation resist_exertion resist_heat resist_cold resist_altitude resist_pressure resist_vacuum resist_radiation resist_acceleration resist_sleep_deprivation sleep_rest aging_check sense_general sense_vision sense_hearing sense_taste_smell sense_touch sense_detection resist_magic resist_psionic resist_supernatural_power resist_power resist_telepathy reaction_roll influence_roll resist_deception resist_interrogation`.split(" ");
+const requiredPurposes = `general knockdown_stun recover_physical_stun consciousness regain_consciousness death resist_bleeding natural_recovery crippling_recovery pain resist_torture resist_metabolic_hazard resist_poison resist_disease resist_infection resist_paralysis resist_incapacitation resist_unconsciousness resist_nausea resist_seizure resist_addiction resist_alcohol fright_check resist_fear resist_intimidation avoid_mental_stun recover_mental_stun self_control resist_mental_influence resist_possession maintain_concentration resist_confusion memorize recall_information prolonged_mental_task creativity maintain_balance avoid_fall controlled_fall resist_takedown resist_knockback_fall stay_mounted break_free resist_suffocation resist_exertion resist_heat resist_cold resist_altitude resist_pressure resist_vacuum resist_radiation resist_acceleration resist_sleep_deprivation sleep_rest aging_check sense_general sense_vision sense_hearing sense_taste_smell sense_smell sense_taste sense_touch sense_detection resist_magic resist_psionic resist_supernatural_power resist_power resist_telepathy sensory_vector_vision sensory_vector_hearing sensory_vector_smell sensory_vector_taste sensory_vector_touch sensory_vector_smell_taste inhaled_agent reaction_roll influence_roll resist_deception resist_interrogation be_heard appear_honest fashion_context healthy_appearance unnecessary_risk`.split(" ");
 
 test("catálogo contém todas as finalidades obrigatórias e preserva os 16 IDs antigos", () => {
   const ids = new Set(ROLL_PURPOSES.map(p => p.id));
@@ -191,4 +191,52 @@ test("quick view remove o rodapé vazio do Dialog antes de medir o card", () => 
     delete globalThis.requestAnimationFrame;
     delete globalThis.window;
   }
+});
+
+test("novas tags existem e preservam hierarquias específicas e legadas", () => {
+  const requiredTags = `mental.memory mental.memory.memorize mental.memory.recall mental.task.prolonged mental.creativity sense.smell sense.taste vector.sensory.smell vector.sensory.taste vector.inhaled resistance.alcohol communication.be_heard social.appear_honest social.fashion social.healthy_appearance risk.unnecessary`.split(" ");
+  const known = new Set(ROLL_TAG_CATALOG.map(tag => tag.id));
+  requiredTags.forEach(tag => assert.ok(known.has(tag), tag));
+  assert.deepEqual(expandRollTags("sense.smell").slice(0, 2), ["sense.smell", "sense.smell_taste"]);
+  assert.deepEqual(expandRollTags("sense.taste").slice(0, 2), ["sense.taste", "sense.smell_taste"]);
+  assert.ok(expandRollTags("resistance.alcohol").includes("resistance.metabolic"));
+});
+
+test("olfato e paladar são distintos, mas o filtro legado alcança ambos uma única vez", () => {
+  const smell = resolveRollMetadata({ purposeIds: ["sense_smell"] }).rollTags;
+  const taste = resolveRollMetadata({ purposeIds: ["sense_taste"] }).rollTags;
+  assert.equal(matchesRollTags({ roll_tags: "sense.smell" }, taste), false);
+  assert.equal(matchesRollTags({ roll_tags: "sense.taste" }, smell), false);
+  assert.equal(matchesRollTags({ roll_tags: "sense.smell_taste" }, smell), true);
+  assert.equal(matchesRollTags({ roll_tags: "sense.smell_taste" }, taste), true);
+  const actions = [{ roll_tags: "sense.smell,sense.taste", roll_tag_match: "any", modifier: 2 }];
+  const combined = resolveRollMetadata({ purposeIds: ["sense_smell", "sense_taste"] }).rollTags;
+  assert.equal(actions.filter(action => matchesRollTags(action, combined)).reduce((sum, action) => sum + action.modifier, 0), 2);
+});
+
+test("vetor visual não produz nem corresponde à tag de teste de visão", () => {
+  const vector = resolveRollMetadata({ purposeIds: ["sensory_vector_vision"] }).rollTags;
+  assert.ok(vector.includes("vector.sensory.vision"));
+  assert.equal(vector.includes("sense.vision"), false);
+  assert.equal(matchesRollTags({ roll_tags: "sense.vision" }, vector), false);
+});
+
+test("novos qualificadores combinam com finalidades principais e a busca cobre variações", () => {
+  const ids = ["resist_incapacitation", "sensory_vector_vision", "inhaled_agent", "unnecessary_risk"];
+  assert.deepEqual(resolveRollMetadata({ purposeIds: ids }).purposeIds, ids);
+  for (const id of ids.slice(1)) assert.equal(ROLL_PURPOSES.find(p => p.id === id).role, "qualifier");
+  for (const [query, id] of [["MEMÓRIA", "memorize"], ["memoria", "memorize"], ["fumaca", "inhaled_agent"], ["álcool", "resist_alcohol"], ["saudavel", "healthy_appearance"]]) {
+    assert.ok(searchRollPurposes(query).some(p => p.id === id), `${query} -> ${id}`);
+  }
+});
+
+test("quick view expõe tags diretas, herdadas, tipo e ajuda das novas finalidades", () => {
+  const smell = buildPurposeQuickView("sense_smell");
+  assert.deepEqual(smell.directTags, ["sense.smell"]);
+  assert.ok(smell.inheritedTags.includes("sense.smell_taste"));
+  assert.ok(smell.distinctions.length && smell.references.length);
+  const vector = buildPurposeQuickView("sensory_vector_smell");
+  assert.equal(vector.groupLabel, "Vetores e Agentes");
+  assert.equal(vector.roleLabel, "Qualificador");
+  assert.ok(vector.inheritedTags.includes("vector.sensory.smell_taste"));
 });

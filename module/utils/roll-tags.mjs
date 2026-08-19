@@ -3,7 +3,8 @@ export const ROLL_TAG_GROUPS = Object.freeze([
   ["physical_resistance", "Resistências físicas"], ["mental", "Mentais e comportamentais"],
   ["movement", "Equilíbrio, quedas e movimento"], ["environment", "Ambiente e fisiologia"],
   ["senses", "Sentidos"], ["supernatural", "Fontes e poderes"],
-  ["social", "Sociais"], ["vectors", "Vetores sensoriais"]
+  ["social", "Sociais e comunicação"], ["vectors", "Vetores e agentes"],
+  ["circumstances", "Circunstâncias"]
 ].map(([id, label]) => Object.freeze({ id, label })));
 
 const definitions = [
@@ -17,26 +18,31 @@ const definitions = [
   ["resistance.physical","Resistência física","physical_resistance",["test.resistance"]], ["resistance.metabolic","Perigo metabólico","physical_resistance",["resistance.physical"]],
   ["resistance.poison","Veneno","physical_resistance",["resistance.metabolic"]], ["resistance.disease","Doença","physical_resistance",["resistance.metabolic"]],
   ["resistance.infection","Infecção","physical_resistance",["resistance.disease"]], ["resistance.addiction","Dependência/abstinência","physical_resistance",["resistance.metabolic"]],
+  ["resistance.alcohol","Álcool","physical_resistance",["resistance.metabolic"]],
   ["resistance.paralysis","Paralisia","physical_resistance",["resistance.physical"]], ["resistance.incapacitation","Incapacitação","physical_resistance",["resistance.physical"]],
   ["resistance.unconsciousness","Sono, coma ou inconsciência","physical_resistance",["resistance.incapacitation"]], ["resistance.nausea","Náusea","physical_resistance",["resistance.physical"]], ["resistance.seizure","Convulsões","physical_resistance",["resistance.physical"]],
   ["resistance.mental","Resistência mental","mental",["test.resistance"]], ["resistance.fear","Medo","mental",["resistance.mental"]], ["mental.fright_check","Verificação de pânico","mental",["resistance.fear"]],
   ["resistance.intimidation","Intimidação","mental",["resistance.mental"]], ["mental.stun.avoid","Evitar atordoamento mental","mental"], ["mental.stun.recover","Recuperar atordoamento mental","mental"],
   ["mental.self_control","Autocontrole","mental"], ["resistance.mental_influence","Influência mental","mental",["resistance.mental"]], ["resistance.possession","Possessão","mental",["resistance.mental"]],
   ["mental.concentration","Concentração","mental"], ["resistance.confusion","Confusão ou alucinação","mental",["resistance.mental"]],
+  ["mental.memory","Memória","mental"], ["mental.memory.memorize","Memorizar","mental",["mental.memory"]], ["mental.memory.recall","Recordar","mental",["mental.memory"]],
+  ["mental.task.prolonged","Tarefa Mental Prolongada","mental"], ["mental.creativity","Criatividade e Inventividade","mental"],
   ["movement.balance","Equilíbrio","movement"], ["movement.avoid_fall","Evitar queda","movement"], ["movement.controlled_fall","Queda controlada","movement"], ["movement.takedown","Derrubada","movement"],
   ["movement.knockback_fall","Permanecer de pé após projeção","movement"], ["movement.mounted","Permanecer montado","movement"], ["movement.break_free","Libertar-se","movement"],
   ["resistance.environmental","Resistência ambiental","environment",["resistance.physical"]],
   ...["suffocation","exertion","heat","cold","altitude","pressure","vacuum","radiation","acceleration","sleep_deprivation"].map(id => [`environment.${id}`, id.replaceAll("_"," "), "environment", ["resistance.environmental"]]),
   ["environment.sleep_rest","Adormecer ou obter descanso","environment"], ["environment.aging","Envelhecimento","environment",["resistance.physical"]],
   ["sense.general","Sentidos em geral","senses",["test.sense"]], ["sense.vision","Visão","senses",["sense.general"]], ["sense.hearing","Audição","senses",["sense.general"]],
-  ["sense.smell_taste","Paladar ou olfato","senses",["sense.general"]], ["sense.touch","Tato","senses",["sense.general"]], ["sense.detection","Detecção","senses",["sense.general"]],
+  ["sense.smell_taste","Paladar ou olfato","senses",["sense.general"]], ["sense.smell","Olfato","senses",["sense.smell_taste"]], ["sense.taste","Paladar","senses",["sense.smell_taste"]], ["sense.touch","Tato","senses",["sense.general"]], ["sense.detection","Detecção","senses",["sense.general"]],
   ["resistance.supernatural","Resistência sobrenatural","supernatural",["test.resistance"]], ["resistance.magic","Magia","supernatural",["resistance.supernatural"]],
   ["resistance.psionic","Psiquismo","supernatural",["resistance.supernatural"]], ["resistance.telepathy","Telepatia","supernatural",["resistance.psionic"]], ["resistance.power","Poder","supernatural",["resistance.supernatural"]],
   ["source.supernatural","Fonte sobrenatural","supernatural"], ["source.magic","Fonte mágica","supernatural",["source.supernatural"]], ["source.psionic","Fonte psiônica","supernatural",["source.supernatural"]],
   ["source.telepathic","Fonte telepática","supernatural",["source.psionic"]], ["source.power","Fonte de poder","supernatural",["source.supernatural"]],
   ["social.reaction","Reação","social"], ["social.influence","Influência","social"], ["social.resist_deception","Resistir a enganação","social"], ["social.resist_interrogation","Resistir a interrogatório","social"],
+  ["communication.be_heard","Fazer-se Ouvir","social"], ["social.appear_honest","Parecer Honesto ou Confiável","social"], ["social.fashion","Moda e Estilo","social"], ["social.healthy_appearance","Aparência Saudável","social"],
   ["vector.sensory","Ataque por canal sensorial","vectors"], ["vector.sensory.vision","Canal visual","vectors",["vector.sensory"]], ["vector.sensory.hearing","Canal auditivo","vectors",["vector.sensory"]],
-  ["vector.sensory.smell_taste","Canal olfativo ou gustativo","vectors",["vector.sensory"]], ["vector.sensory.touch","Canal tátil","vectors",["vector.sensory"]]
+  ["vector.sensory.smell_taste","Canal olfativo ou gustativo","vectors",["vector.sensory"]], ["vector.sensory.smell","Canal Olfativo","vectors",["vector.sensory.smell_taste"]], ["vector.sensory.taste","Canal Gustativo","vectors",["vector.sensory.smell_taste"]], ["vector.sensory.touch","Canal tátil","vectors",["vector.sensory"]],
+  ["vector.inhaled","Agente Inalado","vectors"], ["risk.unnecessary","Risco Desnecessário","circumstances"]
 ];
 
 export const ROLL_TAG_CATALOG = Object.freeze(definitions.map(([id,label,group,parents=[]]) => Object.freeze({ id, label, group, parents, selectable: true, description: `Rolagens relacionadas a ${label.toLowerCase()}.` })));

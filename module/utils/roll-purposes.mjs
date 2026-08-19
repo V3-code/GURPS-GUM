@@ -29,13 +29,21 @@ export const ROLL_PURPOSE_GROUPS = Object.freeze([
     "id": "senses",
     "label": "Sensoriais"
   },
-  {
+{
     "id": "sources",
     "label": "Fontes e Poderes"
   },
   {
+    "id": "vectors",
+    "label": "Vetores e Agentes"
+  },
+  {
     "id": "social",
     "label": "Sociais"
+  },
+  {
+    "id": "circumstances",
+    "label": "Circunstâncias"
   }
 ]);
 export const ROLL_PURPOSES = [
@@ -60,6 +68,7 @@ export const ROLL_PURPOSES = [
   {"id": "resist_nausea", "label": "Resistência a Náusea", "shortLabel": "Resistência a Náusea", "group": "resistances", "tags": ["resistance.nausea"], "suggestedAttributes": ["ht"], "role": "primary", "description": "Teste relacionado a resistência a náusea."},
   {"id": "resist_seizure", "label": "Resistência a Convulsões", "shortLabel": "Resistência a Convulsões", "group": "resistances", "tags": ["resistance.seizure"], "suggestedAttributes": ["ht"], "role": "primary", "description": "Teste relacionado a resistência a convulsões."},
   {"id": "resist_addiction", "label": "Dependência/Abstinência", "shortLabel": "Dependência/Abstinência", "group": "resistances", "tags": ["resistance.addiction"], "suggestedAttributes": ["ht"], "role": "primary", "description": "Teste relacionado a dependência/abstinência."},
+  {"id": "resist_alcohol", "label": "Resistência ao Álcool", "shortLabel": "Resistência ao Álcool", "group": "resistances", "tags": ["resistance.alcohol"], "suggestedAttributes": ["ht"], "role": "primary", "description": "Use ao resistir aos efeitos do álcool e da embriaguez.", "keywords": ["álcool", "alcool", "bebida", "embriaguez"]},
   {"id": "fright_check", "label": "Verificação de Pânico", "shortLabel": "Verificação de Pânico", "group": "mental", "tags": ["mental.fright_check"], "suggestedAttributes": ["vont"], "role": "primary", "description": "Teste relacionado a verificação de pânico."},
   {"id": "resist_fear", "label": "Resistência ao Medo", "shortLabel": "Resistência ao Medo", "group": "mental", "tags": ["resistance.fear"], "suggestedAttributes": ["vont"], "role": "primary", "description": "Teste relacionado a resistência ao medo."},
   {"id": "resist_intimidation", "label": "Resistência à Intimidação", "shortLabel": "Resistência à Intimidação", "group": "mental", "tags": ["resistance.intimidation"], "suggestedAttributes": ["vont"], "role": "primary", "description": "Teste relacionado a resistência à intimidação."},
@@ -70,6 +79,10 @@ export const ROLL_PURPOSES = [
   {"id": "resist_possession", "label": "Resistência a Possessão", "shortLabel": "Resistência a Possessão", "group": "mental", "tags": ["resistance.possession"], "suggestedAttributes": ["vont"], "role": "primary", "description": "Teste relacionado a resistência a possessão."},
   {"id": "maintain_concentration", "label": "Manter a Concentração", "shortLabel": "Manter a Concentração", "group": "mental", "tags": ["mental.concentration"], "suggestedAttributes": ["vont"], "role": "primary", "description": "Teste relacionado a manter a concentração."},
   {"id": "resist_confusion", "label": "Resistência a Confusão/Alucinação", "shortLabel": "Resistência a Confusão/Alucinação", "group": "mental", "tags": ["resistance.confusion"], "suggestedAttributes": ["vont"], "role": "primary", "description": "Teste relacionado a resistência a confusão/alucinação."},
+  {"id": "memorize", "label": "Memorizar", "shortLabel": "Memorizar", "group": "mental", "tags": ["mental.memory.memorize"], "suggestedAttributes": ["iq"], "role": "primary", "description": "Use ao fixar deliberadamente informações novas na memória.", "keywords": ["memorizar", "decorar", "memória", "memoria"]},
+  {"id": "recall_information", "label": "Recordar Informação", "shortLabel": "Recordar Informação", "group": "mental", "tags": ["mental.memory.recall"], "suggestedAttributes": ["iq"], "role": "primary", "description": "Use ao lembrar ou recuperar uma informação já aprendida.", "keywords": ["lembrar", "recordação", "recordacao", "memória", "memoria"]},
+  {"id": "prolonged_mental_task", "label": "Tarefa Mental Prolongada", "shortLabel": "Tarefa Mental Prolongada", "group": "mental", "tags": ["mental.task.prolonged"], "suggestedAttributes": ["iq"], "role": "primary", "description": "Use para uma tarefa intelectual que exige esforço sustentado por longo período.", "keywords": ["tarefa", "mental", "prolongada", "persistência", "persistencia"]},
+  {"id": "creativity", "label": "Criatividade/Inventividade", "shortLabel": "Criatividade/Inventividade", "group": "mental", "tags": ["mental.creativity"], "suggestedAttributes": ["iq"], "role": "primary", "description": "Use para criar, improvisar ou encontrar uma solução inventiva.", "keywords": ["inventar", "criatividade", "inventividade", "improvisar"]},
   {"id": "maintain_balance", "label": "Manter o Equilíbrio", "shortLabel": "Manter o Equilíbrio", "group": "movement", "tags": ["movement.balance"], "suggestedAttributes": [], "role": "primary", "description": "Teste relacionado a manter o equilíbrio."},
   {"id": "avoid_fall", "label": "Evitar uma Queda", "shortLabel": "Evitar uma Queda", "group": "movement", "tags": ["movement.avoid_fall"], "suggestedAttributes": [], "role": "primary", "description": "Teste relacionado a evitar uma queda."},
   {"id": "controlled_fall", "label": "Queda Controlada/Amortecer Queda", "shortLabel": "Queda Controlada/Amortecer Queda", "group": "movement", "tags": ["movement.controlled_fall"], "suggestedAttributes": [], "role": "primary", "description": "Teste relacionado a queda controlada/amortecer queda."},
@@ -93,6 +106,8 @@ export const ROLL_PURPOSES = [
   {"id": "sense_vision", "label": "Visão", "shortLabel": "Visão", "group": "senses", "tags": ["sense.vision"], "suggestedAttributes": ["per"], "role": "primary", "description": "Teste relacionado a visão."},
   {"id": "sense_hearing", "label": "Audição", "shortLabel": "Audição", "group": "senses", "tags": ["sense.hearing"], "suggestedAttributes": ["per"], "role": "primary", "description": "Teste relacionado a audição."},
   {"id": "sense_taste_smell", "label": "Paladar/Olfato", "shortLabel": "Paladar/Olfato", "group": "senses", "tags": ["sense.smell_taste"], "suggestedAttributes": ["per"], "role": "primary", "description": "Teste relacionado a paladar/olfato."},
+  {"id": "sense_smell", "label": "Olfato", "shortLabel": "Olfato", "group": "senses", "tags": ["sense.smell"], "suggestedAttributes": ["per"], "role": "primary", "description": "Use para perceber, identificar ou discriminar cheiros pelo olfato.", "keywords": ["olfato", "cheiro", "olfativo"]},
+  {"id": "sense_taste", "label": "Paladar", "shortLabel": "Paladar", "group": "senses", "tags": ["sense.taste"], "suggestedAttributes": ["per"], "role": "primary", "description": "Use para perceber, identificar ou discriminar sabores pelo paladar.", "keywords": ["paladar", "gosto", "sabor", "gustativo"]},
   {"id": "sense_touch", "label": "Tato", "shortLabel": "Tato", "group": "senses", "tags": ["sense.touch"], "suggestedAttributes": ["per"], "role": "primary", "description": "Teste relacionado a tato."},
   {"id": "sense_detection", "label": "Detecção", "shortLabel": "Detecção", "group": "senses", "tags": ["sense.detection"], "suggestedAttributes": ["per"], "role": "primary", "description": "Teste relacionado a detecção."},
   {"id": "resist_magic", "label": "Resistência à Magia", "shortLabel": "Resistência à Magia", "group": "sources", "tags": ["resistance.magic", "source.magic"], "suggestedAttributes": ["vont"], "role": "qualifier", "description": "Qualificador para resistência direta à fonte; não se aplica automaticamente a consequências físicas indiretas."},
@@ -100,10 +115,22 @@ export const ROLL_PURPOSES = [
   {"id": "resist_supernatural_power", "label": "Resistência Sobrenatural", "shortLabel": "Resistência Sobrenatural", "group": "sources", "tags": ["resistance.supernatural", "source.supernatural"], "suggestedAttributes": ["vont"], "role": "qualifier", "description": "Qualificador para resistência direta à fonte; não se aplica automaticamente a consequências físicas indiretas."},
   {"id": "resist_power", "label": "Resistência a Poder", "shortLabel": "Resistência a Poder", "group": "sources", "tags": ["resistance.power", "source.power"], "suggestedAttributes": ["vont"], "role": "qualifier", "description": "Qualificador para resistência direta à fonte; não se aplica automaticamente a consequências físicas indiretas."},
   {"id": "resist_telepathy", "label": "Resistência Telepática", "shortLabel": "Resistência Telepática", "group": "sources", "tags": ["resistance.telepathy", "source.telepathic"], "suggestedAttributes": ["vont"], "role": "qualifier", "description": "Qualificador para resistência direta à fonte; não se aplica automaticamente a consequências físicas indiretas."},
+  {"id": "sensory_vector_vision", "label": "Ataque por Canal Visual", "shortLabel": "Canal Visual", "group": "vectors", "tags": ["vector.sensory.vision"], "suggestedAttributes": [], "role": "qualifier", "description": "Use quando o ataque ou efeito chega pelo canal visual.", "keywords": ["visual", "visão", "visao"]},
+  {"id": "sensory_vector_hearing", "label": "Ataque por Canal Auditivo", "shortLabel": "Canal Auditivo", "group": "vectors", "tags": ["vector.sensory.hearing"], "suggestedAttributes": [], "role": "qualifier", "description": "Use quando o ataque ou efeito chega pelo canal auditivo.", "keywords": ["auditivo", "audição", "audicao", "ouvir"]},
+  {"id": "sensory_vector_smell", "label": "Ataque por Canal Olfativo", "shortLabel": "Canal Olfativo", "group": "vectors", "tags": ["vector.sensory.smell"], "suggestedAttributes": [], "role": "qualifier", "description": "Use quando o ataque ou efeito chega especificamente pelo olfato.", "keywords": ["olfativo", "olfato", "cheiro"]},
+  {"id": "sensory_vector_taste", "label": "Ataque por Canal Gustativo", "shortLabel": "Canal Gustativo", "group": "vectors", "tags": ["vector.sensory.taste"], "suggestedAttributes": [], "role": "qualifier", "description": "Use quando o ataque ou efeito chega especificamente pelo paladar.", "keywords": ["gustativo", "paladar", "gosto"]},
+  {"id": "sensory_vector_touch", "label": "Ataque por Canal Tátil", "shortLabel": "Canal Tátil", "group": "vectors", "tags": ["vector.sensory.touch"], "suggestedAttributes": [], "role": "qualifier", "description": "Use quando o ataque ou efeito chega pelo contato ou canal tátil.", "keywords": ["tátil", "tatil", "toque"]},
+  {"id": "sensory_vector_smell_taste", "label": "Ataque por Canal Olfativo ou Gustativo", "shortLabel": "Canal Olfativo/Gustativo", "group": "vectors", "tags": ["vector.sensory.smell_taste"], "suggestedAttributes": [], "role": "qualifier", "description": "Use para um vetor comum que pode agir pelo olfato ou pelo paladar.", "keywords": ["olfativo", "gustativo", "olfato", "paladar"]},
+  {"id": "inhaled_agent", "label": "Agente Inalado", "shortLabel": "Agente Inalado", "group": "vectors", "tags": ["vector.inhaled"], "suggestedAttributes": [], "role": "qualifier", "description": "Use quando gás, fumaça ou outro agente precisa ser respirado ou inalado.", "keywords": ["respirar", "inalar", "gás", "gas", "fumaça", "fumaca"]},
   {"id": "reaction_roll", "label": "Teste de Reação", "shortLabel": "Teste de Reação", "group": "social", "tags": ["social.reaction"], "suggestedAttributes": [], "role": "primary", "description": "Teste relacionado a teste de reação."},
   {"id": "influence_roll", "label": "Teste de Influência", "shortLabel": "Teste de Influência", "group": "social", "tags": ["social.influence"], "suggestedAttributes": [], "role": "primary", "description": "Teste relacionado a teste de influência."},
   {"id": "resist_deception", "label": "Resistência a Enganação", "shortLabel": "Resistência a Enganação", "group": "social", "tags": ["social.resist_deception"], "suggestedAttributes": [], "role": "primary", "description": "Teste relacionado a resistência a enganação."},
-  {"id": "resist_interrogation", "label": "Resistência a Interrogatório", "shortLabel": "Resistência a Interrogatório", "group": "social", "tags": ["social.resist_interrogation"], "suggestedAttributes": [], "role": "primary", "description": "Teste relacionado a resistência a interrogatório."}
+{"id": "resist_interrogation", "label": "Resistência a Interrogatório", "shortLabel": "Resistência a Interrogatório", "group": "social", "tags": ["social.resist_interrogation"], "suggestedAttributes": [], "role": "primary", "description": "Teste relacionado a resistência a interrogatório."}
+  ,{"id": "be_heard", "label": "Fazer-se Ouvir", "shortLabel": "Fazer-se Ouvir", "group": "social", "tags": ["communication.be_heard"], "suggestedAttributes": [], "role": "primary", "description": "Use para projetar a voz e fazer-se ouvir apesar da distância ou do ruído.", "keywords": ["voz", "grito", "ouvir"]}
+  ,{"id": "appear_honest", "label": "Parecer Honesto/Confiável", "shortLabel": "Parecer Honesto", "group": "social", "tags": ["social.appear_honest"], "suggestedAttributes": [], "role": "qualifier", "description": "Use quando parecer sincero, honesto ou confiável for relevante ao teste social.", "keywords": ["sincero", "honesto", "confiável", "confiavel"]}
+  ,{"id": "fashion_context", "label": "Moda e Estilo", "shortLabel": "Moda e Estilo", "group": "social", "tags": ["social.fashion"], "suggestedAttributes": [], "role": "qualifier", "description": "Use quando conhecimento, apresentação ou adequação à moda e ao estilo forem relevantes.", "keywords": ["moda", "estilo"]}
+  ,{"id": "healthy_appearance", "label": "Aparência Saudável", "shortLabel": "Aparência Saudável", "group": "social", "tags": ["social.healthy_appearance"], "suggestedAttributes": [], "role": "qualifier", "description": "Use quando uma aparência de saúde e vitalidade influenciar o teste social.", "keywords": ["saúde", "saude", "saudável", "saudavel", "aparência", "aparencia"]}
+  ,{"id": "unnecessary_risk", "label": "Risco Desnecessário", "shortLabel": "Risco Desnecessário", "group": "circumstances", "tags": ["risk.unnecessary"], "suggestedAttributes": [], "role": "qualifier", "description": "Use quando o personagem assume voluntariamente um risco desnecessário e significativo.", "keywords": ["risco", "perigo", "ousadia"]}
 ];
 // Conteúdo editorial opcional da ajuda contextual. As tags mecânicas continuam
 // sendo definidas exclusivamente no catálogo acima e na hierarquia central.
@@ -125,6 +152,10 @@ const PURPOSE_HELP = {
     distinctions: ["Todo e qualquer teste genérico contra medo; Resistência ao Medo pode abranger situações que não usam especificamente uma Verificação de Pânico."],
     recommendedFilterTags: ["mental.fright_check"], references: ["Módulo Básico, Verificações de Pânico"]
   },
+  memorize: { distinctions: ["Recordar informação já aprendida; memorizar é o ato de fixar conteúdo novo."], recommendedFilterTags: ["mental.memory.memorize", "mental.memory"], references: ["Memória Eidética/Memória Fotográfica"] },
+  recall_information: { distinctions: ["Memorizar conteúdo novo; recordar recupera algo já aprendido."], recommendedFilterTags: ["mental.memory.recall", "mental.memory"], references: ["Memória Eidética/Memória Fotográfica"] },
+  prolonged_mental_task: { distinctions: ["Um teste mental breve ou uma simples manutenção de concentração."], references: ["Obstinado"] },
+  creativity: { distinctions: ["Recordar conhecimento ou apenas executar uma técnica conhecida."], references: ["Versátil"] },
   resist_fear: { distinctions: ["Verificação de Pânico: esta finalidade pode abranger testes contra medo que não utilizem especificamente essas regras."] },
   avoid_fall: { distinctions: ["Amortecer uma queda que já ocorreu."] },
   controlled_fall: { distinctions: ["Evitar uma queda; esta finalidade é usada depois que a queda já está ocorrendo."] },
@@ -134,8 +165,24 @@ const PURPOSE_HELP = {
   sense_vision: { distinctions: ["Resistência a ataques que utilizam a visão como vetor."] },
   sense_hearing: { distinctions: ["Resistência a ataques que utilizam a audição como vetor."] },
   sense_taste_smell: { distinctions: ["Resistência a ataques que utilizam paladar ou olfato como vetor."] },
+  sense_smell: { distinctions: ["Teste apenas de paladar.", "Ataque que usa o olfato como vetor; testar um sentido não é resistir por esse canal."], recommendedFilterTags: ["sense.smell", "sense.smell_taste"], references: ["Olfato Discriminatório e Olfato Aguçado"] },
+  sense_taste: { distinctions: ["Teste apenas de olfato.", "Ataque que usa o paladar como vetor; testar um sentido não é resistir por esse canal."], recommendedFilterTags: ["sense.taste", "sense.smell_taste"], references: ["Paladar Discriminatório e Paladar Aguçado"] },
+  
   sense_touch: { distinctions: ["Resistência a ataques que utilizam o tato como vetor."] },
-  resist_magic: { distinctions: ["Consequências físicas indiretas de uma magia; esta finalidade representa resistência direta à influência mágica."], recommendedFilterTags: ["resistance.magic"] }
+  resist_magic: { distinctions: ["Consequências físicas indiretas de uma magia; esta finalidade representa resistência direta à influência mágica."], recommendedFilterTags: ["resistance.magic"] },
+  resist_alcohol: { distinctions: ["Resistência geral a outros perigos metabólicos ou dependência/abstinência."], recommendedFilterTags: ["resistance.alcohol", "resistance.metabolic"], references: ["Tolerância ao Álcool"] },
+  sensory_vector_vision: { distinctions: ["Teste de Visão; o vetor descreve como um ataque chega, não qual sentido está sendo testado."], references: ["Sentido Protegido"] },
+  sensory_vector_hearing: { distinctions: ["Teste de Audição; o vetor descreve como um ataque chega, não qual sentido está sendo testado."], references: ["Sentido Protegido"] },
+  sensory_vector_smell: { distinctions: ["Teste de Olfato e canal gustativo."], recommendedFilterTags: ["vector.sensory.smell", "vector.sensory.smell_taste"], references: ["Sentido Protegido"] },
+  sensory_vector_taste: { distinctions: ["Teste de Paladar e canal olfativo."], recommendedFilterTags: ["vector.sensory.taste", "vector.sensory.smell_taste"], references: ["Sentido Protegido"] },
+  sensory_vector_touch: { distinctions: ["Teste de Tato."], references: ["Sentido Protegido"] },
+  sensory_vector_smell_taste: { distinctions: ["Teste de Olfato ou Paladar; esta é uma categoria de vetor de ataque."], references: ["Sentido Protegido"] },
+  inhaled_agent: { distinctions: ["Sufocamento sem agente inalado e ataques que atuam apenas por um sentido."], references: ["Pulmões com Filtro"] },
+  be_heard: { distinctions: ["Teste de Audição de quem escuta e teste social cujo conteúdo, não o alcance da voz, seja o foco."], references: ["Voz Penetrante"] },
+  appear_honest: { distinctions: ["Ser objetivamente verdadeiro; este qualificador descreve a impressão transmitida."], references: ["Rosto Sincero"] },
+  fashion_context: { distinctions: ["Reação social geral sem relação com moda ou estilo."], references: ["Por Dentro da Moda"] },
+  healthy_appearance: { distinctions: ["Resistência a doença; aqui importa somente a aparência social de saúde."], references: ["Metabolismo Impoluto"] },
+  unnecessary_risk: { distinctions: ["Perigo inevitável ou risco necessário para alcançar o objetivo."], references: ["Venturoso"] }
 };
 for (const purpose of ROLL_PURPOSES) {
   Object.assign(purpose, PURPOSE_HELP[purpose.id] || {});
