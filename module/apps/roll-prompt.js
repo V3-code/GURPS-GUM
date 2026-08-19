@@ -23,6 +23,10 @@ export class GurpsRollPrompt extends FormApplication {
         this.currentBaseLabel = "Perícia";
         this.originalBaseValue = parseInt(this.rollData.value) || 10;
         this.currentBaseValue = this.originalBaseValue;
+        // Keep the roll's original base separate from the base selected in the
+        // prompt. Re-rendering the prompt must not recalculate the relative
+        // skill level from an attribute the user has just selected.
+        this.originalBaseAttributeKey = this._resolveOriginalBaseAttributeKey();
         this.baseDelta = 0;
         this.baseModifierParts = [];
         this.baseAttributeSourceLabel = "Perícia";
@@ -760,7 +764,7 @@ return 'default';
         return parts;
     }
 
-    _getBaseAttributeKey() {
+    _resolveOriginalBaseAttributeKey() {
         const attributeKey = this.rollData.attributeKey?.toLowerCase?.() || this.rollData.attribute?.toLowerCase?.();
         if (attributeKey) return attributeKey;
         if (this.rollData.itemId) {
@@ -768,6 +772,10 @@ return 'default';
             return item?.system?.base_attribute?.toString?.().trim() || null;
         }
         return null;
+    }
+
+    _getBaseAttributeKey() {
+        return this.originalBaseAttributeKey;
     }
 
     _resolveBaseValue(key, { fallbackValue = null } = {}) {
@@ -1219,8 +1227,13 @@ return 'default';
             this.currentBaseKey = option.key;
             this.currentBaseLabel = option.label;
             this.currentBaseValue = this._computeBaseValueFromOption(option);
-            this.rollData.attributeKey = option.type === "attribute" ? option.key : this.rollData.attributeKey;
-            if (option.type === "attribute" && (this.context.startsWith("check_") || this.rollData.type === "attribute")) this.context = `check_${option.key}`;
+            if (option.type === "attribute") {
+                if (this.rollData.type === "attribute" || this.context.startsWith("check_")) {
+                    this.context = `check_${option.key}`;
+                } else if (this.rollData.type === "skill" || this.context.startsWith("skill_")) {
+                    this.context = `skill_${option.key}`;
+                }
+            }
             this.rollData.modifier = parseInt(inputManual.val()) || 0;
             await this._reloadSemanticModifiers();
             await this.render(false);
