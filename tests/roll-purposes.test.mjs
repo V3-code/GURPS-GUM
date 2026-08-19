@@ -19,7 +19,7 @@ test("keywords localizam a finalidade sem se tornarem tags", () => {
   registerRollPurpose(original);
 });
 import { ROLL_TAG_ALIASES, ROLL_TAG_CATALOG, expandRollTags, getGroupedRollTags, normalizeRollTags } from "../module/utils/roll-tags.mjs";
-import { buildPurposeQuickView, getRollPurposeById } from "../module/apps/purpose-quick-view.mjs";
+import { buildPurposeQuickView, buildPurposeQuickViewContent, calculatePurposePreviewHeight, getRollPurposeById, PurposeQuickView } from "../module/apps/purpose-quick-view.mjs";
 
 const requiredPurposes = `general knockdown_stun recover_physical_stun consciousness regain_consciousness death resist_bleeding natural_recovery crippling_recovery pain resist_torture resist_metabolic_hazard resist_poison resist_disease resist_infection resist_paralysis resist_incapacitation resist_unconsciousness resist_nausea resist_seizure resist_addiction fright_check resist_fear resist_intimidation avoid_mental_stun recover_mental_stun self_control resist_mental_influence resist_possession maintain_concentration resist_confusion maintain_balance avoid_fall controlled_fall resist_takedown resist_knockback_fall stay_mounted break_free resist_suffocation resist_exertion resist_heat resist_cold resist_altitude resist_pressure resist_vacuum resist_radiation resist_acceleration resist_sleep_deprivation sleep_rest aging_check sense_general sense_vision sense_hearing sense_taste_smell sense_touch sense_detection resist_magic resist_psionic resist_supernatural_power resist_power resist_telepathy reaction_roll influence_roll resist_deception resist_interrogation`.split(" ");
 
@@ -141,4 +141,54 @@ test("qualificador de magia e Teste Geral têm apresentação segura", () => {
   assert.deepEqual(general.inheritedTags, []);
   assert.deepEqual(general.recommendedFilterTags, []);
   assert.match(general.description, /Não produz tags semânticas/);
+});
+
+test("quick view reutiliza toda a cadeia de classes do preview premium", () => {
+  const html = buildPurposeQuickViewContent(buildPurposeQuickView("knockdown_stun"));
+  assert.match(html, /gurps-dialog-canvas gum-preview-canvas gum-purpose-preview-canvas/);
+  assert.match(html, /gurps-item-preview-card gum-preview-card gum-purpose-preview-card/);
+  assert.match(html, /preview-header gum-purpose-preview-header/);
+  assert.match(html, /preview-content gum-purpose-preview-content/);
+  assert.match(html, /class="purpose-copy-tag"/);
+  assert.match(html, /<details><summary>Categorias herdadas<\/summary>/);
+});
+
+test("quick view abre na altura natural, limitada a 75% da viewport", () => {
+  assert.equal(calculatePurposePreviewHeight(34, 320, 1000), 356);
+  assert.equal(calculatePurposePreviewHeight(34, 900, 1000), 750);
+});
+
+test("quick view remove o rodapé vazio do Dialog antes de medir o card", () => {
+  let removedFooter = false;
+  let positionedHeight = null;
+  const root = {
+    addClass() {},
+    find: selector => selector === ".window-header" ? { outerHeight: () => 34 } : { outerHeight: () => 0 }
+  };
+  const html = {
+    closest: () => root,
+    find: selector => {
+      if (selector === ".dialog-buttons") return { remove: () => { removedFooter = true; } };
+      if (selector === ".purpose-copy-tag") return { on() {} };
+      if (selector === ".gum-purpose-preview-card") return { outerHeight: () => 320 };
+      return { outerHeight: () => 0 };
+    }
+  };
+  globalThis.window = { innerHeight: 1000 };
+  globalThis.requestAnimationFrame = callback => callback();
+  globalThis.Dialog = class {
+    constructor(data) { this.data = data; }
+    render() { this.data.render(html); }
+    setPosition({ height }) { positionedHeight = height; }
+  };
+  try {
+    PurposeQuickView.show("knockdown_stun");
+    assert.equal(removedFooter, true);
+    assert.equal(positionedHeight, 356);
+  } finally {
+    PurposeQuickView.current = null;
+    delete globalThis.Dialog;
+    delete globalThis.requestAnimationFrame;
+    delete globalThis.window;
+  }
 });

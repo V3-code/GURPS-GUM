@@ -40,6 +40,17 @@ const escapeHtml = value => globalThis.foundry?.utils?.escapeHTML
   : String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
 const badges = tags => tags.map(tag => `<span class="purpose-tag"><code>${escapeHtml(tag)}</code><button type="button" class="purpose-copy-tag" data-tag="${escapeHtml(tag)}" title="Copiar tag" aria-label="Copiar tag ${escapeHtml(tag)}"><i class="fas fa-copy"></i></button></span>`).join("");
 
+export function buildPurposeQuickViewContent(view) {
+  const bases = view.suggestedBases.length ? `<div><b>${view.suggestedBases.length === 1 ? "Base comum" : "Bases comuns"}:</b> ${view.suggestedBases.join(" ou ")}</div><p class="purpose-base-note">A base é apenas uma sugestão. O GUM não limita esta finalidade a um atributo ou habilidade específica.</p>` : "";
+  const section = (title, body, className = "") => body ? `<section class="${className}"><h4>${title}</h4>${body}</section>` : "";
+  return `<div class="gurps-dialog-canvas gum-preview-canvas gum-purpose-preview-canvas"><article class="gurps-item-preview-card gum-preview-card gum-purpose-preview-card gum-purpose-quick-view"><header class="preview-header gum-purpose-preview-header"><div class="header-text"><h3>${escapeHtml(view.label)}</h3><span class="preview-item-type">Finalidade do Teste</span></div></header><section class="preview-content gum-purpose-preview-content"><div class="purpose-facts"><div><b>Grupo:</b> ${escapeHtml(view.groupLabel)}</div><div><b>Tipo:</b> ${escapeHtml(view.roleLabel)}</div>${bases}${view.qualifierHint ? `<p>${escapeHtml(view.qualifierHint)}</p>` : ""}</div>${section("Quando usar", `<p>${escapeHtml(view.description)}</p>`)}${section("Não confundir com", view.distinctions.length ? `<ul>${view.distinctions.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : "")}${section("Tag recomendada para efeitos", badges(view.recommendedFilterTags))}${section("Tags específicas produzidas", badges(view.directTags))}${view.inheritedTags.length ? `<details><summary>Categorias herdadas</summary>${badges(view.inheritedTags)}</details>` : ""}<p class="purpose-tag-help">Tags específicas restringem o modificador a esta finalidade ou a uma situação muito próxima. Categorias herdadas também podem alcançar outras finalidades relacionadas.</p>${section("Referência", view.references.map(escapeHtml).join("<br>"), "purpose-references")}</section></article></div>`;
+}
+
+export function calculatePurposePreviewHeight(headerHeight, cardHeight, viewportHeight) {
+  const naturalHeight = Math.ceil(Math.max(0, headerHeight) + Math.max(0, cardHeight) + 2);
+  return Math.min(naturalHeight, Math.floor(Math.max(0, viewportHeight) * 0.75));
+}
+
 export class PurposeQuickView {
   static current = null;
 
@@ -47,15 +58,37 @@ export class PurposeQuickView {
     const view = buildPurposeQuickView(id);
     if (!view) { console.warn(`GUM | Finalidade desconhecida: ${id}`); return null; }
     this.current?.close();
-    const bases = view.suggestedBases.length ? `<div><b>${view.suggestedBases.length === 1 ? "Base comum" : "Bases comuns"}:</b> ${view.suggestedBases.join(" ou ")}</div><p class="purpose-base-note">A base é apenas uma sugestão. O GUM não limita esta finalidade a um atributo ou habilidade específica.</p>` : "";
-    const section = (title, body, className = "") => body ? `<section class="${className}"><h4>${title}</h4>${body}</section>` : "";
-    const content = `<div class="gurps-dialog-canvas gum-preview-canvas"><article class="gurps-item-preview-card gum-purpose-quick-view"><header class="preview-header"><div class="header-text"><h3>${escapeHtml(view.label)}</h3><span class="preview-item-type">Finalidade do Teste</span></div></header><div class="preview-content"><div class="purpose-facts"><div><b>Grupo:</b> ${escapeHtml(view.groupLabel)}</div><div><b>Tipo:</b> ${escapeHtml(view.roleLabel)}</div>${bases}${view.qualifierHint ? `<p>${escapeHtml(view.qualifierHint)}</p>` : ""}</div>${section("Quando usar", `<p>${escapeHtml(view.description)}</p>`)}${section("Não confundir com", view.distinctions.length ? `<ul>${view.distinctions.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : "")}${section("Tag recomendada para efeitos", badges(view.recommendedFilterTags))}${section("Tags específicas produzidas", badges(view.directTags))}${view.inheritedTags.length ? `<details><summary>Categorias herdadas</summary>${badges(view.inheritedTags)}</details>` : ""}<p class="purpose-tag-help">Tags específicas restringem o modificador a esta finalidade ou a uma situação muito próxima. Categorias herdadas também podem alcançar outras finalidades relacionadas.</p>${section("Referência", view.references.map(escapeHtml).join("<br>"), "purpose-references")}</div></article></div>`;
-    this.current = new Dialog({ title: `Finalidade: ${view.label}`, content, buttons: {}, close: () => { this.current = null; }, render: html => html.find(".purpose-copy-tag").on("click", async event => {
-      event.preventDefault(); event.stopPropagation();
-      const tag = event.currentTarget.dataset.tag;
-      try { if (!navigator.clipboard?.writeText) throw new Error("Clipboard indisponível"); await navigator.clipboard.writeText(tag); ui.notifications.info(`Tag copiada: ${tag}`); }
-      catch (error) { console.warn("GUM | Não foi possível copiar a tag", error); ui.notifications?.warn("Não foi possível copiar a tag."); }
-    }) }, { classes: ["gurps-item-preview-dialog", "gum-premium-preview-dialog", "gum-purpose-quick-view-dialog"], width: 480, height: "auto", resizable: true }).render(true);
-    return this.current;
+    const content = buildPurposeQuickViewContent(view);
+    let fittedInitialHeight = false;
+    const dialog = new Dialog({
+      title: `Finalidade: ${view.label}`,
+      content,
+      buttons: {},
+      close: () => { this.current = null; },
+      render: html => {
+        // O template padrão do Dialog mantém um rodapé vazio mesmo sem botões.
+        // Removê-lo antes da medição evita que a região flexível infle a janela.
+        html.find(".dialog-buttons").remove();
+        html.find(".purpose-copy-tag").on("click", async event => {
+          event.preventDefault(); event.stopPropagation();
+          const tag = event.currentTarget.dataset.tag;
+          try { if (!navigator.clipboard?.writeText) throw new Error("Clipboard indisponível"); await navigator.clipboard.writeText(tag); ui.notifications.info(`Tag copiada: ${tag}`); }
+          catch (error) { console.warn("GUM | Não foi possível copiar a tag", error); ui.notifications?.warn("Não foi possível copiar a tag."); }
+        });
+        const windowRoot = html.closest(".app.window-app, .window-app, .dialog");
+        windowRoot.addClass("gurps-item-preview-dialog gum-premium-preview-dialog gum-purpose-preview-dialog");
+        if (!fittedInitialHeight) {
+          fittedInitialHeight = true;
+          requestAnimationFrame(() => {
+            const headerHeight = windowRoot.find(".window-header").outerHeight(true) || 0;
+            const cardHeight = html.find(".gum-purpose-preview-card").outerHeight(true) || 0;
+            dialog.setPosition({ height: calculatePurposePreviewHeight(headerHeight, cardHeight, window.innerHeight) });
+          });
+        }
+      }
+    }, { classes: ["gurps-item-preview-dialog", "gum-premium-preview-dialog", "gum-purpose-preview-dialog"], width: 520, height: "auto", resizable: true });
+    this.current = dialog;
+    dialog.render(true);
+    return dialog;
   }
 }
