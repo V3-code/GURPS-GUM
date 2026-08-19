@@ -3186,10 +3186,10 @@ background-color: var(--gum-accent-gold);
     color: #fff2d8;
 }
 
-.gum.sheet.actor .skill-effect-tag {
+.gum.sheet.actor .skill-modifier-tag {
     display: inline-flex;
     align-items: center;
-    margin-left: 6px;
+    margin-left: 0;
     padding: 1px 6px;
     border-radius: 10px;
     font-size: 10px;
@@ -3197,13 +3197,28 @@ background-color: var(--gum-accent-gold);
     font-weight: 700;
     vertical-align: middle;
     color: #fff;
+    cursor: help;
+    letter-spacing: .02em;
 }
 
-.gum.sheet.actor .skill-effect-tag.is-positive {
+.gum.sheet.actor .skill-modifier-indicators {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 4px;
+}
+
+.gum.sheet.actor .skill-modifier-tag.is-included {
+    border: 1px solid #74c0fc;
+    background: rgba(25, 113, 194, .2);
+    color: #d0ebff;
+}
+
+.gum.sheet.actor .skill-modifier-tag.is-roll.is-positive {
     background: #2f9e44;
 }
 
-.gum.sheet.actor .skill-effect-tag.is-negative {
+.gum.sheet.actor .skill-modifier-tag.is-roll.is-negative {
     background: #c92a2a;
 }
 

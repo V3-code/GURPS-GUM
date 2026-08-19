@@ -821,11 +821,6 @@
                             {{!-- Nome (Visualização Rápida) --}}
                             <h4 class="item-quick-view" title="Clique para ver detalhes">
                                 {{this.name}}
-                                {{#if this.effectNhTagVisible}}
-                                    <span class="skill-effect-tag {{this.effectNhTagClass}}" title="Mod. direto de NH (nh_passive + nh_temp + efeitos include_in_nh)">
-                                        {{#if (gte this.effectNhTagValue 0)}}+{{/if}}{{this.effectNhTagValue}}
-                                    </span>
-                                {{/if}}
                             </h4>
                             
                             {{!-- Linha de Detalhes e Caminho (AGORA SEMPRE VISÍVEL) --}}
@@ -875,7 +870,11 @@
                                     <span class="path-val">
                                      {{#if (gte this.skillListDisplay.skillLevel 0)}}+{{/if}}{{this.skillListDisplay.skillLevel}}
                                     </span>
-                                </span>
+                                 </span>
+                                    {{#if (or this.modifierIndicators.included.visible this.modifierIndicators.roll.visible)}}<span class="skill-modifier-indicators">
+                                    {{#if this.modifierIndicators.included.visible}}<span class="skill-modifier-tag is-included" title="{{this.modifierIndicators.included.title}}" aria-label="{{this.modifierIndicators.included.title}}">NH</span>{{/if}}
+                                    {{#if this.modifierIndicators.roll.visible}}<span class="skill-modifier-tag is-roll {{this.modifierIndicators.roll.className}}" title="{{this.modifierIndicators.roll.title}}" aria-label="{{this.modifierIndicators.roll.title}}">ROL {{#if (gte this.modifierIndicators.roll.total 0)}}+{{/if}}{{this.modifierIndicators.roll.total}}</span>{{/if}}
+                                </span>{{/if}}
 
 
                             </div>
@@ -1851,13 +1850,8 @@
                     <li class="item skill-tree-item {{this.indentClass}} {{#if this.isTrunk}}is-trunk{{/if}}" data-item-id="{{this._id}}" data-item-type="skill" draggable="true">
                       <div class="st-item-icon item-quick-view" style="background-image: url('{{this.img}}');" title="Visualizar Perícia"></div>
                       <div class="st-item-name">
-                        <h4 class="item-quick-view" title="Clique para ver detalhes">
+                       <h4 class="item-quick-view" title="Clique para ver detalhes">
                           {{this.name}}
-                          {{#if this.effectNhTagVisible}}
-                          <span class="skill-effect-tag {{this.effectNhTagClass}}" title="Mod. direto de NH (nh_passive + nh_temp + efeitos include_in_nh)">
-                            {{#if (gte this.effectNhTagValue 0)}}+{{/if}}{{this.effectNhTagValue}}
-                          </span>
-                          {{/if}}
                         </h4>
                         <div class="st-inheritance-path">
                           <div class="st-meta">
@@ -1879,6 +1873,10 @@
                             <i class="fas fa-chevron-right path-separator"></i> {{this.skillListDisplay.baseAttribute}}
                             <span class="path-val">{{#if (gte this.skillListDisplay.skillLevel 0)}}+{{/if}}{{this.skillListDisplay.skillLevel}}</span>
                           </span>
+                            {{#if (or this.modifierIndicators.included.visible this.modifierIndicators.roll.visible)}}<span class="skill-modifier-indicators">
+                            {{#if this.modifierIndicators.included.visible}}<span class="skill-modifier-tag is-included" title="{{this.modifierIndicators.included.title}}" aria-label="{{this.modifierIndicators.included.title}}">NH</span>{{/if}}
+                            {{#if this.modifierIndicators.roll.visible}}<span class="skill-modifier-tag is-roll {{this.modifierIndicators.roll.className}}" title="{{this.modifierIndicators.roll.title}}" aria-label="{{this.modifierIndicators.roll.title}}">ROL {{#if (gte this.modifierIndicators.roll.total 0)}}+{{/if}}{{this.modifierIndicators.roll.total}}</span>{{/if}}
+                          </span>{{/if}}
                         </div>
                       </div>
                       <div class="st-nh-box">

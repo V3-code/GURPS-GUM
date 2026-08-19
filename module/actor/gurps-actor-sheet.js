@@ -6,6 +6,7 @@ import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js
 import { getBodyProfile, getBodyLocationDefinition, listBodyProfiles } from "../config/body-profiles.js";
 import { TemplateBrowser } from "../apps/template-browser.js";
 import { GumPreviewDialog } from "../apps/preview-dialog.js";
+import { buildSkillModifierIndicators } from "../utils/skill-modifier-indicators.mjs";
 
 const { ActorSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -319,7 +320,10 @@ async getData(options) {
 
         // 2. Separar apenas os itens do tipo 'skill'
         let skills = itemsByType.skill || [];
-        const actorActiveEffects = Array.from(this.actor?.appliedEffects ?? this.actor?.effects ?? []);
+                const actorActiveEffects = Array.from(this.actor?.appliedEffects ?? this.actor?.effects ?? []).map((effect) => ({
+            name: effect.name,
+            rollModifier: foundry.utils.getProperty(effect, "flags.gum.rollModifier")
+        }));
 
           const normalizeFilterTokens = (rawValue) => String(rawValue ?? "")
             .split(",")
@@ -355,32 +359,15 @@ async getData(options) {
             });
         };
 
-        const collectIncludeInNhEffectBonus = (skill) => {
-            let total = 0;
-            for (const effect of actorActiveEffects) {
-                const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
-                if (!data) continue;
-                const entries = Array.isArray(data.entries) && data.entries.length
-                    ? data.entries
-                    : [{ value: data.value, nh_display_mode: data.nh_display_mode ?? "roll_only", target_values: data.target_values ?? "", contexts: data.context ?? "all" }];
-                for (const entry of entries) {
-                    if ((entry?.nh_display_mode || "roll_only") !== "include_in_nh") continue;
-                    if (!matchesEntryTargetForItem(entry, skill)) continue;
-                    if (!matchesEntryContextForItem(entry, skill)) continue;
-                    const value = Number(entry?.value);
-                    if (Number.isFinite(value)) total += value;
-                }
-            }
-            return total;
-        };
-
-        skills.forEach((skill) => {
-            const directNhDelta = (Number(skill.system?.nh_passive) || 0)
-                + (Number(skill.system?.nh_temp) || 0)
-                + collectIncludeInNhEffectBonus(skill);
-            skill.effectNhTagVisible = directNhDelta !== 0;
-            skill.effectNhTagValue = directNhDelta;
-            skill.effectNhTagClass = directNhDelta >= 0 ? "is-positive" : "is-negative";
+         skills.forEach((skill) => {
+            skill.modifierIndicators = buildSkillModifierIndicators({
+                effects: actorActiveEffects,
+                skill,
+                passive: skill.system?.nh_passive,
+                temporary: skill.system?.nh_temp,
+                matchesTarget: matchesEntryTargetForItem,
+                matchesContext: matchesEntryContextForItem
+            });
 
             const useTreeFields = skillsViewMode === 'tree';
             const treeHierarchyType = skill.system?.tree_hierarchy_type ?? skill.system?.hierarchy_type ?? "normal";

@@ -1,7 +1,7 @@
 import { GumPreviewDialog } from "./preview-dialog.js";
 import { PurposeQuickView } from "./purpose-quick-view.mjs";
 import { performGURPSRoll } from "../../scripts/main.js";
- import { getGroupedRollPurposes, getPurposeLabels, matchesRollTags, normalizePurposeSearch, resolveRollMetadata, searchRollPurposes } from "../utils/roll-purposes.mjs";
+import { getGroupedRollPurposes, getPurposeLabels, matchesRollTags, normalizePurposeSearch, resolveRollMetadata, searchRollPurposes, shouldIncludeInPermanentNh } from "../utils/roll-purposes.mjs";
 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
@@ -96,16 +96,26 @@ export class GurpsRollPrompt extends FormApplication {
             const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
             if (!data) return;
 
-            const entries = Array.isArray(data.entries) && data.entries.length
+        const entries = Array.isArray(data.entries) && data.entries.length
                 ? data.entries
-                : [{ value: data.value, cap: data.cap, context: data.context }];
+                : [{
+                    value: data.value,
+                    cap: data.cap,
+                    context: data.context,
+                    nh_display_mode: data.nh_display_mode,
+                    roll_tags: data.roll_tags,
+                    roll_tag_match: data.roll_tag_match,
+                    target_values: data.target_values,
+                    source_item_ids: data.source_item_ids,
+                    application_side: data.applicationSide
+                }];
 
             entries.forEach((entry, index) => {
                 const context = entry?.contexts ?? entry?.context ?? "all";
                 if (!this._matchesEffectContext(context, this.context)) return;
                 if (!matchesRollTags(entry, this._getRollMetadata().rollTags)) return;
                 if (!this._matchesTargetFilter(entry)) return;
-                if ((entry?.nh_display_mode || "roll_only") === "include_in_nh") return;
+                if (shouldIncludeInPermanentNh(entry)) return;
                 const applicationSide = this._resolveModifierApplicationSide(entry, data);
                 if (applicationSide !== "self") return;
 
@@ -153,16 +163,26 @@ export class GurpsRollPrompt extends FormApplication {
         for (const effect of activeEffects) {
             const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
             if (!data) continue;
-            const configuredEntries = Array.isArray(data.entries) && data.entries.length
+        const configuredEntries = Array.isArray(data.entries) && data.entries.length
                 ? data.entries
-                : [{ value: data.value, cap: data.cap, context: data.context, application_side: data.applicationSide ?? "self" }];
+                : [{
+                    value: data.value,
+                    cap: data.cap,
+                    context: data.context,
+                    nh_display_mode: data.nh_display_mode,
+                    roll_tags: data.roll_tags,
+                    roll_tag_match: data.roll_tag_match,
+                    target_values: data.target_values,
+                    source_item_ids: data.source_item_ids,
+                    application_side: data.applicationSide ?? "self"
+                }];
 
             configuredEntries.forEach((entry, entryIndex) => {
                 const context = entry?.contexts ?? entry?.context ?? "all";
                 if (!this._matchesEffectContext(context, this.context)) return;
                 if (!matchesRollTags(entry, this._getRollMetadata().rollTags)) return;
                 if (!this._matchesTargetFilter(entry)) return;
-                if ((entry?.nh_display_mode || "roll_only") === "include_in_nh") return;
+                if (shouldIncludeInPermanentNh(entry)) return;
                 if (this._resolveModifierApplicationSide(entry, data) !== "vs_targeter") return;
 
                 entries.push({
