@@ -14,6 +14,12 @@
                         <i class="fas fa-times" aria-hidden="true"></i>
                     </button>
                 </div>
+                <button type="button" class="purpose-context-filter {{#if contextualPurposeFilterActive}}active{{/if}}"
+                        aria-pressed="{{#if contextualPurposeFilterActive}}true{{else}}false{{/if}}"
+                        aria-label="Mostra finalidades relacionadas ao personagem, solicitadas pelo mestre ou já selecionadas nesta rolagem."
+                        title="Contextuais — Mostra finalidades relacionadas ao personagem, solicitadas pelo mestre ou já selecionadas nesta rolagem.">
+                    <i class="fas fa-filter" aria-hidden="true"></i><span class="purpose-context-count">{{contextualPurposeCount}}</span>
+                </button>
                 <button type="button" class="purpose-general {{#unless hasPurposes}}active{{/unless}}"
                         data-purpose-id="general"
                         aria-pressed="{{#if hasPurposes}}false{{else}}true{{/if}}">
@@ -30,13 +36,14 @@
                 <div class="group-content">
                     <div class="purpose-buttons">
                         {{#each group.purposes as |purpose|}}
-                        <div class="purpose-item-wrapper {{#if purpose.selected}}active{{/if}} {{#if purpose.suggested}}suggested{{/if}}">
+                         <div class="purpose-item-wrapper {{#if purpose.selected}}active{{/if}} {{#if purpose.suggested}}suggested{{/if}} {{#if purpose.requested}}requested{{/if}}">
                             <button type="button" class="purpose-btn {{#if purpose.selected}}active{{/if}}"
                                     data-purpose-id="{{purpose.id}}"
                                     aria-pressed="{{#if purpose.selected}}true{{else}}false{{/if}}"
                                     title="{{purpose.tooltip}}">
                                 <span class="purpose-card-copy">
                                     <span class="purpose-card-label">{{purpose.label}}</span>
+                                    {{#if purpose.requested}}<span class="purpose-requested" title="Solicitada pelo mestre"><i class="fas fa-shield-alt" aria-hidden="true"></i> Solicitada pelo mestre</span>{{/if}}
                                     {{#if purpose.suggested}}<span class="purpose-card-hint">Atributo usual</span>{{/if}}
                                 </span>
                                 <span class="purpose-check" aria-hidden="true"><i class="fas fa-check"></i></span>
@@ -52,6 +59,7 @@
             </details>
              {{/each}}
             <p class="purpose-search-empty" style="display: none;">Nenhuma finalidade encontrada.</p>
+            <p class="purpose-context-empty" style="display: none;">Nenhuma finalidade contextual disponível. Use a busca ou mostre todas as finalidades. <button type="button" class="purpose-context-show-all">Mostrar todas</button></p>
         </section>
         <h3 class="column-header modifiers-heading">Modificadores</h3>
         

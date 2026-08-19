@@ -1,7 +1,9 @@
 import { GumPreviewDialog } from "./preview-dialog.js";
 import { PurposeQuickView } from "./purpose-quick-view.mjs";
 import { performGURPSRoll } from "../../scripts/main.js";
-import { getGroupedRollPurposes, getPurposeLabels, matchesRollTags, normalizePurposeSearch, resolveRollMetadata, searchRollPurposes, shouldIncludeInPermanentNh } from "../utils/roll-purposes.mjs";
+import { getGroupedRollPurposes, getPurposeLabels, matchesRollTags, normalizePurposeIds, normalizePurposeSearch, resolveRollMetadata, searchRollPurposes, shouldIncludeInPermanentNh } from "../utils/roll-purposes.mjs";
+import { getContextualPurposeIds, getInitialContextualFilterState, getRelatedPurposeIds, isPurposeRelatedToEntry } from "../utils/contextual-roll-purposes.mjs";
+import { normalizeRollTags } from "../utils/roll-tags.mjs";
 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
@@ -33,12 +35,16 @@ export class GurpsRollPrompt extends FormApplication {
         this.isMenuCollapsed = true;
         this.defenseMode = "normal";
         this.defenseTiming = "before";
-        this.purposeIds = resolveRollMetadata({ purposeIds: rollData.purposeIds }).purposeIds;
+        this.requestedPurposeIds = normalizePurposeIds(rollData.requestedPurposeIds);
+        this.purposeIds = normalizePurposeIds([...normalizePurposeIds(rollData.purposeIds), ...this.requestedPurposeIds]);
+        this.relatedPurposeIds = [];
+        this.contextualPurposeFilterActive = true;
         this.purposeSearchQuery = "";
         // As finalidades começam recolhidas para manter o menu compacto.
         this.collapsedPurposeGroups = new Set(["survival", "resistances", "mental", "movement", "environment", "senses", "sources", "vectors", "social", "circumstances"]);
 
         this.context = this._determineContext();
+        this._refreshRelatedPurposeIds();
         this.counterEffectsNotice = null;
 
 
@@ -52,6 +58,46 @@ export class GurpsRollPrompt extends FormApplication {
         console.log(" -> Dados recebidos:", rollData);
         console.log(" -> Item ID:", rollData.itemId);
         console.log(" -> Contexto Calculado:", this.context);
+    }
+
+     _collectActorPurposeModifierEntries() {
+        const result = [];
+        const accept = (entry, fallback = {}) => {
+            if (!entry || !normalizeRollTags(entry.roll_tags ?? entry.rollTags).length) return;
+            if (!this._matchesEffectContext(entry.contexts ?? entry.context ?? "all", this.context)) return;
+            if (!this._matchesTargetFilter(entry)) return;
+            if (this._resolveModifierApplicationSide(entry, fallback) !== "self") return;
+            if (shouldIncludeInPermanentNh(entry)) return;
+            result.push(entry);
+        };
+        for (const effect of Array.from(this.actor?.appliedEffects ?? this.actor?.effects ?? [])) {
+            if (effect?.disabled || effect?.suppressed || effect?.isSuppressed) continue;
+            const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
+            if (!data) continue;
+            const entries = Array.isArray(data.entries) && data.entries.length ? data.entries : [data];
+            entries.forEach(entry => accept(entry, data));
+        }
+        const gmModifiers = this.actor?.getFlag?.("gum", "gm_modifiers") || [];
+        gmModifiers.forEach(entry => accept(entry));
+        for (const item of Array.from(this.actor?.items ?? []).filter(item => item?.type === "gm_modifier")) {
+            const entries = Array.isArray(item.system?.modifier_entries) && item.system.modifier_entries.length
+                ? item.system.modifier_entries : [item.system];
+            entries.forEach(entry => {
+                if (!item.system?.modifier_entries?.length && !this._isValidForContext(item, this.context)) return;
+                accept(entry);
+            });
+        }
+        return result;
+    }
+
+    _isPurposeRelatedToEntry(purpose, entry) { return isPurposeRelatedToEntry(purpose, entry); }
+    _getRelatedPurposeIds() { return getRelatedPurposeIds(this._collectActorPurposeModifierEntries()); }
+    _getContextualPurposeIds() {
+        return getContextualPurposeIds({ relatedPurposeIds: this.relatedPurposeIds, requestedPurposeIds: this.requestedPurposeIds, selectedPurposeIds: this.purposeIds });
+    }
+    _refreshRelatedPurposeIds() {
+        this.relatedPurposeIds = this._getRelatedPurposeIds();
+        if (!getInitialContextualFilterState(this._getContextualPurposeIds())) this.contextualPurposeFilterActive = false;
     }
 
     static get defaultOptions() {
@@ -1083,11 +1129,14 @@ return 'default';
         context.baseAttributeLabel = this._buildBaseDetailLabel(currentOption);
         context.menuCollapsed = this.isMenuCollapsed;
         const purposeSearchActive = Boolean(normalizePurposeSearch(this.purposeSearchQuery));
+        const contextualIds = new Set(this._getContextualPurposeIds());
         context.purposeGroups = getGroupedRollPurposes(this.currentBaseKey, this.purposeIds)
             .filter(group => group.id !== "general")
-            .map(group => ({ ...group, isOpen: purposeSearchActive || !this.collapsedPurposeGroups.has(group.id) }));
+            .map(group => ({ ...group, isOpen: purposeSearchActive || !this.collapsedPurposeGroups.has(group.id), purposes: group.purposes.map(purpose => ({ ...purpose, contextual: contextualIds.has(purpose.id), requested: this.requestedPurposeIds.includes(purpose.id) })) }));
         context.purposeSearchQuery = this.purposeSearchQuery;
         context.purposeSearchActive = purposeSearchActive;
+        context.contextualPurposeFilterActive = this.contextualPurposeFilterActive;
+        context.contextualPurposeCount = contextualIds.size;
         context.purposeLabels = getPurposeLabels(this.purposeIds, { short: true });
         context.hasPurposes = context.purposeLabels.length > 0;
         
@@ -1287,6 +1336,17 @@ return 'default';
             await this.render(false);
         });
 
+        html.find('.purpose-context-filter').click(ev => {
+            ev.preventDefault();
+            this.contextualPurposeFilterActive = !this.contextualPurposeFilterActive;
+            this._applyPurposeVisibility(html);
+        });
+        html.find('.purpose-context-show-all').click(ev => {
+            ev.preventDefault();
+            this.contextualPurposeFilterActive = false;
+            this._applyPurposeVisibility(html);
+        });
+
         const purposeSearch = html.find('.purpose-search-input');
         const applyPurposeSearch = () => {
             const active = Boolean(normalizePurposeSearch(this.purposeSearchQuery));
@@ -1297,15 +1357,21 @@ return 'default';
                 let groupHasResults = false;
                 group.find('.purpose-item-wrapper').each((__, wrapperElement) => {
                     const wrapper = $(wrapperElement);
-                    const matchesQuery = !active || matches.has(`${wrapper.find('.purpose-btn').data('purpose-id') || ''}`);
-                    wrapper.toggle(matchesQuery);
-                    if (matchesQuery) { groupHasResults = true; resultCount += 1; }
+                    const id = `${wrapper.find('.purpose-btn').data('purpose-id') || ''}`;
+                    const matchesQuery = !active || matches.has(id);
+                    const matchesContext = !this.contextualPurposeFilterActive || this._getContextualPurposeIds().includes(id);
+                    const visible = active ? matchesQuery : matchesContext;
+                    wrapper.toggle(visible);
+                    if (visible) { groupHasResults = true; resultCount += 1; }
                 });
-                group.toggle(!active || groupHasResults);
+                group.toggle(groupHasResults);
                 element.open = active ? groupHasResults : !this.collapsedPurposeGroups.has(`${element.dataset.groupId || ''}`);
             });
             html.find('.purpose-search-clear').toggleClass('visible', active).prop('disabled', !active);
             html.find('.purpose-search-empty').toggle(active && resultCount === 0);
+            html.find('.purpose-context-empty').toggle(!active && this.contextualPurposeFilterActive && resultCount === 0);
+            const filter = html.find('.purpose-context-filter');
+            filter.toggleClass('active', this.contextualPurposeFilterActive).attr('aria-pressed', String(this.contextualPurposeFilterActive));
             return resultCount;
         };
         purposeSearch.on('input', ev => {
@@ -1366,6 +1432,11 @@ return 'default';
         this._updateTotals(html);
     }
 
+    _applyPurposeVisibility(html) {
+        const input = html.find('.purpose-search-input');
+        input.trigger('input');
+    }
+
     _applyMenuState(html) {
         html.toggleClass('modifiers-collapsed', this.isMenuCollapsed);
         const toggleBtn = html.find('.menu-toggle-btn');
@@ -1379,6 +1450,7 @@ return 'default';
         this._loadGMModifiers();
         this._loadEffectModifiers();
         this._loadTargetCounterModifiers();
+        this._refreshRelatedPurposeIds();
     }
 
     _updateTotals(html) {
@@ -1769,6 +1841,8 @@ const rollPayload = {
             defenseTiming: this.defenseTiming
         };
         Object.assign(rollPayload, this._getRollMetadata());
+        rollPayload.purposeIds = normalizePurposeIds(rollPayload.purposeIds);
+        rollPayload.requestedPurposeIds = normalizePurposeIds(this.requestedPurposeIds);
         const rollOptions = {
             ignoreGlobals: true, // Já processamos os globais aqui no prompt
             effectiveCap: lowestCap // ✅ O SEGREDO: Enviamos o teto calculado aqui!
