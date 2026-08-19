@@ -1238,13 +1238,19 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
         : "";
 
     const purposeLabels = getPurposeLabels(rollData.purposeIds);
-    const purposeHtml = purposeLabels.length ? `<div class="roll-purposes"><strong>Finalidades:</strong> ${purposeLabels.map(label => foundry.utils.escapeHTML(label)).join(", ")}</div>` : "";
+    const purposeHtml = purposeLabels.length ? `
+        <details class="roll-purposes">
+            <summary>Finalidades</summary>
+            <div class="roll-purpose-list">
+                ${purposeLabels.map(label => `<span>${foundry.utils.escapeHTML(label)}</span>`).join("")}
+            </div>
+        </details>
+    ` : "";
 
     const content = `
         <div class="gurps-roll-card premium">
             <header class="card-header">
-                <h3>${label}</h3>
-                <small>${actor.name}</small>
+                <h3>${label}</h3>              
                 ${purposeHtml}
             </header>
 
