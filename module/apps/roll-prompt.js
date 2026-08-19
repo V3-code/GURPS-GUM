@@ -1,4 +1,5 @@
 import { GumPreviewDialog } from "./preview-dialog.js";
+import { PurposeQuickView } from "./purpose-quick-view.mjs";
 import { performGURPSRoll } from "../../scripts/main.js";
  import { getGroupedRollPurposes, getPurposeLabels, matchesRollTags, normalizePurposeSearch, resolveRollMetadata, searchRollPurposes } from "../utils/roll-purposes.mjs";
 
@@ -1223,6 +1224,13 @@ return 'default';
             this.rollData.modifier = parseInt(inputManual.val()) || 0;
             await this._reloadSemanticModifiers();
             await this.render(false);
+         });
+
+        html.find('.purpose-view').on('click keydown', ev => {
+            if (ev.type === 'keydown' && ev.key !== 'Enter' && ev.key !== ' ') return;
+            ev.preventDefault();
+            ev.stopPropagation();
+            PurposeQuickView.show(`${ev.currentTarget.dataset.purposeId || ''}`);
         });
 
         

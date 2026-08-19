@@ -19,6 +19,7 @@ test("keywords localizam a finalidade sem se tornarem tags", () => {
   registerRollPurpose(original);
 });
 import { ROLL_TAG_ALIASES, ROLL_TAG_CATALOG, expandRollTags, getGroupedRollTags, normalizeRollTags } from "../module/utils/roll-tags.mjs";
+import { buildPurposeQuickView, getRollPurposeById } from "../module/apps/purpose-quick-view.mjs";
 
 const requiredPurposes = `general knockdown_stun recover_physical_stun consciousness regain_consciousness death resist_bleeding natural_recovery crippling_recovery pain resist_torture resist_metabolic_hazard resist_poison resist_disease resist_infection resist_paralysis resist_incapacitation resist_unconsciousness resist_nausea resist_seizure resist_addiction fright_check resist_fear resist_intimidation avoid_mental_stun recover_mental_stun self_control resist_mental_influence resist_possession maintain_concentration resist_confusion maintain_balance avoid_fall controlled_fall resist_takedown resist_knockback_fall stay_mounted break_free resist_suffocation resist_exertion resist_heat resist_cold resist_altitude resist_pressure resist_vacuum resist_radiation resist_acceleration resist_sleep_deprivation sleep_rest aging_check sense_general sense_vision sense_hearing sense_taste_smell sense_touch sense_detection resist_magic resist_psionic resist_supernatural_power resist_power resist_telepathy reaction_roll influence_roll resist_deception resist_interrogation`.split(" ");
 
@@ -94,4 +95,50 @@ test("modificador por finalidade não entra no NH permanente", () => {
   assert.equal(shouldIncludeInPermanentNh({nh_display_mode:"include_in_nh",roll_tags:"poison"}),false);
   assert.equal(shouldIncludeInPermanentNh({nh_display_mode:"include_in_nh"}),true);
   assert.deepEqual(getPurposeLabels(["resist_poison"]),["Resistência a Veneno"]);
+});
+
+test("view model traduz grupo, tipo, bases e preserva o catálogo", () => {
+  const original = structuredClone(getRollPurposeById("fright_check"));
+  const view = buildPurposeQuickView("fright_check");
+  assert.equal(view.groupLabel, "Mentais e Comportamentais");
+  assert.equal(view.roleLabel, "Finalidade principal");
+  assert.deepEqual(view.suggestedBases, ["Vontade"]);
+  assert.deepEqual(view.recommendedFilterTags, ["mental.fright_check"]);
+  assert.ok(view.distinctions.length);
+  assert.ok(view.references.length);
+  assert.deepEqual(getRollPurposeById("fright_check"), original);
+  assert.equal(getRollPurposeById("desconhecida"), null);
+});
+
+test("view model separa tags diretas e herdadas com ordem estável", () => {
+  const view = buildPurposeQuickView("knockdown_stun");
+  assert.deepEqual(view.directTags, ["injury.knockdown", "injury.stun.physical"]);
+  assert.deepEqual(view.recommendedFilterTags, ["injury.knockdown_stun"]);
+  assert.ok(view.inheritedTags.includes("injury.knockdown_stun"));
+  assert.ok(view.inheritedTags.includes("test.survival"));
+  assert.equal(new Set(view.inheritedTags).size, view.inheritedTags.length);
+});
+
+test("view model aplica fallbacks e omite metadados opcionais ausentes", () => {
+  const catalog = [{ id: "custom", label: "Teste Personalizado", group: "other", tags: ["custom.tag", "custom.tag"] }];
+  const source = structuredClone(catalog);
+  const view = buildPurposeQuickView("custom", { catalog, groups: [], expandTags: tags => [...tags, "custom.parent", "custom.parent"] });
+  assert.match(view.description, /Teste Personalizado/i);
+  assert.deepEqual(view.distinctions, []);
+  assert.deepEqual(view.references, []);
+  assert.deepEqual(view.recommendedFilterTags, ["custom.tag"]);
+  assert.deepEqual(view.inheritedTags, ["custom.parent"]);
+  assert.deepEqual(catalog, source);
+});
+
+test("qualificador de magia e Teste Geral têm apresentação segura", () => {
+  const magic = buildPurposeQuickView("resist_magic");
+  assert.equal(magic.roleLabel, "Qualificador");
+  assert.match(magic.qualifierHint, /combinados/);
+  assert.deepEqual(magic.recommendedFilterTags, ["resistance.magic"]);
+  const general = buildPurposeQuickView("general");
+  assert.deepEqual(general.directTags, []);
+  assert.deepEqual(general.inheritedTags, []);
+  assert.deepEqual(general.recommendedFilterTags, []);
+  assert.match(general.description, /Não produz tags semânticas/);
 });

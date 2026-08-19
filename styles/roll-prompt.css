@@ -601,6 +601,20 @@
 .purpose-btn.active .purpose-check { visibility: visible; }
 .purpose-view { display: grid; flex: 0 0 24px; width: 24px; place-items: center; border-left: 1px solid #444; background: rgba(0,0,0,.2); color: #777; cursor: help; }
 .purpose-view:hover { background: rgba(255,255,255,.1); color: var(--gum-accent-gold); }
+.purpose-view:focus-visible { outline: 2px solid var(--gum-accent-gold); outline-offset: -2px; color: var(--gum-accent-gold); }
 .purpose-item-wrapper.active .purpose-view { border-left-color: #8c7440; }
 .purpose-summary { color: #aaa; display: flex; flex-wrap: wrap; gap: 5px; font-size: .78em; margin-top: -8px; }
 .purpose-summary span { background: rgba(181,151,83,.14); border: 1px solid rgba(181,151,83,.35); border-radius: 10px; color: #ddd; padding: 1px 6px; }
+
+.gum-purpose-quick-view { max-width: 90vw; color: #ddd; overflow-wrap: anywhere; }
+.gum-purpose-quick-view .preview-content { max-height: 75vh; overflow-x: hidden; overflow-y: auto; }
+.gum-purpose-quick-view section, .gum-purpose-quick-view details { margin-top: 14px; }
+.gum-purpose-quick-view h4, .gum-purpose-quick-view summary { margin: 0 0 6px; color: var(--gum-accent-gold); font-size: .78em; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.gum-purpose-quick-view ul { margin: 4px 0; padding-left: 20px; }
+.gum-purpose-quick-view p { margin: 4px 0; }
+.gum-purpose-quick-view .purpose-facts { color: #bbb; }
+.gum-purpose-quick-view .purpose-base-note, .gum-purpose-quick-view .purpose-tag-help, .gum-purpose-quick-view .purpose-references { color: #999; font-size: .82em; }
+.gum-purpose-quick-view .purpose-tag { display: inline-flex; align-items: center; max-width: 100%; margin: 2px 4px 2px 0; border: 1px solid #675b3d; border-radius: 3px; background: #171717; }
+.gum-purpose-quick-view .purpose-tag code { min-width: 0; padding: 4px 7px; color: #e0ca91; overflow-wrap: anywhere; }
+.gum-purpose-quick-view .purpose-copy-tag { width: 26px; height: 26px; margin: 0; padding: 0; border: 0; border-left: 1px solid #675b3d; border-radius: 0; background: transparent; color: #999; }
+.gum-purpose-quick-view .purpose-copy-tag:hover { color: var(--gum-accent-gold); }

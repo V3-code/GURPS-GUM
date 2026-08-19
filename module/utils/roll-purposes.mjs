@@ -105,6 +105,42 @@ export const ROLL_PURPOSES = [
   {"id": "resist_deception", "label": "Resistência a Enganação", "shortLabel": "Resistência a Enganação", "group": "social", "tags": ["social.resist_deception"], "suggestedAttributes": [], "role": "primary", "description": "Teste relacionado a resistência a enganação."},
   {"id": "resist_interrogation", "label": "Resistência a Interrogatório", "shortLabel": "Resistência a Interrogatório", "group": "social", "tags": ["social.resist_interrogation"], "suggestedAttributes": [], "role": "primary", "description": "Teste relacionado a resistência a interrogatório."}
 ];
+// Conteúdo editorial opcional da ajuda contextual. As tags mecânicas continuam
+// sendo definidas exclusivamente no catálogo acima e na hierarquia central.
+const PURPOSE_HELP = {
+  general: { description: "Finalidade neutra utilizada quando nenhuma finalidade mecânica específica foi selecionada. Não produz tags semânticas e não ativa modificadores filtrados por finalidade." },
+  knockdown_stun: {
+    description: "Teste imediato de HT provocado por ferimento grave ou por determinados ferimentos na cabeça ou nos órgãos vitais. Um fracasso provoca nocaute e atordoamento físico. Um fracasso por 5 ou mais ou uma falha crítica também pode provocar perda da consciência.",
+    distinctions: ["Recuperar-se posteriormente do atordoamento físico.", "Manter a consciência com 0 PV ou menos.", "Recuperar a consciência.", "Resistir diretamente a sono, coma ou inconsciência.", "Permanecer de pé depois de uma projeção."],
+    recommendedFilterTags: ["injury.knockdown_stun"]
+  },
+  recover_physical_stun: { distinctions: ["O teste inicial de nocaute e atordoamento provocado pelo ferimento."] },
+  consciousness: { distinctions: ["Recuperar a consciência depois de já estar inconsciente."] },
+  regain_consciousness: { distinctions: ["Testes para permanecer consciente."] },
+  resist_unconsciousness: { distinctions: ["Inconsciência provocada por fracasso em testes decorrentes de ferimentos."] },
+  avoid_mental_stun: { distinctions: ["Atordoamento físico provocado por ferimentos."] },
+  recover_mental_stun: { distinctions: ["Recuperação de atordoamento físico."] },
+  fright_check: {
+    description: "Teste realizado diante de uma situação aterrorizante ou psicologicamente traumática.",
+    distinctions: ["Todo e qualquer teste genérico contra medo; Resistência ao Medo pode abranger situações que não usam especificamente uma Verificação de Pânico."],
+    recommendedFilterTags: ["mental.fright_check"], references: ["Módulo Básico, Verificações de Pânico"]
+  },
+  resist_fear: { distinctions: ["Verificação de Pânico: esta finalidade pode abranger testes contra medo que não utilizem especificamente essas regras."] },
+  avoid_fall: { distinctions: ["Amortecer uma queda que já ocorreu."] },
+  controlled_fall: { distinctions: ["Evitar uma queda; esta finalidade é usada depois que a queda já está ocorrendo."] },
+  resist_takedown: { distinctions: ["Projeção causada por dano."] },
+  resist_knockback_fall: { distinctions: ["O cálculo da distância de projeção."] },
+  sense_general: { distinctions: ["Resistência a ataques que utilizam um sentido como vetor."] },
+  sense_vision: { distinctions: ["Resistência a ataques que utilizam a visão como vetor."] },
+  sense_hearing: { distinctions: ["Resistência a ataques que utilizam a audição como vetor."] },
+  sense_taste_smell: { distinctions: ["Resistência a ataques que utilizam paladar ou olfato como vetor."] },
+  sense_touch: { distinctions: ["Resistência a ataques que utilizam o tato como vetor."] },
+  resist_magic: { distinctions: ["Consequências físicas indiretas de uma magia; esta finalidade representa resistência direta à influência mágica."], recommendedFilterTags: ["resistance.magic"] }
+};
+for (const purpose of ROLL_PURPOSES) {
+  Object.assign(purpose, PURPOSE_HELP[purpose.id] || {});
+  purpose.suggestedBases = [...purpose.suggestedAttributes];
+}
 const PURPOSE_BY_ID = new Map(ROLL_PURPOSES.map(p => [p.id,p]));
 export function normalizePurposeSearch(value="") { return String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR").trim(); }
 export function searchRollPurposes(query="") {
