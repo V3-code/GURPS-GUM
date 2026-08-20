@@ -1,15 +1,11 @@
 <form class="gum-test-request-form">
   <header class="request-launcher-hero">
-    <span class="request-launcher-icon"><i class="fas fa-dice"></i></span>
-    <div>
-      <h2>Solicitar Teste</h2>
-      <p>Prepare um teste e acompanhe todas as respostas em um único card do chat.</p>
-    </div>
+    <h2>Solicitar Teste</h2>
   </header>
 
   <section class="request-form-section request-basics">
     <div class="request-section-heading"><i class="fas fa-pen"></i><span>Apresentação</span></div>
-    <label class="request-field"><span>Título</span><input name="title" value="Teste solicitado pelo Mestre"></label>
+    <label class="request-field request-title-field"><span>Título do Teste</span><input type="text" name="title" value="Teste solicitado pelo Mestre"></label>
     <label class="request-field"><span>Descrição <small>opcional</small></span><textarea name="description" rows="2" placeholder="Contexto breve para os jogadores"></textarea></label>
   </section>
 
@@ -29,7 +25,7 @@
         <summary><span>{{label}}</span><span class="target-group-count">{{targets.length}}</span><i class="fas fa-chevron-down"></i></summary>
         <div class="target-group-content">
           {{#each targets}}
-          <label class="target-option">
+          <label class="target-option" tabindex="0">
             <input type="checkbox" name="targets" value="{{targetKey}}" {{checked selected}}>
             <img src="{{actorImg}}"><span>{{actorName}}</span><i class="fas fa-check target-check"></i>
           </label>
@@ -42,36 +38,43 @@
 
   <section class="request-form-section">
     <div class="request-section-heading"><i class="fas fa-bullseye"></i><span>Teste</span></div>
-    <div class="request-type-switch">
-      <label><input type="radio" name="testType" value="attribute" checked><span><i class="fas fa-shield-alt"></i> Atributo</span></label>
-      <label><input type="radio" name="testType" value="skill"><span><i class="fas fa-book-open"></i> Perícia</span></label>
-    </div>
-    <div class="attribute-fields request-inline-field"><label>Atributo</label><select name="attributeKey">{{#each attributes}}<option value="{{key}}">{{label}}</option>{{/each}}</select></div>
-    <div class="skill-fields" hidden>
-      <label class="request-field" for="gum-test-request-skill-search"><span>Buscar perícia</span><input id="gum-test-request-skill-search" name="skillSearch" type="search" list="gum-test-request-skills" autocomplete="off" placeholder="Digite o nome ou a especialização"></label>
-      <input name="skillUuid" type="hidden">
-      <datalist id="gum-test-request-skills">{{#each skills}}<option value="{{displayName}}" data-uuid="{{uuid}}"></option>{{/each}}</datalist>
-      <p class="unregistered-skill-notice" hidden><i class="fas fa-triangle-exclamation"></i><span><strong>Perícia não registrada.</strong> Informe o pré-definido personalizado.</span></p>
-      <div class="custom-skill-fields" hidden>
-        <input name="customSkillName" type="hidden">
-        <label>Atributo base <select name="customAttributeKey">{{#each attributes}}<option value="{{key}}">{{label}}</option>{{/each}}</select></label>
-        <label>Modificador <input type="number" name="customModifier" value="-5"></label>
+   <div class="request-test-fields">
+      <div class="attribute-fields request-test-row">
+        <label class="request-test-choice"><input type="radio" name="testType" value="attribute" checked><span><i class="fas fa-shield-alt"></i> Atributo</span></label>
+        <select id="gum-test-request-attribute" name="attributeKey" aria-label="Atributo">{{#each attributes}}<option value="{{key}}">{{label}}</option>{{/each}}</select>
+      </div>
+      <div class="skill-fields request-test-row">
+        <label class="request-test-choice"><input type="radio" name="testType" value="skill"><span><i class="fas fa-book-open"></i> Perícia</span></label>
+        <div class="skill-field-content"><input id="gum-test-request-skill-search" name="skillSearch" type="search" list="gum-test-request-skills" autocomplete="off" placeholder="Digite o nome ou a especialização" aria-label="Perícia">
+          <input name="skillUuid" type="hidden">
+          <datalist id="gum-test-request-skills">{{#each skills}}<option value="{{displayName}}" data-uuid="{{uuid}}"></option>{{/each}}</datalist>
+          <p class="unregistered-skill-notice" hidden><i class="fas fa-triangle-exclamation"></i><span><strong>Perícia não registrada.</strong> Informe o pré-definido personalizado.</span></p>
+          <div class="custom-skill-fields" hidden>
+            <input name="customSkillName" type="hidden">
+            <label>Atributo base <select name="customAttributeKey">{{#each attributes}}<option value="{{key}}">{{label}}</option>{{/each}}</select></label>
+            <label>Modificador <input type="number" name="customModifier" value="-5"></label>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="request-form-section">
-    <div class="request-section-heading"><i class="fas fa-tags"></i><span>Finalidades</span><small>opcional</small></div>
+  <details class="request-form-section request-purpose-section" {{#if purposeSectionOpen}}open{{/if}}>
+    <summary class="request-section-heading"><i class="fas fa-tags"></i><span>Finalidades</span><small>opcional</small><span class="purpose-selection-summary">Nenhuma selecionada</span><i class="fas fa-chevron-down purpose-section-chevron"></i></summary>
+    <div class="request-purpose-content">
+    <div class="purpose-search" role="search"><i class="fas fa-search"></i><input class="purpose-search-input" type="search" placeholder="Buscar finalidade" aria-label="Buscar finalidade"><button class="purpose-search-clear" type="button" title="Limpar busca" aria-label="Limpar busca"><i class="fas fa-times"></i></button></div>
     <div class="purpose-list">
-      {{#each purposes}}<details class="purpose-group"><summary><span>{{label}}</span><i class="fas fa-chevron-down"></i></summary><div>{{#each purposes}}<label class="purpose-option"><input type="checkbox" name="purposes" value="{{id}}"><span>{{label}}</span></label>{{/each}}</div></details>{{/each}}
+      {{#each purposes}}<details class="purpose-group" data-group-label="{{label}}"><summary><span>{{label}}</span><i class="fas fa-chevron-down"></i></summary><div>{{#each purposes}}<label class="purpose-option" tabindex="0"><input type="checkbox" name="purposes" value="{{id}}"><span>{{label}}</span><i class="fas fa-check purpose-check"></i></label>{{/each}}</div></details>{{/each}}
     </div>
-  </section>
+    <p class="purpose-search-empty" hidden>Nenhuma finalidade encontrada.</p>
+    </div>
+  </details>
 
   <section class="request-form-section request-delivery-section">
     <div class="request-section-heading"><i class="fas fa-sliders-h"></i><span>Condições e entrega</span></div>
     <div class="modifier-row">
       <label class="request-field"><span>Modificador do Mestre</span><input type="number" name="fixedModifier" value="0"></label>
-      <label class="request-field"><span>Descrição</span><input name="fixedModifierLabel" placeholder="Ex.: Escuridão"></label>
+      <label class="request-field"><span>Descrição Simples do Modificador (opcional)</span><input type="text" name="fixedModifierLabel" placeholder="Ex.: Escuridão"></label>
     </div>
     <label class="request-notify-toggle"><input type="checkbox" name="notifyPlayers"><span class="request-toggle-mark"></span><span><strong>Também avisar os jogadores</strong><small>O pedido continuará salvo no chat mesmo que o aviso seja fechado.</small></span></label>
   </section>

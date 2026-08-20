@@ -1,4 +1,4 @@
-import { getGroupedRollPurposes } from "../utils/roll-purposes.mjs";
+import { getGroupedRollPurposes, normalizePurposeSearch } from "../utils/roll-purposes.mjs";
 import { buildTestRequestTargets } from "../utils/test-request-targets.mjs";
 import { normalizeSkillText } from "../utils/skill-default-resolver.mjs";
 import { createTestRequestMessage } from "../services/test-request-service.js";
@@ -16,7 +16,7 @@ export class TestRequestLauncher extends FormApplication {
       id: "gum-test-request-launcher",
       title: "Solicitar Teste",
       template: "systems/gum/templates/apps/test-request-launcher.hbs",
-      width: 720,
+      width: 580,
       height: 760,
       resizable: true,
       closeOnSubmit: true,
@@ -79,6 +79,7 @@ export class TestRequestLauncher extends FormApplication {
     return {
       groupedTargets,
       purposes: getGroupedRollPurposes().filter(group => group.id !== "general"),
+      purposeSectionOpen: Boolean(this.purposeSectionOpen),
       skills: deduped,
       attributes: [{ key: "st", label: "ST" }, { key: "dx", label: "DX" }, { key: "iq", label: "IQ" }, { key: "ht", label: "HT" }, { key: "per", label: "PER" }, { key: "vont", label: "VONT" }]
     };
@@ -101,8 +102,10 @@ export class TestRequestLauncher extends FormApplication {
 
     const updateTestType = () => {
       const isSkill = html.find("input[name=testType]:checked").val() === "skill";
-      html.find(".attribute-fields").prop("hidden", isSkill);
-      html.find(".skill-fields").prop("hidden", !isSkill);
+      html.find("select[name=attributeKey]").prop("disabled", isSkill);
+      html.find(".skill-field-content input, .skill-field-content select").not("input[type=hidden]").prop("disabled", !isSkill);
+      html.find(".attribute-fields").toggleClass("is-disabled", isSkill);
+      html.find(".skill-fields").toggleClass("is-disabled", !isSkill);
     };
     html.find("input[name=testType]").on("change", updateTestType);
     updateTestType();
@@ -115,7 +118,47 @@ export class TestRequestLauncher extends FormApplication {
       skillUuid.val(option?.dataset.uuid ?? "");
       html.find(".custom-skill-fields").prop("hidden", Boolean(option));
       html.find(".unregistered-skill-notice").prop("hidden", !event.currentTarget.value.trim() || Boolean(option));
-      html.find("input[name=customSkillName]").val(option ? "" : event.currentTarget.value.trim());
+html.find("input[name=customSkillName]").val(option ? "" : event.currentTarget.value.trim());
+    });
+
+    const purposeSearch = html.find(".purpose-search-input");
+    const purposeSection = html.find(".request-purpose-section").get(0);
+    purposeSection?.addEventListener("toggle", () => { this.purposeSectionOpen = purposeSection.open; });
+    const updatePurposeSelection = () => {
+      const selected = html.find("input[name=purposes]:checked");
+      const labels = selected.map((_index, input) => $(input).siblings("span").text().trim()).get();
+      html.find(".purpose-selection-summary").text(labels.length ? labels.join(", ") : "Nenhuma selecionada");
+      selected.each((_index, input) => { input.closest(".purpose-group").open = true; });
+    };
+    const applyPurposeSearch = () => {
+      const query = normalizePurposeSearch(purposeSearch.val());
+      let resultCount = 0;
+      html.find(".purpose-group").each((_index, groupElement) => {
+        const group = $(groupElement);
+        const groupMatches = normalizePurposeSearch(group.data("group-label")).includes(query);
+        let groupHasResults = false;
+        group.find(".purpose-option").each((__index, optionElement) => {
+          const visible = !query || groupMatches || normalizePurposeSearch(optionElement.textContent).includes(query);
+          optionElement.hidden = !visible;
+          if (visible) { groupHasResults = true; resultCount += 1; }
+        });
+        groupElement.hidden = !groupHasResults;
+        if (query && groupHasResults) groupElement.open = true;
+        else if (!query) groupElement.open = Boolean(group.find("input[name=purposes]:checked").length);
+      });
+      html.find(".purpose-search-clear").toggleClass("visible", Boolean(query)).prop("disabled", !query);
+      html.find(".purpose-search-empty").prop("hidden", !query || resultCount > 0);
+    };
+    purposeSearch.on("input", applyPurposeSearch).on("keydown", event => {
+      if (event.key !== "Escape") return;
+      event.preventDefault(); purposeSearch.val(""); applyPurposeSearch();
+    });
+    html.find(".purpose-search-clear").on("click", () => { purposeSearch.val("").trigger("input").trigger("focus"); });
+    html.find("input[name=purposes]").on("change", updatePurposeSelection);
+    updatePurposeSelection();
+    html.find(".target-option, .purpose-option").on("keydown", event => {
+      if (event.key !== " " && event.key !== "Enter") return;
+      event.preventDefault(); $(event.currentTarget).find("input[type=checkbox]").trigger("click");
     });
   }
 
