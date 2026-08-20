@@ -23,6 +23,9 @@ import { GurpsRollPrompt } from "../module/apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../module/apps/damage-roll-prompt.js";
 import { getPurposeLabels, matchesRollTags, resolveRollMetadata, shouldIncludeInPermanentNh } from "../module/utils/roll-purposes.mjs";
 import { getBodyProfile, getBodyLocationDefinition } from "../module/config/body-profiles.js";
+import { openTestRequestLauncher } from "../module/apps/test-request-launcher.js";
+import { activateTestRequestChatListeners, registerTestRequestSocket } from "../module/services/test-request-service.js";
+import { evaluateGurpsRollResult } from "../module/utils/gurps-roll-result.mjs";
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
 const isEffectDurationPermanent = (duration = {}) => {
@@ -40,6 +43,13 @@ const normalizeEffectDurationFlags = (duration = {}) => {
     }
     return normalized;
 };
+
+// Foundry V13 replaced the jQuery-based hook with an HTMLElement-based hook.
+// Keep V12 support without registering the deprecated hook on newer versions.
+const testRequestChatRenderHook = Number(game.release?.generation ?? 12) >= 13
+    ? "renderChatMessageHTML"
+    : "renderChatMessage";
+Hooks.on(testRequestChatRenderHook, (_message, html) => activateTestRequestChatListeners(html));
 
 const isCombatDuration = (duration = {}) => {
     if (!duration || typeof duration !== "object") return false;
@@ -1205,25 +1215,9 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     const total = roll.total;
 
     // --- 5. RESULTADO ---
-    const isSuccess = total <= effectiveLevel;
-    const margin = Math.abs(effectiveLevel - total);
-    
-    let resultLabel = isSuccess ? "Sucesso" : "Falha";
-    let statusClass = isSuccess ? "success" : "failure";
-    let marginLabel = "Margem";
-    const rollOutcome = isSuccess ? "success" : "failure";
-
-    // Críticos
-    const isCritSuccess = (total <= 4) || (total === 5 && effectiveLevel >= 15) || (total === 6 && effectiveLevel >= 16);
-    const isCritFailure = (total >= 18) || (total === 17 && effectiveLevel <= 15) || (total - effectiveLevel >= 10);
-
-    if (isCritSuccess) {
-        resultLabel = "Sucesso Crítico";
-        statusClass = "crit-success";
-    } else if (isCritFailure) {
-        resultLabel = "Falha Crítica";
-        statusClass = "crit-failure";
-    }
+    const evaluatedResult = evaluateGurpsRollResult(total, effectiveLevel);
+    const { isSuccess, margin, resultLabel, statusClass, rollOutcome,
+        isCriticalSuccess: isCritSuccess, isCriticalFailure: isCritFailure, outcome } = evaluatedResult;
 
     // --- 7. HTML DO CARD ---
  const diceFaces = roll.dice[0].results.map((d) => `<span class="die-face">${d.result}</span>`).join('');
@@ -1303,7 +1297,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
         rolls: [roll],
         sound: CONFIG.sounds.dice
     });
-    ChatMessage.create(chatData);
+    if (extraOptions.createChatMessage !== false) await ChatMessage.create(chatData);
 
     if (rollData.type === "defense") {
         await processConditions(actor, {
@@ -1331,6 +1325,15 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
             console.error("GUM | Falha ao aplicar Evento de Uso (activate):", err);
         }
     }
+
+    const structuredResult = { roll, rollJSON: roll.toJSON(), total, baseValue, promptModifier: promptMod,
+        globalModifier: globalModValue, totalModifier, mathLevel, effectiveLevel,
+        effectiveCap: lowestCap === Infinity ? null : lowestCap, isCapped, isSuccess,
+        isCriticalSuccess: isCritSuccess, isCriticalFailure: isCritFailure, margin, outcome,
+        resultLabel, statusClass, purposeIds: rollData.purposeIds ?? [], modifierBreakdown: [
+            { source: "prompt", value: promptMod }, { source: "global", value: globalModValue }
+        ] };
+    if (extraOptions.returnResult || extraOptions.createChatMessage === false) return structuredResult;
 }
 
 function _buildDamageActionData(actor, sourceItem, rollData) {
@@ -2729,6 +2732,7 @@ Hooks.on("renderActorDirectory", (app, html, data) => {
 //  2.1 HOOK DE PRONTO (`ready`)
 // ================================================================== //
 Hooks.once('ready', async function() {
+    registerTestRequestSocket();
     console.log("GUM | Fase 'ready': Aplicando configurações.");
 
     await migrateEffectTokenIconPolicy();
@@ -4309,17 +4313,20 @@ Hooks.on("getSceneControlButtons", (controls) => {
         },
         button: true
     };
+    const requestTestTool = { name: "request-test", title: "Solicitar Teste", icon: "fas fa-dice", visible: true,
+        onChange: () => openTestRequestLauncher(), button: true };
 
     // 5. INJEÇÃO SEGURA NA LISTA DE FERRAMENTAS
     const toolsCollection = targetLayer.tools;
 
     if (Array.isArray(toolsCollection)) {
         // V12: É um Array
-        toolsCollection.push(gmScreenTool);
+        toolsCollection.push(gmScreenTool, requestTestTool);
     } 
     else if (toolsCollection instanceof Map) {
         // V13 (Possível): É um Map
         toolsCollection.set("gm-screen", gmScreenTool);
+        toolsCollection.set("request-test", requestTestTool);
     } 
     else if (typeof toolsCollection === 'object') {
         // V13 (Provável): É um Objeto
@@ -4327,6 +4334,7 @@ Hooks.on("getSceneControlButtons", (controls) => {
         if (!toolsCollection["gm-screen"]) {
             toolsCollection["gm-screen"] = gmScreenTool;
         }
+        if (!toolsCollection["request-test"]) toolsCollection["request-test"] = requestTestTool;
     } 
     else {
         console.error("GUM | Formato desconhecido para 'layer.tools':", toolsCollection);

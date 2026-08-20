@@ -1,0 +1,80 @@
+<form class="gum-test-request-form">
+  <header class="request-launcher-hero">
+    <span class="request-launcher-icon"><i class="fas fa-dice"></i></span>
+    <div>
+      <h2>Solicitar Teste</h2>
+      <p>Prepare um teste e acompanhe todas as respostas em um único card do chat.</p>
+    </div>
+  </header>
+
+  <section class="request-form-section request-basics">
+    <div class="request-section-heading"><i class="fas fa-pen"></i><span>Apresentação</span></div>
+    <label class="request-field"><span>Título</span><input name="title" value="Teste solicitado pelo Mestre"></label>
+    <label class="request-field"><span>Descrição <small>opcional</small></span><textarea name="description" rows="2" placeholder="Contexto breve para os jogadores"></textarea></label>
+  </section>
+
+  <section class="request-form-section">
+    <div class="request-section-heading">
+      <i class="fas fa-users"></i><span>Personagens</span>
+      <span class="request-selection-count"><strong data-selected-target-count>0</strong> selecionado(s)</span>
+    </div>
+    <div class="target-tools">
+      <label class="request-search"><i class="fas fa-search"></i><input class="target-search" type="search" placeholder="Buscar por nome"></label>
+      <button type="button" class="request-tool-button" data-action="select-visible"><i class="fas fa-check-double"></i> Visíveis</button>
+      <button type="button" class="request-tool-button" data-action="clear"><i class="fas fa-eraser"></i> Limpar</button>
+    </div>
+    <div class="target-list">
+      {{#each groupedTargets}}
+      <details class="target-group" {{#if isOpen}}open{{/if}}>
+        <summary><span>{{label}}</span><span class="target-group-count">{{targets.length}}</span><i class="fas fa-chevron-down"></i></summary>
+        <div class="target-group-content">
+          {{#each targets}}
+          <label class="target-option">
+            <input type="checkbox" name="targets" value="{{targetKey}}" {{checked selected}}>
+            <img src="{{actorImg}}"><span>{{actorName}}</span><i class="fas fa-check target-check"></i>
+          </label>
+          {{/each}}
+        </div>
+      </details>
+      {{/each}}
+    </div>
+  </section>
+
+  <section class="request-form-section">
+    <div class="request-section-heading"><i class="fas fa-bullseye"></i><span>Teste</span></div>
+    <div class="request-type-switch">
+      <label><input type="radio" name="testType" value="attribute" checked><span><i class="fas fa-shield-alt"></i> Atributo</span></label>
+      <label><input type="radio" name="testType" value="skill"><span><i class="fas fa-book-open"></i> Perícia</span></label>
+    </div>
+    <div class="attribute-fields request-inline-field"><label>Atributo</label><select name="attributeKey">{{#each attributes}}<option value="{{key}}">{{label}}</option>{{/each}}</select></div>
+    <div class="skill-fields" hidden>
+      <label class="request-field" for="gum-test-request-skill-search"><span>Buscar perícia</span><input id="gum-test-request-skill-search" name="skillSearch" type="search" list="gum-test-request-skills" autocomplete="off" placeholder="Digite o nome ou a especialização"></label>
+      <input name="skillUuid" type="hidden">
+      <datalist id="gum-test-request-skills">{{#each skills}}<option value="{{displayName}}" data-uuid="{{uuid}}"></option>{{/each}}</datalist>
+      <p class="unregistered-skill-notice" hidden><i class="fas fa-triangle-exclamation"></i><span><strong>Perícia não registrada.</strong> Informe o pré-definido personalizado.</span></p>
+      <div class="custom-skill-fields" hidden>
+        <input name="customSkillName" type="hidden">
+        <label>Atributo base <select name="customAttributeKey">{{#each attributes}}<option value="{{key}}">{{label}}</option>{{/each}}</select></label>
+        <label>Modificador <input type="number" name="customModifier" value="-5"></label>
+      </div>
+    </div>
+  </section>
+
+  <section class="request-form-section">
+    <div class="request-section-heading"><i class="fas fa-tags"></i><span>Finalidades</span><small>opcional</small></div>
+    <div class="purpose-list">
+      {{#each purposes}}<details class="purpose-group"><summary><span>{{label}}</span><i class="fas fa-chevron-down"></i></summary><div>{{#each purposes}}<label class="purpose-option"><input type="checkbox" name="purposes" value="{{id}}"><span>{{label}}</span></label>{{/each}}</div></details>{{/each}}
+    </div>
+  </section>
+
+  <section class="request-form-section request-delivery-section">
+    <div class="request-section-heading"><i class="fas fa-sliders-h"></i><span>Condições e entrega</span></div>
+    <div class="modifier-row">
+      <label class="request-field"><span>Modificador do Mestre</span><input type="number" name="fixedModifier" value="0"></label>
+      <label class="request-field"><span>Descrição</span><input name="fixedModifierLabel" placeholder="Ex.: Escuridão"></label>
+    </div>
+    <label class="request-notify-toggle"><input type="checkbox" name="notifyPlayers"><span class="request-toggle-mark"></span><span><strong>Também avisar os jogadores</strong><small>O pedido continuará salvo no chat mesmo que o aviso seja fechado.</small></span></label>
+  </section>
+
+  <footer class="request-form-footer"><button type="submit" class="request-submit"><i class="fas fa-paper-plane"></i><span>Publicar pedido</span></button></footer>
+</form>

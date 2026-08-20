@@ -1,0 +1,12 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { buildTestRequestTargets, isUserAuthorizedForTarget, recipientUserIdsForActor } from "../module/utils/test-request-targets.mjs";
+const assigned = { id: "u1", active: true, isGM: false, character: { id: "a" } };
+const owner = { id: "u2", active: true, isGM: false, character: null };
+const actor = { id: "a", uuid: "Actor.a", name: "A", ownership: { u2: 3 } };
+test("prioriza usuário atribuído", () => assert.deepEqual(recipientUserIdsForActor(actor, [assigned, owner]), ["u1"]));
+test("usa OWNER quando não atribuído e NPC fica sem destinatário", () => { assert.deepEqual(recipientUserIdsForActor(actor, [owner]), ["u2"]); assert.deepEqual(recipientUserIdsForActor({ id: "n" }, [owner]), []); });
+test("mestre é autorizado para qualquer alvo", () => assert.equal(isUserAuthorizedForTarget({ isGM: true }, null), true));
+test("token sintético mantém UUID e tokens vinculados são deduplicados", () => { const linked = { id: "t1", actor, actorLink: true }; const linked2 = { id: "t2", actor, actorLink: true }; const syntheticActor = { ...actor, id: "s", uuid: "Scene.s.Token.t", isToken: true }; const synthetic = { id: "t", uuid: "Scene.s.Token.t", actor: syntheticActor, actorLink: false }; const targets = buildTestRequestTargets({ actors: [actor], tokens: [linked, linked2, synthetic], users: [] }); assert.equal(targets.filter(t => t.targetKey === "Actor.a").length, 1); assert.ok(targets.some(t => t.tokenUuid === "Scene.s.Token.t")); });
+test("personagem de jogador offline não é classificado como NPC", () => { const offlineOwner = { ...owner, active: false }; const [target] = buildTestRequestTargets({ actors: [actor], users: [offlineOwner] }); assert.equal(target.group, "Personagens com proprietário offline"); assert.deepEqual(target.recipientUserIds, []); });
+test("token vinculado a ator mundial removido é ignorado", () => { const staleToken = { id: "stale", actor, actorLink: true }; const targets = buildTestRequestTargets({ actors: [], tokens: [staleToken], selectedTokenIds: ["stale"] }); assert.deepEqual(targets, []); });

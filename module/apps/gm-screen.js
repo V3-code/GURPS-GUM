@@ -8,6 +8,7 @@ import { GumPreviewDialog } from "./preview-dialog.js";
 import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
 import { resolveGMScreenCardTarget } from "../utils/gm-screen-target.mjs";
 import { getGMScreenEffectState } from "../utils/gm-screen-effect-state.mjs";
+import { openTestRequestLauncher } from "./test-request-launcher.js";
 
 export class GumGMScreen extends Application {
     
@@ -278,6 +279,7 @@ async getData() {
     
 activateListeners(html) {
         super.activateListeners(html);
+        html.find('.gm-request-test').click(event => { event.preventDefault(); openTestRequestLauncher(); });
 
         html.find('.main-tab-btn').click(async ev => {
             ev.preventDefault();

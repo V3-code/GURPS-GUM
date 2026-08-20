@@ -52,6 +52,7 @@
     "styles/damage-application.css",
     "styles/roll-prompt.css",
     "styles/gm-screen.css",
+    "styles/test-request.css",
     "styles/conditions.css",
     "styles/condition-builder.css"
   ],

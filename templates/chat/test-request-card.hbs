@@ -1,0 +1,43 @@
+<article class="gum-test-request">
+  <header>
+    <span class="request-card-icon"><i class="fas fa-dice"></i></span>
+    <div><span class="request-card-kicker">Pedido do Mestre</span><h3>{{request.title}}</h3>
+    {{#if request.description}}<p>{{request.description}}</p>{{/if}}
+    </div>
+  </header>
+  <div class="request-summary">
+    <span class="request-summary-pill"><i class="fas fa-bullseye"></i> {{testLabel}}</span>
+    {{#each purposes}}<span class="request-summary-pill purpose"><i class="fas fa-tag"></i> {{this}}</span>{{/each}}
+    {{#if request.test.fixedModifier}}<span class="request-summary-pill modifier"><i class="fas fa-lock"></i> {{request.test.fixedModifier}} {{request.test.fixedModifierLabel}}</span>{{/if}}
+  </div>
+  <div class="request-progress"><div><span>Progresso</span><strong>{{progress.answered}} / {{progress.total}}</strong></div><div class="request-progress-track"><span style="width: {{progressPercent}}%"></span></div></div>
+  <div class="request-targets">
+    {{#each targets}}
+    <details class="request-target-row {{#if unavailableReason}}is-unavailable{{/if}}">
+      <summary>
+        <img src="{{actorImg}}">
+        <span>{{actorName}}</span>
+        <strong class="request-result request-result-{{response.outcome}}">{{status}}</strong>
+      </summary>
+      {{#if response}}
+      <dl>
+        <dt>Dados</dt><dd>{{response.total}}</dd>
+        <dt>Alvo efetivo</dt><dd>{{response.effectiveTarget}}</dd>
+        <dt>Margem</dt><dd>{{response.margin}}</dd>
+        <dt>Base</dt><dd>{{response.baseValue}}</dd>
+        {{#if response.defaultLabel}}<dt>Pré-definido</dt><dd>{{response.defaultLabel}}</dd>{{/if}}
+        <dt>Modificadores</dt><dd>{{#each modifierBreakdown}}<span class="request-modifier-part">{{label}} {{valueLabel}}</span>{{/each}}</dd>
+        {{#if responsePurposeLabels}}<dt>Finalidades</dt><dd>{{#each responsePurposeLabels}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}</dd>{{/if}}
+        <dt>Usuário</dt><dd>{{responseUserName}}</dd>
+        <dt>Horário</dt><dd>{{submittedAtLabel}}</dd>
+      </dl>
+      {{#if hasHistory}}<details class="request-history"><summary>{{historyCount}} tentativa(s) anterior(es)</summary>{{#if previous}}<p>Última: {{previous.status}} · dados {{previous.total}} contra {{previous.effectiveTarget}}</p>{{/if}}</details>{{/if}}
+      {{#unless unavailableReason}}<button type="button" class="test-request-roll" data-target-key="{{encodedKey}}" data-replace="true">Refazer</button>{{/unless}}
+      {{else}}
+        {{#if unavailableReason}}<p class="request-unavailable-reason"><i class="fas fa-triangle-exclamation"></i> {{unavailableReason}}</p>
+        {{else}}<button type="button" class="test-request-roll" data-target-key="{{encodedKey}}">Rolar Teste</button>{{/if}}
+      {{/if}}
+    </details>
+    {{/each}}
+  </div>
+</article>

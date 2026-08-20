@@ -911,7 +911,10 @@ return 'default';
             ? null
             : options.find(option => option.type === "fixed" && option.value === Number(normalizedBaseAttributeKey));
 
-        if (normalizedBaseAttributeKey && options.some(option => option.key === normalizedBaseAttributeKey)) {
+        const requestedInitialBaseKey = this.rollData.initialBaseKey?.toString?.().trim().toLowerCase();
+        if (requestedInitialBaseKey && options.some(option => option.key === requestedInitialBaseKey)) {
+            this.baseDefaultKey = requestedInitialBaseKey;
+        } else if (normalizedBaseAttributeKey && options.some(option => option.key === normalizedBaseAttributeKey)) {
             this.baseDefaultKey = normalizedBaseAttributeKey;
         } else if (fixedMatch) {
             this.baseDefaultKey = fixedMatch.key;
