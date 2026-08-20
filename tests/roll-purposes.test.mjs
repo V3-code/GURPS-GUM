@@ -170,6 +170,7 @@ test("quick view remove o rodapé vazio do Dialog antes de medir o card", () => 
     find: selector => {
       if (selector === ".dialog-buttons") return { remove: () => { removedFooter = true; } };
       if (selector === ".purpose-copy-tag") return { on() {} };
+      if (selector === ".gum-purpose-preview-canvas") return { 0: { scrollHeight: 280 } };
       if (selector === ".gum-purpose-preview-card") return { outerHeight: () => 320 };
       return { outerHeight: () => 0 };
     }
@@ -184,7 +185,7 @@ test("quick view remove o rodapé vazio do Dialog antes de medir o card", () => 
   try {
     PurposeQuickView.show("knockdown_stun");
     assert.equal(removedFooter, true);
-    assert.equal(positionedHeight, 356);
+    assert.equal(positionedHeight, 316);
   } finally {
     PurposeQuickView.current = null;
     delete globalThis.Dialog;

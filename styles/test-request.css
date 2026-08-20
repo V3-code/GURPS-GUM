@@ -42,7 +42,7 @@
 .target-group > summary > i,.purpose-group > summary > i { color: #777; font-size: .65rem; transition: transform .15s; }
 .target-group[open] > summary > i,.purpose-group[open] > summary > i { transform: rotate(180deg); }
 .target-group-count { display: grid; place-items: center; min-width: 20px; height: 20px; border-radius: 10px; color: var(--gum-accent-gold, #c5a05b); background: rgba(197,160,91,.1); font-size: .68rem; }
-.target-group-content { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 5px; padding: 0 7px 7px; }
+.target-group-content { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 5px; padding: 5px; }
 .target-option { position: relative; display: flex; align-items: center; gap: 7px; min-width: 0; padding: 6px; border: 1px solid #444; border-radius: 4px; color: #bbb; background: var(--gum-bg-dark, #181818); cursor: pointer; }
 .target-option:hover { border-color: rgba(197,160,91,.35); background: rgba(197,160,91,.06); }
 .target-option:has(input:checked) { border-color: rgba(197,160,91,.6); color: #fff; background: rgba(197,160,91,.12); }
@@ -67,12 +67,12 @@
 .custom-skill-fields label { display: grid; gap: 4px; color: #aaa; font-size: .72rem; font-weight: 700; }
 .unregistered-skill-notice,.request-unavailable-reason { display: flex; gap: 7px; margin: 0; padding: 7px 9px; border: 1px solid rgba(201,91,75,.35); border-radius: 5px; color: #e5aaa1; background: rgba(140,40,31,.14); font-size: .72rem; }
 
-.purpose-search { display: flex; align-items: center; height: 34px; margin-bottom: 8px; padding-left: 9px; border: 1px solid #444; border-radius: 4px; color: #777; background: var(--gum-bg-dark,#181818); }
+.purpose-search { display: flex; align-items: center; height: 34px; /* margin-bottom: 8px */; padding-left: 9px; border: 1px solid #444; border-radius: 4px; color: #777; background: var(--gum-bg-dark,#181818); }
 .purpose-search:focus-within { border-color: var(--gum-accent-gold,#c5a05b); color: var(--gum-accent-gold,#c5a05b); }
 .purpose-search input { flex: 1; min-width: 0; border: 0!important; background: transparent!important; box-shadow: none!important; }
 .purpose-search-clear { visibility: hidden; width: 30px; height: 30px; margin: 0; padding: 0; border: 0; color: #999; background: transparent; }
 .purpose-search-clear.visible { visibility: visible; }.purpose-search-clear:hover { color: #fff; }
-.purpose-list { display: flex; flex-direction: column; gap: 6px; max-height: 245px; overflow: auto; padding-right: 3px; }
+.purpose-list { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; max-height: 245px; overflow: auto; padding-right: 3px; }
 .purpose-group { border: 1px solid rgba(255,255,255,.07); border-radius: 4px; background: rgba(0,0,0,.15); }
 .purpose-group > summary { border-left: 3px solid #8c7440; background: rgba(181,151,83,.08); text-transform: uppercase; }
 .purpose-group > summary:hover { color: #fff; background: rgba(255,255,255,.05); }

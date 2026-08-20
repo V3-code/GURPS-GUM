@@ -46,8 +46,8 @@ export function buildPurposeQuickViewContent(view) {
   return `<div class="gurps-dialog-canvas gum-preview-canvas gum-purpose-preview-canvas"><article class="gurps-item-preview-card gum-preview-card gum-purpose-preview-card gum-purpose-quick-view"><header class="preview-header gum-purpose-preview-header"><div class="header-text"><h3>${escapeHtml(view.label)}</h3><span class="preview-item-type">Finalidade do Teste</span></div></header><section class="preview-content gum-purpose-preview-content"><div class="purpose-facts"><div><b>Grupo:</b> ${escapeHtml(view.groupLabel)}</div><div><b>Tipo:</b> ${escapeHtml(view.roleLabel)}</div>${bases}${view.qualifierHint ? `<p>${escapeHtml(view.qualifierHint)}</p>` : ""}</div>${section("Quando usar", `<p>${escapeHtml(view.description)}</p>`)}${section("Não confundir com", view.distinctions.length ? `<ul>${view.distinctions.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : "")}${section("Tag recomendada para efeitos", badges(view.recommendedFilterTags))}${section("Tags específicas produzidas", badges(view.directTags))}${view.inheritedTags.length ? `<details><summary>Categorias herdadas</summary>${badges(view.inheritedTags)}</details>` : ""}<p class="purpose-tag-help">Tags específicas restringem o modificador a esta finalidade ou a uma situação muito próxima. Categorias herdadas também podem alcançar outras finalidades relacionadas.</p>${section("Referência", view.references.map(escapeHtml).join("<br>"), "purpose-references")}</section></article></div>`;
 }
 
-export function calculatePurposePreviewHeight(headerHeight, cardHeight, viewportHeight) {
-  const naturalHeight = Math.ceil(Math.max(0, headerHeight) + Math.max(0, cardHeight) + 2);
+export function calculatePurposePreviewHeight(headerHeight, contentHeight, viewportHeight) {
+  const naturalHeight = Math.ceil(Math.max(0, headerHeight) + Math.max(0, contentHeight) + 2);
   return Math.min(naturalHeight, Math.floor(Math.max(0, viewportHeight) * 0.75));
 }
 
@@ -81,8 +81,11 @@ export class PurposeQuickView {
           fittedInitialHeight = true;
           requestAnimationFrame(() => {
             const headerHeight = windowRoot.find(".window-header").outerHeight(true) || 0;
-            const cardHeight = html.find(".gum-purpose-preview-card").outerHeight(true) || 0;
-            dialog.setPosition({ height: calculatePurposePreviewHeight(headerHeight, cardHeight, window.innerHeight) });
+            // scrollHeight representa o conteúdo real mesmo quando o layout flexível do
+            // Dialog já esticou o card para preencher a altura padrão da janela.
+            const canvas = html.find(".gum-purpose-preview-canvas")[0];
+            const contentHeight = canvas?.scrollHeight || html.find(".gum-purpose-preview-card").outerHeight(true) || 0;
+            dialog.setPosition({ height: calculatePurposePreviewHeight(headerHeight, contentHeight, window.innerHeight) });
           });
         }
       }

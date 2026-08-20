@@ -588,9 +588,10 @@
 .purpose-general i { visibility: hidden; }
 .purpose-general.active { border-color: var(--gum-accent-gold); background: var(--gum-accent-gold); color: #111; }
 .purpose-general.active i { visibility: visible; }
-.purpose-group { margin-top: 0; }
+.purpose-group { align-self: stretch; width: 100%; min-width: 0; margin-top: 0; box-sizing: border-box; }
 .purpose-group-summary { border-left-color: #8c7440; }
-.purpose-buttons { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 6px; }
+.purpose-group .group-content { min-width: 0; box-sizing: border-box; }
+.purpose-buttons { display: grid; width: 100%; min-width: 0; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 6px; }
 .purpose-item-wrapper { display: flex; align-items: stretch; min-width: 0; overflow: hidden; background: var(--gum-bg-dark); border: 1px solid #444; border-radius: 3px; transition: border-color .15s, transform .15s, box-shadow .15s; }
 .purpose-item-wrapper:hover { border-color: var(--gum-accent-gold); transform: translateY(-1px); }
 .purpose-item-wrapper.active { border-color: var(--gum-accent-gold); box-shadow: 0 0 0 1px rgba(181,151,83,.2); }
@@ -614,13 +615,13 @@
 .purpose-summary span { background: rgba(181,151,83,.14); border: 1px solid rgba(181,151,83,.35); border-radius: 10px; color: #ddd; padding: 1px 6px; }
 .app.window-app.dialog.gum-purpose-preview-dialog,
 .window-app.gum-purpose-preview-dialog,
-.dialog.gum-purpose-preview-dialog { overflow: hidden; background: linear-gradient(145deg, #101114 0%, #17191e 52%, #0d0e11 100%) !important; border: 1px solid rgba(214,181,109,.22) !important; border-radius: 14px; box-shadow: 0 22px 70px rgba(0,0,0,.72), inset 0 1px 0 rgba(255,255,255,.035); }
+.dialog.gum-purpose-preview-dialog { min-width: 0; overflow: hidden; background: linear-gradient(145deg, #101114 0%, #17191e 52%, #0d0e11 100%) !important; border: 1px solid rgba(214,181,109,.22) !important; border-radius: 14px; box-shadow: 0 22px 70px rgba(0,0,0,.72), inset 0 1px 0 rgba(255,255,255,.035); }
 .gum-purpose-preview-dialog .window-header { flex: 0 0 auto; min-height: 34px; padding: 7px 12px; background: rgba(8,9,12,.96) !important; border-bottom: 1px solid rgba(214,181,109,.18) !important; color: #d9d2c3 !important; }
 .gum-purpose-preview-dialog .window-content,
 .gum-purpose-preview-dialog .dialog-content { min-height: 0; padding: 0 !important; overflow-x: hidden !important; overflow-y: auto !important; background: radial-gradient(circle at top left, rgba(214,181,109,.08), transparent 34%), #111217 !important; color: #ded8cb !important; }
-.gum-purpose-preview-dialog .dialog-buttons:empty { display: none !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; }
-.gum-purpose-preview-dialog .gum-purpose-preview-canvas { min-height: 0; padding: 0; overflow-x: hidden; background: transparent !important; }
-.gum-purpose-preview-dialog .gum-purpose-preview-card.gurps-item-preview-card { width: 100%; margin: 0; overflow-wrap: anywhere; background: transparent !important; border: 0 !important; box-shadow: none !important; color: #ded8cb !important; }
+.gum-purpose-preview-dialog .dialog-buttons { display: none !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; }
+.gum-purpose-preview-dialog .gum-purpose-preview-canvas { height: auto; min-height: 0; padding: 0; overflow-x: hidden; background: transparent !important; }
+.gum-purpose-preview-dialog .gum-purpose-preview-card.gurps-item-preview-card { flex: 0 0 auto; width: 100%; height: auto; min-height: 0; margin: 0; overflow-wrap: anywhere; background: transparent !important; border: 0 !important; box-shadow: none !important; color: #ded8cb !important; }
 .gum-purpose-preview-dialog .gum-purpose-preview-header { grid-template-columns: minmax(0, 1fr); background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,0)) !important; border-bottom: 1px solid rgba(255,255,255,.07); }
 .gum-purpose-preview-dialog .gum-purpose-preview-content { color: #ddd6ca; }
 .gum-purpose-preview-dialog .gum-purpose-preview-content > section,
