@@ -1479,9 +1479,28 @@ async _onDrop(event) {
     return super._onDrop(event);
 }
 
+_onEditPortrait() {
+    const FilePickerImpl = foundry?.applications?.apps?.FilePicker?.implementation ?? FilePicker;
+    const picker = new FilePickerImpl({
+        type: "image",
+        current: this.actor.img,
+        callback: async path => {
+            if (path && path !== this.actor.img) await this.actor.update({ img: path });
+        }
+    });
+
+    return picker.render(true);
+}
+
 activateListeners(html) {
     super.activateListeners(html);
     if (!this.isEditable) return;
+
+    html.on('click keydown', '[data-action="edit-portrait"]', (ev) => {
+    if (ev.type === "keydown" && !["Enter", " "].includes(ev.key)) return;
+    ev.preventDefault();
+    this._onEditPortrait();
+    });
 
 html.on('click', '.recalc-secondary-stats-btn', (ev) => this._onRecalculateSecondaryStats(ev));
 html.on('click', '.points-summary-btn', (ev) => this._onOpenPointsSummary(ev));

@@ -26,6 +26,7 @@ import { getBodyProfile, getBodyLocationDefinition } from "../module/config/body
 import { openTestRequestLauncher } from "../module/apps/test-request-launcher.js";
 import { activateTestRequestChatListeners, registerTestRequestSocket } from "../module/services/test-request-service.js";
 import { evaluateGurpsRollResult } from "../module/utils/gurps-roll-result.mjs";
+import { registerContextMenuCompatibilityHooks } from "../module/utils/context-menu-compatibility.mjs";
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
 const isEffectDurationPermanent = (duration = {}) => {
@@ -2315,6 +2316,7 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
 // ================================================================== //
 Hooks.once('init', async function() { 
     console.log("GUM | Fase 'init': Registrando configurações e fichas."); 
+    registerContextMenuCompatibilityHooks({ Hooks, generation: game.release?.generation });
     GumPreviewDialog.registerChatDetailsHandler();
     game.gum = {};
     game.gum.importFromGCS = importFromGCS;
