@@ -13,6 +13,13 @@ async function resolveTarget(target) {
   return fromUuid(target.tokenUuid || target.actorUuid).then(document => document?.actor ?? document).catch(() => null);
 }
 
+async function resolveTargetTokenImage(target) {
+  if (!target.tokenUuid) return null;
+  return fromUuid(target.tokenUuid)
+    .then(document => document?.texture?.src ?? document?.document?.texture?.src ?? null)
+    .catch(() => null);
+}
+
 function responsibleGM(message) {
   const author = game.users.get(message.user?.id ?? message.user);
   if (author?.active && author.isGM) return author;
@@ -71,6 +78,7 @@ export async function rollTestRequest(messageId, targetKey, { replace = false } 
   const target = request?.targets?.find(entry => entry.targetKey === targetKey);
   if (!target) return ui.notifications.warn("Alvo do pedido não encontrado.");
   const actor = await resolveTarget(target);
+  const tokenImg = await resolveTargetTokenImage(target);
   if (!isUserAuthorizedForTarget(game.user, actor, target)) return ui.notifications.error("Você não pode rolar por este personagem.");
   if (replace && !await Dialog.confirm({ title: "Refazer teste", content: "<p>Substituir o resultado atual?</p>" })) return;
   let resolution;
@@ -91,7 +99,7 @@ export async function rollTestRequest(messageId, targetKey, { replace = false } 
   if (!Number.isFinite(value)) return ui.notifications.warn("O teste está indisponível para este personagem.");
   const rollData = { label: request.title, type: request.test.type === "attribute" ? "attribute" : "skill", attributeKey: request.test.attributeKey,
     value, itemId, itemUuid, requestedPurposeIds: request.test.requestedPurposeIds, fixedModifier: request.test.fixedModifier,
-    fixedModifierLabel: request.test.fixedModifierLabel || "Modificador do Mestre", img: actor.img, defaultLabel: resolution?.label,
+        fixedModifierLabel: request.test.fixedModifierLabel || "Modificador do Mestre", tokenImg, img: actor.img, defaultLabel: resolution?.label,
     initialBaseKey: request.test.type === "attribute" ? request.test.attributeKey : "skill" };
   new GurpsRollPrompt(actor, rollData, { onRoll: async (rollActor, payload, options) => {
     const result = await performGURPSRoll(rollActor, payload, { ...options, createChatMessage: false, returnResult: true });

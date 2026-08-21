@@ -4,6 +4,7 @@ import { performGURPSRoll } from "../../scripts/main.js";
 import { getGroupedRollPurposes, getPurposeLabels, matchesRollTags, normalizePurposeIds, normalizePurposeSearch, resolveRollMetadata, searchRollPurposes, shouldIncludeInPermanentNh } from "../utils/roll-purposes.mjs";
 import { getContextualPurposeIds, getInitialContextualFilterState, getRelatedPurposeIds, isPurposeRelatedToEntry } from "../utils/contextual-roll-purposes.mjs";
 import { normalizeRollTags } from "../utils/roll-tags.mjs";
+import { resolveRollPromptImage } from "../utils/roll-prompt-image.mjs";
 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
@@ -1111,6 +1112,7 @@ return 'default';
         context.actor = this.actor;
         context.label = this.rollData.label || "Teste";
         context.img = this.rollData.img || this.actor.img || "icons/svg/d20.svg";
+        context.img = resolveRollPromptImage(this.actor, this.rollData);
         context.baseValue = parseInt(this.rollData.value) || 10;
         context.initialManualMod = parseInt(this.rollData.modifier) || 0;
         context.manualLabel = this.rollData.modifierLabel || "Manual";
