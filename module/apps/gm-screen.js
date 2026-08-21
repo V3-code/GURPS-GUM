@@ -9,6 +9,7 @@ import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js
 import { resolveGMScreenCardTarget } from "../utils/gm-screen-target.mjs";
 import { getGMScreenEffectState } from "../utils/gm-screen-effect-state.mjs";
 import { openTestRequestLauncher } from "./test-request-launcher.js";
+import { resolveCharacterImage } from "../utils/character-image.mjs";
 
 export class GumGMScreen extends Application {
     
@@ -89,7 +90,7 @@ async getData() {
                 if (!actor) return null; 
                 
                 // Prepara os dados base (Lê HP, FP e Modificadores do ator correto)
-                const data = this._prepareActorData(actor);
+                const data = this._prepareActorData(actor, c.token);
                 
                 // Adiciona dados específicos do combate
                 data.combatantId = c.id;
@@ -152,7 +153,7 @@ async getData() {
     /**
      * Helper para extrair dados vitais de um ator (Reuso de código)
      */
- _prepareActorData(actor) {
+ _prepareActorData(actor, token = null) {
         const attr = actor.system.attributes;
         const encumbranceNames = ["Nenhuma", "Leve", "Média", "Pesada", "Muito Pesada"];
         const encumbranceLevel = Math.min(4, Math.max(0, Number(actor.system.encumbrance?.level_value) || 0));
@@ -227,7 +228,10 @@ async getData() {
         return {
             id: actor.id,
             name: actor.name,
-            img: actor.img,
+            img: resolveCharacterImage(actor, {
+                token,
+                sourceActor: game.actors.get(actor.id)
+            }),
             hp: prepareResource(attr.hp),
             fp: prepareResource(attr.fp),
             defenses: {

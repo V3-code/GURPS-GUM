@@ -244,7 +244,7 @@
     color: var(--gum-accent-gold); line-height: 1.1; 
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
 }
-.roll-subtitle { font-size: 0.8em; opacity: 0.7; font-style: italic; }
+.roll-subtitle { font-size: 0.85em; opacity: 0.85; font-weight: 600; }
 
 /* Seleção de Atributo Base */
 .base-attribute-panel {

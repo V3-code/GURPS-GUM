@@ -34,3 +34,9 @@ test("recorre ao retrato do ator e depois aos fallbacks", () => {
   assert.equal(resolveRollPromptImage({}, { img: "item.webp" }, {}), "item.webp");
   assert.equal(resolveRollPromptImage({}, {}, {}), "icons/svg/d20.svg");
 });
+
+test("usa o retrato da ficha sintética do token antes da ficha de origem", () => {
+  const syntheticActor = { id: "actor-1", img: "synthetic-actor.webp" };
+  const actor = { id: "actor-1", img: "source.webp", token: { actor: syntheticActor } };
+  assert.equal(resolveRollPromptImage(actor, {}, {}), "synthetic-actor.webp");
+});

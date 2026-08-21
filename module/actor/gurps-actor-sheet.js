@@ -7,6 +7,7 @@ import { getBodyProfile, getBodyLocationDefinition, listBodyProfiles } from "../
 import { TemplateBrowser } from "../apps/template-browser.js";
 import { GumPreviewDialog } from "../apps/preview-dialog.js";
 import { buildSkillModifierIndicators } from "../utils/skill-modifier-indicators.mjs";
+import { resolveCharacterImage } from "../utils/character-image.mjs";
 
 const { ActorSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -2656,6 +2657,8 @@ html.on("click", ".rollable-damage", async (ev) => {
     // ---- Pacote de Dano (para Damage Application)
     const damagePackage = {
       attackerId: this.actor.id,
+      attackerTokenId: this.actor.token?.id || null,
+      attackerTokenImg: resolveCharacterImage(this.actor),
       sourceName: normalizedAttack.name,
       sourceItemId: normalizedAttack.sourceItemId || null,
       sourceItemUuid: normalizedAttack.sourceItemUuid || null,
@@ -2869,8 +2872,10 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
     const roll = new Roll(finalFormula);
     await roll.evaluate();
 
-    const damagePackage = {
+      const damagePackage = {
       attackerId: actor.id,
+      attackerTokenId: actor.token?.id || null,
+      attackerTokenImg: resolveCharacterImage(actor),
       sourceName: label,
       main: { total: roll.total, type: basicDamageType, armorDivisor: 1 },
       onDamageEffects: {},

@@ -2,6 +2,7 @@ import { applyContingentCondition, applyCurrentRollPrivacy, evaluateNumericFormu
 import { applySingleEffect } from "../effects-engine.js";
 import { getBodyLocationDefinition, getBodyProfile } from "../../module/config/body-profiles.js";
 import { getActiveEffectFlagSources, hasActiveEffectFlag } from "../../module/utils/active-effect-flags.mjs";
+import { resolveCharacterImage } from "../../module/utils/character-image.mjs";
 
 export default class DamageApplicationWindow extends Application {
     
@@ -10,6 +11,8 @@ export default class DamageApplicationWindow extends Application {
 this.damageData = damageData;
         this.attackerActor = attackerActor;
         this.targetActor = targetActor;
+        this.attackerToken = options.attackerToken ?? null;
+        this.targetToken = options.targetToken ?? null;
         
         this.effectState = {};
         this.isApplying = false;
@@ -22,7 +25,22 @@ this.damageData = damageData;
             activeDamageKey: 'main'
         };
 
-        this.options.title = `Aplicar Dano em ${this.targetActor?.name || "Alvo"}`;
+ this.options.title = `Aplicar Dano em ${this.targetActor?.name || "Alvo"}`;
+    }
+
+    _attackerImage() {
+        return resolveCharacterImage(this.attackerActor, {
+            token: this.attackerToken,
+            tokenImg: this.damageData.attackerTokenImg,
+            sourceActor: game.actors.get(this.attackerActor?.id)
+        });
+    }
+
+    _targetImage() {
+        return resolveCharacterImage(this.targetActor, {
+            token: this.targetToken,
+            sourceActor: game.actors.get(this.targetActor?.id)
+        });
     }
 
 async _resolveOnDamageEffects() {
@@ -430,8 +448,16 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
         // ... (Seu método getData, 100% preservado e sem alterações)
         const context = await super.getData();
         context.damage = this.damageData;
-        context.attacker = this.attackerActor;
-        context.target = this.targetActor;
+        context.attacker = {
+            id: this.attackerActor?.id,
+            name: this.attackerActor?.name,
+            img: this._attackerImage()
+        };
+        context.target = {
+            id: this.targetActor?.id,
+            name: this.targetActor?.name,
+            img: this._targetImage()
+        };
         const ignoreShockSources = getActiveEffectFlagSources(this.targetActor, "ignoreShock");
         context.targetIgnoresShock = ignoreShockSources.length > 0;
         context.ignoreShockSourceNames = ignoreShockSources
@@ -1115,12 +1141,12 @@ async _onNpcResistanceRoll(effectId) {
                 <div class="card-content">
                     <div class="summary-actors vertical">
                         <div class="actor-line">
-                            <img src="${this.attackerActor.img}" class="actor-token-icon">
+                            <img src="${this._attackerImage()}" class="actor-token-icon">
                             <strong>${this.attackerActor.name}</strong>
                         </div>
                         <div class="arrow-line"><i class="fas fa-arrow-right"></i></div>
                         <div class="actor-line">
-                            <img src="${this.targetActor.img}" class="actor-token-icon">
+                            <img src="${this._targetImage()}" class="actor-token-icon">
                             <strong>${this.targetActor.name}</strong>
                         </div>
                     </div>
@@ -1391,7 +1417,7 @@ async _onNpcResistanceRoll(effectId) {
                         <div class="info-row">
                             <span class="label">Alvo</span>
                             <span class="value with-img">
-                                <img src="${target?.img || targetToken?.document?.texture?.src}" class="actor-token-icon">
+                                <img src="${resolveCharacterImage(target, { token: targetToken })}" class="actor-token-icon">
                                 ${target?.name || "Alvo"}
                             </span>
                         </div>

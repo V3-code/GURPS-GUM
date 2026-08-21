@@ -27,6 +27,7 @@ import { openTestRequestLauncher } from "../module/apps/test-request-launcher.js
 import { activateTestRequestChatListeners, registerTestRequestSocket } from "../module/services/test-request-service.js";
 import { evaluateGurpsRollResult } from "../module/utils/gurps-roll-result.mjs";
 import { registerContextMenuCompatibilityHooks } from "../module/utils/context-menu-compatibility.mjs";
+import { resolveCharacterImage } from "../module/utils/character-image.mjs";
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
 const isEffectDurationPermanent = (duration = {}) => {
@@ -1566,6 +1567,8 @@ async function _rollDamageFromChatAction(payload) {
 
     const damagePackage = {
         attackerId: actor.id,
+        attackerTokenId: actor.token?.id || null,
+        attackerTokenImg: resolveCharacterImage(actor),
         sourceName: normalizedAttack.name,
         sourceItemId: normalizedAttack.sourceItemId || null,
         sourceItemUuid: normalizedAttack.sourceItemUuid || null,
@@ -2282,7 +2285,7 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
                     <div class="info-row">
                         <span class="label">Alvo</span>
                         <span class="value with-img">
-                             <img src="${targetToken.actor?.img || targetToken.document?.texture?.src || "icons/svg/mystery-man.svg"}" class="actor-token-icon">
+                             <img src="${resolveCharacterImage(targetToken.actor, { token: targetToken })}" class="actor-token-icon">
                             ${targetToken.name || targetToken.actor?.name || "Alvo"}
                         </span>
                     </div>
@@ -2831,7 +2834,8 @@ Hooks.once('ready', async function() {
         console.error("GUM | DEBUG: Falha na Etapa 1. Nenhum token ou múltiplos tokens selecionados.");
         return ui.notifications.warn("Por favor, selecione exatamente um token como alvo.");
     }
-    const targetActor = controlled[0].actor;
+        const targetToken = controlled[0];
+    const targetActor = targetToken.actor;
     console.log(`GUM | DEBUG: Etapa 1 OK. Alvo: ${targetActor.name}`);
 
     // 2. Lê o pacote de dados
@@ -2857,7 +2861,13 @@ Hooks.once('ready', async function() {
 
     // 4. Cria e renderiza nossa nova janela
     console.log("GUM | DEBUG: Etapa 4. Tudo pronto para abrir a janela.");
-    new DamageApplicationWindow(damagePackage, attackerActor, targetActor).render(true);
+        const attackerToken = damagePackage.attackerTokenId
+        ? canvas.tokens.get(damagePackage.attackerTokenId)
+        : null;
+    new DamageApplicationWindow(damagePackage, attackerActor, targetActor, {
+        attackerToken,
+        targetToken
+    }).render(true);
 });
     
 
