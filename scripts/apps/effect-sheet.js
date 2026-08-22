@@ -1,5 +1,7 @@
 // GUM/scripts/apps/effect-sheet.js
 import { getGroupedRollTags, isKnownRollTag, normalizeRollTags, ROLL_TAG_ALIASES } from "../../module/utils/roll-tags.mjs";
+import { normalizePurposeIds } from "../../module/utils/roll-purposes.mjs";
+import { formatPurposeSelection, openRollPurposePicker } from "../../module/apps/roll-purpose-picker.mjs";
 
 const { ItemSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -119,6 +121,7 @@ const DEFAULT_EFFECT_ACTION = {
     roll_modifier_context: "all",
     roll_modifier_application_side: "self",
     roll_modifier_entries: [],
+    requestedPurposeIds: [],
     whisperMode: "public",
     category: "hp",
     name: "",
@@ -184,6 +187,7 @@ const normalizeAction = (action = {}) => {
     next.roll_modifier_cap = next.roll_modifier_entries[0]?.cap ?? "";
     next.roll_modifier_context = next.roll_modifier_entries[0]?.contexts ?? "all";
     next.roll_modifier_application_side = next.roll_modifier_entries[0]?.application_side ?? "self";
+    next.requestedPurposeIds = normalizePurposeIds(next.requestedPurposeIds ?? next.roll_requested_purpose_ids);
     return next;
 };
 
@@ -304,10 +308,15 @@ export class EffectSheet extends ItemSheet {
                 isExpanded: this._isActionExpanded(index),
                 rollModifierEntries: entries
             };
+            decoratedAction.requestedPurposeIdsCsv = action.requestedPurposeIds.join(",");
+            decoratedAction.purposeSelectionSummary = formatPurposeSelection(action.requestedPurposeIds);
             decoratedAction.summaryText = buildActionSummary(decoratedAction);
             return decoratedAction;
         });
         context.hasTimedActions = actions.some((action) => ["attribute", "flag", "roll_modifier", "status"].includes(action.type));
+        const resistancePurposeIds = normalizePurposeIds(context.system.resistanceRoll?.requestedPurposeIds);
+        context.resistancePurposeIdsCsv = resistancePurposeIds.join(",");
+        context.resistancePurposeSummary = formatPurposeSelection(resistancePurposeIds);
 
         return context;
     }
@@ -497,6 +506,24 @@ activateListeners(html) {
             },
             default: 'ok'
         }).render(true);
+     });
+    html.on("click", ".open-purpose-picker", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        const button = event.currentTarget;
+        const input = this.form?.querySelector(`[name="${button.dataset.targetInput}"]`);
+        if (!input) return;
+        const attributeInput = button.dataset.attributeInput ? this.form?.querySelector(`[name="${button.dataset.attributeInput}"]`) : null;
+        openRollPurposePicker({
+            selectedIds: input.value,
+            attributeKey: attributeInput?.value,
+            onApply: ids => {
+                input.value = ids.join(",");
+                input.dispatchEvent(new Event("change", { bubbles: true }));
+                const summary = button.closest(".effect-purpose-control")?.querySelector(".effect-purpose-summary");
+                if (summary) summary.textContent = formatPurposeSelection(ids);
+            }
+        });
     });
     html.on('click', '.open-roll-tag-picker', (ev) => {
         ev.preventDefault();
@@ -869,6 +896,9 @@ activateListeners(html) {
     async _updateObject(event, formData) {
         const actionEntries = new Map();
         const rollEntries = new Map();
+        if (Object.hasOwn(formData, "system.resistanceRoll.requestedPurposeIds")) {
+            formData["system.resistanceRoll.requestedPurposeIds"] = normalizePurposeIds(formData["system.resistanceRoll.requestedPurposeIds"]);
+        }
 
         for (const [key, value] of Object.entries(formData)) {
             const actionMatch = key.match(/^system\.actions\.(\d+)\.([a-zA-Z0-9_]+)$/);
@@ -961,6 +991,7 @@ activateListeners(html) {
             formData["system.roll_modifier_context"] = firstAction.roll_modifier_context;
             formData["system.roll_modifier_application_side"] = firstAction.roll_modifier_application_side;
             formData["system.roll_modifier_entries"] = firstAction.roll_modifier_entries;
+            formData["system.requestedPurposeIds"] = firstAction.requestedPurposeIds;
             formData["system.whisperMode"] = firstAction.whisperMode;
             formData["system.category"] = firstAction.category;
             formData["system.name"] = firstAction.name;

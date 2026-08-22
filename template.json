@@ -849,6 +849,7 @@
       "roll_modifier_context": "all",
       "roll_modifier_entries": [],
       "whisperMode": "public",
+      "requestedPurposeIds": [],
       "resistanceRoll": {
         "isResisted": false,
         "attribute": "ht",
@@ -856,7 +857,8 @@
         "applyOn": "failure",
         "margin": "",
         "chatText": "",
-        "skipPromptCard": false
+        "skipPromptCard": false,
+        "requestedPurposeIds": []
       },
       "category": "pf",
       "name": "",

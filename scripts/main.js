@@ -25,9 +25,12 @@ import { getPurposeLabels, matchesRollTags, resolveRollMetadata, shouldIncludeIn
 import { getBodyProfile, getBodyLocationDefinition } from "../module/config/body-profiles.js";
 import { openTestRequestLauncher } from "../module/apps/test-request-launcher.js";
 import { activateTestRequestChatListeners, registerTestRequestSocket } from "../module/services/test-request-service.js";
-import { evaluateGurpsRollResult } from "../module/utils/gurps-roll-result.mjs";
+import { activateRollRequestChatListeners, executeRollRequest, registerRollRequestSocket } from "../module/services/roll-request-service.js";
+import { evaluateBarrierConsequence, isMatchingDamageResistance, normalizeResistanceRoll, normalizeRollRequest } from "../module/utils/roll-request-data.mjs";import { evaluateGurpsRollResult } from "../module/utils/gurps-roll-result.mjs";
 import { registerContextMenuCompatibilityHooks } from "../module/utils/context-menu-compatibility.mjs";
 import { resolveCharacterImage } from "../module/utils/character-image.mjs";
+import { appendResistanceRequestResult, renderPendingResistanceRequest } from "../module/utils/roll-request-view.mjs";
+import { isUserAuthorizedForTarget } from "../module/utils/test-request-targets.mjs";
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
 const isEffectDurationPermanent = (duration = {}) => {
@@ -51,7 +54,7 @@ const normalizeEffectDurationFlags = (duration = {}) => {
 const testRequestChatRenderHook = Number(game.release?.generation ?? 12) >= 13
     ? "renderChatMessageHTML"
     : "renderChatMessage";
-Hooks.on(testRequestChatRenderHook, (_message, html) => activateTestRequestChatListeners(html));
+Hooks.on(testRequestChatRenderHook, (_message, html) => { activateTestRequestChatListeners(html); activateRollRequestChatListeners(html); });
 
 const isCombatDuration = (duration = {}) => {
     if (!duration || typeof duration !== "object") return false;
@@ -2219,25 +2222,37 @@ async function applyUseEventEffects(item, actor, trigger, options = {}) {
     }
 }
 
+
 /**
  * Cria uma mensagem de chat solicitando o teste de resistência de um efeito de ativação.
  * O teste usa os dados de barreira configurados no item efeito.
  */
 async function _promptActivationResistance(effectItem, targetToken, sourceActor, originItem, effectLinkId, options = {}) {
     const rollData = effectItem.system?.resistanceRoll || {};
+    const normalizedResistance = normalizeResistanceRoll(rollData);
     const suppressResistanceCard = rollData.skipPromptCard || options.suppressResistanceCard;
     if (suppressResistanceCard) {
-                const conditionContext = options.conditionId
+        const targetKey = targetToken.document?.uuid || targetToken.uuid || targetToken.actor?.uuid;
+        const conditionContext = options.conditionId
             ? {
                 conditionId: options.conditionId,
                 conditionActivationMode: options.conditionActivationMode || null
             }
             : {};
-        await applySingleEffect(effectItem, [targetToken], {
-            actor: sourceActor,
-            origin: originItem || effectItem,
-            ...conditionContext
-        });
+        const silentRequest = {
+            id: foundry.utils.randomID(), title: `Resistência: ${effectItem.name}`,
+            origin: { type: "effect-barrier", sourceActorUuid: sourceActor?.uuid, sourceItemUuid: originItem?.uuid, effectUuid: effectItem.uuid, effectLinkId },
+            targets: [{ targetKey, actorUuid: targetToken.actor?.uuid, tokenUuid: targetToken.document?.uuid || targetToken.uuid || null, actorName: targetToken.actor?.name, recipientUserIds: [] }],
+            test: { ...normalizedResistance.test, fixedModifier: evaluateNumericFormula(rollData.modifier, { actor: targetToken.actor }) || 0 }, consequence: normalizedResistance.consequence
+        };
+        await executeRollRequest(silentRequest, targetKey, { prompt: false, onResult: async result => {
+            if (!game.user.isGM) {
+                game.socket.emit("system.gum", { type: "rollRequest:silentBarrierResult", request: silentRequest, targetKey, userId: game.user.id, result, context: { conditionId: options.conditionId || null, conditionActivationMode: options.conditionActivationMode || null } });
+                return;
+            }
+            const barrier = evaluateBarrierConsequence(result, normalizedResistance.consequence);
+            if (barrier.shouldApply) await applySingleEffect(effectItem, [targetToken], { actor: sourceActor, origin: originItem || effectItem, ...conditionContext });
+        }});
         return;
     }
     const applyOnText = rollData.applyOn === 'success' ? 'Em sucesso' : 'Em falha';
@@ -2245,70 +2260,44 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
     const rawModifier = (rollData.modifier ?? "").toString().trim();
     const previewModifier = evaluateNumericFormula(rawModifier, { actor: targetToken.actor });
     const previewModifierSigned = previewModifier > 0 ? `+${previewModifier}` : `${previewModifier}`;
-    const isExpressionModifier = rawModifier && !/^[+-]?\d+(\.\d+)?$/.test(rawModifier);
     const testLabel = `${(rollData.attribute || 'HT').toUpperCase()}${rawModifier && previewModifier !== 0 ? ` ${previewModifierSigned}` : ''}`;
     const resistanceChatText = (rollData.chatText || "").toString().trim();
-    const resistanceChatTextHtml = resistanceChatText
-        ? `<div class="info-row resistance-note-row"><span class="value resistance-note-text">${foundry.utils.escapeHTML(resistanceChatText)}</span></div>`
-        : "";
-
- const chatPayload = {
+ 
+    const chatPayload = {
         mode: options.mode || "activation",
         targetActorId: targetToken.actor?.id,
         targetTokenId: targetToken.id,
         effectItemUuid: effectItem.uuid || null,
-        effectItemData: effectItem.toObject(),
         sourceActorId: sourceActor?.id || null,
         originItemUuid: originItem?.uuid || null,
         effectLinkId: effectLinkId || null,
                 conditionId: options.conditionId || null,
         conditionActivationMode: options.conditionActivationMode || null
     };
+ const targetKey = targetToken.document?.uuid || targetToken.uuid || targetToken.actor?.uuid;
+ const request = {
+        version: 1, id: foundry.utils.randomID(), status: "pending", title: `Resistência: ${effectItem.name}`,
+        origin: { type: "effect-barrier", sourceActorUuid: sourceActor?.uuid, sourceItemUuid: originItem?.uuid, effectUuid: effectItem.uuid, effectLinkId },
+        targets: [{ targetKey, actorUuid: targetToken.actor?.uuid, tokenUuid: targetToken.document?.uuid || targetToken.uuid || null, actorName: targetToken.actor?.name, recipientUserIds: [] }],
+        test: normalizedResistance.test, consequence: normalizedResistance.consequence, delivery: {}, responses: []
+    };
 
- const content = `
-        <div class="gurps-roll-card resistance-roll-card roll-pending">
-            <header class="card-header">
-                <div class="header-left">
-                    <div class="header-icon"><img src="${effectItem.img}"></div>
-                    <div class="header-title">
-                        <h3>${effectItem.name}</h3>
-                        <small>Teste de Resistência Necessário</small>
-                    </div>
-                </div>
-            </header>
-            <div class="card-content">
-                <div class="resistance-info resistance-info-compact">
-                    <div class="info-row">
-                        <span class="label">Origem</span>
-                        <span class="value">${sourceActor?.name || originItem?.name || 'Origem desconhecida'}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="label">Alvo</span>
-                        <span class="value with-img">
-                             <img src="${resolveCharacterImage(targetToken.actor, { token: targetToken })}" class="actor-token-icon">
-                            ${targetToken.name || targetToken.actor?.name || "Alvo"}
-                        </span>
-                    </div>
-                    ${resistanceChatTextHtml}
-                    <div class="resistance-test-block">
-                        <div class="test-main">Teste de ${testLabel}</div>
-                        <div class="test-sub">${applyOnText} | Margem mín: ${marginValue}</div>
-                    </div>
-
-                    <div class="pill-row action-row">
-                        <button type="button" class="resistance-roll-button full-width" data-roll-data='${JSON.stringify(chatPayload)}'>
-                            <i class="fas fa-dice-d6"></i> Rolar Resistência
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
+ const content = renderPendingResistanceRequest({
+        request, effectName: effectItem.name, effectImg: effectItem.img,
+        originLabel: sourceActor?.name || originItem?.name || "Origem desconhecida",
+        targetName: targetToken.name || targetToken.actor?.name || "Alvo",
+        targetImg: resolveCharacterImage(targetToken.actor, { token: targetToken }),
+        testLabel: `Teste de ${testLabel}`, modifierLabel: rawModifier ? `Barreira ${previewModifierSigned}` : "",
+        applyOnLabel: applyOnText, marginLabel: marginValue,
+        purposeLabels: getPurposeLabels(normalizedResistance.test.requestedPurposeIds),
+        description: resistanceChatText
+    });
 
 
     const chatData = applyCurrentRollPrivacy({
         speaker: ChatMessage.getSpeaker({ actor: targetToken.actor || sourceActor }),
-        content
+        content,
+        flags: { gum: { rollRequest: request, resistanceContext: chatPayload } }
     });
     ChatMessage.create(chatData);
 }
@@ -2738,6 +2727,8 @@ Hooks.on("renderActorDirectory", (app, html, data) => {
 // ================================================================== //
 Hooks.once('ready', async function() {
     registerTestRequestSocket();
+    registerRollRequestSocket();
+    game.socket.on("system.gum", enqueueResistanceSocketResult);
     console.log("GUM | Fase 'ready': Aplicando configurações.");
 
     await migrateEffectTokenIconPolicy();
@@ -2990,257 +2981,134 @@ $('body').on('click', '.chat-roll-damage-button', async (ev) => {
 // LISTENER FINAL E ÚNICO PARA O BOTÃO DE RESISTÊNCIA
 // ==========================================================
 
+const resistanceResultQueues = new Map();
+const handledSilentResistanceRequests = new Set();
+
+async function processResistanceSocketResult(payload) {
+    if (!game.user.isGM || !["rollRequest:damageResult", "rollRequest:barrierResult", "rollRequest:silentBarrierResult"].includes(payload?.type)) return;
+    if (payload.type === "rollRequest:silentBarrierResult") {
+        const request = normalizeRollRequest(payload.request);
+        if (!request.id || handledSilentResistanceRequests.has(request.id) || request.origin?.type !== "effect-barrier") return;
+        const target = request.targets.find(entry => entry.targetKey === payload.targetKey);
+        const actorDocument = target ? await fromUuid(target.tokenUuid || target.actorUuid).catch(() => null) : null;
+        const actor = actorDocument?.actor || actorDocument;
+        const sender = game.users.get(payload.userId);
+        const effectItem = request.origin.effectUuid ? await fromUuid(request.origin.effectUuid).catch(() => null) : null;
+        if (!actor || !effectItem || !isUserAuthorizedForTarget(sender, actor, target)) return;
+        if (!["total", "baseValue", "totalModifier", "effectiveTarget", "margin"].every(key => Number.isFinite(Number(payload.result?.[key])))) return;
+        const canonical = evaluateGurpsRollResult(Number(payload.result.total), Number(payload.result.effectiveTarget));
+        payload.result = { ...payload.result, margin: canonical.margin, outcome: canonical.outcome, resultLabel: canonical.resultLabel };
+        handledSilentResistanceRequests.add(request.id);
+        const barrier = evaluateBarrierConsequence(payload.result, request.consequence);
+        if (barrier.shouldApply) {
+            const targetToken = target.tokenUuid ? await fromUuid(target.tokenUuid).catch(() => null) : null;
+            const targets = targetToken ? [targetToken.object || targetToken] : (actor.getActiveTokens?.().length ? actor.getActiveTokens() : [{ actor, name: actor.name }]);
+            const conditionContext = payload.context?.conditionId ? { conditionId: payload.context.conditionId, conditionActivationMode: payload.context.conditionActivationMode || null } : {};
+            await applySingleEffect(effectItem, targets, { actor: request.origin.sourceActorUuid ? await fromUuid(request.origin.sourceActorUuid).catch(() => null) : null, origin: request.origin.sourceItemUuid ? await fromUuid(request.origin.sourceItemUuid).catch(() => effectItem) : effectItem, ...conditionContext });
+        }
+        return;
+    }
+    const message = game.messages.get(payload.messageId);
+    const request = message?.getFlag("gum", "rollRequest");
+    const context = message?.getFlag("gum", "resistanceContext");
+    if (!message || !request || request.id !== payload.requestId || request.status !== "pending" || !context) return;
+    const target = request.targets?.find(entry => entry.targetKey === payload.targetKey);
+    const actorDocument = target ? await fromUuid(target.tokenUuid || target.actorUuid).catch(() => null) : null;
+    const actor = actorDocument?.actor || actorDocument;
+    const sender = game.users.get(payload.userId);
+    if (!actor || !isUserAuthorizedForTarget(sender, actor, target)) return;
+    if (!["total", "baseValue", "totalModifier", "effectiveTarget", "margin"].every(key => Number.isFinite(Number(payload.result?.[key])))) return;
+    const canonical = evaluateGurpsRollResult(Number(payload.result.total), Number(payload.result.effectiveTarget));
+    payload.result = { ...payload.result, margin: canonical.margin, outcome: canonical.outcome, resultLabel: canonical.resultLabel };
+    const barrier = evaluateBarrierConsequence(payload.result, request.consequence);
+    await message.update({ "flags.gum.rollRequest.status": "processing" });
+    let consequenceLabel = barrier.shouldApply ? "Efeito aplicável" : "Efeito bloqueado";
+    if (payload.type === "rollRequest:damageResult") {
+        const application = game.gum?.damageApplications?.get(String(context.damageApplicationId));
+        if (!isMatchingDamageResistance(application, { targetActorId: actor.id, effectLinkId: context.effectLinkId, effectUuid: request.origin?.effectUuid })) {
+            await message.update({ "flags.gum.rollRequest.status": "pending" });
+            return;
+        }
+        const effect = application.availableOnDamageEffects.find(entry => entry.id === context.effectLinkId);
+        await application.updateEffectCard(context.effectLinkId, { isSuccess: barrier.success, shouldApply: barrier.shouldApply, resultText: `${payload.result.total} vs ${payload.result.effectiveTarget} — ${payload.result.resultLabel}`, rollRequestId: request.id, result: payload.result }, effect.item.system, { autoApply: false });
+        consequenceLabel = barrier.shouldApply ? "Aguardando aplicação do dano" : "Efeito bloqueado";
+    } else if (barrier.shouldApply) {
+        const effectItem = request.origin?.effectUuid ? await fromUuid(request.origin.effectUuid).catch(() => null) : null;
+        if (!effectItem) { await message.update({ "flags.gum.rollRequest.status": "pending" }); return; }
+        const targetToken = target.tokenUuid ? await fromUuid(target.tokenUuid).catch(() => null) : null;
+        const targets = targetToken ? [targetToken.object || targetToken] : (actor.getActiveTokens?.().length ? actor.getActiveTokens() : [{ actor, name: actor.name }]);
+        const originItem = context.originItemUuid ? await fromUuid(context.originItemUuid).catch(() => null) : null;
+        const originActor = context.sourceActorId ? game.actors.get(context.sourceActorId) : null;
+        const conditionContext = context.mode === "condition" && context.conditionId ? { conditionId: context.conditionId, conditionActivationMode: context.conditionActivationMode || null } : {};
+        await applySingleEffect(effectItem, targets, { actor: originActor, origin: originItem || effectItem, ...conditionContext });
+        consequenceLabel = "Efeito aplicado";
+    }
+    const updated = { ...request, status: "resolved", responses: [...(request.responses || []), { ...payload.result, consequence: consequenceLabel }] };
+    await message.update({ content: appendResistanceRequestResult(message.content, { result: payload.result, consequenceLabel, purposeLabels: getPurposeLabels(payload.result.purposeIds), userName: sender.name }), "flags.gum.rollRequest": updated });
+}
+
+function enqueueResistanceSocketResult(payload) {
+    if (!["rollRequest:damageResult", "rollRequest:barrierResult", "rollRequest:silentBarrierResult"].includes(payload?.type)) return;
+    const queueKey = payload.messageId || payload.request?.id;
+    const previous = resistanceResultQueues.get(queueKey) ?? Promise.resolve();
+    const next = previous.then(() => processResistanceSocketResult(payload)).catch(error => console.error("GUM | Resultado de resistência", error));
+    const queued = next.finally(() => { if (resistanceResultQueues.get(queueKey) === queued) resistanceResultQueues.delete(queueKey); });
+    resistanceResultQueues.set(queueKey, queued);
+    return queued;
+}
+
 
 $('body').on('click', '.resistance-roll-button', async ev => {
     ev.preventDefault();
+    ev.stopImmediatePropagation();
     const button = ev.currentTarget;
-
-    // Acessa o pacote de dados completo
-    const rollData = JSON.parse(button.dataset.rollData);
-    
-    // ✅ CORREÇÃO AQUI: Lemos o 'effectItemData' completo que salvamos antes.
-    const { effectItemData, sourceName, effectLinkId } = rollData;
-    const mode = rollData.mode || "activation";
-    const rollConfig = effectItemData?.system?.resistanceRoll || {};
-    if (!effectItemData) {
-        ui.notifications.warn("Dados do efeito não encontrados para o teste de resistência.");
+    button.disabled = true;
+    const messageElement = button.closest('.message, li.chat-message');
+    const message = game.messages.get(messageElement?.dataset.messageId);
+    const legacyPayload = (() => { try { return JSON.parse(button.dataset.rollData || "{}"); } catch (_error) { return {}; } })();
+    const context = message?.getFlag("gum", "resistanceContext") || legacyPayload;
+    const effectItem = context.effectItemUuid ? await fromUuid(context.effectItemUuid).catch(() => null) : null;
+    const effectData = effectItem?.toObject?.() || context.effectItemData;
+    const rollConfig = effectItem?.system?.resistanceRoll || effectData?.system?.resistanceRoll || {};
+    const normalized = normalizeResistanceRoll(rollConfig);
+    const targetToken = context.targetTokenId ? canvas.tokens?.get(context.targetTokenId) : null;
+    const targetActor = targetToken?.actor || (context.targetActorId ? game.actors.get(context.targetActorId) : null);
+    if (!message || !effectData || !targetActor) {
         button.disabled = false;
-        return;
+        return ui.notifications.warn("Não foi possível validar o pedido de resistência.");
     }
 
-    const resolveActorForRoll = () => {
-        const messageId = $(button).closest('.message').data('messageId');
-        const message = messageId ? game.messages.get(messageId) : null;
-        const speakerActor = message ? ChatMessage.getSpeakerActor(message.speaker) : null;
-        if (speakerActor) return speakerActor;
-
-        const controlled = canvas.tokens?.controlled || [];
-        if (controlled.length > 0) return controlled[0].actor;
-
-        if (game.user.character) return game.user.character;
-
- if (rollData.targetActorId) return game.actors.get(rollData.targetActorId);
-        return null;
+    const targetKey = targetToken?.document?.uuid || targetActor.uuid;
+    const storedRequest = message.getFlag("gum", "rollRequest");
+    const evaluatedModifier = evaluateNumericFormula(rollConfig.modifier, { actor: targetActor, eventData: context }) || 0;
+    const dynamicModifier = context.mode === "damage" && rollConfig.dynamicModifier
+        ? (() => { try { return Number(Function("actor", "event", `return (${rollConfig.dynamicModifier})`)(targetActor, { damage: context.damage ?? 0, target: targetActor })) || 0; } catch (_error) { return 0; } })()
+        : 0;
+    const request = {
+        ...(storedRequest || {}),
+        version: 1,
+        id: storedRequest?.id || `resistance:${message.id}`,
+        status: storedRequest?.status || "pending",
+        title: storedRequest?.title || `Resistência: ${effectData.name}`,
+        origin: storedRequest?.origin || { type: context.mode === "damage" ? "damage-barrier" : "effect-barrier", effectUuid: context.effectItemUuid, effectLinkId: context.effectLinkId },
+        targets: storedRequest?.targets?.length ? storedRequest.targets : [{ targetKey, actorUuid: targetActor.uuid, tokenUuid: targetToken?.document?.uuid || null, actorName: targetActor.name, recipientUserIds: [] }],
+        test: { ...(storedRequest?.test || normalized.test), fixedModifier: evaluatedModifier + dynamicModifier },
+        consequence: storedRequest?.consequence || normalized.consequence,
+        delivery: storedRequest?.delivery || {}, responses: storedRequest?.responses || []
     };
 
-    const buildFallbackToken = (fallbackActor) => ({
-        actor: fallbackActor,
-        id: null,
-        name: fallbackActor?.name || "Alvo",
-        document: { texture: { src: fallbackActor?.img || "icons/svg/mystery-man.svg" } }
-    });
-
-   const computeTargetValue = (actor, extraModifier = 0, { includesEffectModifier = false } = {}) => {
-        if (!actor) return { finalTarget: rollData.finalTarget || 10, base: 10 };
-        const attributeKey = rollConfig.attribute || "ht";
-        const resolvedBaseValue = resolveRollBaseValue(actor, attributeKey);
-        const baseAttributeValue = (resolvedBaseValue !== null && resolvedBaseValue !== undefined)
-            ? resolvedBaseValue
-            : 10;
-
-        const effectModifier = evaluateNumericFormula(rollConfig.modifier, { actor, eventData: rollData }) || 0;
-        const totalModifier = includesEffectModifier ? extraModifier : effectModifier + extraModifier;
-        return {
-            finalTarget: baseAttributeValue + totalModifier,
-            base: baseAttributeValue,
-            modifier: totalModifier,
-            effectModifier,
-            extraModifier,
-            attributeLabel: attributeKey.toString().toUpperCase()
-        };
-    };
-
-    const resistingActor = resolveActorForRoll();
-    if (!resistingActor) {
-        ui.notifications.warn("Nenhum ator encontrado para rolar a resistência.");
-        return;
-    }
-
-    const performResistanceRoll = async (extraModifier = 0, options = {}) => {
-        button.disabled = true;
-        const targetCalc = computeTargetValue(resistingActor, extraModifier, options);
-        const finalTarget = targetCalc.finalTarget;
-
-        const roll = new Roll("3d6");
-        await roll.evaluate();
-
-        const margin = finalTarget - roll.total;
-        const success = roll.total <= finalTarget;
-        const achievedMargin = Math.abs(margin);
-        const minMargin = parseInt(rollConfig.margin) || 0;
-        const marginOk = achievedMargin >= minMargin;
-        const applyOnSuccess = rollConfig.applyOn === 'success';
-        const shouldApply = marginOk && ((applyOnSuccess && success) || (!applyOnSuccess && !success));
-
-        let resultText = success ? `Sucesso com margem de ${margin}` : `Fracasso por uma margem de ${-margin}`;
-        let resultLabel = success ? "Sucesso" : "Falha";
-        let resultClass = success ? 'success' : 'failure';
-
-        if (roll.total <= 4 || (roll.total <= 6 && margin >= 10)) {
-            resultText = `Sucesso Crítico!`;
-            resultLabel = "Sucesso Crítico";
-            resultClass = 'crit-success';
-        } else if (roll.total >= 17 || (roll.total === 16 && margin <= -10)) {
-            resultText = `Falha Crítica!`;
-            resultLabel = "Falha Crítica";
-            resultClass = 'crit-failure';
+    const outcome = await executeRollRequest(request, request.targets[0].targetKey, { prompt: !ev.shiftKey, onResult: async result => {
+        const payload = { type: context.mode === "damage" ? "rollRequest:damageResult" : "rollRequest:barrierResult", messageId: message.id, requestId: request.id, targetKey: request.targets[0].targetKey, userId: game.user.id, result };
+        if (game.user.isGM) await enqueueResistanceSocketResult(payload);
+        else {
+            game.socket.emit("system.gum", payload);
+            ui.notifications.info("Resultado de resistência enviado ao Mestre.");
         }
-
-        // Comunica o resultado de volta para a janela de dano.
-        // Rolagens originadas da janela de dano devem apenas resolver o card;
-        // qualquer botão de aplicação (publicar, fechar ou manter) passa por _onApplyDamage.
-        const shouldAutoApplyResistanceEffect = mode !== "damage";
-        if (game.gum.activeDamageApplication) {
-            // ✅ CORREÇÃO AQUI: Passamos apenas o 'system' do efeito, que é o que a função espera.
-            game.gum.activeDamageApplication.updateEffectCard(effectLinkId, {
-                isSuccess: success,
-                resultText: resultText,
-                shouldApply: shouldApply
-            }, effectItemData.system, { autoApply: mode !== "damage" }); // Passamos os dados do sistema como terceiro argumento
-        }
-
-        // Aplica o efeito no alvo
-        if (shouldApply && mode !== "damage") {
-            const effectItem = rollData.effectItemUuid
-                ? await fromUuid(rollData.effectItemUuid).catch(() => null)
-                : await Item.fromSource(effectItemData);
-            if (effectItem) {
-     const resolveTargets = () => {
-                    const targets = [];
-                    if (rollData.targetTokenId) {
-                        const token = canvas.tokens?.get(rollData.targetTokenId);
-                        if (token) targets.push(token);
-                    }
-                    if (targets.length === 0 && resistingActor) {
-                        const activeTokens = resistingActor.getActiveTokens();
-                        if (activeTokens.length > 0) {
-                            targets.push(...activeTokens);
-                        } else {
-                            targets.push(buildFallbackToken(resistingActor));
-                        }
-                    }
-                    if (targets.length === 0 && rollData.targetActorId) {
-                        const actor = game.actors.get(rollData.targetActorId);
-                        if (actor) {
-                            const activeTokens = actor.getActiveTokens();
-                            if (activeTokens.length > 0) {
-                                targets.push(...activeTokens);
-                            } else {
-                                targets.push(buildFallbackToken(actor));
-                            }
-                        }
-                    }
-                    return targets;
-                };
-
-
-                const targets = resolveTargets();
-                if (targets.length > 0) {
-                    const originItem = rollData.originItemUuid ? await fromUuid(rollData.originItemUuid).catch(() => null) : null;
-                    const originActor = rollData.sourceActorId ? game.actors.get(rollData.sourceActorId) : null;
-
-                    ui.notifications.info(`${resistingActor.name} foi afetado por: ${effectItem.name}!`);
-                  const conditionContext = mode === "condition" && rollData.conditionId
-                        ? {
-                            conditionId: rollData.conditionId,
-                            conditionActivationMode: rollData.conditionActivationMode || null
-                        }
-                        : {};
-                    await applySingleEffect(effectItem, targets, {
-                        actor: originActor,
-                        origin: originItem || effectItem,
-                        ...conditionContext
-                    });
-                } else {
-                    ui.notifications.warn("Não foi possível encontrar um alvo para aplicar o efeito.");
-                }
-            }
-        }
-
-        // Monta o card de resultado no chat usando o mesmo layout da rolagem base
-        const diceFaces = roll.dice[0].results.map(r => `<span class="die-face">${r.result}</span>`).join('');
-        const modifierText = targetCalc.modifier !== 0 ? `${targetCalc.modifier > 0 ? '+' : ''}${targetCalc.modifier}` : '±0';
-        const modBreakdownParts = [];
-        if (targetCalc.effectModifier) {
-            modBreakdownParts.push(`Ef ${targetCalc.effectModifier > 0 ? '+' : ''}${targetCalc.effectModifier}`);
-        }
-        if (targetCalc.extraModifier) {
-            modBreakdownParts.push(`Mod ${targetCalc.extraModifier > 0 ? '+' : ''}${targetCalc.extraModifier}`);
-        }
-        const modBreakdown = modBreakdownParts.length > 0 ? modBreakdownParts.join(' | ') : 'Sem modificadores';
-        const marginValue = Math.abs(margin);
-
-        const flavor = `
-            <div class="gurps-roll-card premium roll-result">
-                <header class="card-header">
-                    <h3>Teste de Resistência</h3>
-                    <small>${resistingActor?.name || 'Alvo'}</small>
-                </header>
-
-                <div class="card-formula-container">
-                    <span class="formula-pill">${targetCalc.attributeLabel} ${targetCalc.base}</span>
-                    <span class="formula-pill">${modifierText} (${modBreakdown})</span>
-                </div>
-
-                <div class="card-content">
-                    <div class="card-main-flex">
-                        <div class="roll-column">
-                            <span class="column-label">Dados</span>
-                            <div class="roll-total">${roll.total}</div>
-                            <div class="individual-dice">${diceFaces}</div>
-                        </div>
-
-                        <div class="column-separator"></div>
-
-                        <div class="target-column">
-                            <span class="column-label">Alvo</span>
-                            <div class="target-value">${finalTarget}</div>
-                            <div class="target-note">Final</div>
-                        </div>
-                    </div>
-                </div>
-
-                <footer class="card-footer">
-                    <div class="result-block ${resultClass}">
-                        <span class="result-label">${resultLabel}</span>
-                        <span class="result-margin">Margem ${marginValue}</span>
-                    </div>
-                </footer>
-            </div>
-        `;
-
-        // Publica o resultado em uma nova mensagem para evitar conflitos com hooks
-        // de renderizacao que dependem do HTML original da solicitacao de resistencia.
-        const resultChatData = applyCurrentRollPrivacy({
-            speaker: ChatMessage.getSpeaker({ actor: resistingActor }),
-            content: flavor,
-            rolls: [roll]
-        });
-        await ChatMessage.create(resultChatData);
-    };
-
-    if (ev.shiftKey) {
-        await performResistanceRoll();
-        return;
-    }
-
-    const promptTarget = computeTargetValue(resistingActor, 0);
-    const promptData = {
-        label: "Teste de Resistência",
-        type: "attribute",
-        attribute: rollConfig.attribute || "ht",
-        value: promptTarget.base,
-        modifier: 0,
-        fixedModifier: promptTarget.effectModifier,
-        fixedModifierLabel: "Barreira",
-        img: effectItemData?.img || resistingActor.img
-    };
-
-    new GurpsRollPrompt(resistingActor, promptData, {
-        onRoll: async (_actor, promptPayload) => {
-            await performResistanceRoll(promptPayload.modifier || 0, { includesEffectModifier: true });
-        }
-    }).render(true);
+    }});
+    if (!outcome.accepted) {
+        button.disabled = false;
+        ui.notifications.warn(typeof outcome.reason === "string" && !["target", "permission", "processing"].includes(outcome.reason) ? outcome.reason : "Não foi possível realizar o teste de resistência.");
+    } 
 });
 
 });

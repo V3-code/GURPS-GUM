@@ -3,6 +3,10 @@ import { applySingleEffect } from "../effects-engine.js";
 import { getBodyLocationDefinition, getBodyProfile } from "../../module/config/body-profiles.js";
 import { getActiveEffectFlagSources, hasActiveEffectFlag } from "../../module/utils/active-effect-flags.mjs";
 import { resolveCharacterImage } from "../../module/utils/character-image.mjs";
+import { evaluateBarrierConsequence, normalizeResistanceRoll } from "../../module/utils/roll-request-data.mjs";
+import { executeRollRequest } from "../../module/services/roll-request-service.js";
+import { getPurposeLabels } from "../../module/utils/roll-purposes.mjs";
+import { renderPendingResistanceRequest } from "../../module/utils/roll-request-view.mjs";
 
 export default class DamageApplicationWindow extends Application {
     
@@ -498,6 +502,7 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
         this.preparedOnDamageEffects = await this._resolveOnDamageEffects();
         game.gum = game.gum || {};
         game.gum.activeDamageApplication = this;
+        (game.gum.damageApplications ??= new Map()).set(String(this.appId), this);
 const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
         const profile = getBodyProfile(profileId);
         const totalDrLocations = this.targetActor.system.combat.dr_locations || {};
@@ -988,63 +993,31 @@ async _onNpcResistanceRoll(effectId) {
     const effect = (this.availableOnDamageEffects || []).find(e => e.id === effectId);
     if (!effect?.requiresResistance || !effect.item) return;
     const rollData = effect.item.system?.resistanceRoll || {};
+    const normalized = normalizeResistanceRoll(rollData);
     const target = this.targetActor;
-    let baseAttributeValue = getProperty(target.system.attributes, `${rollData.attribute}.final`) || 10;
     let totalModifier = evaluateNumericFormula(rollData.modifier, {
         actor: target,
         eventData: { damage: this.finalInjury, target, attacker: this.attackerActor }
     }) || 0;
-    if (rollData.dynamicModifier) {
+     if (rollData.dynamicModifier) {
         try { totalModifier += Function("actor", "event", `return (${rollData.dynamicModifier})`)(target, { damage: this.finalInjury, target, attacker: this.attackerActor }); } catch(e) { console.warn(`GUM | Erro ao avaliar modificador dinâmico:`, e); }
     }
-        const finalTarget = baseAttributeValue + totalModifier;
-        const roll = new Roll("3d6");
-        await roll.evaluate();
-        const success = roll.total <= finalTarget;
-        const shouldApply = (rollData.applyOn || 'failure') === 'success' ? success : !success;
-        const simpleResultText = `${roll.total} vs ${finalTarget} - ${success ? "<span style='color: green;'>SUCESSO</span>" : "<span style='color: red;'>FALHA</span>"}`;
-        const attributeLabel = (rollData.attribute || "HT").toUpperCase();
-        const resultClass = success ? "success" : "failure";
-        const resultLabel = success ? "Sucesso" : "Falha";
-        const marginValue = Math.abs(finalTarget - roll.total);
-        const chatResultText = `
-            <div class="gurps-roll-card premium roll-result">
-                <header class="card-header">
-                    <h3>Teste de Resistência</h3>
-                    <small>${target?.name || "Alvo"}</small>
-                </header>
-                <div class="card-formula-container">
-                    <span class="formula-pill">${attributeLabel}</span>
-                </div>
-                <div class="card-content">
-                    <div class="card-main-flex">
-                        <div class="roll-column">
-                            <span class="column-label">Dados</span>
-                            <div class="roll-total">${roll.total}</div>
-                        </div>
-                        <div class="column-separator"></div>
-                        <div class="target-column">
-                            <span class="column-label">Alvo</span>
-                            <div class="target-value">${finalTarget}</div>
-                            <div class="target-note">Final</div>
-                        </div>
-                    </div>
-                </div>
-                <footer class="card-footer">
-                    <div class="result-block ${resultClass}">
-                        <span class="result-label">${resultLabel}</span>
-                        <span class="result-margin">Margem ${marginValue}</span>
-                    </div>
-                </footer>
-            </div>
-        `;
-        await this.updateEffectCard(
-            effectId,
-            { isSuccess: success, shouldApply, resultText: simpleResultText, chatResultText },
-            effect.item.system,
-            { autoApply: false }
-        );
-    }
+    const targetToken = this.targetToken || target?.getActiveTokens?.()[0] || null;
+    const targetKey = targetToken?.document?.uuid || target?.uuid;
+    const request = {
+        id: foundry.utils.randomID(), title: `Resistência: ${effect.item.name}`,
+        origin: { type: "damage-barrier", sourceActorUuid: this.attackerActor?.uuid, effectUuid: effect.item.uuid, effectLinkId: effectId },
+        targets: [{ targetKey, actorUuid: target?.uuid, tokenUuid: targetToken?.document?.uuid || null, actorName: target?.name, recipientUserIds: [] }],
+        test: { ...normalized.test, fixedModifier: totalModifier }, consequence: normalized.consequence
+    };
+    const outcome = await executeRollRequest(request, targetKey, { prompt: false, onResult: async result => {
+        const barrier = evaluateBarrierConsequence(result, normalized.consequence);
+        const simpleResultText = `${result.total} vs ${result.effectiveTarget} — ${result.resultLabel}`;
+        const chatResultText = `<div class="gurps-roll-card premium roll-result"><header class="card-header"><h3>Teste de Resistência</h3><small>${target?.name || "Alvo"}</small></header><div class="card-content"><p>${simpleResultText}</p><p>Margem ${result.margin}</p></div></div>`;
+        await this.updateEffectCard(effectId, { isSuccess: barrier.success, shouldApply: barrier.shouldApply, resultText: simpleResultText, chatResultText, result }, effect.item.system, { autoApply: false });
+    }});
+    if (!outcome.accepted) ui.notifications.warn(outcome.reason || "Não foi possível realizar a resistência.");
+}
     
     _publishResistanceResult(effectId) {
         const state = this.effectState?.[effectId];
@@ -1385,66 +1358,40 @@ async _onNpcResistanceRoll(effectId) {
         });
         const resolvedModifierSigned = resolvedModifier > 0 ? `+${resolvedModifier}` : `${resolvedModifier}`;
         const modifierValue = rawModifier && resolvedModifier !== 0 ? resolvedModifierSigned : '0';
-        const modifierClass = resolvedModifier > 0 ? 'positive' : resolvedModifier < 0 ? 'negative' : 'neutral';
         const resistanceChatText = (rollData.chatText || '').toString().trim();
-        const resistanceChatTextHtml = resistanceChatText
-            ? `<div class="info-row resistance-note-row"><span class="label">Nota</span><span class="value resistance-note-text">${foundry.utils.escapeHTML(resistanceChatText)}</span></div>`
-            : '';
 
         const chatPayload = {
             mode: "damage",
             targetActorId: target?.id || null,
             targetTokenId: targetToken?.id || null,
+            effectItemUuid: effect.item.uuid || null,
             effectItemData: effect.item.toObject(),
             sourceActorId: this.attackerActor?.id || null,
-            effectLinkId: effect.id,
-            originItemUuid: effect.originItemUuid || null
+           effectLinkId: effect.id,
+            originItemUuid: effect.originItemUuid || null,
+            damageApplicationId: String(this.appId),
+            damage: this.finalInjury
+        };
+        const normalized = normalizeResistanceRoll(rollData);
+        const targetKey = targetToken?.document?.uuid || target?.uuid;
+        const request = {
+            version: 1, id: foundry.utils.randomID(), status: "pending", title: `Resistência: ${effect.item.name}`,
+            origin: { type: "damage-barrier", sourceActorUuid: this.attackerActor?.uuid, sourceItemUuid: effect.originItemUuid || null, effectUuid: effect.item.uuid, effectLinkId: effect.id },
+            targets: [{ targetKey, actorUuid: target?.uuid, tokenUuid: targetToken?.document?.uuid || null, actorName: target?.name, recipientUserIds: [] }],
+            test: normalized.test, consequence: normalized.consequence, delivery: {}, responses: []
         };
 
-        const content = `
-            <div class="gurps-roll-card resistance-roll-card roll-pending">
-                <header class="card-header">
-                    <div class="header-left">
-                        <div class="header-icon"><img src="${effect.item.img}"></div>
-                        <div class="header-title">
-                            <h3>Teste de Resistência Necessário</h3>
-                            <small>${effect.item.name}</small>
-                        </div>
-                    </div>
-                </header>
-                <div class="card-content">
-                    <div class="resistance-info">
-                        <div class="info-row">
-                            <span class="label">Alvo</span>
-                            <span class="value with-img">
-                                <img src="${resolveCharacterImage(target, { token: targetToken })}" class="actor-token-icon">
-                                ${target?.name || "Alvo"}
-                            </span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">Atributo</span>
-                            <span class="value">${(rollData.attribute || "HT").toUpperCase()} ${modifierValue !== '0' ? `<small class="${modifierClass}">(${modifierValue})</small>` : ''}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">Aplicar em</span>
-                            <span class="value">${applyOnText}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">Margem mín.</span>
-                            <span class="value">${marginValue}</span>
-                        </div>
-                        ${resistanceChatTextHtml}
-                    </div>
-                    <div class="card-actions">
-                        <button type="button" class="resistance-roll-button" data-roll-data='${JSON.stringify(chatPayload)}'>
-                            <i class="fas fa-dice-d6"></i> Rolar Resistência
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
+        const content = renderPendingResistanceRequest({
+            request, effectName: effect.item.name, effectImg: effect.item.img,
+            originLabel: this.attackerActor?.name || "Aplicação de dano",
+            targetName: target?.name || "Alvo", targetImg: resolveCharacterImage(target, { token: targetToken }),
+            testLabel: (rollData.attribute || "HT").toUpperCase(), modifierLabel: modifierValue !== "0" ? `Barreira ${modifierValue}` : "",
+            applyOnLabel: applyOnText, marginLabel: marginValue, purposeLabels: getPurposeLabels(normalized.test.requestedPurposeIds),
+            description: resistanceChatText, buttonPayload: chatPayload
+        });
 
-        const resistanceChatData = applyCurrentRollPrivacy({ speaker: ChatMessage.getSpeaker({ actor: target }), content });
+        const resistanceChatData = applyCurrentRollPrivacy({ speaker: ChatMessage.getSpeaker({ actor: target }), content,
+            flags: { gum: { rollRequest: request, resistanceContext: chatPayload } } });
         ChatMessage.create(resistanceChatData);
     }
     
@@ -1465,6 +1412,7 @@ async _onNpcResistanceRoll(effectId) {
 
     async close(options) {
         this.isDialogClosed = true;
+        game.gum?.damageApplications?.delete(String(this.appId));
         if (this.pendingResistanceEffects.size === 0 && game.gum?.activeDamageApplication === this) {
             delete game.gum.activeDamageApplication;
         }

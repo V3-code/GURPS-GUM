@@ -19,7 +19,7 @@ function actorOwnershipGroup(actor, users = []) {
 export function isUserAuthorizedForTarget(user, actor, target = {}) {
   if (user?.isGM) return true;
   if (!user?.active || !actor) return false;
-  return user.character?.id === actor.id || actor.testUserPermission?.(user, "OWNER") || actor.ownership?.[user.id] === 3;
+return target.recipientUserIds?.includes(user.id) || user.character?.id === actor.id || actor.testUserPermission?.(user, "OWNER") || actor.ownership?.[user.id] === 3;
 }
 
 export function buildTestRequestTargets({ actors = [], tokens = [], users = [], selectedTokenIds = [] } = {}) {

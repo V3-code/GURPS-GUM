@@ -1,9 +1,4 @@
-const tokenTexture = token => token?.document?.texture?.src ?? token?.texture?.src ?? null;
-
-const belongsToActor = (token, actor) => {
-  const tokenActor = token?.actor ?? token?.document?.actor;
-  return tokenActor === actor || (tokenActor?.id && tokenActor.id === actor?.id);
-};
+import { resolveCharacterImage } from "./character-image.mjs";
 
 /**
  * Resolve a imagem de identidade da rolagem, preservando a aparência específica

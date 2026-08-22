@@ -126,6 +126,10 @@
 .request-target-row > summary::-webkit-details-marker { display:none; }
 .request-target-row > summary img { width: 28px; height: 28px; border: 1px solid rgba(81,62,33,.32); border-radius: 50%; object-fit: cover; }
 .request-target-row > summary > span { flex: 1; min-width: 0; overflow: hidden; color: #3c3427; font-size: .72rem; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.gum-request-target-summary { display:flex; align-items:center; gap:7px; padding:6px; }
+.gum-request-target-summary img { width:28px; height:28px; border:1px solid rgba(81,62,33,.32); border-radius:50%; object-fit:cover; }
+.gum-request-target-summary > span { flex:1; min-width:0; overflow:hidden; color:#3c3427; font-size:.72rem; font-weight:800; text-overflow:ellipsis; white-space:nowrap; }
+.gum-request-origin { margin:0 7px 6px; color:#74664f; font-size:.65rem; }
 .request-result { padding: 2px 6px; border-radius: 9px; color: #6e6252; background: rgba(83,67,43,.08); font-size: .62rem; white-space: nowrap; }
 .request-result-success,.request-result-critical-success { color: #2b6b3f; background: rgba(45,129,72,.12); }
 .request-result-failure,.request-result-critical-failure { color: #8b352d; background: rgba(155,56,45,.12); }
@@ -135,6 +139,13 @@
 .request-modifier-part { display: block; }.request-history { margin: 5px 7px; color: #625744; font-size: .65rem; }.request-history p { margin: 4px 0; }
 .request-target-row button { width: calc(100% - 14px); margin: 0 7px 7px; min-height: 28px; border: 1px solid rgba(94,67,25,.4); border-radius: 4px; color: #4f3a1c; background: rgba(197,160,91,.15); font-size: .68rem; font-weight: 800; }
 .request-target-row button:hover { background: rgba(197,160,91,.3); }
+.request-target-row button:disabled { opacity:.65; cursor:default; }
+.gum-request-inline-result { margin:0 7px 7px; padding:7px; border-top:1px solid rgba(88,65,31,.18); border-radius:4px; background:rgba(76,57,29,.06); }
+.gum-request-result-heading { display:flex; align-items:center; gap:6px; margin-bottom:6px; color:#544a3b; font-size:.68rem; }
+.gum-request-result-heading > b { margin-left:auto; color:#5e4219; }
+.gum-request-inline-result details > summary { cursor:pointer; color:#74664f; font-size:.66rem; font-weight:800; }
+.gum-request-inline-result dl { display:grid; grid-template-columns:auto 1fr; gap:3px 8px; margin:6px 0 0; font-size:.66rem; }
+.gum-request-inline-result dt { color:#74664f; font-weight:800; }.gum-request-inline-result dd { margin:0; color:#3b3429; }
 .request-unavailable-reason { margin: 0 7px 7px; color: #853f35; }
 .gum-test-request-highlight { animation: gum-request-highlight 1.8s ease-out; }
 

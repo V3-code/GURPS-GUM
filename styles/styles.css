@@ -7211,6 +7211,12 @@ background-color: var(--gum-accent-gold);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.62);
     transform: translateY(-1px);
 }
+.gum-roll-request-card .gum-roll-request-meta { display:flex; flex-wrap:wrap; gap:5px; margin:8px 0; }
+.gum-roll-request-card .gum-roll-request-meta span { border:1px solid #cfbea7; border-radius:999px; padding:3px 7px; background:#f9f5ec; }
+.gum-roll-request-card .gum-roll-request-result { display:flex; justify-content:space-between; padding:8px; border-radius:6px; background:rgba(0,0,0,.05); }
+.gum-roll-request-card details { margin-top:8px; }
+.gum-roll-request-card dl { display:grid; grid-template-columns:auto 1fr; gap:3px 8px; }
+.gum-roll-request-card dt { font-weight:700; }
 .equipment-card.is-inside-container {
   margin-top: 5px;
   border-left: 3px solid rgba(84, 160, 255, 0.65);

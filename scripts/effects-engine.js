@@ -1,3 +1,6 @@
+import { createSingleRollRequestMessage } from "../module/services/roll-request-service.js";
+import { normalizeChatRoll } from "../module/utils/roll-request-data.mjs";
+
 /**
  * O "Motor de Efeitos" central do sistema. (Versão 5.0 - Rollback Controlado)
  * Lida com tipos de efeitos separados:
@@ -694,26 +697,14 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                 for (const target of targets) {
                     const targetActor = target.actor;
                     const chatBody = action.chat_text.replace(/{actor.name}/g, targetActor.name);
-                    let rollButtonHtml = "";
-                    if (action.has_roll) {
-                        let finalTarget = 0;
-                        if (action.roll_attribute === "fixed") {
-                            finalTarget = Number(action.roll_fixed_value) || 10;
-                        } else if (action.roll_attribute) {
-                            const resolvedBase = resolveRollBaseValue(targetActor, action.roll_attribute);
-                            const finalAttr = (resolvedBase !== null && resolvedBase !== undefined) ? resolvedBase : 10;
-                            const resolvedModifier = evaluateNumericModifier(action.roll_modifier, { actor: targetActor });
-                            finalTarget = finalAttr + resolvedModifier;
-                        }
-                        const label = action.roll_label || "Rolar Teste";
-                        rollButtonHtml = `<div class="gum-effect-chat-actions"><button class="rollable gum-chat-roll-button" data-roll-value="${finalTarget}" data-label="${label}"><i class="fas fa-dice-d20"></i><span>${label}</span><strong>vs ${finalTarget}</strong></button></div>`;
-                    }
-
-                    const content = `<div class="gurps-effect-chat-card"><div class="gum-effect-chat-header"><i class="fas fa-comment-dots"></i><span>Mensagem de Efeito</span><span class="gum-effect-chat-target">${targetActor.name}</span></div><div class="gum-effect-chat-body">${chatBody}</div>${rollButtonHtml}</div>`;
+                    const content = `<div class="gurps-effect-chat-card"><div class="gum-effect-chat-header"><i class="fas fa-comment-dots"></i><span>Mensagem de Efeito</span><span class="gum-effect-chat-target">${targetActor.name}</span></div><div class="gum-effect-chat-body">${chatBody}</div></div>`;
                     const chatData = { speaker: ChatMessage.getSpeaker({ actor: targetActor }), content };
                     if (action.whisperMode === "gm") chatData.whisper = ChatMessage.getWhisperRecipients("GM");
                     else if (action.whisperMode === "blind") chatData.blind = true;
-                    ChatMessage.create(chatData);
+                    if (action.has_roll) {
+                        const normalized = normalizeChatRoll(action);
+                        await createSingleRollRequestMessage({ title: normalized.label, description: chatBody, origin: { type: "effect-chat", effectUuid: effectItem.uuid }, targets: [{ targetKey: targetActor.uuid, actorUuid: targetActor.uuid, tokenUuid: null, actorName: targetActor.name, actorImg: targetActor.img, recipientUserIds: [] }], test: normalized.test, consequence: { type: "chat-record" }, delivery: { rollMode: normalized.whisperMode } }, chatData);
+                    } else ChatMessage.create(chatData);
                 }
             }
         } catch (error) {

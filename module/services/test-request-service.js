@@ -1,9 +1,7 @@
-import { GurpsRollPrompt } from "../apps/roll-prompt.js";
-import { performGURPSRoll } from "../../scripts/main.js";
 import { getPurposeLabels } from "../utils/roll-purposes.mjs";
 import { createTestRequest, getTestRequestProgress, getTestRequestResponse, insertTestRequestResponse } from "../utils/test-request-data.mjs";
 import { isUserAuthorizedForTarget } from "../utils/test-request-targets.mjs";
-import { resolveSkillDefault } from "../utils/skill-default-resolver.mjs";
+import { executeRollRequest, resolveRequestedTest } from "./roll-request-service.js";
 import { formatTestRequestStatus, prepareModifierBreakdown, prepareResponseHistory } from "../utils/test-request-view.mjs";
 
 const queues = new Map();
@@ -41,7 +39,7 @@ export async function renderTestRequestMessage(request) {
       if (!Number.isFinite(value)) unavailableReason = "O atributo solicitado não está disponível.";
     } else {
       const definition = canonicalSkill ? { ...request.test, predefined: canonicalSkill.system?.predefined } : request.test;
-      const resolution = resolveSkillDefault(actor, definition);
+      const resolution = await resolveRequestedTest(actor, definition);
       if (!resolution.available) unavailableReason = resolution.reason;
     }
     const response = getTestRequestResponse(request, target.targetKey);
@@ -59,17 +57,10 @@ export async function renderTestRequestMessage(request) {
 export async function createTestRequestMessage(data) {
   const request = createTestRequest(data, { id: foundry.utils.randomID(), userId: game.user.id });
   const content = await renderTestRequestMessage(request);
-  const message = await ChatMessage.create({ user: game.user.id, speaker: ChatMessage.getSpeaker(), content, flags: { gum: { testRequest: request } } });
+  const message = await ChatMessage.create({ user: game.user.id, speaker: ChatMessage.getSpeaker(), content, flags: { gum: { testRequest: request, rollRequest: request } } });
   if (request.delivery.notifyPlayers) game.socket.emit("system.gum", { type: "testRequest:notify", messageId: message.id, requestId: request.id,
     notification: { title: request.title, targets: request.targets.map(target => ({ targetKey: target.targetKey, actorName: target.actorName, recipientUserIds: target.recipientUserIds })) } });
   return message;
-}
-
-function serializableResult(result, actor, target, resolution) {
-  return { userId: game.user.id, actorUuid: target.actorUuid, tokenUuid: target.tokenUuid, submittedAt: Date.now(), total: result.total,
-    effectiveTarget: result.effectiveLevel, margin: result.margin, outcome: result.outcome, resultLabel: result.resultLabel,
-    baseValue: result.baseValue, totalModifier: result.totalModifier, modifierBreakdown: result.modifierBreakdown ?? [],
-    purposeIds: result.purposeIds ?? [], rollJSON: result.rollJSON, defaultLabel: resolution?.label ?? null };
 }
 
 export async function rollTestRequest(messageId, targetKey, { replace = false } = {}) {
@@ -78,32 +69,10 @@ export async function rollTestRequest(messageId, targetKey, { replace = false } 
   const target = request?.targets?.find(entry => entry.targetKey === targetKey);
   if (!target) return ui.notifications.warn("Alvo do pedido não encontrado.");
   const actor = await resolveTarget(target);
-  const tokenImg = await resolveTargetTokenImage(target);
   if (!isUserAuthorizedForTarget(game.user, actor, target)) return ui.notifications.error("Você não pode rolar por este personagem.");
   if (replace && !await Dialog.confirm({ title: "Refazer teste", content: "<p>Substituir o resultado atual?</p>" })) return;
-  let resolution;
-  let value;
-  let itemId = null;
-  let itemUuid = null;
-  if (request.test.type === "attribute") value = Number(actor.system?.attributes?.[request.test.attributeKey]?.final ?? actor.system?.attributes?.[request.test.attributeKey]?.value);
-  else {
-    let definition = request.test;
-    if (request.test.skillUuid) {
-      const canonical = await fromUuid(request.test.skillUuid).catch(() => null);
-      if (canonical) definition = { ...request.test, predefined: canonical.system?.predefined };
-    }
-    resolution = resolveSkillDefault(actor, definition);
-    if (!resolution.available) return ui.notifications.warn(resolution.reason);
-    value = resolution.value; itemId = resolution.itemId; itemUuid = resolution.itemUuid;
-  }
-  if (!Number.isFinite(value)) return ui.notifications.warn("O teste está indisponível para este personagem.");
-  const rollData = { label: request.title, type: request.test.type === "attribute" ? "attribute" : "skill", attributeKey: request.test.attributeKey,
-    value, itemId, itemUuid, requestedPurposeIds: request.test.requestedPurposeIds, fixedModifier: request.test.fixedModifier,
-        fixedModifierLabel: request.test.fixedModifierLabel || "Modificador do Mestre", tokenImg, img: actor.img, defaultLabel: resolution?.label,
-    initialBaseKey: request.test.type === "attribute" ? request.test.attributeKey : "skill" };
-  new GurpsRollPrompt(actor, rollData, { onRoll: async (rollActor, payload, options) => {
-    const result = await performGURPSRoll(rollActor, payload, { ...options, createChatMessage: false, returnResult: true });
-    const socketPayload = { type: "testRequest:submitResponse", messageId, requestId: request.id, targetKey, userId: game.user.id, replace, response: serializableResult(result, actor, target, resolution) };
+    const outcome = await executeRollRequest(request, targetKey, { onResult: async response => {
+    const socketPayload = { type: "testRequest:submitResponse", messageId, requestId: request.id, targetKey, userId: game.user.id, replace, response };
     // Socket.IO does not echo a system event back to its sender consistently
     // across the supported Foundry versions. A GM therefore processes their
     // own response directly; player responses still go to the responsible GM.
@@ -114,7 +83,8 @@ export async function rollTestRequest(messageId, targetKey, { replace = false } 
       game.socket.emit("system.gum", socketPayload);
       ui.notifications.info("Resultado enviado ao Mestre.");
     }
-  }}).render(true);
+    }});
+  if (!outcome.accepted) ui.notifications.warn(outcome.reason === "processing" ? "Este teste já está sendo processado." : "O teste está indisponível para este personagem.");
 }
 
 async function processResponse(payload) {
@@ -130,7 +100,7 @@ async function processResponse(payload) {
   let updated;
   try { updated = insertTestRequestResponse(current, payload.targetKey, payload.response, { replace: payload.replace === true }); }
   catch (error) { ui.notifications.warn(error.message); return false; }
-  await message.update({ content: await renderTestRequestMessage(updated), "flags.gum.testRequest": updated });
+    await message.update({ content: await renderTestRequestMessage(updated), "flags.gum.testRequest": updated, "flags.gum.rollRequest": updated });
   return true;
 }
 
@@ -192,9 +162,11 @@ export function activateTestRequestChatListeners(html) {
     const message = game.messages.get(messageId);
     const target = message?.getFlag("gum", "testRequest")?.targets?.find(entry => entry.targetKey === targetKey);
     if (target && !game.user.isGM && !target.recipientUserIds.includes(game.user.id)) button.disabled = true;
-    button.addEventListener("click", event => {
+    button.addEventListener("click", async event => {
+      event.currentTarget.disabled = true;
       const messageElement = event.currentTarget.closest(".message") ?? event.currentTarget.closest("li.chat-message");
-      rollTestRequest(messageElement?.dataset.messageId, decodeURIComponent(event.currentTarget.dataset.targetKey), { replace: event.currentTarget.dataset.replace === "true" });
+      await rollTestRequest(messageElement?.dataset.messageId, decodeURIComponent(event.currentTarget.dataset.targetKey), { replace: event.currentTarget.dataset.replace === "true" });
+      event.currentTarget.disabled = false;
     });
   });
 }

@@ -1,9 +1,13 @@
+import { normalizeRollRequest } from "./roll-request-data.mjs";
+
 export function createTestRequest(data = {}, { id = null, userId = null, now = Date.now() } = {}) {
+  const common = normalizeRollRequest(data, { id, userId, now });
   const requestId = id ?? data.id ?? `${now}`;
   return { version: 1, id: requestId, status: "open", creatorUserId: userId ?? data.creatorUserId ?? null, createdAt: now,
     title: String(data.title || "Teste solicitado pelo Mestre"), description: String(data.description || ""),
     targets: Array.isArray(data.targets) ? data.targets.map(target => ({ ...target, recipientUserIds: [...new Set(target.recipientUserIds ?? [])] })) : [],
-    test: { type: "attribute", attributeKey: null, skillUuid: null, skillName: null, specialization: null, sourceId: null, customDefault: null, requestedPurposeIds: [], fixedModifier: 0, fixedModifierLabel: "", ...(data.test ?? {}) },
+    origin: common.origin, consequence: common.consequence,
+    test: common.test,
     delivery: { notifyPlayers: false, ...(data.delivery ?? {}) }, responses: normalizeTestRequestResponses(data.responses, data.targets) };
 }
 

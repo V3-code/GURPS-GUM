@@ -934,6 +934,14 @@
                                                                     />
                                                                 </div>
                                                             </div>
+</div>
+                                                        <div class="effect-premium-field effect-premium-field-full">
+                                                            <label class="effect-premium-field-label"><i class="fas fa-bullseye" aria-hidden="true"></i> Finalidades</label>
+                                                            <div class="effect-purpose-control">
+                                                                <input type="hidden" name="system.actions.{{action.index}}.requestedPurposeIds" value="{{action.requestedPurposeIdsCsv}}" />
+                                                                <button type="button" class="open-purpose-picker" data-target-input="system.actions.{{action.index}}.requestedPurposeIds" data-attribute-input="system.actions.{{action.index}}.roll_attribute"><i class="fas fa-list-check"></i> Selecionar finalidades</button>
+                                                                <span class="effect-purpose-summary">{{action.purposeSelectionSummary}}</span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 {{/if}}
@@ -1327,6 +1335,15 @@
                                 value="{{system.resistanceRoll.modifier}}"
                                 {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}
                             />
+                        </div>
+
+                        <div class="effect-field effect-field-full" style="margin-bottom: 15px;">
+                            <div class="effect-label">Finalidades do teste</div>
+                            <div class="effect-purpose-control">
+                                <input type="hidden" name="system.resistanceRoll.requestedPurposeIds" value="{{resistancePurposeIdsCsv}}" />
+                                <button type="button" class="open-purpose-picker" data-target-input="system.resistanceRoll.requestedPurposeIds" data-attribute-input="system.resistanceRoll.attribute" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}><i class="fas fa-list-check"></i> Selecionar finalidades</button>
+                                <span class="effect-purpose-summary">{{resistancePurposeSummary}}</span>
+                            </div>
                         </div>
 
                         <label class="custom-checkbox block effect-inline-checkbox">

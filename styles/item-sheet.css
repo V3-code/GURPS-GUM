@@ -6136,6 +6136,8 @@ color:#121114;
 .gum-roll-tag-picker .roll-tag-picker-info:hover span, .gum-roll-tag-picker .roll-tag-picker-info:focus span, .gum-roll-tag-picker .roll-tag-picker-info[aria-expanded="true"] span { display: block; }
 .gum-roll-tag-picker .roll-tag-picker-empty { display: grid; gap: 4px; padding: 28px; color: var(--gum-text-medio, #aaa); text-align: center; }
 .gum-roll-tag-picker .roll-tag-picker-empty strong { color: var(--gum-accent-gold, #b59753); }
+.gum-purpose-picker .gum-purpose-picker-title { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.gum-purpose-picker .gum-purpose-suggested { display: inline-flex; flex: 0 0 auto; padding: 1px 6px; border: 1px solid rgba(181,151,83,.55); border-radius: 999px; background: rgba(181,151,83,.14); color: var(--gum-accent-gold, #b59753); font: 700 .68em/1.4 sans-serif; letter-spacing: .04em; text-transform: uppercase; }
 @media (max-width: 620px) {
   .gum-roll-tag-picker .roll-tag-picker-option label { align-items: flex-start; flex-direction: column; gap: 4px; }
   .gum-roll-tag-picker .roll-tag-picker-option code { max-width: 100%; }
