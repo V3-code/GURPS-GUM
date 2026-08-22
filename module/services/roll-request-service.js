@@ -6,8 +6,8 @@ import { isUserAuthorizedForTarget } from "../utils/test-request-targets.mjs";
 import { getPurposeLabels } from "../utils/roll-purposes.mjs";
 import { appendResistanceRequestResult, renderPendingChatRollRequest } from "../utils/roll-request-view.mjs";
 import { evaluateGurpsRollResult } from "../utils/gurps-roll-result.mjs";
+import { createRollRequestExecutor } from "./roll-request-executor.mjs";
 
-const processing = new Set();
 const resultQueues = new Map();
 
 export async function resolveRollRequestTarget(target) {
@@ -55,42 +55,16 @@ export function serializeRollRequestResult(result, { target = {}, resolution = {
   };
 }
 
-export async function executeRollRequest(rawRequest, targetKey, { prompt = true, onResult } = {}) {
-  const request = normalizeRollRequest(rawRequest);
-  const key = `${request.id}:${targetKey}`;
-  if (processing.has(key)) return { accepted: false, reason: "processing" };
-  const target = request.targets.find(entry => entry.targetKey === targetKey);
-  const resolvedTarget = await resolveRollRequestTarget(target);
-  if (!target || !resolvedTarget?.actor) return { accepted: false, reason: "target" };
-  if (!isUserAuthorizedForTarget(game.user, resolvedTarget.actor, target)) return { accepted: false, reason: "permission" };
-  const resolution = await resolveRequestedTest(resolvedTarget.actor, request.test);
-  if (!resolution.available) return { accepted: false, reason: resolution.reason };
-  processing.add(key);
-  const rollData = {
-    label: request.title, type: resolution.type, attributeKey: resolution.attributeKey,
-    value: resolution.value, itemId: resolution.itemId, itemUuid: resolution.itemUuid,
-    requestedPurposeIds: request.test.requestedPurposeIds, purposeIds: request.test.requestedPurposeIds, fixedModifier: request.test.fixedModifier,
-    fixedModifierLabel: request.test.fixedModifierLabel || "Modificador fixo", defaultLabel: resolution.label,
-    initialBaseKey: resolution.type === "attribute" ? (resolution.attributeKey || "fixed") : "skill", img: resolvedTarget.actor.img
-  };
-  const run = async (actor, payload, options = {}) => {
-    try {
-      const result = await performGURPSRoll(actor, payload, { ...options, createChatMessage: false, returnResult: true });
-      const serialized = serializeRollRequestResult(result, { target, resolution });
-      await onResult?.(serialized, { request, target, actor, resolution });
-      return { accepted: true, result: serialized };
-    } finally { processing.delete(key); }
-  };
-  if (!prompt) return run(resolvedTarget.actor, { ...rollData, modifier: request.test.fixedModifier }, {});
-  const promptApp = new GurpsRollPrompt(resolvedTarget.actor, rollData, { onRoll: run });
-  const originalClose = promptApp.close.bind(promptApp);
-  promptApp.close = async (...args) => {
-    processing.delete(key);
-    return originalClose(...args);
-  };
-  promptApp.render(true);
-  return { accepted: true, pending: true };
-}
+export const executeRollRequest = createRollRequestExecutor({
+  normalizeRequest: normalizeRollRequest,
+  resolveTarget: resolveRollRequestTarget,
+  authorize: isUserAuthorizedForTarget,
+  resolveTest: resolveRequestedTest,
+  performRoll: performGURPSRoll,
+  serializeResult: serializeRollRequestResult,
+  createPrompt: (actor, rollData, options) => new GurpsRollPrompt(actor, rollData, options),
+  getCurrentUser: () => game.user
+});
 
 export async function createSingleRollRequestMessage(data, chatData = {}) {
   const request = normalizeRollRequest(data, { id: foundry.utils.randomID(), userId: game.user.id });

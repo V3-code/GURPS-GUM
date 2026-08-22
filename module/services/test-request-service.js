@@ -2,6 +2,7 @@ import { getPurposeLabels } from "../utils/roll-purposes.mjs";
 import { createTestRequest, getTestRequestProgress, getTestRequestResponse, insertTestRequestResponse } from "../utils/test-request-data.mjs";
 import { isUserAuthorizedForTarget } from "../utils/test-request-targets.mjs";
 import { executeRollRequest, resolveRequestedTest } from "./roll-request-service.js";
+import { runWithChatButtonDisabled } from "../utils/chat-button-state.mjs";
 import { formatTestRequestStatus, prepareModifierBreakdown, prepareResponseHistory } from "../utils/test-request-view.mjs";
 
 const queues = new Map();
@@ -161,12 +162,13 @@ export function activateTestRequestChatListeners(html) {
     const messageId = button.closest(".message")?.dataset.messageId ?? button.closest("li.chat-message")?.dataset.messageId;
     const message = game.messages.get(messageId);
     const target = message?.getFlag("gum", "testRequest")?.targets?.find(entry => entry.targetKey === targetKey);
-    if (target && !game.user.isGM && !target.recipientUserIds.includes(game.user.id)) button.disabled = true;
+    if (target && !game.user.isGM && !target.recipientUserIds?.includes(game.user.id)) button.disabled = true;
     button.addEventListener("click", async event => {
-      event.currentTarget.disabled = true;
-      const messageElement = event.currentTarget.closest(".message") ?? event.currentTarget.closest("li.chat-message");
-      await rollTestRequest(messageElement?.dataset.messageId, decodeURIComponent(event.currentTarget.dataset.targetKey), { replace: event.currentTarget.dataset.replace === "true" });
-      event.currentTarget.disabled = false;
+      event.preventDefault();
+      await runWithChatButtonDisabled(button, async () => {
+        const messageElement = button.closest(".message") ?? button.closest("li.chat-message");
+        await rollTestRequest(messageElement?.dataset.messageId, decodeURIComponent(button.dataset.targetKey), { replace: button.dataset.replace === "true" });
+      });
     });
   });
 }
