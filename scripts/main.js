@@ -31,6 +31,7 @@ import { registerContextMenuCompatibilityHooks } from "../module/utils/context-m
 import { resolveCharacterImage } from "../module/utils/character-image.mjs";
 import { appendResistanceRequestResult, renderPendingResistanceRequest } from "../module/utils/roll-request-view.mjs";
 import { isUserAuthorizedForTarget } from "../module/utils/test-request-targets.mjs";
+import { showDiceForMessageLessRoll } from "../module/utils/dice-so-nice.mjs";
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
 const isEffectDurationPermanent = (duration = {}) => {
@@ -1301,6 +1302,13 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
         content: content,
         rolls: [roll],
         sound: CONFIG.sounds.dice
+    });
+    showDiceForMessageLessRoll(roll, {
+        createChatMessage: extraOptions.createChatMessage,
+        dice3d: game.dice3d,
+        user: game.user,
+        whisper: chatData.whisper ?? null,
+        blind: chatData.blind ?? false
     });
     if (extraOptions.createChatMessage !== false) await ChatMessage.create(chatData);
 
