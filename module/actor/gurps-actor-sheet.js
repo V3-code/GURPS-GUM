@@ -8,6 +8,7 @@ import { TemplateBrowser } from "../apps/template-browser.js";
 import { GumPreviewDialog } from "../apps/preview-dialog.js";
 import { buildSkillModifierIndicators } from "../utils/skill-modifier-indicators.mjs";
 import { resolveCharacterImage } from "../utils/character-image.mjs";
+import { buildSecondaryStatsRecalculationPlan, buildSecondaryStatsUpdateData, formatBasicDamageDiceCount } from "../utils/secondary-stats-recalculation.mjs";
 
 const { ActorSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -4004,47 +4005,88 @@ async _onRecalculateSecondaryStats(ev) {
   ev.preventDefault();
   ev.stopPropagation();
 
-  const confirmed = await Dialog.confirm({
-    title: "Recalcular Atributos Secundários",
-    content: `
-      <p>Deseja recalcular os <b>valores base</b> dos atributos secundários usando os atributos primários atuais?</p>
-      <p style="opacity:.8">Esta ação não altera modificadores fixos, passivos, temporários ou overrides.</p>
-    `,
-    yes: () => true,
-    no: () => false,
-    defaultYes: false
+    let plan;
+  try {
+    plan = this._buildSecondaryStatsRecalculationPlan();
+  } catch (error) {
+    console.error("GUM | Falha ao construir prévia de atributos derivados", error);
+    ui.notifications.error("Não foi possível calcular a prévia dos atributos derivados.");
+    return;
+  }
+
+  const groups = [
+    ["resources", "Recursos", "fas fa-heart"], ["physical", "Capacidade física", "fas fa-dumbbell"],
+    ["movement", "Movimento e defesa", "fas fa-running"], ["senses", "Sentidos", "fas fa-eye"],
+    ["damage", "Dano básico", "fas fa-fist-raised"]
+  ].map(([id, label, icon]) => {
+    const entries = plan.filter(entry => entry.group === id);
+    return { id, label, icon, entries, changedCount: entries.filter(entry => entry.changed).length };
   });
+  const content = await renderTemplate("systems/gum/templates/apps/secondary-stats-recalculation.hbs", { groups });
 
-  if (!confirmed) return;
+  new Dialog({
+    title: "Revisar atributos derivados",
+    content,
+    buttons: {
+      apply: {
+        icon: '<i class="fas fa-check"></i>', label: "Aplicar alterações",
+        callback: async html => {
+          const selectedIds = html.find('input[name="secondary-stat"]:checked').map((_, input) => input.value).get();
+          const updateData = buildSecondaryStatsUpdateData(plan, selectedIds);
+          if (!Object.keys(updateData).length) return;
+          try {
+            await this.actor.update(updateData);
+            this.render(false);
+            ui.notifications.info(`${selectedIds.length} alteração(ões) de atributos derivados aplicada(s).`);
+          } catch (error) {
+            console.error("GUM | Falha ao aplicar atributos derivados", error);
+            ui.notifications.error("Não foi possível aplicar as alterações de atributos derivados.");
+          }
+        }
+      },
+      cancel: { icon: '<i class="fas fa-times"></i>', label: "Cancelar" }
+    },
+    default: "apply",
+    render: html => this._activateSecondaryStatsPreview(html, plan)
+  }, { classes: ["dialog", "gum", "secondary-stats-recalculation-dialog"], width: 680, height: "auto" }).render(true);
+}
 
-  const actor = this.actor;
-  const attrs = actor.system.attributes || {};
-  const st = Number(attrs.st?.value) || 0;
-  const dx = Number(attrs.dx?.value) || 0;
-  const ht = Number(attrs.ht?.value) || 0;
-  const per = Number(attrs.per?.value) || 0;
+_buildSecondaryStatsRecalculationPlan() {
+  return buildSecondaryStatsRecalculationPlan(this.actor.system, st => this._getBasicDamageFromST(st));
+}
 
-  const basicSpeed = Math.round((((dx + ht) / 4) + Number.EPSILON) * 100) / 100;
-  const basicMove = Math.floor(basicSpeed);
-  const damage = this._getBasicDamageFromST(st);
-
-  await actor.update({
-    "system.attributes.hp.max": st,
-    "system.attributes.fp.max": ht,
-    "system.attributes.basic_speed.value": basicSpeed,
-    "system.attributes.basic_move.value": basicMove,
-    "system.attributes.dodge.value": Math.floor(basicSpeed) + 3,
-    "system.attributes.dodge.-=gcs_imported_fixed": null,
-    "system.attributes.lifting_st.value": st,
-    "system.attributes.vision.value": per,
-    "system.attributes.hearing.value": per,
-    "system.attributes.tastesmell.value": per,
-    "system.attributes.touch.value": per,
-    "system.attributes.thrust_damage": damage.thrust,
-    "system.attributes.swing_damage": damage.swing
+_activateSecondaryStatsPreview(html, plan) {
+  const fields = html.find('input[name="secondary-stat"]');
+  const applyButton = html.closest(".app").find('button[data-button="apply"]');
+  const updateState = () => {
+    const count = fields.filter(":checked").length;
+    applyButton.prop("disabled", count === 0).html(`<i class="fas fa-check"></i> Aplicar ${count} alteração(ões)`);
+    html.find(".secondary-stat-row").each((_, row) => row.classList.toggle("selected", row.querySelector('input[name="secondary-stat"]')?.checked));
+    html.find(".secondary-group-toggle").each((_, toggle) => {
+      const groupFields = fields.filter(`[data-group="${toggle.dataset.group}"]:not(:disabled)`);
+      toggle.checked = groupFields.length > 0 && groupFields.filter(":checked").length === groupFields.length;
+      toggle.indeterminate = groupFields.filter(":checked").length > 0 && !toggle.checked;
+    });
+    const selected = new Set(fields.filter(":checked").map((_, input) => input.value).get());
+    html.find(".secondary-dependency-warning").each((_, warning) => {
+      const dependencies = (warning.dataset.dependencies || "").split(",").filter(id => plan.some(entry => entry.id === id));
+      warning.hidden = !dependencies.some(id => !selected.has(id));
+    });
+  };
+  fields.on("change", updateState);
+  html.find(".secondary-group-selector").on("click", event => event.stopPropagation());
+  html.find(".secondary-group-toggle").on("change", event => {
+    fields.filter(`[data-group="${event.currentTarget.dataset.group}"]:not(:disabled)`).prop("checked", event.currentTarget.checked);
+    updateState();
   });
-
-  ui.notifications.info("Atributos secundários base recalculados com sucesso.");
+  html.find('[data-action="recommended"]').on("click", () => fields.each((_, input) => { input.checked = plan.find(entry => entry.id === input.value)?.selectedByDefault === true; }).trigger("change"));
+  html.find('[data-action="all"]').on("click", () => fields.not(":disabled").prop("checked", true).trigger("change"));
+  html.find('[data-action="none"]').on("click", () => fields.prop("checked", false).trigger("change"));
+  html.find('[data-action="unchanged"]').on("click", event => {
+    const shown = html.toggleClass("show-unchanged").hasClass("show-unchanged");
+    event.currentTarget.setAttribute("aria-pressed", String(shown));
+  });
+  updateState();
 }
 
 _getBasicDamageFromST(stValue) {
@@ -4089,8 +4131,8 @@ _getBasicDamageFromST(stValue) {
   const swingDice = 5 + (bonusDice * 2);
 
   return {
-    thrust: `${thrustDice}d`,
-    swing: `${swingDice}d`
+    thrust: formatBasicDamageDiceCount(thrustDice),
+    swing: formatBasicDamageDiceCount(swingDice)
   };
 }
 
