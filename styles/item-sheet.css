@@ -6098,15 +6098,15 @@ color:#121114;
 }
 
 .gum-roll-tag-picker-window { width: min(740px, 92vw) !important; max-width: 92vw; max-height: 85vh; background: var(--gum-bg-darkest, #16191f); color: var(--gum-text-claro, #eee); }
-.gum-roll-tag-picker-window .window-header { flex: 0 0 auto; border-bottom: 1px solid var(--gum-accent-gold, #b59753); background: var(--gum-bg-darkest, #16191f); color: var(--gum-accent-gold, #b59753); font-family: var(--gum-font-secondary, serif); text-transform: uppercase; }
+.gum-roll-tag-picker-window .window-header { flex: 0 0 auto; border: 0; border-bottom: 1px solid rgba(181,151,83,.32); background: var(--gum-bg-darkest, #16191f); color: var(--gum-accent-gold, #b59753); font-family: var(--gum-font-secondary, serif); font-size: .78rem; letter-spacing: .05em; text-transform: uppercase; }
 .gum-roll-tag-picker-window .window-content { min-height: 0; overflow: hidden; padding: 12px; background: var(--gum-bg-dark, #20242d); color: var(--gum-text-claro, #eee); }
 .gum-roll-tag-picker-window .dialog-content { min-height: 0; overflow: hidden; }
 .gum-roll-tag-picker-window .dialog-buttons { flex: 0 0 auto; gap: 10px; margin-top: 10px; }
-.gum-roll-tag-picker-window .dialog-buttons button { border: 1px solid #555; background: #292e39; color: var(--gum-text-claro, #eee); }
-.gum-roll-tag-picker-window .dialog-buttons [data-button="ok"] { border-color: var(--gum-accent-gold, #b59753); background: var(--gum-accent-gold, #b59753); color: #111; font-weight: 700; }
-.gum-roll-tag-picker { display: flex; flex-direction: column; gap: 10px; min-height: 0; max-height: calc(85vh - 105px); overflow: hidden; }
+.gum-roll-tag-picker-window .dialog-buttons button { min-height: 30px; border: 0; border-radius: 5px; background: #292e39; color: var(--gum-text-claro, #eee); font-size: .76rem; }
+.gum-roll-tag-picker-window .dialog-buttons [data-button="ok"], .gum-roll-tag-picker-window .dialog-buttons [data-button="apply"] { background: var(--gum-accent-gold, #b59753); color: #111; font-weight: 700; }
+.gum-roll-tag-picker { display: flex; flex-direction: column; gap: 9px; min-height: 0; max-height: calc(85vh - 105px); overflow: hidden; font-size: .76rem; }
 .gum-roll-tag-picker button { cursor: pointer; }
-.gum-roll-tag-picker .roll-tag-picker-searchbox { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; padding: 0 8px; border: 1px solid #4b515f; border-radius: 6px; background: #181c23; }
+.gum-roll-tag-picker .roll-tag-picker-searchbox { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; padding: 0 8px; border: 1px solid rgba(255,255,255,.12); border-radius: 6px; background: #181c23; }
 .gum-roll-tag-picker .roll-tag-picker-searchbox:focus-within { border-color: var(--gum-accent-gold, #b59753); box-shadow: 0 0 0 1px rgba(181,151,83,.25); }
 .gum-roll-tag-picker .roll-tag-picker-search { width: 100%; min-width: 0; border: 0; background: transparent; color: var(--gum-text-claro, #eee); box-shadow: none; }
 .gum-roll-tag-picker .roll-tag-search-clear { flex: 0 0 26px; border: 0; background: transparent; color: var(--gum-text-medio, #aaa); }
@@ -6118,9 +6118,9 @@ color:#121114;
 .gum-roll-tag-picker .roll-tag-match legend { padding: 0 5px; color: var(--gum-text-medio, #bbb); font-weight: 700; }
 .gum-roll-tag-picker .roll-tag-match label { padding: 5px 9px; border-radius: 4px; background: #282d37; cursor: pointer; }
 .gum-roll-tag-picker .roll-tag-picker-results { min-height: 100px; overflow-x: hidden; overflow-y: auto; padding-right: 6px; scrollbar-gutter: stable; }
-.gum-roll-tag-picker .roll-tag-picker-group { margin: 0 0 7px; border: 1px solid #414754; border-radius: 6px; background: rgba(255,255,255,.025); }
+.gum-roll-tag-picker .roll-tag-picker-group { margin: 0 0 6px; border: 0; border-radius: 6px; background: rgba(255,255,255,.035); }
 .gum-roll-tag-picker .roll-tag-picker-group[hidden], .gum-roll-tag-picker .roll-tag-picker-option[hidden], .gum-roll-tag-picker .roll-tag-picker-empty[hidden] { display: none; }
-.gum-roll-tag-picker .roll-tag-picker-group summary { display: flex; justify-content: space-between; gap: 8px; padding: 8px 10px; cursor: pointer; color: var(--gum-accent-gold, #b59753); font-family: 'Roboto Condensed'; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.gum-roll-tag-picker .roll-tag-picker-group summary { display: flex; justify-content: space-between; gap: 8px; padding: 7px 9px; cursor: pointer; color: var(--gum-accent-gold, #b59753); font-family: 'Roboto Condensed'; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 .gum-roll-tag-picker .roll-tag-group-help { margin-left: 4px; color: var(--gum-text-medio, #aaa); font-size: .85em; }
 .gum-roll-tag-picker .roll-tag-group-count { color: var(--gum-text-medio, #aaa); font-family: sans-serif; font-size: .8em; font-weight: 400; }
 .gum-roll-tag-picker .roll-tag-group-options { padding: 0 6px 6px; }

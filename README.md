@@ -1,10 +1,12 @@
 # GURPS GUM (Não Oficial)
 
-Sistema para Foundry Virtual Tabletop inspirado no GURPS, mantido pela comunidade.
+Sistema para Foundry Virtual Tabletop inspirado no GURPS, mantido pela comunidade. 
+
+Verão Beta funcional - ajustes de melhoria sendo feitos.
 
 **Autor:** Victor Valentim  
 **Versão:** `1.0.0`  
-**Compatibilidade Foundry VTT:** `13` (mínimo) / `14` (verificado)
+**Compatibilidade Foundry VTT:** `12` (mínimo) / `14` (verificado)
 
 > Projeto não oficial e sem fins lucrativos. GURPS é marca registrada de Steve Jackson Games. Este repositório não é afiliado, licenciado ou endossado pela Steve Jackson Games.
 
@@ -33,8 +35,8 @@ O GUM oferece uma base completa para campanhas no estilo GURPS dentro do Foundry
 
 1. ficha de personagem dedicada;
 2. compêndios prontos para uso;
-3. ferramentas para mestre (modificadores, condições, efeitos e tela de apoio);
-4. importação e exportação de dados do GCS;
+3. ferramentas para mestre (Escudo do Mestre, Solicitar Testes, Janela de Aplicação de Dano etc.);
+4. importação e exportação de dados do GCS: Fichas de personagens, Templates, bibliotecas de equipamentos, vantagens, ampliações, modificadores etc.
 5. automações de regras e gerenciamento de estados.
 
 ## Recursos disponíveis para usuários

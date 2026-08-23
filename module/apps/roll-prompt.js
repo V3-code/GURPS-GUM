@@ -5,6 +5,7 @@ import { getGroupedRollPurposes, getPurposeLabels, matchesRollTags, normalizePur
 import { getContextualPurposeIds, getInitialContextualFilterState, getRelatedPurposeIds, isPurposeRelatedToEntry } from "../utils/contextual-roll-purposes.mjs";
 import { normalizeRollTags } from "../utils/roll-tags.mjs";
 import { resolveRollPromptImage } from "../utils/roll-prompt-image.mjs";
+import { measureGridDistance } from "../utils/grid-distance.mjs";
 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
@@ -326,21 +327,12 @@ export class GurpsRollPrompt extends FormApplication {
 
     _measureDistanceInSceneUnits(fromToken, toToken) {
         if (!fromToken?.center || !toToken?.center) return null;
-        const origin = fromToken.center;
-        const destination = toToken.center;
-
-        if (canvas.grid?.measureDistance) {
-            const measured = canvas.grid.measureDistance(origin, destination, { gridSpaces: true });
-            if (Number.isFinite(measured)) return measured;
-        }
-
-        if (canvas.grid?.measurePath) {
-            const path = canvas.grid.measurePath([origin, destination]);
-            const measured = path?.distance ?? path?.cost;
-            if (Number.isFinite(measured)) return measured;
-        }
-
-        return null;
+        return measureGridDistance(
+            canvas.grid,
+            fromToken.center,
+            toToken.center,
+            canvas.scene?.grid?.distance ?? 1
+        );
     }
 
     _getStandardRangeBands() {
