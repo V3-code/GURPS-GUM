@@ -55,6 +55,11 @@ const screens = [
         name: "preview dialog",
         template: null,
         script: new URL("../module/apps/preview-dialog.js", import.meta.url)
+    },
+    {
+        name: "trigger sheet",
+        template: new URL("../templates/items/trigger-sheet.hbs", import.meta.url),
+        script: new URL("../scripts/apps/trigger-sheet.js", import.meta.url)
     }
 ];
 const languagePaths = {
@@ -665,4 +670,28 @@ test("preview dialog preserves mechanical types, item fields, chat payload and r
     assert.match(screen.scriptSource, /const compactMatch = normalized\.match\(\/\^\(\[A-Z\]\+\)\(\\d\+\)\$\//);
     assert.match(screen.scriptSource, /parsed\.page \+ \(Number\(match\.pageOffset\) \|\| 0\)/);
     assert.match(screen.scriptSource, /missing\.map\(escapeHtml\)\.join\(", "\)/);
+});
+
+test("trigger sheet reachable flow has no fixed Portuguese UI text", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "trigger sheet");
+    const templateSource = screen.templateSource.replace(/{{!--[\s\S]*?--}}/g, "");
+    for (const text of [
+        "Nome do Gatilho", "Gatilho", "Descrição", "Código", "Item de qualidade de vida", "Descrição Completa",
+        "Descrição Resumida", "Salvar", "Expandir", "Cancelar"
+    ]) {
+        assert.ok(!templateSource.includes(text), `fixed trigger sheet text: ${text}`);
+    }
+});
+
+test("trigger sheet preserves tabs, document fields and editor behavior", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "trigger sheet");
+    for (const field of ["name", "system.code", "system.description", "system.chat_description"]) {
+        assert.match(screen.templateSource, new RegExp(`(?:name|data-field|target|data-edit)="${field.replace(".", "\\.")}"`), `missing trigger field: ${field}`);
+    }
+    assert.match(screen.templateSource, /data-tab="detalhes"/);
+    assert.match(screen.templateSource, /data-tab="codigo"/);
+    assert.match(screen.templateSource, /engine="prosemirror"/);
+    assert.match(screen.scriptSource, /await this\.item\.update\(\{ \[field\]: content \}\)/);
+    assert.match(screen.scriptSource, /this\.item\.system\.description \|\| ""/);
+    assert.match(screen.scriptSource, /this\.item\.system\.chat_description \|\| ""/);
 });

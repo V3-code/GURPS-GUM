@@ -3,7 +3,10 @@
     "Common": {
       "Cancel": "Cancelar",
       "Cost": "Custo",
-      "Folders": "Pastas"
+      "Folders": "Pastas",
+      "Edit": "Editar",
+      "Expand": "Expandir",
+      "Save": "Salvar"
     },
     "DamageRollPrompt": {
       "Title": "Configurar Rolagem de Dano",
@@ -335,6 +338,16 @@
         "Quantity": "Qtd",
         "Reference": "REF"
       }
+    },
+    "TriggerSheet": {
+      "NamePlaceholder": "Nome do Gatilho",
+      "Type": "Gatilho",
+      "Description": "Descrição",
+      "Code": "Código",
+      "Hint": "Item de qualidade de vida, não essencial. Use este espaço para armazenar a lógica do gatilho e salvá-la no compêndio [GUM] Gatilhos para uso pela busca rápida do Item Condição.",
+      "CodePlaceholder": "Ex.: actor.system.attributes.hp.value <= 0",
+      "FullDescription": "Descrição Completa",
+      "ChatDescription": "Descrição Resumida (Chat)"
     }
   }
 }

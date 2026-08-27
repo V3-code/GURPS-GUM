@@ -3,7 +3,10 @@
     "Common": {
       "Cancel": "Cancel",
       "Cost": "Cost",
-      "Folders": "Folders"
+      "Folders": "Folders",
+      "Edit": "Edit",
+      "Expand": "Expand",
+      "Save": "Save"
     },
     "DamageRollPrompt": {
       "Title": "Configure Damage Roll",
@@ -335,6 +338,16 @@
         "Quantity": "Qty",
         "Reference": "REF"
       }
+    },
+    "TriggerSheet": {
+      "NamePlaceholder": "Trigger Name",
+      "Type": "Trigger",
+      "Description": "Description",
+      "Code": "Code",
+      "Hint": "This is an optional convenience item. Use this space to store trigger logic and save it in the [GUM] Gatilhos compendium for use through the Condition Item's quick search.",
+      "CodePlaceholder": "E.g. actor.system.attributes.hp.value <= 0",
+      "FullDescription": "Full Description",
+      "ChatDescription": "Short Description (Chat)"
     }
   }
 }
