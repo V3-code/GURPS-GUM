@@ -2,6 +2,22 @@ import { GumPreviewDialog } from "./preview-dialog.js";
 import { prepareCompendiumFolderFilters, recordMatchesFolderFilter } from "./compendium-folder-filter.js";
 // systems/gum/module/apps/eqp-modifier-browser.js
 
+const EQUIPMENT_CATEGORY_KEYS = {
+    all: "GUM.EquipmentModifierBrowser.Categories.all",
+    general: "GUM.EquipmentModifierBrowser.Categories.general",
+    enchantment: "GUM.EquipmentModifierBrowser.Categories.enchantment",
+    melee: "GUM.EquipmentModifierBrowser.Categories.melee",
+    ranged: "GUM.EquipmentModifierBrowser.Categories.ranged",
+    armor: "GUM.EquipmentModifierBrowser.Categories.armor",
+    shield: "GUM.EquipmentModifierBrowser.Categories.shield",
+    ammo: "GUM.EquipmentModifierBrowser.Categories.ammo"
+};
+
+const getLocalizedCategoryLabel = (category) => {
+    const localizationKey = EQUIPMENT_CATEGORY_KEYS[category];
+    return localizationKey ? game.i18n.localize(localizationKey) : category;
+};
+
 export class EqpModifierBrowser extends FormApplication {
   constructor(targetItem, options) {
     super(options);
@@ -24,7 +40,7 @@ export class EqpModifierBrowser extends FormApplication {
 
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
-      title: "Modificadores de Equipamento",
+      title: game.i18n.localize("GUM.EquipmentModifierBrowser.Title"),
       classes: ["gum", "eqp-modifier-browser", "theme-dark"], 
       template: "systems/gum/templates/apps/eqp-modifier-browser.hbs",
       width: 900, 
@@ -241,15 +257,18 @@ el.style.display = isVisible ? "grid" : "none";
       const modifier = modifierData?.uuid ? (await fromUuid(modifierData.uuid).catch(() => null)) || modifierData : modifierData;
       const system = modifier?.system || {};
       return GumPreviewDialog.show({
-        title: modifier?.name || "Modificador",
-        type: "Mod. Equipamento",
+        title: modifier?.name || game.i18n.localize("GUM.EquipmentModifierBrowser.ModifierFallback"),
+        type: game.i18n.localize("GUM.EquipmentModifierBrowser.ModifierType"),
         img: modifier?.img || "icons/svg/upgrade.svg",
-        description: await GumPreviewDialog.enrichDescription(system.features || system.description || "<i>Sem descrição.</i>"),
+        description: await GumPreviewDialog.enrichDescription(system.features || system.description || `<i>${game.i18n.localize("GUM.EquipmentModifierBrowser.NoDescription")}</i>`),
         tags: [
-          { label: "Custo", value: this._getCostDisplay(system) },
-          { label: "Peso", value: system.weight_mod },
-          { label: "TL", value: system.tech_level_mod },
-          { label: "Categorias", value: Object.keys(system.target_type || {}).filter(k => system.target_type[k]).join(", ") }
+          { label: game.i18n.localize("GUM.Common.Cost"), value: this._getCostDisplay(system) },
+          { label: game.i18n.localize("GUM.EquipmentModifierBrowser.Weight"), value: system.weight_mod },
+          { label: game.i18n.localize("GUM.EquipmentModifierBrowser.TechLevel"), value: system.tech_level_mod },
+          {
+            label: game.i18n.localize("GUM.EquipmentModifierBrowser.CategoriesLabel"),
+            value: Object.keys(system.target_type || {}).filter(k => system.target_type[k]).map(getLocalizedCategoryLabel).join(", ")
+          }
         ],
         width: 500
       });
@@ -306,7 +325,7 @@ el.style.display = isVisible ? "grid" : "none";
 
   async _updateObject(event, formData) {
     const selectedIds = Object.keys(formData).filter(key => formData[key] === true && key.length === 16);
-    if (selectedIds.length === 0) return ui.notifications.warn("Nenhum modificador selecionado.");
+    if (selectedIds.length === 0) return ui.notifications.warn(game.i18n.localize("GUM.EquipmentModifierBrowser.NoSelection"));
     
     const newModifiersData = {};
     for (const id of selectedIds) {
@@ -328,6 +347,10 @@ el.style.display = isVisible ? "grid" : "none";
     }
 
     await this.targetItem.update(newModifiersData);
-    ui.notifications.info(`${Object.keys(newModifiersData).length} modificadores adicionados.`);
+    const addedCount = Object.keys(newModifiersData).length;
+    const notificationKey = addedCount === 1
+      ? "GUM.EquipmentModifierBrowser.AddedOne"
+      : "GUM.EquipmentModifierBrowser.AddedMany";
+    ui.notifications.info(game.i18n.format(notificationKey, { count: addedCount }));
   }
 }

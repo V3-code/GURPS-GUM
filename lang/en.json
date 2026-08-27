@@ -165,6 +165,37 @@
       "NoFolder": "No folder",
       "NoSelection": "No template was selected.",
       "SelectedNotFound": "The selected template was not found."
+    },
+    "EquipmentModifierBrowser": {
+      "Title": "Equipment Modifiers",
+      "Search": "Search",
+      "SearchPlaceholder": "Name or Tags...",
+      "Category": "Category",
+      "Categories": {
+        "all": "All",
+        "general": "General / Materials",
+        "enchantment": "Enchantments",
+        "melee": "Melee Weapons",
+        "ranged": "Ranged Weapons",
+        "armor": "Armor",
+        "shield": "Shields",
+        "ammo": "Ammunition"
+      },
+      "CostFactor": "Cost Factor (CF)",
+      "Min": "Min",
+      "Max": "Max",
+      "ViewTooltip": "View details",
+      "NoResults": "No equipment modifiers found.",
+      "AddSelected": "Add Selected",
+      "ModifierFallback": "Modifier",
+      "ModifierType": "Equipment Modifier",
+      "NoDescription": "No description.",
+      "Weight": "Weight",
+      "TechLevel": "TL",
+      "CategoriesLabel": "Categories",
+      "NoSelection": "No modifier was selected.",
+      "AddedOne": "{count} modifier added.",
+      "AddedMany": "{count} modifiers added."
     }
   }
 }

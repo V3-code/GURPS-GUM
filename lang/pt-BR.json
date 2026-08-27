@@ -165,6 +165,37 @@
       "NoFolder": "Sem pasta",
       "NoSelection": "Nenhum Modelo foi selecionado.",
       "SelectedNotFound": "Modelo selecionado não encontrado."
+    },
+    "EquipmentModifierBrowser": {
+      "Title": "Modificadores de Equipamento",
+      "Search": "Buscar",
+      "SearchPlaceholder": "Nome ou Tags...",
+      "Category": "Categoria",
+      "Categories": {
+        "all": "Todos",
+        "general": "Geral / Materiais",
+        "enchantment": "Encantamentos",
+        "melee": "Armas C.C.",
+        "ranged": "Armas Dist.",
+        "armor": "Armaduras",
+        "shield": "Escudos",
+        "ammo": "Munição"
+      },
+      "CostFactor": "Fator de Custo (CF)",
+      "Min": "Min",
+      "Max": "Max",
+      "ViewTooltip": "Ver detalhes",
+      "NoResults": "Nenhum modificador de equipamento encontrado.",
+      "AddSelected": "Adicionar Selecionados",
+      "ModifierFallback": "Modificador",
+      "ModifierType": "Mod. Equipamento",
+      "NoDescription": "Sem descrição.",
+      "Weight": "Peso",
+      "TechLevel": "TL",
+      "CategoriesLabel": "Categorias",
+      "NoSelection": "Nenhum modificador selecionado.",
+      "AddedOne": "{count} modificador adicionado.",
+      "AddedMany": "{count} modificadores adicionados."
     }
   }
 }

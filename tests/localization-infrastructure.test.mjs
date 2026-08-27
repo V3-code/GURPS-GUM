@@ -38,6 +38,11 @@ const screens = [
         name: "template browser",
         template: new URL("../templates/apps/template-browser.hbs", import.meta.url),
         script: new URL("../module/apps/template-browser.js", import.meta.url)
+    },
+    {
+        name: "equipment modifier browser",
+        template: new URL("../templates/apps/eqp-modifier-browser.hbs", import.meta.url),
+        script: new URL("../module/apps/eqp-modifier-browser.js", import.meta.url)
     }
 ];
 const languagePaths = {
@@ -134,6 +139,9 @@ test("localized screens reference every localization key and only defined keys",
     ]) {
         used.add(`GUM.GMModifierBrowser.Categories.${category}`);
     }
+    for (const key of ["AddedOne", "AddedMany"]) {
+        used.add(`GUM.EquipmentModifierBrowser.${key}`);
+    }
 
     assert.deepEqual([...used].sort(), [...defined].sort());
 });
@@ -226,6 +234,22 @@ test("GM modifier and template browser localization keys remain available", asyn
         "task_difficulty", "ritual", "power_operation", "time", "effort", "situation", "equipment", "other"
     ]) {
         assert.ok(defined.has(`GUM.GMModifierBrowser.Categories.${category}`), `missing GM modifier category: ${category}`);
+    }
+});
+
+test("equipment modifier browser localization keys remain available", async () => {
+    const portuguese = JSON.parse(await readFile(languagePaths["pt-BR"], "utf8"));
+    const defined = new Set(flattenKeys(portuguese));
+    const keys = [
+        "Title", "Search", "SearchPlaceholder", "Category", "CostFactor", "Min", "Max", "ViewTooltip", "NoResults",
+        "AddSelected", "ModifierFallback", "ModifierType", "NoDescription", "Weight", "TechLevel", "CategoriesLabel",
+        "NoSelection", "AddedOne", "AddedMany"
+    ];
+    for (const key of keys) {
+        assert.ok(defined.has(`GUM.EquipmentModifierBrowser.${key}`), `missing equipment modifier browser key: ${key}`);
+    }
+    for (const category of ["all", "general", "enchantment", "melee", "ranged", "armor", "shield", "ammo"]) {
+        assert.ok(defined.has(`GUM.EquipmentModifierBrowser.Categories.${category}`), `missing equipment category: ${category}`);
     }
 });
 
@@ -398,4 +422,42 @@ test("GM modifier and template browsers preserve selectors, category IDs and sel
     assert.match(templateScreen.templateSource, /type="radio" name="selectedTemplate"[^>]*value="{{template\.id}}"/);
     assert.match(templateScreen.scriptSource, /formData\.selectedTemplate/);
     assert.match(templateScreen.scriptSource, /this\.onSelect\(selectedTemplate\)/);
+});
+
+test("equipment modifier browser reachable flow has no fixed Portuguese UI text", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "equipment modifier browser");
+    const templateSource = screen.templateSource.replace(/{{!--[\s\S]*?--}}/g, "");
+    const beforeLegacyPreview = screen.scriptSource.split("      const createTag =", 1)[0];
+    const afterLegacyPreview = screen.scriptSource.split("  _formatValue", 2)[1];
+    const reachableScript = `${beforeLegacyPreview}${afterLegacyPreview}`
+        .replace(/\/\/.*$/gm, "")
+        .replace(/\/\*[\s\S]*?\*\//g, "");
+    const fixedPortuguese = [
+        "Modificadores de Equipamento", "Nome ou Tags...", "Geral / Materiais", "Encantamentos", "Armas C.C.",
+        "Armas Dist.", "Armaduras", "Escudos", "Munição", "Fator de Custo", "Ver detalhes",
+        "Nenhum modificador de equipamento encontrado.", "Adicionar Selecionados", "Mod. Equipamento",
+        "Sem descrição.", "Peso", "Categorias", "Nenhum modificador selecionado.", "modificadores adicionados."
+    ];
+
+    for (const text of fixedPortuguese) {
+        assert.ok(!templateSource.includes(text), `fixed equipment modifier template text: ${text}`);
+        assert.ok(!reachableScript.includes(text), `fixed reachable equipment modifier script text: ${text}`);
+    }
+});
+
+test("equipment modifier browser preserves filters, category IDs and modifier data", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "equipment modifier browser");
+    for (const name of ["search", "filter-folder", "cfMin", "cfMax", "submit"]) {
+        assert.match(screen.templateSource, new RegExp(`name="${name}"`));
+    }
+    for (const category of ["all", "general", "enchantment", "melee", "ranged", "armor", "shield", "ammo"]) {
+        assert.match(screen.templateSource, new RegExp(`class="category-filter" value="${category}"`));
+        assert.match(screen.scriptSource, new RegExp(`${category}: "GUM\\.EquipmentModifierBrowser\\.Categories\\.${category}"`));
+    }
+    for (const field of ["cost_adjustment", "cost_factor", "weight_mod", "tech_level_mod", "features", "ref", "source_uuid"]) {
+        assert.match(screen.scriptSource, new RegExp(`\\b${field}:`));
+    }
+    assert.match(screen.scriptSource, /Object\.keys\(system\.target_type \|\| \{\}\)\.filter\(k => system\.target_type\[k\]\)\.map\(getLocalizedCategoryLabel\)/);
+    assert.match(screen.scriptSource, /addedCount === 1/);
+    assert.match(screen.scriptSource, /game\.i18n\.format\(notificationKey, \{ count: addedCount \}\)/);
 });

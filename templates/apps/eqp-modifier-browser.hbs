@@ -5,16 +5,16 @@
         <div class="browser-sidebar">
             
   <div class="filter-group">
-                <h3 class="filter-title">Buscar</h3>
+                <h3 class="filter-title">{{localize "GUM.EquipmentModifierBrowser.Search"}}</h3>
                 <div class="search-box">
-                    <input type="text" name="search" placeholder="Nome ou Tags..." value="{{filters.search}}" autocomplete="off">
+                    <input type="text" name="search" placeholder="{{localize "GUM.EquipmentModifierBrowser.SearchPlaceholder"}}" value="{{filters.search}}" autocomplete="off">
                     <i class="fas fa-search"></i>
                 </div>
             </div>
 
             {{#if folders.length}}
             <div class="filter-group">
-                <h3 class="filter-title">Pastas</h3>
+                <h3 class="filter-title">{{localize "GUM.Common.Folders"}}</h3>
                 <div class="radio-filter-list">
                     {{#each folders as |folder|}}
                     <label class="filter-radio">
@@ -28,55 +28,55 @@
 
             {{!-- Checkboxes de Categoria --}}
             <div class="filter-group">
-                <h3 class="filter-title">Categoria</h3>
+                <h3 class="filter-title">{{localize "GUM.EquipmentModifierBrowser.Category"}}</h3>
                 <div class="radio-filter-list">
                     
                     <label class="filter-radio">
                         <input type="checkbox" class="category-filter" value="all" {{checked filters.categories.all}}>
-                        <span>Todos</span>
+                        <span>{{localize "GUM.EquipmentModifierBrowser.Categories.all"}}</span>
                     </label>
                     
                     <label class="filter-radio">
                         <input type="checkbox" class="category-filter" value="general" {{checked filters.categories.general}}>
-                        <span>Geral / Materiais</span>
+                        <span>{{localize "GUM.EquipmentModifierBrowser.Categories.general"}}</span>
                     </label>
                     
                     <label class="filter-radio">
                         <input type="checkbox" class="category-filter" value="enchantment" {{checked filters.categories.enchantment}}>
-                        <span>Encantamentos</span>
+                        <span>{{localize "GUM.EquipmentModifierBrowser.Categories.enchantment"}}</span>
                     </label>
 
                     <label class="filter-radio">
                         <input type="checkbox" class="category-filter" value="melee" {{checked filters.categories.melee}}>
-                        <span>Armas C.C.</span>
+                        <span>{{localize "GUM.EquipmentModifierBrowser.Categories.melee"}}</span>
                     </label>
                     <label class="filter-radio">
                         <input type="checkbox" class="category-filter" value="ranged" {{checked filters.categories.ranged}}>
-                        <span>Armas Dist.</span>
+                        <span>{{localize "GUM.EquipmentModifierBrowser.Categories.ranged"}}</span>
                     </label>
 
                     <label class="filter-radio">
                         <input type="checkbox" class="category-filter" value="armor" {{checked filters.categories.armor}}>
-                        <span>Armaduras</span>
+                        <span>{{localize "GUM.EquipmentModifierBrowser.Categories.armor"}}</span>
                     </label>
                     <label class="filter-radio">
                         <input type="checkbox" class="category-filter" value="shield" {{checked filters.categories.shield}}>
-                        <span>Escudos</span>
+                        <span>{{localize "GUM.EquipmentModifierBrowser.Categories.shield"}}</span>
                     </label>
                     
                     <label class="filter-radio">
                         <input type="checkbox" class="category-filter" value="ammo" {{checked filters.categories.ammo}}>
-                        <span>Munição</span>
+                        <span>{{localize "GUM.EquipmentModifierBrowser.Categories.ammo"}}</span>
                     </label>
                 </div>
             </div>
 
             <div class="filter-group">
-                <h3 class="filter-title">Fator de Custo (CF)</h3>
+                <h3 class="filter-title">{{localize "GUM.EquipmentModifierBrowser.CostFactor"}}</h3>
                 <div class="cf-range-inputs">
-                    <input type="number" name="cfMin" placeholder="Min" step="0.1">
+                    <input type="number" name="cfMin" placeholder="{{localize "GUM.EquipmentModifierBrowser.Min"}}" step="0.1">
                     <span class="range-sep">-</span>
-                    <input type="number" name="cfMax" placeholder="Max" step="0.1">
+                    <input type="number" name="cfMax" placeholder="{{localize "GUM.EquipmentModifierBrowser.Max"}}" step="0.1">
                 </div>
             </div>
         </div>
@@ -110,7 +110,7 @@
                     </div>
 
                     <div class="item-actions">
-                        <button type="button" class="browser-quick-view" data-id="{{this.id}}" title="Ver detalhes">
+                        <button type="button" class="browser-quick-view" data-id="{{this.id}}" title="{{localize "GUM.EquipmentModifierBrowser.ViewTooltip"}}">
                             <i class="fas fa-eye"></i>
                         </button>
                         <label class="item-select">
@@ -119,7 +119,7 @@
                     </div>
                 </li>
                 {{else}}
-                <li class="placeholder-text">Nenhum modificador de equipamento encontrado.</li>
+                <li class="placeholder-text">{{localize "GUM.EquipmentModifierBrowser.NoResults"}}</li>
                 {{/each}}
             </ol>
         </main>
@@ -127,7 +127,7 @@
 
     <footer class="browser-footer">
         <button type="submit" name="submit">
-            <i class="fas fa-plus"></i> Adicionar Selecionados
+            <i class="fas fa-plus"></i> {{localize "GUM.EquipmentModifierBrowser.AddSelected"}}
         </button>
     </footer>
 </form>
