@@ -1,7 +1,9 @@
 {
   "GUM": {
     "Common": {
-      "Cancel": "Cancelar"
+      "Cancel": "Cancelar",
+      "Cost": "Custo",
+      "Folders": "Pastas"
     },
     "DamageRollPrompt": {
       "Title": "Configurar Rolagem de Dano",
@@ -24,6 +26,25 @@
         "followUp": "dano de acompanhamento",
         "fragmentation": "dano de fragmentação"
       }
+    },
+    "ModifierBrowser": {
+      "Title": "Navegador de Modificadores",
+      "Search": "Buscar",
+      "SearchPlaceholder": "Buscar modificador...",
+      "Enhancements": "Ampliações",
+      "Limitations": "Limitações",
+      "ViewTooltip": "Visualizar modificador",
+      "NoResults": "Nenhum modificador encontrado.",
+      "AddSelected": "Adicionar Selecionados",
+      "FolderFallback": "Pasta",
+      "ModifierFallback": "Modificador",
+      "ModifierType": "Modificador",
+      "NoDescription": "Sem descrição.",
+      "Ref": "REF",
+      "Effect": "Efeito",
+      "NoSelection": "Nenhum modificador foi selecionado.",
+      "AddedOne": "{count} modificador adicionado.",
+      "AddedMany": "{count} modificadores adicionados."
     }
   }
 }

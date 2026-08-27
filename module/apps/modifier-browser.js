@@ -11,7 +11,7 @@ export class ModifierBrowser extends FormApplication {
 
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
-      title: "Navegador de Modificadores",
+      title: game.i18n.localize("GUM.ModifierBrowser.Title"),
       classes: ["gum", "modifier-browser", "theme-dark"],
       template: "systems/gum/templates/apps/modifier-browser.hbs",
       width: 900, height: 700, resizable: true
@@ -40,7 +40,7 @@ export class ModifierBrowser extends FormApplication {
 
         const usedFolderIds = new Set(this.allModifiers.map(mod => mod.folderId).filter(Boolean));
         this.availableFolders = Array.from(usedFolderIds)
-          .map(folderId => ({ id: folderId, name: folderMap.get(folderId) ?? "Pasta" }))
+          .map(folderId => ({ id: folderId, name: folderMap.get(folderId) ?? game.i18n.localize("GUM.ModifierBrowser.FolderFallback") }))
           .sort((a, b) => a.name.localeCompare(b.name));
     }
     context.modifiers = this.allModifiers; 
@@ -112,14 +112,14 @@ if (showEnhancements && showLimitations && !isEnhancement && !isLimitation) isVi
       const modifier = modifierData?.uuid ? (await fromUuid(modifierData.uuid).catch(() => null)) || modifierData : modifierData;
       const system = modifier?.system || {};
       return GumPreviewDialog.show({
-        title: modifier?.name || "Modificador",
-        type: "Modificador",
+        title: modifier?.name || game.i18n.localize("GUM.ModifierBrowser.ModifierFallback"),
+        type: game.i18n.localize("GUM.ModifierBrowser.ModifierType"),
         img: modifier?.img || "icons/svg/aura.svg",
-        description: await GumPreviewDialog.enrichDescription(system.description || "<i>Sem descrição.</i>"),
+        description: await GumPreviewDialog.enrichDescription(system.description || `<i>${game.i18n.localize("GUM.ModifierBrowser.NoDescription")}</i>`),
         tags: [
-          { label: "Custo", value: system.cost },
-          { label: "REF", value: system.ref },
-          { label: "Efeito", value: system.applied_effect }
+          { label: game.i18n.localize("GUM.Common.Cost"), value: system.cost },
+          { label: game.i18n.localize("GUM.ModifierBrowser.Ref"), value: system.ref },
+          { label: game.i18n.localize("GUM.ModifierBrowser.Effect"), value: system.applied_effect }
         ],
         width: 500
       });
@@ -159,7 +159,7 @@ if (showEnhancements && showLimitations && !isEnhancement && !isLimitation) isVi
 
   async _updateObject(event, formData) {
     const selectedIds = Object.keys(formData).filter(key => formData[key] === true && key.length === 16);
-    if (selectedIds.length === 0) return ui.notifications.warn("Nenhum modificador foi selecionado.");
+    if (selectedIds.length === 0) return ui.notifications.warn(game.i18n.localize("GUM.ModifierBrowser.NoSelection"));
     
     const newModifiersData = {};
     for (const id of selectedIds) {
@@ -177,6 +177,9 @@ if (showEnhancements && showLimitations && !isEnhancement && !isLimitation) isVi
       }
     }
     await this.targetItem.update(newModifiersData);
-    ui.notifications.info(`${selectedIds.length} modificador(es) adicionado(s).`);
+    const confirmationKey = selectedIds.length === 1
+      ? "GUM.ModifierBrowser.AddedOne"
+      : "GUM.ModifierBrowser.AddedMany";
+    ui.notifications.info(game.i18n.format(confirmationKey, { count: selectedIds.length }));
   }
 }

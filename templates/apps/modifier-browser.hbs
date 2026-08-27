@@ -4,25 +4,25 @@
 
     <aside class="browser-sidebar">
       <div class="filter-group">
-        <h3 class="filter-title">Buscar</h3>
+        <h3 class="filter-title">{{localize "GUM.ModifierBrowser.Search"}}</h3>
         <div class="search-box">
-          <input type="text" name="search" placeholder="Buscar modificador..."/>
+          <input type="text" name="search" placeholder="{{localize "GUM.ModifierBrowser.SearchPlaceholder"}}"/>
           <i class="fas fa-search"></i>
         </div>
       </div>
 
       {{#if folders.length}}
       <div class="filter-group">
-        <h3 class="filter-title">Pastas</h3>
+        <h3 class="filter-title">{{localize "GUM.Common.Folders"}}</h3>
         {{#each folders as |folder|}}
 <label class="filter-check folder-filter-check" style="--folder-depth: {{folder.depth}}"><input type="checkbox" name="filter-folder" value="{{folder.id}}"/> <span>{{folder.name}}</span></label>
         {{/each}}
       </div>
       {{/if}}
       <div class="filter-group">
-        <h3 class="filter-title">Custo</h3>
-        <label class="filter-check"><input type="checkbox" name="filter-enhancements"/> <span>Ampliações (+)</span></label>
-        <label class="filter-check"><input type="checkbox" name="filter-limitations"/> <span>Limitações (-)</span></label>
+        <h3 class="filter-title">{{localize "GUM.Common.Cost"}}</h3>
+        <label class="filter-check"><input type="checkbox" name="filter-enhancements"/> <span>{{localize "GUM.ModifierBrowser.Enhancements"}} (+)</span></label>
+        <label class="filter-check"><input type="checkbox" name="filter-limitations"/> <span>{{localize "GUM.ModifierBrowser.Limitations"}} (-)</span></label>
       </div>
 
     </aside>
@@ -43,7 +43,7 @@
           </div>
 
           <div class="item-actions">
-            <button type="button" class="browser-quick-view" data-id="{{mod.id}}" title="Visualizar modificador">
+            <button type="button" class="browser-quick-view" data-id="{{mod.id}}" title="{{localize "GUM.ModifierBrowser.ViewTooltip"}}">
               <i class="fas fa-eye"></i>
             </button>
             <label class="item-select" for="mod-{{mod.id}}">
@@ -52,7 +52,7 @@
           </div>
         </li>
         {{else}}
-        <li class="placeholder-text">Nenhum modificador encontrado.</li>
+        <li class="placeholder-text">{{localize "GUM.ModifierBrowser.NoResults"}}</li>
         {{/each}}
       </ol>
     </main>
@@ -61,7 +61,7 @@
 
   <footer class="browser-footer">
     <button type="submit">
-      <i class="fas fa-check"></i> Adicionar Selecionados
+      <i class="fas fa-check"></i> {{localize "GUM.ModifierBrowser.AddSelected"}}
     </button>
   </footer>
 

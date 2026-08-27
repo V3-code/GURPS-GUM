@@ -1,7 +1,9 @@
 {
   "GUM": {
     "Common": {
-      "Cancel": "Cancel"
+      "Cancel": "Cancel",
+      "Cost": "Cost",
+      "Folders": "Folders"
     },
     "DamageRollPrompt": {
       "Title": "Configure Damage Roll",
@@ -24,6 +26,25 @@
         "followUp": "follow-up damage",
         "fragmentation": "fragmentation damage"
       }
+    },
+    "ModifierBrowser": {
+      "Title": "Modifier Browser",
+      "Search": "Search",
+      "SearchPlaceholder": "Search modifiers...",
+      "Enhancements": "Enhancements",
+      "Limitations": "Limitations",
+      "ViewTooltip": "View modifier",
+      "NoResults": "No modifiers found.",
+      "AddSelected": "Add Selected",
+      "FolderFallback": "Folder",
+      "ModifierFallback": "Modifier",
+      "ModifierType": "Modifier",
+      "NoDescription": "No description.",
+      "Ref": "REF",
+      "Effect": "Effect",
+      "NoSelection": "No modifier was selected.",
+      "AddedOne": "{count} modifier added.",
+      "AddedMany": "{count} modifiers added."
     }
   }
 }
