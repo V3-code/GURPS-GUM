@@ -1,3 +1,9 @@
-2026/08/22-22:03:22.650 6fb4 Recovering log #1022
-2026/08/22-22:03:22.651 6fb4 Delete type=0 #1022
-2026/08/22-22:03:22.651 6fb4 Delete type=3 #1021
+2026/08/23-13:23:17.085 6bfc Recovering log #1024
+2026/08/23-13:23:17.085 6bfc Level-0 table #1026: started
+2026/08/23-13:23:17.089 6bfc Level-0 table #1026: 19366 bytes OK
+2026/08/23-13:23:17.089 6bfc Delete type=0 #1024
+2026/08/23-13:23:17.089 6bfc Delete type=3 #1023
+2026/08/23-16:01:22.615 6884 Compacting 2@0 + 1@1 files
+2026/08/23-16:01:22.631 6884 Generated table #1028@0: 220 keys, 232738 bytes
+2026/08/23-16:01:22.631 6884 Compacted 2@0 + 1@1 files => 232738 bytes
+2026/08/23-16:01:22.632 6884 compacted to: files[ 0 1 0 0 0 0 0 ]

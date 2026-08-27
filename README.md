@@ -4,7 +4,7 @@ Sistema para Foundry Virtual Tabletop inspirado no GURPS, mantido pela comunidad
 
 Verão Beta funcional - ajustes de melhoria sendo feitos.
 
-**Autor:** Victor Valentim  
+**Autor:** V3-code 
 **Versão:** `1.0.0`  
 **Compatibilidade Foundry VTT:** `12` (mínimo) / `14` (verificado)
 
