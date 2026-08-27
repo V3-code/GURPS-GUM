@@ -2,34 +2,34 @@
     {{!-- A área de edição agora está no topo e é a principal --}}
     <div class="editor-panel">
         {{!-- ✅ O TEXTO DE AJUDA AGORA É O PLACEHOLDER --}}
-        <textarea name="system.when" placeholder="Use a paleta de ferramentas abaixo para construir sua fórmula ou escreva diretamente na caixa...">{{item.system.when}}</textarea>
+        <textarea name="system.when" placeholder="{{localize "GUM.ConditionBuilder.FormulaPlaceholder"}}">{{item.system.when}}</textarea>
     </div>
 
     {{!-- A paleta de ferramentas abaixo --}}
     <div class="palette">
         <div class="palette-group">
             <div class="palette-header">
-                <i class="fas fa-sitemap"></i> Estruturas de Regra
+                <i class="fas fa-sitemap"></i> {{localize "GUM.ConditionBuilder.RuleStructures"}}
             </div>
             <div class="palette-buttons">
                 {{!-- ✅ BOTÃO DEDICADO PARA GATILHOS SALVOS ✅ --}}
                 <button type="button" class="palette-button" data-action="open-saved-triggers">
-                    <i class="fas fa-bookmark"></i> Gatilhos Salvos
+                    <i class="fas fa-bookmark"></i> {{localize "GUM.ConditionBuilder.SavedTriggers"}}
                 </button>
                 <button type="button" class="palette-button" data-action="open-structures">
-                    <i class="fas fa-cogs"></i> Estruturas Padrão
+                    <i class="fas fa-cogs"></i> {{localize "GUM.ConditionBuilder.StandardStructures"}}
                 </button>
             </div>
         </div>
         
         <div class="palette-group">
             <div class="palette-header">
-                <i class="fas fa-cube"></i> Ferramentas de Fórmula
+                <i class="fas fa-cube"></i> {{localize "GUM.ConditionBuilder.FormulaTools"}}
             </div>
             <div class="palette-buttons">
-                <button type="button" class="palette-button" data-action="open-attributes">Atributos...</button>
-                <button type="button" class="palette-button" data-action="open-operators">Operadores...</button>
-                <button type="button" class="palette-button" data-action="open-connectors">Conectores...</button>
+                <button type="button" class="palette-button" data-action="open-attributes">{{localize "GUM.ConditionBuilder.AttributesButton"}}</button>
+                <button type="button" class="palette-button" data-action="open-operators">{{localize "GUM.ConditionBuilder.OperatorsButton"}}</button>
+                <button type="button" class="palette-button" data-action="open-connectors">{{localize "GUM.ConditionBuilder.ConnectorsButton"}}</button>
             </div>
         </div>
     </div>
@@ -37,7 +37,7 @@
     {{!-- O botão Salvar, agora parte do layout principal --}}
     <div class="dialog-footer-actions">
         <button type="submit">
-            <i class="fas fa-save"></i> Salvar Fórmula
+            <i class="fas fa-save"></i> {{localize "GUM.ConditionBuilder.SaveFormula"}}
         </button>
     </div>
 </form>

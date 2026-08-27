@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { GUM_DATA } from "../scripts/gum-data.js";
 
 const manifestPath = new URL("../system.json", import.meta.url);
 const screens = [
@@ -60,6 +61,11 @@ const screens = [
         name: "trigger sheet",
         template: new URL("../templates/items/trigger-sheet.hbs", import.meta.url),
         script: new URL("../scripts/apps/trigger-sheet.js", import.meta.url)
+    },
+    {
+        name: "condition builder",
+        template: new URL("../templates/apps/condition-builder.hbs", import.meta.url),
+        script: new URL("../scripts/apps/condition-builder.js", import.meta.url)
     }
 ];
 const languagePaths = {
@@ -75,9 +81,11 @@ function flattenKeys(value, prefix = "") {
 }
 
 function directLocalizationKeys(source) {
-    return new Set(Array.from(source.matchAll(
+    const keys = new Set(Array.from(source.matchAll(
         /(?:localize|format)(?:\(\s*|\s+)["']([^"']+)["']/g
     ), (match) => match[1]));
+    for (const match of source.matchAll(/["'](GUM\.[A-Za-z0-9_.]+)["']/g)) keys.add(match[1]);
+    return keys;
 }
 
 async function readScreenSources() {
@@ -694,4 +702,43 @@ test("trigger sheet preserves tabs, document fields and editor behavior", async 
     assert.match(screen.scriptSource, /await this\.item\.update\(\{ \[field\]: content \}\)/);
     assert.match(screen.scriptSource, /this\.item\.system\.description \|\| ""/);
     assert.match(screen.scriptSource, /this\.item\.system\.chat_description \|\| ""/);
+});
+
+test("condition builder reachable flow has no fixed Portuguese UI text", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "condition builder");
+    const templateSource = screen.templateSource.replace(/{{!--[\s\S]*?--}}/g, "");
+    const scriptSource = screen.scriptSource.replace(/\/\/.*$/gm, "");
+    for (const text of [
+        "Assistente de Condições", "Selecionar Atributo", "Selecionar Operador de Comparação", "Selecionar Conector Lógico",
+        "Geral do Personagem", "Itens e Equipamentos", "Vantagens e Desvantagens", "Status e Estados do Jogo",
+        "Combate e Ambiente", "Selecionar Estrutura de Regra", "Qual tipo de habilidade?", "Salvar Fórmula"
+    ]) {
+        assert.ok(!`${templateSource}\n${scriptSource}`.includes(text), `fixed condition builder text: ${text}`);
+    }
+});
+
+test("condition builder preserves formula values, paths, operators and insertion behavior", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "condition builder");
+    const mappedAttributes = Array.from(screen.scriptSource.matchAll(/"([^"]+)": "GUM\.ConditionBuilder\.Attributes\.[^"]+"/g), match => match[1]).sort();
+    assert.deepEqual(mappedAttributes, Object.keys(GUM_DATA.attributes).sort());
+    for (const value of [
+        "CAMINHO_DO_ATRIBUTO <= VALOR_OU_FÓRMULA",
+        "actor.items.some(i => i.name === 'NOME_DO_ITEM')",
+        "actor.items.some(i => i.type === 'armor' && i.system.location === 'equipped' && i.system.dr >= VALOR)",
+        "actor.items.some(i => i.type === 'advantage' && i.name === 'NOME_DA_VANTAGEM')",
+        "actor.items.some(i => i.type === 'disadvantage' && i.name === 'NOME_DA_DESVANTAGEM')",
+        "actor.effects.some(e => e.getFlag('core', 'statusId') === 'prone')",
+        "game.scenes.current.getFlag('gum', 'NOME_DA_FLAG') === true",
+        "game.combat?.round >= NÚMERO_DA_RODADA"
+    ]) {
+        assert.ok(screen.scriptSource.includes(value), `missing preserved formula: ${value}`);
+    }
+    for (const operator of ["==", "!=", "<", "<=", ">", ">="]) {
+        assert.match(screen.scriptSource, new RegExp(`"${operator.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}": "GUM\\.ConditionBuilder\\.Operators\\.`));
+    }
+    assert.match(screen.scriptSource, /const value = `\$\{valuePrefix\}\$\{key\}`/);
+    assert.match(screen.scriptSource, /pickerData\.template\.replace\("'TYPE'", `'\$\{type\}'`\)/);
+    assert.match(screen.scriptSource, /textarea\.value = textarea\.value\.substring\(0, start\) \+ text \+ textarea\.value\.substring\(end\)/);
+    assert.match(screen.scriptSource, /this\.item\.update\(\{ "system\.when": formData\["system\.when"\] \}\)/);
+    assert.match(screen.templateSource, /name="system\.when"/);
 });
