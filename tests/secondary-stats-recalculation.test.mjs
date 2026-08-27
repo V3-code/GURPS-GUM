@@ -120,3 +120,28 @@ test("dano com muitos dados preserva explicitamente as faces d6", () => {
   assert.equal(formatBasicDamageDiceCount(30), "30d6");
   assert.equal(formatBasicDamageDiceCount(59), "59d6");
 });
+
+test("apresentação aceita localização injetada sem alterar paths ou cálculos", () => {
+  const calls = [];
+  const i18n = {
+    localize: key => {
+      calls.push(["localize", key]);
+      return `loc:${key}`;
+    },
+    format: (key, data) => {
+      calls.push(["format", key, data]);
+      return `fmt:${key}`;
+    }
+  };
+  const plan = buildSecondaryStatsRecalculationPlan(fixture(), damage, i18n);
+  const hp = plan.find(entry => entry.id === "hp-max");
+  const dodge = plan.find(entry => entry.id === "dodge");
+
+  assert.equal(hp.label, "loc:GUM.SecondaryStatsRecalculation.Entries.HPMax");
+  assert.equal(hp.reason, "fmt:GUM.SecondaryStatsRecalculation.Reasons.CalculatedFrom");
+  assert.equal(hp.path, "system.attributes.hp.max");
+  assert.equal(hp.proposedValue, 12);
+  assert.equal(dodge.warnings[0], "loc:GUM.SecondaryStatsRecalculation.Warnings.RemoveImportedDodge");
+  assert.ok(calls.some(([, key]) => key === "GUM.SecondaryStatsRecalculation.PrimaryFinal"));
+  assert.deepEqual(buildSecondaryStatsUpdateData(plan, ["hp-max"]), { "system.attributes.hp.max": 12 });
+});

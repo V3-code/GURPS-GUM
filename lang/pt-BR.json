@@ -196,6 +196,72 @@
       "NoSelection": "Nenhum modificador selecionado.",
       "AddedOne": "{count} modificador adicionado.",
       "AddedMany": "{count} modificadores adicionados."
+    },
+    "SecondaryStatsRecalculation": {
+      "RecalculateTooltip": "Recalcular bases de atributos secundários",
+      "Title": "Revisar atributos derivados",
+      "Introduction": "Analise os ajustes que serão feitos no personagem e escolha o que deseja aplicar.",
+      "PreparedValuesHint": "ST, DX, HT e Per usam seus valores finais, incluindo efeitos e modificadores aplicáveis.",
+      "QuickActions": "Ações rápidas",
+      "Recommended": "Recomendados",
+      "All": "Todos",
+      "Clear": "Limpar",
+      "ShowUnchanged": "Sem alteração",
+      "Attribute": "Atributo",
+      "Current": "Atual",
+      "Calculated": "Calculado",
+      "ToggleGroup": "Selecionar ou desmarcar o grupo",
+      "Override": "Override",
+      "Changed": "Alteração",
+      "Unchanged": "Sem alteração",
+      "ApplyChanges": "Aplicar alterações",
+      "ApplyOne": "Aplicar {count} alteração",
+      "ApplyMany": "Aplicar {count} alterações",
+      "AppliedOne": "{count} alteração de atributo derivado aplicada.",
+      "AppliedMany": "{count} alterações de atributos derivados aplicadas.",
+      "CalculationFailure": "Não foi possível calcular a prévia dos atributos derivados.",
+      "ApplyFailure": "Não foi possível aplicar as alterações de atributos derivados.",
+      "ChangedOne": "{count} alteração",
+      "ChangedMany": "{count} alterações",
+      "ModifierDetail": "Base {base} · modificadores {modifier} · final estimado {final}",
+      "FinalComparisonDetail": "Final atual {current} · final estimado {final}",
+      "DependencyWarning": "Seleção parcial: este resultado depende de outro atributo recalculável não selecionado.",
+      "PerceptionAbbreviation": "Per",
+      "PrimaryFinal": "{label} final {final}",
+      "PrimaryAdjusted": "{label} final {final} (base {base}, adicionais {difference})",
+      "ProtectedByOverride": "Protegido por override",
+      "Groups": {
+        "Resources": "Recursos",
+        "Physical": "Capacidade física",
+        "Movement": "Movimento e defesa",
+        "Senses": "Sentidos",
+        "Damage": "Dano básico"
+      },
+      "Entries": {
+        "HPMax": "PV Máximo",
+        "FPMax": "PF Máximo",
+        "LiftingST": "ST de Levantamento",
+        "BasicSpeed": "Velocidade Básica",
+        "BasicMove": "Deslocamento Básico",
+        "Dodge": "Esquiva-base",
+        "Vision": "Visão",
+        "Hearing": "Audição",
+        "TasteSmell": "Paladar/Olfato",
+        "Touch": "Tato",
+        "ThrustDamage": "Golpe de Ponta",
+        "SwingDamage": "Golpe em Balanço"
+      },
+      "Reasons": {
+        "CalculatedFrom": "Calculado a partir de {source}",
+        "BasicSpeed": "Calculada a partir de {dx} e {ht}",
+        "BasicMove": "Calculado a partir da nova Velocidade Básica",
+        "Dodge": "Calculada pela mesma Velocidade Básica proposta",
+        "DamageTable": "Calculado pela tabela de dano para {source}"
+      },
+      "Warnings": {
+        "MaximumBelowCurrent": "O novo máximo é inferior ao valor atual; o valor atual será preservado.",
+        "RemoveImportedDodge": "A seleção também removerá o valor fixo importado da Esquiva."
+      }
     }
   }
 }

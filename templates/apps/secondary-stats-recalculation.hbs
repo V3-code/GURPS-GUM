@@ -2,20 +2,20 @@
   <header class="secondary-preview-header">
     <span class="secondary-preview-header-icon"><i class="fas fa-sync-alt"></i></span>
     <div>
-      <p>Analise os ajustes que serão feitos no Personagem escolha o que deseja aplicar.</p>
-      <small><i class="fas fa-layer-group"></i> ST, DX, HT e Per usam seus valores finais, incluindo efeitos e modificadores aplicáveis.</small>
+      <p>{{localize "GUM.SecondaryStatsRecalculation.Introduction"}}</p>
+      <small><i class="fas fa-layer-group"></i> {{localize "GUM.SecondaryStatsRecalculation.PreparedValuesHint"}}</small>
     </div>
   </header>
 
-  <nav class="secondary-preview-actions" aria-label="Ações rápidas">
-    <button type="button" data-action="recommended"><i class="fas fa-star"></i> Recomendados</button>
-    <button type="button" data-action="all"><i class="fas fa-check-double"></i> Todos</button>
-    <button type="button" data-action="none"><i class="far fa-square"></i> Limpar</button>
-    <button type="button" data-action="unchanged" aria-pressed="false"><i class="fas fa-eye"></i> Sem alteração</button>
+  <nav class="secondary-preview-actions" aria-label="{{localize 'GUM.SecondaryStatsRecalculation.QuickActions'}}">
+    <button type="button" data-action="recommended"><i class="fas fa-star"></i> {{localize "GUM.SecondaryStatsRecalculation.Recommended"}}</button>
+    <button type="button" data-action="all"><i class="fas fa-check-double"></i> {{localize "GUM.SecondaryStatsRecalculation.All"}}</button>
+    <button type="button" data-action="none"><i class="far fa-square"></i> {{localize "GUM.SecondaryStatsRecalculation.Clear"}}</button>
+    <button type="button" data-action="unchanged" aria-pressed="false"><i class="fas fa-eye"></i> {{localize "GUM.SecondaryStatsRecalculation.ShowUnchanged"}}</button>
   </nav>
 
   <div class="secondary-preview-column-labels" aria-hidden="true">
-    <span>Atributo</span><span>Atual</span><span></span><span>Calculado</span>
+    <span>{{localize "GUM.SecondaryStatsRecalculation.Attribute"}}</span><span>{{localize "GUM.SecondaryStatsRecalculation.Current"}}</span><span></span><span>{{localize "GUM.SecondaryStatsRecalculation.Calculated"}}</span>
   </div>
 
   <div class="secondary-preview-groups">
@@ -23,8 +23,8 @@
     <details class="secondary-preview-group" open>
       <summary>
         <span class="secondary-group-identity"><i class="{{icon}}"></i><strong>{{label}}</strong></span>
-        <span class="secondary-group-meta">{{changedCount}} alteração(ões)</span>
-        <label class="secondary-group-selector" title="Selecionar ou desmarcar o grupo">
+        <span class="secondary-group-meta">{{changedLabel}}</span>
+        <label class="secondary-group-selector" title="{{localize 'GUM.SecondaryStatsRecalculation.ToggleGroup'}}">
           <input type="checkbox" class="secondary-group-toggle" data-group="{{id}}" checked />
           <span></span>
         </label>
@@ -47,17 +47,17 @@
             <div class="secondary-stat-meta">
               <small>{{reason}}</small>
               {{#if protectedByOverride}}
-                <span class="secondary-status protected"><i class="fas fa-lock"></i> Override</span>
+                <span class="secondary-status protected"><i class="fas fa-lock"></i> {{localize "GUM.SecondaryStatsRecalculation.Override"}}</span>
               {{else}}
-                {{#if changed}}<span class="secondary-status changed">Alteração</span>{{else}}<span class="secondary-status stable">Sem alteração</span>{{/if}}
+                {{#if changed}}<span class="secondary-status changed">{{localize "GUM.SecondaryStatsRecalculation.Changed"}}</span>{{else}}<span class="secondary-status stable">{{localize "GUM.SecondaryStatsRecalculation.Unchanged"}}</span>{{/if}}
               {{/if}}
             </div>
             {{#if changed}}
-              {{#if modifierTotal}}<small class="secondary-stat-detail">Base {{proposedValue}} <span>·</span> modificadores {{modifierTotal}} <span>·</span> final estimado {{proposedFinal}}</small>{{/if}}
-              {{#if currentFinal}}<small class="secondary-stat-detail">Final atual {{currentFinal}} <span>·</span> final estimado {{proposedFinal}}</small>{{/if}}
+              {{#if modifierDetail}}<small class="secondary-stat-detail">{{modifierDetail}}</small>{{/if}}
+              {{#if finalComparisonDetail}}<small class="secondary-stat-detail">{{finalComparisonDetail}}</small>{{/if}}
             {{/if}}
             {{#each warnings}}<small class="secondary-stat-warning"><i class="fas fa-exclamation-triangle"></i> {{this}}</small>{{/each}}
-            {{#if dependencies.length}}<small hidden class="secondary-dependency-warning" data-dependencies="{{dependencies}}"><i class="fas fa-link"></i> Seleção parcial: este resultado depende de outro atributo recalculável não selecionado.</small>{{/if}}
+            {{#if dependencies.length}}<small hidden class="secondary-dependency-warning" data-dependencies="{{dependencies}}"><i class="fas fa-link"></i> {{localize "GUM.SecondaryStatsRecalculation.DependencyWarning"}}</small>{{/if}}
           </div>
         </article>
         {{/each}}

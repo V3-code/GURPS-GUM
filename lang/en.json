@@ -196,6 +196,72 @@
       "NoSelection": "No modifier was selected.",
       "AddedOne": "{count} modifier added.",
       "AddedMany": "{count} modifiers added."
+    },
+    "SecondaryStatsRecalculation": {
+      "RecalculateTooltip": "Recalculate derived attribute bases",
+      "Title": "Review Derived Attributes",
+      "Introduction": "Review the adjustments that will be made to the character and choose which ones to apply.",
+      "PreparedValuesHint": "ST, DX, HT, and Per use their final values, including applicable effects and modifiers.",
+      "QuickActions": "Quick actions",
+      "Recommended": "Recommended",
+      "All": "All",
+      "Clear": "Clear",
+      "ShowUnchanged": "Unchanged",
+      "Attribute": "Attribute",
+      "Current": "Current",
+      "Calculated": "Calculated",
+      "ToggleGroup": "Select or clear the group",
+      "Override": "Override",
+      "Changed": "Change",
+      "Unchanged": "Unchanged",
+      "ApplyChanges": "Apply Changes",
+      "ApplyOne": "Apply {count} change",
+      "ApplyMany": "Apply {count} changes",
+      "AppliedOne": "{count} derived attribute change applied.",
+      "AppliedMany": "{count} derived attribute changes applied.",
+      "CalculationFailure": "The derived attribute preview could not be calculated.",
+      "ApplyFailure": "The derived attribute changes could not be applied.",
+      "ChangedOne": "{count} change",
+      "ChangedMany": "{count} changes",
+      "ModifierDetail": "Base {base} · modifiers {modifier} · estimated final {final}",
+      "FinalComparisonDetail": "Current final {current} · estimated final {final}",
+      "DependencyWarning": "Partial selection: this result depends on another recalculable attribute that is not selected.",
+      "PerceptionAbbreviation": "Per",
+      "PrimaryFinal": "{label} final {final}",
+      "PrimaryAdjusted": "{label} final {final} (base {base}, adjustments {difference})",
+      "ProtectedByOverride": "Protected by override",
+      "Groups": {
+        "Resources": "Resources",
+        "Physical": "Physical Capacity",
+        "Movement": "Movement and Defense",
+        "Senses": "Senses",
+        "Damage": "Basic Damage"
+      },
+      "Entries": {
+        "HPMax": "Maximum HP",
+        "FPMax": "Maximum FP",
+        "LiftingST": "Lifting ST",
+        "BasicSpeed": "Basic Speed",
+        "BasicMove": "Basic Move",
+        "Dodge": "Base Dodge",
+        "Vision": "Vision",
+        "Hearing": "Hearing",
+        "TasteSmell": "Taste/Smell",
+        "Touch": "Touch",
+        "ThrustDamage": "Thrust Damage",
+        "SwingDamage": "Swing Damage"
+      },
+      "Reasons": {
+        "CalculatedFrom": "Calculated from {source}",
+        "BasicSpeed": "Calculated from {dx} and {ht}",
+        "BasicMove": "Calculated from the new Basic Speed",
+        "Dodge": "Calculated from the same proposed Basic Speed",
+        "DamageTable": "Calculated from the damage table for {source}"
+      },
+      "Warnings": {
+        "MaximumBelowCurrent": "The new maximum is below the current value; the current value will be preserved.",
+        "RemoveImportedDodge": "This selection will also remove the imported fixed Dodge value."
+      }
     }
   }
 }

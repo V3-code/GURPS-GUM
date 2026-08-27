@@ -4010,26 +4010,46 @@ async _onRecalculateSecondaryStats(ev) {
     plan = this._buildSecondaryStatsRecalculationPlan();
   } catch (error) {
     console.error("GUM | Falha ao construir prévia de atributos derivados", error);
-    ui.notifications.error("Não foi possível calcular a prévia dos atributos derivados.");
+    ui.notifications.error(game.i18n.localize("GUM.SecondaryStatsRecalculation.CalculationFailure"));
     return;
   }
 
   const groups = [
-    ["resources", "Recursos", "fas fa-heart"], ["physical", "Capacidade física", "fas fa-dumbbell"],
-    ["movement", "Movimento e defesa", "fas fa-running"], ["senses", "Sentidos", "fas fa-eye"],
-    ["damage", "Dano básico", "fas fa-fist-raised"]
-  ].map(([id, label, icon]) => {
-    const entries = plan.filter(entry => entry.group === id);
-    return { id, label, icon, entries, changedCount: entries.filter(entry => entry.changed).length };
+    ["resources", "Resources", "fas fa-heart"], ["physical", "Physical", "fas fa-dumbbell"],
+    ["movement", "Movement", "fas fa-running"], ["senses", "Senses", "fas fa-eye"],
+    ["damage", "Damage", "fas fa-fist-raised"]
+  ].map(([id, groupKey, icon]) => {
+    const entries = plan.filter(entry => entry.group === id).map(entry => ({
+      ...entry,
+      modifierDetail: entry.modifierTotal ? game.i18n.format("GUM.SecondaryStatsRecalculation.ModifierDetail", {
+        base: entry.proposedValue,
+        modifier: entry.modifierTotal,
+        final: entry.proposedFinal
+      }) : "",
+      finalComparisonDetail: entry.currentFinal ? game.i18n.format("GUM.SecondaryStatsRecalculation.FinalComparisonDetail", {
+        current: entry.currentFinal,
+        final: entry.proposedFinal
+      }) : ""
+    }));
+    const changedCount = entries.filter(entry => entry.changed).length;
+    const countKey = changedCount === 1 ? "ChangedOne" : "ChangedMany";
+    return {
+      id,
+      label: game.i18n.localize(`GUM.SecondaryStatsRecalculation.Groups.${groupKey}`),
+      icon,
+      entries,
+      changedCount,
+      changedLabel: game.i18n.format(`GUM.SecondaryStatsRecalculation.${countKey}`, { count: changedCount })
+    };
   });
   const content = await renderTemplate("systems/gum/templates/apps/secondary-stats-recalculation.hbs", { groups });
 
   new Dialog({
-    title: "Revisar atributos derivados",
+    title: game.i18n.localize("GUM.SecondaryStatsRecalculation.Title"),
     content,
     buttons: {
       apply: {
-        icon: '<i class="fas fa-check"></i>', label: "Aplicar alterações",
+        icon: '<i class="fas fa-check"></i>', label: game.i18n.localize("GUM.SecondaryStatsRecalculation.ApplyChanges"),
         callback: async html => {
           const selectedIds = html.find('input[name="secondary-stat"]:checked').map((_, input) => input.value).get();
           const updateData = buildSecondaryStatsUpdateData(plan, selectedIds);
@@ -4037,14 +4057,17 @@ async _onRecalculateSecondaryStats(ev) {
           try {
             await this.actor.update(updateData);
             this.render(false);
-            ui.notifications.info(`${selectedIds.length} alteração(ões) de atributos derivados aplicada(s).`);
+            const notificationKey = selectedIds.length === 1
+              ? "GUM.SecondaryStatsRecalculation.AppliedOne"
+              : "GUM.SecondaryStatsRecalculation.AppliedMany";
+            ui.notifications.info(game.i18n.format(notificationKey, { count: selectedIds.length }));
           } catch (error) {
             console.error("GUM | Falha ao aplicar atributos derivados", error);
-            ui.notifications.error("Não foi possível aplicar as alterações de atributos derivados.");
+            ui.notifications.error(game.i18n.localize("GUM.SecondaryStatsRecalculation.ApplyFailure"));
           }
         }
       },
-      cancel: { icon: '<i class="fas fa-times"></i>', label: "Cancelar" }
+      cancel: { icon: '<i class="fas fa-times"></i>', label: game.i18n.localize("GUM.Common.Cancel") }
     },
     default: "apply",
     render: html => this._activateSecondaryStatsPreview(html, plan)
@@ -4052,7 +4075,14 @@ async _onRecalculateSecondaryStats(ev) {
 }
 
 _buildSecondaryStatsRecalculationPlan() {
-  return buildSecondaryStatsRecalculationPlan(this.actor.system, st => this._getBasicDamageFromST(st));
+  return buildSecondaryStatsRecalculationPlan(
+    this.actor.system,
+    st => this._getBasicDamageFromST(st),
+    {
+      localize: key => game.i18n.localize(key),
+      format: (key, data) => game.i18n.format(key, data)
+    }
+  );
 }
 
 _activateSecondaryStatsPreview(html, plan) {
@@ -4060,7 +4090,8 @@ _activateSecondaryStatsPreview(html, plan) {
   const applyButton = html.closest(".app").find('button[data-button="apply"]');
   const updateState = () => {
     const count = fields.filter(":checked").length;
-    applyButton.prop("disabled", count === 0).html(`<i class="fas fa-check"></i> Aplicar ${count} alteração(ões)`);
+    const countKey = count === 1 ? "ApplyOne" : "ApplyMany";
+    applyButton.prop("disabled", count === 0).html(`<i class="fas fa-check"></i> ${game.i18n.format(`GUM.SecondaryStatsRecalculation.${countKey}`, { count })}`);
     html.find(".secondary-stat-row").each((_, row) => row.classList.toggle("selected", row.querySelector('input[name="secondary-stat"]')?.checked));
     html.find(".secondary-group-toggle").each((_, toggle) => {
       const groupFields = fields.filter(`[data-group="${toggle.dataset.group}"]:not(:disabled)`);

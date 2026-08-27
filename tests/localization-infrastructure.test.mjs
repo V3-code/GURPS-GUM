@@ -43,6 +43,13 @@ const screens = [
         name: "equipment modifier browser",
         template: new URL("../templates/apps/eqp-modifier-browser.hbs", import.meta.url),
         script: new URL("../module/apps/eqp-modifier-browser.js", import.meta.url)
+    },
+    {
+        name: "secondary stats recalculation",
+        template: new URL("../templates/apps/secondary-stats-recalculation.hbs", import.meta.url),
+        script: new URL("../module/actor/gurps-actor-sheet.js", import.meta.url),
+        scriptStart: "async _onRecalculateSecondaryStats",
+        scriptEnd: "\n_getBasicDamageFromST(stValue) {"
     }
 ];
 const languagePaths = {
@@ -64,11 +71,20 @@ function directLocalizationKeys(source) {
 }
 
 async function readScreenSources() {
-    return Promise.all(screens.map(async (screen) => ({
-        ...screen,
-        templateSource: await readFile(screen.template, "utf8"),
-        scriptSource: await readFile(screen.script, "utf8")
-    })));
+    return Promise.all(screens.map(async (screen) => {
+        const completeScriptSource = await readFile(screen.script, "utf8");
+        const selectedScriptSource = screen.scriptStart
+            ? completeScriptSource.split(screen.scriptStart, 2)[1]
+            : completeScriptSource;
+        const scriptSource = screen.scriptEnd
+            ? selectedScriptSource.slice(0, selectedScriptSource.indexOf(screen.scriptEnd))
+            : selectedScriptSource;
+        return {
+            ...screen,
+            templateSource: await readFile(screen.template, "utf8"),
+            scriptSource
+        };
+    }));
 }
 
 function assertBalancedHandlebars(template) {
@@ -141,6 +157,27 @@ test("localized screens reference every localization key and only defined keys",
     }
     for (const key of ["AddedOne", "AddedMany"]) {
         used.add(`GUM.EquipmentModifierBrowser.${key}`);
+    }
+    for (const key of [
+        "RecalculateTooltip", "Title", "Introduction", "PreparedValuesHint", "QuickActions", "Recommended", "All", "Clear",
+        "ShowUnchanged", "Attribute", "Current", "Calculated", "ToggleGroup", "Override", "Changed", "Unchanged", "ApplyChanges",
+        "ApplyOne", "ApplyMany", "AppliedOne", "AppliedMany", "CalculationFailure", "ApplyFailure", "ChangedOne", "ChangedMany",
+        "ModifierDetail", "FinalComparisonDetail", "DependencyWarning", "PerceptionAbbreviation", "PrimaryFinal", "PrimaryAdjusted",
+        "ProtectedByOverride"
+    ]) {
+        used.add(`GUM.SecondaryStatsRecalculation.${key}`);
+    }
+    for (const group of ["Resources", "Physical", "Movement", "Senses", "Damage"]) {
+        used.add(`GUM.SecondaryStatsRecalculation.Groups.${group}`);
+    }
+    for (const entry of ["HPMax", "FPMax", "LiftingST", "BasicSpeed", "BasicMove", "Dodge", "Vision", "Hearing", "TasteSmell", "Touch", "ThrustDamage", "SwingDamage"]) {
+        used.add(`GUM.SecondaryStatsRecalculation.Entries.${entry}`);
+    }
+    for (const reason of ["CalculatedFrom", "BasicSpeed", "BasicMove", "Dodge", "DamageTable"]) {
+        used.add(`GUM.SecondaryStatsRecalculation.Reasons.${reason}`);
+    }
+    for (const warning of ["MaximumBelowCurrent", "RemoveImportedDodge"]) {
+        used.add(`GUM.SecondaryStatsRecalculation.Warnings.${warning}`);
     }
 
     assert.deepEqual([...used].sort(), [...defined].sort());
@@ -250,6 +287,33 @@ test("equipment modifier browser localization keys remain available", async () =
     }
     for (const category of ["all", "general", "enchantment", "melee", "ranged", "armor", "shield", "ammo"]) {
         assert.ok(defined.has(`GUM.EquipmentModifierBrowser.Categories.${category}`), `missing equipment category: ${category}`);
+    }
+});
+
+test("secondary stats recalculation localization keys remain available", async () => {
+    const portuguese = JSON.parse(await readFile(languagePaths["pt-BR"], "utf8"));
+    const defined = new Set(flattenKeys(portuguese));
+    const keys = [
+        "RecalculateTooltip", "Title", "Introduction", "PreparedValuesHint", "QuickActions", "Recommended", "All", "Clear",
+        "ShowUnchanged", "Attribute", "Current", "Calculated", "ToggleGroup", "Override", "Changed", "Unchanged", "ApplyChanges",
+        "ApplyOne", "ApplyMany", "AppliedOne", "AppliedMany", "CalculationFailure", "ApplyFailure", "ChangedOne", "ChangedMany",
+        "ModifierDetail", "FinalComparisonDetail", "DependencyWarning", "PerceptionAbbreviation", "PrimaryFinal", "PrimaryAdjusted",
+        "ProtectedByOverride"
+    ];
+    for (const key of keys) {
+        assert.ok(defined.has(`GUM.SecondaryStatsRecalculation.${key}`), `missing secondary stats key: ${key}`);
+    }
+    for (const group of ["Resources", "Physical", "Movement", "Senses", "Damage"]) {
+        assert.ok(defined.has(`GUM.SecondaryStatsRecalculation.Groups.${group}`), `missing secondary stats group: ${group}`);
+    }
+    for (const entry of ["HPMax", "FPMax", "LiftingST", "BasicSpeed", "BasicMove", "Dodge", "Vision", "Hearing", "TasteSmell", "Touch", "ThrustDamage", "SwingDamage"]) {
+        assert.ok(defined.has(`GUM.SecondaryStatsRecalculation.Entries.${entry}`), `missing secondary stats entry: ${entry}`);
+    }
+    for (const reason of ["CalculatedFrom", "BasicSpeed", "BasicMove", "Dodge", "DamageTable"]) {
+        assert.ok(defined.has(`GUM.SecondaryStatsRecalculation.Reasons.${reason}`), `missing secondary stats reason: ${reason}`);
+    }
+    for (const warning of ["MaximumBelowCurrent", "RemoveImportedDodge"]) {
+        assert.ok(defined.has(`GUM.SecondaryStatsRecalculation.Warnings.${warning}`), `missing secondary stats warning: ${warning}`);
     }
 });
 
@@ -460,4 +524,49 @@ test("equipment modifier browser preserves filters, category IDs and modifier da
     assert.match(screen.scriptSource, /Object\.keys\(system\.target_type \|\| \{\}\)\.filter\(k => system\.target_type\[k\]\)\.map\(getLocalizedCategoryLabel\)/);
     assert.match(screen.scriptSource, /addedCount === 1/);
     assert.match(screen.scriptSource, /game\.i18n\.format\(notificationKey, \{ count: addedCount \}\)/);
+});
+
+test("secondary stats recalculation reachable flow has no fixed Portuguese UI text", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "secondary stats recalculation");
+    const templateSource = screen.templateSource.replace(/{{!--[\s\S]*?--}}/g, "");
+    const fixedPortuguese = [
+        "Analise os ajustes", "Ações rápidas", "Recomendados", "Todos", "Limpar", "Sem alteração", "Atributo", "Atual",
+        "Calculado", "Selecionar ou desmarcar o grupo", "Alteração", "modificadores", "final estimado", "Seleção parcial",
+        "Revisar atributos derivados", "Aplicar alterações", "Não foi possível calcular", "Não foi possível aplicar"
+    ];
+
+    for (const text of fixedPortuguese) {
+        assert.ok(!templateSource.includes(text), `fixed secondary stats template text: ${text}`);
+        assert.ok(!screen.scriptSource.includes(`"${text}`), `fixed reachable secondary stats script text: ${text}`);
+    }
+
+    const characterTemplate = await readFile(new URL("../templates/actors/characters.hbs", import.meta.url), "utf8");
+    assert.ok(!characterTemplate.includes('title="Recalcular bases de atributos secundários"'));
+    assert.match(characterTemplate, /recalc-secondary-stats-btn" title="{{localize 'GUM\.SecondaryStatsRecalculation\.RecalculateTooltip'}}"/);
+});
+
+test("secondary stats recalculation preserves selectors, paths and update behavior while localizing presentation", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "secondary stats recalculation");
+    const utilitySource = await readFile(new URL("../module/utils/secondary-stats-recalculation.mjs", import.meta.url), "utf8");
+
+    for (const action of ["recommended", "all", "none", "unchanged"]) {
+        assert.match(screen.templateSource, new RegExp(`data-action="${action}"`));
+    }
+    assert.match(screen.templateSource, /name="secondary-stat" value="{{id}}" data-group="{{group}}"/);
+    assert.match(screen.templateSource, /class="secondary-group-toggle" data-group="{{id}}"/);
+    assert.match(screen.scriptSource, /buildSecondaryStatsUpdateData\(plan, selectedIds\)/);
+    assert.match(screen.scriptSource, /selectedIds\.length === 1/);
+    assert.match(screen.scriptSource, /count === 1 \? "ApplyOne" : "ApplyMany"/);
+    assert.match(screen.scriptSource, /localize: key => game\.i18n\.localize\(key\)/);
+    assert.match(screen.scriptSource, /format: \(key, data\) => game\.i18n\.format\(key, data\)/);
+    for (const path of [
+        "system.attributes.hp.max", "system.attributes.fp.max", "system.attributes.lifting_st.value",
+        "system.attributes.basic_speed.value", "system.attributes.basic_move.value", "system.attributes.dodge.value",
+        "system.attributes.vision.value", "system.attributes.hearing.value", "system.attributes.tastesmell.value",
+        "system.attributes.touch.value", "system.attributes.thrust_damage", "system.attributes.swing_damage"
+    ]) {
+        assert.ok(utilitySource.includes(`"${path}"`), `missing preserved update path: ${path}`);
+    }
+    assert.match(utilitySource, /buildSecondaryStatsRecalculationPlan\(system, getBasicDamageFromST, i18n = null\)/);
+    assert.match(utilitySource, /if \(!selected\.has\(entry\.id\) \|\| !entry\.changed \|\| entry\.protectedByOverride\) continue/);
 });
