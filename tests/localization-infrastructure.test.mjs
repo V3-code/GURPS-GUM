@@ -50,6 +50,11 @@ const screens = [
         script: new URL("../module/actor/gurps-actor-sheet.js", import.meta.url),
         scriptStart: "async _onRecalculateSecondaryStats",
         scriptEnd: "\n_getBasicDamageFromST(stValue) {"
+    },
+    {
+        name: "preview dialog",
+        template: null,
+        script: new URL("../module/apps/preview-dialog.js", import.meta.url)
     }
 ];
 const languagePaths = {
@@ -81,7 +86,7 @@ async function readScreenSources() {
             : selectedScriptSource;
         return {
             ...screen,
-            templateSource: await readFile(screen.template, "utf8"),
+            templateSource: screen.template ? await readFile(screen.template, "utf8") : "",
             scriptSource
         };
     }));
@@ -178,6 +183,26 @@ test("localized screens reference every localization key and only defined keys",
     }
     for (const warning of ["MaximumBelowCurrent", "RemoveImportedDodge"]) {
         used.add(`GUM.SecondaryStatsRecalculation.Warnings.${warning}`);
+    }
+    for (const key of [
+        "Details", "Action", "NoDescription", "OpenReference", "Metadata", "Configured", "Empty", "SendToChat", "DetailsTitle",
+        "ViewItemDetails", "ViewDetails", "SentToChat", "OpenDetailsFailure", "FillReference", "InvalidReference", "PdfNotFound",
+        "ReferencesNotFound", "MissingReferences", "MultipleReferences", "ChooseReference"
+    ]) {
+        used.add(`GUM.PreviewDialog.${key}`);
+    }
+    for (const type of [
+        "Equipment", "MeleeWeapon", "RangedWeapon", "Advantage", "Disadvantage", "Skill", "Spell", "Power", "Condition",
+        "Modifier", "EquipmentModifier", "GMModifier", "Effect", "Trigger", "Template"
+    ]) {
+        used.add(`GUM.PreviewDialog.Types.${type}`);
+    }
+    for (const tag of [
+        "Damage", "Range", "Parry", "Strength", "Accuracy", "RateOfFire", "Shots", "Recoil", "Attribute", "Level", "Group",
+        "Class", "Casting", "Cost", "Activation", "Duration", "Points", "SelfControl", "TechLevel", "LegalityClass", "When",
+        "Effects", "Effect", "Weight", "Tags", "Value", "SkillCap", "Category", "Type", "Code", "Quantity", "Reference"
+    ]) {
+        used.add(`GUM.PreviewDialog.Tags.${tag}`);
     }
 
     assert.deepEqual([...used].sort(), [...defined].sort());
@@ -314,6 +339,32 @@ test("secondary stats recalculation localization keys remain available", async (
     }
     for (const warning of ["MaximumBelowCurrent", "RemoveImportedDodge"]) {
         assert.ok(defined.has(`GUM.SecondaryStatsRecalculation.Warnings.${warning}`), `missing secondary stats warning: ${warning}`);
+    }
+});
+
+test("preview dialog localization keys remain available", async () => {
+    const portuguese = JSON.parse(await readFile(languagePaths["pt-BR"], "utf8"));
+    const defined = new Set(flattenKeys(portuguese));
+    const keys = [
+        "Details", "Action", "NoDescription", "OpenReference", "Metadata", "Configured", "Empty", "SendToChat", "DetailsTitle",
+        "ViewItemDetails", "ViewDetails", "SentToChat", "OpenDetailsFailure", "FillReference", "InvalidReference", "PdfNotFound",
+        "ReferencesNotFound", "MissingReferences", "MultipleReferences", "ChooseReference"
+    ];
+    for (const key of keys) {
+        assert.ok(defined.has(`GUM.PreviewDialog.${key}`), `missing preview dialog key: ${key}`);
+    }
+    for (const type of [
+        "Equipment", "MeleeWeapon", "RangedWeapon", "Advantage", "Disadvantage", "Skill", "Spell", "Power", "Condition",
+        "Modifier", "EquipmentModifier", "GMModifier", "Effect", "Trigger", "Template"
+    ]) {
+        assert.ok(defined.has(`GUM.PreviewDialog.Types.${type}`), `missing preview dialog type: ${type}`);
+    }
+    for (const tag of [
+        "Damage", "Range", "Parry", "Strength", "Accuracy", "RateOfFire", "Shots", "Recoil", "Attribute", "Level", "Group",
+        "Class", "Casting", "Cost", "Activation", "Duration", "Points", "SelfControl", "TechLevel", "LegalityClass", "When",
+        "Effects", "Effect", "Weight", "Tags", "Value", "SkillCap", "Category", "Type", "Code", "Quantity", "Reference"
+    ]) {
+        assert.ok(defined.has(`GUM.PreviewDialog.Tags.${tag}`), `missing preview dialog tag: ${tag}`);
     }
 });
 
@@ -569,4 +620,49 @@ test("secondary stats recalculation preserves selectors, paths and update behavi
     }
     assert.match(utilitySource, /buildSecondaryStatsRecalculationPlan\(system, getBasicDamageFromST, i18n = null\)/);
     assert.match(utilitySource, /if \(!selected\.has\(entry\.id\) \|\| !entry\.changed \|\| entry\.protectedByOverride\) continue/);
+});
+
+test("preview dialog reachable flow has no fixed Portuguese UI text", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "preview dialog");
+    const fixedPortuguese = [
+        "Equipamento", "Arma C. a C.", "Arma à Dist.", "Vantagem", "Desvantagem", "Perícia", "Condição", "Modificador",
+        "Efeito", "Gatilho", "Modelo", "Detalhes", "Sem descrição.", "Abrir referência", "Metadados", "Ação", "Dano",
+        "Alcance", "Aparar", "Nível", "Grupo", "Classe", "Custo", "Ativação", "Duração", "Pontos", "Quando", "Efeitos",
+        "Peso", "Valor", "Categoria", "Código", "Configurado", "Vazio", "Enviar para o Chat", "Ver detalhes", "Enviado para o chat",
+        "Não foi possível abrir", "Preencha o campo REF", "Formato de REF inválido", "Nenhum PDF com código",
+        "Nenhuma das referências", "Não encontradas", "Múltiplas Referências", "Escolha qual referência"
+    ];
+
+    for (const text of fixedPortuguese) {
+        assert.ok(!screen.scriptSource.includes(text), `fixed preview dialog text: ${text}`);
+    }
+});
+
+test("preview dialog preserves mechanical types, item fields, chat payload and reference handling", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "preview dialog");
+    for (const [type, key] of Object.entries({
+        equipment: "Equipment", melee_weapon: "MeleeWeapon", ranged_weapon: "RangedWeapon", advantage: "Advantage",
+        disadvantage: "Disadvantage", skill: "Skill", spell: "Spell", power: "Power", condition: "Condition",
+        modifier: "Modifier", eqp_modifier: "EquipmentModifier", gm_modifier: "GMModifier", effect: "Effect",
+        trigger: "Trigger", template: "Template"
+    })) {
+        assert.match(screen.scriptSource, new RegExp(`${type}: "GUM\\.PreviewDialog\\.Types\\.${key}"`));
+    }
+    const typeMapping = screen.scriptSource.split("const TYPE_LABEL_KEYS = {", 2)[1].split("};", 1)[0];
+    assert.doesNotMatch(typeMapping, /game\.i18n/);
+    assert.match(screen.scriptSource, /localizationKey \? localize\(localizationKey\) : \(type \? type\.toString\(\)\.toUpperCase\(\)/);
+    for (const field of [
+        "damage_formula", "damage_type", "reach", "parry", "min_strength", "accuracy", "range", "rof", "shots", "rcl",
+        "base_attribute", "skill_level", "group", "spell_class", "casting_time", "duration", "mana_cost", "mana_maint",
+        "activation_cost", "maint_cost", "points", "self_control_roll", "tech_level", "legality_class", "when", "effects",
+        "cost", "level", "applied_effect", "cost_factor", "weight_mod", "tags", "modifier", "nh_cap", "ui_category", "code",
+        "quantity", "total_weight", "total_cost", "ref"
+    ]) {
+        assert.match(screen.scriptSource, new RegExp(`\\b${field}\\b`), `missing preserved preview field: ${field}`);
+    }
+    assert.match(screen.scriptSource, /encodeURIComponent\(JSON\.stringify\(\{ title, type, img, description, tags, sourceUuid \}\)\)/);
+    assert.match(screen.scriptSource, /style: CONST\.CHAT_MESSAGE_STYLES\.OTHER/);
+    assert.match(screen.scriptSource, /const compactMatch = normalized\.match\(\/\^\(\[A-Z\]\+\)\(\\d\+\)\$\//);
+    assert.match(screen.scriptSource, /parsed\.page \+ \(Number\(match\.pageOffset\) \|\| 0\)/);
+    assert.match(screen.scriptSource, /missing\.map\(escapeHtml\)\.join\(", "\)/);
 });

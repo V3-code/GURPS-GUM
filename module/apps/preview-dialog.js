@@ -1,22 +1,26 @@
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
-const TYPE_LABELS = {
-  equipment: "Equipamento",
-  melee_weapon: "Arma C. a C.",
-  ranged_weapon: "Arma à Dist.",
-  advantage: "Vantagem",
-  disadvantage: "Desvantagem",
-  skill: "Perícia",
-  spell: "Magia",
-  power: "Poder",
-  condition: "Condição",
-  modifier: "Modificador",
-  eqp_modifier: "Mod. Equipamento",
-  gm_modifier: "Modificador GM",
-  effect: "Efeito",
-  trigger: "Gatilho",
-  template: "Modelo"
+const TYPE_LABEL_KEYS = {
+  equipment: "GUM.PreviewDialog.Types.Equipment",
+  melee_weapon: "GUM.PreviewDialog.Types.MeleeWeapon",
+  ranged_weapon: "GUM.PreviewDialog.Types.RangedWeapon",
+  advantage: "GUM.PreviewDialog.Types.Advantage",
+  disadvantage: "GUM.PreviewDialog.Types.Disadvantage",
+  skill: "GUM.PreviewDialog.Types.Skill",
+  spell: "GUM.PreviewDialog.Types.Spell",
+  power: "GUM.PreviewDialog.Types.Power",
+  condition: "GUM.PreviewDialog.Types.Condition",
+  modifier: "GUM.PreviewDialog.Types.Modifier",
+  eqp_modifier: "GUM.PreviewDialog.Types.EquipmentModifier",
+  gm_modifier: "GUM.PreviewDialog.Types.GMModifier",
+  effect: "GUM.PreviewDialog.Types.Effect",
+  trigger: "GUM.PreviewDialog.Types.Trigger",
+  template: "GUM.PreviewDialog.Types.Template"
 };
+
+const localize = key => game.i18n.localize(key);
+const format = (key, data) => game.i18n.format(key, data);
+const italicized = key => `<i>${localize(key)}</i>`;
 
 function escapeHtml(value) {
   return foundry.utils.escapeHTML((value ?? "").toString());
@@ -61,7 +65,7 @@ function renderReferenceLinks(value) {
   if (!refs.length) return escapeHtml(rawRef);
 
   return refs
-    .map(ref => `<a href="#" class="open-reference-link" data-ref="${escapeHtml(ref.label)}" title="Abrir referência">${escapeHtml(ref.label)}</a>`)
+    .map(ref => `<a href="#" class="open-reference-link" data-ref="${escapeHtml(ref.label)}" title="${escapeHtml(localize("GUM.PreviewDialog.OpenReference"))}">${escapeHtml(ref.label)}</a>`)
     .join(" ");
 }
 
@@ -69,7 +73,7 @@ function renderTags(tags = []) {
   const normalized = tags.map(normalizeTag).filter(Boolean);
   if (!normalized.length) return "";
   return `
-    <footer class="preview-meta" aria-label="Metadados">
+    <footer class="preview-meta" aria-label="${escapeHtml(localize("GUM.PreviewDialog.Metadata"))}">
       ${normalized.map(tag => `
         <span class="preview-chip">
           <b>${escapeHtml(tag.label)}</b>
@@ -83,104 +87,106 @@ function renderTags(tags = []) {
 function renderHeaderAction(action) {
   if (!action) return "";
   const icon = action.icon || "fas fa-circle-info";
-  return `<a class="${escapeHtml(action.className || "preview-action")}" data-action="${escapeHtml(action.action || "custom")}" title="${escapeHtml(action.title || action.label || "Ação")}"><i class="${escapeHtml(icon)}"></i></a>`;
+  return `<a class="${escapeHtml(action.className || "preview-action")}" data-action="${escapeHtml(action.action || "custom")}" title="${escapeHtml(action.title || action.label || localize("GUM.PreviewDialog.Action"))}"><i class="${escapeHtml(icon)}"></i></a>`;
 }
 
 export class GumPreviewDialog {
   static typeLabel(type) {
-    return TYPE_LABELS[type] || (type ? type.toString().toUpperCase() : "Detalhes");
+    const localizationKey = TYPE_LABEL_KEYS[type];
+    return localizationKey ? localize(localizationKey) : (type ? type.toString().toUpperCase() : localize("GUM.PreviewDialog.Details"));
   }
 
   static async enrichDescription(description, { secrets = true } = {}) {
-    const source = hasValue(description) ? description : "<i>Sem descrição.</i>";
+    const source = hasValue(description) ? description : italicized("GUM.PreviewDialog.NoDescription");
     return TextEditorImpl.enrichHTML(source, { secrets, async: true });
   }
 
   static getItemDescription(item) {
     const s = item?.system || {};
-    return s.chat_description || s.description || s.notes || s.features || "<i>Sem descrição.</i>";
+    return s.chat_description || s.description || s.notes || s.features || italicized("GUM.PreviewDialog.NoDescription");
   }
 
   static buildItemTags(item, { extraTags = [] } = {}) {
     const s = item?.system || {};
     const tags = [];
+    const tagLabel = key => localize(`GUM.PreviewDialog.Tags.${key}`);
     const add = (label, value) => { if (hasValue(value)) tags.push({ label, value }); };
     const addHtml = (label, html) => { if (hasValue(html)) tags.push({ label, html }); };
 
     switch (item?.type) {
       case "melee_weapon":
-        add("Dano", `${s.damage_formula || ""} ${s.damage_type || ""}`.trim());
-        add("Alcance", s.reach);
-        add("Aparar", s.parry);
-        add("ST", s.min_strength);
+        add(tagLabel("Damage"), `${s.damage_formula || ""} ${s.damage_type || ""}`.trim());
+        add(tagLabel("Range"), s.reach);
+        add(tagLabel("Parry"), s.parry);
+        add(tagLabel("Strength"), s.min_strength);
         break;
       case "ranged_weapon":
-        add("Dano", `${s.damage_formula || ""} ${s.damage_type || ""}`.trim());
-        add("Prec.", s.accuracy);
-        add("Alcance", s.range);
-        add("CdT", s.rof);
-        add("Tiros", s.shots);
-        add("RCO", s.rcl);
-        add("ST", s.min_strength);
+        add(tagLabel("Damage"), `${s.damage_formula || ""} ${s.damage_type || ""}`.trim());
+        add(tagLabel("Accuracy"), s.accuracy);
+        add(tagLabel("Range"), s.range);
+        add(tagLabel("RateOfFire"), s.rof);
+        add(tagLabel("Shots"), s.shots);
+        add(tagLabel("Recoil"), s.rcl);
+        add(tagLabel("Strength"), s.min_strength);
         break;
       case "skill":
-        add("Attr.", (s.base_attribute || "--").toString().toUpperCase());
-        add("Nível", `${Number(s.skill_level) > 0 ? "+" : ""}${s.skill_level || "0"}`);
-        add("Grupo", s.group);
+        add(tagLabel("Attribute"), (s.base_attribute || "--").toString().toUpperCase());
+        add(tagLabel("Level"), `${Number(s.skill_level) > 0 ? "+" : ""}${s.skill_level || "0"}`);
+        add(tagLabel("Group"), s.group);
         break;
       case "spell":
-        add("Classe", s.spell_class);
-        add("Conj.", `${s.casting_time || "0"} / ${s.duration || 0}`);
-        add("Custo", `${s.mana_cost || "0"} / ${s.mana_maint || "0"}`);
+        add(tagLabel("Class"), s.spell_class);
+        add(tagLabel("Casting"), `${s.casting_time || "0"} / ${s.duration || 0}`);
+        add(tagLabel("Cost"), `${s.mana_cost || "0"} / ${s.mana_maint || "0"}`);
         break;
       case "power":
-        add("Ativação", `${s.activation_cost || "0"} / ${s.maint_cost || "0"}`);
-        add("Duração", s.duration);
+        add(tagLabel("Activation"), `${s.activation_cost || "0"} / ${s.maint_cost || "0"}`);
+        add(tagLabel("Duration"), s.duration);
         break;
       case "advantage":
       case "disadvantage":
-        add("Pontos", s.points);
-        add("CR", s.self_control_roll);
+        add(tagLabel("Points"), s.points);
+        add(tagLabel("SelfControl"), s.self_control_roll);
         break;
       case "equipment":
-        add("TL", s.tech_level);
-        add("LC", s.legality_class);
+        add(tagLabel("TechLevel"), s.tech_level);
+        add(tagLabel("LegalityClass"), s.legality_class);
         break;
       case "condition":
-        add("Quando", s.when);
-        add("Efeitos", Array.isArray(s.effects) ? s.effects.length : null);
+        add(tagLabel("When"), s.when);
+        add(tagLabel("Effects"), Array.isArray(s.effects) ? s.effects.length : null);
         break;
       case "modifier":
-        add("Custo", s.cost);
-        add("Nível", s.level);
-        add("Efeito", s.applied_effect);
+        add(tagLabel("Cost"), s.cost);
+        add(tagLabel("Level"), s.level);
+        add(tagLabel("Effect"), s.applied_effect);
         break;
       case "eqp_modifier":
-        add("Custo", s.cost_factor);
-        add("Peso", s.weight_mod);
-        add("TL", s.tech_level_mod || s.tech_level);
-        add("Tags", s.tags);
+        add(tagLabel("Cost"), s.cost_factor);
+        add(tagLabel("Weight"), s.weight_mod);
+        add(tagLabel("TechLevel"), s.tech_level_mod || s.tech_level);
+        add(tagLabel("Tags"), s.tags);
         break;
       case "gm_modifier":
-        add("Valor", s.modifier);
-        add("Cap NH", s.nh_cap);
-        add("Categoria", s.ui_category);
+        add(tagLabel("Value"), s.modifier);
+        add(tagLabel("SkillCap"), s.nh_cap);
+        add(tagLabel("Category"), s.ui_category);
         break;
       case "effect":
-        add("Tipo", s.type);
+        add(tagLabel("Type"), s.type);
         break;
       case "trigger":
-        add("Código", s.code ? "Configurado" : "Vazio");
+        add(tagLabel("Code"), s.code ? localize("GUM.PreviewDialog.Configured") : localize("GUM.PreviewDialog.Empty"));
         break;
     }
 
     if (["equipment", "melee_weapon", "ranged_weapon"].includes(item?.type)) {
-      add("Qtd", `x${s.quantity || 1}`);
-      add("Peso", s.total_weight ? `${s.total_weight} kg` : null);
-      add("Custo", s.total_cost ? `$${s.total_cost}` : null);
+      add(tagLabel("Quantity"), `x${s.quantity || 1}`);
+      add(tagLabel("Weight"), s.total_weight ? `${s.total_weight} kg` : null);
+      add(tagLabel("Cost"), s.total_cost ? `$${s.total_cost}` : null);
     }
 
-    add("REF", s.ref);
+    add(tagLabel("Reference"), s.ref);
     return [...tags, ...extraTags];
   }
 
@@ -202,10 +208,10 @@ export class GumPreviewDialog {
   }
 
   static async show({
-    title = "Detalhes",
-    type = "Detalhes",
+    title = null,
+    type = null,
     img = "icons/svg/mystery-man.svg",
-    description = "<i>Sem descrição.</i>",
+    description = null,
     tags = [],
     actor = null,
     sourceUuid = "",
@@ -213,11 +219,14 @@ export class GumPreviewDialog {
     width = 500,
     speaker = null
   } = {}) {
-    const safeTitle = escapeHtml(title);
-    const safeType = escapeHtml(type);
+    const resolvedTitle = title ?? localize("GUM.PreviewDialog.Details");
+    const resolvedType = type ?? localize("GUM.PreviewDialog.Details");
+    const resolvedDescription = description ?? italicized("GUM.PreviewDialog.NoDescription");
+    const safeTitle = escapeHtml(resolvedTitle);
+    const safeType = escapeHtml(resolvedType);
     const safeImg = escapeHtml(img || "icons/svg/mystery-man.svg");
     const tagHtml = renderTags(tags);
-    const actions = sendToChat ? renderHeaderAction({ action: "send-to-chat", className: "send-to-chat", title: "Enviar para o Chat", icon: "fas fa-comment" }) : "";
+    const actions = sendToChat ? renderHeaderAction({ action: "send-to-chat", className: "send-to-chat", title: localize("GUM.PreviewDialog.SendToChat"), icon: "fas fa-comment" }) : "";
     const sourceAttr = sourceUuid ? ` data-source-uuid="${escapeHtml(sourceUuid)}"` : "";
 
     const content = `
@@ -232,7 +241,7 @@ export class GumPreviewDialog {
             <div class="header-controls">${actions}</div>
           </header>
           <section class="preview-content">
-            <div class="preview-description">${description}</div>
+            <div class="preview-description">${resolvedDescription}</div>
             ${tagHtml}
           </section>
         </article>
@@ -240,13 +249,13 @@ export class GumPreviewDialog {
     `;
 
     return new Dialog({
-      title: `Detalhes: ${title}`,
+      title: format("GUM.PreviewDialog.DetailsTitle", { title: resolvedTitle }),
       content,
       buttons: {},
       default: "",
       render: (html) => {
         html.find(".send-to-chat").on("click", async () => {
-          await this.sendToChat({ title, type, img, description, tags, actor, sourceUuid, speaker });
+          await this.sendToChat({ title: resolvedTitle, type: resolvedType, img, description: resolvedDescription, tags, actor, sourceUuid, speaker });
         });
         html.find(".open-reference-link").on("click", this._onOpenReferenceLink.bind(this));
       }
@@ -274,9 +283,9 @@ export class GumPreviewDialog {
         </header>
         <div class="preview-content">
           <div class="chat-description-actions">
-            <button type="button" class="chat-show-details" aria-label="Ver detalhes do item">
+            <button type="button" class="chat-show-details" aria-label="${escapeHtml(localize("GUM.PreviewDialog.ViewItemDetails"))}">
               <i class="fas fa-align-left"></i>
-              <span>Ver detalhes</span>
+              <span>${escapeHtml(localize("GUM.PreviewDialog.ViewDetails"))}</span>
             </button>
           </div>
         </div>
@@ -289,7 +298,7 @@ export class GumPreviewDialog {
       content,
       style: CONST.CHAT_MESSAGE_STYLES.OTHER
     });
-    ui.notifications.info("Enviado para o chat.");
+    ui.notifications.info(localize("GUM.PreviewDialog.SentToChat"));
   }
 
   static registerChatDetailsHandler() {
@@ -307,7 +316,7 @@ export class GumPreviewDialog {
             await this.show({ ...data, sendToChat: false });
           } catch (err) {
             console.error("GUM | Falha ao abrir detalhes do chat", err);
-            ui.notifications.error("Não foi possível abrir os detalhes desse item.");
+            ui.notifications.error(localize("GUM.PreviewDialog.OpenDetailsFailure"));
           }
         });
       });
@@ -319,10 +328,10 @@ export class GumPreviewDialog {
     event.stopPropagation();
 
     const rawRef = (event.currentTarget?.dataset?.ref ?? "").toString().trim();
-    if (!rawRef) return ui.notifications.warn("Preencha o campo REF antes de abrir a referência.");
+    if (!rawRef) return ui.notifications.warn(localize("GUM.PreviewDialog.FillReference"));
 
     const parsedList = parseReferenceCodes(rawRef);
-    if (!parsedList.length) return ui.notifications.warn("Formato de REF inválido. Use ex.: BA23 ou BA23, MA45.");
+    if (!parsedList.length) return ui.notifications.warn(localize("GUM.PreviewDialog.InvalidReference"));
 
     if (parsedList.length === 1) return this._openSingleReference(parsedList[0]);
     return this._promptMultipleReferences(parsedList);
@@ -459,7 +468,7 @@ export class GumPreviewDialog {
   static async _openSingleReference(parsed) {
     const match = this._findPdfPageByCode(parsed.code);
     if (!match) {
-      return ui.notifications.warn(`Nenhum PDF com código "${parsed.code}" foi encontrado nos periódicos.`);
+      return ui.notifications.warn(format("GUM.PreviewDialog.PdfNotFound", { code: parsed.code }));
     }
 
     const pageNumber = Math.max(1, parsed.page + (Number(match.pageOffset) || 0));
@@ -486,16 +495,16 @@ export class GumPreviewDialog {
     }
 
     if (!Object.keys(buttons).length) {
-      return ui.notifications.warn("Nenhuma das referências informadas foi encontrada nos periódicos.");
+      return ui.notifications.warn(localize("GUM.PreviewDialog.ReferencesNotFound"));
     }
 
     const missingHtml = missing.length
-      ? `<p style="opacity:.8;margin-top:.5rem"><b>Não encontradas:</b> ${missing.join(", ")}</p>`
+      ? `<p style="opacity:.8;margin-top:.5rem"><b>${escapeHtml(localize("GUM.PreviewDialog.MissingReferences"))}:</b> ${missing.map(escapeHtml).join(", ")}</p>`
       : "";
 
     new Dialog({
-      title: "Múltiplas Referências",
-      content: `<p>Escolha qual referência deseja abrir:</p>${missingHtml}`,
+      title: localize("GUM.PreviewDialog.MultipleReferences"),
+      content: `<p>${escapeHtml(localize("GUM.PreviewDialog.ChooseReference"))}</p>${missingHtml}`,
       buttons,
       default: Object.keys(buttons)[0]
     }).render(true);
