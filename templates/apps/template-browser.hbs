@@ -2,16 +2,16 @@
   <div class="browser-container">
     <aside class="browser-sidebar">
       <div class="filter-group">
-        <h3 class="filter-title">Buscar</h3>
+        <h3 class="filter-title">{{localize "GUM.TemplateBrowser.Search"}}</h3>
         <div class="search-box">
-          <input type="text" name="search" placeholder="Buscar modelo..." />
+          <input type="text" name="search" placeholder="{{localize "GUM.TemplateBrowser.SearchPlaceholder"}}" />
           <i class="fas fa-search"></i>
         </div>
       </div>
 
       {{#if folders.length}}
       <div class="filter-group">
-        <h3 class="filter-title">Pastas e Subpastas</h3>
+        <h3 class="filter-title">{{localize "GUM.TemplateBrowser.FoldersAndSubfolders"}}</h3>
         {{#each folders as |folder|}}
         <label class="filter-check folder-filter-check" style="--folder-depth: {{folder.depth}}">
           <input type="checkbox" name="filter-folder" value="{{folder.id}}" />
@@ -38,7 +38,7 @@
           </div>
 
           <div class="item-actions">
-            <button type="button" class="browser-quick-view" title="Visualizar modelo">
+            <button type="button" class="browser-quick-view" title="{{localize "GUM.TemplateBrowser.ViewTooltip"}}">
               <i class="fas fa-eye"></i>
             </button>
             <label class="item-select" for="template-{{template.id}}">
@@ -47,7 +47,7 @@
           </div>
         </li>
         {{else}}
-        <li class="placeholder-text">Nenhum Modelo encontrado no mundo/compêndios.</li>
+        <li class="placeholder-text">{{localize "GUM.TemplateBrowser.NoResults"}}</li>
         {{/each}}
       </ol>
     </main>
@@ -55,7 +55,7 @@
 
   <footer class="browser-footer">
     <button type="submit">
-      <i class="fas fa-check"></i> Aplicar Modelo
+      <i class="fas fa-check"></i> {{localize "GUM.TemplateBrowser.ApplyTemplate"}}
     </button>
   </footer>
 </form>

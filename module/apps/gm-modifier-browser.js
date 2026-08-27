@@ -1,6 +1,8 @@
 import { GumPreviewDialog } from "./preview-dialog.js";
-import { GM_MODIFIER_CATEGORY_OPTIONS, getGMModifierCategoryLabel, normalizeGMModifierCategory } from "../utils/gm-modifier-categories.js";
+import { GM_MODIFIER_CATEGORY_OPTIONS, normalizeGMModifierCategory } from "../utils/gm-modifier-categories.js";
 // GUM/module/apps/gm-modifier-browser.js
+
+const getLocalizedCategoryLabel = (categoryId) => game.i18n.localize(`GUM.GMModifierBrowser.Categories.${categoryId}`);
 
 export class GMModifierBrowser extends FormApplication {
   
@@ -13,7 +15,7 @@ export class GMModifierBrowser extends FormApplication {
 
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
-      title: "Navegador de Modificadores Globais",
+      title: game.i18n.localize("GUM.GMModifierBrowser.Title"),
       // Reutilizamos a classe CSS existente para manter o estilo
       classes: ["gum", "gm-modifier-browser", "theme-dark"], 
       template: "systems/gum/templates/apps/gm-modifier-browser.hbs",
@@ -41,11 +43,18 @@ export class GMModifierBrowser extends FormApplication {
         this.allModifiers = content.map(item => {
             const formattedVal = (item.system.modifier > 0 ? '+' : '') + item.system.modifier;
                         const category = normalizeGMModifierCategory(item.system.ui_category || "situation");
-            const categoryLabel = getGMModifierCategoryLabel(category);
+            const categoryLabel = getLocalizedCategoryLabel(category);
             const displayGroup = String(item.system.group || "").trim() || categoryLabel;
-            const subtitleParts = [`Modificador: ${formattedVal}`, `Categoria: ${categoryLabel}`];
-            if (displayGroup && displayGroup !== categoryLabel) subtitleParts.push(`Grupo: ${displayGroup}`);
-            if (item.system.nh_cap) subtitleParts.push(`Teto ${item.system.nh_cap}`);
+            const subtitleParts = [
+                game.i18n.format("GUM.GMModifierBrowser.ModifierSubtitle", { value: formattedVal }),
+                game.i18n.format("GUM.GMModifierBrowser.CategorySubtitle", { value: categoryLabel })
+            ];
+            if (displayGroup && displayGroup !== categoryLabel) {
+                subtitleParts.push(game.i18n.format("GUM.GMModifierBrowser.GroupSubtitle", { value: displayGroup }));
+            }
+            if (item.system.nh_cap) {
+                subtitleParts.push(game.i18n.format("GUM.GMModifierBrowser.CapSubtitle", { value: item.system.nh_cap }));
+            }
 
             return {
                 id: item.id,
@@ -68,14 +77,16 @@ export class GMModifierBrowser extends FormApplication {
 
         const usedFolderIds = new Set(this.allModifiers.map(mod => mod.folderId).filter(Boolean));
         this.availableFolders = Array.from(usedFolderIds)
-          .map(folderId => ({ id: folderId, name: folderMap.get(folderId) ?? "Pasta" }))
+          .map(folderId => ({ id: folderId, name: folderMap.get(folderId) ?? game.i18n.localize("GUM.GMModifierBrowser.FolderFallback") }))
           .sort((a, b) => a.name.localeCompare(b.name));
     }
     
     context.modifiers = this.allModifiers;
     context.folders = this.availableFolders;
     const usedCategories = new Set(this.allModifiers.map(mod => mod.category));
-    context.categories = GM_MODIFIER_CATEGORY_OPTIONS.filter(category => usedCategories.has(category.id));
+    context.categories = GM_MODIFIER_CATEGORY_OPTIONS
+        .filter(category => usedCategories.has(category.id))
+        .map(category => ({ ...category, label: getLocalizedCategoryLabel(category.id) }));
     
     return context;
   }
@@ -128,13 +139,13 @@ export class GMModifierBrowser extends FormApplication {
         const s = itemData.system;
         return GumPreviewDialog.show({
             title: itemData.name,
-            type: "Modificador GM",
+            type: game.i18n.localize("GUM.GMModifierBrowser.ModifierType"),
             img: itemData.img || "icons/svg/d20.svg",
-            description: await GumPreviewDialog.enrichDescription(s.description || "<i>Sem descrição.</i>"),
+            description: await GumPreviewDialog.enrichDescription(s.description || `<i>${game.i18n.localize("GUM.GMModifierBrowser.NoDescription")}</i>`),
             tags: [
-                { label: "Valor", value: itemData.formattedVal },
-                { label: "Teto", value: s.nh_cap },
-                { label: "Duração", value: s.duration }
+                { label: game.i18n.localize("GUM.GMModifierBrowser.Value"), value: itemData.formattedVal },
+                { label: game.i18n.localize("GUM.GMModifierBrowser.Cap"), value: s.nh_cap },
+                { label: game.i18n.localize("GUM.GMModifierBrowser.Duration"), value: s.duration }
             ],
             width: 500
         });
@@ -196,7 +207,7 @@ export class GMModifierBrowser extends FormApplication {
     // Filtra apenas as chaves que são IDs (tamanho 16) e estão true
     const selectedIds = Object.keys(formData).filter(key => formData[key] === true && key.length === 16);
     
-    if (selectedIds.length === 0) return ui.notifications.warn("Nenhum modificador foi selecionado.");
+    if (selectedIds.length === 0) return ui.notifications.warn(game.i18n.localize("GUM.GMModifierBrowser.NoSelection"));
     
     const selectedItems = selectedIds.map(id => this.allModifiers.find(m => m.id === id)).filter(m => m);
 

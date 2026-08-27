@@ -6,16 +6,16 @@
             
             {{!-- Busca --}}
             <div class="filter-group">
-                <h3 class="filter-title">Buscar</h3>
+                <h3 class="filter-title">{{localize "GUM.GMModifierBrowser.Search"}}</h3>
                 <div class="search-box">
-                    <input type="text" name="search" placeholder="Nome...">
+                    <input type="text" name="search" placeholder="{{localize "GUM.GMModifierBrowser.SearchPlaceholder"}}">
                     <i class="fas fa-search"></i>
                 </div>
             </div>
 
             {{#if folders.length}}
             <div class="filter-group">
-                <h3 class="filter-title">Pastas</h3>
+                <h3 class="filter-title">{{localize "GUM.Common.Folders"}}</h3>
                 {{#each folders as |folder|}}
 <label class="filter-check folder-filter-check" style="--folder-depth: {{folder.depth}}"><input type="checkbox" name="filter-folder" value="{{folder.id}}"> <span>{{folder.name}}</span></label>
                 {{/each}}
@@ -24,15 +24,15 @@
 
             {{!-- Filtro de Valor --}}
             <div class="filter-group">
-                <h3 class="filter-title">Tipo</h3>
-                <label class="filter-check"><input type="checkbox" name="filter-bonus" checked> <span>Bônus (+)</span></label>
-                <label class="filter-check"><input type="checkbox" name="filter-penalty" checked> <span>Penalidade (-)</span></label>
+                <h3 class="filter-title">{{localize "GUM.GMModifierBrowser.Type"}}</h3>
+                <label class="filter-check"><input type="checkbox" name="filter-bonus" checked> <span>{{localize "GUM.GMModifierBrowser.Bonus"}}</span></label>
+                <label class="filter-check"><input type="checkbox" name="filter-penalty" checked> <span>{{localize "GUM.GMModifierBrowser.Penalty"}}</span></label>
             </div>
             
             {{!-- Filtro de Categorias --}}
             {{#if categories.length}}
             <div class="filter-group category-filter">
-                <h3 class="filter-title">Categorias</h3>
+                <h3 class="filter-title">{{localize "GUM.GMModifierBrowser.CategoriesLabel"}}</h3>
                 {{#each categories as |category|}}
                 <label class="filter-check"><input type="checkbox" value="{{category.id}}"> <span>{{category.label}}</span></label>
                 {{/each}}
@@ -59,7 +59,7 @@
                     </div>
 
                     <div class="item-actions">
-                        <button type="button" class="browser-quick-view" data-id="{{this.id}}" title="Ver detalhes">
+                        <button type="button" class="browser-quick-view" data-id="{{this.id}}" title="{{localize "GUM.GMModifierBrowser.ViewTooltip"}}">
                             <i class="fas fa-eye"></i>
                         </button>
                         <label class="item-select">
@@ -71,7 +71,7 @@
                 
                 {{#unless modifiers}}
                 <li class="placeholder-text">
-                    Nenhum modificador encontrado no compêndio "[GUM] Modificadores de Rolagem".
+                    {{localize "GUM.GMModifierBrowser.NoResults"}}
                 </li>
                 {{/unless}}
             </ol>
@@ -80,6 +80,6 @@
 
     {{!-- RODAPÉ FIXO --}}
     <footer class="browser-footer">
-        <button type="submit"><i class="fas fa-plus-circle"></i> Adicionar Selecionados</button>
+        <button type="submit"><i class="fas fa-plus-circle"></i> {{localize "GUM.GMModifierBrowser.AddSelected"}}</button>
     </footer>
 </form>

@@ -11,7 +11,7 @@ export class TemplateBrowser extends FormApplication {
 
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
-      title: "Navegador de Modelos",
+      title: game.i18n.localize("GUM.TemplateBrowser.Title"),
       classes: ["gum", "template-browser", "theme-dark"],
       template: "systems/gum/templates/apps/template-browser.hbs",
       width: 900,
@@ -26,13 +26,13 @@ export class TemplateBrowser extends FormApplication {
 
     const templatePack = game.packs.get(this.templatePackId);
     if (!templatePack) {
-      ui.notifications.warn("Compêndio de Modelos não encontrado. Verifique se o pack 'templates' está habilitado.");
+      ui.notifications.warn(game.i18n.localize("GUM.TemplateBrowser.CompendiumMissing"));
     } else {
       let docs = [];
       try {
         docs = await templatePack.getDocuments();
       } catch (err) {
-        console.warn(`GUM | Falha ao ler compêndio ${templatePack.collection}`, err);
+        console.warn(game.i18n.format("GUM.TemplateBrowser.ReadFailure", { collection: templatePack.collection }), err);
       }
 
       const templates = docs.filter(doc => doc.type === "template");
@@ -132,15 +132,15 @@ export class TemplateBrowser extends FormApplication {
     const system = template?.system || {};
     const blocks = system.blocks || [];
     return GumPreviewDialog.show({
-      title: template?.name || "Modelo",
-      type: "Modelo",
+      title: template?.name || game.i18n.localize("GUM.TemplateBrowser.TemplateFallback"),
+      type: game.i18n.localize("GUM.TemplateBrowser.TemplateType"),
       img: template?.img || "icons/svg/book.svg",
-      description: await GumPreviewDialog.enrichDescription(system.description || "<i>Modelo de personagem.</i>"),
+      description: await GumPreviewDialog.enrichDescription(system.description || `<i>${game.i18n.localize("GUM.TemplateBrowser.DefaultDescription")}</i>`),
       tags: [
-        { label: "Categoria", value: system.model_category || "generic" },
-        { label: "Blocos", value: blocks.length },
-        { label: "Origem", value: templateData.sourceLabel || "-" },
-        { label: "Pasta", value: templateData.folderLabel || "Sem pasta" }
+        { label: game.i18n.localize("GUM.TemplateBrowser.Category"), value: system.model_category || "generic" },
+        { label: game.i18n.localize("GUM.TemplateBrowser.Blocks"), value: blocks.length },
+        { label: game.i18n.localize("GUM.TemplateBrowser.Source"), value: templateData.sourceLabel || "-" },
+        { label: game.i18n.localize("GUM.TemplateBrowser.Folder"), value: templateData.folderLabel || game.i18n.localize("GUM.TemplateBrowser.NoFolder") }
       ],
       width: 500
     });
@@ -175,10 +175,10 @@ export class TemplateBrowser extends FormApplication {
 
   async _updateObject(_event, formData) {
     const selectedId = formData.selectedTemplate;
-    if (!selectedId) return ui.notifications.warn("Nenhum Modelo foi selecionado.");
+    if (!selectedId) return ui.notifications.warn(game.i18n.localize("GUM.TemplateBrowser.NoSelection"));
 
     const selectedTemplate = this.allTemplates.find(entry => entry.id === selectedId);
-    if (!selectedTemplate) return ui.notifications.error("Modelo selecionado não encontrado.");
+    if (!selectedTemplate) return ui.notifications.error(game.i18n.localize("GUM.TemplateBrowser.SelectedNotFound"));
 
     if (this.onSelect) {
       this.onSelect(selectedTemplate);

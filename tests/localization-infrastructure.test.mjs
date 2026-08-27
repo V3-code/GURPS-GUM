@@ -28,6 +28,16 @@ const screens = [
         name: "trigger browser",
         template: new URL("../templates/apps/trigger-browser.hbs", import.meta.url),
         script: new URL("../module/apps/trigger-browser.js", import.meta.url)
+    },
+    {
+        name: "GM modifier browser",
+        template: new URL("../templates/apps/gm-modifier-browser.hbs", import.meta.url),
+        script: new URL("../module/apps/gm-modifier-browser.js", import.meta.url)
+    },
+    {
+        name: "template browser",
+        template: new URL("../templates/apps/template-browser.hbs", import.meta.url),
+        script: new URL("../module/apps/template-browser.js", import.meta.url)
     }
 ];
 const languagePaths = {
@@ -118,6 +128,12 @@ test("localized screens reference every localization key and only defined keys",
     for (const key of ["Configured", "Empty"]) {
         used.add(`GUM.TriggerBrowser.${key}`);
     }
+    for (const category of [
+        "location", "maneuver", "attack_opt", "defense_opt", "posture", "range", "terrain_light", "state_affliction",
+        "task_difficulty", "ritual", "power_operation", "time", "effort", "situation", "equipment", "other"
+    ]) {
+        used.add(`GUM.GMModifierBrowser.Categories.${category}`);
+    }
 
     assert.deepEqual([...used].sort(), [...defined].sort());
 });
@@ -181,6 +197,35 @@ test("effect and trigger browser localization keys remain available", async () =
         for (const key of keys) {
             assert.ok(defined.has(`GUM.${browser}.${key}`), `missing ${browser} key: ${key}`);
         }
+    }
+});
+
+test("GM modifier and template browser localization keys remain available", async () => {
+    const portuguese = JSON.parse(await readFile(languagePaths["pt-BR"], "utf8"));
+    const defined = new Set(flattenKeys(portuguese));
+    const browserKeys = {
+        GMModifierBrowser: [
+            "Title", "Search", "SearchPlaceholder", "Type", "Bonus", "Penalty", "CategoriesLabel", "ViewTooltip",
+            "NoResults", "AddSelected", "FolderFallback", "ModifierSubtitle", "CategorySubtitle", "GroupSubtitle",
+            "CapSubtitle", "ModifierType", "NoDescription", "Value", "Cap", "Duration", "NoSelection"
+        ],
+        TemplateBrowser: [
+            "Title", "Search", "SearchPlaceholder", "FoldersAndSubfolders", "ViewTooltip", "NoResults", "ApplyTemplate",
+            "CompendiumMissing", "ReadFailure", "TemplateFallback", "TemplateType", "DefaultDescription", "Category", "Blocks",
+            "Source", "Folder", "NoFolder", "NoSelection", "SelectedNotFound"
+        ]
+    };
+
+    for (const [browser, keys] of Object.entries(browserKeys)) {
+        for (const key of keys) {
+            assert.ok(defined.has(`GUM.${browser}.${key}`), `missing ${browser} key: ${key}`);
+        }
+    }
+    for (const category of [
+        "location", "maneuver", "attack_opt", "defense_opt", "posture", "range", "terrain_light", "state_affliction",
+        "task_difficulty", "ritual", "power_operation", "time", "effort", "situation", "equipment", "other"
+    ]) {
+        assert.ok(defined.has(`GUM.GMModifierBrowser.Categories.${category}`), `missing GM modifier category: ${category}`);
     }
 });
 
@@ -297,4 +342,60 @@ test("effect and trigger browsers preserve mechanical behavior while localizing 
     assert.match(triggerScreen.scriptSource, /textarea\.setSelectionRange\(newCursorPos, newCursorPos\)/);
     assert.match(triggerScreen.scriptSource, /foundry\.utils\.escapeHTML\(system\.code\)/);
     assert.match(triggerScreen.scriptSource, /system\.code \? "GUM\.TriggerBrowser\.Configured" : "GUM\.TriggerBrowser\.Empty"/);
+});
+
+test("GM modifier browser reachable flow has no fixed Portuguese UI text", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "GM modifier browser");
+    const templateSource = screen.templateSource.replace(/{{!--[\s\S]*?--}}/g, "");
+    const reachableScript = screen.scriptSource
+        .replace(/\/\/.*$/gm, "")
+        .replace(/\/\*[\s\S]*?\*\//g, "");
+    const fixedPortuguese = [
+        "Navegador de Modificadores Globais", "Modificador:", "Categoria:", "Grupo:", "Teto ", "Pasta",
+        "Modificador GM", "Sem descrição.", "Duração", "Nenhum modificador foi selecionado.",
+        "Bônus (+)", "Penalidade (-)", "Ver detalhes", "Nenhum modificador encontrado", "Adicionar Selecionados"
+    ];
+
+    for (const text of fixedPortuguese) {
+        assert.ok(!templateSource.includes(text), `fixed GM modifier template text: ${text}`);
+        assert.ok(!reachableScript.includes(text), `fixed reachable GM modifier script text: ${text}`);
+    }
+});
+
+test("template browser reachable flow has no fixed Portuguese UI text", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "template browser");
+    const templateSource = screen.templateSource.replace(/{{!--[\s\S]*?--}}/g, "");
+    const reachableScript = screen.scriptSource.split("    const content =", 1)[0]
+        + screen.scriptSource.split("  async _updateObject", 2)[1];
+    const fixedPortuguese = [
+        "Navegador de Modelos", "Compêndio de Modelos não encontrado", "Falha ao ler compêndio",
+        "Modelo de personagem.", "Pastas e Subpastas", "Visualizar modelo", "Nenhum Modelo encontrado",
+        "Aplicar Modelo", "Nenhum Modelo foi selecionado.", "Modelo selecionado não encontrado."
+    ];
+
+    for (const text of fixedPortuguese) {
+        assert.ok(!templateSource.includes(text), `fixed template browser text: ${text}`);
+        assert.ok(!reachableScript.includes(text), `fixed reachable template browser script text: ${text}`);
+    }
+});
+
+test("GM modifier and template browsers preserve selectors, category IDs and selection behavior", async () => {
+    const screenSources = await readScreenSources();
+    const gmScreen = screenSources.find(({ name }) => name === "GM modifier browser");
+    const templateScreen = screenSources.find(({ name }) => name === "template browser");
+
+    for (const name of ["search", "filter-folder", "filter-bonus", "filter-penalty"]) {
+        assert.match(gmScreen.templateSource, new RegExp(`name="${name}"`));
+    }
+    assert.ok(gmScreen.templateSource.includes('value="{{category.id}}"'));
+    assert.ok(gmScreen.templateSource.includes('name="{{this.id}}"'));
+    assert.match(gmScreen.scriptSource, /normalizeGMModifierCategory\(item\.system\.ui_category \|\| "situation"\)/);
+    assert.match(gmScreen.scriptSource, /getLocalizedCategoryLabel\(category\.id\)/);
+    assert.match(gmScreen.scriptSource, /game\.i18n\.format\("GUM\.GMModifierBrowser\.ModifierSubtitle", \{ value: formattedVal \}\)/);
+
+    assert.match(templateScreen.templateSource, /name="search"/);
+    assert.match(templateScreen.templateSource, /name="filter-folder" value="{{folder\.id}}"/);
+    assert.match(templateScreen.templateSource, /type="radio" name="selectedTemplate"[^>]*value="{{template\.id}}"/);
+    assert.match(templateScreen.scriptSource, /formData\.selectedTemplate/);
+    assert.match(templateScreen.scriptSource, /this\.onSelect\(selectedTemplate\)/);
 });
