@@ -13,7 +13,7 @@ constructor(targetItem, options = {}) {
 
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
-      title: "Navegador de Condições",
+      title: game.i18n.localize("GUM.ConditionBrowser.Title"),
       classes: ["gum", "condition-browser", "theme-dark"],
       template: "systems/gum/templates/apps/condition-browser.hbs",
       width: 900, height: 700, resizable: true
@@ -141,11 +141,11 @@ const pack = game.packs.get("gum.conditions");
       const system = condition?.system || {};
       const effectsList = Array.isArray(system.effects) ? system.effects : Object.values(system.effects || {});
       return GumPreviewDialog.show({
-        title: condition?.name || "Condição",
-        type: "Condição",
+        title: condition?.name || game.i18n.localize("GUM.ConditionBrowser.ConditionFallback"),
+        type: game.i18n.localize("GUM.ConditionBrowser.ConditionType"),
         img: condition?.img || "icons/svg/terror.svg",
-        description: await GumPreviewDialog.enrichDescription(system.description || "<i>Sem descrição.</i>"),
-        tags: [{ label: "Efeitos", value: effectsList.length || null }],
+        description: await GumPreviewDialog.enrichDescription(system.description || `<i>${game.i18n.localize("GUM.ConditionBrowser.NoDescription")}</i>`),
+        tags: [{ label: game.i18n.localize("GUM.ConditionBrowser.Effects"), value: effectsList.length || null }],
         width: 500
       });
       const createTag = (label, value) => value ? `<div class="property-tag"><label>${label}</label><span>${value}</span></div>` : "";
@@ -182,7 +182,7 @@ const pack = game.packs.get("gum.conditions");
 
   async _updateObject(event, formData) {
       const selectedIds = Object.keys(formData).filter(key => formData[key] === true && key.length === 16);
-      if (selectedIds.length === 0) return ui.notifications.warn("Nenhuma condição foi selecionada.");
+      if (selectedIds.length === 0) return ui.notifications.warn(game.i18n.localize("GUM.ConditionBrowser.NoSelection"));
 
       const selectedConditions = selectedIds.map(id => this.allConditions.find(c => c.id === id)).filter(c => c);
 
@@ -196,7 +196,10 @@ const pack = game.packs.get("gum.conditions");
             updates[`system.generalConditions.${newKey}`] = { name: condition.name, uuid: condition.uuid };
           }
           await this.targetItem.update(updates);
-          ui.notifications.info(`${selectedConditions.length} condição(ões) anexada(s).`);
+          const notificationKey = selectedConditions.length === 1
+              ? "GUM.ConditionBrowser.AttachedOne"
+              : "GUM.ConditionBrowser.AttachedMany";
+          ui.notifications.info(game.i18n.format(notificationKey, { count: selectedConditions.length }));
       }
   }
 }

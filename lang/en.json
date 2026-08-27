@@ -45,6 +45,27 @@
       "NoSelection": "No modifier was selected.",
       "AddedOne": "{count} modifier added.",
       "AddedMany": "{count} modifiers added."
+    },
+    "ConditionBrowser": {
+      "Title": "Condition Browser",
+      "Search": "Search",
+      "SearchPlaceholder": "Search conditions...",
+      "EffectType": "Effect Type",
+      "Attribute": "Attribute",
+      "Status": "Status",
+      "Chat": "Chat",
+      "Macro": "Macro",
+      "Flag": "Flag",
+      "ViewTooltip": "View condition",
+      "NoResults": "No conditions found in compendium \"[GUM] Condições\".",
+      "AttachSelected": "Attach Selected",
+      "ConditionFallback": "Condition",
+      "ConditionType": "Condition",
+      "NoDescription": "No description.",
+      "Effects": "Effects",
+      "NoSelection": "No condition was selected.",
+      "AttachedOne": "{count} condition attached.",
+      "AttachedMany": "{count} conditions attached."
     }
   }
 }

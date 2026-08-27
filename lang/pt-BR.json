@@ -45,6 +45,27 @@
       "NoSelection": "Nenhum modificador foi selecionado.",
       "AddedOne": "{count} modificador adicionado.",
       "AddedMany": "{count} modificadores adicionados."
+    },
+    "ConditionBrowser": {
+      "Title": "Navegador de Condições",
+      "Search": "Buscar",
+      "SearchPlaceholder": "Buscar condição...",
+      "EffectType": "Tipo de Efeito",
+      "Attribute": "Atributo",
+      "Status": "Status",
+      "Chat": "Chat",
+      "Macro": "Macro",
+      "Flag": "Flag",
+      "ViewTooltip": "Visualizar condição",
+      "NoResults": "Nenhuma condição encontrada no compêndio \"[GUM] Condições\".",
+      "AttachSelected": "Anexar Selecionadas",
+      "ConditionFallback": "Condição",
+      "ConditionType": "Condição",
+      "NoDescription": "Sem descrição.",
+      "Effects": "Efeitos",
+      "NoSelection": "Nenhuma condição foi selecionada.",
+      "AttachedOne": "{count} condição anexada.",
+      "AttachedMany": "{count} condições anexadas."
     }
   }
 }

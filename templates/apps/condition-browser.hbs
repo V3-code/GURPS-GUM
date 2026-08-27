@@ -4,16 +4,16 @@
 
         <aside class="browser-sidebar">
             <div class="filter-group">
-                <h3 class="filter-title">Buscar</h3>
+                <h3 class="filter-title">{{localize "GUM.ConditionBrowser.Search"}}</h3>
                 <div class="search-box">
-                    <input type="text" name="search" placeholder="Buscar condição..."/>
+                    <input type="text" name="search" placeholder="{{localize "GUM.ConditionBrowser.SearchPlaceholder"}}"/>
                     <i class="fas fa-search"></i>
                 </div>
             </div>
 
             {{#if folders.length}}
             <div class="filter-group">
-                <h3 class="filter-title">Pastas</h3>
+                <h3 class="filter-title">{{localize "GUM.Common.Folders"}}</h3>
                 {{#each folders as |folder|}}
                 <label class="filter-check"><input type="checkbox" name="filter-folder" value="{{folder.id}}"/> <span>{{folder.name}}</span></label>
                 {{/each}}
@@ -22,12 +22,12 @@
             
             
             <div class="filter-group">
-                <h3 class="filter-title">Tipo de Efeito</h3>
-                <label class="filter-check"><input type="checkbox" name="filter-attribute" checked/> <span>Atributo</span></label>
-                <label class="filter-check"><input type="checkbox" name="filter-status" checked/> <span>Status</span></label>
-                <label class="filter-check"><input type="checkbox" name="filter-chat" checked/> <span>Chat</span></label>
-                <label class="filter-check"><input type="checkbox" name="filter-macro" checked/> <span>Macro</span></label>
-                <label class="filter-check"><input type="checkbox" name="filter-flag" checked/> <span>Flag</span></label>
+                <h3 class="filter-title">{{localize "GUM.ConditionBrowser.EffectType"}}</h3>
+                <label class="filter-check"><input type="checkbox" name="filter-attribute" checked/> <span>{{localize "GUM.ConditionBrowser.Attribute"}}</span></label>
+                <label class="filter-check"><input type="checkbox" name="filter-status" checked/> <span>{{localize "GUM.ConditionBrowser.Status"}}</span></label>
+                <label class="filter-check"><input type="checkbox" name="filter-chat" checked/> <span>{{localize "GUM.ConditionBrowser.Chat"}}</span></label>
+                <label class="filter-check"><input type="checkbox" name="filter-macro" checked/> <span>{{localize "GUM.ConditionBrowser.Macro"}}</span></label>
+                <label class="filter-check"><input type="checkbox" name="filter-flag" checked/> <span>{{localize "GUM.ConditionBrowser.Flag"}}</span></label>
             </div>
 
         </aside>
@@ -48,7 +48,7 @@
                     </div>
 
                     <div class="item-actions">
-                        <button type="button" class="browser-quick-view" data-id="{{condition.id}}" title="Visualizar condição">
+                        <button type="button" class="browser-quick-view" data-id="{{condition.id}}" title="{{localize "GUM.ConditionBrowser.ViewTooltip"}}">
                             <i class="fas fa-eye"></i>
                         </button>
                         <label class="item-select" for="condition-{{condition.id}}">
@@ -57,7 +57,7 @@
                     </div>
                 </li>
                 {{else}}
-                <li class="placeholder-text">Nenhuma condição encontrada no compêndio "[GUM] Condições".</li>
+                <li class="placeholder-text">{{localize "GUM.ConditionBrowser.NoResults"}}</li>
                 {{/each}}
             </ol>
         </main>
@@ -66,7 +66,7 @@
 
     <footer class="browser-footer">
         <button type="submit">
-            <i class="fas fa-check"></i> Anexar Selecionadas
+            <i class="fas fa-check"></i> {{localize "GUM.ConditionBrowser.AttachSelected"}}
         </button>
     </footer>
 

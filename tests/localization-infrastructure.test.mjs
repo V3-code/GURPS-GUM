@@ -13,6 +13,11 @@ const screens = [
         name: "modifier browser",
         template: new URL("../templates/apps/modifier-browser.hbs", import.meta.url),
         script: new URL("../module/apps/modifier-browser.js", import.meta.url)
+    },
+    {
+        name: "condition browser",
+        template: new URL("../templates/apps/condition-browser.hbs", import.meta.url),
+        script: new URL("../module/apps/condition-browser.js", import.meta.url)
     }
 ];
 const languagePaths = {
@@ -94,6 +99,9 @@ test("localized screens reference every localization key and only defined keys",
     for (const key of ["AddedOne", "AddedMany"]) {
         used.add(`GUM.ModifierBrowser.${key}`);
     }
+    for (const key of ["AttachedOne", "AttachedMany"]) {
+        used.add(`GUM.ConditionBrowser.${key}`);
+    }
 
     assert.deepEqual([...used].sort(), [...defined].sort());
 });
@@ -125,6 +133,19 @@ test("damage roll pilot localization keys remain available", async () => {
     for (const key of pilotKeys) assert.ok(defined.has(key), `missing pilot key: ${key}`);
 });
 
+test("modifier browser localization keys remain available", async () => {
+    const portuguese = JSON.parse(await readFile(languagePaths["pt-BR"], "utf8"));
+    const defined = new Set(flattenKeys(portuguese));
+    const modifierKeys = [
+        "Title", "Search", "SearchPlaceholder", "Enhancements", "Limitations", "ViewTooltip",
+        "NoResults", "AddSelected", "FolderFallback", "ModifierFallback", "ModifierType",
+        "NoDescription", "Ref", "Effect", "NoSelection", "AddedOne", "AddedMany"
+    ];
+    for (const key of modifierKeys) {
+        assert.ok(defined.has(`GUM.ModifierBrowser.${key}`), `missing modifier browser key: ${key}`);
+    }
+});
+
 test("localized screen Handlebars expressions and blocks are balanced", async () => {
     for (const { name, templateSource } of await readScreenSources()) {
         assert.doesNotThrow(() => assertBalancedHandlebars(templateSource), name);
@@ -146,4 +167,38 @@ test("modifier browser reachable flow has no fixed Portuguese UI text", async ()
         assert.ok(!modifierScreen.templateSource.includes(text), `fixed template text: ${text}`);
         assert.ok(!reachableScript.includes(text), `fixed reachable script text: ${text}`);
     }
+});
+
+test("condition browser reachable flow has no fixed Portuguese UI text", async () => {
+    const conditionScreen = (await readScreenSources()).find(({ name }) => name === "condition browser");
+    const beforePreviewReturn = conditionScreen.scriptSource.split("      return GumPreviewDialog.show(", 1)[0];
+    const previewCall = conditionScreen.scriptSource.split("      return GumPreviewDialog.show(", 2)[1]
+        .split("      const createTag =", 1)[0];
+    const updateFlow = conditionScreen.scriptSource.split("  async _updateObject", 2)[1];
+    const reachableScript = `${beforePreviewReturn}${previewCall}${updateFlow}`
+        .replace(/\/\/.*$/gm, "");
+    const fixedPortuguese = [
+        "Buscar", "Pastas", "Tipo de Efeito", "Atributo", "Visualizar condição",
+        "Nenhuma condição encontrada", "Anexar Selecionadas", "Navegador de Condições",
+        "Sem descrição", "Efeitos", "Nenhuma condição foi selecionada", "anexada", "anexadas"
+    ];
+
+    for (const text of fixedPortuguese) {
+        assert.ok(!conditionScreen.templateSource.includes(text), `fixed template text: ${text}`);
+        assert.ok(!reachableScript.includes(text), `fixed reachable script text: ${text}`);
+    }
+});
+
+test("condition browser keeps mechanical selectors and values while formatting attachment counts", async () => {
+    const conditionScreen = (await readScreenSources()).find(({ name }) => name === "condition browser");
+    for (const name of ["search", "filter-folder", "filter-attribute", "filter-status", "filter-chat", "filter-macro", "filter-flag"]) {
+        assert.match(conditionScreen.templateSource, new RegExp(`name="${name}"`));
+    }
+    for (const type of ["attribute", "status", "chat", "macro", "flag"]) {
+        assert.match(conditionScreen.scriptSource, new RegExp(`\\b${type}: form\\.querySelector\\('\\[name="filter-${type}"\\]'\\)\\.checked`));
+    }
+    assert.ok(conditionScreen.templateSource.includes('value="{{folder.id}}"'));
+    assert.ok(conditionScreen.templateSource.includes('name="{{condition.id}}"'));
+    assert.match(conditionScreen.scriptSource, /selectedConditions\.length === 1/);
+    assert.match(conditionScreen.scriptSource, /game\.i18n\.format\(notificationKey, \{ count: selectedConditions\.length \}\)/);
 });
