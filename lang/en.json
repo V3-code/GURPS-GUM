@@ -1,0 +1,29 @@
+{
+  "GUM": {
+    "Common": {
+      "Cancel": "Cancel"
+    },
+    "DamageRollPrompt": {
+      "Title": "Configure Damage Roll",
+      "Heading": "Damage Roll",
+      "SituationalModifiers": "Situational Damage Modifiers",
+      "StandardDamage": "Standard Damage",
+      "FragmentationDamage": "Fragmentation Damage",
+      "FollowUpDamage": "Follow-Up Damage",
+      "StandardPlaceholder": "E.g. 2d6+3",
+      "FragmentationPlaceholder": "E.g. 1d6+1",
+      "FollowUpPlaceholder": "E.g. 1d6",
+      "TypePlaceholder": "Type...",
+      "Roll": "Roll Damage",
+      "RollTooltip": "Roll the configured damage",
+      "ReviewAdditionalDamage": "Review the additional damage fields.",
+      "InvalidExpression": "Invalid expression in {section}.",
+      "SelectDamageType": "Select the damage type for {section}.",
+      "Sections": {
+        "main": "standard damage",
+        "followUp": "follow-up damage",
+        "fragmentation": "fragmentation damage"
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
 <form class="gum-damage-roll-prompt premium" autocomplete="off">
   <header class="damage-prompt-header">
-    <div class="header-kicker">Rolagem de Dano</div>
+    <div class="header-kicker">{{localize "GUM.DamageRollPrompt.Heading"}}</div>
     <h2>{{sourceName}}</h2>
   </header>
 
@@ -13,37 +13,37 @@
     {{/each}}
   </section>
   <section class="damage-modifier-section">
-    <h4>Modificadores de Dano Situacionais</h4>
+    <h4>{{localize "GUM.DamageRollPrompt.SituationalModifiers"}}</h4>
 
     <div class="damage-row">
-      <label>Dano Padrão</label>
-      <input type="text" name="mainAdditional" data-formula-input="true" placeholder="Ex: 2d6+3" />
+      <label>{{localize "GUM.DamageRollPrompt.StandardDamage"}}</label>
+      <input type="text" name="mainAdditional" data-formula-input="true" placeholder="{{localize 'GUM.DamageRollPrompt.StandardPlaceholder'}}" />
       <input type="text" value="{{main.type}}" disabled />
     </div>
 
     <div class="damage-row">
-      <label>Dano de Fragmentação</label>
-      <input type="text" name="fragmentationAdditional" data-formula-input="true" placeholder="Ex: 1d6+1" />
+      <label>{{localize "GUM.DamageRollPrompt.FragmentationDamage"}}</label>
+      <input type="text" name="fragmentationAdditional" data-formula-input="true" placeholder="{{localize 'GUM.DamageRollPrompt.FragmentationPlaceholder'}}" />
       {{#if fragmentationTypeLocked}}
         <input type="text" value="{{fragmentation.type}}" disabled />
       {{else}}
-        <input type="text" name="fragmentationType" data-type-input="true" placeholder="Tipo..." />
+        <input type="text" name="fragmentationType" data-type-input="true" placeholder="{{localize 'GUM.DamageRollPrompt.TypePlaceholder'}}" />
       {{/if}}
     </div>
 
     <div class="damage-row">
-      <label>Dano de Acompanhamento</label>
-      <input type="text" name="followUpAdditional" data-formula-input="true" placeholder="Ex: 1d6" />
+      <label>{{localize "GUM.DamageRollPrompt.FollowUpDamage"}}</label>
+      <input type="text" name="followUpAdditional" data-formula-input="true" placeholder="{{localize 'GUM.DamageRollPrompt.FollowUpPlaceholder'}}" />
       {{#if followUpTypeLocked}}
         <input type="text" value="{{followUp.type}}" disabled />
       {{else}}
-        <input type="text" name="followUpType" data-type-input="true" placeholder="Tipo..." />
+        <input type="text" name="followUpType" data-type-input="true" placeholder="{{localize 'GUM.DamageRollPrompt.TypePlaceholder'}}" />
       {{/if}}
     </div>
   </section>
 
   <footer class="damage-prompt-actions">
-    <button type="submit"><i class="fas fa-dice"></i> Rolar Dano</button>
-    <button type="button" data-action="cancel">Cancelar</button>
+    <button type="submit" title="{{localize 'GUM.DamageRollPrompt.RollTooltip'}}"><i class="fas fa-dice"></i> {{localize "GUM.DamageRollPrompt.Roll"}}</button>
+    <button type="button" data-action="cancel">{{localize "GUM.Common.Cancel"}}</button>
   </footer>
 </form>

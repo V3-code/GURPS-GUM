@@ -1,0 +1,29 @@
+{
+  "GUM": {
+    "Common": {
+      "Cancel": "Cancelar"
+    },
+    "DamageRollPrompt": {
+      "Title": "Configurar Rolagem de Dano",
+      "Heading": "Rolagem de Dano",
+      "SituationalModifiers": "Modificadores de Dano Situacionais",
+      "StandardDamage": "Dano Padrão",
+      "FragmentationDamage": "Dano de Fragmentação",
+      "FollowUpDamage": "Dano de Acompanhamento",
+      "StandardPlaceholder": "Ex: 2d6+3",
+      "FragmentationPlaceholder": "Ex: 1d6+1",
+      "FollowUpPlaceholder": "Ex: 1d6",
+      "TypePlaceholder": "Tipo...",
+      "Roll": "Rolar Dano",
+      "RollTooltip": "Rolar o dano configurado",
+      "ReviewAdditionalDamage": "Revise os campos de dano adicional.",
+      "InvalidExpression": "Expressão inválida em {section}.",
+      "SelectDamageType": "Selecione o tipo de dano para {section}.",
+      "Sections": {
+        "main": "dano padrão",
+        "followUp": "dano de acompanhamento",
+        "fragmentation": "dano de fragmentação"
+      }
+    }
+  }
+}

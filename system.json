@@ -13,6 +13,18 @@
     "minimum": "12",
     "verified": "14"
   },
+  "languages": [
+    {
+      "lang": "pt-BR",
+      "name": "Português (Brasil)",
+      "path": "lang/pt-BR.json"
+    },
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
   "grid": {
     "distance": 1,
     "units": "m"

@@ -9,7 +9,7 @@ export class GurpsDamageRollPrompt extends FormApplication {
 
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
-            title: "Configurar Rolagem de Dano",
+            title: game.i18n.localize("GUM.DamageRollPrompt.Title"),
             id: "gurps-damage-roll-prompt",
             template: "systems/gum/templates/apps/damage-roll-prompt.hbs",
             width: 460,
@@ -60,7 +60,7 @@ export class GurpsDamageRollPrompt extends FormApplication {
         ].filter((card) => card.formula);
 
         return {
-            sourceName: this.damageData.sourceName || "Rolagem de Dano",
+            sourceName: this.damageData.sourceName || game.i18n.localize("GUM.DamageRollPrompt.Heading"),
             main,
             followUp,
             fragmentation,
@@ -193,7 +193,7 @@ export class GurpsDamageRollPrompt extends FormApplication {
     async _updateObject(_event, formData) {
         const result = this._buildResult(formData);
         if (!result.valid) {
-            ui.notifications.warn(result.error || "Revise os campos de dano adicional.");
+            ui.notifications.warn(result.error || game.i18n.localize("GUM.DamageRollPrompt.ReviewAdditionalDamage"));
             return;
         }
 
@@ -268,10 +268,20 @@ export class GurpsDamageRollPrompt extends FormApplication {
 
         for (const section of sections) {
             if (!this._isValidAdditionalFormula(section.expr)) {
-                return { valid: false, error: `Expressão inválida em ${section.key}.` };
+                return {
+                    valid: false,
+                    error: game.i18n.format("GUM.DamageRollPrompt.InvalidExpression", {
+                        section: game.i18n.localize(`GUM.DamageRollPrompt.Sections.${section.key}`)
+                    })
+                };
             }
             if (section.expr && !section.type) {
-                return { valid: false, error: `Selecione o tipo de dano para ${section.key}.` };
+                return {
+                    valid: false,
+                    error: game.i18n.format("GUM.DamageRollPrompt.SelectDamageType", {
+                        section: game.i18n.localize(`GUM.DamageRollPrompt.Sections.${section.key}`)
+                    })
+                };
             }
         }
 
