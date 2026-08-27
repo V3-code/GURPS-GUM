@@ -4,14 +4,19 @@ import { GumPreviewDialog } from "./preview-dialog.js";
 
 // ✅ PASSO 1: Mudar o nome da classe de ModifierBrowser para EffectBrowser
 
-const EFFECT_TYPE_LABELS = {
-    attribute: "Atributo",
-    flag: "Flag",
-    roll_modifier: "Modificador de Rolagem",
-    status: "Status"
+const EFFECT_TYPE_LABEL_KEYS = {
+    attribute: "GUM.EffectBrowser.Attribute",
+    flag: "GUM.EffectBrowser.Flag",
+    roll_modifier: "GUM.EffectBrowser.RollModifier",
+    status: "GUM.EffectBrowser.Status",
+    chat: "GUM.EffectBrowser.Chat",
+    macro: "GUM.EffectBrowser.Macro"
 };
 
-const getEffectTypeLabel = (type) => EFFECT_TYPE_LABELS[type] || type || "-";
+const getEffectTypeLabel = (type) => {
+    const localizationKey = EFFECT_TYPE_LABEL_KEYS[type];
+    return localizationKey ? game.i18n.localize(localizationKey) : type || "-";
+};
 
 const getPrimaryRollModifierValue = (system = {}) => {
     const first = Array.isArray(system.roll_modifier_entries) && system.roll_modifier_entries.length ? system.roll_modifier_entries[0] : null;
@@ -55,7 +60,7 @@ constructor(targetItem, options = {}) {
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
       // ✅ PASSO 1: Atualizar título, classes e arquivo de template
-      title: "Navegador de Efeitos",
+      title: game.i18n.localize("GUM.EffectBrowser.Title"),
       classes: ["gum", "effect-browser", "theme-dark"], // Classe CSS atualizada
       template: "systems/gum/templates/apps/effect-browser.hbs", // Arquivo .hbs atualizado
       width: 900, height: 700, resizable: true
@@ -180,17 +185,17 @@ _onFilterResults(event) {
       const effectRef = system.ref ?? system.reference;
       const quickDescriptionSource = (system.chat_description ?? "").toString().trim()
         ? system.chat_description
-        : (system.description || system.notes || "<i>Sem descrição.</i>");
+        : (system.description || system.notes || `<i>${game.i18n.localize("GUM.EffectBrowser.NoDescription")}</i>`);
 
       return GumPreviewDialog.show({
-        title: effect?.name || "Efeito",
-        type: "Efeito",
+        title: effect?.name || game.i18n.localize("GUM.EffectBrowser.EffectFallback"),
+        type: game.i18n.localize("GUM.EffectBrowser.EffectFallback"),
         img: effect?.img || "icons/svg/mystery-man.svg",
         description: await GumPreviewDialog.enrichDescription(quickDescriptionSource),
         tags: [
-          { label: "Tipo", value: getEffectTypeLabel(system.type) },
-          { label: "Modificador", value: getPrimaryRollModifierValue(system) },
-          { label: "REF", value: effectRef }
+          { label: game.i18n.localize("GUM.EffectBrowser.Type"), value: getEffectTypeLabel(system.type) },
+          { label: game.i18n.localize("GUM.EffectBrowser.Modifier"), value: getPrimaryRollModifierValue(system) },
+          { label: game.i18n.localize("GUM.EffectBrowser.Ref"), value: effectRef }
         ],
         sendToChat: true,
         sourceUuid: effect?.uuid || "",
@@ -201,7 +206,7 @@ _onFilterResults(event) {
   // ✅ PASSO 3: Reescrever a lógica de salvamento
   async _updateObject(event, formData) {
       const selectedIds = Object.keys(formData).filter(key => formData[key] === true && key.length === 16);
-      if (selectedIds.length === 0) return ui.notifications.warn("Nenhum efeito foi selecionado.");
+      if (selectedIds.length === 0) return ui.notifications.warn(game.i18n.localize("GUM.EffectBrowser.NoSelection"));
       
       const selectedEffects = selectedIds.map(id => this.allEffects.find(e => e.id === id)).filter(e => e);
 
@@ -217,7 +222,10 @@ _onFilterResults(event) {
             existingEffects.push(newEffectData);
           }
           await this.targetItem.update({ "system.effects": existingEffects });
-          ui.notifications.info(`${selectedEffects.length} efeito(s) adicionado(s).`);
+          const notificationKey = selectedEffects.length === 1
+              ? "GUM.EffectBrowser.AddedOne"
+              : "GUM.EffectBrowser.AddedMany";
+          ui.notifications.info(game.i18n.format(notificationKey, { count: selectedEffects.length }));
       }
   }
 }

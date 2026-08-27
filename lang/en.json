@@ -66,6 +66,43 @@
       "NoSelection": "No condition was selected.",
       "AttachedOne": "{count} condition attached.",
       "AttachedMany": "{count} conditions attached."
+    },
+    "EffectBrowser": {
+      "Title": "Effect Browser",
+      "Search": "Search",
+      "SearchPlaceholder": "Search effects...",
+      "Type": "Type",
+      "Attribute": "Attribute",
+      "Status": "Status",
+      "RollModifier": "Roll Modifier",
+      "Chat": "Chat",
+      "Macro": "Macro",
+      "Flag": "Flag",
+      "ViewTooltip": "View effect",
+      "NoResults": "No effects found in compendium \"GUM - Efeitos\".",
+      "AddSelected": "Add Selected",
+      "EffectFallback": "Effect",
+      "NoDescription": "No description.",
+      "Modifier": "Modifier",
+      "Ref": "REF",
+      "NoSelection": "No effect was selected.",
+      "AddedOne": "{count} effect added.",
+      "AddedMany": "{count} effects added."
+    },
+    "TriggerBrowser": {
+      "Title": "Trigger Browser",
+      "Search": "Search",
+      "SearchPlaceholder": "Search triggers...",
+      "ViewTooltip": "View trigger",
+      "NoResults": "No triggers found in compendium \"[GUM] Gatilhos\".",
+      "InsertTrigger": "Insert Trigger",
+      "FolderFallback": "Folder",
+      "NoSelection": "No trigger was selected.",
+      "NoDescription": "No description.",
+      "TriggerFallback": "Trigger",
+      "Code": "Code",
+      "Configured": "Configured",
+      "Empty": "Empty"
     }
   }
 }

@@ -66,6 +66,43 @@
       "NoSelection": "Nenhuma condição foi selecionada.",
       "AttachedOne": "{count} condição anexada.",
       "AttachedMany": "{count} condições anexadas."
+    },
+    "EffectBrowser": {
+      "Title": "Navegador de Efeitos",
+      "Search": "Buscar",
+      "SearchPlaceholder": "Buscar efeito...",
+      "Type": "Tipo",
+      "Attribute": "Atributo",
+      "Status": "Status",
+      "RollModifier": "Modificador de Rolagem",
+      "Chat": "Chat",
+      "Macro": "Macro",
+      "Flag": "Flag",
+      "ViewTooltip": "Visualizar efeito",
+      "NoResults": "Nenhum efeito encontrado no compêndio \"GUM - Efeitos\".",
+      "AddSelected": "Adicionar Selecionados",
+      "EffectFallback": "Efeito",
+      "NoDescription": "Sem descrição.",
+      "Modifier": "Modificador",
+      "Ref": "REF",
+      "NoSelection": "Nenhum efeito foi selecionado.",
+      "AddedOne": "{count} efeito adicionado.",
+      "AddedMany": "{count} efeitos adicionados."
+    },
+    "TriggerBrowser": {
+      "Title": "Navegador de Gatilhos",
+      "Search": "Buscar",
+      "SearchPlaceholder": "Buscar gatilho...",
+      "ViewTooltip": "Visualizar gatilho",
+      "NoResults": "Nenhum gatilho encontrado no compêndio \"[GUM] Gatilhos\".",
+      "InsertTrigger": "Inserir Gatilho",
+      "FolderFallback": "Pasta",
+      "NoSelection": "Nenhum gatilho foi selecionado.",
+      "NoDescription": "Sem descrição.",
+      "TriggerFallback": "Gatilho",
+      "Code": "Código",
+      "Configured": "Configurado",
+      "Empty": "Vazio"
     }
   }
 }

@@ -13,7 +13,7 @@ export class TriggerBrowser extends FormApplication {
 
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
-      title: "Navegador de Gatilhos",
+      title: game.i18n.localize("GUM.TriggerBrowser.Title"),
       classes: ["gum", "trigger-browser", "theme-dark"],
       template: "systems/gum/templates/apps/trigger-browser.hbs",
       width: 900, height: 700, resizable: true
@@ -43,7 +43,7 @@ async getData() {
 
         const usedFolderIds = new Set(this.allTriggers.map(trigger => trigger.folderId).filter(Boolean));
         this.availableFolders = Array.from(usedFolderIds)
-          .map(folderId => ({ id: folderId, name: folderMap.get(folderId) ?? "Pasta" }))
+          .map(folderId => ({ id: folderId, name: folderMap.get(folderId) ?? game.i18n.localize("GUM.TriggerBrowser.FolderFallback") }))
           .sort((a, b) => a.name.localeCompare(b.name));
     }
     context.triggers = this.allTriggers; 
@@ -110,7 +110,7 @@ async getData() {
   async _updateObject(event, formData) {
     const selectedTriggerId = formData.triggerSelection;
     if (!selectedTriggerId) {
-        return ui.notifications.warn("Nenhum gatilho foi selecionado.");
+        return ui.notifications.warn(game.i18n.localize("GUM.TriggerBrowser.NoSelection"));
     }
 
     const trigger = this.allTriggers.find(t => t.id === selectedTriggerId);
@@ -132,13 +132,14 @@ async getData() {
   async _showQuickView(triggerData) {
       const trigger = triggerData?.uuid ? (await fromUuid(triggerData.uuid).catch(() => null)) || triggerData : triggerData;
       const system = trigger?.system || {};
-      const description = await TextEditor.enrichHTML(system.description || "<i>Sem descrição.</i>", { async: true });
+      const description = await TextEditor.enrichHTML(system.description || `<i>${game.i18n.localize("GUM.TriggerBrowser.NoDescription")}</i>`, { async: true });
+      const codeStateKey = system.code ? "GUM.TriggerBrowser.Configured" : "GUM.TriggerBrowser.Empty";
       return GumPreviewDialog.show({
-        title: trigger?.name || "Gatilho",
-        type: "Gatilho",
+        title: trigger?.name || game.i18n.localize("GUM.TriggerBrowser.TriggerFallback"),
+        type: game.i18n.localize("GUM.TriggerBrowser.TriggerFallback"),
         img: trigger?.img || "icons/svg/dice-target.svg",
         description: `${description}${system.code ? `<pre class="preview-code">${foundry.utils.escapeHTML(system.code)}</pre>` : ""}`,
-        tags: [{ label: "Código", value: system.code ? "Configurado" : "Vazio" }],
+        tags: [{ label: game.i18n.localize("GUM.TriggerBrowser.Code"), value: game.i18n.localize(codeStateKey) }],
         width: 500
       });
 

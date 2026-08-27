@@ -5,16 +5,16 @@
         {{!-- Coluna da Esquerda (Sidebar de Filtros Simplificada) --}}
         <aside class="browser-sidebar">
             <div class="filter-group">
-                <h3 class="filter-title">Buscar</h3>
+                <h3 class="filter-title">{{localize "GUM.EffectBrowser.Search"}}</h3>
                 <div class="search-box">
-                    <input type="text" name="search" placeholder="Buscar efeito..."/>
+                    <input type="text" name="search" placeholder="{{localize "GUM.EffectBrowser.SearchPlaceholder"}}"/>
                     <i class="fas fa-search"></i>
                 </div>
             </div>
 
             {{#if folders.length}}
             <div class="filter-group">
-                <h3 class="filter-title">Pastas</h3>
+                <h3 class="filter-title">{{localize "GUM.Common.Folders"}}</h3>
                 {{#each folders as |folder|}}
                 <label class="filter-check"><input type="checkbox" name="filter-folder" value="{{folder.id}}"/> <span>{{folder.name}}</span></label>
                 {{/each}}
@@ -22,13 +22,13 @@
             {{/if}}
             
             <div class="filter-group">
-                <h3 class="filter-title">Tipo</h3>
-                <label class="filter-check"><input type="checkbox" name="filter-attribute" checked/> <span>Atributo</span></label>
-                <label class="filter-check"><input type="checkbox" name="filter-status" checked/> <span>Status</span></label>
-                <label class="filter-check"><input type="checkbox" name="filter-roll_modifier" checked/> <span>Mod. Rolagem</span></label>
-                <label class="filter-check"><input type="checkbox" name="filter-chat" checked/> <span>Chat</span></label>
-                <label class="filter-check"><input type="checkbox" name="filter-macro" checked/> <span>Macro</span></label>
-                <label class="filter-check"><input type="checkbox" name="filter-flag" checked/> <span>Flag</span></label>
+                <h3 class="filter-title">{{localize "GUM.EffectBrowser.Type"}}</h3>
+                <label class="filter-check"><input type="checkbox" name="filter-attribute" checked/> <span>{{localize "GUM.EffectBrowser.Attribute"}}</span></label>
+                <label class="filter-check"><input type="checkbox" name="filter-status" checked/> <span>{{localize "GUM.EffectBrowser.Status"}}</span></label>
+                <label class="filter-check"><input type="checkbox" name="filter-roll_modifier" checked/> <span>{{localize "GUM.EffectBrowser.RollModifier"}}</span></label>
+                <label class="filter-check"><input type="checkbox" name="filter-chat" checked/> <span>{{localize "GUM.EffectBrowser.Chat"}}</span></label>
+                <label class="filter-check"><input type="checkbox" name="filter-macro" checked/> <span>{{localize "GUM.EffectBrowser.Macro"}}</span></label>
+                <label class="filter-check"><input type="checkbox" name="filter-flag" checked/> <span>{{localize "GUM.EffectBrowser.Flag"}}</span></label>
             </div>
 
         </aside>
@@ -50,7 +50,7 @@
                     </div>
 
                     <div class="item-actions">
-                        <button type="button" class="browser-quick-view" data-id="{{effect.id}}" title="Visualizar efeito">
+                        <button type="button" class="browser-quick-view" data-id="{{effect.id}}" title="{{localize "GUM.EffectBrowser.ViewTooltip"}}">
                             <i class="fas fa-eye"></i>
                         </button>
                         <label class="item-select" for="effect-{{effect.id}}">
@@ -59,7 +59,7 @@
                     </div>
                 </li>
                 {{else}}
-                <li class="placeholder-text">Nenhum efeito encontrado no compêndio "GUM - Efeitos".</li>
+                <li class="placeholder-text">{{localize "GUM.EffectBrowser.NoResults"}}</li>
                 {{/each}}
             </ol>
         </main>
@@ -68,7 +68,7 @@
 
     <footer class="browser-footer">
         <button type="submit">
-            <i class="fas fa-check"></i> Adicionar Selecionados
+            <i class="fas fa-check"></i> {{localize "GUM.EffectBrowser.AddSelected"}}
         </button>
     </footer>
 

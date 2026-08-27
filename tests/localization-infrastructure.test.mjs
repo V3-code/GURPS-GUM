@@ -18,6 +18,16 @@ const screens = [
         name: "condition browser",
         template: new URL("../templates/apps/condition-browser.hbs", import.meta.url),
         script: new URL("../module/apps/condition-browser.js", import.meta.url)
+    },
+    {
+        name: "effect browser",
+        template: new URL("../templates/apps/effect-browser.hbs", import.meta.url),
+        script: new URL("../module/apps/effect-browser.js", import.meta.url)
+    },
+    {
+        name: "trigger browser",
+        template: new URL("../templates/apps/trigger-browser.hbs", import.meta.url),
+        script: new URL("../module/apps/trigger-browser.js", import.meta.url)
     }
 ];
 const languagePaths = {
@@ -102,6 +112,12 @@ test("localized screens reference every localization key and only defined keys",
     for (const key of ["AttachedOne", "AttachedMany"]) {
         used.add(`GUM.ConditionBrowser.${key}`);
     }
+    for (const key of ["Attribute", "Flag", "RollModifier", "Status", "Chat", "Macro", "AddedOne", "AddedMany"]) {
+        used.add(`GUM.EffectBrowser.${key}`);
+    }
+    for (const key of ["Configured", "Empty"]) {
+        used.add(`GUM.TriggerBrowser.${key}`);
+    }
 
     assert.deepEqual([...used].sort(), [...defined].sort());
 });
@@ -143,6 +159,28 @@ test("modifier browser localization keys remain available", async () => {
     ];
     for (const key of modifierKeys) {
         assert.ok(defined.has(`GUM.ModifierBrowser.${key}`), `missing modifier browser key: ${key}`);
+    }
+});
+
+test("effect and trigger browser localization keys remain available", async () => {
+    const portuguese = JSON.parse(await readFile(languagePaths["pt-BR"], "utf8"));
+    const defined = new Set(flattenKeys(portuguese));
+    const browserKeys = {
+        EffectBrowser: [
+            "Title", "Search", "SearchPlaceholder", "Type", "Attribute", "Status", "RollModifier", "Chat", "Macro", "Flag",
+            "ViewTooltip", "NoResults", "AddSelected", "EffectFallback", "NoDescription", "Modifier", "Ref", "NoSelection",
+            "AddedOne", "AddedMany"
+        ],
+        TriggerBrowser: [
+            "Title", "Search", "SearchPlaceholder", "ViewTooltip", "NoResults", "InsertTrigger", "FolderFallback",
+            "NoSelection", "NoDescription", "TriggerFallback", "Code", "Configured", "Empty"
+        ]
+    };
+
+    for (const [browser, keys] of Object.entries(browserKeys)) {
+        for (const key of keys) {
+            assert.ok(defined.has(`GUM.${browser}.${key}`), `missing ${browser} key: ${key}`);
+        }
     }
 });
 
@@ -201,4 +239,62 @@ test("condition browser keeps mechanical selectors and values while formatting a
     assert.ok(conditionScreen.templateSource.includes('name="{{condition.id}}"'));
     assert.match(conditionScreen.scriptSource, /selectedConditions\.length === 1/);
     assert.match(conditionScreen.scriptSource, /game\.i18n\.format\(notificationKey, \{ count: selectedConditions\.length \}\)/);
+});
+
+test("effect browser reachable flow has no fixed Portuguese UI text", async () => {
+    const effectScreen = (await readScreenSources()).find(({ name }) => name === "effect browser");
+    const templateSource = effectScreen.templateSource.replace(/{{!--[\s\S]*?--}}/g, "");
+    const reachableScript = effectScreen.scriptSource.replace(/\/\/.*$/gm, "");
+    const fixedPortuguese = [
+        "Buscar efeito...", "Mod. Rolagem", "Visualizar efeito", "Nenhum efeito encontrado",
+        "Adicionar Selecionados", "Navegador de Efeitos", "Modificador de Rolagem",
+        "Sem descrição.", "Nenhum efeito foi selecionado.", "efeito(s) adicionado(s)"
+    ];
+
+    for (const text of fixedPortuguese) {
+        assert.ok(!templateSource.includes(text), `fixed effect template text: ${text}`);
+        assert.ok(!reachableScript.includes(text), `fixed reachable effect script text: ${text}`);
+    }
+});
+
+test("trigger browser reachable flow has no fixed Portuguese UI text", async () => {
+    const triggerScreen = (await readScreenSources()).find(({ name }) => name === "trigger browser");
+    const templateSource = triggerScreen.templateSource.replace(/{{!--[\s\S]*?--}}/g, "");
+    const reachableScript = triggerScreen.scriptSource.split("      const content =", 1)[0]
+        .replace(/\/\/.*$/gm, "")
+        .replace(/\/\*[\s\S]*?\*\//g, "");
+    const fixedPortuguese = [
+        "Buscar gatilho...", "Visualizar gatilho", "Nenhum gatilho encontrado", "Inserir Gatilho",
+        "Navegador de Gatilhos", "Nenhum gatilho foi selecionado.", "Sem descrição.", "Configurado", "Vazio"
+    ];
+
+    for (const text of fixedPortuguese) {
+        assert.ok(!templateSource.includes(text), `fixed trigger template text: ${text}`);
+        assert.ok(!reachableScript.includes(text), `fixed reachable trigger script text: ${text}`);
+    }
+});
+
+test("effect and trigger browsers preserve mechanical behavior while localizing dynamic labels", async () => {
+    const screenSources = await readScreenSources();
+    const effectScreen = screenSources.find(({ name }) => name === "effect browser");
+    const triggerScreen = screenSources.find(({ name }) => name === "trigger browser");
+
+    for (const name of ["search", "filter-folder", "filter-attribute", "filter-status", "filter-roll_modifier", "filter-chat", "filter-macro", "filter-flag"]) {
+        assert.match(effectScreen.templateSource, new RegExp(`name="${name}"`));
+    }
+    for (const type of ["attribute", "flag", "roll_modifier", "status", "chat", "macro"]) {
+        assert.match(effectScreen.scriptSource, new RegExp(`\\b${type}: "GUM\\.EffectBrowser\\.`));
+    }
+    assert.match(effectScreen.scriptSource, /localizationKey \? game\.i18n\.localize\(localizationKey\) : type \|\| "-"/);
+    const effectTypeMapping = effectScreen.scriptSource.split("const EFFECT_TYPE_LABEL_KEYS = {", 2)[1].split("};", 1)[0];
+    assert.doesNotMatch(effectTypeMapping, /game\.i18n/);
+    assert.match(effectScreen.scriptSource, /selectedEffects\.length === 1/);
+    assert.match(effectScreen.scriptSource, /game\.i18n\.format\(notificationKey, \{ count: selectedEffects\.length \}\)/);
+
+    assert.match(triggerScreen.templateSource, /type="radio" name="triggerSelection" value="{{trigger\.id}}"/);
+    assert.match(triggerScreen.templateSource, /{{#if \(eq index 0\)}}checked{{\/if}}/);
+    assert.match(triggerScreen.scriptSource, /textarea\.value = textarea\.value\.substring\(0, start\) \+ code \+ textarea\.value\.substring\(end\)/);
+    assert.match(triggerScreen.scriptSource, /textarea\.setSelectionRange\(newCursorPos, newCursorPos\)/);
+    assert.match(triggerScreen.scriptSource, /foundry\.utils\.escapeHTML\(system\.code\)/);
+    assert.match(triggerScreen.scriptSource, /system\.code \? "GUM\.TriggerBrowser\.Configured" : "GUM\.TriggerBrowser\.Empty"/);
 });
