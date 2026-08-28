@@ -16,12 +16,12 @@
                 <textarea
                     name="name"
                     rows="1"
-                    placeholder="Nome do Item"
+                    placeholder="{{localize "GUM.EffectSheet.NamePlaceholder"}}"
                 >{{item.name}}</textarea>
             </div>
 
             <div class="header-subline">
-                <span class="item-type-tag">Efeito</span>
+                <span class="item-type-tag">{{localize "GUM.EffectSheet.Type"}}</span>
             </div>
 
             <span class="header-divider" aria-hidden="true"></span>
@@ -32,9 +32,9 @@
     {{!-- ABAS                                                       --}}
     {{!-- ========================================================= --}}
     <nav class="sheet-tabs tabs" data-group="primary">
-        <a class="item active" data-tab="description">Descrição</a>
-        <a class="item" data-tab="configuracao">Configuração</a>
-        <a class="item" data-tab="efeitos-ativos">Efeitos Ativos</a>
+        <a class="item active" data-tab="description">{{localize "GUM.EffectSheet.DescriptionTab"}}</a>
+        <a class="item" data-tab="configuracao">{{localize "GUM.EffectSheet.ConfigurationTab"}}</a>
+        <a class="item" data-tab="efeitos-ativos">{{localize "GUM.EffectSheet.ActiveEffectsTab"}}</a>
     </nav>
 
     <main class="sheet-body">
@@ -1022,8 +1022,8 @@
                             class="form-group"
                             style="flex-direction: row; text-align: center;"
                         >
-                            <label title="Livro e Página de Referência">
-                                <a class="open-reference-link" title="Abrir Referência">
+                            <label title="{{localize "GUM.EffectSheet.ReferenceTooltip"}}">
+                                <a class="open-reference-link" title="{{localize "GUM.PreviewDialog.OpenReference"}}">
                                     <i class="fas fa-book-open"></i>
                                 </a>
                                 REF
@@ -1034,7 +1034,7 @@
                                     type="text"
                                     name="system.ref"
                                     value="{{system.ref}}"
-                                    placeholder="Ex: BA23, MA45"
+                                    placeholder="{{localize "GUM.EffectSheet.ReferencePlaceholder"}}"
                                 />
                             </div>
                         </div>
@@ -1043,7 +1043,7 @@
                             <details class="itemdesc-panel" open>
                                 <summary class="itemdesc-block-header">
                                     <h4 class="itemdesc-block-title">
-                                        Descrição Resumida (Chat)
+                                        {{localize "GUM.EffectSheet.ChatDescription"}}
                                     </h4>
                                 </summary>
 
@@ -1053,6 +1053,8 @@
                                             type="button"
                                             class="toggle-editor itemdesc-edit-button"
                                             data-field="system.chat_description"
+                                            title="{{localize "GUM.Common.Edit"}}"
+                                            aria-label="{{localize "GUM.Common.Edit"}}"
                                         >
                                             <i class="fas fa-pen"></i>
                                         </button>
@@ -1083,7 +1085,7 @@
                                                 data-field="system.chat_description"
                                             >
                                                 <i class="fas fa-save"></i>
-                                                Salvar
+                                                {{localize "GUM.Common.Save"}}
                                             </button>
 
                                             <button
@@ -1092,7 +1094,7 @@
                                                 data-expanded="false"
                                             >
                                                 <i class="fas fa-expand"></i>
-                                                Expandir
+                                                {{localize "GUM.Common.Expand"}}
                                             </button>
 
                                             <button
@@ -1100,7 +1102,7 @@
                                                 class="cancel-description"
                                             >
                                                 <i class="fas fa-times"></i>
-                                                Cancelar
+                                                {{localize "GUM.Common.Cancel"}}
                                             </button>
                                         </div>
                                     </div>
@@ -1112,7 +1114,7 @@
                             <details class="itemdesc-panel" open>
                                 <summary class="itemdesc-block-header">
                                     <h4 class="itemdesc-block-title">
-                                        Descrição Completa
+                                        {{localize "GUM.EffectSheet.FullDescription"}}
                                     </h4>
                                 </summary>
 
@@ -1122,6 +1124,8 @@
                                             type="button"
                                             class="toggle-editor itemdesc-edit-button"
                                             data-field="system.description"
+                                            title="{{localize "GUM.Common.Edit"}}"
+                                            aria-label="{{localize "GUM.Common.Edit"}}"
                                         >
                                             <i class="fas fa-pen"></i>
                                         </button>
@@ -1152,7 +1156,7 @@
                                                 data-field="system.description"
                                             >
                                                 <i class="fas fa-save"></i>
-                                                Salvar
+                                                {{localize "GUM.Common.Save"}}
                                             </button>
 
                                             <button
@@ -1161,7 +1165,7 @@
                                                 data-expanded="false"
                                             >
                                                 <i class="fas fa-expand"></i>
-                                                Expandir
+                                                {{localize "GUM.Common.Expand"}}
                                             </button>
 
                                             <button
@@ -1169,7 +1173,7 @@
                                                 class="cancel-description"
                                             >
                                                 <i class="fas fa-times"></i>
-                                                Cancelar
+                                                {{localize "GUM.Common.Cancel"}}
                                             </button>
                                         </div>
                                     </div>

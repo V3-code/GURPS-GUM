@@ -71,6 +71,11 @@ const screens = [
         name: "condition sheet",
         template: new URL("../templates/items/condition-sheet.hbs", import.meta.url),
         script: new URL("../scripts/apps/condition-sheet.js", import.meta.url)
+    },
+    {
+        name: "effect sheet description",
+        template: new URL("../templates/items/effect-sheet.hbs", import.meta.url),
+        script: new URL("../scripts/apps/effect-sheet.js", import.meta.url)
     }
 ];
 const languagePaths = {
@@ -779,6 +784,42 @@ test("condition sheet preserves binding modes, linked effects, editors and PDF r
     assert.match(screen.scriptSource, /const effectItem = await fromUuid\(link\.uuid\)/);
     assert.match(screen.scriptSource, /effects\.splice\(effectIndex, 1\)/);
     assert.match(screen.scriptSource, /this\.item\.update\(\{ "system\.effects": effects \}\)/);
+    assert.match(screen.scriptSource, /await this\.item\.update\(\{ \[field\]: content \}\)/);
+    assert.match(screen.scriptSource, /part\.replace\(\/\\s\+\/g, ""\)\.match\(\/\^\(\[A-Z\]\+\)\(\\d\+\)\$\//);
+    assert.match(screen.scriptSource, /parsed\.page \+ \(Number\(match\.pageOffset\) \|\| 0\)/);
+    assert.match(screen.scriptSource, /missing\.map\(escapeHtml\)\.join\(", "\)/);
+});
+
+test("effect sheet header and description have no fixed Portuguese UI text", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "effect sheet description");
+    const headerAndTabs = screen.templateSource.split('<main class="sheet-body">', 1)[0];
+    const descriptionTab = screen.templateSource
+        .split('<div class="tab active" data-tab="description" data-group="primary">', 2)[1]
+        .split('<div class="tab" data-tab="configuracao" data-group="primary">', 1)[0];
+    const referenceFlow = screen.scriptSource.split("    async _onOpenReferenceLink", 2)[1];
+    const scopedSource = `${headerAndTabs}\n${descriptionTab}\n${referenceFlow}`
+        .replace(/{{!--[\s\S]*?--}}/g, "")
+        .replace(/\/\/.*$/gm, "");
+
+    for (const text of [
+        "Nome do Item", "Descrição Resumida", "Descrição Completa", "Livro e Página de Referência",
+        "Abrir Referência", "Salvar", "Expandir", "Cancelar", "Preencha o campo REF",
+        "Formato de REF inválido", "Nenhum PDF com código", "Nenhuma das referências informadas",
+        "Não encontradas", "Múltiplas Referências", "Escolha qual referência"
+    ]) {
+        assert.ok(!scopedSource.includes(text), `fixed effect sheet description text: ${text}`);
+    }
+});
+
+test("effect sheet description preserves tabs, fields, editors and PDF references", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "effect sheet description");
+    for (const tab of ["description", "configuracao", "efeitos-ativos"]) {
+        assert.match(screen.templateSource, new RegExp(`data-tab="${tab}"`));
+    }
+    for (const field of ["name", "system.ref", "system.chat_description", "system.description"]) {
+        assert.match(screen.templateSource, new RegExp(`(?:name|data-field|target|data-edit)="${field.replaceAll(".", "\\.")}"`), `missing effect field: ${field}`);
+    }
+    assert.match(screen.templateSource, /engine="prosemirror"/);
     assert.match(screen.scriptSource, /await this\.item\.update\(\{ \[field\]: content \}\)/);
     assert.match(screen.scriptSource, /part\.replace\(\/\\s\+\/g, ""\)\.match\(\/\^\(\[A-Z\]\+\)\(\\d\+\)\$\//);
     assert.match(screen.scriptSource, /parsed\.page \+ \(Number\(match\.pageOffset\) \|\| 0\)/);

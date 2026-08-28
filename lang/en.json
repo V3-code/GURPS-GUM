@@ -443,6 +443,18 @@
         "GreaterThanOrEqual": "Greater than or equal to"
       }
     },
+    "EffectSheet": {
+      "NamePlaceholder": "Effect Name",
+      "Type": "Effect",
+      "DescriptionTab": "Description",
+      "ConfigurationTab": "Configuration",
+      "ActiveEffectsTab": "Active Effects",
+      "ReferenceTooltip": "Reference Book and Page",
+      "ReferencePlaceholder": "E.g. BA23, MA45",
+      "ChatDescription": "Short Description (Chat)",
+      "FullDescription": "Full Description",
+      "PdfPositionFailure": "The PDF could not be positioned on the requested page automatically."
+    },
     "ConditionSheet": {
       "NamePlaceholder": "Condition Name",
       "Type": "Condition",

@@ -5,6 +5,9 @@ import { formatPurposeSelection, openRollPurposePicker } from "../../module/apps
 
 const { ItemSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
+const localize = key => game.i18n.localize(key);
+const format = (key, data) => game.i18n.format(key, data);
+const escapeHtml = value => foundry.utils.escapeHTML(String(value ?? ""));
 
 
 const ROLL_MODIFIER_CONTEXT_OPTIONS = [
@@ -1022,13 +1025,13 @@ activateListeners(html) {
         const rawRef = (refInput?.value ?? this.item.system?.ref ?? '').toString().trim();
 
         if (!rawRef) {
-            return ui.notifications.warn("Preencha o campo REF antes de abrir a referência.");
+            return ui.notifications.warn(localize("GUM.PreviewDialog.FillReference"));
         }
 
         const parsedList = this._parseReferenceCodes(rawRef);
 
         if (!parsedList.length) {
-            return ui.notifications.warn("Formato de REF inválido. Use ex.: BA23 ou BA23, MA45.");
+            return ui.notifications.warn(localize("GUM.PreviewDialog.InvalidReference"));
         }
 
         if (parsedList.length === 1) {
@@ -1077,7 +1080,7 @@ activateListeners(html) {
     async _openSingleReference(parsed) {
         const match = this._findPdfPageByCode(parsed.code);
         if (!match) {
-            return ui.notifications.warn(`Nenhum PDF com código "${parsed.code}" foi encontrado nos periódicos.`);
+            return ui.notifications.warn(format("GUM.PreviewDialog.PdfNotFound", { code: parsed.code }));
         }
 
         const pageNumber = Math.max(1, parsed.page + (Number(match.pageOffset) || 0));
@@ -1105,16 +1108,16 @@ activateListeners(html) {
         }
 
         if (!Object.keys(buttons).length) {
-            return ui.notifications.warn("Nenhuma das referências informadas foi encontrada nos periódicos.");
+            return ui.notifications.warn(localize("GUM.PreviewDialog.ReferencesNotFound"));
         }
 
         const missingHtml = missing.length
-            ? `<p style="opacity:.8;margin-top:.5rem"><b>Não encontradas:</b> ${missing.join(", ")}</p>`
+            ? `<p style="opacity:.8;margin-top:.5rem"><b>${escapeHtml(localize("GUM.PreviewDialog.MissingReferences"))}:</b> ${missing.map(escapeHtml).join(", ")}</p>`
             : "";
 
         new Dialog({
-            title: "Múltiplas Referências",
-            content: `<p>Escolha qual referência deseja abrir:</p>${missingHtml}`,
+            title: localize("GUM.PreviewDialog.MultipleReferences"),
+            content: `<p>${escapeHtml(localize("GUM.PreviewDialog.ChooseReference"))}</p>${missingHtml}`,
             buttons,
             default: Object.keys(buttons)[0]
         }).render(true);
@@ -1227,7 +1230,7 @@ activateListeners(html) {
             }, { once: true });
         }
 
-        ui.notifications.warn("Não foi possível posicionar o PDF na página solicitada automaticamente.");
+        ui.notifications.warn(localize("GUM.EffectSheet.PdfPositionFailure"));
     }
 
 }

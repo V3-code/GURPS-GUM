@@ -443,6 +443,18 @@
         "GreaterThanOrEqual": "Maior ou Igual a"
       }
     },
+    "EffectSheet": {
+      "NamePlaceholder": "Nome do Efeito",
+      "Type": "Efeito",
+      "DescriptionTab": "Descrição",
+      "ConfigurationTab": "Configuração",
+      "ActiveEffectsTab": "Efeitos Ativos",
+      "ReferenceTooltip": "Livro e Página de Referência",
+      "ReferencePlaceholder": "Ex.: BA23, MA45",
+      "ChatDescription": "Descrição Resumida (Chat)",
+      "FullDescription": "Descrição Completa",
+      "PdfPositionFailure": "Não foi possível posicionar o PDF na página solicitada automaticamente."
+    },
     "ConditionSheet": {
       "NamePlaceholder": "Nome da Condição",
       "Type": "Condição",
