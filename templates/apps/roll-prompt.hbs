@@ -4,26 +4,26 @@
     <div class="prompt-menu-column">
         <section class="roll-purpose-panel" aria-labelledby="roll-purpose-heading">
             <div class="purpose-heading-row">
-                <h3 id="roll-purpose-heading" class="column-header">Finalidades do Teste</h3>
-                <div class="purpose-search" role="search" aria-label="Buscar finalidades">
+                <h3 id="roll-purpose-heading" class="column-header">{{localize "GUM.RollPrompt.TestPurposes"}}</h3>
+                <div class="purpose-search" role="search" aria-label="{{localize "GUM.RollPrompt.SearchPurposes"}}">
                     <i class="fas fa-search" aria-hidden="true"></i>
                     <input type="search" class="purpose-search-input" value="{{purposeSearchQuery}}"
-                           placeholder="Buscar finalidade" autocomplete="off">
+                           placeholder="{{localize "GUM.RollPrompt.SearchPurposePlaceholder"}}" autocomplete="off">
                     <button type="button" class="purpose-search-clear {{#if purposeSearchActive}}visible{{/if}}"
-                            aria-label="Limpar busca" title="Limpar busca" {{#unless purposeSearchActive}}disabled{{/unless}}>
+                            aria-label="{{localize "GUM.RollPrompt.ClearSearch"}}" title="{{localize "GUM.RollPrompt.ClearSearch"}}" {{#unless purposeSearchActive}}disabled{{/unless}}>
                         <i class="fas fa-times" aria-hidden="true"></i>
                     </button>
                 </div>
                 <button type="button" class="purpose-context-filter {{#if contextualPurposeFilterActive}}active{{/if}}"
                         aria-pressed="{{#if contextualPurposeFilterActive}}true{{else}}false{{/if}}"
-                        aria-label="Mostra finalidades relacionadas ao personagem, solicitadas pelo mestre ou já selecionadas nesta rolagem."
-                        title="Contextuais — Mostra finalidades relacionadas ao personagem, solicitadas pelo mestre ou já selecionadas nesta rolagem.">
+                        aria-label="{{localize "GUM.RollPrompt.ContextualPurposesHint"}}"
+                        title="{{localize "GUM.RollPrompt.ContextualPurposesTitle"}}">
                     <i class="fas fa-filter" aria-hidden="true"></i><span class="purpose-context-count">{{contextualPurposeCount}}</span>
                 </button>
                 <button type="button" class="purpose-general {{#unless hasPurposes}}active{{/unless}}"
                         data-purpose-id="general"
                         aria-pressed="{{#if hasPurposes}}false{{else}}true{{/if}}">
-                    <span>Teste Geral</span>
+                    <span>{{localize "GUM.RollPrompt.GeneralTest"}}</span>
                     <i class="fas fa-check" aria-hidden="true"></i>
                 </button>
             </div>
@@ -43,13 +43,13 @@
                                     title="{{purpose.tooltip}}">
                                 <span class="purpose-card-copy">
                                     <span class="purpose-card-label">{{purpose.label}}</span>
-                                    {{#if purpose.requested}}<span class="purpose-requested" title="Solicitada pelo mestre"><i class="fas fa-shield-alt" aria-hidden="true"></i> Solicitada pelo mestre</span>{{/if}}
-                                    {{#if purpose.suggested}}<span class="purpose-card-hint">Atributo usual</span>{{/if}}
+                                    {{#if purpose.requested}}<span class="purpose-requested" title="{{localize "GUM.RollPrompt.RequestedByGM"}}"><i class="fas fa-shield-alt" aria-hidden="true"></i> {{localize "GUM.RollPrompt.RequestedByGM"}}</span>{{/if}}
+                                    {{#if purpose.suggested}}<span class="purpose-card-hint">{{localize "GUM.RollPrompt.UsualAttribute"}}</span>{{/if}}
                                 </span>
                                 <span class="purpose-check" aria-hidden="true"><i class="fas fa-check"></i></span>
                             </button>
                            <span class="purpose-view" role="button" tabindex="0" data-purpose-id="{{purpose.id}}"
-                                  title="Ver informações sobre {{purpose.label}}" aria-label="Ver informações sobre {{purpose.label}}">
+                                  title="{{localize "GUM.RollPrompt.ViewPurposeInfo"}}: {{purpose.label}}" aria-label="{{localize "GUM.RollPrompt.ViewPurposeInfo"}}: {{purpose.label}}">
                                 <i class="fas fa-info-circle" aria-hidden="true"></i>
                             </span>
                         </div>
@@ -58,10 +58,10 @@
                 </div>
             </details>
              {{/each}}
-            <p class="purpose-search-empty" style="display: none;">Nenhuma finalidade encontrada.</p>
-            <p class="purpose-context-empty" style="display: none;">Nenhuma finalidade contextual disponível. Use a busca ou mostre todas as finalidades. <button type="button" class="purpose-context-show-all">Mostrar todas</button></p>
+            <p class="purpose-search-empty" style="display: none;">{{localize "GUM.RollPrompt.NoPurposeFound"}}</p>
+            <p class="purpose-context-empty" style="display: none;">{{localize "GUM.RollPrompt.NoContextualPurpose"}} <button type="button" class="purpose-context-show-all">{{localize "GUM.RollPrompt.ShowAll"}}</button></p>
         </section>
-        <h3 class="column-header modifiers-heading">Modificadores</h3>
+        <h3 class="column-header modifiers-heading">{{localize "GUM.RollPrompt.Modifiers"}}</h3>
         
         <div class="roll-blocks-container">
             {{#each blocks as |block|}}
@@ -102,7 +102,7 @@
 
         {{!-- 1. CABEÇALHO (Compacto) --}}
         <div class="command-header">
-            <button type="button" class="menu-toggle-btn" title="Mostrar/Ocultar opções de rolagem" aria-label="Mostrar ou ocultar opções de rolagem" aria-expanded="{{#if menuCollapsed}}false{{else}}true{{/if}}">
+            <button type="button" class="menu-toggle-btn" title="{{localize "GUM.RollPrompt.ToggleRollOptions"}}" aria-label="{{localize "GUM.RollPrompt.ToggleRollOptionsAria"}}" aria-expanded="{{#if menuCollapsed}}false{{else}}true{{/if}}">
                 <i class="fas fa-bars"></i>
             </button>
             <div class="roll-icon-small">
@@ -115,13 +115,13 @@
         </div>
 
         <div class="purpose-summary" aria-live="polite">
-            <strong>Finalidades:</strong>
-            {{#if hasPurposes}}{{#each purposeLabels as |purpose|}}<span>{{purpose}}</span>{{/each}}{{else}}<em>Teste Geral</em>{{/if}}
+            <strong>{{localize "GUM.RollPrompt.Purposes"}}:</strong>
+            {{#if hasPurposes}}{{#each purposeLabels as |purpose|}}<span>{{purpose}}</span>{{/each}}{{else}}<em>{{localize "GUM.RollPrompt.GeneralTest"}}</em>{{/if}}
         </div>
 
         {{!-- 2. ATRIBUTO BASE (SELETOR) --}}
         <div class="base-attribute-panel">
-            <label class="section-label">Atributo Base</label>
+            <label class="section-label">{{localize "GUM.RollPrompt.BaseAttribute"}}</label>
             <div class="base-attribute-row base-attribute-row--primary">
                 {{#each baseAttributePrimary as |option|}}
                 <button type="button" class="base-attr-btn {{#if option.isSelected}}active{{/if}}"
@@ -148,7 +148,7 @@
 
         {{!-- 2. NH BASE (Destaque) --}}
         <div class="base-value-box">
-            <span class="label">NH Base (<span class="base-attr-label">{{baseAttributeLabel}}</span>)</span>
+            <span class="label">{{localize "GUM.RollPrompt.BaseSkillLevel"}} (<span class="base-attr-label">{{baseAttributeLabel}}</span>)</span>
             <span class="value">{{baseValue}}</span>
         </div>
 
@@ -175,24 +175,24 @@
 
         {{!-- 4. MODO DE ROLAGEM DEFENSIVA --}}
         <div class="defense-mode-panel">
-            <label class="section-label">Modo de Rolagem</label>
+            <label class="section-label">{{localize "GUM.RollPrompt.RollMode"}}</label>
             <div class="defense-mode-options">
-                <button type="button" class="defense-mode-btn active" data-defense-mode="normal">Normal</button>
-                <button type="button" class="defense-mode-btn" data-defense-mode="defense_standard">Defesa Padrão</button>
-                <button type="button" class="defense-mode-btn" data-defense-mode="defense_simple">Defesa Simples</button>
+                <button type="button" class="defense-mode-btn active" data-defense-mode="normal">{{localize "GUM.RollPrompt.Normal"}}</button>
+                <button type="button" class="defense-mode-btn" data-defense-mode="defense_standard">{{localize "GUM.RollPrompt.StandardDefense"}}</button>
+                <button type="button" class="defense-mode-btn" data-defense-mode="defense_simple">{{localize "GUM.RollPrompt.SimpleDefense"}}</button>
             </div>
             <div class="defense-timing-panel" style="display:none;">
-                <label class="section-label section-label--sub">Aplicação dos Modificadores</label>
+                <label class="section-label section-label--sub">{{localize "GUM.RollPrompt.ModifierApplication"}}</label>
                 <div class="defense-mode-options defense-mode-options--timing">
-                    <button type="button" class="defense-timing-btn active" data-defense-timing="before">Antes da conversão</button>
-                    <button type="button" class="defense-timing-btn" data-defense-timing="after">Depois da conversão</button>
+                    <button type="button" class="defense-timing-btn active" data-defense-timing="before">{{localize "GUM.RollPrompt.BeforeConversion"}}</button>
+                    <button type="button" class="defense-timing-btn" data-defense-timing="after">{{localize "GUM.RollPrompt.AfterConversion"}}</button>
                 </div>
             </div>
         </div>
 
         {{!-- 5. PILHA DE ATIVOS (Stack) --}}
         <div class="active-mods-container">
-            <label class="section-label">Ativos</label>
+            <label class="section-label">{{localize "GUM.RollPrompt.ActiveModifiers"}}</label>
             <div class="active-mods-list">
                 {{!-- O JS vai injetar as tags aqui --}}
                 <span class="empty-stack-msg">...</span>
@@ -203,26 +203,26 @@
         <div class="command-footer">
 <div class="calc-display">
             <div class="calc-row final">
-                <span class="calc-label">NH FINAL</span>
+                <span class="calc-label">{{localize "GUM.RollPrompt.FinalSkillLevel"}}</span>
                 {{!-- Adicionamos classes para riscar se tiver cap --}}
                 <span class="calc-val final-val">{{baseValue}}</span>
             </div>
             
             {{!-- LINHA DE DETALHE --}}
             <div class="calc-row detail">
-                <span class="detail-text"><span class="base-summary">Base {{baseValue}}</span> <span class="total-mod-val">+0</span></span>
+                <span class="detail-text"><span class="base-summary">{{localize "GUM.RollPrompt.Base"}} {{baseValue}}</span> <span class="total-mod-val">+0</span></span>
             </div>
 
             {{!-- LINHA DE TETO (CAP) --}}
             {{!-- Escondida por padrão, o JS vai mostrar --}}
             <div class="cap-info-row" style="display:none;">
-                <span class="cap-label"><i class="fas fa-arrow-down"></i> Teto Máximo:</span>
+                <span class="cap-label"><i class="fas fa-arrow-down"></i> {{localize "GUM.RollPrompt.MaximumCap"}}:</span>
                 <span class="cap-val">--</span>
             </div>
         </div>
 
             <button type="submit" class="roll-big-btn">
-                <i class="fas fa-dice"></i> ROLAR
+                <i class="fas fa-dice"></i> {{localize "GUM.RollPrompt.Roll"}}
             </button>
         </div>
 

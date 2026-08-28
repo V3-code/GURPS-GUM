@@ -90,6 +90,11 @@ const screens = [
         script: new URL("../scripts/apps/damage-application.js", import.meta.url)
     },
     {
+        name: "roll prompt",
+        template: new URL("../templates/apps/roll-prompt.hbs", import.meta.url),
+        script: new URL("../module/apps/roll-prompt.js", import.meta.url)
+    },
+    {
         name: "roll purpose catalog",
         template: null,
         script: new URL("../module/utils/roll-purposes.mjs", import.meta.url)
@@ -1073,4 +1078,50 @@ test("damage application preserves mechanical values and calculation rules", asy
     assert.match(screen.scriptSource, /BODY_LOCATION_GROUP_KEYS\[groupKey\]/);
     assert.match(screen.scriptSource, /type: "damage"/);
     assert.match(screen.scriptSource, /specialEffect: "shock"/);
+});
+
+test("roll prompt reachable flow has no fixed Portuguese UI text", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "roll prompt");
+    const templateSource = screen.templateSource.replace(/{{!--[\s\S]*?--}}/g, "");
+    const beforeLegacyPreview = screen.scriptSource.split("            const escapeHtml =", 1)[0];
+    const afterLegacyPreview = screen.scriptSource.split("        // Seleção de Botão", 2)[1];
+    const reachableScript = `${beforeLegacyPreview}${afterLegacyPreview}`
+        .replace(/\/\/.*$/gm, "")
+        .replace(/\/\*[\s\S]*?\*\//g, "");
+    const fixedPortuguese = [
+        "Configurar Rolagem", "Finalidades do Teste", "Buscar finalidade", "Limpar busca", "Teste Geral",
+        "Solicitada pelo mestre", "Atributo usual", "Nenhuma finalidade encontrada", "Mostrar todas",
+        "Atributo Base", "NH Base", "Modo de Rolagem", "Defesa Padrão", "Defesa Simples", "Antes da conversão",
+        "Depois da conversão", "Teto Máximo", "Nenhum modificador", "Contra-efeitos ignorados", "Teto Aplicado"
+    ];
+
+    for (const text of fixedPortuguese) {
+        assert.ok(!templateSource.includes(text), `fixed roll prompt template text: ${text}`);
+        assert.ok(!reachableScript.includes(text), `fixed reachable roll prompt script text: ${text}`);
+    }
+    assert.ok(!templateSource.includes(">Modificadores<"), "fixed roll prompt modifiers heading");
+});
+
+test("roll prompt preserves purpose, base, defense and cap mechanics", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "roll prompt");
+
+    assert.match(screen.templateSource, /data-purpose-id="{{purpose\.id}}"/);
+    assert.match(screen.templateSource, /data-key="{{option\.key}}"/);
+    assert.match(screen.templateSource, /name="manualMod"/);
+    for (const value of ["normal", "defense_standard", "defense_simple"]) {
+        assert.match(screen.templateSource, new RegExp(`data-defense-mode="${value}"`));
+    }
+    for (const value of ["before", "after"]) {
+        assert.match(screen.templateSource, new RegExp(`data-defense-timing="${value}"`));
+    }
+    for (const key of ["st", "dx", "iq", "ht", "per", "vont", "skill", "fixed_8", "fixed_12", "fixed_16"]) {
+        assert.match(screen.scriptSource, new RegExp(`key: "${key}"`));
+    }
+    assert.match(screen.scriptSource, /normalizePurposeIds\(\[\.\.\.normalizePurposeIds\(rollData\.purposeIds\), \.\.\.this\.requestedPurposeIds\]\)/);
+    assert.match(screen.scriptSource, /const totalMod = fixedModifier \+ manualMod \+ buttonsMod/);
+    assert.match(screen.scriptSource, /Math\.min\(\.\.\.activeCaps\)/);
+    assert.match(screen.scriptSource, /effectiveCap: lowestCap/);
+    assert.match(screen.scriptSource, /defenseMode: this\.defenseMode/);
+    assert.match(screen.scriptSource, /defenseTiming: this\.defenseTiming/);
+    assert.match(screen.scriptSource, /performGURPSRoll\(this\.actor, rollPayload, rollOptions\)/);
 });

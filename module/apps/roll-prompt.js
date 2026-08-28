@@ -8,6 +8,8 @@ import { resolveRollPromptImage } from "../utils/roll-prompt-image.mjs";
 import { measureGridDistance } from "../utils/grid-distance.mjs";
 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
+const localize = key => game.i18n.localize(key);
+const format = (key, data) => game.i18n.format(key, data);
 
 export class GurpsRollPrompt extends FormApplication {
     static COLLAPSED_WIDTH = 380;
@@ -22,9 +24,9 @@ export class GurpsRollPrompt extends FormApplication {
         this.baseAttributeOptions = [];
         this.baseAttributeOptionsMap = new Map();
         this.baseDefaultKey = "skill";
-        this.baseDefaultLabel = "Perícia";
+        this.baseDefaultLabel = localize("GUM.RollPrompt.Skill");
         this.currentBaseKey = "skill";
-        this.currentBaseLabel = "Perícia";
+        this.currentBaseLabel = localize("GUM.RollPrompt.Skill");
         this.originalBaseValue = parseInt(this.rollData.value) || 10;
         this.currentBaseValue = this.originalBaseValue;
         // Keep the roll's original base separate from the base selected in the
@@ -33,7 +35,7 @@ export class GurpsRollPrompt extends FormApplication {
         this.originalBaseAttributeKey = this._resolveOriginalBaseAttributeKey();
         this.baseDelta = 0;
         this.baseModifierParts = [];
-        this.baseAttributeSourceLabel = "Perícia";
+        this.baseAttributeSourceLabel = localize("GUM.RollPrompt.Skill");
         this.isMenuCollapsed = true;
         this.defenseMode = "normal";
         this.defenseTiming = "before";
@@ -104,7 +106,7 @@ export class GurpsRollPrompt extends FormApplication {
 
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
-            title: "Configurar Rolagem",
+            title: localize("GUM.RollPrompt.Title"),
             id: "gurps-roll-prompt",
             template: "systems/gum/templates/apps/roll-prompt.hbs",
             width: GurpsRollPrompt.EXPANDED_WIDTH,
@@ -254,7 +256,7 @@ export class GurpsRollPrompt extends FormApplication {
         if (targetTokens.length > 1) {
             const hasAnyApplicable = targetTokens.some((token) => this._collectCounterCandidatesForTarget(token.actor).length > 0);
             if (hasAnyApplicable) {
-                this.counterEffectsNotice = "Contra-efeitos ignorados (múltiplos alvos).";
+                this.counterEffectsNotice = localize("GUM.RollPrompt.CounterEffectsMultipleTargets");
             }
             return;
         }
@@ -273,7 +275,7 @@ export class GurpsRollPrompt extends FormApplication {
             const labelBase = this._buildCounterModifierLabel(candidate);
             const payload = {
                 id: `counter::${targetToken.id}::${key}`,
-                label: `Alvo: ${labelBase}`,
+                label: format("GUM.RollPrompt.TargetModifier", { label: labelBase }),
                 value,
                 nh_cap: Number.isNaN(cap) ? null : cap,
                 isGM: true,
@@ -295,7 +297,7 @@ export class GurpsRollPrompt extends FormApplication {
         if (entryLabel) return this._capitalizeCounterLabel(entryLabel);
 
         const effectName = `${candidate?.effect?.name ?? ""}`.trim();
-        if (!effectName) return "Efeito";
+        if (!effectName) return localize("GUM.RollPrompt.Effect");
 
         const cleaned = effectName.replace(/^Modificador de Rolagem\s*[-—:]\s*/i, "").trim();
         return this._capitalizeCounterLabel(cleaned || effectName);
@@ -418,7 +420,7 @@ export class GurpsRollPrompt extends FormApplication {
 
     _formatDistanceLabel(distanceMeters) {
         const roundedMeters = Math.max(0, Math.ceil(Number(distanceMeters) || 0));
-        return `Distância (${roundedMeters}m)`;
+        return format("GUM.RollPrompt.Distance", { distance: roundedMeters });
     }
 
     _loadAutoDistanceModifier() {
@@ -791,7 +793,7 @@ return 'default';
     }
 
     _formatBaseLabelValue(key) {
-        if (!key) return "Perícia";
+        if (!key) return localize("GUM.RollPrompt.Skill");
         const normalizedKey = this._normalizeAttributeKey(key);
         const labelMap = {
             st: "ST",
@@ -799,7 +801,7 @@ return 'default';
             iq: "IQ",
             ht: "HT",
             per: "Per",
-            vont: "Vont"
+            vont: localize("GUM.RollPrompt.WillAbbreviation")
         };
         if (labelMap[normalizedKey]) return labelMap[normalizedKey];
         const fixedNumber = Number(normalizedKey);
@@ -893,8 +895,8 @@ return 'default';
             { key: "iq", label: "IQ", type: "attribute" },
             { key: "ht", label: "HT", type: "attribute" },
             { key: "per", label: "Per", type: "attribute" },
-            { key: "vont", label: "Vont", type: "attribute" },
-            { key: "skill", label: "Habilidade", type: "skill" },
+            { key: "vont", label: localize("GUM.RollPrompt.WillAbbreviation"), type: "attribute" },
+            { key: "skill", label: localize("GUM.RollPrompt.Skill"), type: "skill" },
             { key: "fixed_8", label: "8", type: "fixed", value: 8 },
             { key: "fixed_12", label: "12", type: "fixed", value: 12 },
             { key: "fixed_16", label: "16", type: "fixed", value: 16 }
@@ -922,7 +924,7 @@ return 'default';
         });
 
         const defaultOption = options.find(option => option.key === this.baseDefaultKey) || options.find(option => option.key === "skill");
-        this.baseDefaultLabel = defaultOption?.label || "Perícia";
+        this.baseDefaultLabel = defaultOption?.label || localize("GUM.RollPrompt.Skill");
         this.currentBaseKey = this.baseDefaultKey;
         this.currentBaseLabel = this.baseDefaultLabel;
         this.currentBaseValue = this._computeBaseValueFromOption(defaultOption);
@@ -965,7 +967,7 @@ return 'default';
         const blocksMap = new Map();
 
         const ensureBlock = (groupName) => {
-            const label = (groupName || "").toString().trim() || "Geral";
+            const label = (groupName || "").toString().trim() || localize("GUM.RollPrompt.GeneralGroup");
             const key = label.slugify({ strict: true }) || "geral";
             if (!blocksMap.has(key)) {
                 blocksMap.set(key, {
@@ -1102,15 +1104,15 @@ return 'default';
         const context = await super.getData();
         const preservedBaseKey = this._basePrepared ? this.currentBaseKey : null;
         context.actor = this.actor;
-        context.label = this.rollData.label || "Teste";
+        context.label = this.rollData.label || localize("GUM.RollPrompt.Test");
         context.img = this.rollData.img || this.actor.img || "icons/svg/d20.svg";
         context.img = resolveRollPromptImage(this.actor, this.rollData);
         context.baseValue = parseInt(this.rollData.value) || 10;
         context.initialManualMod = parseInt(this.rollData.modifier) || 0;
-        context.manualLabel = this.rollData.modifierLabel || "Manual";
+        context.manualLabel = this.rollData.modifierLabel || localize("GUM.RollPrompt.Manual");
         context.lockInitialModifier = this.rollData.lockInitialModifier === true;
         context.fixedModifier = parseInt(this.rollData.fixedModifier) || 0;
-        context.fixedModifierLabel = this.rollData.fixedModifierLabel || "Fixo";
+        context.fixedModifierLabel = this.rollData.fixedModifierLabel || localize("GUM.RollPrompt.Fixed");
         context.baseAttributeOptions = this._prepareBaseAttributeOptions();
         if (preservedBaseKey && this.baseAttributeOptionsMap.has(preservedBaseKey)) {
             const preserved = this.baseAttributeOptionsMap.get(preservedBaseKey);
@@ -1175,14 +1177,14 @@ return 'default';
             if (rawValue === undefined) rawValue = button.data('value');
 
             const data = {
-                name: icon.data('title') || button.data('label') || "Modificador",
+                name: icon.data('title') || button.data('label') || localize("GUM.RollPrompt.Modifier"),
                 value: parseInt(rawValue) || 0,
                 cap: icon.data('cap') || button.data('cap'),
                 duration: icon.data('duration') || button.data('duration'),
                  ref: icon.data('ref') || button.data('ref') || "",
                 img: icon.data('img') || button.data('img') || "icons/svg/d20.svg",
-                desc: icon.data('desc') || "<i>Sem descrição.</i>",
-                type: "Modificador GM"
+                desc: icon.data('desc') || `<i>${localize("GUM.RollPrompt.NoDescription")}</i>`,
+                type: localize("GUM.RollPrompt.GMModifier")
             };
 
             const escapeHtml = (value) => foundry.utils.escapeHTML((value ?? "").toString());
@@ -1214,8 +1216,8 @@ return 'default';
                 description: enrichedDesc,
                 tags: [
                     { label: "MOD", value: `${data.value > 0 ? "+" : ""}${data.value}` },
-                    { label: "Cap NH", value: data.cap },
-                    { label: "Duração", value: data.duration },
+                    { label: localize("GUM.RollPrompt.SkillCap"), value: data.cap },
+                    { label: localize("GUM.RollPrompt.Duration"), value: data.duration },
                     { label: "REF", value: data.ref }
                 ],
                 width: 500
@@ -1454,7 +1456,7 @@ return 'default';
         const base = parseInt(this.currentBaseValue) || parseInt(this.rollData.value) || 10;
         let manual = parseInt(html.find('input[name="manualMod"]').val()) || 0;
         const fixedModifier = parseInt(this.rollData.fixedModifier) || 0;
-        const fixedModifierLabel = this.rollData.fixedModifierLabel || "Fixo";
+        const fixedModifierLabel = this.rollData.fixedModifierLabel || localize("GUM.RollPrompt.Fixed");
         let selected = 0;
         let activeCaps = [];
         const baseChanged = this.currentBaseKey !== this.baseDefaultKey;
@@ -1493,7 +1495,7 @@ return 'default';
                 final = lowestCap;
                 isCapped = true;
                 // Texto explícito para o usuário
-                capText = `Teto Aplicado: ${lowestCap}`;
+                capText = format("GUM.RollPrompt.AppliedCap", { cap: lowestCap });
             }
         }
 
@@ -1503,11 +1505,11 @@ return 'default';
         stackContainer.empty();
 
         if (baseChanged) {
-            stackContainer.append(`<span class="mod-tag locked base-attr-tag">Base: ${this.currentBaseLabel}</span>`);
+            stackContainer.append(`<span class="mod-tag locked base-attr-tag">${format("GUM.RollPrompt.BaseChanged", { base: this.currentBaseLabel })}</span>`);
         }
 
         if (manual !== 0) {
-            stackContainer.append(`<span class="mod-tag locked">Manual <strong>${manual > 0 ? '+' : ''}${manual}</strong></span>`);
+            stackContainer.append(`<span class="mod-tag locked">${localize("GUM.RollPrompt.Manual")} <strong>${manual > 0 ? '+' : ''}${manual}</strong></span>`);
         }
 
         if (fixedModifier !== 0) {
@@ -1515,11 +1517,11 @@ return 'default';
         }
         
         if (this.selectedModifiers.length === 0 && manual === 0 && fixedModifier === 0 && !baseChanged) {
-             stackContainer.append(`<span class="empty-stack-msg" style="color:#666; font-style:italic; font-size:0.8em;">Nenhum modificador.</span>`);
+             stackContainer.append(`<span class="empty-stack-msg" style="color:#666; font-style:italic; font-size:0.8em;">${localize("GUM.RollPrompt.NoModifiers")}</span>`);
         }
 
         if (this.counterEffectsNotice) {
-            stackContainer.append(`<span class="mod-tag locked" title="Regra de alvo único para contra-efeitos.">${this.counterEffectsNotice}</span>`);
+            stackContainer.append(`<span class="mod-tag locked" title="${localize("GUM.RollPrompt.CounterEffectSingleTargetRule")}">${this.counterEffectsNotice}</span>`);
         }
 
         this.selectedModifiers.forEach(m => {
@@ -1527,7 +1529,7 @@ return 'default';
             const tagClass = m.isGM ? 'gm-locked' : (m.isEffect ? 'gm-locked' : '');
             const sourceLabel = m.sourceLabel || (m.isCounterEffect ? m.counterSource : "");
             const title = sourceLabel
-                ? ` title="Origem: ${foundry.utils.escapeHTML(sourceLabel)}"`
+                ? ` title="${format("GUM.RollPrompt.Source", { source: foundry.utils.escapeHTML(sourceLabel) })}"`
                 : '';
             const safeLabel = foundry.utils.escapeHTML((m.label || "").toString());
             const tag = $(`<span class="mod-tag ${tagClass}"${title}>${capBadge}${safeLabel} <strong>${m.value > 0 ? '+' : ''}${m.value}</strong></span>`);
@@ -1548,17 +1550,23 @@ const color = totalMod > 0 ? 'var(--c-accent-gold)' : (totalMod < 0 ? '#e57373' 
         const currentOption = this.baseAttributeOptionsMap.get(this.currentBaseKey);
         html.find('.base-attr-label').text(this._buildBaseDetailLabel(currentOption));
         if (!defenseActive) {
-            html.find('.base-summary').text(`Base ${base}`);
+            html.find('.base-summary').text(format("GUM.RollPrompt.BaseSummary", { base }));
         } else {
-            const modeLabel = this.defenseMode === "defense_standard" ? "Defesa Padrão" : "Defesa Simples";
-            const timingLabel = this.defenseTiming === "before" ? "antes" : "depois";
-            html.find('.base-summary').text(`${modeLabel} (${timingLabel}) de Base ${base}`);
+            const modeLabel = this.defenseMode === "defense_standard"
+                ? localize("GUM.RollPrompt.StandardDefense")
+                : localize("GUM.RollPrompt.SimpleDefense");
+            const timingLabel = this.defenseTiming === "before"
+                ? localize("GUM.RollPrompt.BeforeShort")
+                : localize("GUM.RollPrompt.AfterShort");
+            html.find('.base-summary').text(format("GUM.RollPrompt.DefenseBaseSummary", { mode: modeLabel, timing: timingLabel, base }));
         }
         
         // Atualiza Valor Final
         const finalEl = html.find('.final-val');
         finalEl.text(final);
-        html.find('.calc-label').text(defenseActive ? 'DEFESA FINAL' : 'NH FINAL');
+        html.find('.calc-label').text(defenseActive
+            ? localize("GUM.RollPrompt.FinalDefense")
+            : localize("GUM.RollPrompt.FinalSkillLevel"));
         
         // Atualiza Aviso de Teto
         const capEl = html.find('.cap-warning');
@@ -1571,7 +1579,7 @@ const color = totalMod > 0 ? 'var(--c-accent-gold)' : (totalMod < 0 ? '#e57373' 
             finalEl.addClass('is-capped'); // Classe para CSS extra (riscado, etc)
             
             // Dica: Mostra o valor original no title
-            finalEl.attr('title', `Valor original: ${mathValue} (Reduzido pelo teto)`);
+            finalEl.attr('title', format("GUM.RollPrompt.OriginalValueCapped", { value: mathValue }));
         } else {
             // Visual Normal
             capEl.slideUp(150);
@@ -1586,10 +1594,10 @@ const color = totalMod > 0 ? 'var(--c-accent-gold)' : (totalMod < 0 ? '#e57373' 
         event.stopPropagation();
 
         const rawRef = (event.currentTarget?.dataset?.ref ?? '').toString().trim();
-        if (!rawRef) return ui.notifications.warn("Preencha o campo REF antes de abrir a referência.");
+        if (!rawRef) return ui.notifications.warn(localize("GUM.PreviewDialog.FillReference"));
 
         const parsedList = this._parseReferenceCodes(rawRef);
-        if (!parsedList.length) return ui.notifications.warn("Formato de REF inválido. Use ex.: BA23 ou BA23, MA45.");
+        if (!parsedList.length) return ui.notifications.warn(localize("GUM.PreviewDialog.InvalidReference"));
 
         if (parsedList.length === 1) return this._openSingleReference(parsedList[0]);
         return this._promptMultipleReferences(parsedList);
@@ -1751,7 +1759,7 @@ const color = totalMod > 0 ? 'var(--c-accent-gold)' : (totalMod < 0 ? '#e57373' 
     async _openSingleReference(parsed) {
         const match = this._findPdfPageByCode(parsed.code);
         if (!match) {
-            return ui.notifications.warn(`Nenhum PDF com código "${parsed.code}" foi encontrado nos periódicos.`);
+            return ui.notifications.warn(format("GUM.PreviewDialog.PdfNotFound", { code: parsed.code }));
         }
 
         const pageNumber = Math.max(1, parsed.page + (Number(match.pageOffset) || 0));
@@ -1779,16 +1787,16 @@ const color = totalMod > 0 ? 'var(--c-accent-gold)' : (totalMod < 0 ? '#e57373' 
         }
 
         if (!Object.keys(buttons).length) {
-            return ui.notifications.warn("Nenhuma das referências informadas foi encontrada nos periódicos.");
+            return ui.notifications.warn(localize("GUM.PreviewDialog.ReferencesNotFound"));
         }
 
         const missingHtml = missing.length
-            ? `<p style="opacity:.8;margin-top:.5rem"><b>Não encontradas:</b> ${missing.join(", ")}</p>`
+            ? `<p style="opacity:.8;margin-top:.5rem"><b>${localize("GUM.PreviewDialog.MissingReferences")}:</b> ${missing.join(", ")}</p>`
             : "";
 
         new Dialog({
-            title: "Múltiplas Referências",
-            content: `<p>Escolha qual referência deseja abrir:</p>${missingHtml}`,
+            title: localize("GUM.PreviewDialog.MultipleReferences"),
+            content: `<p>${localize("GUM.PreviewDialog.ChooseReference")}</p>${missingHtml}`,
             buttons,
             default: Object.keys(buttons)[0]
         }).render(true);
@@ -1859,4 +1867,4 @@ const rollPayload = {
         if (this.defenseMode === "defense_simple") return baseHalf;
         return parseInt(value) || 0;
     }
-} 
+}
