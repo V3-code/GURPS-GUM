@@ -1,5 +1,13 @@
 const { ItemSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
+const localize = (key, fallback = key) => {
+    const value = globalThis.game?.i18n?.localize?.(key);
+    return value && value !== key ? value : fallback;
+};
+const format = (key, data, fallback) => {
+    const value = globalThis.game?.i18n?.format?.(key, data);
+    return value && value !== key ? value : fallback;
+};
 
 export class TemplateItemSheet extends ItemSheet {
     static get defaultOptions() {
@@ -19,7 +27,9 @@ export class TemplateItemSheet extends ItemSheet {
     }
 
     get title() {
-        return this.item?.name ? `Modelo: ${this.item.name}` : "Modelo";
+        return this.item?.name
+            ? format("GUM.TemplateItemSheet.TitleNamed", { name: this.item.name }, `Template: ${this.item.name}`)
+            : localize("GUM.TemplateItemSheet.Title", "Template");
     }
 
     async getData(options = {}) {
@@ -58,7 +68,7 @@ export class TemplateItemSheet extends ItemSheet {
         if (entry.kind === "group") {
             return {
                 ...entry,
-                rowName: entry.name || "Subgrupo",
+                rowName: entry.name || localize("GUM.TemplateItemSheet.Rows.Subgroup", "Subgroup"),
                 rowQty: "-",
                 rowLevel: "-",
                 rowCost: entry.cost ?? 0,
@@ -79,7 +89,7 @@ export class TemplateItemSheet extends ItemSheet {
 
         return {
             ...entry,
-            rowName: entry.name || "Item",
+            rowName: entry.name || localize("GUM.TemplateItemSheet.Rows.Item", "Item"),
             rowQty: entry.quantity ?? "-",
             rowLevel: entry.level ?? "-",
             rowCost: entry.cost ?? "-",
@@ -89,29 +99,39 @@ export class TemplateItemSheet extends ItemSheet {
 
     _buildBlockSummary(block, contents) {
         const count = contents.length;
+        const itemCount = format(
+            count === 1 ? "GUM.TemplateItemSheet.Summaries.ItemOne" : "GUM.TemplateItemSheet.Summaries.ItemMany",
+            { count },
+            `${count} ${count === 1 ? "item" : "items"}`
+        );
         if (block.type === "selection") {
-            return `${count} item(ns) • escolher ${block.choiceCount ?? 1}`;
+            return format("GUM.TemplateItemSheet.Summaries.Selection", { items: itemCount, count: block.choiceCount ?? 1 }, `${itemCount} • choose ${block.choiceCount ?? 1}`);
         }
         if (block.type === "points") {
-            return `${count} opção(ões) • ${block.pointsAvailable ?? 0} pontos`;
+            const optionCount = format(
+                count === 1 ? "GUM.TemplateItemSheet.Summaries.OptionOne" : "GUM.TemplateItemSheet.Summaries.OptionMany",
+                { count },
+                `${count} ${count === 1 ? "option" : "options"}`
+            );
+            return format("GUM.TemplateItemSheet.Summaries.Points", { options: optionCount, points: block.pointsAvailable ?? 0 }, `${optionCount} • ${block.pointsAvailable ?? 0} points`);
         }
-        return `${count} item(ns)`;
+        return itemCount;
     }
 
     _buildItemSubtitle(entry) {
         const parts = [];
         if (entry.itemType) parts.push(this._getItemTypeLabel(entry.itemType));
-        if (entry.cost !== undefined && entry.cost !== null) parts.push(`${entry.cost} pts`);
-        if (entry.level !== undefined && entry.level !== null && entry.level !== "") parts.push(`Nível ${entry.level}`);
-        if (entry.quantity !== undefined && entry.quantity !== null && entry.quantity !== "" && entry.quantity !== 1) parts.push(`Qtd ${entry.quantity}`);
+        if (entry.cost !== undefined && entry.cost !== null) parts.push(format("GUM.TemplateItemSheet.Rows.Points", { value: entry.cost }, `${entry.cost} pts`));
+        if (entry.level !== undefined && entry.level !== null && entry.level !== "") parts.push(format("GUM.TemplateItemSheet.Rows.Level", { value: entry.level }, `Level ${entry.level}`));
+        if (entry.quantity !== undefined && entry.quantity !== null && entry.quantity !== "" && entry.quantity !== 1) parts.push(format("GUM.TemplateItemSheet.Rows.Quantity", { value: entry.quantity }, `Qty ${entry.quantity}`));
         return parts.join(" • ");
     }
 
     _buildGroupSubtitle(entry) {
-        const parts = ["Subgrupo"];
+        const parts = [localize("GUM.TemplateItemSheet.Rows.Subgroup", "Subgroup")];
         if (entry.localNotes) parts.push(String(entry.localNotes));
         const subBlocks = Array.isArray(entry.subBlocks) ? entry.subBlocks : [];
-        parts.push(`${subBlocks.length} sub-bloco(s)`);
+        parts.push(format(subBlocks.length === 1 ? "GUM.TemplateItemSheet.Rows.SubBlockOne" : "GUM.TemplateItemSheet.Rows.SubBlockMany", { count: subBlocks.length }, `${subBlocks.length} ${subBlocks.length === 1 ? "sub-block" : "sub-blocks"}`));
         return parts.join(" • ");
     }
 
@@ -127,7 +147,7 @@ export class TemplateItemSheet extends ItemSheet {
             parts.push(`${label} ${sign}${numeric}`);
         }
 
-         if (!parts.length) return "Nenhuma alteração";
+         if (!parts.length) return localize("GUM.TemplateItemSheet.Rows.NoChanges", "No changes");
         return parts.join(" • ");
     }
 
@@ -141,30 +161,30 @@ export class TemplateItemSheet extends ItemSheet {
                 return `${this._getAttributeLabel(attr.key)} ${sign}${attr.value}`;
             });
 
-        if (!entries.length) return entry.label || "Atributos";
+        if (!entries.length) return entry.label && entry.label !== "Atributos" ? entry.label : localize("GUM.TemplateItemSheet.Rows.Attributes", "Attributes");
         if (entries.length === 1) return entries[0];
         return `${entries[0]} +${entries.length - 1}`;
     }
 
     _getItemTypeLabel(type) {
         const map = {
-            skill: "Perícia",
-            spell: "Magia",
-            power: "Poder",
-            advantage: "Vantagem",
-            disadvantage: "Desvantagem",
-            equipment: "Equipamento"
+            skill: "GUM.TemplateItemSheet.ItemTypes.Skill",
+            spell: "GUM.TemplateItemSheet.ItemTypes.Spell",
+            power: "GUM.TemplateItemSheet.ItemTypes.Power",
+            advantage: "GUM.TemplateItemSheet.ItemTypes.Advantage",
+            disadvantage: "GUM.TemplateItemSheet.ItemTypes.Disadvantage",
+            equipment: "GUM.TemplateItemSheet.ItemTypes.Equipment"
         };
-        return map[type] || type;
+        return map[type] ? localize(map[type], type) : type;
     }
 
     _getBlockTypeLabel(type) {
         const map = {
-            guaranteed: "Garantido",
-            selection: "Seleção",
-            points: "Alocação por Pontos"
+            guaranteed: "GUM.TemplateItemSheet.BlockTypes.Guaranteed",
+            selection: "GUM.TemplateItemSheet.BlockTypes.Selection",
+            points: "GUM.TemplateItemSheet.BlockTypes.Points"
         };
-        return map[type] || "Bloco";
+        return map[type] ? localize(map[type], type) : localize("GUM.TemplateItemSheet.BlockTypes.Default", "Block");
     }
 
     _getBlockIcon(type) {
@@ -178,18 +198,18 @@ export class TemplateItemSheet extends ItemSheet {
 
     _getAttributeLabel(key) {
         const map = {
-            st: "ST",
-            dx: "DX",
-            iq: "IQ",
-            ht: "HT",
-            will: "Vont",
-            per: "Per",
-            hp: "PV",
-            fp: "PF",
-            basic_speed: "Velocidade",
-            move: "Deslocamento"
+            st: "GUM.TemplateItemSheet.Attributes.ST",
+            dx: "GUM.TemplateItemSheet.Attributes.DX",
+            iq: "GUM.TemplateItemSheet.Attributes.IQ",
+            ht: "GUM.TemplateItemSheet.Attributes.HT",
+            will: "GUM.TemplateItemSheet.Attributes.Will",
+            per: "GUM.TemplateItemSheet.Attributes.Perception",
+            hp: "GUM.TemplateItemSheet.Attributes.HP",
+            fp: "GUM.TemplateItemSheet.Attributes.FP",
+            basic_speed: "GUM.TemplateItemSheet.Attributes.BasicSpeed",
+            move: "GUM.TemplateItemSheet.Attributes.Move"
         };
-        return map[key] || key;
+        return map[key] ? localize(map[key], key.toUpperCase()) : key;
     }
 
         _getAttributeCostPerLevel(key) {
@@ -210,16 +230,9 @@ export class TemplateItemSheet extends ItemSheet {
 
     _renderAttributeFieldRows(attributes = {}, costs = {}) {
         const rows = [
-            { key: "st", label: "ST" },
-            { key: "dx", label: "DX" },
-            { key: "iq", label: "IQ" },
-            { key: "ht", label: "HT" },
-            { key: "will", label: "Vont" },
-            { key: "per", label: "Per" },
-            { key: "hp", label: "PV" },
-            { key: "fp", label: "PF" },
-            { key: "basic_speed", label: "Velocidade", step: "0.25" },
-            { key: "move", label: "Deslocamento" }
+            { key: "st" }, { key: "dx" }, { key: "iq" }, { key: "ht" },
+            { key: "will" }, { key: "per" }, { key: "hp" }, { key: "fp" },
+            { key: "basic_speed", step: "0.25" }, { key: "move" }
         ];
 
         return rows.map(row => {
@@ -228,7 +241,7 @@ export class TemplateItemSheet extends ItemSheet {
             const step = row.step ? `step="${row.step}"` : "";
             return `
             <div class="template-attr-row">
-                <label for="attr-${row.key}">${row.label}</label>
+                <label for="attr-${row.key}">${this._getAttributeLabel(row.key)}</label>
                 <input type="number" id="attr-${row.key}" value="${value}" ${step}>
                 <input type="number" id="cost-${row.key}" value="${cost}">
             </div>`;
@@ -327,8 +340,8 @@ export class TemplateItemSheet extends ItemSheet {
         const content = `
         <div class="template-block-create-dialog">
             <div class="form-group">
-                <label>Nome do Bloco</label>
-                <input type="text" id="template-block-title" placeholder="Digite um nome para o bloco"/>
+                <label>${localize("GUM.TemplateItemSheet.Dialogs.BlockName", "Block Name")}</label>
+                <input type="text" id="template-block-title" placeholder="${localize("GUM.TemplateItemSheet.Dialogs.BlockNamePlaceholder", "Enter a name for the block")}"/>
             </div>
 
             <hr>
@@ -336,26 +349,26 @@ export class TemplateItemSheet extends ItemSheet {
             <div class="template-block-type-list">
                 <label class="template-block-type-option">
                     <input type="radio" name="template-block-type" value="guaranteed" checked>
-                    <span>Garantido</span>
+                    <span>${localize("GUM.TemplateItemSheet.BlockTypes.Guaranteed", "Guaranteed")}</span>
                 </label>
                 <label class="template-block-type-option">
                     <input type="radio" name="template-block-type" value="selection">
-                    <span>Seleção</span>
+                    <span>${localize("GUM.TemplateItemSheet.BlockTypes.Selection", "Selection")}</span>
                 </label>
                 <label class="template-block-type-option">
                     <input type="radio" name="template-block-type" value="points">
-                    <span>Alocação por pontos</span>
+                    <span>${localize("GUM.TemplateItemSheet.BlockTypes.Points", "Point Allocation")}</span>
                 </label>
             </div>
         </div>
         `;
 
         new Dialog({
-            title: "Adicionar Bloco",
+            title: localize("GUM.TemplateItemSheet.Dialogs.AddBlock", "Add Block"),
             content,
             buttons: {
                 create: {
-                    label: "Salvar",
+                    label: localize("GUM.TemplateItemSheet.Common.Save", "Save"),
                     callback: async (dlgHtml) => {
                         const type = dlgHtml.find("input[name='template-block-type']:checked").val();
                         const title = (dlgHtml.find("#template-block-title").val() || "").trim();
@@ -375,7 +388,7 @@ export class TemplateItemSheet extends ItemSheet {
                         await this.item.update({ "system.blocks": blocks });
                     }
                 },
-                cancel: { label: "Cancelar" }
+                cancel: { label: localize("GUM.TemplateItemSheet.Common.Cancel", "Cancel") }
             },
             default: "create"
         }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog", "gum-sheet-item", "gum-sheet-edit-dialog", "gum-magic-view-dialog"] }).render(true);
@@ -425,9 +438,9 @@ export class TemplateItemSheet extends ItemSheet {
         <div class="template-attr-dialog">
 
             <div class="template-attr-grid-header">
-                <span>Atributo</span>
-                <span>Incremento</span>
-                <span>Custo</span>
+                <span>${localize("GUM.TemplateItemSheet.Dialogs.Attribute", "Attribute")}</span>
+                <span>${localize("GUM.TemplateItemSheet.Dialogs.Increment", "Increment")}</span>
+                <span>${localize("GUM.TemplateItemSheet.Structure.Cost", "Cost")}</span>
             </div>
 
             <div class="template-attr-grid">
@@ -435,22 +448,22 @@ export class TemplateItemSheet extends ItemSheet {
             </div>
             <hr>
             <div class="form-group" style="margin-top:10px; justify-self: center;">
-                <label style="display:inline-flex;text-wrap-mode: nowrap;align-items: center;"><input style="width:14px; height:14px" type="checkbox" id="link-secondary"> Recalcular Atr. Secundários antes de alterá-los.</label>
+                <label style="display:inline-flex;text-wrap-mode: nowrap;align-items: center;"><input style="width:14px; height:14px" type="checkbox" id="link-secondary"> ${localize("GUM.TemplateItemSheet.Dialogs.RecalculateSecondary", "Recalculate secondary attributes before changing them.")}</label>
             </div>
             <hr>
             <div class="form-group" style="margin-top:10px;">
-                <label>Custo Total</label>
+                <label>${localize("GUM.TemplateItemSheet.Dialogs.TotalCost", "Total Cost")}</label>
                 <input type="number" id="template-attr-total-cost" value="0" readonly>
             </div>
         </div>
         `;
 
         new Dialog({
-            title: "Adicionar Atributo",
+            title: localize("GUM.TemplateItemSheet.Dialogs.AddAttribute", "Add Attribute"),
             content,
             buttons: {
                 save: {
-                    label: "Salvar",
+                    label: localize("GUM.TemplateItemSheet.Common.Save", "Save"),
                     callback: async (dlgHtml) => {
                         const attributes = {
                             st: Number(dlgHtml.find("#attr-st").val()) || 0,
@@ -484,7 +497,7 @@ export class TemplateItemSheet extends ItemSheet {
                         const entry = {
                             id: foundry.utils.randomID(),
                             kind: "attribute",
-                            label: "Atributos",
+                            label: "",
                             attributes,
                             costs,
                             linkSecondary,
@@ -494,7 +507,7 @@ export class TemplateItemSheet extends ItemSheet {
                         await this._appendEntryToBlock(blockId, entry);
                     }
                 },
-                cancel: { label: "Cancelar" }
+                cancel: { label: localize("GUM.TemplateItemSheet.Common.Cancel", "Cancel") }
             },
                 default: "save",
                 render: (dlgHtml) => {
@@ -541,32 +554,32 @@ export class TemplateItemSheet extends ItemSheet {
         const content = `
         <div class="template-group-dialog">
             <div class="form-group">
-                <label>Nome do Subgrupo</label>
-                <input type="text" id="group-name" value="" placeholder="Ex.: Weapon and Shield">
+                <label>${localize("GUM.TemplateItemSheet.Dialogs.SubgroupName", "Subgroup Name")}</label>
+                <input type="text" id="group-name" value="" placeholder="${localize("GUM.TemplateItemSheet.Dialogs.SubgroupNameExample", "E.g.: Weapon and Shield")}">
             </div>
             <div class="form-group">
-                <label>Notas locais</label>
-                <input type="text" id="group-notes" value="" placeholder="Ex.: Escolha uma arma e pegue Escudo">
+                <label>${localize("GUM.TemplateItemSheet.Dialogs.LocalNotes", "Local Notes")}</label>
+                <input type="text" id="group-notes" value="" placeholder="${localize("GUM.TemplateItemSheet.Dialogs.LocalNotesExample", "E.g.: Choose a weapon and take Shield")}">
             </div>
             <div class="form-group">
-                <label>Custo exibido</label>
+                <label>${localize("GUM.TemplateItemSheet.Dialogs.DisplayedCost", "Displayed Cost")}</label>
                 <input type="number" id="group-cost" value="0">
             </div>
             <div class="form-group">
-                <label>Sub-blocos (JSON)</label>
+                <label>${localize("GUM.TemplateItemSheet.Dialogs.SubBlocksJson", "Sub-blocks (JSON)")}</label>
                 <textarea id="group-sub-blocks" rows="12" style="width:100%; font-family: monospace;">[]</textarea>
-                <p class="notes">Use um array de blocos no formato do template (type/title/choiceCount/pointsAvailable/contents).</p>
+                <p class="notes">${localize("GUM.TemplateItemSheet.Dialogs.SubBlocksHelp", "Use an array of blocks in the template format (type/title/choiceCount/pointsAvailable/contents).")}</p>
             </div>
         </div>`;
 
         new Dialog({
-            title: "Adicionar Subgrupo",
+            title: localize("GUM.TemplateItemSheet.Dialogs.AddSubgroup", "Add Subgroup"),
             content,
             buttons: {
                 save: {
-                    label: "Salvar",
+                    label: localize("GUM.TemplateItemSheet.Common.Save", "Save"),
                     callback: async (dlgHtml) => {
-                        const name = String(dlgHtml.find("#group-name").val() || "").trim() || "Subgrupo";
+                        const name = String(dlgHtml.find("#group-name").val() || "").trim() || localize("GUM.TemplateItemSheet.Rows.Subgroup", "Subgroup");
                         const localNotes = String(dlgHtml.find("#group-notes").val() || "").trim();
                         const cost = Number(dlgHtml.find("#group-cost").val()) || 0;
                         const subBlocksRaw = String(dlgHtml.find("#group-sub-blocks").val() || "[]");
@@ -575,7 +588,7 @@ export class TemplateItemSheet extends ItemSheet {
                         try {
                             parsedSubBlocks = JSON.parse(subBlocksRaw);
                         } catch (_err) {
-                            ui.notifications.error("JSON inválido nos sub-blocos do subgrupo.");
+                            ui.notifications.error(localize("GUM.TemplateItemSheet.Notifications.InvalidSubBlocksJson", "Invalid JSON in subgroup sub-blocks."));
                             return false;
                         }
 
@@ -594,7 +607,7 @@ export class TemplateItemSheet extends ItemSheet {
                         await this._appendEntryToBlock(blockId, entry);
                     }
                 },
-                cancel: { label: "Cancelar" }
+                cancel: { label: localize("GUM.TemplateItemSheet.Common.Cancel", "Cancel") }
             },
             default: "save"
         }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog", "gum-sheet-item", "gum-sheet-edit-dialog", "gum-magic-view-dialog"] }).render(true);
@@ -690,31 +703,31 @@ export class TemplateItemSheet extends ItemSheet {
         const content = `
         <div class="template-group-dialog">
             <div class="form-group">
-                <label>Nome do Subgrupo</label>
+                <label>${localize("GUM.TemplateItemSheet.Dialogs.SubgroupName", "Subgroup Name")}</label>
                 <input type="text" id="group-name" value="${foundry.utils.escapeHTML(entry.name || "")}">
             </div>
             <div class="form-group">
-                <label>Notas locais</label>
+                <label>${localize("GUM.TemplateItemSheet.Dialogs.LocalNotes", "Local Notes")}</label>
                 <input type="text" id="group-notes" value="${foundry.utils.escapeHTML(entry.localNotes || "")}">
             </div>
             <div class="form-group">
-                <label>Custo exibido</label>
+                <label>${localize("GUM.TemplateItemSheet.Dialogs.DisplayedCost", "Displayed Cost")}</label>
                 <input type="number" id="group-cost" value="${Number(entry.cost) || 0}">
             </div>
             <div class="form-group">
-                <label>Sub-blocos (JSON)</label>
+                <label>${localize("GUM.TemplateItemSheet.Dialogs.SubBlocksJson", "Sub-blocks (JSON)")}</label>
                 <textarea id="group-sub-blocks" rows="12" style="width:100%; font-family: monospace;">${foundry.utils.escapeHTML(subBlocksText)}</textarea>
             </div>
         </div>`;
 
         new Dialog({
-            title: "Editar Subgrupo",
+            title: localize("GUM.TemplateItemSheet.Dialogs.EditSubgroup", "Edit Subgroup"),
             content,
             buttons: {
                 save: {
-                    label: "Salvar",
+                    label: localize("GUM.TemplateItemSheet.Common.Save", "Save"),
                     callback: async (dlgHtml) => {
-                        const name = String(dlgHtml.find("#group-name").val() || "").trim() || "Subgrupo";
+                        const name = String(dlgHtml.find("#group-name").val() || "").trim() || localize("GUM.TemplateItemSheet.Rows.Subgroup", "Subgroup");
                         const localNotes = String(dlgHtml.find("#group-notes").val() || "").trim();
                         const cost = Number(dlgHtml.find("#group-cost").val()) || 0;
                         const subBlocksRaw = String(dlgHtml.find("#group-sub-blocks").val() || "[]");
@@ -723,7 +736,7 @@ export class TemplateItemSheet extends ItemSheet {
                         try {
                             parsedSubBlocks = JSON.parse(subBlocksRaw);
                         } catch (_err) {
-                            ui.notifications.error("JSON inválido nos sub-blocos do subgrupo.");
+                            ui.notifications.error(localize("GUM.TemplateItemSheet.Notifications.InvalidSubBlocksJson", "Invalid JSON in subgroup sub-blocks."));
                             return false;
                         }
 
@@ -734,7 +747,7 @@ export class TemplateItemSheet extends ItemSheet {
                         await this._replaceEntry(blockId, entryId, entry);
                     }
                 },
-                cancel: { label: "Cancelar" }
+                cancel: { label: localize("GUM.TemplateItemSheet.Common.Cancel", "Cancel") }
             },
             default: "save"
         }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog", "gum-sheet-item", "gum-sheet-edit-dialog", "gum-magic-view-dialog"] }).render(true);
@@ -747,13 +760,13 @@ export class TemplateItemSheet extends ItemSheet {
         const content = `
         <div class="template-attr-dialog">
             <div class="form-group">
-                <label><input type="checkbox" id="link-secondary" ${entry.linkSecondary ? "checked" : ""}> Vincular atributos secundários aos primários</label>
+                <label><input type="checkbox" id="link-secondary" ${entry.linkSecondary ? "checked" : ""}> ${localize("GUM.TemplateItemSheet.Dialogs.LinkSecondary", "Link secondary attributes to primary attributes")}</label>
             </div>
 
             <div class="template-attr-grid-header">
-                <span>Atributo</span>
-                <span>Incremento</span>
-                <span>Custo</span>
+                <span>${localize("GUM.TemplateItemSheet.Dialogs.Attribute", "Attribute")}</span>
+                <span>${localize("GUM.TemplateItemSheet.Dialogs.Increment", "Increment")}</span>
+                <span>${localize("GUM.TemplateItemSheet.Structure.Cost", "Cost")}</span>
             </div>
 
             <div class="template-attr-grid">
@@ -761,18 +774,18 @@ export class TemplateItemSheet extends ItemSheet {
             </div>
 
             <div class="form-group" style="margin-top:10px;">
-                <label>Custo Total</label>
+                <label>${localize("GUM.TemplateItemSheet.Dialogs.TotalCost", "Total Cost")}</label>
                 <input type="number" id="template-attr-total-cost" value="${entry.cost || 0}" readonly>
             </div>
         </div>
         `;
 
         new Dialog({
-            title: "Editar Atributo",
+            title: localize("GUM.TemplateItemSheet.Dialogs.EditAttribute", "Edit Attribute"),
             content,
             buttons: {
                 save: {
-                    label: "Salvar",
+                    label: localize("GUM.TemplateItemSheet.Common.Save", "Save"),
                     callback: async (dlgHtml) => {
                         entry.attributes = {
                             st: Number(dlgHtml.find("#attr-st").val()) || 0,
@@ -806,7 +819,7 @@ export class TemplateItemSheet extends ItemSheet {
                         await this._replaceEntry(blockId, entryId, entry);
                     }
                 },
-                cancel: { label: "Cancelar" }
+                cancel: { label: localize("GUM.TemplateItemSheet.Common.Cancel", "Cancel") }
             },
             default: "save",
             render: (dlgHtml) => {
@@ -850,15 +863,17 @@ export class TemplateItemSheet extends ItemSheet {
 
     async _editItemEntry(blockId, entryId, entry) {
         const isEquipment = entry.itemType === "equipment";
-        const levelLabel = ["skill", "spell", "power"].includes(entry.itemType) ? "Nível" : "Nível/Valor";
+        const levelLabel = ["skill", "spell", "power"].includes(entry.itemType)
+            ? localize("GUM.TemplateItemSheet.Structure.Level", "Level")
+            : localize("GUM.TemplateItemSheet.Dialogs.LevelOrValue", "Level/Value");
         const content = `
         <div class="form-group">
-            <label>Nome</label>
+            <label>${localize("GUM.TemplateItemSheet.Structure.Name", "Name")}</label>
             <input type="text" id="entry-name" value="${entry.name || ""}">
         </div>
         <div class="form-grid-3">
             <div class="form-group">
-                <label>Qtd</label>
+                <label>${localize("GUM.TemplateItemSheet.Structure.QuantityAbbreviation", "Qty")}</label>
                 <input type="number" id="entry-qty" value="${entry.quantity ?? 1}" ${isEquipment ? "" : "disabled"}>
             </div>
             <div class="form-group">
@@ -866,18 +881,18 @@ export class TemplateItemSheet extends ItemSheet {
                 <input type="text" id="entry-level" value="${entry.level ?? ""}">
             </div>
             <div class="form-group">
-                <label>Custo</label>
+                <label>${localize("GUM.TemplateItemSheet.Structure.Cost", "Cost")}</label>
                 <input type="number" id="entry-cost" value="${entry.cost ?? 0}">
             </div>
         </div>
         `;
 
         new Dialog({
-            title: "Editar Item do Bloco",
+            title: localize("GUM.TemplateItemSheet.Dialogs.EditBlockItem", "Edit Block Item"),
             content,
             buttons: {
                 save: {
-                    label: "Salvar",
+                    label: localize("GUM.TemplateItemSheet.Common.Save", "Save"),
                     callback: async (dlgHtml) => {
                         entry.name = dlgHtml.find("#entry-name").val();
                         entry.quantity = Number(dlgHtml.find("#entry-qty").val()) || 1;
@@ -886,7 +901,7 @@ export class TemplateItemSheet extends ItemSheet {
                         await this._replaceEntry(blockId, entryId, entry);
                     }
                 },
-                cancel: { label: "Cancelar" }
+                cancel: { label: localize("GUM.TemplateItemSheet.Common.Cancel", "Cancel") }
             },
             default: "save"
         }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog", "gum-sheet-item", "gum-sheet-edit-dialog", "gum-magic-view-dialog"] }).render(true);
@@ -919,7 +934,7 @@ export class TemplateItemSheet extends ItemSheet {
         if (!item) return;
 
         if (!["skill", "spell", "power", "advantage", "disadvantage", "equipment"].includes(item.type)) {
-            ui.notifications.warn("Esse tipo de item não pode ser usado em um Modelo.");
+            ui.notifications.warn(localize("GUM.TemplateItemSheet.Notifications.UnsupportedItem", "This item type cannot be used in a Template."));
             return;
         }
 
@@ -961,15 +976,15 @@ export class TemplateItemSheet extends ItemSheet {
     async _promptEquipmentEntry(item, base) {
         return new Promise(resolve => {
             new Dialog({
-                title: `Adicionar ${item.name}`,
+                title: format("GUM.TemplateItemSheet.Dialogs.AddNamedItem", { name: item.name }, `Add ${item.name}`),
                 content: `
                 <div class="form-group">
-                    <label>Quantidade</label>
+                    <label>${localize("GUM.TemplateItemSheet.Dialogs.Quantity", "Quantity")}</label>
                     <input type="number" id="entry-qty" value="1" min="1">
                 </div>`,
                 buttons: {
                     save: {
-                        label: "Adicionar",
+                        label: localize("GUM.TemplateItemSheet.Common.Add", "Add"),
                         callback: (html) => {
                             base.quantity = Number(html.find("#entry-qty").val()) || 1;
                             base.cost = item.system?.cost ?? 0;
@@ -977,7 +992,7 @@ export class TemplateItemSheet extends ItemSheet {
                         }
                     },
                     cancel: {
-                        label: "Cancelar",
+                        label: localize("GUM.TemplateItemSheet.Common.Cancel", "Cancel"),
                         callback: () => resolve(null)
                     }
                 },
@@ -994,37 +1009,37 @@ export class TemplateItemSheet extends ItemSheet {
 
         return new Promise(resolve => {
             new Dialog({
-                title: `Adicionar ${item.name}`,
+                title: format("GUM.TemplateItemSheet.Dialogs.AddNamedItem", { name: item.name }, `Add ${item.name}`),
                 content: `
                 <div class="template-level-dialog">
-                    <div class="template-level-dialog__title">${foundry.utils.escapeHTML(item.name || "Item")}</div>
+                    <div class="template-level-dialog__title">${foundry.utils.escapeHTML(item.name || localize("GUM.TemplateItemSheet.Rows.Item", "Item"))}</div>
                     <div class="template-level-dialog__subtitle">${foundry.utils.escapeHTML(itemTypeLabel)}</div>
                     <hr>
 
                     ${difficultyValue ? `
                     <div class="template-level-dialog__row">
-                        <label>Dificuldade</label>
+                        <label>${localize("GUM.TemplateItemSheet.Dialogs.Difficulty", "Difficulty")}</label>
                         <input type="text" value="${foundry.utils.escapeHTML(difficultyValue)}" readonly>
                     </div>` : ""}
 
                     <div class="template-level-dialog__row">
-                        <label>Pontos por Nível</label>
+                        <label>${localize("GUM.TemplateItemSheet.Dialogs.PointsPerLevel", "Points per Level")}</label>
                         <input type="text" value="${foundry.utils.escapeHTML(pointsInfo)}" readonly>
                     </div>
 
                     <div class="template-level-dialog__row">
-                        <label>Nível Relativo no Modelo</label>
+                        <label>${localize("GUM.TemplateItemSheet.Dialogs.RelativeLevel", "Relative Level in Template")}</label>
                         <input type="number" id="entry-level" value="${levelValue}">
                     </div>
 
                     <div class="template-level-dialog__row">
-                        <label>Custo Total</label>
+                        <label>${localize("GUM.TemplateItemSheet.Dialogs.TotalCost", "Total Cost")}</label>
                         <input type="number" id="entry-total-cost" value="${this._calculateLevelledItemCost(item, levelValue)}" readonly>
                     </div>
                 </div>`,
                 buttons: {
                     save: {
-                        label: "Adicionar",
+                        label: localize("GUM.TemplateItemSheet.Common.Add", "Add"),
                         callback: (html) => {
                             const level = Number(html.find("#entry-level").val()) || 0;
                             base.level = level;
@@ -1033,7 +1048,7 @@ export class TemplateItemSheet extends ItemSheet {
                         }
                     },
                     cancel: {
-                        label: "Cancelar",
+                        label: localize("GUM.TemplateItemSheet.Common.Cancel", "Cancel"),
                         callback: () => resolve(null)
                     }
                 },
@@ -1061,19 +1076,19 @@ export class TemplateItemSheet extends ItemSheet {
 
         return new Promise(resolve => {
             new Dialog({
-                title: `Adicionar ${item.name}`,
+                title: format("GUM.TemplateItemSheet.Dialogs.AddNamedItem", { name: item.name }, `Add ${item.name}`),
                 content: `
                 <div class="form-group">
-                    <label>Nível/Valor</label>
+                    <label>${localize("GUM.TemplateItemSheet.Dialogs.LevelOrValue", "Level/Value")}</label>
                     <input type="text" id="entry-level" value="${currentLevel}">
                 </div>
                 <div class="form-group">
-                    <label>Custo</label>
+                    <label>${localize("GUM.TemplateItemSheet.Structure.Cost", "Cost")}</label>
                     <input type="number" id="entry-cost" value="${fixedCost}">
                 </div>`,
                 buttons: {
                     save: {
-                        label: "Adicionar",
+                        label: localize("GUM.TemplateItemSheet.Common.Add", "Add"),
                         callback: (html) => {
                             base.level = html.find("#entry-level").val();
                             base.cost = Number(html.find("#entry-cost").val()) || fixedCost;
@@ -1081,7 +1096,7 @@ export class TemplateItemSheet extends ItemSheet {
                         }
                     },
                     cancel: {
-                        label: "Cancelar",
+                        label: localize("GUM.TemplateItemSheet.Common.Cancel", "Cancel"),
                         callback: () => resolve(null)
                     }
                 },
@@ -1095,19 +1110,19 @@ export class TemplateItemSheet extends ItemSheet {
         if (raw === undefined || raw === null || raw === "") return "";
 
         const map = {
-            "E": "Fácil",
-            "A": "Média",
-            "H": "Difícil",
-            "VH": "Muito Difícil",
-            "F": "Fácil",
-            "M": "Média",
-            "D": "Difícil",
-            "MD": "Muito Difícil",
-            "TecM": "Técnica Média",
-            "TecD": "Técnica Difícil"
+            "E": "GUM.TemplateItemSheet.Difficulties.Easy",
+            "A": "GUM.TemplateItemSheet.Difficulties.Average",
+            "H": "GUM.TemplateItemSheet.Difficulties.Hard",
+            "VH": "GUM.TemplateItemSheet.Difficulties.VeryHard",
+            "F": "GUM.TemplateItemSheet.Difficulties.Easy",
+            "M": "GUM.TemplateItemSheet.Difficulties.Average",
+            "D": "GUM.TemplateItemSheet.Difficulties.Hard",
+            "MD": "GUM.TemplateItemSheet.Difficulties.VeryHard",
+            "TecM": "GUM.TemplateItemSheet.Difficulties.AverageTechnique",
+            "TecD": "GUM.TemplateItemSheet.Difficulties.HardTechnique"
         };
 
-        return map[raw] || String(raw);
+        return map[raw] ? localize(map[raw], String(raw)) : String(raw);
     }
 
     _getPointsPerLevelInfo(item) {
@@ -1116,17 +1131,17 @@ export class TemplateItemSheet extends ItemSheet {
             "E": "F", "A": "M", "H": "D", "VH": "MD"
         })[difficulty] || difficulty;
 
-        if (normalized === "TecM") return "Progressão técnica: +1 ponto por nível";
-        if (normalized === "TecD") return "Progressão técnica difícil: 2 pontos no primeiro nível, +1 ponto por nível adicional";
+        if (normalized === "TecM") return localize("GUM.TemplateItemSheet.Progressions.AverageTechnique", "Technique progression: +1 point per level");
+        if (normalized === "TecD") return localize("GUM.TemplateItemSheet.Progressions.HardTechnique", "Hard technique progression: 2 points at the first level, +1 point per additional level");
 
         const tables = {
-            "F": "Tabela Fácil (1, 2, 4, 8, 12, 16...)",
-            "M": "Tabela Média (1, 2, 4, 8, 12, 16, 20...)",
-            "D": "Tabela Difícil (1, 2, 4, 8, 12, 16, 20, 24...)",
-            "MD": "Tabela Muito Difícil (1, 2, 4, 8, 12, 16, 20, 24, 28...)"
+            "F": localize("GUM.TemplateItemSheet.Progressions.Easy", "Easy Table (1, 2, 4, 8, 12, 16...)"),
+            "M": localize("GUM.TemplateItemSheet.Progressions.Average", "Average Table (1, 2, 4, 8, 12, 16, 20...)"),
+            "D": localize("GUM.TemplateItemSheet.Progressions.Hard", "Hard Table (1, 2, 4, 8, 12, 16, 20, 24...)"),
+            "MD": localize("GUM.TemplateItemSheet.Progressions.VeryHard", "Very Hard Table (1, 2, 4, 8, 12, 16, 20, 24, 28...)")
         };
 
-        return tables[normalized] || "Progressão por tabela do sistema";
+        return tables[normalized] || localize("GUM.TemplateItemSheet.Progressions.SystemTable", "System table progression");
     }
 
     _calculateLevelledItemCost(item, level) {

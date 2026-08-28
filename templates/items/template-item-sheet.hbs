@@ -3,10 +3,10 @@
     <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}" />
     <div class="header-info">
       <div class="header-main-line">
-        <textarea name="name" rows="1" placeholder="Nome do Modelo">{{item.name}}</textarea>
+        <textarea name="name" rows="1" placeholder="{{localize "GUM.TemplateItemSheet.NamePlaceholder"}}">{{item.name}}</textarea>
       </div>
       <div class="header-subline">
-        <span class="item-type-tag">Modelo</span>
+        <span class="item-type-tag">{{localize "GUM.TemplateItemSheet.Type"}}</span>
       </div>
       <span class="header-divider" aria-hidden="true"></span>
     </div>
@@ -14,8 +14,8 @@
 
   <section class="sheet-content">
     <nav class="sheet-tabs tabs" data-group="primary">
-      <a class="item" data-tab="description">Descrição</a>
-      <a class="item" data-tab="structure">Estrutura</a>
+      <a class="item" data-tab="description">{{localize "GUM.TemplateItemSheet.Tabs.Description"}}</a>
+      <a class="item" data-tab="structure">{{localize "GUM.TemplateItemSheet.Tabs.Structure"}}</a>
     </nav>
 
     <section class="sheet-body-content">
@@ -25,7 +25,7 @@
             <div class="form-section description-section itemdesc-block">
               <details class="itemdesc-panel" open>
                 <summary class="itemdesc-block-header">
-                  <h4 class="itemdesc-block-title">Descrição Resumida (Chat)</h4>
+                  <h4 class="itemdesc-block-title">{{localize "GUM.TemplateItemSheet.Description.Short"}}</h4>
                 </summary>
                 {{#if editable}}
                 <span class="itemdesc-header-actions">
@@ -40,9 +40,9 @@
                   <div class="description-editor itemdesc-inner" style="display:none;">
                     {{editor system.chat_description target="system.chat_description" engine="prosemirror" owner=owner editable=editable}}
                     <div class="description-actions">
-                      <button type="button" class="save-description" data-field="system.chat_description"><i class="fas fa-save"></i> Salvar</button>
-                      <button type="button" class="expand-description" data-expanded="false"><i class="fas fa-expand"></i> Expandir</button>
-                      <button type="button" class="cancel-description"><i class="fas fa-times"></i> Cancelar</button>
+                      <button type="button" class="save-description" data-field="system.chat_description"><i class="fas fa-save"></i> {{localize "GUM.TemplateItemSheet.Common.Save"}}</button>
+                      <button type="button" class="expand-description" data-expanded="false"><i class="fas fa-expand"></i> {{localize "GUM.TemplateItemSheet.Common.Expand"}}</button>
+                      <button type="button" class="cancel-description"><i class="fas fa-times"></i> {{localize "GUM.TemplateItemSheet.Common.Cancel"}}</button>
                     </div>
                   </div>
                 </div>
@@ -52,7 +52,7 @@
             <div class="form-section description-section itemdesc-block">
               <details class="itemdesc-panel" open>
                 <summary class="itemdesc-block-header">
-                  <h4 class="itemdesc-block-title">Descrição Completa</h4>
+                  <h4 class="itemdesc-block-title">{{localize "GUM.TemplateItemSheet.Description.Full"}}</h4>
                 </summary>
                 {{#if editable}}
                 <span class="itemdesc-header-actions">
@@ -67,9 +67,9 @@
                   <div class="description-editor itemdesc-inner" style="display:none;">
                     {{editor system.description target="system.description" engine="prosemirror" owner=owner editable=editable}}
                     <div class="description-actions">
-                      <button type="button" class="save-description" data-field="system.description"><i class="fas fa-save"></i> Salvar</button>
-                      <button type="button" class="expand-description" data-expanded="false"><i class="fas fa-expand"></i> Expandir</button>
-                      <button type="button" class="cancel-description"><i class="fas fa-times"></i> Cancelar</button>
+                      <button type="button" class="save-description" data-field="system.description"><i class="fas fa-save"></i> {{localize "GUM.TemplateItemSheet.Common.Save"}}</button>
+                      <button type="button" class="expand-description" data-expanded="false"><i class="fas fa-expand"></i> {{localize "GUM.TemplateItemSheet.Common.Expand"}}</button>
+                      <button type="button" class="cancel-description"><i class="fas fa-times"></i> {{localize "GUM.TemplateItemSheet.Common.Cancel"}}</button>
                     </div>
                   </div>
                 </div>
@@ -81,8 +81,8 @@
 
       <div class="tab template-structure-tab" data-group="primary" data-tab="structure">
         <div class="template-blocks-header">
-          <h3 class="template-blocks-title">Blocos</h3>
-          <button type="button" class="add-template-block template-blocks-add" title="Adicionar bloco">
+          <h3 class="template-blocks-title">{{localize "GUM.TemplateItemSheet.Structure.Blocks"}}</h3>
+          <button type="button" class="add-template-block template-blocks-add" title="{{localize "GUM.TemplateItemSheet.Structure.AddBlock"}}">
             <i class="fas fa-plus"></i>
           </button>
         </div>
@@ -99,10 +99,10 @@
               </div>
 
               <div class="item-controls template-block-controls">
-                <a class="item-control edit-template-block" data-block-id="{{block.id}}" title="Editar bloco">
+                <a class="item-control edit-template-block" data-block-id="{{block.id}}" title="{{localize "GUM.TemplateItemSheet.Structure.EditBlock"}}">
                   <i class="fas fa-edit"></i>
                 </a>
-                <a class="item-control delete-template-block" data-block-id="{{block.id}}" title="Remover bloco">
+                <a class="item-control delete-template-block" data-block-id="{{block.id}}" title="{{localize "GUM.TemplateItemSheet.Structure.RemoveBlock"}}">
                   <i class="fas fa-trash"></i>
                 </a>
               </div>
@@ -112,18 +112,18 @@
             <div class="template-block-editor">
               <div class="template-block-fields">
                 <div class="form-group">
-                  <label>Título customizado</label>
+                  <label>{{localize "GUM.TemplateItemSheet.Structure.CustomTitle"}}</label>
                   <input type="text"
                          class="block-field"
                          data-block-id="{{block.id}}"
                          data-field="title"
                          value="{{block.title}}"
-                         placeholder="Deixe vazio para usar o título padrão"/>
+                         placeholder="{{localize "GUM.TemplateItemSheet.Structure.CustomTitlePlaceholder"}}"/>
                 </div>
 
                 {{#if block.isSelection}}
                 <div class="form-group input-narrow">
-                  <label>Quantidade a escolher</label>
+                  <label>{{localize "GUM.TemplateItemSheet.Structure.ChoiceCount"}}</label>
                   <input type="number"
                          class="block-field"
                          data-block-id="{{block.id}}"
@@ -135,7 +135,7 @@
 
                 {{#if block.isPoints}}
                 <div class="form-group input-narrow">
-                  <label>Pontos disponíveis</label>
+                  <label>{{localize "GUM.TemplateItemSheet.Structure.PointsAvailable"}}</label>
                   <input type="number"
                          class="block-field"
                          data-block-id="{{block.id}}"
@@ -152,11 +152,11 @@
                 <table class="template-block-table">
                   <thead>
                     <tr>
-                      <th>Nome</th>
-                      <th>Qtd</th>
-                      <th>Nível</th>
-                      <th>Custo</th>
-                      <th>Controles</th>
+                      <th>{{localize "GUM.TemplateItemSheet.Structure.Name"}}</th>
+                      <th>{{localize "GUM.TemplateItemSheet.Structure.QuantityAbbreviation"}}</th>
+                      <th>{{localize "GUM.TemplateItemSheet.Structure.Level"}}</th>
+                      <th>{{localize "GUM.TemplateItemSheet.Structure.Cost"}}</th>
+                      <th>{{localize "GUM.TemplateItemSheet.Structure.Controls"}}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -176,13 +176,13 @@
                           <a class="edit-block-entry"
                              data-block-id="{{block.id}}"
                              data-entry-id="{{entry.id}}"
-                             title="Editar">
+                             title="{{localize "GUM.TemplateItemSheet.Common.Edit"}}">
                             <i class="fas fa-edit"></i>
                           </a>
                           <a class="delete-block-entry"
                              data-block-id="{{block.id}}"
                              data-entry-id="{{entry.id}}"
-                             title="Remover">
+                             title="{{localize "GUM.TemplateItemSheet.Common.Remove"}}">
                             <i class="fas fa-trash"></i>
                           </a>
                         </div>
@@ -196,9 +196,9 @@
                           <i class="fas fa-box-open"></i>
                           <span>
                             {{#if block.contents.length}}
-                              Arraste mais itens para este bloco
+                              {{localize "GUM.TemplateItemSheet.Structure.DropMore"}}
                             {{else}}
-                              Arraste perícias, vantagens, desvantagens, magias, poderes ou equipamentos para este bloco
+                              {{localize "GUM.TemplateItemSheet.Structure.DropEmpty"}}
                             {{/if}}
                           </span>
                         </div>
@@ -210,10 +210,10 @@
 
                 <div class="template-block-actions">
                     <button type="button" class="add-block-attribute" data-block-id="{{block.id}}">
-                    <i class="fas fa-sliders-h"></i> Adicionar Atributo
+                    <i class="fas fa-sliders-h"></i> {{localize "GUM.TemplateItemSheet.Structure.AddAttribute"}}
                     </button>
                     <button type="button" class="add-block-group" data-block-id="{{block.id}}">
-                    <i class="fas fa-project-diagram"></i> Adicionar Subgrupo
+                    <i class="fas fa-project-diagram"></i> {{localize "GUM.TemplateItemSheet.Structure.AddSubgroup"}}
                     </button>
                 </div>
 
@@ -222,7 +222,7 @@
           </section>
           {{else}}
           <div class="template-empty-state">
-            Nenhum bloco criado ainda.
+            {{localize "GUM.TemplateItemSheet.Structure.Empty"}}
           </div>
           {{/each}}
         </div>

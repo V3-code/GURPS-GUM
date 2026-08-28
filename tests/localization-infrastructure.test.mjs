@@ -80,6 +80,11 @@ const screens = [
         script: new URL("../scripts/apps/effect-sheet.js", import.meta.url)
     },
     {
+        name: "template item sheet",
+        template: new URL("../templates/items/template-item-sheet.hbs", import.meta.url),
+        script: new URL("../module/item/template-item-sheet.js", import.meta.url)
+    },
+    {
         name: "roll purpose catalog",
         template: null,
         script: new URL("../module/utils/roll-purposes.mjs", import.meta.url)
@@ -986,4 +991,31 @@ test("shared purpose picker and quick view have no fixed Portuguese UI text", as
     ]) {
         assert.ok(!scopedSource.includes(text), `fixed shared purpose UI text: ${text}`);
     }
+});
+
+test("template item sheet reachable flow has no fixed Portuguese UI text", async () => {
+    const screen = (await readScreenSources()).find(entry => entry.name === "template item sheet");
+    const reachable = `${screen.templateSource}\n${screen.scriptSource.replace(/\/\/.*$/gm, "")}`;
+    for (const text of [
+        "Nome do Modelo", "Descrição Resumida", "Descrição Completa", "Adicionar bloco", "Editar bloco", "Remover bloco",
+        "Título customizado", "Quantidade a escolher", "Pontos disponíveis", "Arraste perícias", "Nenhum bloco criado",
+        "Adicionar Atributo", "Adicionar Subgrupo", "Nome do Subgrupo", "Notas locais", "Custo exibido",
+        "JSON inválido", "Editar Item do Bloco", "Esse tipo de item não pode ser usado"
+    ]) assert.ok(!reachable.includes(text), `fixed template item sheet UI text: ${text}`);
+});
+
+test("template item sheet preserves block, entry, attribute and difficulty mechanics", async () => {
+    const screen = (await readScreenSources()).find(entry => entry.name === "template item sheet");
+    const combined = `${screen.templateSource}\n${screen.scriptSource}`;
+    for (const value of [
+        "guaranteed", "selection", "points", "choiceCount", "pointsAvailable", "contents", "collapsed",
+        "skill", "spell", "power", "advantage", "disadvantage", "equipment", "attribute", "group",
+        "st", "dx", "iq", "ht", "will", "per", "hp", "fp", "basic_speed", "move",
+        "E", "A", "H", "VH", "F", "M", "D", "MD", "TecM", "TecD"
+    ]) assert.ok(new RegExp(`\\b${value}\\b`).test(combined) || combined.includes(`data-field="${value}"`), `missing template mechanic: ${value}`);
+    assert.match(screen.scriptSource, /this\.item\.update\(\{ "system\.blocks": blocks \}\)/);
+    assert.match(screen.scriptSource, /TextEditor\.getDragEventData\(event\)/);
+    assert.match(screen.scriptSource, /JSON\.parse\(subBlocksRaw\)/);
+    assert.match(screen.templateSource, /name="system\.chat_description"|target="system\.chat_description"/);
+    assert.match(screen.templateSource, /name="system\.description"|target="system\.description"/);
 });

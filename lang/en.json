@@ -443,6 +443,142 @@
         "GreaterThanOrEqual": "Greater than or equal to"
       }
     },
+    "TemplateItemSheet": {
+      "Title": "Template",
+      "TitleNamed": "Template: {name}",
+      "NamePlaceholder": "Template Name",
+      "Type": "Template",
+      "Tabs": {
+        "Description": "Description",
+        "Structure": "Structure"
+      },
+      "Common": {
+        "Save": "Save",
+        "Expand": "Expand",
+        "Cancel": "Cancel",
+        "Add": "Add",
+        "Edit": "Edit",
+        "Remove": "Remove"
+      },
+      "Description": {
+        "Short": "Short Description (Chat)",
+        "Full": "Full Description"
+      },
+      "Structure": {
+        "Blocks": "Blocks",
+        "AddBlock": "Add block",
+        "EditBlock": "Edit block",
+        "RemoveBlock": "Remove block",
+        "CustomTitle": "Custom title",
+        "CustomTitlePlaceholder": "Leave blank to use the default title",
+        "ChoiceCount": "Number to choose",
+        "PointsAvailable": "Available points",
+        "Name": "Name",
+        "QuantityAbbreviation": "Qty",
+        "Level": "Level",
+        "Cost": "Cost",
+        "Controls": "Controls",
+        "DropMore": "Drag more items into this block",
+        "DropEmpty": "Drag skills, advantages, disadvantages, spells, powers, or equipment into this block",
+        "AddAttribute": "Add Attribute",
+        "AddSubgroup": "Add Subgroup",
+        "Empty": "No blocks created yet."
+      },
+      "Summaries": {
+        "ItemOne": "{count} item",
+        "ItemMany": "{count} items",
+        "Selection": "{items} • choose {count}",
+        "OptionOne": "{count} option",
+        "OptionMany": "{count} options",
+        "Points": "{options} • {points} points"
+      },
+      "Rows": {
+        "Subgroup": "Subgroup",
+        "Item": "Item",
+        "Points": "{value} pts",
+        "Level": "Level {value}",
+        "Quantity": "Qty {value}",
+        "SubBlockOne": "{count} sub-block",
+        "SubBlockMany": "{count} sub-blocks",
+        "NoChanges": "No changes",
+        "Attributes": "Attributes"
+      },
+      "ItemTypes": {
+        "Skill": "Skill",
+        "Spell": "Spell",
+        "Power": "Power",
+        "Advantage": "Advantage",
+        "Disadvantage": "Disadvantage",
+        "Equipment": "Equipment"
+      },
+      "BlockTypes": {
+        "Guaranteed": "Guaranteed",
+        "Selection": "Selection",
+        "Points": "Point Allocation",
+        "Default": "Block"
+      },
+      "Attributes": {
+        "ST": "ST",
+        "DX": "DX",
+        "IQ": "IQ",
+        "HT": "HT",
+        "Will": "Will",
+        "Perception": "Per",
+        "HP": "HP",
+        "FP": "FP",
+        "BasicSpeed": "Basic Speed",
+        "Move": "Move"
+      },
+      "Dialogs": {
+        "BlockName": "Block Name",
+        "BlockNamePlaceholder": "Enter a name for the block",
+        "AddBlock": "Add Block",
+        "Attribute": "Attribute",
+        "Increment": "Increment",
+        "RecalculateSecondary": "Recalculate secondary attributes before changing them.",
+        "TotalCost": "Total Cost",
+        "AddAttribute": "Add Attribute",
+        "SubgroupName": "Subgroup Name",
+        "SubgroupNameExample": "E.g.: Weapon and Shield",
+        "LocalNotes": "Local Notes",
+        "LocalNotesExample": "E.g.: Choose a weapon and take Shield",
+        "DisplayedCost": "Displayed Cost",
+        "SubBlocksJson": "Sub-blocks (JSON)",
+        "SubBlocksHelp": "Use an array of blocks in the template format (type/title/choiceCount/pointsAvailable/contents).",
+        "AddSubgroup": "Add Subgroup",
+        "EditSubgroup": "Edit Subgroup",
+        "LinkSecondary": "Link secondary attributes to primary attributes",
+        "EditAttribute": "Edit Attribute",
+        "LevelOrValue": "Level/Value",
+        "EditBlockItem": "Edit Block Item",
+        "AddNamedItem": "Add {name}",
+        "Quantity": "Quantity",
+        "Difficulty": "Difficulty",
+        "PointsPerLevel": "Points per Level",
+        "RelativeLevel": "Relative Level in Template"
+      },
+      "Notifications": {
+        "InvalidSubBlocksJson": "Invalid JSON in subgroup sub-blocks.",
+        "UnsupportedItem": "This item type cannot be used in a Template."
+      },
+      "Difficulties": {
+        "Easy": "Easy",
+        "Average": "Average",
+        "Hard": "Hard",
+        "VeryHard": "Very Hard",
+        "AverageTechnique": "Average Technique",
+        "HardTechnique": "Hard Technique"
+      },
+      "Progressions": {
+        "AverageTechnique": "Technique progression: +1 point per level",
+        "HardTechnique": "Hard technique progression: 2 points at the first level, +1 point per additional level",
+        "Easy": "Easy Table (1, 2, 4, 8, 12, 16...)",
+        "Average": "Average Table (1, 2, 4, 8, 12, 16, 20...)",
+        "Hard": "Hard Table (1, 2, 4, 8, 12, 16, 20, 24...)",
+        "VeryHard": "Very Hard Table (1, 2, 4, 8, 12, 16, 20, 24, 28...)",
+        "SystemTable": "System table progression"
+      }
+    },
     "RollTags": {
       "GenericDescription": "Rolls related to {label}.",
       "Groups": {

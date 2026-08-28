@@ -443,6 +443,142 @@
         "GreaterThanOrEqual": "Maior ou Igual a"
       }
     },
+    "TemplateItemSheet": {
+      "Title": "Modelo",
+      "TitleNamed": "Modelo: {name}",
+      "NamePlaceholder": "Nome do Modelo",
+      "Type": "Modelo",
+      "Tabs": {
+        "Description": "Descrição",
+        "Structure": "Estrutura"
+      },
+      "Common": {
+        "Save": "Salvar",
+        "Expand": "Expandir",
+        "Cancel": "Cancelar",
+        "Add": "Adicionar",
+        "Edit": "Editar",
+        "Remove": "Remover"
+      },
+      "Description": {
+        "Short": "Descrição Resumida (Chat)",
+        "Full": "Descrição Completa"
+      },
+      "Structure": {
+        "Blocks": "Blocos",
+        "AddBlock": "Adicionar bloco",
+        "EditBlock": "Editar bloco",
+        "RemoveBlock": "Remover bloco",
+        "CustomTitle": "Título customizado",
+        "CustomTitlePlaceholder": "Deixe vazio para usar o título padrão",
+        "ChoiceCount": "Quantidade a escolher",
+        "PointsAvailable": "Pontos disponíveis",
+        "Name": "Nome",
+        "QuantityAbbreviation": "Qtd",
+        "Level": "Nível",
+        "Cost": "Custo",
+        "Controls": "Controles",
+        "DropMore": "Arraste mais itens para este bloco",
+        "DropEmpty": "Arraste perícias, vantagens, desvantagens, magias, poderes ou equipamentos para este bloco",
+        "AddAttribute": "Adicionar Atributo",
+        "AddSubgroup": "Adicionar Subgrupo",
+        "Empty": "Nenhum bloco criado ainda."
+      },
+      "Summaries": {
+        "ItemOne": "{count} item",
+        "ItemMany": "{count} itens",
+        "Selection": "{items} • escolher {count}",
+        "OptionOne": "{count} opção",
+        "OptionMany": "{count} opções",
+        "Points": "{options} • {points} pontos"
+      },
+      "Rows": {
+        "Subgroup": "Subgrupo",
+        "Item": "Item",
+        "Points": "{value} pts",
+        "Level": "Nível {value}",
+        "Quantity": "Qtd {value}",
+        "SubBlockOne": "{count} sub-bloco",
+        "SubBlockMany": "{count} sub-blocos",
+        "NoChanges": "Nenhuma alteração",
+        "Attributes": "Atributos"
+      },
+      "ItemTypes": {
+        "Skill": "Perícia",
+        "Spell": "Magia",
+        "Power": "Poder",
+        "Advantage": "Vantagem",
+        "Disadvantage": "Desvantagem",
+        "Equipment": "Equipamento"
+      },
+      "BlockTypes": {
+        "Guaranteed": "Garantido",
+        "Selection": "Seleção",
+        "Points": "Alocação por Pontos",
+        "Default": "Bloco"
+      },
+      "Attributes": {
+        "ST": "ST",
+        "DX": "DX",
+        "IQ": "IQ",
+        "HT": "HT",
+        "Will": "Vont",
+        "Perception": "Per",
+        "HP": "PV",
+        "FP": "PF",
+        "BasicSpeed": "Velocidade",
+        "Move": "Deslocamento"
+      },
+      "Dialogs": {
+        "BlockName": "Nome do Bloco",
+        "BlockNamePlaceholder": "Digite um nome para o bloco",
+        "AddBlock": "Adicionar Bloco",
+        "Attribute": "Atributo",
+        "Increment": "Incremento",
+        "RecalculateSecondary": "Recalcular atributos secundários antes de alterá-los.",
+        "TotalCost": "Custo Total",
+        "AddAttribute": "Adicionar Atributo",
+        "SubgroupName": "Nome do Subgrupo",
+        "SubgroupNameExample": "Ex.: Arma e Escudo",
+        "LocalNotes": "Notas locais",
+        "LocalNotesExample": "Ex.: Escolha uma arma e pegue Escudo",
+        "DisplayedCost": "Custo exibido",
+        "SubBlocksJson": "Sub-blocos (JSON)",
+        "SubBlocksHelp": "Use um array de blocos no formato do modelo (type/title/choiceCount/pointsAvailable/contents).",
+        "AddSubgroup": "Adicionar Subgrupo",
+        "EditSubgroup": "Editar Subgrupo",
+        "LinkSecondary": "Vincular atributos secundários aos primários",
+        "EditAttribute": "Editar Atributo",
+        "LevelOrValue": "Nível/Valor",
+        "EditBlockItem": "Editar Item do Bloco",
+        "AddNamedItem": "Adicionar {name}",
+        "Quantity": "Quantidade",
+        "Difficulty": "Dificuldade",
+        "PointsPerLevel": "Pontos por Nível",
+        "RelativeLevel": "Nível Relativo no Modelo"
+      },
+      "Notifications": {
+        "InvalidSubBlocksJson": "JSON inválido nos sub-blocos do subgrupo.",
+        "UnsupportedItem": "Esse tipo de item não pode ser usado em um Modelo."
+      },
+      "Difficulties": {
+        "Easy": "Fácil",
+        "Average": "Média",
+        "Hard": "Difícil",
+        "VeryHard": "Muito Difícil",
+        "AverageTechnique": "Técnica Média",
+        "HardTechnique": "Técnica Difícil"
+      },
+      "Progressions": {
+        "AverageTechnique": "Progressão técnica: +1 ponto por nível",
+        "HardTechnique": "Progressão técnica difícil: 2 pontos no primeiro nível, +1 ponto por nível adicional",
+        "Easy": "Tabela Fácil (1, 2, 4, 8, 12, 16...)",
+        "Average": "Tabela Média (1, 2, 4, 8, 12, 16, 20...)",
+        "Hard": "Tabela Difícil (1, 2, 4, 8, 12, 16, 20, 24...)",
+        "VeryHard": "Tabela Muito Difícil (1, 2, 4, 8, 12, 16, 20, 24, 28...)",
+        "SystemTable": "Progressão pela tabela do sistema"
+      }
+    },
     "RollTags": {
       "GenericDescription": "Rolagens relacionadas a {label}.",
       "Groups": {
