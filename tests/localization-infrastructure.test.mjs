@@ -85,6 +85,11 @@ const screens = [
         script: new URL("../module/item/template-item-sheet.js", import.meta.url)
     },
     {
+        name: "damage application",
+        template: new URL("../templates/apps/damage-application.hbs", import.meta.url),
+        script: new URL("../scripts/apps/damage-application.js", import.meta.url)
+    },
+    {
         name: "roll purpose catalog",
         template: null,
         script: new URL("../module/utils/roll-purposes.mjs", import.meta.url)
@@ -1018,4 +1023,54 @@ test("template item sheet preserves block, entry, attribute and difficulty mecha
     assert.match(screen.scriptSource, /JSON\.parse\(subBlocksRaw\)/);
     assert.match(screen.templateSource, /name="system\.chat_description"|target="system\.chat_description"/);
     assert.match(screen.templateSource, /name="system\.description"|target="system\.description"/);
+});
+
+test("damage application reachable flow has no fixed Portuguese UI text", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "damage application");
+    const templateSource = screen.templateSource.replace(/{{!--[\s\S]*?--}}/g, "");
+    const scriptSource = screen.scriptSource
+        .replace(/\/\/.*$/gm, "")
+        .replace(/\/\*[\s\S]*?\*\//g, "");
+    const fixedPortuguese = [
+        "Aplicar Dano", "Ponto de Impacto", "Situações Especiais", "Aplicar Apenas Efeitos",
+        "Aplicar como Cura", "Dano de Explosão", "Aplicar Choque", "Tolerância a Ferimentos",
+        "Peso da Defesa", "Apenas Projeção", "Efeitos a serem aplicados", "Propor Testes",
+        "Teste de Resistência", "Resumo do Ataque", "Efeitos Pendentes", "Nenhum efeito adicional"
+    ];
+
+    for (const text of fixedPortuguese) {
+        assert.ok(!templateSource.includes(text), `fixed damage application template text: ${text}`);
+        assert.ok(!scriptSource.includes(text), `fixed reachable damage application script text: ${text}`);
+    }
+});
+
+test("damage application preserves mechanical values and calculation rules", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "damage application");
+
+    for (const value of ["nao-vivo", "homogeneo", "difuso", "one-handed", "two-handed", "normal", "cheap", "fine", "veryFine"]) {
+        assert.match(screen.templateSource, new RegExp(`value="${value}"`));
+    }
+    for (const field of [
+        "damage_target_pool", "large_area_injury", "ignore_dr", "wounding_mod_type", "special_apply_effects_only",
+        "special_apply_as_heal", "special_half_damage", "special_explosion", "special_apply_shock", "special_only_knockback",
+        "tolerance_type", "damage_reduction_enabled", "damage_reduction_value", "damage_rolled", "armor_divisor", "target_dr"
+    ]) {
+        assert.match(screen.templateSource, new RegExp(`name="${field}"`));
+    }
+    for (const abbreviation of ["cort", "perf", "cont", "qmd", "cor", "tox", "pi", "pi-", "pi+", "pi++"]) {
+        assert.match(screen.scriptSource, new RegExp(`abrev: "${abbreviation.replace(/[+]/g, "\\+")}"`));
+    }
+    assert.match(screen.scriptSource, /Math\.floor\(selectedLocationDR \/ armorDivisor\)/);
+    assert.match(screen.scriptSource, /Math\.floor\(penetratingDamage \* woundingMod\)/);
+    assert.match(screen.scriptSource, /Math\.floor\(finalInjury \/ damageReductionValue\)/);
+    assert.match(screen.scriptSource, /Math\.ceil\(\(torsoDR \+ markedDR\) \/ 2\)/);
+    assert.match(screen.scriptSource, /system\.attributes\.hp\.value/);
+    assert.match(screen.scriptSource, /system\.attributes\.fp\.value/);
+    assert.match(screen.scriptSource, /system\.spell_reserves\.\$\{key\}/);
+    assert.match(screen.scriptSource, /system\.power_reserves\.\$\{key\}/);
+    assert.match(screen.scriptSource, /this\._localizedBodyLocationLabel\(key, data\)/);
+    assert.match(screen.scriptSource, /BODY_LOCATION_LABEL_KEYS\[baseKey\]/);
+    assert.match(screen.scriptSource, /BODY_LOCATION_GROUP_KEYS\[groupKey\]/);
+    assert.match(screen.scriptSource, /type: "damage"/);
+    assert.match(screen.scriptSource, /specialEffect: "shock"/);
 });

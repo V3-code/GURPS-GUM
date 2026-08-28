@@ -8,6 +8,53 @@ import { executeRollRequest } from "../../module/services/roll-request-service.j
 import { getPurposeLabels } from "../../module/utils/roll-purposes.mjs";
 import { renderPendingResistanceRequest } from "../../module/utils/roll-request-view.mjs";
 
+const localize = key => game.i18n.localize(key);
+const format = (key, data) => game.i18n.format(key, data);
+
+const BODY_LOCATION_LABEL_KEYS = {
+    head: "GUM.DamageApplication.Locations.Skull",
+    eyes: "GUM.DamageApplication.Locations.Eyes",
+    face: "GUM.DamageApplication.Locations.Face",
+    neck: "GUM.DamageApplication.Locations.Neck",
+    torso: "GUM.DamageApplication.Locations.Torso",
+    vitals: "GUM.DamageApplication.Locations.Vitals",
+    groin: "GUM.DamageApplication.Locations.Groin",
+    body: "GUM.DamageApplication.Locations.Body",
+    shoulder: "GUM.DamageApplication.Locations.Shoulder",
+    chest: "GUM.DamageApplication.Locations.Chest",
+    abdomen: "GUM.DamageApplication.Locations.Abdomen",
+    joint: "GUM.DamageApplication.Locations.Joint",
+    spine: "GUM.DamageApplication.Locations.Spine",
+    artery: "GUM.DamageApplication.Locations.Artery",
+    jaw: "GUM.DamageApplication.Locations.Jaw",
+    wing: "GUM.DamageApplication.Locations.Wing",
+    tail: "GUM.DamageApplication.Locations.Tail",
+    fin: "GUM.DamageApplication.Locations.Fin",
+    horn: "GUM.DamageApplication.Locations.Horn",
+    arm: "GUM.DamageApplication.Locations.Arm",
+    leg: "GUM.DamageApplication.Locations.Leg",
+    hand: "GUM.DamageApplication.Locations.Hand",
+    foot: "GUM.DamageApplication.Locations.Foot",
+    nose: "GUM.DamageApplication.Locations.Nose",
+    ear: "GUM.DamageApplication.Locations.Ear",
+    tentacle: "GUM.DamageApplication.Locations.Tentacle",
+    pincer: "GUM.DamageApplication.Locations.Pincer",
+    paw: "GUM.DamageApplication.Locations.Paw"
+};
+
+const BODY_LOCATION_GROUP_KEYS = {
+    arm: "GUM.DamageApplication.LocationGroups.Arms",
+    hand: "GUM.DamageApplication.LocationGroups.Hands",
+    leg: "GUM.DamageApplication.LocationGroups.Legs",
+    foot: "GUM.DamageApplication.LocationGroups.Feet",
+    wing: "GUM.DamageApplication.LocationGroups.Wings",
+    tail: "GUM.DamageApplication.LocationGroups.Tails",
+    tentacle: "GUM.DamageApplication.LocationGroups.Tentacles",
+    pincer: "GUM.DamageApplication.LocationGroups.Pincers",
+    fin: "GUM.DamageApplication.LocationGroups.Fins",
+    paw: "GUM.DamageApplication.LocationGroups.Paws"
+};
+
 export default class DamageApplicationWindow extends Application {
     
     constructor(damageData, attackerActor, targetActor, options = {}) {
@@ -29,7 +76,9 @@ this.damageData = damageData;
             activeDamageKey: 'main'
         };
 
- this.options.title = `Aplicar Dano em ${this.targetActor?.name || "Alvo"}`;
+ this.options.title = format("GUM.DamageApplication.TitleForTarget", {
+     target: this.targetActor?.name || localize("GUM.DamageApplication.TargetFallback")
+ });
     }
 
     _attackerImage() {
@@ -187,34 +236,37 @@ async _resolveOnDamageEffects() {
 
         if (!attackWeight || !defenseWeight || !basicLift) {
             advisor.dataset.status = "incomplete";
-            if (summaryEl) summaryEl.innerHTML = `<strong>Dados incompletos.</strong> Informe peso do ataque, peso da defesa e BC do alvo para avaliar Aparar/Bloquear armas pesadas.`;
+            if (summaryEl) summaryEl.innerHTML = `<strong>${localize("GUM.DamageApplication.HeavyDefenseIncomplete")}</strong> ${localize("GUM.DamageApplication.HeavyDefenseIncompleteHint")}`;
             return null;
         }
 
         const result = this._evaluateHeavyWeaponDefense({ attackWeight, defenseWeight, basicLift, defenseMode, quality });
         const ratioText = Number.isFinite(result.ratio) ? result.ratio.toFixed(2).replace(".", ",") : "∞";
         let status = "ok";
-        let headline = "Defesa dentro do limite de peso.";
+        let headline = localize("GUM.DamageApplication.HeavyDefenseWithinLimit");
         const details = [
-            `Ataque ${this._formatWeight(attackWeight)} kg × defesa ${this._formatWeight(defenseWeight)} kg = ${ratioText}×.`,
-            `BC ${this._formatWeight(basicLift)} kg; limite absoluto ${this._formatWeight(result.absoluteLimit)} kg.`
+            format("GUM.DamageApplication.HeavyDefenseRatio", { attack: this._formatWeight(attackWeight), defense: this._formatWeight(defenseWeight), ratio: ratioText }),
+            format("GUM.DamageApplication.HeavyDefenseLimit", { basicLift: this._formatWeight(basicLift), limit: this._formatWeight(result.absoluteLimit) })
         ];
 
         if (result.exceedsAbsoluteLimit) {
             status = "danger";
-            headline = "Tentativa excede o limite absoluto.";
-            details.push("Pela regra, a tentativa falha automaticamente; o ataque acerta, e a arma aparadora pode ser derrubada se não quebrar.");
+            headline = localize("GUM.DamageApplication.HeavyDefenseExceedsLimit");
+            details.push(localize("GUM.DamageApplication.HeavyDefenseAutomaticFailure"));
         } else if (result.offersNoResistance) {
             status = "danger";
-            headline = "Chance de quebra acima de 6 em 6.";
-            details.push(`Chance ajustada: ${result.adjustedBreakChance} em 6. A tentativa não oferece resistência; o ataque acerta.`);
+            headline = localize("GUM.DamageApplication.HeavyDefenseBreakAboveSix");
+            details.push(format("GUM.DamageApplication.HeavyDefenseNoResistance", { chance: result.adjustedBreakChance }));
         } else if (result.adjustedBreakChance > 0) {
             status = "warning";
-            headline = "Há risco de quebra da arma/escudo defensor.";
-            details.push(`Chance ajustada de quebra: ${result.adjustedBreakChance} em 6${result.adjustedBreakChance !== result.baseBreakChance ? ` (base ${result.baseBreakChance} em 6)` : ""}.`);
-            details.push("Se a defesa for bem-sucedida, normalmente ela ainda detém o ataque mesmo que a arma quebre.");
+            headline = localize("GUM.DamageApplication.HeavyDefenseBreakRisk");
+            const baseChance = result.adjustedBreakChance !== result.baseBreakChance
+                ? format("GUM.DamageApplication.HeavyDefenseBaseChance", { chance: result.baseBreakChance })
+                : "";
+            details.push(format("GUM.DamageApplication.HeavyDefenseAdjustedChance", { chance: result.adjustedBreakChance, base: baseChance }));
+            details.push(localize("GUM.DamageApplication.HeavyDefenseSuccessfulDefense"));
         } else {
-            details.push("A proporção é menor que 3×; sem risco de quebra por peso nesta regra.");
+            details.push(localize("GUM.DamageApplication.HeavyDefenseNoBreakRisk"));
         }
 
         advisor.dataset.status = status;
@@ -287,18 +339,29 @@ async _resolveOnDamageEffects() {
         let status = result.distance > 0 ? "warning" : "ok";
         if (!result.eligible) status = "incomplete";
         const typeReason = result.eligible
-            ? (onlyKnockbackInput?.checked ? "Ataque marcado como Apenas Projeção." : result.isCrushing ? "Contusão pode projetar mesmo sem penetrar a RD." : "Corte só projeta porque não penetrou a RD.")
-            : "Somente contusão projeta sempre; corte projeta apenas quando não penetra a RD.";
+            ? (onlyKnockbackInput?.checked
+                ? localize("GUM.DamageApplication.KnockbackReasonOnly")
+                : result.isCrushing
+                    ? localize("GUM.DamageApplication.KnockbackReasonCrushing")
+                    : localize("GUM.DamageApplication.KnockbackReasonCutting"))
+            : localize("GUM.DamageApplication.KnockbackReasonIneligible");
         const details = [
             typeReason,
-            `Distância: ${Math.floor(this._toNumber(basicDamage, 0))} ÷ ${result.threshold} = ${result.distance} m (múltiplos completos).`,
+            format("GUM.DamageApplication.KnockbackDistance", { damage: Math.floor(this._toNumber(basicDamage, 0)), threshold: result.threshold, distance: result.distance }),
             result.distance > 0
-                ? `Teste para não cair: maior entre DX ${result.dx}, Acrobacia ${result.acrobatics || "—"} ou Judô ${result.judo || "—"}; penalidade ${result.fallPenalty}. ${result.balanceBonus ? "Equilíbrio Perfeito +4. " : ""}Alvo efetivo: ${result.targetNumber}.`
-                : "Sem metros completos de projeção."
+                ? format("GUM.DamageApplication.KnockbackFallTest", {
+                    dx: result.dx,
+                    acrobatics: result.acrobatics || "—",
+                    judo: result.judo || "—",
+                    penalty: result.fallPenalty,
+                    balance: result.balanceBonus ? localize("GUM.DamageApplication.KnockbackBalanceBonus") : "",
+                    target: result.targetNumber
+                })
+                : localize("GUM.DamageApplication.KnockbackNoDistance")
         ];
-        if (result.distance > 0) details.push("Se atingir obstáculo, trate como colisão com velocidade igual à distância projetada.");
+        if (result.distance > 0) details.push(localize("GUM.DamageApplication.KnockbackCollisionHint"));
         advisor.dataset.status = status;
-        if (summaryEl) summaryEl.innerHTML = `<strong>${result.distance} m de projeção estimada.</strong><ul>${details.map(detail => `<li>${detail}</li>`).join("")}</ul>`;
+        if (summaryEl) summaryEl.innerHTML = `<strong>${format("GUM.DamageApplication.KnockbackEstimated", { distance: result.distance })}</strong><ul>${details.map(detail => `<li>${detail}</li>`).join("")}</ul>`;
         return { ...result, status };
     }
 
@@ -350,9 +413,33 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
         return {
             torsoDR,
             markedDR,
-            markedLabel: markedRow?.querySelector(".label")?.textContent?.trim() || "Torso",
+            markedLabel: markedRow?.querySelector(".label")?.textContent?.trim() || localize("GUM.DamageApplication.Locations.Torso"),
             effectiveDR: Math.ceil((torsoDR + markedDR) / 2)
         };
+    }
+
+    _localizedBodyLocationLabel(key, data = {}) {
+        const match = String(key || "").match(/^([a-z]+)(?:_([lr]))?(?:_(\d+))?$/);
+        const baseKey = match?.[1];
+        const labelKey = BODY_LOCATION_LABEL_KEYS[baseKey];
+        if (!labelKey) return data.label ?? data.name ?? key;
+
+        const location = localize(labelKey);
+        const side = match?.[2];
+        const index = match?.[3] || (side ? "1" : "");
+        if (side) {
+            return format("GUM.DamageApplication.LocationWithSide", {
+                location,
+                side: localize(side === "l" ? "GUM.DamageApplication.LeftAbbreviation" : "GUM.DamageApplication.RightAbbreviation"),
+                index
+            });
+        }
+        return index ? format("GUM.DamageApplication.LocationWithIndex", { location, index }) : location;
+    }
+
+    _localizedBodyGroupLabel(groupKey, fallback) {
+        const labelKey = BODY_LOCATION_GROUP_KEYS[groupKey];
+        return labelKey ? localize(labelKey) : fallback;
     }
 
     _buildLocationRows(profile, drLocations) {
@@ -361,8 +448,10 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
         const extraKeys = Object.keys(drLocations || {})
             .filter(key => !locationsData[key] && getBodyLocationDefinition(key))
             .sort((a, b) => {
-                const aLabel = getBodyLocationDefinition(a)?.label ?? a;
-                const bLabel = getBodyLocationDefinition(b)?.label ?? b;
+                const aDefinition = getBodyLocationDefinition(a);
+                const bDefinition = getBodyLocationDefinition(b);
+                const aLabel = this._localizedBodyLocationLabel(a, aDefinition);
+                const bLabel = this._localizedBodyLocationLabel(b, bDefinition);
                 return aLabel.localeCompare(bLabel);
             });
         const combinedOrder = [...baseOrder, ...extraKeys];
@@ -376,12 +465,12 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
 
             items.push({
                 key,
-                label: data.label ?? data.name ?? key,
+                label: this._localizedBodyLocationLabel(key, data),
                 roll: data.roll ?? "--",
                 totalDR: baseDR,
                 groupKey: data.groupKey,
-                groupLabel: data.groupLabel,
-                groupPlural: data.groupPlural,
+                groupLabel: this._localizedBodyGroupLabel(data.groupKey, data.groupLabel),
+                groupPlural: this._localizedBodyGroupLabel(data.groupKey, data.groupPlural),
                 drSignature: this._getDRSignature(drData)
             });
         }
@@ -438,7 +527,7 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
 
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
-            title: `Aplicar Dano`,
+            title: localize("GUM.DamageApplication.Title"),
             template: "systems/gum/templates/apps/damage-application.hbs",
             classes: ["dialog", "gurps", "damage-application-dialog"],
             width: 760,
@@ -481,8 +570,8 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
         };
 
         const damageablePools = [];
-        damageablePools.push({ path: 'system.attributes.hp.value', label: `Pontos de Vida (PV)` });
-        damageablePools.push({ path: 'system.attributes.fp.value', label: `Pontos de Fadiga (PF)` });
+        damageablePools.push({ path: 'system.attributes.hp.value', label: localize("GUM.DamageApplication.HitPoints") });
+        damageablePools.push({ path: 'system.attributes.fp.value', label: localize("GUM.DamageApplication.FatiguePoints") });
                const combatMeters = this.targetActor.system.combat.combat_meters || {};
         for (const [key, meter] of Object.entries(combatMeters)) {
             const meterPath = `system.combat.combat_meters.${key}.${meter.current !== undefined ? "current" : "value"}`;
@@ -491,12 +580,12 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
         const spellReserves = this.targetActor.system.spell_reserves || {};
         for (const [key, reserve] of Object.entries(spellReserves)) {
             const reservePath = `system.spell_reserves.${key}.${reserve.current !== undefined ? "current" : "value"}`;
-            damageablePools.push({ path: reservePath, label: `RM:${reserve.name}` });
+            damageablePools.push({ path: reservePath, label: format("GUM.DamageApplication.SpellReserve", { name: reserve.name }) });
         }
  const powerReserves = this.targetActor.system.power_reserves || {};
         for (const [key, reserve] of Object.entries(powerReserves)) {
             const reservePath = `system.power_reserves.${key}.${reserve.current !== undefined ? "current" : "value"}`;
-            damageablePools.push({ path: reservePath, label: `RP:${reserve.name}` });
+            damageablePools.push({ path: reservePath, label: format("GUM.DamageApplication.PowerReserve", { name: reserve.name }) });
         }
         context.damageablePools = damageablePools;
         this.preparedOnDamageEffects = await this._resolveOnDamageEffects();
@@ -509,7 +598,7 @@ const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
 
         context.locations = this._buildLocationRows(profile, totalDrLocations);
 
-        context.locations.push({ key: "custom", label: "Outro", roll: "--", totalDR: 0, custom: true });
+        context.locations.push({ key: "custom", label: localize("GUM.DamageApplication.OtherLocation"), roll: "--", totalDR: 0, custom: true });
 
         const hasNumericRoll = context.locations.some(loc => {
             const firstRoll = parseInt(loc.roll.split(/[,-]/)[0]);
@@ -526,7 +615,7 @@ const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
             });
         }
         const mainDamageType = this.damageData.main?.type?.toLowerCase() || '';
-        const woundingModifiersList = [ { type: "Queimadura", abrev: "qmd", mult: 1 }, { type: "Corrosão", abrev: "cor", mult: 1 }, { type: "Toxina", abrev: "tox", mult: 1 }, { type: "Contusão", abrev: "cont", mult: 1 }, { type: "Corte", abrev: "cort", mult: 1.5 }, { type: "Perfuração", abrev: "perf", mult: 2 }, { type: "Perfurante", abrev: "pi", mult: 1 }, { type: "Pouco Perfurante", abrev: "pi-", mult: 0.5 }, { type: "Muito Perfurante", abrev: "pi+", mult: 1.5 }, { type: "Ext. Perfurante", abrev: "pi++", mult: 2 } ];
+        const woundingModifiersList = this._baseWoundingModifiers();
         let defaultModFound = false;
         context.woundingModifiers = woundingModifiersList.map(mod => { mod.checked = (mod.abrev === mainDamageType); if (mod.checked) defaultModFound = true; return mod; });
         context.noModChecked = !defaultModFound;
@@ -631,20 +720,20 @@ const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
                     htmlContent += `<hr style="margin-top: 6px; margin-bottom: 6px;">`;
 
                     htmlContent += `
-                        <div class="wounding-row">
+                        <div class="wounding-row" data-abrev="none">
                             <label class="custom-radio">
                                 <input type="radio" name="wounding_mod_type" value="1" ${selectedAbrev === '' ? 'checked' : ''}/>
-                                <span>Sem Modificador</span>
+                                <span>${localize("GUM.DamageApplication.NoModifier")}</span>
                                 <span class="dots"></span>
                                 <span class="mult">x1</span>
                             </label>
                         </div>`;
 
                     htmlContent += `
-                        <div class="wounding-row">
+                        <div class="wounding-row" data-abrev="custom">
                             <label class="custom-radio">
                                 <input type="radio" name="wounding_mod_type" value="custom"/>
-                                <span>Outros Mod.:</span>
+                                <span>${localize("GUM.DamageApplication.OtherModifiers")}:</span>
                                 <input type="number" name="custom_wounding_mod" value="1" step="0.5" class="custom-mod-input"/>
                             </label>
                         </div>`;
@@ -751,8 +840,8 @@ async _updateDamageCalculation(form) {
     const effects = [];
     let originalBase = damageRolled;
     let modifiedBase = damageRolled;
-    if (halfDamageChecked) { modifiedBase = Math.floor(modifiedBase / 2); effects.push(`🟡 Dano reduzido pela metade (1/2D): ${originalBase} ➜ ${modifiedBase}`); originalBase = modifiedBase; }
-    if (explosionChecked && explosionDistance > 0) { const divisor = Math.max(1, 3 * explosionDistance); const preExplosion = modifiedBase; modifiedBase = Math.floor(modifiedBase / divisor); effects.push(`🔴 Explosão: ${preExplosion} ➜ ${modifiedBase} (÷${divisor})`); }
+    if (halfDamageChecked) { modifiedBase = Math.floor(modifiedBase / 2); effects.push(format("GUM.DamageApplication.HalfDamageCalculation", { original: originalBase, modified: modifiedBase })); originalBase = modifiedBase; }
+    if (explosionChecked && explosionDistance > 0) { const divisor = Math.max(1, 3 * explosionDistance); const preExplosion = modifiedBase; modifiedBase = Math.floor(modifiedBase / divisor); effects.push(format("GUM.DamageApplication.ExplosionCalculation", { original: preExplosion, modified: modifiedBase, divisor })); }
     damageRolled = modifiedBase;
     const selectedModRadio = form.querySelector('input[name="wounding_mod_type"]:checked');
     const selectedRowForMod = selectedModRadio?.closest('.wounding-row');
@@ -780,7 +869,7 @@ async _updateDamageCalculation(form) {
     if (largeAreaInjury) {
         largeAreaDRData = this._getLargeAreaInjuryDR(form, damageTypeKey);
         selectedLocationDR = largeAreaDRData.effectiveDR;
-        effects.push(`🟠 Lesão em Larga Escala: RD efetiva ${selectedLocationDR} = ⌈(${largeAreaDRData.torsoDR} torso + ${largeAreaDRData.markedDR} ${largeAreaDRData.markedLabel}) ÷ 2⌉`);
+        effects.push(format("GUM.DamageApplication.LargeAreaCalculation", { effective: selectedLocationDR, torso: largeAreaDRData.torsoDR, marked: largeAreaDRData.markedDR, location: largeAreaDRData.markedLabel }));
     }
     const ignoreDR = form.querySelector('[name="ignore_dr"]')?.checked;
     
@@ -788,24 +877,24 @@ async _updateDamageCalculation(form) {
     let penetratingDamage = Math.max(0, damageRolled - effectiveDR);
     let woundingMod = 1;
     if (selectedModRadio) { if (selectedModRadio.value === 'custom') { woundingMod = parseFloat(form.querySelector('[name="custom_wounding_mod"]')?.value) || 1; } else { woundingMod = parseFloat(selectedModRadio.value) || 1; } }
-    if (toleranceType === "nao-vivo") { const table = { "perf": 1, "pi": 1 / 3, "pi-": 0.2, "pi+": 0.5, "pi++": 1 }; if (table[damageAbrev] !== undefined) { woundingMod = table[damageAbrev]; effects.push("⚙️ Tolerância: Não Vivo (mod. ajustado)"); } }
-    if (toleranceType === "homogeneo") { const table = { "perf": 0.5, "pi": 0.2, "pi-": 0.1, "pi+": 1 / 3, "pi++": 0.5 }; if (table[damageAbrev] !== undefined) { woundingMod = table[damageAbrev]; effects.push("⚙️ Tolerância: Homogêneo (mod. ajustado)"); } }
-    if (toleranceType === "difuso") { woundingMod = 1; effects.push("⚙️ Tolerância: Difuso (lesão máx. = 1)"); }
+    if (toleranceType === "nao-vivo") { const table = { "perf": 1, "pi": 1 / 3, "pi-": 0.2, "pi+": 0.5, "pi++": 1 }; if (table[damageAbrev] !== undefined) { woundingMod = table[damageAbrev]; effects.push(localize("GUM.DamageApplication.UnlivingCalculation")); } }
+    if (toleranceType === "homogeneo") { const table = { "perf": 0.5, "pi": 0.2, "pi-": 0.1, "pi+": 1 / 3, "pi++": 0.5 }; if (table[damageAbrev] !== undefined) { woundingMod = table[damageAbrev]; effects.push(localize("GUM.DamageApplication.HomogeneousCalculation")); } }
+    if (toleranceType === "difuso") { woundingMod = 1; effects.push(localize("GUM.DamageApplication.DiffuseCalculation")); }
     let finalInjury = Math.floor(penetratingDamage * woundingMod);
     if (toleranceType === "difuso") finalInjury = Math.min(1, finalInjury);
     if (damageReductionEnabled) {
         const preReductionInjury = finalInjury;
         finalInjury = Math.floor(finalInjury / damageReductionValue);
-        effects.push(`🛡️ Redução de Dano: ${preReductionInjury} ➜ ${finalInjury} (÷${damageReductionValue}, após RD + mod. ferimento)`);
+        effects.push(format("GUM.DamageApplication.DamageReductionCalculation", { original: preReductionInjury, injury: finalInjury, divisor: damageReductionValue }));
     }
     if (effectsOnlyChecked) { finalInjury = 0; } // Zera a lesão se a opção estiver marcada
     if (effectsOnlyChecked || onlyKnockbackChecked) { finalInjury = 0; } // Zera a lesão se a opção estiver marcada
 
-    const selectedLocationLabel = form.querySelector('.location-row.active .label')?.textContent || '(Selecione)';
+    const selectedLocationLabel = form.querySelector('.location-row.active .label')?.textContent || localize("GUM.DamageApplication.SelectLocation");
     const drLabel = ignoreDR
-        ? 'Ignorar RD'
+        ? localize("GUM.DamageApplication.IgnoreDRShort")
         : largeAreaInjury
-            ? `Larga Escala: torso ${largeAreaDRData?.torsoDR ?? 0} + ${largeAreaDRData?.markedLabel ?? 'marcado'} ${largeAreaDRData?.markedDR ?? 0}`
+            ? format("GUM.DamageApplication.LargeAreaDRLabel", { torso: largeAreaDRData?.torsoDR ?? 0, location: largeAreaDRData?.markedLabel ?? localize("GUM.DamageApplication.MarkedLocation"), marked: largeAreaDRData?.markedDR ?? 0 })
             : selectedLocationLabel;
     const drDisplay = ignoreDR
         ? '0'
@@ -818,13 +907,12 @@ async _updateDamageCalculation(form) {
             const selectedRowText = selectedModRadio.closest('.wounding-row')?.textContent || '';
 
             if (selectedModRadio.value === 'custom') {
-                modName = 'outros mod.';
-            } else if (selectedRowText.includes('Sem Modificador')) {
-                // Agora checamos pelo texto, que é único para esta opção
-                modName = 'sem mod.';
+                modName = localize("GUM.DamageApplication.OtherModifiersShort");
+            } else if (selectedRowForMod?.dataset?.abrev === 'none') {
+                modName = localize("GUM.DamageApplication.NoModifierShort");
             } else {
                 // Para todos os outros, extrai a abreviação dos parênteses
-                modName = selectedRowText.match(/\(([^)]+)\)/)?.[1] || 'mod';
+                modName = selectedRowText.match(/\(([^)]+)\)/)?.[1] || localize("GUM.DamageApplication.ModifierShort");
             }
         }
     const field = (sel) => form.querySelector(`[data-field="${sel}"]`);
@@ -847,44 +935,44 @@ async _updateDamageCalculation(form) {
     let notesHtml = "";
 
     if (effectsOnlyChecked) {
-        notesHtml += `<li class="feedback-note">Apenas efeitos serão aplicados.</li>`;
+        notesHtml += `<li class="feedback-note">${localize("GUM.DamageApplication.EffectsOnlyNote")}</li>`;
     }
 
     if (onlyKnockbackChecked) {
-        notesHtml += `<li class="feedback-note">Apenas Projeção: dano direto zerado, mas a distância usa o dano básico.</li>`;
+        notesHtml += `<li class="feedback-note">${localize("GUM.DamageApplication.KnockbackOnlyNote")}</li>`;
     }
 
     if (applyAsHeal) {
-    notesHtml += `<li class="feedback-note">O valor final será aplicada como restauração.</li>`;
+    notesHtml += `<li class="feedback-note">${localize("GUM.DamageApplication.HealingNote")}</li>`;
     if (injuryLabel) {
-        injuryLabel.textContent = "Restauração";
+        injuryLabel.textContent = localize("GUM.DamageApplication.Restoration");
         injuryLabel.style.color = "#3b7d3b"; // ✅ Cor do label adicionada
     }
     if (injuryValue) injuryValue.style.color = "#3b7d3b"; // Verde
     } else {
     // Garante que volta ao normal se a caixa for desmarcada
     if (injuryLabel) {
-        injuryLabel.textContent = "Lesão";
+        injuryLabel.textContent = localize("GUM.DamageApplication.Injury");
         injuryLabel.style.color = "#c53434"; // ✅ Cor do label resetada
     }
     if (injuryValue) injuryValue.style.color = "#c53434"; // Vermelho
     }
 
-    if (halfDamageChecked) { notesHtml += `<li>1/2D: Dano base reduzido.</li>`; }
-    if (explosionChecked && explosionDistance > 0) { const divisor = Math.max(1, 3 * explosionDistance); notesHtml += `<li>Explosão: Dano dividido por ${divisor}.</li>`; }
-    if (largeAreaInjury) { notesHtml += `<li>Lesão em Larga Escala: usa a média arredondada para cima entre a RD do torso e a RD marcada em laranja.</li>`; }
-    if (ignoreDR) { notesHtml += `<li>Ignorar RD do Alvo: RD exibida e aplicada como 0.</li>`; }
-    if (toleranceType) { const toleranceName = { "nao-vivo": "Não Vivo", "homogeneo": "Homogêneo", "difuso": "Difuso"}[toleranceType]; notesHtml += `<li>Tolerância: ${toleranceName} aplicada.</li>`; }
-    if (damageReductionEnabled) { notesHtml += `<li>Redução de Dano aplicada por último: lesão ÷ ${damageReductionValue}.</li>`; }
+    if (halfDamageChecked) { notesHtml += `<li>${localize("GUM.DamageApplication.HalfDamageNote")}</li>`; }
+    if (explosionChecked && explosionDistance > 0) { const divisor = Math.max(1, 3 * explosionDistance); notesHtml += `<li>${format("GUM.DamageApplication.ExplosionNote", { divisor })}</li>`; }
+    if (largeAreaInjury) { notesHtml += `<li>${localize("GUM.DamageApplication.LargeAreaNote")}</li>`; }
+    if (ignoreDR) { notesHtml += `<li>${localize("GUM.DamageApplication.IgnoreDRNote")}</li>`; }
+    if (toleranceType) { const toleranceName = { "nao-vivo": localize("GUM.DamageApplication.Unliving"), "homogeneo": localize("GUM.DamageApplication.Homogeneous"), "difuso": localize("GUM.DamageApplication.DiffuseShort")}[toleranceType]; notesHtml += `<li>${format("GUM.DamageApplication.ToleranceNote", { tolerance: toleranceName })}</li>`; }
+    if (damageReductionEnabled) { notesHtml += `<li>${format("GUM.DamageApplication.DamageReductionNote", { divisor: damageReductionValue })}</li>`; }
     const knockbackResult = this._updateKnockbackAdvisor(form, { basicDamage: damageRolled, damageTypeKey, penetratingDamage });
     if (knockbackResult?.distance > 0) {
-        notesHtml += `<li>Projeção: ${knockbackResult.distance} m; teste para não cair em ${knockbackResult.targetNumber} ou menos.</li>`;
+        notesHtml += `<li>${format("GUM.DamageApplication.KnockbackNote", { distance: knockbackResult.distance, target: knockbackResult.targetNumber })}</li>`;
     }
     const heavyDefenseResult = this._updateHeavyWeaponDefenseAdvisor(form);
     if (heavyDefenseResult?.status === "warning") {
-        notesHtml += `<li>Aviso de peso da defesa: ${heavyDefenseResult.headline}</li>`;
+        notesHtml += `<li>${format("GUM.DamageApplication.DefenseWeightWarning", { headline: heavyDefenseResult.headline })}</li>`;
     } else if (heavyDefenseResult?.status === "danger") {
-        notesHtml += `<li class="feedback-note">Atenção: ${heavyDefenseResult.headline}</li>`;
+        notesHtml += `<li class="feedback-note">${format("GUM.DamageApplication.Attention", { headline: heavyDefenseResult.headline })}</li>`;
     }
 
     if (notesContainer) { notesContainer.innerHTML = notesHtml ? `<ul>${notesHtml}</ul>` : ""; }
@@ -911,17 +999,21 @@ async _updateDamageCalculation(form) {
         const isChecked = effectState.checked && meetsRequirements;
         const resistanceData = effect.item?.system?.resistanceRoll;
         const requiresResistance = resistanceData?.isResisted;
-        const chanceText = effect.activationChance < 100 ? `Chance: ${effect.activationChance}%` : null;
+        const chanceText = effect.activationChance < 100 ? format("GUM.DamageApplication.Chance", { chance: effect.activationChance }) : null;
         const reqTexts = [];
-        if (effect.minInjury) reqTexts.push(`Lesão mín. ${effect.minInjury}`);
-        if (requiredType) reqTexts.push(`Tipo: ${requiredType.toUpperCase()}`);
+        if (effect.minInjury) reqTexts.push(format("GUM.DamageApplication.MinimumInjury", { injury: effect.minInjury }));
+        if (requiredType) reqTexts.push(format("GUM.DamageApplication.DamageType", { type: requiredType.toUpperCase() }));
         const disabledAttr = meetsRequirements ? "" : "disabled";
-        const statusText = !meetsRequirements ? "Requisitos não atendidos" : requiresResistance ? "Requer teste de resistência" : "Aplicação direta";
+        const statusText = !meetsRequirements
+            ? localize("GUM.DamageApplication.RequirementsNotMet")
+            : requiresResistance
+                ? localize("GUM.DamageApplication.RequiresResistance")
+                : localize("GUM.DamageApplication.DirectApplication");
         const resistanceClass = requiresResistance ? "eff-type" : "eff-type muted";
         const resistanceStatus = effectState.resistanceResult
             ? effectState.resistanceResult.shouldApply
-                ? "(Aplicável)"
-                : "(Bloqueado)"
+                ? localize("GUM.DamageApplication.Applicable")
+                : localize("GUM.DamageApplication.Blocked")
             : statusText;
 
         if (isChecked && requiresResistance && !effectState.resistanceResult) {
@@ -936,38 +1028,40 @@ async _updateDamageCalculation(form) {
         });
 
         const resistanceRollText = requiresResistance && resistanceData?.attribute
-            ? `(Teste de ${resistanceData.attribute.toUpperCase()})`
-            : "(Automático)";
+            ? format("GUM.DamageApplication.AttributeTest", { attribute: resistanceData.attribute.toUpperCase() })
+            : localize("GUM.DamageApplication.Automatic");
 
         const resistanceResultText = effectState.resistanceResult?.resultText
             ? `<div class="eff-status">${effectState.resistanceResult.resultText}</div>`
             : "";
         const canPublishResistanceResult = requiresResistance && !!effectState.resistanceResult?.resultText;
         const publishedClass = effectState.resistanceResult?.publishedToChat ? "published" : "";
-        const publishTitle = effectState.resistanceResult?.publishedToChat ? "Resultado já publicado no chat" : "Publicar resultado do teste no chat";
+        const publishTitle = effectState.resistanceResult?.publishedToChat
+            ? localize("GUM.DamageApplication.ResultAlreadyPublished")
+            : localize("GUM.DamageApplication.PublishTestResult");
 
         potentialEffectsHTML += `
             <div class="effect-card ${meetsRequirements ? '' : 'disabled'}" data-effect-id="${effect.id}">
                 <label class="custom-checkbox">
                     <input type="checkbox" class="contingent-effect-toggle" ${isChecked ? 'checked' : ''} ${disabledAttr}>
-                    <span>${effect.item?.name || "Efeito desconhecido"}</span>
+                    <span>${effect.item?.name || localize("GUM.DamageApplication.UnknownEffect")}</span>
                 </label>
                 <div class="${resistanceClass}">
                     ${resistanceRollText} ${chanceText ? `• ${chanceText}` : ''}
                 </div>
                 ${reqTexts.length ? `<div class="eff-meta">${reqTexts.join(" • ")}</div>` : ''}
                 | ${resistanceResultText} <div class="eff-meta">${resistanceStatus}</div>
-                ${requiresResistance ? `<a class="npc-resistance-roll" data-effect-id="${effect.id}" title="Rolar para o alvo"><i class="fas fa-dice-d20"></i></a>` : ''} 
+                ${requiresResistance ? `<a class="npc-resistance-roll" data-effect-id="${effect.id}" title="${localize("GUM.DamageApplication.RollForTarget")}"><i class="fas fa-dice-d20"></i></a>` : ''}
                 ${canPublishResistanceResult ? `<a class="publish-resistance-result ${publishedClass}" data-effect-id="${effect.id}" title="${publishTitle}"><i class="fas fa-bullhorn"></i></a>` : ''}
             </div>
         `;
     }
 
-    effectsSummaryEl.innerHTML = hasPotentialEffects ? potentialEffectsHTML : `<div class="placeholder">Nenhum efeito adicional</div>`;
+    effectsSummaryEl.innerHTML = hasPotentialEffects ? potentialEffectsHTML : `<div class="placeholder">${localize("GUM.DamageApplication.NoAdditionalEffects")}</div>`;
     const proposeButton = actionButtonsEl.querySelector('button[data-action="proposeTests"]');
     if (proposeButton) {
         proposeButton.disabled = false;
-        proposeButton.textContent = "Propor Testes";
+        proposeButton.textContent = localize("GUM.DamageApplication.ProposeTests");
         if (needsResistanceRoll) { proposeButton.style.display = 'inline-block'; } else { proposeButton.style.display = 'none'; }
     }
 }
@@ -979,14 +1073,14 @@ async _updateDamageCalculation(form) {
         });
 
         if (effectsNeedingRoll.length === 0) {
-            return ui.notifications.info("Nenhum efeito com resistência selecionado.");
+            return ui.notifications.info(localize("GUM.DamageApplication.NoResistanceEffectSelected"));
         }
 
-        ui.notifications.info("Enviando propostas de teste para o chat...");
+        ui.notifications.info(localize("GUM.DamageApplication.SendingTestProposals"));
         for (const effect of effectsNeedingRoll) {
             this._promptResistanceRoll(effect);
         }
-        this.element.find('button[data-action="proposeTests"]').prop('disabled', true).text('Testes Propostos');
+        this.element.find('button[data-action="proposeTests"]').prop('disabled', true).text(localize("GUM.DamageApplication.TestsProposed"));
     }
     
 async _onNpcResistanceRoll(effectId) {
@@ -1005,7 +1099,7 @@ async _onNpcResistanceRoll(effectId) {
     const targetToken = this.targetToken || target?.getActiveTokens?.()[0] || null;
     const targetKey = targetToken?.document?.uuid || target?.uuid;
     const request = {
-        id: foundry.utils.randomID(), title: `Resistência: ${effect.item.name}`,
+        id: foundry.utils.randomID(), title: format("GUM.DamageApplication.ResistanceTitle", { effect: effect.item.name }),
         origin: { type: "damage-barrier", sourceActorUuid: this.attackerActor?.uuid, effectUuid: effect.item.uuid, effectLinkId: effectId },
         targets: [{ targetKey, actorUuid: target?.uuid, tokenUuid: targetToken?.document?.uuid || null, actorName: target?.name, recipientUserIds: [] }],
         test: { ...normalized.test, fixedModifier: totalModifier }, consequence: normalized.consequence
@@ -1013,10 +1107,10 @@ async _onNpcResistanceRoll(effectId) {
     const outcome = await executeRollRequest(request, targetKey, { prompt: false, onResult: async result => {
         const barrier = evaluateBarrierConsequence(result, normalized.consequence);
         const simpleResultText = `${result.total} vs ${result.effectiveTarget} — ${result.resultLabel}`;
-        const chatResultText = `<div class="gurps-roll-card premium roll-result"><header class="card-header"><h3>Teste de Resistência</h3><small>${target?.name || "Alvo"}</small></header><div class="card-content"><p>${simpleResultText}</p><p>Margem ${result.margin}</p></div></div>`;
+        const chatResultText = `<div class="gurps-roll-card premium roll-result"><header class="card-header"><h3>${localize("GUM.DamageApplication.ResistanceTest")}</h3><small>${target?.name || localize("GUM.DamageApplication.TargetFallback")}</small></header><div class="card-content"><p>${simpleResultText}</p><p>${format("GUM.DamageApplication.Margin", { margin: result.margin })}</p></div></div>`;
         await this.updateEffectCard(effectId, { isSuccess: barrier.success, shouldApply: barrier.shouldApply, resultText: simpleResultText, chatResultText, result }, effect.item.system, { autoApply: false });
     }});
-    if (!outcome.accepted) ui.notifications.warn(outcome.reason || "Não foi possível realizar a resistência.");
+    if (!outcome.accepted) ui.notifications.warn(outcome.reason || localize("GUM.DamageApplication.ResistanceFailure"));
 }
     
     _publishResistanceResult(effectId) {
@@ -1056,7 +1150,7 @@ async _onNpcResistanceRoll(effectId) {
         const rollContext = ["check_dx", "skill_dx", "check_iq", "skill_iq", "attack_melee", "attack_ranged"].join(",");
 
         const effectPayload = {
-            name: `Choque (-${nextShockValue})`,
+            name: format("GUM.DamageApplication.ShockEffect", { value: nextShockValue }),
             img: pendingShock?.img || "icons/svg/daze.svg",
             changes: [],
             statuses: [],
@@ -1099,17 +1193,17 @@ async _onNpcResistanceRoll(effectId) {
         let resultLine = '';
 
         if (applyAsHeal && finalInjury > 0) {
-            resultLine = `<p>${this.targetActor.name} Recuperou <strong>${finalInjury} em ${poolLabel}</strong>.</p>`;
+            resultLine = `<p>${format("GUM.DamageApplication.ChatRecovered", { target: this.targetActor.name, injury: finalInjury, pool: poolLabel })}</p>`;
         } else if (finalInjury > 0 && !effectsOnlyChecked) {
-            resultLine = `<p>${this.targetActor.name} Sofreu <strong>${finalInjury} de lesão</strong> em ${poolLabel}.</p>`;
+            resultLine = `<p>${format("GUM.DamageApplication.ChatInjury", { target: this.targetActor.name, injury: finalInjury, pool: poolLabel })}</p>`;
         } else if (!applyAsHeal && finalInjury <= 0 && !effectsOnlyChecked) {
-            resultLine = `<p>O ataque não ultrapassou a resistência a dano do alvo.</p>`;
+            resultLine = `<p>${localize("GUM.DamageApplication.ChatNoPenetration")}</p>`;
         }
 
         return `
             <div class="gurps-roll-card premium attack-summary-card">
                 <header class="card-header">
-                    <h3>Resumo do Ataque</h3>
+                    <h3>${localize("GUM.DamageApplication.AttackSummary")}</h3>
                 </header>
                 <div class="card-content">
                     <div class="summary-actors vertical">
@@ -1125,23 +1219,23 @@ async _onNpcResistanceRoll(effectId) {
                     </div>
                     ${resultLine ? `
                     <div class="summary-block result-card">
-                        <div class="minicard-title">Resultado</div>
+                        <div class="minicard-title">${localize("GUM.DamageApplication.Result")}</div>
                         ${resultLine}
                     </div>` : ''}
                     ${appliedEffectNames.length > 0 || contingentApplied.length > 0 ? `
                     <div class="summary-block effects-card">
-                        <div class="minicard-title">Efeitos Aplicados</div>
+                        <div class="minicard-title">${localize("GUM.DamageApplication.AppliedEffects")}</div>
                         ${[...appliedEffectNames, ...contingentApplied].map(name => `<p><strong>${name}</strong></p>`).join('')}
                     </div>` : ''}
                     ${pendingEffectNames.length > 0 ? `
                     <div class="summary-block pending-card">
-                        <div class="minicard-title">Efeitos Pendentes</div>
-                        <p>Aguardando teste de resistência:</p>
+                        <div class="minicard-title">${localize("GUM.DamageApplication.PendingEffects")}</div>
+                        <p>${localize("GUM.DamageApplication.AwaitingResistance")}</p>
                         ${pendingEffectNames.map(name => `<p><strong>${name}</strong></p>`).join('')}
                     </div>` : ''}
                     ${preventedEffectNames.length > 0 ? `
                     <div class="summary-block prevented-card">
-                        <div class="minicard-title">Efeitos Impedidos</div>
+                        <div class="minicard-title">${localize("GUM.DamageApplication.PreventedEffects")}</div>
                         ${preventedEffectNames.map(name => `<p><strong>${name}</strong></p>`).join('')}
                     </div>` : ''}
                 </div>
@@ -1159,7 +1253,7 @@ async _onNpcResistanceRoll(effectId) {
             const targetIgnoresShock = ignoreShockSources.length > 0;
             const applyShock = !targetIgnoresShock && (form.querySelector('[name="special_apply_shock"]')?.checked ?? true);
             const selectedPoolPath = form.querySelector('[name="damage_target_pool"]').value;
-            if (!selectedPoolPath) { this.isApplying = false; return ui.notifications.error("Nenhum alvo para o dano foi selecionado."); }
+            if (!selectedPoolPath) { this.isApplying = false; return ui.notifications.error(localize("GUM.DamageApplication.NoDamageTarget")); }
             const currentPoolValue = foundry.utils.getProperty(this.targetActor, selectedPoolPath);
             const poolLabel = form.querySelector('[name="damage_target_pool"] option:checked').textContent;
             let summaryMessage = null;
@@ -1202,7 +1296,9 @@ async _onNpcResistanceRoll(effectId) {
             const preventedEffectNames = [];
             if (targetIgnoresShock && game.combat && !applyAsHeal && finalInjury > 0 && !effectsOnlyChecked) {
                 const sourceNames = ignoreShockSources.map(effect => effect.name).filter(Boolean).join(", ");
-                preventedEffectNames.push(sourceNames ? `Choque ignorado: ${sourceNames}` : "Choque ignorado por efeito ativo");
+                preventedEffectNames.push(sourceNames
+                    ? format("GUM.DamageApplication.ShockIgnoredSources", { sources: sourceNames })
+                    : localize("GUM.DamageApplication.ShockIgnoredHint"));
             }
             let shockAppliedValue = 0;
             const pendingResistanceQueue = [];
@@ -1243,7 +1339,7 @@ async _onNpcResistanceRoll(effectId) {
                 if (applyShock && !applyAsHeal && finalInjury > 0 && !effectsOnlyChecked) {
                 shockAppliedValue = await this._applyShockEffect(finalInjury);
                 if (shockAppliedValue > 0) {
-                    appliedEffectNames.push(`Choque (-${shockAppliedValue})`);
+                    appliedEffectNames.push(format("GUM.DamageApplication.ShockEffect", { value: shockAppliedValue }));
                 }
             }
 
@@ -1264,7 +1360,7 @@ async _onNpcResistanceRoll(effectId) {
             }
 
             if (pendingResistance) {
-                ui.notifications.info("Efeitos com resistência precisam de teste antes de serem aplicados. As solicitações foram enviadas para o chat.");
+                ui.notifications.info(localize("GUM.DamageApplication.PendingResistanceNotice"));
             }
 
             if (summaryMessage) {
@@ -1320,7 +1416,9 @@ async _onNpcResistanceRoll(effectId) {
         if (card) {
             const statusEl = card.querySelector('.eff-status');
             if (statusEl) {
-                statusEl.textContent = rollResult.resultText || (shouldApply ? "Aplicável" : "Bloqueado");
+                statusEl.textContent = rollResult.resultText || (shouldApply
+                    ? localize("GUM.DamageApplication.ApplicableBare")
+                    : localize("GUM.DamageApplication.BlockedBare"));
             }
         }
 
@@ -1341,7 +1439,7 @@ async _onNpcResistanceRoll(effectId) {
         if (effectTargets.length === 0) return;
         await applySingleEffect(effect.item, effectTargets, { actor: this.attackerActor, origin: effect.item });
         state.applied = true;
-        ui.notifications.info(`Efeito aplicado: ${effect.item.name}`);
+        ui.notifications.info(format("GUM.DamageApplication.EffectApplied", { effect: effect.item.name }));
     }
 
     async _promptResistanceRoll(effect) {
@@ -1349,7 +1447,9 @@ async _onNpcResistanceRoll(effectId) {
         const rollData = effect.item.system?.resistanceRoll || {};
         const target = this.targetActor;
         const targetToken = this.targetActor?.getActiveTokens?.()[0] || null;
-        const applyOnText = rollData.applyOn === 'success' ? 'Aplicar em Sucesso' : 'Aplicar em Falha';
+        const applyOnText = rollData.applyOn === 'success'
+            ? localize("GUM.DamageApplication.ApplyOnSuccess")
+            : localize("GUM.DamageApplication.ApplyOnFailure");
         const marginValue = (rollData.margin !== undefined && rollData.margin !== null && rollData.margin !== '') ? rollData.margin : '—';
         const rawModifier = (rollData.modifier ?? "").toString().trim();
         const resolvedModifier = evaluateNumericFormula(rawModifier, {
@@ -1375,7 +1475,7 @@ async _onNpcResistanceRoll(effectId) {
         const normalized = normalizeResistanceRoll(rollData);
         const targetKey = targetToken?.document?.uuid || target?.uuid;
         const request = {
-            version: 1, id: foundry.utils.randomID(), status: "pending", title: `Resistência: ${effect.item.name}`,
+            version: 1, id: foundry.utils.randomID(), status: "pending", title: format("GUM.DamageApplication.ResistanceTitle", { effect: effect.item.name }),
             origin: { type: "damage-barrier", sourceActorUuid: this.attackerActor?.uuid, sourceItemUuid: effect.originItemUuid || null, effectUuid: effect.item.uuid, effectLinkId: effect.id },
             targets: [{ targetKey, actorUuid: target?.uuid, tokenUuid: targetToken?.document?.uuid || null, actorName: target?.name, recipientUserIds: [] }],
             test: normalized.test, consequence: normalized.consequence, delivery: {}, responses: []
@@ -1383,9 +1483,9 @@ async _onNpcResistanceRoll(effectId) {
 
         const content = renderPendingResistanceRequest({
             request, effectName: effect.item.name, effectImg: effect.item.img,
-            originLabel: this.attackerActor?.name || "Aplicação de dano",
-            targetName: target?.name || "Alvo", targetImg: resolveCharacterImage(target, { token: targetToken }),
-            testLabel: (rollData.attribute || "HT").toUpperCase(), modifierLabel: modifierValue !== "0" ? `Barreira ${modifierValue}` : "",
+            originLabel: this.attackerActor?.name || localize("GUM.DamageApplication.DamageApplicationFallback"),
+            targetName: target?.name || localize("GUM.DamageApplication.TargetFallback"), targetImg: resolveCharacterImage(target, { token: targetToken }),
+            testLabel: (rollData.attribute || "HT").toUpperCase(), modifierLabel: modifierValue !== "0" ? format("GUM.DamageApplication.BarrierModifier", { modifier: modifierValue }) : "",
             applyOnLabel: applyOnText, marginLabel: marginValue, purposeLabels: getPurposeLabels(normalized.test.requestedPurposeIds),
             description: resistanceChatText, buttonPayload: chatPayload
         });
@@ -1397,13 +1497,28 @@ async _onNpcResistanceRoll(effectId) {
     
     _getAdjustedWoundingModifiers(locationKey) {
         // ... (Seu método _getAdjustedWoundingModifiers, sem alterações)
-        const baseMods = [ { group: 1, type: "Corte", abrev: "cort", mult: 1.5 }, { group: 1, type: "Perfuração", abrev: "perf", mult: 2 }, { group: 1, type: "Contusão", abrev: "cont", mult: 1 }, { group: 2, type: "Queimadura", abrev: "qmd", mult: 1 }, { group: 2, type: "Corrosão", abrev: "cor", mult: 1 }, { group: 2, type: "Toxina", abrev: "tox", mult: 1 }, { group: 3, type: "Perfurante", abrev: "pi", mult: 1 }, { group: 3, type: "Pouco Perfurante", abrev: "pi-", mult: 0.5 }, { group: 3, type: "Muito Perfurante", abrev: "pi+", mult: 1.5 }, { group: 3, type: "Ext. Perfurante", abrev: "pi++", mult: 2 }, ];
+        const baseMods = this._baseWoundingModifiers();
         if (["head", "eyes"].includes(locationKey)) { return baseMods.map(mod => ({ ...mod, mult: mod.abrev === "tox" ? 1 : 4 })); }
         if (locationKey === "face") { return baseMods.map(mod => ({ ...mod, mult: mod.abrev === "cor" ? 1.5 : mod.mult })); }
         if (["arm", "leg", "hand", "foot"].includes(locationKey)) { return baseMods.map(mod => { if (["perf", "pi+", "pi++"].includes(mod.abrev)) return { ...mod, mult: 1 }; return mod; }); }
         if (locationKey === "neck") { return baseMods.map(mod => { if (mod.abrev === "cor" || mod.abrev === "cont") return { ...mod, mult: 1.5 }; if (mod.abrev === "cort") return { ...mod, mult: 2 }; return mod; }); }
         if (locationKey === "vitals") { return baseMods.map(mod => { if (["perf", "pi", "pi-", "pi+", "pi++"].includes(mod.abrev)) return { ...mod, mult: 3 }; return mod; }); }
         return baseMods;
+    }
+
+    _baseWoundingModifiers() {
+        return [
+            { group: 1, type: localize("GUM.DamageApplication.DamageTypes.Cutting"), abrev: "cort", mult: 1.5 },
+            { group: 1, type: localize("GUM.DamageApplication.DamageTypes.Impaling"), abrev: "perf", mult: 2 },
+            { group: 1, type: localize("GUM.DamageApplication.DamageTypes.Crushing"), abrev: "cont", mult: 1 },
+            { group: 2, type: localize("GUM.DamageApplication.DamageTypes.Burning"), abrev: "qmd", mult: 1 },
+            { group: 2, type: localize("GUM.DamageApplication.DamageTypes.Corrosion"), abrev: "cor", mult: 1 },
+            { group: 2, type: localize("GUM.DamageApplication.DamageTypes.Toxic"), abrev: "tox", mult: 1 },
+            { group: 3, type: localize("GUM.DamageApplication.DamageTypes.Piercing"), abrev: "pi", mult: 1 },
+            { group: 3, type: localize("GUM.DamageApplication.DamageTypes.SmallPiercing"), abrev: "pi-", mult: 0.5 },
+            { group: 3, type: localize("GUM.DamageApplication.DamageTypes.LargePiercing"), abrev: "pi+", mult: 1.5 },
+            { group: 3, type: localize("GUM.DamageApplication.DamageTypes.HugePiercing"), abrev: "pi++", mult: 2 }
+        ];
     }
     
     async _updateObject(_event, _formData) {

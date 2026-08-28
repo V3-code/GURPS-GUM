@@ -4,7 +4,7 @@
     <header class="damage-header">
   <div class="header-row">
     <div class="actor-portrait attacker">
-      <img src="{{attacker.img}}" title="Atacante: {{attacker.name}}"/>
+      <img src="{{attacker.img}}" title="{{localize "GUM.DamageApplication.Attacker"}}: {{attacker.name}}"/>
       </div>
 
     <div class="damage-cards-area">
@@ -28,7 +28,7 @@
     </div>
 
     <div class="actor-portrait target">
-      <img src="{{target.img}}" title="Alvo: {{target.name}}"/>
+      <img src="{{target.img}}" title="{{localize "GUM.DamageApplication.Target"}}: {{target.name}}"/>
       </div>
   </div>
 
@@ -47,14 +47,14 @@
     {{!-- 2. CORPO COM 3 COLUNAS --}}
     <main class="damage-app-body">
         <div class="body-column hit-locations-panel">
-            <div class="panel-header">Ponto de Impacto</div>
+            <div class="panel-header">{{localize "GUM.DamageApplication.HitLocation"}}</div>
             <div class="locations-table">
                 {{!-- Cabeçalho da Tabela de RD --}}
                 <div class="location-header">
-                    <span>Rolagem</span>
-                    <span>Local</span>
+                    <span>{{localize "GUM.DamageApplication.Roll"}}</span>
+                    <span>{{localize "GUM.DamageApplication.Location"}}</span>
                     <span>RD</span>
-                    <span class="large-area-header" title="Marcador usado na Lesão em Larga Escala">LE</span>
+                    <span class="large-area-header" title="{{localize "GUM.DamageApplication.LargeAreaMarkerHint"}}">{{localize "GUM.DamageApplication.LargeAreaAbbreviation"}}</span>
                 </div>
                 {{!-- Lista de Locais --}}
                 {{#each locations}}
@@ -68,18 +68,18 @@
                                 {{this.totalDR}}
                             {{/if}}
                         </span>
-                    <span class="large-area-marker" title="Usar esta RD junto da RD do torso para Lesão em Larga Escala"><i class="fas fa-bullseye"></i></span>
+                    <span class="large-area-marker" title="{{localize "GUM.DamageApplication.LargeAreaLocationHint"}}"><i class="fas fa-bullseye"></i></span>
                 </div>
                 {{/each}}
             </div>
             <div class="damage-options">
                 <label class="custom-checkbox">
                     <input type="checkbox" name="large_area_injury"/>
-                    <span title="Usa RD efetiva = (RD do torso + RD marcada em laranja) ÷ 2, arredondada para cima.">Lesão em Larga Escala</span>
+                    <span title="{{localize "GUM.DamageApplication.LargeAreaHint"}}">{{localize "GUM.DamageApplication.LargeAreaInjury"}}</span>
                 </label>
                 <label class="custom-checkbox">
                     <input type="checkbox" name="ignore_dr"/>
-                    <span>Ignorar RD do Alvo</span>
+                    <span>{{localize "GUM.DamageApplication.IgnoreTargetDR"}}</span>
                 </label>
             </div>
         </div>
@@ -87,7 +87,7 @@
         
        {{!-- Coluna 2: Modificadores de Ferimento --}}
 <div class="body-column wounding-mods-panel">
-     <div class="panel-header">Mod. de Ferimento e Lesão</div>
+     <div class="panel-header">{{localize "GUM.DamageApplication.WoundingAndInjury"}}</div>
 <div class="wounding-table">
   <div class="wounding-table">
   {{#each woundingModifiers}}
@@ -136,62 +136,62 @@
 
         {{!-- Colunas 3 --}}
         <div class="body-column situational-mods-panel">
-  <div class="panel-header">Situações Especiais</div>
+  <div class="panel-header">{{localize "GUM.DamageApplication.SpecialSituations"}}</div>
   <div class="situational-options">
    
     <label class="custom-checkbox">
         <input type="checkbox" name="special_apply_effects_only" />
-        <span title="Ignora a Lesão e aplica apenas os efeitos contingentes ao alvo.">Aplicar Apenas Efeitos</span>
+        <span title="{{localize "GUM.DamageApplication.EffectsOnlyHint"}}">{{localize "GUM.DamageApplication.ApplyEffectsOnly"}}</span>
     </label>
       
     <label class="custom-checkbox">
       <input type="checkbox" name="special_apply_as_heal" />
-      <span title="Inverte a Lesão - Recupera ao invés de Ferir">Aplicar como Cura</span>
+      <span title="{{localize "GUM.DamageApplication.HealingHint"}}">{{localize "GUM.DamageApplication.ApplyAsHealing"}}</span>
     </label>
  
 
   <label class="custom-checkbox">
     <input type="checkbox" name="special_half_damage" />
-    <span>Acima da Distância 1/2D</span>
+    <span>{{localize "GUM.DamageApplication.BeyondHalfDamage"}}</span>
   </label>
 
   <label class="custom-checkbox">
     <input type="checkbox" name="special_explosion"/>
-    <span>Dano de Explosão</span>
-    <input type="number" name="special_explosion_distance" min="0" step="1" value="1" style="width: 40px; margin-left: 6px;" title="Distância em metros/hex do centro da explosão"/>
+    <span>{{localize "GUM.DamageApplication.ExplosionDamage"}}</span>
+    <input type="number" name="special_explosion_distance" min="0" step="1" value="1" style="width: 40px; margin-left: 6px;" title="{{localize "GUM.DamageApplication.ExplosionDistanceHint"}}"/>
   </label>
 
   <label class="custom-checkbox shock-option {{#if targetIgnoresShock}}is-disabled{{/if}}">
     <input type="checkbox" name="special_apply_shock" {{#unless targetIgnoresShock}}checked{{/unless}} {{#if targetIgnoresShock}}disabled{{/if}}/>
-    <span title="{{#if targetIgnoresShock}}Choque ignorado por efeito ativo{{#if ignoreShockSourceNames}}: {{ignoreShockSourceNames}}{{/if}}{{else}}Aplica Choque automaticamente no próximo turno do alvo (máx. -4).{{/if}}">Aplicar Choque (GURPS)</span>
-    {{#if targetIgnoresShock}}<small title="{{ignoreShockSourceNames}}">Ignorado por efeito ativo</small>{{/if}}
+    <span title="{{#if targetIgnoresShock}}{{localize "GUM.DamageApplication.ShockIgnoredHint"}}{{#if ignoreShockSourceNames}}: {{ignoreShockSourceNames}}{{/if}}{{else}}{{localize "GUM.DamageApplication.ShockHint"}}{{/if}}">{{localize "GUM.DamageApplication.ApplyShock"}}</span>
+    {{#if targetIgnoresShock}}<small title="{{ignoreShockSourceNames}}">{{localize "GUM.DamageApplication.IgnoredByActiveEffect"}}</small>{{/if}}
   </label>
 
   <label class="custom-checkbox">
     <input type="checkbox" name="show_impact_effects"/>
-    <span>Mostrar efeitos do ponto de impacto</span>
+    <span>{{localize "GUM.DamageApplication.ShowHitLocationEffects"}}</span>
   </label>
 
     <label class="custom-checkbox">
     <input type="checkbox" name="special_only_knockback"/>
-    <span title="Calcula projeção normalmente, mas zera o dano direto aplicado.">Apenas Projeção</span>
+    <span title="{{localize "GUM.DamageApplication.KnockbackOnlyHint"}}">{{localize "GUM.DamageApplication.KnockbackOnly"}}</span>
   </label>
 
 
 <div class="injury-tolerance-section">
 <label class="custom-select">
-  <span>Tolerância a Ferimentos:</span>
+  <span>{{localize "GUM.DamageApplication.InjuryTolerance"}}:</span>
   <select name="tolerance_type">
-    <option value="">Nenhuma</option>
-    <option value="nao-vivo">Não Vivo</option>
-    <option value="homogeneo">Homogêneo</option>
-    <option value="difuso">Difuso (máx. 1 lesão)</option>
+    <option value="">{{localize "GUM.DamageApplication.None"}}</option>
+    <option value="nao-vivo">{{localize "GUM.DamageApplication.Unliving"}}</option>
+    <option value="homogeneo">{{localize "GUM.DamageApplication.Homogeneous"}}</option>
+    <option value="difuso">{{localize "GUM.DamageApplication.Diffuse"}}</option>
   </select>
   
   <div class="injury-reduction-section">
     <label class="custom-checkbox">
       <input type="checkbox" name="damage_reduction_enabled"/>
-      <span title="Aplica após subtrair RD e aplicar modificadores de ferimento.">Redução de Dano</span>
+      <span title="{{localize "GUM.DamageApplication.DamageReductionHint"}}">{{localize "GUM.DamageApplication.DamageReduction"}}</span>
         <label class="custom-reduction-input">
       <input type="number" name="damage_reduction_value" min="2" max="4" step="1" value="2"/>
     </label>
@@ -208,69 +208,69 @@
     </main>
 
     <details class="heavy-defense-advisor" data-status="incomplete">
-    <summary class="heavy-defense-title"><i class="fas fa-weight-hanging"></i> Peso da Defesa <span class="heavy-defense-title-hint">Aparar/Bloquear armas pesadas</span></summary>
+    <summary class="heavy-defense-title"><i class="fas fa-weight-hanging"></i> {{localize "GUM.DamageApplication.DefenseWeight"}} <span class="heavy-defense-title-hint">{{localize "GUM.DamageApplication.HeavyWeaponDefense"}}</span></summary>
     <div class="heavy-defense-content">
       <div class="heavy-defense-grid">
         <label>
-          <span>Peso ataque</span>
+          <span>{{localize "GUM.DamageApplication.AttackWeight"}}</span>
           <input type="number" name="heavy_attack_weight" min="0" step="0.01" value="{{heavyDefense.attackWeight}}" />
         </label>
         <label>
-          <span>BC alvo</span>
+          <span>{{localize "GUM.DamageApplication.TargetBasicLift"}}</span>
           <input type="number" name="heavy_basic_lift" min="0" step="0.01" value="{{heavyDefense.basicLift}}" />
         </label>
         <label>
-          <span>Defesa usada</span>
+          <span>{{localize "GUM.DamageApplication.DefenseUsed"}}</span>
           <select name="heavy_defense_item" class="heavy-defense-item-select">
-            <option value="manual" data-weight="0">Manual / Desarmado</option>
+            <option value="manual" data-weight="0">{{localize "GUM.DamageApplication.ManualUnarmed"}}</option>
             {{#each heavyDefense.defenseOptions}}
               <option value="{{this.id}}" data-weight="{{this.weight}}">{{this.name}} ({{this.weight}} kg{{#if this.equipped}}){{/if}}</option>
             {{/each}}
           </select>
         </label>
         <label>
-          <span>Peso defesa</span>
+          <span>{{localize "GUM.DamageApplication.DefenseItemWeight"}}</span>
           <input type="number" name="heavy_defense_weight" min="0" step="0.01" value="0" />
         </label>
         <label>
-          <span>Modo</span>
+          <span>{{localize "GUM.DamageApplication.Mode"}}</span>
           <select name="heavy_defense_mode" class="heavy-defense-item-select">
-            <option value="one-handed">1 mão</option>
-            <option value="two-handed">2 mãos</option>
+            <option value="one-handed">{{localize "GUM.DamageApplication.OneHanded"}}</option>
+            <option value="two-handed">{{localize "GUM.DamageApplication.TwoHanded"}}</option>
           </select>
         </label>
         <label>
-          <span>Qualidade</span>
+          <span>{{localize "GUM.DamageApplication.Quality"}}</span>
           <select name="heavy_defense_quality" class="heavy-defense-item-select">
-            <option value="normal">Normal</option>
-            <option value="cheap">Barata (+2)</option>
-            <option value="fine">Superior (-1)</option>
-            <option value="veryFine">Altíssima (-2)</option>
+            <option value="normal">{{localize "GUM.DamageApplication.QualityNormal"}}</option>
+            <option value="cheap">{{localize "GUM.DamageApplication.QualityCheap"}}</option>
+            <option value="fine">{{localize "GUM.DamageApplication.QualityFine"}}</option>
+            <option value="veryFine">{{localize "GUM.DamageApplication.QualityVeryFine"}}</option>
           </select>
         </label>
       </div>
-      <div class="heavy-defense-summary">Informe os pesos para avaliar Aparar/Bloquear armas pesadas.</div>
+      <div class="heavy-defense-summary">{{localize "GUM.DamageApplication.HeavyDefensePrompt"}}</div>
     </div>
   </details>
 
    <details class="knockback-advisor" data-status="incomplete">
-    <summary class="knockback-title"><i class="fas fa-person-falling"></i> Projeção <span class="knockback-title-hint">GURPS Básico, pág. 378</span></summary>
+    <summary class="knockback-title"><i class="fas fa-person-falling"></i> {{localize "GUM.DamageApplication.Knockback"}} <span class="knockback-title-hint">{{localize "GUM.DamageApplication.BasicSetPage378"}}</span></summary>
     <div class="knockback-content">
       <div class="knockback-grid">
         <label>
-          <span>ST/PV alvo</span>
+          <span>{{localize "GUM.DamageApplication.TargetSTHP"}}</span>
           <input type="number" name="knockback_target_st" min="0" step="1" value="{{knockback.targetST}}" />
         </label>
         <label class="knockback-checkbox-label">
           <input type="checkbox" name="knockback_use_hp" />
-          <span>Usar PV (sem ST/não resiste)</span>
+          <span>{{localize "GUM.DamageApplication.UseHP"}}</span>
         </label>
         <label class="knockback-checkbox-label">
           <input type="checkbox" name="knockback_perfect_balance" {{#if knockback.hasPerfectBalance}}checked{{/if}} />
-          <span>Equilíbrio Perfeito (+4)</span>
+          <span>{{localize "GUM.DamageApplication.PerfectBalance"}}</span>
         </label>
       </div>
-      <div class="knockback-summary">A projeção será estimada a partir do dano básico antes da RD.</div>
+      <div class="knockback-summary">{{localize "GUM.DamageApplication.KnockbackPrompt"}}</div>
     </div>
   </details>
 
@@ -282,50 +282,50 @@
 <footer class="damage-app-footer">
     <div class="footer-top">
         <div class="footer-column effects-summary">
-            <div class="placeholder">Efeitos a serem aplicados</div>
+            <div class="placeholder">{{localize "GUM.DamageApplication.EffectsToApply"}}</div>
         </div>
 
         <div class="footer-column calculation-summary">
             <div class="calc-group-compact">
                 <div class="calc-item-compact">
-                    <label>Dano Básico</label>
+                    <label>{{localize "GUM.DamageApplication.BasicDamage"}}</label>
                     <input type="number" name="damage_rolled" class="calc-input-compact" min="0" step="1"/>
                 </div>
                 <div class="calc-item-compact">
-                    <label>Divisor</label>
+                    <label>{{localize "GUM.DamageApplication.Divisor"}}</label>
                     <input type="number" name="armor_divisor" class="calc-input-compact" value="1" min="0.1" step="0.1"/>
                 </div>
             </div>
 
             <div class="calc-group-compact">
                 <div class="calc-item-compact">
-                    <label>RD Alvo</label>
+                    <label>{{localize "GUM.DamageApplication.TargetDR"}}</label>
                     <span class="calc-field-compact" data-field="target_dr">(...)</span>
                 </div>
                 <div class="calc-item-compact">
-                    <label>Penetrante</label>
+                    <label>{{localize "GUM.DamageApplication.Penetrating"}}</label>
                     <span class="calc-field-compact" data-field="penetrating_damage">0</span>
                 </div>
             </div>
             
             <div class="calc-item-compact single">
-                <label>Mod. Ferimento</label>
+                <label>{{localize "GUM.DamageApplication.WoundingModifier"}}</label>
                 <span class="calc-field-compact" data-field="wounding_mod">x1</span>
             </div>
 
             <div class="calculation-notes">
             </div>
             <div class="final-injury-compact">
-                <label>Lesão</label>
+                <label>{{localize "GUM.DamageApplication.Injury"}}</label>
                 <span data-field="final_injury">0</span>
             </div>
         </div>
     </div>
 
     <div class="action-bar action-buttons">
-        <button type="button" data-action="proposeTests" style="display: none;"><i class="fas fa-dice-d20"></i> Propor Testes</button>
-        <button type="button" data-action="applyAndPublish"><i class="fas fa-bullhorn"></i> Aplicar e Publicar</button>
-        <button type="button" data-action="applyAndClose"><i class="fas fa-check"></i> Aplicar e Fechar</button>
-        <button type="button" data-action="applyAndKeepOpen"><i class="fas fa-sync-alt"></i> Aplicar e Manter</button>
+        <button type="button" data-action="proposeTests" style="display: none;"><i class="fas fa-dice-d20"></i> {{localize "GUM.DamageApplication.ProposeTests"}}</button>
+        <button type="button" data-action="applyAndPublish"><i class="fas fa-bullhorn"></i> {{localize "GUM.DamageApplication.ApplyAndPublish"}}</button>
+        <button type="button" data-action="applyAndClose"><i class="fas fa-check"></i> {{localize "GUM.DamageApplication.ApplyAndClose"}}</button>
+        <button type="button" data-action="applyAndKeepOpen"><i class="fas fa-sync-alt"></i> {{localize "GUM.DamageApplication.ApplyAndKeepOpen"}}</button>
     </div>
 </footer>
