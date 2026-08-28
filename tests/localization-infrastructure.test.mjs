@@ -825,3 +825,51 @@ test("effect sheet description preserves tabs, fields, editors and PDF reference
     assert.match(screen.scriptSource, /parsed\.page \+ \(Number\(match\.pageOffset\) \|\| 0\)/);
     assert.match(screen.scriptSource, /missing\.map\(escapeHtml\)\.join\(", "\)/);
 });
+
+test("effect sheet configuration has no fixed Portuguese UI text", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "effect sheet description");
+    const configurationTab = screen.templateSource
+        .split('<div class="tab" data-tab="configuracao" data-group="primary">', 2)[1]
+        .split("    </main>", 1)[0];
+    const getDataFlow = screen.scriptSource
+        .split("    async getData(options)", 2)[1]
+        .split("    _captureExpansionState()", 1)[0];
+    const scopedSource = `${configurationTab}\n${getDataFlow}`
+        .replace(/{{!--[\s\S]*?--}}/g, "")
+        .replace(/\/\/.*$/gm, "");
+
+    for (const text of [
+        "Ícone no Token", "Automático (temporário mostra / permanente oculta)", "Sempre mostrar no token",
+        "Nunca mostrar no token", "Acúmulo por Condições", "Acumular normalmente", "Não acumular entre condições",
+        "Barreira de Resistência", "Ativar registro de barreira", "Texto no card de resistência", "Aplicar efeito em",
+        "Em Falha", "Em Sucesso", "Margem Min", "Finalidades do teste", "Selecionar finalidades",
+        "Realizar o teste automaticamente", "Duração do Efeito", "Temporária/Combate", "Efeitos Passivos",
+        "Início da contagem", "Ao aplicar", "No início do próximo turno", "Rodadas (seg)", "Fim da contagem",
+        "No início do turno final", "No fim do turno final"
+    ]) {
+        assert.ok(!scopedSource.includes(text), `fixed effect sheet configuration text: ${text}`);
+    }
+});
+
+test("effect sheet configuration preserves policies, resistance and duration mechanics", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "effect sheet description");
+    for (const field of [
+        "system.tokenIconPolicy", "system.conditionStackingMode", "system.resistanceRoll.isResisted",
+        "system.resistanceRoll.chatText", "system.resistanceRoll.applyOn", "system.resistanceRoll.attribute",
+        "system.resistanceRoll.margin", "system.resistanceRoll.modifier", "system.resistanceRoll.requestedPurposeIds",
+        "system.resistanceRoll.skipPromptCard", "system.duration._uiMode", "system.duration.isPermanent",
+        "system.duration.inCombat", "system.duration.startMode", "system.duration.value", "system.duration.endMode"
+    ]) {
+        assert.match(screen.templateSource, new RegExp(`name="${field.replaceAll(".", "\\.")}"`), `missing effect configuration field: ${field}`);
+    }
+    for (const value of [
+        "auto", "always", "never", "stack", "unique", "failure", "success", "permanent", "combat",
+        "apply", "nextTurnStart", "turnStart", "turnEnd"
+    ]) {
+        assert.ok(`${screen.templateSource}\n${screen.scriptSource}`.includes(`"${value}"`), `missing preserved configuration value: ${value}`);
+    }
+    assert.match(screen.scriptSource, /const resistancePurposeIds = normalizePurposeIds\(context\.system\.resistanceRoll\?\.requestedPurposeIds\)/);
+    assert.match(screen.scriptSource, /"system\.duration\._uiMode": mode/);
+    assert.match(screen.scriptSource, /"system\.duration\.isPermanent": isPermanent/);
+    assert.match(screen.scriptSource, /"system\.duration\.inCombat": inCombat/);
+});

@@ -8,6 +8,10 @@ const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? 
 const localize = key => game.i18n.localize(key);
 const format = (key, data) => game.i18n.format(key, data);
 const escapeHtml = value => foundry.utils.escapeHTML(String(value ?? ""));
+const formatEffectPurposeSelection = value => {
+    const ids = normalizePurposeIds(value);
+    return ids.length ? formatPurposeSelection(ids) : localize("GUM.EffectSheet.Configuration.GeneralTest");
+};
 
 
 const ROLL_MODIFIER_CONTEXT_OPTIONS = [
@@ -230,13 +234,13 @@ export class EffectSheet extends ItemSheet {
         context.system.tokenIconPolicy = context.system.tokenIconPolicy || "auto";
         context.system.conditionStackingMode = context.system.conditionStackingMode || "stack";
         context.tokenIconPolicyOptions = [
-            { id: "auto", label: "Automático (temporário mostra / permanente oculta)" },
-            { id: "always", label: "Sempre mostrar no token" },
-            { id: "never", label: "Nunca mostrar no token" }
+            { id: "auto", label: localize("GUM.EffectSheet.Configuration.TokenIconAutomatic") },
+            { id: "always", label: localize("GUM.EffectSheet.Configuration.TokenIconAlways") },
+            { id: "never", label: localize("GUM.EffectSheet.Configuration.TokenIconNever") }
         ];
         context.conditionStackingModeOptions = [
-            { id: "stack", label: "Acumular normalmente" },
-            { id: "unique", label: "Não acumular entre condições" }
+            { id: "stack", label: localize("GUM.EffectSheet.Configuration.StackNormally") },
+            { id: "unique", label: localize("GUM.EffectSheet.Configuration.UniqueAcrossConditions") }
         ];
         context.statusEffects = CONFIG.statusEffects
             .map(s => ({ id: s.id, label: s.name }))
@@ -312,14 +316,14 @@ export class EffectSheet extends ItemSheet {
                 rollModifierEntries: entries
             };
             decoratedAction.requestedPurposeIdsCsv = action.requestedPurposeIds.join(",");
-            decoratedAction.purposeSelectionSummary = formatPurposeSelection(action.requestedPurposeIds);
+            decoratedAction.purposeSelectionSummary = formatEffectPurposeSelection(action.requestedPurposeIds);
             decoratedAction.summaryText = buildActionSummary(decoratedAction);
             return decoratedAction;
         });
         context.hasTimedActions = actions.some((action) => ["attribute", "flag", "roll_modifier", "status"].includes(action.type));
         const resistancePurposeIds = normalizePurposeIds(context.system.resistanceRoll?.requestedPurposeIds);
         context.resistancePurposeIdsCsv = resistancePurposeIds.join(",");
-        context.resistancePurposeSummary = formatPurposeSelection(resistancePurposeIds);
+        context.resistancePurposeSummary = formatEffectPurposeSelection(resistancePurposeIds);
 
         return context;
     }
@@ -524,7 +528,7 @@ activateListeners(html) {
                 input.value = ids.join(",");
                 input.dispatchEvent(new Event("change", { bubbles: true }));
                 const summary = button.closest(".effect-purpose-control")?.querySelector(".effect-purpose-summary");
-                if (summary) summary.textContent = formatPurposeSelection(ids);
+                if (summary) summary.textContent = formatEffectPurposeSelection(ids);
             }
         });
     });

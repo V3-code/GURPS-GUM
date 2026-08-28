@@ -1194,7 +1194,7 @@
                     style="margin: 5px;"
                 >
                     <div class="effect-field effect-field-row">
-                        <div class="effect-label">Ícone no Token</div>
+                        <div class="effect-label">{{localize "GUM.EffectSheet.Configuration.TokenIcon"}}</div>
 
                         <select name="system.tokenIconPolicy">
                             {{#each tokenIconPolicyOptions as |policy|}}
@@ -1209,11 +1209,11 @@
                     </div>
 
                  <div class="effect-field effect-field-row">
-                        <div class="effect-label">Acúmulo por Condições</div>
+                        <div class="effect-label">{{localize "GUM.EffectSheet.Configuration.ConditionStacking"}}</div>
 
                         <select
                             name="system.conditionStackingMode"
-                            title="Define se este mesmo Item Efeito pode ser acumulado quando condições diferentes estiverem ativas."
+                            title="{{localize "GUM.EffectSheet.Configuration.ConditionStackingTooltip"}}"
                         >
                             {{#each conditionStackingModeOptions as |mode|}}
                                 <option
@@ -1229,7 +1229,7 @@
 
                 {{#if (eq system.conditionStackingMode "unique")}}
                     <p class="hint" style="margin: 0 10px 10px;">
-                        Enquanto duas ou mais condições vincularem este mesmo Item Efeito, somente uma cópia de cada ação persistente será aplicada ao personagem. O efeito permanece ativo até a última dessas condições ser desligada.
+                        {{localize "GUM.EffectSheet.Configuration.UniqueAcrossConditionsHint"}}
                     </p>
                 {{/if}}
 
@@ -1238,12 +1238,12 @@
                 <section class="effect-card effect-section">
                     <div class="effect-section-header">
                         <h4 class="effect-section-title">
-                            Barreira de Resistência
+                            {{localize "GUM.EffectSheet.Configuration.ResistanceBarrier"}}
                         </h4>
 
                         <label
                             class="effect-section-toggle"
-                            title="Ativar registro de barreira"
+                            title="{{localize "GUM.EffectSheet.Configuration.EnableResistanceBarrier"}}"
                         >
                             <input
                                 type="checkbox"
@@ -1265,13 +1265,13 @@
                             style="margin-bottom: 10px;"
                         >
                             <div class="effect-label">
-                                Texto no card de resistência
+                                {{localize "GUM.EffectSheet.Configuration.ResistanceCardText"}}
                             </div>
 
                             <textarea
                                 name="system.resistanceRoll.chatText"
                                 rows="2"
-                                placeholder="Opcional"
+                                placeholder="{{localize "GUM.EffectSheet.Configuration.Optional"}}"
                                 {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}
                             >{{system.resistanceRoll.chatText}}</textarea>
                         </div>
@@ -1280,7 +1280,7 @@
 
                             <div class="effect-field">
                                 <div class="effect-label">
-                                    Aplicar efeito em
+                                    {{localize "GUM.EffectSheet.Configuration.ApplyEffectOn"}}
                                 </div>
 
                                 <select
@@ -1291,20 +1291,20 @@
                                         value="failure"
                                         {{#if (eq system.resistanceRoll.applyOn "failure")}}selected{{/if}}
                                     >
-                                        Em Falha
+                                        {{localize "GUM.EffectSheet.Configuration.OnFailure"}}
                                     </option>
 
                                     <option
                                         value="success"
                                         {{#if (eq system.resistanceRoll.applyOn "success")}}selected{{/if}}
                                     >
-                                        Em Sucesso
+                                        {{localize "GUM.EffectSheet.Configuration.OnSuccess"}}
                                     </option>
                                 </select>
                             </div>
 
                             <div class="effect-field">
-                                <div class="effect-label">Atributo</div>
+                                <div class="effect-label">{{localize "GUM.EffectSheet.Configuration.Attribute"}}</div>
 
                                 <input
                                     type="text"
@@ -1315,13 +1315,13 @@
                             </div>
 
                             <div class="effect-field">
-                                <div class="effect-label">Margem Min</div>
+                                <div class="effect-label">{{localize "GUM.EffectSheet.Configuration.MinimumMargin"}}</div>
 
                                 <input
                                     type="text"
                                     name="system.resistanceRoll.margin"
                                     value="{{system.resistanceRoll.margin}}"
-                                    placeholder="Opcional"
+                                    placeholder="{{localize "GUM.EffectSheet.Configuration.Optional"}}"
                                     {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}
                                 />
                             </div>
@@ -1331,7 +1331,7 @@
                             class="effect-field"
                             style="margin-bottom: 15px;"
                         >
-                            <div class="effect-label">Modificador</div>
+                            <div class="effect-label">{{localize "GUM.EffectSheet.Configuration.Modifier"}}</div>
 
                             <input
                                 type="text"
@@ -1342,10 +1342,10 @@
                         </div>
 
                         <div class="effect-field effect-field-full" style="margin-bottom: 15px;">
-                            <div class="effect-label">Finalidades do teste</div>
+                            <div class="effect-label">{{localize "GUM.EffectSheet.Configuration.TestPurposes"}}</div>
                             <div class="effect-purpose-control">
                                 <input type="hidden" name="system.resistanceRoll.requestedPurposeIds" value="{{resistancePurposeIdsCsv}}" />
-                                <button type="button" class="open-purpose-picker" data-target-input="system.resistanceRoll.requestedPurposeIds" data-attribute-input="system.resistanceRoll.attribute" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}><i class="fas fa-list-check"></i> Selecionar finalidades</button>
+                                <button type="button" class="open-purpose-picker" data-target-input="system.resistanceRoll.requestedPurposeIds" data-attribute-input="system.resistanceRoll.attribute" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}><i class="fas fa-list-check"></i> {{localize "GUM.EffectSheet.Configuration.SelectPurposes"}}</button>
                                 <span class="effect-purpose-summary">{{resistancePurposeSummary}}</span>
                             </div>
                         </div>
@@ -1359,7 +1359,7 @@
                             />
 
                             <span>
-                                Realizar o teste automaticamente, mas não publicar no chat.
+                                {{localize "GUM.EffectSheet.Configuration.AutomaticTestWithoutChat"}}
                             </span>
                         </label>
                     </div>
@@ -1370,7 +1370,7 @@
                     <section class="effect-card effect-section">
                         <div class="effect-section-header">
                             <h4 class="effect-section-title">
-                                Duração do Efeito
+                                {{localize "GUM.EffectSheet.Configuration.EffectDuration"}}
                             </h4>
 
                             <div class="effect-section-select">
@@ -1382,14 +1382,14 @@
                                         value="permanent"
                                         {{#if system.duration.isPermanent}}selected{{/if}}
                                     >
-                                        Permanente
+                                        {{localize "GUM.EffectSheet.Configuration.Permanent"}}
                                     </option>
 
                                     <option
                                         value="combat"
                                         {{#if (and (not system.duration.isPermanent) system.duration.inCombat)}}selected{{/if}}
                                     >
-                                        Temporária/Combate
+                                        {{localize "GUM.EffectSheet.Configuration.TemporaryCombat"}}
                                     </option>
                                 </select>
                             </div>
@@ -1413,8 +1413,7 @@
 
                             {{#if system.duration.isPermanent}}
                                 <p class="hint">
-                                    O efeito aparecerá no campo "Efeitos Passivos"
-                                    da ficha do personagem.
+                                    {{localize "GUM.EffectSheet.Configuration.PassiveEffectHint"}}
                                 </p>
                             {{/if}}
 
@@ -1424,7 +1423,7 @@
 
                                         <div class="effect-field effect-field-row">
                                             <div class="effect-label">
-                                                Início da contagem
+                                                {{localize "GUM.EffectSheet.Configuration.CountStart"}}
                                             </div>
 
                                             <select
@@ -1435,21 +1434,21 @@
                                                     value="apply"
                                                     {{#if (eq system.duration.startMode "apply")}}selected{{/if}}
                                                 >
-                                                    Ao aplicar
+                                                    {{localize "GUM.EffectSheet.Configuration.OnApply"}}
                                                 </option>
 
                                                 <option
                                                     value="nextTurnStart"
                                                     {{#if (eq system.duration.startMode "nextTurnStart")}}selected{{/if}}
                                                 >
-                                                    No início do próximo turno
+                                                    {{localize "GUM.EffectSheet.Configuration.NextTurnStart"}}
                                                 </option>
                                             </select>
                                         </div>
 
                                         <div class="effect-field effect-field-row">
                                             <div class="effect-label">
-                                                Rodadas (seg)
+                                                {{localize "GUM.EffectSheet.Configuration.RoundsSeconds"}}
                                             </div>
 
                                             <input
@@ -1462,7 +1461,7 @@
 
                                         <div class="effect-field effect-field-row">
                                             <div class="effect-label">
-                                                Fim da contagem
+                                                {{localize "GUM.EffectSheet.Configuration.CountEnd"}}
                                             </div>
 
                                             <select name="system.duration.endMode">
@@ -1470,14 +1469,14 @@
                                                     value="turnStart"
                                                     {{#if (eq system.duration.endMode "turnStart")}}selected{{/if}}
                                                 >
-                                                    No início do turno final
+                                                    {{localize "GUM.EffectSheet.Configuration.FinalTurnStart"}}
                                                 </option>
 
                                                 <option
                                                     value="turnEnd"
                                                     {{#if (eq system.duration.endMode "turnEnd")}}selected{{/if}}
                                                 >
-                                                    No fim do turno final
+                                                    {{localize "GUM.EffectSheet.Configuration.FinalTurnEnd"}}
                                                 </option>
                                             </select>
                                         </div>
