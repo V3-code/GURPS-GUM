@@ -37,7 +37,7 @@ test("keywords localizam a finalidade sem se tornarem tags", () => {
   assert.deepEqual(getGroupedRollPurposes(null, [], "secreto").find(group => group.id === "resistances").purposes.map(p => p.id), [purpose.id]);
   registerRollPurpose(original);
 });
-import { ROLL_TAG_ALIASES, ROLL_TAG_CATALOG, expandRollTags, getGroupedRollTags, normalizeRollTags } from "../module/utils/roll-tags.mjs";
+import { ROLL_TAG_ALIASES, ROLL_TAG_CATALOG, expandRollTags, getGroupedRollTags, getRollTagLabel, normalizeRollTags } from "../module/utils/roll-tags.mjs";
 import { buildPurposeQuickView, buildPurposeQuickViewContent, calculatePurposePreviewHeight, getRollPurposeById, PurposeQuickView } from "../module/apps/purpose-quick-view.mjs";
 
 const requiredPurposes = `general knockdown_stun recover_physical_stun consciousness regain_consciousness death resist_bleeding natural_recovery crippling_recovery pain resist_torture resist_metabolic_hazard resist_poison resist_disease resist_infection resist_paralysis resist_incapacitation resist_unconsciousness resist_nausea resist_seizure resist_addiction resist_alcohol fright_check resist_fear resist_intimidation avoid_mental_stun recover_mental_stun self_control resist_mental_influence resist_possession maintain_concentration resist_confusion memorize recall_information prolonged_mental_task creativity maintain_balance avoid_fall controlled_fall resist_takedown resist_knockback_fall stay_mounted break_free resist_suffocation resist_exertion resist_heat resist_cold resist_altitude resist_pressure resist_vacuum resist_radiation resist_acceleration resist_sleep_deprivation sleep_rest aging_check sense_general sense_vision sense_hearing sense_taste_smell sense_smell sense_taste sense_touch sense_detection resist_magic resist_psionic resist_supernatural_power resist_power resist_telepathy sensory_vector_vision sensory_vector_hearing sensory_vector_smell sensory_vector_taste sensory_vector_touch sensory_vector_smell_taste inhaled_agent reaction_roll influence_roll resist_deception resist_interrogation be_heard appear_honest fashion_context healthy_appearance unnecessary_risk`.split(" ");
@@ -170,6 +170,22 @@ test("quick view reutiliza toda a cadeia de classes do preview premium", () => {
   assert.match(html, /preview-content gum-purpose-preview-content/);
   assert.match(html, /class="purpose-copy-tag"/);
   assert.match(html, /<details><summary>Categorias herdadas<\/summary>/);
+});
+
+test("catálogo de marcadores acompanha o idioma sem alterar IDs, pais ou seleção", () => {
+  const englishGroups = getGroupedRollTags("resistance.poison, sense.smell_taste", { i18n: enI18n });
+  const poison = englishGroups.flatMap(group => group.tags).find(tag => tag.id === "resistance.poison");
+  const smellTaste = englishGroups.flatMap(group => group.tags).find(tag => tag.id === "sense.smell_taste");
+  assert.equal(englishGroups.find(group => group.id === "physical_resistance").label, "Physical Resistances");
+  assert.equal(poison.label, "Poison");
+  assert.equal(poison.description, "Rolls related to poison.");
+  assert.equal(poison.selected, true);
+  assert.deepEqual(poison.parents, ["resistance.metabolic"]);
+  assert.equal(smellTaste.label, "Taste or Smell");
+  assert.equal(smellTaste.selected, true);
+  assert.deepEqual(smellTaste.parents, ["sense.general"]);
+  assert.equal(getRollTagLabel("resistance.poison", { i18n: enI18n }), "Poison");
+  assert.deepEqual(expandRollTags("sense.smell").slice(0, 2), ["sense.smell", "sense.smell_taste"]);
 });
 
 test("quick view acompanha o idioma sem alterar tags ou referências", () => {

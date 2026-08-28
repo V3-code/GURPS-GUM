@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { GUM_DATA } from "../scripts/gum-data.js";
 import { ROLL_PURPOSES, ROLL_PURPOSE_GROUPS } from "../module/utils/roll-purposes.mjs";
+import { ROLL_TAG_CATALOG, ROLL_TAG_GROUPS } from "../module/utils/roll-tags.mjs";
 
 const manifestPath = new URL("../system.json", import.meta.url);
 const screens = [
@@ -244,6 +245,7 @@ test("localized screens reference every localization key and only defined keys",
         used.add(`GUM.PreviewDialog.Tags.${tag}`);
     }
     for (const key of flattenKeys(portuguese.GUM.RollPurposes)) used.add(`GUM.RollPurposes.${key}`);
+    for (const key of flattenKeys(portuguese.GUM.RollTags)) used.add(`GUM.RollTags.${key}`);
 
     assert.deepEqual([...used].sort(), [...defined].sort());
 });
@@ -956,6 +958,19 @@ test("roll purpose catalogs provide localized labels for every mechanical id", a
         assert.deepEqual(Object.keys(catalog.Groups).sort(), ROLL_PURPOSE_GROUPS.map(group => group.id).sort());
         assert.deepEqual(Object.keys(catalog.Purposes).sort(), ROLL_PURPOSES.map(purpose => purpose.id).sort());
         for (const purpose of ROLL_PURPOSES) assert.ok(catalog.Purposes[purpose.id].Label?.trim(), `missing purpose label: ${purpose.id}`);
+    }
+});
+
+test("roll tag catalogs provide localized labels for every mechanical id", async () => {
+    const languages = Object.fromEntries(await Promise.all(Object.entries(languagePaths).map(
+        async ([language, path]) => [language, JSON.parse(await readFile(path, "utf8"))]
+    )));
+    const expectedTags = ROLL_TAG_CATALOG.map(tag => tag.id.replaceAll(".", "_")).sort();
+    for (const language of Object.values(languages)) {
+        const catalog = language.GUM.RollTags;
+        assert.deepEqual(Object.keys(catalog.Groups).sort(), ROLL_TAG_GROUPS.map(group => group.id).sort());
+        assert.deepEqual(Object.keys(catalog.Tags).sort(), expectedTags);
+        for (const label of Object.values(catalog.Tags)) assert.ok(label?.trim(), "missing roll tag label");
     }
 });
 

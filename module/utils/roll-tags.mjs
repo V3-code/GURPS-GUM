@@ -47,6 +47,33 @@ const definitions = [
 
 export const ROLL_TAG_CATALOG = Object.freeze(definitions.map(([id,label,group,parents=[]]) => Object.freeze({ id, label, group, parents, selectable: true, description: `Rolagens relacionadas a ${label.toLowerCase()}.` })));
 const TAG_BY_ID = new Map(ROLL_TAG_CATALOG.map(tag => [tag.id, tag]));
+const resolveI18n = i18n => i18n ?? globalThis.game?.i18n ?? null;
+const translated = (i18n, key, fallback) => {
+  const value = resolveI18n(i18n)?.localize?.(key);
+  return value && value !== key ? value : fallback;
+};
+const translatedFormat = (i18n, key, data, fallback) => {
+  const value = resolveI18n(i18n)?.format?.(key, data);
+  return value && value !== key ? value : fallback;
+};
+const localizationId = id => String(id || "").replaceAll(".", "_");
+
+export function localizeRollTagGroup(group, { i18n } = {}) {
+  if (!group) return null;
+  return { ...group, label: translated(i18n, `GUM.RollTags.Groups.${group.id}`, group.label) };
+}
+
+export function localizeRollTag(tag, { i18n } = {}) {
+  if (!tag) return null;
+  const key = `GUM.RollTags.Tags.${localizationId(tag.id)}`;
+  const label = translated(i18n, key, tag.label);
+  return {
+    ...tag,
+    label,
+    description: translatedFormat(i18n, "GUM.RollTags.GenericDescription", { label: label.toLocaleLowerCase(resolveI18n(i18n)?.lang || undefined) }, tag.description),
+    keywords: [...new Set([...(tag.keywords || []), tag.label])]
+  };
+}
 export const ROLL_TAG_ALIASES = Object.freeze({
   knockdown:"injury.knockdown", stun:"injury.stun.physical", injury:"injury.knockdown_stun", unconsciousness:"injury.stay_conscious", death:"injury.avoid_death", survival:"test.survival",
   pain:"resistance.pain", resistance:"test.resistance", poison:"resistance.poison", disease:"resistance.disease", paralysis:"resistance.paralysis", incapacitation:"resistance.incapacitation",
@@ -71,8 +98,11 @@ export function matchesRollTags(filter, rollTags = []) {
   return String(filter?.roll_tag_match ?? filter?.rollTagMatch ?? "any").toLowerCase() === "all" ? required.every(tag => present.has(tag)) : required.some(tag => present.has(tag));
 }
 export const isKnownRollTag = id => TAG_BY_ID.has(normalizeRollTags([id])[0]);
-export const getRollTagLabel = id => TAG_BY_ID.get(normalizeRollTags([id])[0])?.label || String(id || "");
-export function getGroupedRollTags(selectedTags = []) {
+export const getRollTagLabel = (id, { i18n } = {}) => localizeRollTag(TAG_BY_ID.get(normalizeRollTags([id])[0]), { i18n })?.label || String(id || "");
+export function getGroupedRollTags(selectedTags = [], { i18n } = {}) {
   const selected = new Set(normalizeRollTags(selectedTags));
-  return ROLL_TAG_GROUPS.map(group => ({ ...group, tags: ROLL_TAG_CATALOG.filter(tag => tag.group === group.id && tag.selectable).map(tag => ({ ...tag, selected: selected.has(tag.id) })) }));
+  return ROLL_TAG_GROUPS.map(rawGroup => {
+    const group = localizeRollTagGroup(rawGroup, { i18n });
+    return { ...group, tags: ROLL_TAG_CATALOG.filter(tag => tag.group === group.id && tag.selectable).map(tag => ({ ...localizeRollTag(tag, { i18n }), selected: selected.has(tag.id) })) };
+  });
 }
