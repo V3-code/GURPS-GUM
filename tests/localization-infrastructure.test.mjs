@@ -873,3 +873,59 @@ test("effect sheet configuration preserves policies, resistance and duration mec
     assert.match(screen.scriptSource, /"system\.duration\.isPermanent": isPermanent/);
     assert.match(screen.scriptSource, /"system\.duration\.inCombat": inCombat/);
 });
+
+test("effect sheet actions reachable flow has no fixed Portuguese UI text", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "effect sheet description");
+    const actionsTab = screen.templateSource
+        .split('<div class="tab" data-tab="efeitos-ativos" data-group="primary">', 2)[1]
+        .split('<div class="tab active" data-tab="description" data-group="primary">', 1)[0];
+    const scopedSource = `${actionsTab}\n${screen.scriptSource}`
+        .replace(/{{!--[\s\S]*?--}}/g, "")
+        .replace(/{{![\s\S]*?}}/g, "")
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/\/\/.*$/gm, "");
+
+    for (const text of [
+        "Ações do Efeito", "Configure os resultados", "Adicionar Ação", "Remover ação", "Nome do efeito aplicado",
+        "Nome exibido na ficha", "Modificador de Atributo", "Alteração de Recurso", "Criar Recurso",
+        "Modificador de Rolagem", "Mensagem de Chat", "Valor ou expressão", "Escalonamento do valor",
+        "Ícone de Status", "Pontos de Vida", "Pontos de Fadiga", "Registro de Combate", "Pedir confirmação",
+        "Entrada adicional", "Descrição na Janela de Rolagem", "Aplicar o modificador em", "Selecionar contextos",
+        "Marcadores de finalidade", "Restrições específicas", "Nome da Macro", "Configuração do Teste",
+        "Nenhuma ação configurada", "Selecionar Contextos", "Tag personalizada", "Nenhum marcador encontrado"
+    ]) {
+        assert.ok(!scopedSource.includes(text), `fixed effect sheet actions text: ${text}`);
+    }
+});
+
+test("effect sheet actions preserve action types, fields, contexts and stored values", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "effect sheet description");
+    const combined = `${screen.templateSource}\n${screen.scriptSource}`;
+    for (const type of ["attribute", "status", "resource_change", "resource_create", "roll_modifier", "chat", "macro", "flag"]) {
+        assert.match(screen.templateSource, new RegExp(`value="${type}"`), `missing effect action type: ${type}`);
+    }
+    for (const field of [
+        "label", "type", "path", "operation", "value", "value_mode", "statusId", "category", "name", "chat_notice",
+        "confirm_prompt", "variable_value", "exists_policy", "source", "max", "hidden", "chat_text", "has_roll",
+        "roll_label", "roll_attribute", "roll_modifier", "requestedPurposeIds", "key", "flag_value"
+    ]) {
+        assert.match(screen.templateSource, new RegExp(`name="system\\.actions\\.\{\{action\\.index\}\}\\.${field}"`), `missing action field: ${field}`);
+    }
+    for (const value of [
+        "ADD", "OVERRIDE", "fixed", "per_origin_level", "hp", "fp", "energy_reserve", "combat_tracker",
+        "item_quantity", "spell_reserve", "power_reserve", "ignore", "update_max", "sum_max", "replace", "restore",
+        "any", "all", "roll_only", "include_in_nh", "self", "vs_targeter"
+    ]) {
+        assert.ok(combined.includes(`"${value}"`), `missing preserved effect action value: ${value}`);
+    }
+    const contextIds = Array.from(screen.scriptSource.matchAll(/\{ id: "([^"]+)", labelKey: "GUM\.EffectSheet\.Actions\.ContextsCatalog\./g), match => match[1]);
+    assert.deepEqual(contextIds, [
+        "all", "attack", "attack_melee", "attack_ranged", "defense", "defense_dodge", "defense_parry", "defense_block",
+        "skill", "spell", "power", "sense_vision", "sense_hearing", "sense_tastesmell", "sense_touch", "check_st",
+        "skill_st", "check_dx", "skill_dx", "check_iq", "skill_iq", "check_ht", "skill_ht", "check_per", "skill_per",
+        "check_vont", "skill_vont"
+    ]);
+    assert.match(screen.scriptSource, /actions\.push\(normalizeAction\(\{\}\)\)/);
+    assert.match(screen.scriptSource, /actions\.splice\(index, 1\)/);
+    assert.match(screen.scriptSource, /normalizeRollTags\(dlgHtml\.find\('input\[name="roll-tag"\]:checked'\)/);
+});
