@@ -4,10 +4,10 @@
         <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}"/>
         <div class="header-info">
             <div class="header-main-line">
-                <textarea name="name" rows="1" placeholder="Nome da Condição">{{item.name}}</textarea>
+                <textarea name="name" rows="1" placeholder="{{localize "GUM.ConditionSheet.NamePlaceholder"}}">{{item.name}}</textarea>
             </div>
             <div class="header-subline">
-                <span class="item-type-tag">Condição</span>
+                <span class="item-type-tag">{{localize "GUM.ConditionSheet.Type"}}</span>
             </div>
                 <span class="header-divider" aria-hidden="true"></span>
             </div>
@@ -17,9 +17,9 @@
 
         {{!-- NAVEGAÇÃO DAS ABAS --}}
         <nav class="sheet-tabs tabs" data-group="primary">
-            <a class="item" data-tab="description">Descrição</a>
-            <a class="item" data-tab="gatilho">Gatilho</a>
-            <a class="item" data-tab="effects">Efeitos</a>
+            <a class="item" data-tab="description">{{localize "GUM.ConditionSheet.DescriptionTab"}}</a>
+            <a class="item" data-tab="gatilho">{{localize "GUM.ConditionSheet.TriggerTab"}}</a>
+            <a class="item" data-tab="effects">{{localize "GUM.ConditionSheet.EffectsTab"}}</a>
         </nav>
 
         <section class="sheet-body-content">
@@ -29,21 +29,21 @@
                 <div class="description-tab">
                     <div class="description-grid">
                           <div class="form-group" style="flex-direction: row; text-align:center;">
-                            <label title="Livro e Página de Referência">
-                                <a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> REF
+                            <label title="{{localize "GUM.ConditionSheet.ReferenceTooltip"}}">
+                                <a class="open-reference-link" title="{{localize "GUM.PreviewDialog.OpenReference"}}"><i class="fas fa-book-open"></i></a> REF
                             </label>
                             <div class="input-row">
-                                <input type="text" name="system.ref" value="{{system.ref}}" placeholder="Ex: BA23, MA45"/>
+                                <input type="text" name="system.ref" value="{{system.ref}}" placeholder="{{localize "GUM.ConditionSheet.ReferencePlaceholder"}}"/>
                             </div>
                         </div>
                         <div class="form-section description-section itemdesc-block">
                             <details class="itemdesc-panel" open>
                                 <summary class="itemdesc-block-header">
-                                    <h4 class="itemdesc-block-title">Descrição Resumida (Chat)</h4>
+                                    <h4 class="itemdesc-block-title">{{localize "GUM.ConditionSheet.ChatDescription"}}</h4>
                                 </summary>
                                 {{#if editable}}
                                 <span class="itemdesc-header-actions">
-                                        <button type="button" class="toggle-editor itemdesc-edit-button" data-field="system.chat_description">
+                                        <button type="button" class="toggle-editor itemdesc-edit-button" data-field="system.chat_description" title="{{localize "GUM.Common.Edit"}}" aria-label="{{localize "GUM.Common.Edit"}}">
                                             <i class="fas fa-pen"></i>
                                         </button>
                                 </span>
@@ -54,9 +54,9 @@
                                     <div class="description-editor itemdesc-inner" style="display:none;">
                                         {{editor system.chat_description target="system.chat_description" engine="prosemirror" owner=owner editable=editable}}
                                         <div class="description-actions">
-                                            <button type="button" class="save-description" data-field="system.chat_description"><i class="fas fa-save"></i> Salvar</button>
-                                            <button type="button" class="expand-description" data-expanded="false"><i class="fas fa-expand"></i> Expandir</button>
-                                            <button type="button" class="cancel-description"><i class="fas fa-times"></i> Cancelar</button>
+                                            <button type="button" class="save-description" data-field="system.chat_description"><i class="fas fa-save"></i> {{localize "GUM.Common.Save"}}</button>
+                                            <button type="button" class="expand-description" data-expanded="false"><i class="fas fa-expand"></i> {{localize "GUM.Common.Expand"}}</button>
+                                            <button type="button" class="cancel-description"><i class="fas fa-times"></i> {{localize "GUM.Common.Cancel"}}</button>
                                         </div>
                                     </div>
                                 </div>
@@ -66,11 +66,11 @@
                         <div class="form-section description-section itemdesc-block">
                             <details class="itemdesc-panel" open>
                                 <summary class="itemdesc-block-header">
-                                    <h4 class="itemdesc-block-title">Descrição Completa</h4>
+                                    <h4 class="itemdesc-block-title">{{localize "GUM.ConditionSheet.FullDescription"}}</h4>
                                 </summary>
                                 {{#if editable}}
                                 <span class="itemdesc-header-actions">
-                                        <button type="button" class="toggle-editor itemdesc-edit-button" data-field="system.description">
+                                        <button type="button" class="toggle-editor itemdesc-edit-button" data-field="system.description" title="{{localize "GUM.Common.Edit"}}" aria-label="{{localize "GUM.Common.Edit"}}">
                                             <i class="fas fa-pen"></i>
                                         </button>
                                 </span>
@@ -81,9 +81,9 @@
                                     <div class="description-editor itemdesc-inner" style="display:none;">
                                         {{editor system.description target="system.description" engine="prosemirror" owner=owner editable=editable}}
                                         <div class="description-actions">
-                                            <button type="button" class="save-description" data-field="system.description"><i class="fas fa-save"></i> Salvar</button>
-                                            <button type="button" class="expand-description" data-expanded="false"><i class="fas fa-expand"></i> Expandir</button>
-                                            <button type="button" class="cancel-description"><i class="fas fa-times"></i> Cancelar</button>
+                                            <button type="button" class="save-description" data-field="system.description"><i class="fas fa-save"></i> {{localize "GUM.Common.Save"}}</button>
+                                            <button type="button" class="expand-description" data-expanded="false"><i class="fas fa-expand"></i> {{localize "GUM.Common.Expand"}}</button>
+                                            <button type="button" class="cancel-description"><i class="fas fa-times"></i> {{localize "GUM.Common.Cancel"}}</button>
                                         </div>
                                     </div>
                                 </div>
@@ -98,18 +98,18 @@
                 <section class="form-section condition-card">
                     <div class="section-header">
                         <div>
-                            <p class="eyebrow">Regra de ativação</p>
-                            <h4 class="section-title">Gatilho</h4>
+                            <p class="eyebrow">{{localize "GUM.ConditionSheet.ActivationRule"}}</p>
+                            <h4 class="section-title">{{localize "GUM.ConditionSheet.TriggerTab"}}</h4>
                         </div>
                         <span class="section-tag">JavaScript</span>
                     </div>
 
                     <div class="effect-row-grid effect-duration-grid is-two-col-rows" style="margin-bottom: 8px;">
                         <div class="effect-field effect-field-row">
-                            <label class="effect-label">Modo da condição</label>
+                            <label class="effect-label">{{localize "GUM.ConditionSheet.ConditionMode"}}</label>
                             <select name="system.bindingMode">
-                                <option value="conditional" {{#if (eq system.bindingMode "conditional")}}selected{{/if}}>When (expressão)</option>
-                                <option value="status-link" {{#if (eq system.bindingMode "status-link")}}selected{{/if}}>Vínculo de Status</option>
+                                <option value="conditional" {{#if (eq system.bindingMode "conditional")}}selected{{/if}}>{{localize "GUM.ConditionSheet.ConditionalMode"}}</option>
+                                <option value="status-link" {{#if (eq system.bindingMode "status-link")}}selected{{/if}}>{{localize "GUM.ConditionSheet.StatusLinkMode"}}</option>
                             </select>
                         </div>
                     </div>
@@ -117,39 +117,39 @@
                     {{#if (eq system.bindingMode "status-link")}}
                     <div class="effect-row-grid effect-duration-grid is-two-col-rows" style="margin-bottom: 8px;">
                         <div class="effect-field effect-field-row">
-                            <label class="effect-label">Status vinculado</label>
+                            <label class="effect-label">{{localize "GUM.ConditionSheet.LinkedStatus"}}</label>
                             <select name="system.statusBinding.statusId">
-                                <option value="">— Selecionar —</option>
+                                <option value="">— {{localize "GUM.ConditionSheet.Select"}} —</option>
                                 {{#each statusEffects as |status|}}
                                 <option value="{{status.id}}" {{#if (eq ../system.statusBinding.statusId status.id)}}selected{{/if}}>{{status.label}}</option>
                                 {{/each}}
                             </select>
                         </div>
                         <div class="effect-field effect-field-row">
-                            <label class="effect-label">Empilhamento</label>
+                            <label class="effect-label">{{localize "GUM.ConditionSheet.Stacking"}}</label>
                             <select name="system.statusBinding.stackMode">
-                                <option value="refresh" {{#if (eq system.statusBinding.stackMode "refresh")}}selected{{/if}}>Atualizar duração</option>
-                                <option value="replace" {{#if (eq system.statusBinding.stackMode "replace")}}selected{{/if}}>Substituir</option>
-                                <option value="stack" {{#if (eq system.statusBinding.stackMode "stack")}}selected{{/if}}>Empilhar</option>
+                                <option value="refresh" {{#if (eq system.statusBinding.stackMode "refresh")}}selected{{/if}}>{{localize "GUM.ConditionSheet.RefreshDuration"}}</option>
+                                <option value="replace" {{#if (eq system.statusBinding.stackMode "replace")}}selected{{/if}}>{{localize "GUM.ConditionSheet.Replace"}}</option>
+                                <option value="stack" {{#if (eq system.statusBinding.stackMode "stack")}}selected{{/if}}>{{localize "GUM.ConditionSheet.Stack"}}</option>
                             </select>
                         </div>
                         <div class="effect-field effect-field-row">
-                            <label class="effect-label">Limite de stacks</label>
+                            <label class="effect-label">{{localize "GUM.ConditionSheet.StackLimit"}}</label>
                             <input type="number" min="1" step="1" name="system.statusBinding.stackLimit" value="{{system.statusBinding.stackLimit}}"/>
                         </div>
                     </div>
                     <div class="checkbox-options" style="margin-bottom: 10px;">
                         <label class="custom-checkbox">
                             <input type="checkbox" name="system.statusBinding.enabled" {{checked system.statusBinding.enabled}}/>
-                            <span>Habilitado para vínculo por status</span>
+                            <span>{{localize "GUM.ConditionSheet.StatusLinkEnabled"}}</span>
                         </label>
                         <label class="custom-checkbox">
                             <input type="checkbox" name="system.statusBinding.removeOnStatusOff" {{checked system.statusBinding.removeOnStatusOff}}/>
-                            <span>Remover efeitos quando status sair</span>
+                            <span>{{localize "GUM.ConditionSheet.RemoveEffectsWhenStatusOff"}}</span>
                         </label>
                     </div>
                     {{else}}
-                    <p class="hint">Modo <strong>When</strong> ativo: vínculo de status definido como <strong>sem vínculo</strong>.</p>
+                    <p class="hint">{{localize "GUM.ConditionSheet.ConditionalModeHint"}}</p>
 
                     {{/if}}
 
@@ -160,22 +160,22 @@
                         <div class="checkbox-options" style="margin: 8px 0 2px;">
                             <label class="custom-checkbox">
                                 <input type="checkbox" name="system.triggerOnTurnStartWhileActive" {{checked system.triggerOnTurnStartWhileActive}}/>
-                                <span>Reexecutar o gatilho no início de cada turno do personagem (em combate)</span>
+                                <span>{{localize "GUM.ConditionSheet.TriggerEveryTurn"}}</span>
                             </label>
                         </div>
                         <div class="button-group">
-                            <a class="button saved-triggers-btn" title="Buscar Gatilho Salvo">
+                            <a class="button saved-triggers-btn" title="{{localize "GUM.ConditionSheet.SearchSavedTrigger"}}">
                                 <i class="fas fa-bookmark"></i>
-                                Gatilhos Salvos
+                                {{localize "GUM.ConditionBuilder.SavedTriggers"}}
                             </a>
-                            <a class="button condition-assistant-btn" title="Assistente de Condições">
+                            <a class="button condition-assistant-btn" title="{{localize "GUM.ConditionBuilder.Title"}}">
                                 <i class="fas fa-magic"></i>
-                                Assistente de Construção
+                                {{localize "GUM.ConditionSheet.BuilderAssistant"}}
                             </a>
                         </div>
                     </div>
                     {{else}}
-                    <p class="hint">No modo <strong>Vínculo de Status</strong>, o campo <code>when</code> fica oculto para evitar conflitos.</p>
+                    <p class="hint">{{localize "GUM.ConditionSheet.StatusLinkModeHint"}}</p>
                     {{/if}}
                 </section>
             </div>
@@ -188,8 +188,8 @@
 
                         {{!-- Header padrão + plus minimalista (MESMO DO EQP_MODIFIERS) --}}
                         <div class="eqpmod-block-header">
-                            <h4 class="eqpmod-block-title">Efeitos Vinculados</h4>
-                            <a class="eqpmod-add-button add-effect" title="Adicionar Efeito">
+                            <h4 class="eqpmod-block-title">{{localize "GUM.ConditionSheet.LinkedEffects"}}</h4>
+                            <a class="eqpmod-add-button add-effect" title="{{localize "GUM.ConditionSheet.AddEffect"}}">
                                 <i class="fas fa-plus"></i>
                             </a>
                         </div>
@@ -215,10 +215,10 @@
 
             <div class="effect-controls effects-cell effects-actions">
               <span class="effects-controls">
-                <a class="view-effect" title="Ver Item Efeito Original">
+                <a class="view-effect" title="{{localize "GUM.ConditionSheet.ViewOriginalEffect"}}">
                   <i class="fas fa-eye"></i>
                 </a>
-                <a class="delete-effect" title="Remover Link do Efeito">
+                <a class="delete-effect" title="{{localize "GUM.ConditionSheet.RemoveEffectLink"}}">
                   <i class="fas fa-trash"></i>
                 </a>
               </span>
@@ -230,7 +230,7 @@
     </ol>
   {{else}}
     <ol class="effects-list effects-line-list">
-      <li class="effects-empty empty-hint">Nenhum efeito vinculado.</li>
+      <li class="effects-empty empty-hint">{{localize "GUM.ConditionSheet.NoLinkedEffects"}}</li>
     </ol>
   {{/if}}
 </div>

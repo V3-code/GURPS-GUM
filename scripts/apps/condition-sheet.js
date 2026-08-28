@@ -5,6 +5,9 @@ import { TriggerBrowser } from "../../module/apps/trigger-browser.js";
 
 const { ItemSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
+const localize = key => game.i18n.localize(key);
+const format = (key, data) => game.i18n.format(key, data);
+const escapeHtml = value => foundry.utils.escapeHTML(String(value ?? ""));
 
 export class ConditionSheet extends ItemSheet {
     static get defaultOptions() {
@@ -48,7 +51,7 @@ export class ConditionSheet extends ItemSheet {
         }
         context.statusEffects = (CONFIG.statusEffects || [])
             .map((status) => ({ id: status.id, label: status.name }))
-            .sort((a, b) => a.label.localeCompare(b.label, "pt-BR", { sensitivity: "base" }));
+            .sort((a, b) => a.label.localeCompare(b.label, game.i18n.lang || "pt-BR", { sensitivity: "base" }));
         context.enrichedDescription = await TextEditorImpl.enrichHTML(this.item.system.description, { async: true });
         context.enrichedChatDescription = await TextEditorImpl.enrichHTML(this.item.system.chat_description || "", { async: true });
         context.owner = this.item.isOwner;
@@ -63,7 +66,9 @@ export class ConditionSheet extends ItemSheet {
                 const effectItem = await fromUuid(link.uuid);
                 if (effectItem) {
                     const actions = Array.isArray(effectItem.system?.actions) ? effectItem.system.actions : [];
-                    const effectType = actions.length > 1 ? "múltiplas ações" : (actions[0]?.type || effectItem.system.type || "indefinido");
+                    const effectType = actions.length > 1
+                        ? localize("GUM.ConditionSheet.MultipleActions")
+                        : (actions[0]?.type || effectItem.system.type || localize("GUM.ConditionSheet.Undefined"));
                     preparedEffects.push({
                         name: effectItem.name,
                         img: effectItem.img,
@@ -75,7 +80,14 @@ export class ConditionSheet extends ItemSheet {
                     });
                 } else {
                     // Adiciona um placeholder se o link estiver quebrado␊
-                    preparedEffects.push({ name: "Link Quebrado", img: "icons/svg/hazard.svg", summary: "UUID não encontrado", index: index, uuid: link.uuid, type: "desconhecido" });
+                    preparedEffects.push({
+                        name: localize("GUM.ConditionSheet.BrokenLink"),
+                        img: "icons/svg/hazard.svg",
+                        summary: localize("GUM.ConditionSheet.UuidNotFound"),
+                        index: index,
+                        uuid: link.uuid,
+                        type: localize("GUM.ConditionSheet.Unknown")
+                    });
                 }
             }
         }
@@ -90,15 +102,15 @@ export class ConditionSheet extends ItemSheet {
     _getEffectSummary(effectItem) {
         const sys = effectItem.system;
         switch (sys.type) {
-            case 'attribute': return `Modificador: ${sys.path || ''} ${sys.operation || ''} ${sys.value || ''}`;
-            case 'resource_change': return `Recurso: ${sys.category} (${sys.value || '0'})`;
+            case 'attribute': return format("GUM.ConditionSheet.Summaries.Modifier", { value: `${sys.path || ''} ${sys.operation || ''} ${sys.value || ''}`.trim() });
+            case 'resource_change': return format("GUM.ConditionSheet.Summaries.Resource", { category: sys.category || "", value: sys.value || "0" });
             case 'status':
                 const status = CONFIG.statusEffects.find(s => s.id === sys.statusId);
-                return `Status: ${status ? status.name : sys.statusId}`;
-            case 'chat': return `Mensagem no Chat`;
-            case 'macro': return `Executa Macro: ${sys.value}`;
-            case 'flag': return `Define Flag: ${sys.key}`;
-            default: return "Efeito desconhecido";
+                return format("GUM.ConditionSheet.Summaries.Status", { value: status ? status.name : (sys.statusId || "") });
+            case 'chat': return localize("GUM.ConditionSheet.Summaries.ChatMessage");
+            case 'macro': return format("GUM.ConditionSheet.Summaries.RunMacro", { value: sys.value || "" });
+            case 'flag': return format("GUM.ConditionSheet.Summaries.SetFlag", { value: sys.key || "" });
+            default: return localize("GUM.ConditionSheet.Summaries.UnknownEffect");
         }
     }
 
@@ -243,13 +255,13 @@ export class ConditionSheet extends ItemSheet {
         const rawRef = (refInput?.value ?? this.item.system?.ref ?? '').toString().trim();
 
         if (!rawRef) {
-            return ui.notifications.warn("Preencha o campo REF antes de abrir a referência.");
+            return ui.notifications.warn(localize("GUM.PreviewDialog.FillReference"));
         }
 
         const parsedList = this._parseReferenceCodes(rawRef);
 
         if (!parsedList.length) {
-            return ui.notifications.warn("Formato de REF inválido. Use ex.: BA23 ou BA23, MA45.");
+            return ui.notifications.warn(localize("GUM.PreviewDialog.InvalidReference"));
         }
 
         if (parsedList.length === 1) {
@@ -375,7 +387,7 @@ export class ConditionSheet extends ItemSheet {
     async _openSingleReference(parsed) {
         const match = this._findPdfPageByCode(parsed.code);
         if (!match) {
-            return ui.notifications.warn(`Nenhum PDF com código "${parsed.code}" foi encontrado nos periódicos.`);
+            return ui.notifications.warn(format("GUM.PreviewDialog.PdfNotFound", { code: parsed.code }));
         }
 
         const pageNumber = Math.max(1, parsed.page + (Number(match.pageOffset) || 0));
@@ -403,16 +415,16 @@ export class ConditionSheet extends ItemSheet {
         }
 
         if (!Object.keys(buttons).length) {
-            return ui.notifications.warn("Nenhuma das referências informadas foi encontrada nos periódicos.");
+            return ui.notifications.warn(localize("GUM.PreviewDialog.ReferencesNotFound"));
         }
 
         const missingHtml = missing.length
-            ? `<p style="opacity:.8;margin-top:.5rem"><b>Não encontradas:</b> ${missing.join(", ")}</p>`
+            ? `<p style="opacity:.8;margin-top:.5rem"><b>${escapeHtml(localize("GUM.PreviewDialog.MissingReferences"))}:</b> ${missing.map(escapeHtml).join(", ")}</p>`
             : "";
 
         new Dialog({
-            title: "Múltiplas Referências",
-            content: `<p>Escolha qual referência deseja abrir:</p>${missingHtml}`,
+            title: localize("GUM.PreviewDialog.MultipleReferences"),
+            content: `<p>${escapeHtml(localize("GUM.PreviewDialog.ChooseReference"))}</p>${missingHtml}`,
             buttons,
             default: Object.keys(buttons)[0]
         }).render(true);
@@ -450,6 +462,6 @@ export class ConditionSheet extends ItemSheet {
             }, { once: true });
         }
 
-        ui.notifications.warn("Não foi possível posicionar o PDF na página solicitada automaticamente.");
+        ui.notifications.warn(localize("GUM.ConditionSheet.PdfPositionFailure"));
     }
 }

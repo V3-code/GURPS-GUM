@@ -66,6 +66,11 @@ const screens = [
         name: "condition builder",
         template: new URL("../templates/apps/condition-builder.hbs", import.meta.url),
         script: new URL("../scripts/apps/condition-builder.js", import.meta.url)
+    },
+    {
+        name: "condition sheet",
+        template: new URL("../templates/items/condition-sheet.hbs", import.meta.url),
+        script: new URL("../scripts/apps/condition-sheet.js", import.meta.url)
     }
 ];
 const languagePaths = {
@@ -741,4 +746,41 @@ test("condition builder preserves formula values, paths, operators and insertion
     assert.match(screen.scriptSource, /textarea\.value = textarea\.value\.substring\(0, start\) \+ text \+ textarea\.value\.substring\(end\)/);
     assert.match(screen.scriptSource, /this\.item\.update\(\{ "system\.when": formData\["system\.when"\] \}\)/);
     assert.match(screen.templateSource, /name="system\.when"/);
+});
+
+test("condition sheet reachable flow has no fixed Portuguese UI text", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "condition sheet");
+    const templateSource = screen.templateSource.replace(/{{!--[\s\S]*?--}}/g, "");
+    const scriptSource = screen.scriptSource.replace(/\/\/.*$/gm, "");
+    for (const text of [
+        "Nome da Condição", "Descrição Resumida", "Descrição Completa", "Regra de ativação", "Modo da condição",
+        "Vínculo de Status", "Status vinculado", "Empilhamento", "Atualizar duração", "Limite de stacks",
+        "Efeitos Vinculados", "Nenhum efeito vinculado", "Link Quebrado", "UUID não encontrado", "Efeito desconhecido",
+        "Preencha o campo REF", "Formato de REF inválido", "Múltiplas Referências"
+    ]) {
+        assert.ok(!`${templateSource}\n${scriptSource}`.includes(text), `fixed condition sheet text: ${text}`);
+    }
+});
+
+test("condition sheet preserves binding modes, linked effects, editors and PDF references", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "condition sheet");
+    for (const field of [
+        "name", "system.ref", "system.chat_description", "system.description", "system.bindingMode",
+        "system.statusBinding.statusId", "system.statusBinding.stackMode", "system.statusBinding.stackLimit",
+        "system.statusBinding.enabled", "system.statusBinding.removeOnStatusOff", "system.when",
+        "system.triggerOnTurnStartWhileActive"
+    ]) {
+        assert.match(screen.templateSource, new RegExp(`(?:name|data-field|target|data-edit)="${field.replaceAll(".", "\\.")}"`), `missing condition field: ${field}`);
+    }
+    for (const value of ["conditional", "status-link", "refresh", "replace", "stack"]) {
+        assert.match(screen.templateSource, new RegExp(`value="${value}"`));
+    }
+    assert.match(screen.scriptSource, /const effectLinks = this\.item\.system\.effects \|\| \[\]/);
+    assert.match(screen.scriptSource, /const effectItem = await fromUuid\(link\.uuid\)/);
+    assert.match(screen.scriptSource, /effects\.splice\(effectIndex, 1\)/);
+    assert.match(screen.scriptSource, /this\.item\.update\(\{ "system\.effects": effects \}\)/);
+    assert.match(screen.scriptSource, /await this\.item\.update\(\{ \[field\]: content \}\)/);
+    assert.match(screen.scriptSource, /part\.replace\(\/\\s\+\/g, ""\)\.match\(\/\^\(\[A-Z\]\+\)\(\\d\+\)\$\//);
+    assert.match(screen.scriptSource, /parsed\.page \+ \(Number\(match\.pageOffset\) \|\| 0\)/);
+    assert.match(screen.scriptSource, /missing\.map\(escapeHtml\)\.join\(", "\)/);
 });
