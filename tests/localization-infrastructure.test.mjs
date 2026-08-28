@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { GUM_DATA } from "../scripts/gum-data.js";
+import { ROLL_PURPOSES, ROLL_PURPOSE_GROUPS } from "../module/utils/roll-purposes.mjs";
 
 const manifestPath = new URL("../system.json", import.meta.url);
 const screens = [
@@ -76,6 +77,21 @@ const screens = [
         name: "effect sheet description",
         template: new URL("../templates/items/effect-sheet.hbs", import.meta.url),
         script: new URL("../scripts/apps/effect-sheet.js", import.meta.url)
+    },
+    {
+        name: "roll purpose catalog",
+        template: null,
+        script: new URL("../module/utils/roll-purposes.mjs", import.meta.url)
+    },
+    {
+        name: "roll purpose picker",
+        template: null,
+        script: new URL("../module/apps/roll-purpose-picker.mjs", import.meta.url)
+    },
+    {
+        name: "purpose quick view",
+        template: null,
+        script: new URL("../module/apps/purpose-quick-view.mjs", import.meta.url)
     }
 ];
 const languagePaths = {
@@ -227,6 +243,7 @@ test("localized screens reference every localization key and only defined keys",
     ]) {
         used.add(`GUM.PreviewDialog.Tags.${tag}`);
     }
+    for (const key of flattenKeys(portuguese.GUM.RollPurposes)) used.add(`GUM.RollPurposes.${key}`);
 
     assert.deepEqual([...used].sort(), [...defined].sort());
 });
@@ -928,4 +945,30 @@ test("effect sheet actions preserve action types, fields, contexts and stored va
     assert.match(screen.scriptSource, /actions\.push\(normalizeAction\(\{\}\)\)/);
     assert.match(screen.scriptSource, /actions\.splice\(index, 1\)/);
     assert.match(screen.scriptSource, /normalizeRollTags\(dlgHtml\.find\('input\[name="roll-tag"\]:checked'\)/);
+});
+
+test("roll purpose catalogs provide localized labels for every mechanical id", async () => {
+    const languages = Object.fromEntries(await Promise.all(Object.entries(languagePaths).map(
+        async ([language, path]) => [language, JSON.parse(await readFile(path, "utf8"))]
+    )));
+    for (const language of Object.values(languages)) {
+        const catalog = language.GUM.RollPurposes;
+        assert.deepEqual(Object.keys(catalog.Groups).sort(), ROLL_PURPOSE_GROUPS.map(group => group.id).sort());
+        assert.deepEqual(Object.keys(catalog.Purposes).sort(), ROLL_PURPOSES.map(purpose => purpose.id).sort());
+        for (const purpose of ROLL_PURPOSES) assert.ok(catalog.Purposes[purpose.id].Label?.trim(), `missing purpose label: ${purpose.id}`);
+    }
+});
+
+test("shared purpose picker and quick view have no fixed Portuguese UI text", async () => {
+    const screensByName = new Map((await readScreenSources()).map(screen => [screen.name, screen.scriptSource.replace(/\/\/.*$/gm, "")]));
+    const scopedSource = `${screensByName.get("roll purpose picker")}\n${screensByName.get("purpose quick view")}`;
+    for (const text of [
+        "Buscar finalidade por nome", "Mostrar somente selecionadas", "Nenhuma finalidade encontrada",
+        "Selecionar finalidades do teste", "Aplicar como Teste Geral", "Finalidade principal",
+        "Qualificadores podem ser combinados", "Base comum", "Quando usar", "Não confundir com",
+        "Tag recomendada para efeitos", "Tags específicas produzidas", "Categorias herdadas",
+        "Não foi possível copiar a tag"
+    ]) {
+        assert.ok(!scopedSource.includes(text), `fixed shared purpose UI text: ${text}`);
+    }
 });

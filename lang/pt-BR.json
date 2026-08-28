@@ -443,6 +443,540 @@
         "GreaterThanOrEqual": "Maior ou Igual a"
       }
     },
+    "RollPurposes": {
+      "GeneralTest": "Teste Geral",
+      "GenericDescription": "Teste relacionado a {label}.",
+      "UsualAttribute": " Atributo usual: {attribute}.",
+      "WillAbbreviation": "Vont",
+      "Groups": {
+        "general": "Geral",
+        "survival": "Ferimentos e Sobrevivência",
+        "resistances": "Resistências Físicas",
+        "mental": "Mentais e Comportamentais",
+        "movement": "Equilíbrio, Quedas e Movimento",
+        "environment": "Ambiente e Fisiologia",
+        "senses": "Sensoriais",
+        "sources": "Fontes e Poderes",
+        "vectors": "Vetores e Agentes",
+        "social": "Sociais",
+        "circumstances": "Circunstâncias"
+      },
+      "Picker": {
+        "Suggested": "Sugerida",
+        "InformationAbout": "Informações sobre {label}",
+        "SearchPlaceholder": "Buscar finalidade por nome, chave ou descrição...",
+        "SearchAria": "Buscar finalidades",
+        "ClearSearch": "Limpar pesquisa",
+        "Clear": "Limpar",
+        "SelectedOnly": "Mostrar somente selecionadas",
+        "NoResults": "Nenhuma finalidade encontrada.",
+        "NoResultsHint": "Tente outro termo ou desative o filtro de selecionadas.",
+        "Title": "Selecionar finalidades do teste",
+        "Close": "Fechar",
+        "SelectedOne": "{count} finalidade selecionada",
+        "SelectedMany": "{count} finalidades selecionadas",
+        "ResultOne": "{count} resultado",
+        "ResultMany": "{count} resultados",
+        "ApplyOne": "Aplicar {count} finalidade",
+        "ApplyMany": "Aplicar {count} finalidades",
+        "ApplyGeneral": "Aplicar como Teste Geral",
+        "Apply": "Aplicar",
+        "Cancel": "Cancelar"
+      },
+      "QuickView": {
+        "Perception": "Percepção",
+        "Will": "Vontade",
+        "Other": "Outro",
+        "Primary": "Finalidade principal",
+        "Qualifier": "Qualificador",
+        "QualifierHint": "Qualificadores podem ser combinados com uma finalidade principal.",
+        "CopyTag": "Copiar tag",
+        "CopyTagAria": "Copiar tag {tag}",
+        "CommonBase": "Base comum",
+        "CommonBases": "Bases comuns",
+        "Or": "ou",
+        "BaseHint": "A base é apenas uma sugestão. O GUM não limita esta finalidade a um atributo ou habilidade específica.",
+        "Type": "Finalidade do Teste",
+        "Group": "Grupo",
+        "Role": "Tipo",
+        "WhenToUse": "Quando usar",
+        "DoNotConfuse": "Não confundir com",
+        "RecommendedTag": "Tag recomendada para efeitos",
+        "DirectTags": "Tags específicas produzidas",
+        "InheritedCategories": "Categorias herdadas",
+        "TagHint": "Tags específicas restringem o modificador a esta finalidade ou a uma situação muito próxima. Categorias herdadas também podem alcançar outras finalidades relacionadas.",
+        "Reference": "Referência",
+        "UnknownPurpose": "GUM | Finalidade desconhecida: {id}",
+        "Title": "Finalidade: {label}",
+        "TagCopied": "Tag copiada: {tag}",
+        "CopyFailure": "Não foi possível copiar a tag."
+      },
+      "Purposes": {
+        "general": {
+          "Label": "Teste Geral",
+          "Description": "Finalidade neutra utilizada quando nenhuma finalidade mecânica específica foi selecionada. Não produz tags semânticas e não ativa modificadores filtrados por finalidade."
+        },
+        "knockdown_stun": {
+          "Label": "Nocaute e Atordoamento por Ferimento",
+          "Description": "Teste imediato de HT provocado por ferimento grave ou por determinados ferimentos na cabeça ou nos órgãos vitais. Um fracasso provoca nocaute e atordoamento físico. Um fracasso por 5 ou mais ou uma falha crítica também pode provocar perda da consciência.",
+          "Distinctions": {
+            "0": "Recuperar-se posteriormente do atordoamento físico.",
+            "1": "Manter a consciência com 0 PV ou menos.",
+            "2": "Recuperar a consciência.",
+            "3": "Resistir diretamente a sono, coma ou inconsciência.",
+            "4": "Permanecer de pé depois de uma projeção."
+          }
+        },
+        "recover_physical_stun": {
+          "Label": "Recuperar-se de Atordoamento Físico",
+          "Description": "Teste relacionado a recuperar-se de atordoamento físico.",
+          "Distinctions": {
+            "0": "O teste inicial de nocaute e atordoamento provocado pelo ferimento."
+          }
+        },
+        "consciousness": {
+          "Label": "Manter a Consciência",
+          "Description": "Teste relacionado a manter a consciência.",
+          "Distinctions": {
+            "0": "Recuperar a consciência depois de já estar inconsciente."
+          }
+        },
+        "regain_consciousness": {
+          "Label": "Recuperar a Consciência",
+          "Description": "Teste relacionado a recuperar a consciência.",
+          "Distinctions": {
+            "0": "Testes para permanecer consciente."
+          }
+        },
+        "death": {
+          "Label": "Evitar a Morte",
+          "Description": "Teste relacionado a evitar a morte."
+        },
+        "resist_bleeding": {
+          "Label": "Resistir a Sangramento",
+          "Description": "Teste relacionado a resistir a sangramento."
+        },
+        "natural_recovery": {
+          "Label": "Recuperação Natural",
+          "Description": "Teste relacionado a recuperação natural."
+        },
+        "crippling_recovery": {
+          "Label": "Recuperação de Lesão Incapacitante",
+          "Description": "Teste relacionado a recuperação de lesão incapacitante."
+        },
+        "pain": {
+          "Label": "Resistir à Dor",
+          "Description": "Teste relacionado a resistir à dor."
+        },
+        "resist_torture": {
+          "Label": "Resistir à Tortura",
+          "Description": "Teste relacionado a resistir à tortura."
+        },
+        "resist_metabolic_hazard": {
+          "Label": "Perigo Metabólico",
+          "Description": "Teste relacionado a perigo metabólico."
+        },
+        "resist_poison": {
+          "Label": "Resistência a Veneno",
+          "Description": "Teste relacionado a resistência a veneno."
+        },
+        "resist_disease": {
+          "Label": "Resistência a Doença",
+          "Description": "Teste relacionado a resistência a doença."
+        },
+        "resist_infection": {
+          "Label": "Resistência a Infecção",
+          "Description": "Teste relacionado a resistência a infecção."
+        },
+        "resist_paralysis": {
+          "Label": "Resistência a Paralisia",
+          "Description": "Teste relacionado a resistência a paralisia."
+        },
+        "resist_incapacitation": {
+          "Label": "Resistência a Atribulação/Incapacitação",
+          "Description": "Teste relacionado a resistência a atribulação/incapacitação."
+        },
+        "resist_unconsciousness": {
+          "Label": "Resistência a Sono/Inconsciência/Coma",
+          "Description": "Teste relacionado a resistência a sono/inconsciência/coma.",
+          "Distinctions": {
+            "0": "Inconsciência provocada por fracasso em testes decorrentes de ferimentos."
+          }
+        },
+        "resist_nausea": {
+          "Label": "Resistência a Náusea",
+          "Description": "Teste relacionado a resistência a náusea."
+        },
+        "resist_seizure": {
+          "Label": "Resistência a Convulsões",
+          "Description": "Teste relacionado a resistência a convulsões."
+        },
+        "resist_addiction": {
+          "Label": "Dependência/Abstinência",
+          "Description": "Teste relacionado a dependência/abstinência."
+        },
+        "resist_alcohol": {
+          "Label": "Resistência ao Álcool",
+          "Description": "Use ao resistir aos efeitos do álcool e da embriaguez.",
+          "Distinctions": {
+            "0": "Resistência geral a outros perigos metabólicos ou dependência/abstinência."
+          }
+        },
+        "fright_check": {
+          "Label": "Verificação de Pânico",
+          "Description": "Teste realizado diante de uma situação aterrorizante ou psicologicamente traumática.",
+          "Distinctions": {
+            "0": "Todo e qualquer teste genérico contra medo; Resistência ao Medo pode abranger situações que não usam especificamente uma Verificação de Pânico."
+          }
+        },
+        "resist_fear": {
+          "Label": "Resistência ao Medo",
+          "Description": "Teste relacionado a resistência ao medo.",
+          "Distinctions": {
+            "0": "Verificação de Pânico: esta finalidade pode abranger testes contra medo que não utilizem especificamente essas regras."
+          }
+        },
+        "resist_intimidation": {
+          "Label": "Resistência à Intimidação",
+          "Description": "Teste relacionado a resistência à intimidação."
+        },
+        "avoid_mental_stun": {
+          "Label": "Evitar Atordoamento Mental",
+          "Description": "Teste relacionado a evitar atordoamento mental.",
+          "Distinctions": {
+            "0": "Atordoamento físico provocado por ferimentos."
+          }
+        },
+        "recover_mental_stun": {
+          "Label": "Recuperar-se de Atordoamento Mental",
+          "Description": "Teste relacionado a recuperar-se de atordoamento mental.",
+          "Distinctions": {
+            "0": "Recuperação de atordoamento físico."
+          }
+        },
+        "self_control": {
+          "Label": "Teste de Autocontrole",
+          "Description": "Teste relacionado a teste de autocontrole."
+        },
+        "resist_mental_influence": {
+          "Label": "Resistência a Influência Mental",
+          "Description": "Teste relacionado a resistência a influência mental."
+        },
+        "resist_possession": {
+          "Label": "Resistência a Possessão",
+          "Description": "Teste relacionado a resistência a possessão."
+        },
+        "maintain_concentration": {
+          "Label": "Manter a Concentração",
+          "Description": "Teste relacionado a manter a concentração."
+        },
+        "resist_confusion": {
+          "Label": "Resistência a Confusão/Alucinação",
+          "Description": "Teste relacionado a resistência a confusão/alucinação."
+        },
+        "memorize": {
+          "Label": "Memorizar",
+          "Description": "Use ao fixar deliberadamente informações novas na memória.",
+          "Distinctions": {
+            "0": "Recordar informação já aprendida; memorizar é o ato de fixar conteúdo novo."
+          }
+        },
+        "recall_information": {
+          "Label": "Recordar Informação",
+          "Description": "Use ao lembrar ou recuperar uma informação já aprendida.",
+          "Distinctions": {
+            "0": "Memorizar conteúdo novo; recordar recupera algo já aprendido."
+          }
+        },
+        "prolonged_mental_task": {
+          "Label": "Tarefa Mental Prolongada",
+          "Description": "Use para uma tarefa intelectual que exige esforço sustentado por longo período.",
+          "Distinctions": {
+            "0": "Um teste mental breve ou uma simples manutenção de concentração."
+          }
+        },
+        "creativity": {
+          "Label": "Criatividade/Inventividade",
+          "Description": "Use para criar, improvisar ou encontrar uma solução inventiva.",
+          "Distinctions": {
+            "0": "Recordar conhecimento ou apenas executar uma técnica conhecida."
+          }
+        },
+        "maintain_balance": {
+          "Label": "Manter o Equilíbrio",
+          "Description": "Teste relacionado a manter o equilíbrio."
+        },
+        "avoid_fall": {
+          "Label": "Evitar uma Queda",
+          "Description": "Teste relacionado a evitar uma queda.",
+          "Distinctions": {
+            "0": "Amortecer uma queda que já ocorreu."
+          }
+        },
+        "controlled_fall": {
+          "Label": "Queda Controlada/Amortecer Queda",
+          "Description": "Teste relacionado a queda controlada/amortecer queda.",
+          "Distinctions": {
+            "0": "Evitar uma queda; esta finalidade é usada depois que a queda já está ocorrendo."
+          }
+        },
+        "resist_takedown": {
+          "Label": "Resistir a Queda/Derrubada",
+          "Description": "Teste relacionado a resistir a queda/derrubada.",
+          "Distinctions": {
+            "0": "Projeção causada por dano."
+          }
+        },
+        "resist_knockback_fall": {
+          "Label": "Permanecer de Pé após Projeção",
+          "Description": "Teste relacionado a permanecer de pé após projeção.",
+          "Distinctions": {
+            "0": "O cálculo da distância de projeção."
+          }
+        },
+        "stay_mounted": {
+          "Label": "Permanecer Montado",
+          "Description": "Teste relacionado a permanecer montado."
+        },
+        "break_free": {
+          "Label": "Libertar-se",
+          "Description": "Teste relacionado a libertar-se."
+        },
+        "resist_suffocation": {
+          "Label": "Resistência a Sufocamento",
+          "Description": "Teste relacionado a resistência a sufocamento."
+        },
+        "resist_exertion": {
+          "Label": "Esforço/Fadiga",
+          "Description": "Teste relacionado a esforço/fadiga."
+        },
+        "resist_heat": {
+          "Label": "Resistência ao Calor",
+          "Description": "Teste relacionado a resistência ao calor."
+        },
+        "resist_cold": {
+          "Label": "Resistência ao Frio",
+          "Description": "Teste relacionado a resistência ao frio."
+        },
+        "resist_altitude": {
+          "Label": "Resistência à Altitude",
+          "Description": "Teste relacionado a resistência à altitude."
+        },
+        "resist_pressure": {
+          "Label": "Resistência à Pressão",
+          "Description": "Teste relacionado a resistência à pressão."
+        },
+        "resist_vacuum": {
+          "Label": "Resistência ao Vácuo",
+          "Description": "Teste relacionado a resistência ao vácuo."
+        },
+        "resist_radiation": {
+          "Label": "Resistência à Radiação",
+          "Description": "Teste relacionado a resistência à radiação."
+        },
+        "resist_acceleration": {
+          "Label": "Resistência à Aceleração",
+          "Description": "Teste relacionado a resistência à aceleração."
+        },
+        "resist_sleep_deprivation": {
+          "Label": "Privação de Sono",
+          "Description": "Teste relacionado a privação de sono."
+        },
+        "sleep_rest": {
+          "Label": "Adormecer/Obter Descanso",
+          "Description": "Teste relacionado a adormecer/obter descanso."
+        },
+        "aging_check": {
+          "Label": "Verificação de Envelhecimento",
+          "Description": "Teste relacionado a verificação de envelhecimento."
+        },
+        "sense_general": {
+          "Label": "Teste de Sentidos",
+          "Description": "Teste relacionado a teste de sentidos.",
+          "Distinctions": {
+            "0": "Resistência a ataques que utilizam um sentido como vetor."
+          }
+        },
+        "sense_vision": {
+          "Label": "Visão",
+          "Description": "Teste relacionado a visão.",
+          "Distinctions": {
+            "0": "Resistência a ataques que utilizam a visão como vetor."
+          }
+        },
+        "sense_hearing": {
+          "Label": "Audição",
+          "Description": "Teste relacionado a audição.",
+          "Distinctions": {
+            "0": "Resistência a ataques que utilizam a audição como vetor."
+          }
+        },
+        "sense_taste_smell": {
+          "Label": "Paladar/Olfato",
+          "Description": "Teste relacionado a paladar/olfato.",
+          "Distinctions": {
+            "0": "Resistência a ataques que utilizam paladar ou olfato como vetor."
+          }
+        },
+        "sense_smell": {
+          "Label": "Olfato",
+          "Description": "Use para perceber, identificar ou discriminar cheiros pelo olfato.",
+          "Distinctions": {
+            "0": "Teste apenas de paladar.",
+            "1": "Ataque que usa o olfato como vetor; testar um sentido não é resistir por esse canal."
+          }
+        },
+        "sense_taste": {
+          "Label": "Paladar",
+          "Description": "Use para perceber, identificar ou discriminar sabores pelo paladar.",
+          "Distinctions": {
+            "0": "Teste apenas de olfato.",
+            "1": "Ataque que usa o paladar como vetor; testar um sentido não é resistir por esse canal."
+          }
+        },
+        "sense_touch": {
+          "Label": "Tato",
+          "Description": "Teste relacionado a tato.",
+          "Distinctions": {
+            "0": "Resistência a ataques que utilizam o tato como vetor."
+          }
+        },
+        "sense_detection": {
+          "Label": "Detecção",
+          "Description": "Teste relacionado a detecção."
+        },
+        "resist_magic": {
+          "Label": "Resistência à Magia",
+          "Description": "Qualificador para resistência direta à fonte; não se aplica automaticamente a consequências físicas indiretas.",
+          "Distinctions": {
+            "0": "Consequências físicas indiretas de uma magia; esta finalidade representa resistência direta à influência mágica."
+          }
+        },
+        "resist_psionic": {
+          "Label": "Resistência Psiônica",
+          "Description": "Qualificador para resistência direta à fonte; não se aplica automaticamente a consequências físicas indiretas."
+        },
+        "resist_supernatural_power": {
+          "Label": "Resistência Sobrenatural",
+          "Description": "Qualificador para resistência direta à fonte; não se aplica automaticamente a consequências físicas indiretas."
+        },
+        "resist_power": {
+          "Label": "Resistência a Poder",
+          "Description": "Qualificador para resistência direta à fonte; não se aplica automaticamente a consequências físicas indiretas."
+        },
+        "resist_telepathy": {
+          "Label": "Resistência Telepática",
+          "Description": "Qualificador para resistência direta à fonte; não se aplica automaticamente a consequências físicas indiretas."
+        },
+        "sensory_vector_vision": {
+          "Label": "Ataque por Canal Visual",
+          "ShortLabel": "Canal Visual",
+          "Description": "Use quando o ataque ou efeito chega pelo canal visual.",
+          "Distinctions": {
+            "0": "Teste de Visão; o vetor descreve como um ataque chega, não qual sentido está sendo testado."
+          }
+        },
+        "sensory_vector_hearing": {
+          "Label": "Ataque por Canal Auditivo",
+          "ShortLabel": "Canal Auditivo",
+          "Description": "Use quando o ataque ou efeito chega pelo canal auditivo.",
+          "Distinctions": {
+            "0": "Teste de Audição; o vetor descreve como um ataque chega, não qual sentido está sendo testado."
+          }
+        },
+        "sensory_vector_smell": {
+          "Label": "Ataque por Canal Olfativo",
+          "ShortLabel": "Canal Olfativo",
+          "Description": "Use quando o ataque ou efeito chega especificamente pelo olfato.",
+          "Distinctions": {
+            "0": "Teste de Olfato e canal gustativo."
+          }
+        },
+        "sensory_vector_taste": {
+          "Label": "Ataque por Canal Gustativo",
+          "ShortLabel": "Canal Gustativo",
+          "Description": "Use quando o ataque ou efeito chega especificamente pelo paladar.",
+          "Distinctions": {
+            "0": "Teste de Paladar e canal olfativo."
+          }
+        },
+        "sensory_vector_touch": {
+          "Label": "Ataque por Canal Tátil",
+          "ShortLabel": "Canal Tátil",
+          "Description": "Use quando o ataque ou efeito chega pelo contato ou canal tátil.",
+          "Distinctions": {
+            "0": "Teste de Tato."
+          }
+        },
+        "sensory_vector_smell_taste": {
+          "Label": "Ataque por Canal Olfativo ou Gustativo",
+          "ShortLabel": "Canal Olfativo/Gustativo",
+          "Description": "Use para um vetor comum que pode agir pelo olfato ou pelo paladar.",
+          "Distinctions": {
+            "0": "Teste de Olfato ou Paladar; esta é uma categoria de vetor de ataque."
+          }
+        },
+        "inhaled_agent": {
+          "Label": "Agente Inalado",
+          "Description": "Use quando gás, fumaça ou outro agente precisa ser respirado ou inalado.",
+          "Distinctions": {
+            "0": "Sufocamento sem agente inalado e ataques que atuam apenas por um sentido."
+          }
+        },
+        "reaction_roll": {
+          "Label": "Teste de Reação",
+          "Description": "Teste relacionado a teste de reação."
+        },
+        "influence_roll": {
+          "Label": "Teste de Influência",
+          "Description": "Teste relacionado a teste de influência."
+        },
+        "resist_deception": {
+          "Label": "Resistência a Enganação",
+          "Description": "Teste relacionado a resistência a enganação."
+        },
+        "resist_interrogation": {
+          "Label": "Resistência a Interrogatório",
+          "Description": "Teste relacionado a resistência a interrogatório."
+        },
+        "be_heard": {
+          "Label": "Fazer-se Ouvir",
+          "Description": "Use para projetar a voz e fazer-se ouvir apesar da distância ou do ruído.",
+          "Distinctions": {
+            "0": "Teste de Audição de quem escuta e teste social cujo conteúdo, não o alcance da voz, seja o foco."
+          }
+        },
+        "appear_honest": {
+          "Label": "Parecer Honesto/Confiável",
+          "ShortLabel": "Parecer Honesto",
+          "Description": "Use quando parecer sincero, honesto ou confiável for relevante ao teste social.",
+          "Distinctions": {
+            "0": "Ser objetivamente verdadeiro; este qualificador descreve a impressão transmitida."
+          }
+        },
+        "fashion_context": {
+          "Label": "Moda e Estilo",
+          "Description": "Use quando conhecimento, apresentação ou adequação à moda e ao estilo forem relevantes.",
+          "Distinctions": {
+            "0": "Reação social geral sem relação com moda ou estilo."
+          }
+        },
+        "healthy_appearance": {
+          "Label": "Aparência Saudável",
+          "Description": "Use quando uma aparência de saúde e vitalidade influenciar o teste social.",
+          "Distinctions": {
+            "0": "Resistência a doença; aqui importa somente a aparência social de saúde."
+          }
+        },
+        "unnecessary_risk": {
+          "Label": "Risco Desnecessário",
+          "Description": "Use quando o personagem assume voluntariamente um risco desnecessário e significativo.",
+          "Distinctions": {
+            "0": "Perigo inevitável ou risco necessário para alcançar o objetivo."
+          }
+        }
+      }
+    },
     "EffectSheet": {
       "NamePlaceholder": "Nome do Efeito",
       "Type": "Efeito",

@@ -1,6 +1,16 @@
-import test from "node:test"; 
-import assert from "node:assert/strict"; 
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { ROLL_PURPOSES, getGroupedRollPurposes, getPurposeLabels, matchesRollTags, normalizePurposeIds, normalizePurposeSearch, registerRollPurpose, resolveRollMetadata, searchRollPurposes, shouldIncludeInPermanentNh } from "../module/utils/roll-purposes.mjs";
+
+const makeI18n = language => {
+  const catalog = JSON.parse(readFileSync(new URL(`../lang/${language}.json`, import.meta.url), "utf8"));
+  const get = key => key.split(".").reduce((value, part) => value?.[part], catalog);
+  return { lang: language, localize: key => get(key) ?? key, format: (key, data = {}) => String(get(key) ?? key).replace(/\{([^}]+)\}/g, (_match, name) => data[name] ?? `{${name}}`) };
+};
+const ptI18n = makeI18n("pt-BR");
+const enI18n = makeI18n("en");
+globalThis.game = { i18n: ptI18n };
 
 test("busca finalidades por texto, metadados e sem diferenciar acentos ou caixa", () => {
   assert.equal(normalizePurposeSearch("  NÁUSEA "), "nausea");
@@ -8,6 +18,15 @@ test("busca finalidades por texto, metadados e sem diferenciar acentos ou caixa"
   assert.ok(searchRollPurposes("resist_poison").some(p => p.id === "resist_poison"));
   assert.ok(searchRollPurposes("resistance.poison").some(p => p.id === "resist_poison"));
   assert.ok(searchRollPurposes("consequencias fisicas").some(p => p.id === "resist_magic"));
+});
+
+test("catálogo localizado busca em inglês e preserva a busca legada em português", () => {
+  assert.deepEqual(getPurposeLabels(["resist_poison"], { i18n: enI18n }), ["Resist Poison"]);
+  assert.ok(searchRollPurposes("resist poison", { i18n: enI18n }).some(purpose => purpose.id === "resist_poison"));
+  assert.ok(searchRollPurposes("veneno", { i18n: enI18n }).some(purpose => purpose.id === "resist_poison"));
+  const groups = getGroupedRollPurposes("ht", ["resist_poison"], "poison", { i18n: enI18n });
+  assert.equal(groups.find(group => group.id === "resistances").label, "Physical Resistances");
+  assert.equal(groups.find(group => group.id === "resistances").purposes[0].id, "resist_poison");
 });
 
 test("keywords localizam a finalidade sem se tornarem tags", () => {
@@ -151,6 +170,21 @@ test("quick view reutiliza toda a cadeia de classes do preview premium", () => {
   assert.match(html, /preview-content gum-purpose-preview-content/);
   assert.match(html, /class="purpose-copy-tag"/);
   assert.match(html, /<details><summary>Categorias herdadas<\/summary>/);
+});
+
+test("quick view acompanha o idioma sem alterar tags ou referências", () => {
+  const view = buildPurposeQuickView("resist_magic", { i18n: enI18n });
+  assert.equal(view.label, "Resist Magic");
+  assert.equal(view.groupLabel, "Sources and Powers");
+  assert.equal(view.roleLabel, "Qualifier");
+  assert.match(view.description, /direct resistance to the source/i);
+  assert.deepEqual(view.distinctions, ["Indirect physical consequences of a spell; this purpose represents direct resistance to magical influence."]);
+  assert.deepEqual(view.directTags, ["resistance.magic", "source.magic"]);
+  const html = buildPurposeQuickViewContent(view, { i18n: enI18n });
+  assert.match(html, /Test Purpose/);
+  assert.match(html, /When to Use/);
+  assert.match(html, /Recommended Effect Tag/);
+  assert.match(html, /Inherited Categories/);
 });
 
 test("quick view abre na altura natural, limitada a 75% da viewport", () => {

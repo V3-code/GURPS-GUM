@@ -443,6 +443,540 @@
         "GreaterThanOrEqual": "Greater than or equal to"
       }
     },
+    "RollPurposes": {
+      "GeneralTest": "General Test",
+      "GenericDescription": "Test related to {label}.",
+      "UsualAttribute": " Usual attribute: {attribute}.",
+      "WillAbbreviation": "Will",
+      "Groups": {
+        "general": "General",
+        "survival": "Injury and Survival",
+        "resistances": "Physical Resistances",
+        "mental": "Mental and Behavioral",
+        "movement": "Balance, Falls, and Movement",
+        "environment": "Environment and Physiology",
+        "senses": "Senses",
+        "sources": "Sources and Powers",
+        "vectors": "Vectors and Agents",
+        "social": "Social",
+        "circumstances": "Circumstances"
+      },
+      "Picker": {
+        "Suggested": "Suggested",
+        "InformationAbout": "Information about {label}",
+        "SearchPlaceholder": "Search purposes by name, key, or description...",
+        "SearchAria": "Search purposes",
+        "ClearSearch": "Clear search",
+        "Clear": "Clear",
+        "SelectedOnly": "Show selected only",
+        "NoResults": "No purposes found.",
+        "NoResultsHint": "Try another term or disable the selected-only filter.",
+        "Title": "Select Test Purposes",
+        "Close": "Close",
+        "SelectedOne": "{count} purpose selected",
+        "SelectedMany": "{count} purposes selected",
+        "ResultOne": "{count} result",
+        "ResultMany": "{count} results",
+        "ApplyOne": "Apply {count} purpose",
+        "ApplyMany": "Apply {count} purposes",
+        "ApplyGeneral": "Apply as General Test",
+        "Apply": "Apply",
+        "Cancel": "Cancel"
+      },
+      "QuickView": {
+        "Perception": "Perception",
+        "Will": "Will",
+        "Other": "Other",
+        "Primary": "Primary Purpose",
+        "Qualifier": "Qualifier",
+        "QualifierHint": "Qualifiers can be combined with a primary purpose.",
+        "CopyTag": "Copy tag",
+        "CopyTagAria": "Copy tag {tag}",
+        "CommonBase": "Common base",
+        "CommonBases": "Common bases",
+        "Or": "or",
+        "BaseHint": "The base is only a suggestion. GUM does not limit this purpose to a specific attribute or ability.",
+        "Type": "Test Purpose",
+        "Group": "Group",
+        "Role": "Type",
+        "WhenToUse": "When to Use",
+        "DoNotConfuse": "Do Not Confuse With",
+        "RecommendedTag": "Recommended Effect Tag",
+        "DirectTags": "Specific Tags Produced",
+        "InheritedCategories": "Inherited Categories",
+        "TagHint": "Specific tags restrict the modifier to this purpose or a closely related situation. Inherited categories can also reach other related purposes.",
+        "Reference": "Reference",
+        "UnknownPurpose": "GUM | Unknown purpose: {id}",
+        "Title": "Purpose: {label}",
+        "TagCopied": "Tag copied: {tag}",
+        "CopyFailure": "Could not copy the tag."
+      },
+      "Purposes": {
+        "general": {
+          "Label": "General Test",
+          "Description": "A neutral purpose used when no specific mechanical purpose is selected. It produces no semantic tags and does not activate purpose-filtered modifiers."
+        },
+        "knockdown_stun": {
+          "Label": "Knockdown and Stunning from Injury",
+          "Description": "An immediate HT roll caused by a major wound or certain injuries to the head or vitals. Failure causes knockdown and physical stunning. Failure by 5 or more, or a critical failure, can also cause unconsciousness.",
+          "Distinctions": {
+            "0": "Recovering later from physical stun.",
+            "1": "Staying conscious at 0 HP or less.",
+            "2": "Regaining consciousness.",
+            "3": "Directly resisting sleep, coma, or unconsciousness.",
+            "4": "Remaining standing after knockback."
+          }
+        },
+        "recover_physical_stun": {
+          "Label": "Recover from Physical Stun",
+          "Description": "Test related to recover from physical stun.",
+          "Distinctions": {
+            "0": "The initial knockdown and stunning roll caused by injury."
+          }
+        },
+        "consciousness": {
+          "Label": "Stay Conscious",
+          "Description": "Test related to stay conscious.",
+          "Distinctions": {
+            "0": "Regaining consciousness after already becoming unconscious."
+          }
+        },
+        "regain_consciousness": {
+          "Label": "Regain Consciousness",
+          "Description": "Test related to regain consciousness.",
+          "Distinctions": {
+            "0": "Rolls to stay conscious."
+          }
+        },
+        "death": {
+          "Label": "Avoid Death",
+          "Description": "Test related to avoid death."
+        },
+        "resist_bleeding": {
+          "Label": "Resist Bleeding",
+          "Description": "Test related to resist bleeding."
+        },
+        "natural_recovery": {
+          "Label": "Natural Recovery",
+          "Description": "Test related to natural recovery."
+        },
+        "crippling_recovery": {
+          "Label": "Recover from Crippling Injury",
+          "Description": "Test related to recover from crippling injury."
+        },
+        "pain": {
+          "Label": "Resist Pain",
+          "Description": "Test related to resist pain."
+        },
+        "resist_torture": {
+          "Label": "Resist Torture",
+          "Description": "Test related to resist torture."
+        },
+        "resist_metabolic_hazard": {
+          "Label": "Metabolic Hazard",
+          "Description": "Test related to metabolic hazard."
+        },
+        "resist_poison": {
+          "Label": "Resist Poison",
+          "Description": "Test related to resist poison."
+        },
+        "resist_disease": {
+          "Label": "Resist Disease",
+          "Description": "Test related to resist disease."
+        },
+        "resist_infection": {
+          "Label": "Resist Infection",
+          "Description": "Test related to resist infection."
+        },
+        "resist_paralysis": {
+          "Label": "Resist Paralysis",
+          "Description": "Test related to resist paralysis."
+        },
+        "resist_incapacitation": {
+          "Label": "Resist Affliction/Incapacitation",
+          "Description": "Test related to resist affliction/incapacitation."
+        },
+        "resist_unconsciousness": {
+          "Label": "Resist Sleep/Unconsciousness/Coma",
+          "Description": "Test related to resist sleep/unconsciousness/coma.",
+          "Distinctions": {
+            "0": "Unconsciousness caused by failing injury-related rolls."
+          }
+        },
+        "resist_nausea": {
+          "Label": "Resist Nausea",
+          "Description": "Test related to resist nausea."
+        },
+        "resist_seizure": {
+          "Label": "Resist Seizures",
+          "Description": "Test related to resist seizures."
+        },
+        "resist_addiction": {
+          "Label": "Addiction/Withdrawal",
+          "Description": "Test related to addiction/withdrawal."
+        },
+        "resist_alcohol": {
+          "Label": "Resist Alcohol",
+          "Description": "Use when resisting the effects of alcohol and intoxication.",
+          "Distinctions": {
+            "0": "General resistance to other metabolic hazards or addiction/withdrawal."
+          }
+        },
+        "fright_check": {
+          "Label": "Fright Check",
+          "Description": "A roll made when facing a terrifying or psychologically traumatic situation.",
+          "Distinctions": {
+            "0": "Any generic roll against fear; Resist Fear may cover situations that do not specifically use a Fright Check."
+          }
+        },
+        "resist_fear": {
+          "Label": "Resist Fear",
+          "Description": "Test related to resist fear.",
+          "Distinctions": {
+            "0": "Fright Check: this purpose may cover fear rolls that do not specifically use those rules."
+          }
+        },
+        "resist_intimidation": {
+          "Label": "Resist Intimidation",
+          "Description": "Test related to resist intimidation."
+        },
+        "avoid_mental_stun": {
+          "Label": "Avoid Mental Stun",
+          "Description": "Test related to avoid mental stun.",
+          "Distinctions": {
+            "0": "Physical stunning caused by injury."
+          }
+        },
+        "recover_mental_stun": {
+          "Label": "Recover from Mental Stun",
+          "Description": "Test related to recover from mental stun.",
+          "Distinctions": {
+            "0": "Recovery from physical stunning."
+          }
+        },
+        "self_control": {
+          "Label": "Self-Control Roll",
+          "Description": "Test related to self-control roll."
+        },
+        "resist_mental_influence": {
+          "Label": "Resist Mental Influence",
+          "Description": "Test related to resist mental influence."
+        },
+        "resist_possession": {
+          "Label": "Resist Possession",
+          "Description": "Test related to resist possession."
+        },
+        "maintain_concentration": {
+          "Label": "Maintain Concentration",
+          "Description": "Test related to maintain concentration."
+        },
+        "resist_confusion": {
+          "Label": "Resist Confusion/Hallucination",
+          "Description": "Test related to resist confusion/hallucination."
+        },
+        "memorize": {
+          "Label": "Memorize",
+          "Description": "Use when deliberately committing new information to memory.",
+          "Distinctions": {
+            "0": "Recalling already learned information; memorizing is committing new content."
+          }
+        },
+        "recall_information": {
+          "Label": "Recall Information",
+          "Description": "Use when remembering or retrieving information already learned.",
+          "Distinctions": {
+            "0": "Memorizing new content; recall retrieves something already learned."
+          }
+        },
+        "prolonged_mental_task": {
+          "Label": "Prolonged Mental Task",
+          "Description": "Use for an intellectual task that demands sustained effort over a long period.",
+          "Distinctions": {
+            "0": "A brief mental roll or simple maintenance of concentration."
+          }
+        },
+        "creativity": {
+          "Label": "Creativity/Inventiveness",
+          "Description": "Use to create, improvise, or find an inventive solution.",
+          "Distinctions": {
+            "0": "Recalling knowledge or merely performing a known technique."
+          }
+        },
+        "maintain_balance": {
+          "Label": "Maintain Balance",
+          "Description": "Test related to maintain balance."
+        },
+        "avoid_fall": {
+          "Label": "Avoid a Fall",
+          "Description": "Test related to avoid a fall.",
+          "Distinctions": {
+            "0": "Breaking a fall that has already occurred."
+          }
+        },
+        "controlled_fall": {
+          "Label": "Controlled Fall/Break a Fall",
+          "Description": "Test related to controlled fall/break a fall.",
+          "Distinctions": {
+            "0": "Avoiding a fall; this purpose is used after the fall is already happening."
+          }
+        },
+        "resist_takedown": {
+          "Label": "Resist Takedown",
+          "Description": "Test related to resist takedown.",
+          "Distinctions": {
+            "0": "Knockback caused by damage."
+          }
+        },
+        "resist_knockback_fall": {
+          "Label": "Remain Standing after Knockback",
+          "Description": "Test related to remain standing after knockback.",
+          "Distinctions": {
+            "0": "The calculation of knockback distance."
+          }
+        },
+        "stay_mounted": {
+          "Label": "Stay Mounted",
+          "Description": "Test related to stay mounted."
+        },
+        "break_free": {
+          "Label": "Break Free",
+          "Description": "Test related to break free."
+        },
+        "resist_suffocation": {
+          "Label": "Resist Suffocation",
+          "Description": "Test related to resist suffocation."
+        },
+        "resist_exertion": {
+          "Label": "Exertion/Fatigue",
+          "Description": "Test related to exertion/fatigue."
+        },
+        "resist_heat": {
+          "Label": "Resist Heat",
+          "Description": "Test related to resist heat."
+        },
+        "resist_cold": {
+          "Label": "Resist Cold",
+          "Description": "Test related to resist cold."
+        },
+        "resist_altitude": {
+          "Label": "Resist Altitude",
+          "Description": "Test related to resist altitude."
+        },
+        "resist_pressure": {
+          "Label": "Resist Pressure",
+          "Description": "Test related to resist pressure."
+        },
+        "resist_vacuum": {
+          "Label": "Resist Vacuum",
+          "Description": "Test related to resist vacuum."
+        },
+        "resist_radiation": {
+          "Label": "Resist Radiation",
+          "Description": "Test related to resist radiation."
+        },
+        "resist_acceleration": {
+          "Label": "Resist Acceleration",
+          "Description": "Test related to resist acceleration."
+        },
+        "resist_sleep_deprivation": {
+          "Label": "Sleep Deprivation",
+          "Description": "Test related to sleep deprivation."
+        },
+        "sleep_rest": {
+          "Label": "Fall Asleep/Get Rest",
+          "Description": "Test related to fall asleep/get rest."
+        },
+        "aging_check": {
+          "Label": "Aging Check",
+          "Description": "Test related to aging check."
+        },
+        "sense_general": {
+          "Label": "Sense Roll",
+          "Description": "Test related to sense roll.",
+          "Distinctions": {
+            "0": "Resistance to attacks that use a sense as a vector."
+          }
+        },
+        "sense_vision": {
+          "Label": "Vision",
+          "Description": "Test related to vision.",
+          "Distinctions": {
+            "0": "Resistance to attacks that use vision as a vector."
+          }
+        },
+        "sense_hearing": {
+          "Label": "Hearing",
+          "Description": "Test related to hearing.",
+          "Distinctions": {
+            "0": "Resistance to attacks that use hearing as a vector."
+          }
+        },
+        "sense_taste_smell": {
+          "Label": "Taste/Smell",
+          "Description": "Test related to taste/smell.",
+          "Distinctions": {
+            "0": "Resistance to attacks that use taste or smell as a vector."
+          }
+        },
+        "sense_smell": {
+          "Label": "Smell",
+          "Description": "Use to perceive, identify, or distinguish odors through smell.",
+          "Distinctions": {
+            "0": "A taste-only roll.",
+            "1": "An attack that uses smell as a vector; testing a sense is not resisting through that channel."
+          }
+        },
+        "sense_taste": {
+          "Label": "Taste",
+          "Description": "Use to perceive, identify, or distinguish flavors through taste.",
+          "Distinctions": {
+            "0": "A smell-only roll.",
+            "1": "An attack that uses taste as a vector; testing a sense is not resisting through that channel."
+          }
+        },
+        "sense_touch": {
+          "Label": "Touch",
+          "Description": "Test related to touch.",
+          "Distinctions": {
+            "0": "Resistance to attacks that use touch as a vector."
+          }
+        },
+        "sense_detection": {
+          "Label": "Detection",
+          "Description": "Test related to detection."
+        },
+        "resist_magic": {
+          "Label": "Resist Magic",
+          "Description": "Qualifier for direct resistance to the source; it does not automatically apply to indirect physical consequences.",
+          "Distinctions": {
+            "0": "Indirect physical consequences of a spell; this purpose represents direct resistance to magical influence."
+          }
+        },
+        "resist_psionic": {
+          "Label": "Resist Psionics",
+          "Description": "Qualifier for direct resistance to the source; it does not automatically apply to indirect physical consequences."
+        },
+        "resist_supernatural_power": {
+          "Label": "Resist Supernatural Power",
+          "Description": "Qualifier for direct resistance to the source; it does not automatically apply to indirect physical consequences."
+        },
+        "resist_power": {
+          "Label": "Resist Power",
+          "Description": "Qualifier for direct resistance to the source; it does not automatically apply to indirect physical consequences."
+        },
+        "resist_telepathy": {
+          "Label": "Resist Telepathy",
+          "Description": "Qualifier for direct resistance to the source; it does not automatically apply to indirect physical consequences."
+        },
+        "sensory_vector_vision": {
+          "Label": "Visual-Channel Attack",
+          "ShortLabel": "Visual Channel",
+          "Description": "Use when the attack or effect reaches the target through the visual channel.",
+          "Distinctions": {
+            "0": "Vision roll; the vector describes how an attack arrives, not which sense is being tested."
+          }
+        },
+        "sensory_vector_hearing": {
+          "Label": "Auditory-Channel Attack",
+          "ShortLabel": "Auditory Channel",
+          "Description": "Use when the attack or effect reaches the target through the auditory channel.",
+          "Distinctions": {
+            "0": "Hearing roll; the vector describes how an attack arrives, not which sense is being tested."
+          }
+        },
+        "sensory_vector_smell": {
+          "Label": "Olfactory-Channel Attack",
+          "ShortLabel": "Olfactory Channel",
+          "Description": "Use when the attack or effect reaches the target specifically through smell.",
+          "Distinctions": {
+            "0": "Smell roll and gustatory channel."
+          }
+        },
+        "sensory_vector_taste": {
+          "Label": "Gustatory-Channel Attack",
+          "ShortLabel": "Gustatory Channel",
+          "Description": "Use when the attack or effect reaches the target specifically through taste.",
+          "Distinctions": {
+            "0": "Taste roll and olfactory channel."
+          }
+        },
+        "sensory_vector_touch": {
+          "Label": "Tactile-Channel Attack",
+          "ShortLabel": "Tactile Channel",
+          "Description": "Use when the attack or effect reaches the target through contact or the tactile channel.",
+          "Distinctions": {
+            "0": "Touch roll."
+          }
+        },
+        "sensory_vector_smell_taste": {
+          "Label": "Olfactory or Gustatory-Channel Attack",
+          "ShortLabel": "Olfactory/Gustatory Channel",
+          "Description": "Use for a shared vector that can act through smell or taste.",
+          "Distinctions": {
+            "0": "Smell or Taste roll; this is an attack-vector category."
+          }
+        },
+        "inhaled_agent": {
+          "Label": "Inhaled Agent",
+          "Description": "Use when gas, smoke, or another agent must be breathed or inhaled.",
+          "Distinctions": {
+            "0": "Suffocation without an inhaled agent and attacks that act only through a sense."
+          }
+        },
+        "reaction_roll": {
+          "Label": "Reaction Roll",
+          "Description": "Test related to reaction roll."
+        },
+        "influence_roll": {
+          "Label": "Influence Roll",
+          "Description": "Test related to influence roll."
+        },
+        "resist_deception": {
+          "Label": "Resist Deception",
+          "Description": "Test related to resist deception."
+        },
+        "resist_interrogation": {
+          "Label": "Resist Interrogation",
+          "Description": "Test related to resist interrogation."
+        },
+        "be_heard": {
+          "Label": "Make Yourself Heard",
+          "Description": "Use to project the voice and be heard despite distance or noise.",
+          "Distinctions": {
+            "0": "The listener's Hearing roll and a social roll focused on content rather than voice range."
+          }
+        },
+        "appear_honest": {
+          "Label": "Appear Honest/Trustworthy",
+          "ShortLabel": "Appear Honest",
+          "Description": "Use when appearing sincere, honest, or trustworthy is relevant to the social roll.",
+          "Distinctions": {
+            "0": "Being objectively truthful; this qualifier describes the impression conveyed."
+          }
+        },
+        "fashion_context": {
+          "Label": "Fashion and Style",
+          "Description": "Use when knowledge, presentation, or suitability involving fashion and style is relevant.",
+          "Distinctions": {
+            "0": "General social reaction unrelated to fashion or style."
+          }
+        },
+        "healthy_appearance": {
+          "Label": "Healthy Appearance",
+          "Description": "Use when an appearance of health and vitality influences the social roll.",
+          "Distinctions": {
+            "0": "Disease resistance; only the social appearance of health matters here."
+          }
+        },
+        "unnecessary_risk": {
+          "Label": "Unnecessary Risk",
+          "Description": "Use when the character voluntarily takes a significant, unnecessary risk.",
+          "Distinctions": {
+            "0": "Unavoidable danger or risk necessary to achieve the objective."
+          }
+        }
+      }
+    },
     "EffectSheet": {
       "NamePlaceholder": "Effect Name",
       "Type": "Effect",

@@ -189,12 +189,51 @@ for (const purpose of ROLL_PURPOSES) {
   purpose.suggestedBases = [...purpose.suggestedAttributes];
 }
 const PURPOSE_BY_ID = new Map(ROLL_PURPOSES.map(p => [p.id,p]));
+const resolveI18n = i18n => i18n ?? globalThis.game?.i18n ?? null;
+const translated = (i18n, key, fallback) => {
+  const service = resolveI18n(i18n);
+  if (!service?.localize) return fallback;
+  const value = service.localize(key);
+  return value && value !== key ? value : fallback;
+};
+const translatedFormat = (i18n, key, data, fallback) => {
+  const service = resolveI18n(i18n);
+  if (!service?.format) return fallback;
+  const value = service.format(key, data);
+  return value && value !== key ? value : fallback;
+};
+export function localizeRollPurposeGroup(group, { i18n } = {}) {
+  if (!group) return null;
+  return { ...group, label: translated(i18n, `GUM.RollPurposes.Groups.${group.id}`, group.label) };
+}
+export function localizeRollPurpose(purpose, { i18n } = {}) {
+  if (!purpose) return null;
+  const baseKey = `GUM.RollPurposes.Purposes.${purpose.id}`;
+  const label = translated(i18n, `${baseKey}.Label`, purpose.label);
+  const shortLabel = translated(i18n, `${baseKey}.ShortLabel`, purpose.shortLabel || label);
+  const explicitDescription = translated(i18n, `${baseKey}.Description`, "");
+  const genericDescription = translatedFormat(
+    i18n,
+    "GUM.RollPurposes.GenericDescription",
+    { label: label.toLocaleLowerCase(resolveI18n(i18n)?.lang || undefined) },
+    purpose.description
+  );
+  return {
+    ...purpose,
+    label,
+    shortLabel,
+    description: explicitDescription || genericDescription,
+    distinctions: (purpose.distinctions || []).map((value, index) => translated(i18n, `${baseKey}.Distinctions.${index}`, value))
+  };
+}
 export function normalizePurposeSearch(value="") { return String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR").trim(); }
-export function searchRollPurposes(query="") {
+export function searchRollPurposes(query="", { i18n } = {}) {
   const terms=normalizePurposeSearch(query).split(/\s+/).filter(Boolean);
-  if (!terms.length) return [...ROLL_PURPOSES];
-  return ROLL_PURPOSES.filter(purpose => {
-    const searchable=[purpose.label,purpose.description,purpose.id,...(purpose.tags||[]),...(purpose.keywords||[])].map(normalizePurposeSearch).join(" ");
+  const catalog = ROLL_PURPOSES.map(purpose => localizeRollPurpose(purpose, { i18n }));
+  if (!terms.length) return catalog;
+  return catalog.filter(purpose => {
+    const original = PURPOSE_BY_ID.get(purpose.id);
+    const searchable=[purpose.label,purpose.description,original?.label,original?.description,purpose.id,...(purpose.tags||[]),...(purpose.keywords||[])].map(normalizePurposeSearch).join(" ");
     return terms.every(term=>searchable.includes(term));
   });
 }
@@ -207,5 +246,5 @@ export function normalizePurposeIds(value) { const values=Array.isArray(value)?v
 export function resolveRollMetadata({context="default",purposeIds=[],attributeKey=null}={}) { const ids=normalizePurposeIds(purposeIds); return {context:String(context||"default"),purposeIds:ids,rollTags:expandRollTags(ids.flatMap(id=>PURPOSE_BY_ID.get(id)?.tags||[])),attributeKey:attributeKey?String(attributeKey).toLowerCase():null}; }
 export { matchesRollTags, normalizeRollTags };
 export function shouldIncludeInPermanentNh(entry={}) { return String(entry.nh_display_mode||"roll_only")==="include_in_nh" && normalizeRollTags(entry.roll_tags??entry.rollTags).length===0; }
-export function getPurposeLabels(ids=[],{short=false}={}) { return normalizePurposeIds(ids).map(id=>short?PURPOSE_BY_ID.get(id).shortLabel:PURPOSE_BY_ID.get(id).label); }
-export function getGroupedRollPurposes(attributeKey=null,selectedIds=[],searchQuery="") { const selected=new Set(normalizePurposeIds(selectedIds)); const matches=new Set(searchRollPurposes(searchQuery).map(p=>p.id)); return ROLL_PURPOSE_GROUPS.map(group=>({...group,purposes:ROLL_PURPOSES.filter(p=>p.group===group.id&&matches.has(p.id)).map(p=>({...p,selected:p.id==="general"?selected.size===0:selected.has(p.id),suggested:Boolean(attributeKey&&p.suggestedAttributes.includes(String(attributeKey).toLowerCase())),tooltip:`${p.description}${p.suggestedAttributes.length?` Atributo usual: ${p.suggestedAttributes.map(k=>k==="vont"?"Vont":k.toUpperCase()).join("/")}.`:""}`}))})); }
+export function getPurposeLabels(ids=[],{short=false,i18n}={}) { return normalizePurposeIds(ids).map(id=>{ const purpose=localizeRollPurpose(PURPOSE_BY_ID.get(id),{i18n}); return short?purpose.shortLabel:purpose.label; }); }
+export function getGroupedRollPurposes(attributeKey=null,selectedIds=[],searchQuery="",{i18n}={}) { const selected=new Set(normalizePurposeIds(selectedIds)); const localized=searchRollPurposes(searchQuery,{i18n}); const matches=new Map(localized.map(p=>[p.id,p])); return ROLL_PURPOSE_GROUPS.map(rawGroup=>{ const group=localizeRollPurposeGroup(rawGroup,{i18n}); return {...group,purposes:ROLL_PURPOSES.filter(p=>p.group===group.id&&matches.has(p.id)).map(p=>{ const localizedPurpose=matches.get(p.id); const usualAttribute=localizedPurpose.suggestedAttributes.length?translatedFormat(i18n,"GUM.RollPurposes.UsualAttribute",{attribute:localizedPurpose.suggestedAttributes.map(k=>k==="vont"?translated(i18n,"GUM.RollPurposes.WillAbbreviation","Vont"):k.toUpperCase()).join("/")},` Atributo usual: ${localizedPurpose.suggestedAttributes.map(k=>k==="vont"?"Vont":k.toUpperCase()).join("/")}.`):""; return {...localizedPurpose,selected:p.id==="general"?selected.size===0:selected.has(p.id),suggested:Boolean(attributeKey&&p.suggestedAttributes.includes(String(attributeKey).toLowerCase())),tooltip:`${localizedPurpose.description}${usualAttribute}`}; })}; }); }
