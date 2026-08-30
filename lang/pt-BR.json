@@ -1472,6 +1472,78 @@
         }
       }
     },
+    "Settings": {
+      "Sync": {
+        "Starting": "Iniciando sincronização das Regras do Compêndio...",
+        "PackNotFound": "Compêndio [GUM] Condições Passivas (gum.Regras) não encontrado.",
+        "EmptyPack": "Compêndio [GUM] Condições Passivas está vazio. Nenhuma regra para sincronizar.",
+        "Complete": "Sincronização completa! {rules} regras atualizadas em {characters} personagens."
+      },
+      "Internal": {
+        "EffectTokenIconPolicyMigration": "Migração interna: Política de ícone de efeito no token",
+        "EffectActionsSchemaMigration": "Migração interna: Schema de ações do item efeito (v2)",
+        "GMScreenLayout": "Layout do Escudo"
+      },
+      "InitiativeFormula": {
+        "Name": "Fórmula de Iniciativa (GUM)",
+        "Hint": "Fórmula padrão do GURPS: Velocidade Básica, com DX como desempate e 1d6 como segundo desempate.",
+        "ReloadTitle": "Recarregar Necessário",
+        "ReloadContent": "A fórmula de iniciativa foi alterada. Para que a mudança tenha efeito, o Foundry precisa ser recarregado.",
+        "ReloadNow": "Recarregar Agora",
+        "RemindLater": "Lembrar-me Depois"
+      },
+      "DefaultRules": {
+        "Name": "Condições Passivas em Personagens",
+        "Hint": "Se marcado, adiciona automaticamente todas as 'Condições Passivas' do compêndio [GUM] Condições Passivas a todos os novos Atores de personagem criados."
+      },
+      "SyncRules": {
+        "Name": "Sincronizar Condições Passivas",
+        "Hint": "MARQUE e SALVE para forçar a atualização de todas as 'Condições Passivas' em todos os personagens com as versões mais recentes do compêndio [GUM] Condições Passivas. A caixa desmarcará automaticamente após o uso."
+      },
+      "StatusBindings": {
+        "Name": "Compêndio de Vínculos de Status",
+        "Hint": "ID do compêndio que contém Itens Condição no modo 'Vínculo de Status' (ex.: gum.status_bindings). Se vazio, usa gum.conditions."
+      },
+      "DefaultSkillRoll": {
+        "Name": "Dados de rolagem padrão",
+        "Hint": "Defina os dados que serão usados em rolagens de testes de habilidades (ex.: 3d6, 2d10, 1d20)."
+      },
+      "AutoDistance": {
+        "Name": "Modificador de Distância",
+        "Hint": "Calcula automaticamente o modificador de distância no Prompt de Rolagem quando houver um atacante ativo e um alvo único selecionado."
+      },
+      "DistanceTable": {
+        "Name": "Tabela de distância",
+        "Hint": "Define qual tabela usar para o cálculo automático de distância se a opção de 'Modificador de Distância' estiver ativada.",
+        "Standard": "Padrão (GURPS)",
+        "MonsterHunters": "Resumida (Monster Hunters)",
+        "Hybrid": "Híbrida (MH + Padrão)"
+      },
+      "NormalizeDamageDice": {
+        "Name": "Normalizar dados de dano",
+        "Hint": "(GURPS: Modifying Dice + Adds) Converte automaticamente fórmulas Xd6+Y/Xd6-Y com modificadores altos para mais/menos dados, sem reduzir abaixo de 1d6."
+      },
+      "ImportGCS": {
+        "Name": "Importar Personagem do GCS",
+        "Hint": "Importa uma ficha de personagem completa a partir de um arquivo .gcs (JSON). Isso criará um novo Ator."
+      },
+      "ImportGCSTemplate": {
+        "Name": "Importar Template do GCS",
+        "Hint": "Importa um arquivo .gct/.gcs de template do GCS e cria um Item do tipo Modelo com blocos para aplicação na ficha."
+      },
+      "ImportItems": {
+        "Name": "Importar Itens (JSON)",
+        "Hint": "Ferramenta do Mestre. Importa um arquivo .json de itens (Perícias, Vantagens, etc.) diretamente para o compêndio do sistema correspondente."
+      },
+      "ExportCompendium": {
+        "Name": "Exportar Compêndio (JSON)",
+        "Hint": "Ferramenta do Mestre. Exporta o conteúdo de um compêndio de Itens para um arquivo .json."
+      },
+      "ExportCharacter": {
+        "Name": "Exportar Ficha de Personagem (JSON)",
+        "Hint": "Exporta uma ficha de personagem para um arquivo .json para backup e reutilização."
+      }
+    },
     "RollPrompt": {
       "Title": "Configurar Rolagem",
       "TestPurposes": "Finalidades do Teste",

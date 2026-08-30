@@ -1,14 +1,17 @@
 // GUM/module/settings.js
 
+const localize = key => game.i18n.localize(key);
+const format = (key, data) => game.i18n.format(key, data);
+
 /**
  * A FUNÇÃO DE SINCRONIZAÇÃO (V2 - Corrigida)
  */
 async function syncCompendiumRules() {
-    ui.notifications.info("Iniciando sincronização das Regras do Compêndio...");
+    ui.notifications.info(localize("GUM.Settings.Sync.Starting"));
 
     const pack = game.packs.get("gum.Regras");
     if (!pack) {
-        return ui.notifications.error("Compêndio [GUM] Condições Passivas (gum.Regras) não encontrado.");
+        return ui.notifications.error(localize("GUM.Settings.Sync.PackNotFound"));
     }
 
     const sourceRules = await pack.getDocuments();
@@ -18,7 +21,7 @@ async function syncCompendiumRules() {
     }
 
     if (sourceRulesMap.size === 0) {
-        return ui.notifications.warn("Compêndio [GUM] Condições Passivas está vazio. Nenhuma regra para sincronizar.");
+        return ui.notifications.warn(localize("GUM.Settings.Sync.EmptyPack"));
     }
 
     let updateCount = 0;
@@ -48,7 +51,7 @@ async function syncCompendiumRules() {
         }
     }
 
-    ui.notifications.info(`Sincronização completa! ${updateCount} regras atualizadas em ${actorsToUpdate.length} personagens.`);
+    ui.notifications.info(format("GUM.Settings.Sync.Complete", { rules: updateCount, characters: actorsToUpdate.length }));
 }
 
 // --- IMPORTA A LÓGICA DOS IMPORTADORES ---
@@ -60,7 +63,7 @@ import { importFromJson, importFromGCS, importTemplateFromGCS, exportCompendiumT
 export const registerSystemSettings = function() {
 
  game.settings.register("gum", "effectTokenIconPolicyMigration", {
-        name: "Migração interna: Política de ícone de efeito no token",
+        name: localize("GUM.Settings.Internal.EffectTokenIconPolicyMigration"),
         scope: "world",
         config: false,
         type: Boolean,
@@ -68,7 +71,7 @@ export const registerSystemSettings = function() {
     });
 
     game.settings.register("gum", "effectActionsSchemaMigrationV2", {
-        name: "Migração interna: Schema de ações do item efeito (v2)",
+        name: localize("GUM.Settings.Internal.EffectActionsSchemaMigration"),
         scope: "world",
         config: false,
         type: Boolean,
@@ -77,7 +80,7 @@ export const registerSystemSettings = function() {
 
 // --- CONFIGURAÇÃO DE LAYOUT DO ESCUDO DO MESTRE ---
     game.settings.register("gum", "gmScreenConfig", {
-        name: "Layout do Escudo",
+        name: localize("GUM.Settings.Internal.GMScreenLayout"),
         scope: "world",
         config: false, // Invisível no menu, gerenciado via código
         type: Object,
@@ -88,8 +91,8 @@ export const registerSystemSettings = function() {
     
     // --- FÓRMULA DE INICIATIVA CORRIGIDA ---
     game.settings.register("gum", "initiativeFormula", {
-        name: "Fórmula de Iniciativa (GUM)",
-        hint: "Fórmula padrão do GURPS: Velocidade Básica, com DX como desempate e 1d6 como segundo desempate.",
+        name: localize("GUM.Settings.InitiativeFormula.Name"),
+        hint: localize("GUM.Settings.InitiativeFormula.Hint"),
         scope: "world",
         config: true,
         type: String,
@@ -98,11 +101,11 @@ export const registerSystemSettings = function() {
         
         onChange: value => {
              new Dialog({
-                title: "Recarregar Necessário",
-                content: "<p>A fórmula de iniciativa foi alterada. Para que a mudança tenha efeito, o Foundry precisa ser recarregado.</p>",
+                title: localize("GUM.Settings.InitiativeFormula.ReloadTitle"),
+                content: `<p>${localize("GUM.Settings.InitiativeFormula.ReloadContent")}</p>`,
                 buttons: {
-                    reload: { icon: '<i class="fas fa-redo"></i>', label: "Recarregar Agora", callback: () => window.location.reload() },
-                    later: { icon: '<i class="fas fa-times"></i>', label: "Lembrar-me Depois" }
+                    reload: { icon: '<i class="fas fa-redo"></i>', label: localize("GUM.Settings.InitiativeFormula.ReloadNow"), callback: () => window.location.reload() },
+                    later: { icon: '<i class="fas fa-times"></i>', label: localize("GUM.Settings.InitiativeFormula.RemindLater") }
                 },
                 default: "reload"
             }).render(true);
@@ -111,8 +114,8 @@ export const registerSystemSettings = function() {
 
     // --- CONFIGURAÇÃO DE ADIÇÃO DE REGRAS PADRÃO ---
     game.settings.register("gum", "addDefaultRules", {
-        name: "Condições Passivas em Personagens",
-        hint: "Se marcado, adiciona automaticamente todas as 'Condições Passivas' do compêndio [GUM] Condições Passivas a todos os novos Atores de personagem criados.",
+        name: localize("GUM.Settings.DefaultRules.Name"),
+        hint: localize("GUM.Settings.DefaultRules.Hint"),
         scope: "world",
         config: true,
         type: Boolean,
@@ -121,8 +124,8 @@ export const registerSystemSettings = function() {
 
         // --- "BOTÃO" DE ATUALIZAÇÃO ---
     game.settings.register("gum", "syncCompendiumRulesBtn", {
-        name: "Sincronizar Condições Passivas",
-        hint: "MARQUE e SALVE para forçar a atualização de todas as 'Condições Passivas' em todos os personagens com as versões mais recentes do compêndio [GUM] Condições Passivas. A caixa desmarcará automaticamente após o uso.",
+        name: localize("GUM.Settings.SyncRules.Name"),
+        hint: localize("GUM.Settings.SyncRules.Hint"),
         scope: "world",
         config: true,
         type: Boolean,
@@ -137,8 +140,8 @@ export const registerSystemSettings = function() {
     });
 
     game.settings.register("gum", "statusBindingsCompendium", {
-        name: "Compêndio de Vínculos de Status",
-        hint: "ID do compêndio que contém Itens Condição no modo 'Vínculo de Status' (ex.: gum.status_bindings). Se vazio, usa gum.conditions.",
+        name: localize("GUM.Settings.StatusBindings.Name"),
+        hint: localize("GUM.Settings.StatusBindings.Hint"),
         scope: "world",
         config: true,
         type: String,
@@ -148,8 +151,8 @@ export const registerSystemSettings = function() {
 
 
     game.settings.register("gum", "defaultSkillRollFormula", {
-        name: "Dados de Rolgem padrão",
-        hint: "Defina os dados que serão usados em rolagens de testes habilidades (ex.: 3d6, 2d10, 1d20).",
+        name: localize("GUM.Settings.DefaultSkillRoll.Name"),
+        hint: localize("GUM.Settings.DefaultSkillRoll.Hint"),
         scope: "world",
         config: true,
         type: String,
@@ -157,8 +160,8 @@ export const registerSystemSettings = function() {
     });
 
     game.settings.register("gum", "autoDistanceModifierEnabled", {
-        name: "Modificador de Distância",
-        hint: "Calcula automaticamente o modificador de distância no Prompt de Rolagem quando houver um atacante ativo e um alvo único selecionado.",
+        name: localize("GUM.Settings.AutoDistance.Name"),
+        hint: localize("GUM.Settings.AutoDistance.Hint"),
         scope: "world",
         config: true,
         type: Boolean,
@@ -166,22 +169,22 @@ export const registerSystemSettings = function() {
     });
 
     game.settings.register("gum", "autoDistanceModifierTable", {
-        name: "Tabela de distância",
-        hint: "Define qual tabela usar para o cálculo automático de distância se a opção de 'Modificador de Distância' estiver ativada.",
+        name: localize("GUM.Settings.DistanceTable.Name"),
+        hint: localize("GUM.Settings.DistanceTable.Hint"),
         scope: "world",
         config: true,
         type: String,
         choices: {
-            standard: "Padrão (GURPS)",
-            monster_hunters: "Resumida (Monster Hunters)",
-            hybrid: "Híbrida (MH + Padrão)"
+            standard: localize("GUM.Settings.DistanceTable.Standard"),
+            monster_hunters: localize("GUM.Settings.DistanceTable.MonsterHunters"),
+            hybrid: localize("GUM.Settings.DistanceTable.Hybrid")
         },
         default: "standard"
     });
 
     game.settings.register("gum", "normalizeGurpsDamageDice", {
-        name: "Normalizar dados de dano",
-        hint: "(GURPS: Modifying Dice + Adds) Converte automaticamente fórmulas Xd6+Y/Xd6-Y com modificadores altos para mais/menos dados, sem reduzir abaixo de 1d6.",
+        name: localize("GUM.Settings.NormalizeDamageDice.Name"),
+        hint: localize("GUM.Settings.NormalizeDamageDice.Hint"),
         scope: "world",
         config: true,
         type: Boolean,
@@ -195,8 +198,8 @@ export const registerSystemSettings = function() {
     // =============================================================
 
     game.settings.register("gum", "importGCSButton", {
-        name: "Importar Personagem do GCS",
-        hint: "Importa uma ficha de personagem completa a partir de um arquivo .gcs (JSON). Isso criará um novo Ator.",
+        name: localize("GUM.Settings.ImportGCS.Name"),
+        hint: localize("GUM.Settings.ImportGCS.Hint"),
         scope: "world",
         config: true,
         type: Boolean, // Usamos Boolean como um "botão"
@@ -210,8 +213,8 @@ export const registerSystemSettings = function() {
     });
 
     game.settings.register("gum", "importGCSTemplateButton", {
-        name: "Importar Template do GCS",
-        hint: "Importa um arquivo .gct/.gcs de template do GCS e cria um Item do tipo Modelo com blocos para aplicação na ficha.",
+        name: localize("GUM.Settings.ImportGCSTemplate.Name"),
+        hint: localize("GUM.Settings.ImportGCSTemplate.Hint"),
         scope: "world",
         config: true,
         type: Boolean,
@@ -225,8 +228,8 @@ export const registerSystemSettings = function() {
     });
 
     game.settings.register("gum", "importJSONButton", {
-        name: "Importar Itens (JSON)",
-        hint: "Ferramenta do Mestre. Importa um arquivo .json de itens (Perícias, Vantagens, etc.) diretamente para o compêndio do sistema correspondente.",
+        name: localize("GUM.Settings.ImportItems.Name"),
+        hint: localize("GUM.Settings.ImportItems.Hint"),
         scope: "world",
         config: true,
         type: Boolean,
@@ -240,8 +243,8 @@ export const registerSystemSettings = function() {
  });
 
     game.settings.register("gum", "exportJSONCompendiumButton", {
-        name: "Exportar Compêndio (JSON)",
-        hint: "Ferramenta do Mestre. Exporta o conteúdo de um compêndio de Itens para um arquivo .json.",
+        name: localize("GUM.Settings.ExportCompendium.Name"),
+        hint: localize("GUM.Settings.ExportCompendium.Hint"),
         scope: "world",
         config: true,
         type: Boolean,
@@ -255,8 +258,8 @@ export const registerSystemSettings = function() {
     });
 
     game.settings.register("gum", "exportCharacterJSONButton", {
-        name: "Exportar Ficha de Personagem (JSON)",
-        hint: "Exporta uma ficha de personagem para um arquivo .json para backup e reutilização.",
+        name: localize("GUM.Settings.ExportCharacter.Name"),
+        hint: localize("GUM.Settings.ExportCharacter.Hint"),
         scope: "world",
         config: true,
         type: Boolean,
@@ -268,4 +271,4 @@ export const registerSystemSettings = function() {
             }
         }
     });
-}
+}

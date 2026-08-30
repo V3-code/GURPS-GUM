@@ -1472,6 +1472,78 @@
         }
       }
     },
+    "Settings": {
+      "Sync": {
+        "Starting": "Starting compendium rule synchronization...",
+        "PackNotFound": "[GUM] Passive Conditions compendium (gum.Regras) not found.",
+        "EmptyPack": "The [GUM] Passive Conditions compendium is empty. There are no rules to synchronize.",
+        "Complete": "Synchronization complete! {rules} rules updated across {characters} characters."
+      },
+      "Internal": {
+        "EffectTokenIconPolicyMigration": "Internal migration: Effect token icon policy",
+        "EffectActionsSchemaMigration": "Internal migration: Effect item action schema (v2)",
+        "GMScreenLayout": "GM Screen Layout"
+      },
+      "InitiativeFormula": {
+        "Name": "Initiative Formula (GUM)",
+        "Hint": "Standard GURPS formula: Basic Speed, with DX as the first tie-breaker and 1d6 as the second tie-breaker.",
+        "ReloadTitle": "Reload Required",
+        "ReloadContent": "The initiative formula has changed. Foundry must be reloaded for the change to take effect.",
+        "ReloadNow": "Reload Now",
+        "RemindLater": "Remind Me Later"
+      },
+      "DefaultRules": {
+        "Name": "Passive Conditions on Characters",
+        "Hint": "When enabled, automatically adds all 'Passive Conditions' from the [GUM] Passive Conditions compendium to every newly created character Actor."
+      },
+      "SyncRules": {
+        "Name": "Synchronize Passive Conditions",
+        "Hint": "CHECK and SAVE to update every character's 'Passive Conditions' to the latest versions from the [GUM] Passive Conditions compendium. The checkbox will clear automatically after use."
+      },
+      "StatusBindings": {
+        "Name": "Status Bindings Compendium",
+        "Hint": "ID of the compendium containing Condition Items in 'Status Binding' mode (e.g. gum.status_bindings). If blank, gum.conditions is used."
+      },
+      "DefaultSkillRoll": {
+        "Name": "Default Test Dice",
+        "Hint": "Define the dice used for ability rolls (e.g. 3d6, 2d10, 1d20)."
+      },
+      "AutoDistance": {
+        "Name": "Range Modifier",
+        "Hint": "Automatically calculates the range modifier in the Roll Prompt when there is an active attacker and exactly one selected target."
+      },
+      "DistanceTable": {
+        "Name": "Range Table",
+        "Hint": "Selects the table used for automatic range calculations when 'Range Modifier' is enabled.",
+        "Standard": "Standard (GURPS)",
+        "MonsterHunters": "Condensed (Monster Hunters)",
+        "Hybrid": "Hybrid (MH + Standard)"
+      },
+      "NormalizeDamageDice": {
+        "Name": "Normalize Damage Dice",
+        "Hint": "(GURPS: Modifying Dice + Adds) Automatically converts Xd6+Y/Xd6-Y formulas with large modifiers into more or fewer dice, without reducing them below 1d6."
+      },
+      "ImportGCS": {
+        "Name": "Import GCS Character",
+        "Hint": "Imports a complete character sheet from a .gcs (JSON) file. This creates a new Actor."
+      },
+      "ImportGCSTemplate": {
+        "Name": "Import GCS Template",
+        "Hint": "Imports a GCS .gct/.gcs template file and creates a Template Item with blocks that can be applied to a character sheet."
+      },
+      "ImportItems": {
+        "Name": "Import Items (JSON)",
+        "Hint": "GM tool. Imports a .json file containing Items (Skills, Advantages, etc.) directly into the corresponding system compendium."
+      },
+      "ExportCompendium": {
+        "Name": "Export Compendium (JSON)",
+        "Hint": "GM tool. Exports the contents of an Item compendium to a .json file."
+      },
+      "ExportCharacter": {
+        "Name": "Export Character Sheet (JSON)",
+        "Hint": "Exports a character sheet to a .json file for backup and reuse."
+      }
+    },
     "RollPrompt": {
       "Title": "Configure Roll",
       "TestPurposes": "Test Purposes",

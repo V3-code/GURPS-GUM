@@ -115,6 +115,11 @@ const screens = [
         script: new URL("../module/utils/roll-request-view.mjs", import.meta.url)
     },
     {
+        name: "system settings",
+        template: null,
+        script: new URL("../module/settings.js", import.meta.url)
+    },
+    {
         name: "roll request service",
         template: null,
         script: new URL("../module/services/roll-request-service.js", import.meta.url)
@@ -1200,4 +1205,37 @@ test("test request localization preserves targets, payloads, authorization and r
     assert.match(card.scriptSource, /type: "testRequest:submitResponse"/);
     assert.match(card.scriptSource, /insertTestRequestResponse\(current, payload\.targetKey, payload\.response, \{ replace: payload\.replace === true \}\)/);
     assert.match(card.scriptSource, /"flags\.gum\.testRequest": updated/);
+});
+
+test("system settings reachable UI has no fixed Portuguese text", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "system settings");
+    const source = screen.scriptSource
+        .replace(/\/\/.*$/gm, "")
+        .replace(/\/\*[\s\S]*?\*\//g, "");
+    const fixedPortuguese = [
+        "Fórmula de Iniciativa", "Recarregar Necessário", "Recarregar Agora", "Lembrar-me Depois",
+        "Condições Passivas em Personagens", "Sincronizar Condições Passivas", "Compêndio de Vínculos de Status",
+        "Modificador de Distância", "Tabela de distância", "Normalizar dados de dano",
+        "Importar Personagem do GCS", "Importar Itens (JSON)", "Exportar Compêndio (JSON)",
+        "Iniciando sincronização", "Sincronização completa"
+    ];
+    for (const text of fixedPortuguese) assert.ok(!source.includes(text), `fixed system setting text: ${text}`);
+});
+
+test("system settings preserve ids, scopes, defaults and import/export callbacks", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "system settings");
+    const source = screen.scriptSource;
+    for (const id of [
+        "effectTokenIconPolicyMigration", "effectActionsSchemaMigrationV2", "gmScreenConfig", "initiativeFormula",
+        "addDefaultRules", "syncCompendiumRulesBtn", "statusBindingsCompendium", "defaultSkillRollFormula",
+        "autoDistanceModifierEnabled", "autoDistanceModifierTable", "normalizeGurpsDamageDice", "importGCSButton",
+        "importGCSTemplateButton", "importJSONButton", "exportJSONCompendiumButton", "exportCharacterJSONButton"
+    ]) assert.match(source, new RegExp(`game\\.settings\\.register\\("gum", "${id}"`));
+    for (const value of ["standard", "monster_hunters", "hybrid"]) assert.match(source, new RegExp(`${value}:`));
+    assert.match(source, /default: "@attributes\.basic_speed\.final \+ \(@attributes\.dx\.final\/100\) \+ \(1d6\/1000\)"/);
+    assert.match(source, /default: "3d6"/);
+    assert.match(source, /default: "gum\.status_bindings"/);
+    for (const callback of ["importFromGCS", "importTemplateFromGCS", "importFromJson", "exportCompendiumToJson", "exportCharacterToJson"]) {
+        assert.match(source, new RegExp(`${callback}\\(\\)`));
+    }
 });
