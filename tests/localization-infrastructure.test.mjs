@@ -120,6 +120,11 @@ const screens = [
         script: new URL("../module/settings.js", import.meta.url)
     },
     {
+        name: "import and export tools",
+        template: null,
+        script: new URL("../module/apps/importers.js", import.meta.url)
+    },
+    {
         name: "roll request service",
         template: null,
         script: new URL("../module/services/roll-request-service.js", import.meta.url)
@@ -1238,4 +1243,39 @@ test("system settings preserve ids, scopes, defaults and import/export callbacks
     for (const callback of ["importFromGCS", "importTemplateFromGCS", "importFromJson", "exportCompendiumToJson", "exportCharacterToJson"]) {
         assert.match(source, new RegExp(`${callback}\\(\\)`));
     }
+});
+
+test("JSON import and export reachable UI has no fixed Portuguese text", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "import and export tools");
+    const importStart = screen.scriptSource.indexOf("export async function importFromJson");
+    const importEnd = screen.scriptSource.indexOf("export async function importFromGCS");
+    const exportStart = screen.scriptSource.indexOf("export async function exportCompendiumToJson");
+    const source = `${screen.scriptSource.slice(importStart, importEnd)}\n${screen.scriptSource.slice(exportStart)}`
+        .replace(/\/\/.*$/gm, "")
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/^\s*console\.[^\n]*$/gm, "");
+    const fixedPortuguese = [
+        "Importação cancelada", "Nenhum item encontrado", "Selecionar Destino da Importação",
+        "Por favor, escolha o compêndio", "Remover do compêndio", "Traduzindo", "Iniciando importação",
+        "Importação concluída", "Exportar Compêndio para JSON", "Selecione qual compêndio",
+        "Nenhuma ficha de personagem", "Exportar Ficha para JSON", "Selecione a ficha",
+        "Não foi possível identificar o compêndio", "estado de bloqueio"
+    ];
+    for (const text of fixedPortuguese) assert.ok(!source.includes(text), `fixed import/export text: ${text}`);
+});
+
+test("JSON import and export preserve ids, compendium types and synchronization behavior", async () => {
+    const screen = (await readScreenSources()).find(({ name }) => name === "import and export tools");
+    const source = screen.scriptSource;
+    assert.match(source, /input\.accept = '\.json, \.gcs, \.skl, \.spl, \.eqp, \.adq, \.adm, \.eqm'/);
+    for (const [pack, type] of Object.entries({ skills: "skill", advantages: "advantage", disadvantages: "disadvantage", spells: "spell", powers: "power", equipment: "equipment", modifiers: "modifier", eqp_modifiers: "eqp_modifier" })) {
+        assert.match(source, new RegExp(`"${pack}": "${type}"`));
+    }
+    assert.match(source, /name="remove-missing"/);
+    assert.match(source, /Item\.updateDocuments\(toUpdate, \{ pack: pack\.collection \}\)/);
+    assert.match(source, /Item\.createDocuments\(toCreate, \{ pack: pack\.collection, keepId: true \}\)/);
+    assert.match(source, /Item\.deleteDocuments\(toRemove, \{ pack: pack\.collection \}\)/);
+    assert.match(source, /await pack\.configure\(\{ locked: originalLocked \}\)/);
+    assert.match(source, /saveDataToFile\(jsonContent, "application\/json", filename\)/);
+    assert.match(source, /Hooks\.on\("getCompendiumDirectoryEntryContext"/);
 });

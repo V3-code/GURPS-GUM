@@ -1,4 +1,6 @@
 import { getBodyLocationDefinition, getBodyProfile } from "../config/body-profiles.js";
+const localize = key => game.i18n.localize(key);
+const format = (key, data) => game.i18n.format(key, data);
 /**
  * Lida com a importação de um arquivo JSON (formato customizado) OU
  * um arquivo de Biblioteca GCS (.skl, .spl, .eqp, .adq, .adm, .eqm) para um compêndio.
@@ -13,7 +15,7 @@ export async function importFromJson() {
     input.onchange = async (e) => {
         const file = e.target.files[0];
         if (!file) {
-            return ui.notifications.info("Importação cancelada.");
+            return ui.notifications.info(localize("GUM.ImportExport.ImportCancelled"));
         }
 
         // 3. Lê o arquivo
@@ -23,7 +25,7 @@ export async function importFromJson() {
             data = JSON.parse(fileContent);
         } catch (err) {
             console.error("GUM | Erro ao processar arquivo de biblioteca:", err);
-            return ui.notifications.error("O arquivo está corrompido ou não é um JSON válido.");
+            return ui.notifications.error(localize("GUM.ImportExport.InvalidJson"));
         }
 
         const extension = (file.name?.split('.')?.pop() || '').toLowerCase();
@@ -56,11 +58,11 @@ let importEntries = [];
             const roots = data.skills || data.spells || data.equipment || data.traits || data.modifiers || [];
             importEntries = collectGCSImportEntries(roots);
         } else {
-            return ui.notifications.error("O formato do JSON não foi reconhecido. Esperando uma lista de itens ou um objeto GCS com uma propriedade 'rows'.");
+            return ui.notifications.error(localize("GUM.ImportExport.UnrecognizedJson"));
         }
 
         if (importEntries.length === 0) {
-            return ui.notifications.error("Nenhum item encontrado no arquivo.");
+            return ui.notifications.error(localize("GUM.ImportExport.NoItemsFound"));
         }
 
         const isCompendiumJson = Array.isArray(data) && importEntries.some(entry =>
@@ -71,7 +73,7 @@ let importEntries = [];
         if (isCompendiumJson) {
             const missingIds = importEntries.filter(entry => !entry.itemData._id);
             if (missingIds.length) {
-                return ui.notifications.error(`Importação cancelada: ${missingIds.length} documento(s) não possuem o campo "_id".`);
+                return ui.notifications.error(format("GUM.ImportExport.MissingIds", { count: missingIds.length }));
             }
 
             const seenIds = new Set();
@@ -81,14 +83,14 @@ let importEntries = [];
                 seenIds.add(itemData._id);
             }
             if (duplicateIds.size) {
-                return ui.notifications.error(`Importação cancelada: IDs repetidos no JSON: ${[...duplicateIds].join(", ")}.`);
+                return ui.notifications.error(format("GUM.ImportExport.DuplicateIds", { ids: [...duplicateIds].join(", ") }));
             }
         }
 
         // 6. Pergunta ao usuário para qual compêndio importar
         const allItemPacks = game.packs.filter(p => p.metadata.type === "Item");
         if (allItemPacks.length === 0) {
-            return ui.notifications.error("Nenhum compêndio de Itens encontrado no mundo.");
+            return ui.notifications.error(localize("GUM.ImportExport.NoItemCompendiums"));
         }
 
         const packOptions = allItemPacks.map(pack => {
@@ -96,13 +98,13 @@ let importEntries = [];
         }).join('');
 
         new Dialog({
-            title: "Selecionar Destino da Importação",
+            title: localize("GUM.ImportExport.SelectImportTarget"),
             content: `
                 <div style="padding: 10px 0;">
-                    <p>Encontrados <strong>${importEntries.length}</strong> itens no arquivo JSON.</p>
-                    <p>Por favor, escolha o compêndio de destino:</p>
+                    <p>${format("GUM.ImportExport.ItemsFound", { count: `<strong>${importEntries.length}</strong>` })}</p>
+                    <p>${localize("GUM.ImportExport.ChooseTargetCompendium")}</p>
                     <div class="form-group" style="margin-top: 10px;">
-                        <label style="font-weight: bold;">Compêndio:</label>
+                        <label style="font-weight: bold;">${localize("GUM.ImportExport.Compendium")}:</label>
                         <select name="compendium-target" style="width: 100%;">
                             ${packOptions}
                     </select>
@@ -111,7 +113,7 @@ let importEntries = [];
                     <div class="form-group" style="margin-top: 10px;">
                         <label>
                             <input type="checkbox" name="remove-missing">
-                            Remover do compêndio os itens ausentes deste JSON
+                            ${localize("GUM.ImportExport.RemoveMissingItems")}
                         </label>
                     </div>` : ""}
                 </div>
@@ -119,14 +121,14 @@ let importEntries = [];
             buttons: {
                 import: {
                     icon: '<i class="fas fa-file-import"></i>',
-                    label: "Importar",
+                    label: localize("GUM.ImportExport.Import"),
                     callback: async (html) => {
                         const packName = html.find('select[name="compendium-target"]').val();
                         if (!packName) return;
 
                         const pack = game.packs.get(packName);
                         if (!pack) {
-                            return ui.notifications.error(`Erro: Compêndio "${packName}" não pôde ser encontrado.`);
+                            return ui.notifications.error(format("GUM.ImportExport.CompendiumNotFound", { compendium: packName }));
                         }
                         
                         if (isCompendiumJson) {
@@ -139,7 +141,7 @@ let importEntries = [];
                 },
                 cancel: {
                     icon: '<i class="fas fa-times"></i>',
-                    label: "Cancelar"
+                    label: localize("GUM.ImportExport.Cancel")
                 }
             },
             default: "import"
@@ -157,7 +159,7 @@ let importEntries = [];
 async function importToCompendium(pack, importEntries) {
     if (!pack || !importEntries) return;
     
-    ui.notifications.info(`Traduzindo ${importEntries.length} itens do GCS/JSON...`);
+    ui.notifications.info(format("GUM.ImportExport.ConvertingItems", { count: importEntries.length }));
     const itemsToCreate = [];
     let packWasLocked = pack.locked;
     
@@ -180,7 +182,7 @@ async function importToCompendium(pack, importEntries) {
         console.warn(`GUM | O compêndio "${pack.title}" não tem um tradutor GCS mapeado. Os dados JSON serão importados "como estão".`);
         const firstItemType = importEntries[0]?.itemData?.type;
         if (!firstItemType) {
-            return ui.notifications.error("O JSON não tem um 'type' e o compêndio não é padrão. Importação cancelada.");
+            return ui.notifications.error(localize("GUM.ImportExport.MissingItemType"));
         }
         itemType = firstItemType; // Usa o tipo do primeiro item
         isGenericJson = true; // Marca que não precisamos de tradução
@@ -271,20 +273,20 @@ for (const entry of importEntries) {
         }
 
         if (itemsToCreate.length === 0) {
-            return ui.notifications.warn("Nenhum item pôde ser traduzido. A importação foi cancelada.");
+            return ui.notifications.warn(localize("GUM.ImportExport.NoConvertedItems"));
         }
-        ui.notifications.info(`Iniciando importação de ${itemsToCreate.length} itens traduzidos para "${pack.title}".`);
+        ui.notifications.info(format("GUM.ImportExport.StartingImport", { count: itemsToCreate.length, compendium: pack.title }));
         
         await Item.createDocuments(itemsToCreate, { pack: pack.collection });
 
-        ui.notifications.info(`Importação concluída! ${itemsToCreate.length} itens adicionados a "${pack.title}".`);
+        ui.notifications.info(format("GUM.ImportExport.ImportComplete", { count: itemsToCreate.length, compendium: pack.title }));
     } catch (err) {
         if (err.name === "DataModelValidationError") {
              console.error("GUM | Erro de Validação de Dados:", err.message, itemsToCreate[0]);
-             ui.notifications.error("Erro de Validação: O JSON parece ser para o tipo errado de item. Verifique o console (F12).");
+             ui.notifications.error(localize("GUM.ImportExport.ValidationError"));
         } else {
             console.error(`GUM | Falha ao importar para ${pack.collection}:`, err);
-            ui.notifications.error(`Falha ao importar para ${pack.title}.`);
+            ui.notifications.error(format("GUM.ImportExport.ImportFailed", { compendium: pack.title }));
         }
     } finally {
         await pack.configure({ locked: packWasLocked });
@@ -3511,24 +3513,24 @@ for (const {
 export async function exportCompendiumToJson() {
     const allPacks = game.packs.contents;
     if (allPacks.length === 0) {
-        return ui.notifications.error("Nenhum compêndio encontrado no mundo.");
+        return ui.notifications.error(localize("GUM.ImportExport.NoCompendiums"));
     }
 
     const packOptions = allPacks
-        .sort((a, b) => a.title.localeCompare(b.title, "pt-BR"))
+        .sort((a, b) => a.title.localeCompare(b.title, game.i18n.lang))
         .map(pack => {
-            const packageType = pack.metadata.packageType || "desconhecido";
-            const documentType = pack.metadata.type || "Documento";
+            const packageType = pack.metadata.packageType || localize("GUM.ImportExport.UnknownPackageType");
+            const documentType = pack.metadata.type || localize("GUM.ImportExport.Document");
             return `<option value="${pack.collection}">${pack.title} (${documentType} • ${packageType})</option>`;
     }).join("");
 
     new Dialog({
-        title: "Exportar Compêndio para JSON",
+        title: localize("GUM.ImportExport.ExportCompendiumTitle"),
         content: `
             <div style="padding: 10px 0;">
-                <p>Selecione qual compêndio deseja exportar:</p>
+                <p>${localize("GUM.ImportExport.SelectCompendiumToExport")}</p>
                 <div class="form-group" style="margin-top: 10px;">
-                    <label style="font-weight: bold;">Compêndio:</label>
+                    <label style="font-weight: bold;">${localize("GUM.ImportExport.Compendium")}:</label>
                     <select name="compendium-target" style="width: 100%;">
                         ${packOptions}
                     </select>
@@ -3538,14 +3540,14 @@ export async function exportCompendiumToJson() {
         buttons: {
             export: {
                 icon: '<i class="fas fa-file-export"></i>',
-                label: "Exportar",
+                label: localize("GUM.ImportExport.Export"),
                 callback: async (html) => {
                     const packName = html.find('select[name="compendium-target"]').val();
                     if (!packName) return;
 
                     const pack = game.packs.get(packName);
                     if (!pack) {
-                        return ui.notifications.error(`Erro: Compêndio "${packName}" não pôde ser encontrado.`);
+                        return ui.notifications.error(format("GUM.ImportExport.CompendiumNotFound", { compendium: packName }));
                     }
 
                     await exportSelectedCompendium(pack);
@@ -3553,7 +3555,7 @@ export async function exportCompendiumToJson() {
             },
             cancel: {
                 icon: '<i class="fas fa-times"></i>',
-                label: "Cancelar"
+                label: localize("GUM.ImportExport.Cancel")
             }
         },
         default: "export"
@@ -3567,7 +3569,7 @@ export async function exportCharacterToJson() {
     const characters = game.actors.filter(actor => actor.type === "character");
 
     if (characters.length === 0) {
-        return ui.notifications.warn("Nenhuma ficha de personagem encontrada para exportar.");
+        return ui.notifications.warn(localize("GUM.ImportExport.NoCharacters"));
     }
 
     const actorOptions = characters.map(actor => {
@@ -3575,12 +3577,12 @@ export async function exportCharacterToJson() {
     }).join("");
 
     new Dialog({
-        title: "Exportar Ficha para JSON",
+        title: localize("GUM.ImportExport.ExportCharacterTitle"),
         content: `
             <div style="padding: 10px 0;">
-                <p>Selecione a ficha de personagem que deseja exportar:</p>
+                <p>${localize("GUM.ImportExport.SelectCharacterToExport")}</p>
                 <div class="form-group" style="margin-top: 10px;">
-                    <label style="font-weight: bold;">Personagem:</label>
+                    <label style="font-weight: bold;">${localize("GUM.ImportExport.Character")}:</label>
                     <select name="actor-target" style="width: 100%;">
                         ${actorOptions}
                     </select>
@@ -3590,24 +3592,24 @@ export async function exportCharacterToJson() {
         buttons: {
             export: {
                 icon: '<i class="fas fa-user-export"></i>',
-                label: "Exportar",
+                label: localize("GUM.ImportExport.Export"),
                 callback: async (html) => {
                     const actorId = html.find('select[name="actor-target"]').val();
                     if (!actorId) return;
 
                     const actor = game.actors.get(actorId);
                     if (!actor) {
-                        return ui.notifications.error("Erro: Personagem selecionado não pôde ser encontrado.");
+                        return ui.notifications.error(localize("GUM.ImportExport.CharacterNotFound"));
                     }
 
                     const actorData = actor.toObject();
                     downloadJsonFile(actorData, `${sanitizeFileName(actor.name)}.json`);
-                    ui.notifications.info(`Ficha "${actor.name}" exportada com sucesso.`);
+                    ui.notifications.info(format("GUM.ImportExport.CharacterExported", { character: actor.name }));
                 }
             },
             cancel: {
                 icon: '<i class="fas fa-times"></i>',
-                label: "Cancelar"
+                label: localize("GUM.ImportExport.Cancel")
             }
         },
         default: "export"
@@ -3633,24 +3635,24 @@ async function exportSelectedCompendium(pack) {
     try {
         const documents = await pack.getDocuments();
         if (!documents.length) {
-            return ui.notifications.warn(`O compêndio "${pack.title}" está vazio.`);
+            return ui.notifications.warn(format("GUM.ImportExport.EmptyCompendium", { compendium: pack.title }));
         }
 
         const data = documents.map(document => document.toObject());
         const safeName = sanitizeFileName(pack.metadata.label || pack.metadata.name);
         downloadJsonFile(data, `gum_${safeName}.json`);
-        ui.notifications.info(`Exportação concluída! ${data.length} registros de "${pack.title}" foram exportados.`);
+        ui.notifications.info(format("GUM.ImportExport.ExportComplete", { count: data.length, compendium: pack.title }));
     } catch (err) {
         console.error(`GUM | Falha ao exportar ${pack?.collection}:`, err);
-        ui.notifications.error(`Falha ao exportar "${pack?.title || "compêndio"}": ${err.message}`);
+        ui.notifications.error(format("GUM.ImportExport.ExportFailed", { compendium: pack?.title || localize("GUM.ImportExport.CompendiumFallback"), error: err.message }));
     }
 }
 
 Hooks.on("getCompendiumDirectoryEntryContext", (_html, options) => {
-    if (options.some(option => option.name === "Exportar Compêndio")) return;
+    if (options.some(option => option.name === localize("GUM.ImportExport.ContextExportCompendium"))) return;
 
     options.push({
-        name: "Exportar Compêndio",
+        name: localize("GUM.ImportExport.ContextExportCompendium"),
         icon: '<i class="fas fa-file-export"></i>',
         condition: entry => {
             const collection = getContextCompendiumCollection(entry);
@@ -3659,7 +3661,7 @@ Hooks.on("getCompendiumDirectoryEntryContext", (_html, options) => {
         callback: entry => {
             const collection = getContextCompendiumCollection(entry);
             const pack = game.packs.get(collection);
-            if (!pack) return ui.notifications.error("Não foi possível identificar o compêndio selecionado.");
+            if (!pack) return ui.notifications.error(localize("GUM.ImportExport.ContextCompendiumNotFound"));
             return exportSelectedCompendium(pack);
         }
     });
@@ -3683,7 +3685,7 @@ async function synchronizeCompendiumJson(pack, importEntries, { removeMissing = 
 
     try {
         if (pack.metadata.type !== "Item") {
-            throw new Error(`O compêndio "${pack.title}" não aceita documentos do tipo Item.`);
+            throw new Error(format("GUM.ImportExport.WrongDocumentType", { compendium: pack.title }));
         }
 
         const existingDocuments = await pack.getDocuments();
@@ -3697,11 +3699,11 @@ async function synchronizeCompendiumJson(pack, importEntries, { removeMissing = 
         const incomingTypes = new Set(incoming.map(document => document.type).filter(Boolean));
 
         if (incomingTypes.size !== 1) {
-            throw new Error("O JSON de compêndio deve conter um único tipo de Item.");
+            throw new Error(localize("GUM.ImportExport.SingleItemTypeRequired"));
         }
         const [incomingType] = incomingTypes;
         if (allowedTypes.size && !allowedTypes.has(incomingType)) {
-            throw new Error(`Tipo incompatível: o JSON contém "${incomingType}", mas o compêndio "${pack.title}" contém/espera ${[...allowedTypes].map(type => `"${type}"`).join(", ")}.`);
+            throw new Error(format("GUM.ImportExport.IncompatibleItemType", { incomingType, compendium: pack.title, allowedTypes: [...allowedTypes].map(type => `"${type}"`).join(", ") }));
         }
 
         if (originalLocked) await pack.configure({ locked: false });
@@ -3726,18 +3728,18 @@ async function synchronizeCompendiumJson(pack, importEntries, { removeMissing = 
             removed = toRemove.length;
         }
 
-        ui.notifications.info(`Importação concluída em "${pack.title}": ${updated} atualizado(s), ${created} criado(s), ${removed} removido(s) e ${ignored} ignorado(s).`);
+        ui.notifications.info(format("GUM.ImportExport.SynchronizationComplete", { compendium: pack.title, updated, created, removed, ignored }));
     } catch (err) {
         console.error(`GUM | Falha ao sincronizar o compêndio ${pack.collection}:`, err);
-        ui.notifications.error(`Falha ao importar para "${pack.title}": ${err.message}`);
+        ui.notifications.error(format("GUM.ImportExport.ImportFailedWithError", { compendium: pack.title, error: err.message }));
     } finally {
         if (pack.locked !== originalLocked) {
             try {
                 await pack.configure({ locked: originalLocked });
             } catch (lockError) {
                 console.error(`GUM | Não foi possível restaurar o bloqueio de ${pack.collection}:`, lockError);
-                ui.notifications.error(`Não foi possível restaurar o estado de bloqueio de "${pack.title}".`);
+                ui.notifications.error(format("GUM.ImportExport.RestoreLockFailed", { compendium: pack.title }));
             }
         }
     }
-}
+}
