@@ -5,6 +5,9 @@ import { executeRollRequest, resolveRequestedTest } from "./roll-request-service
 import { runWithChatButtonDisabled } from "../utils/chat-button-state.mjs";
 import { formatTestRequestStatus, prepareModifierBreakdown, prepareResponseHistory } from "../utils/test-request-view.mjs";
 
+const localize = key => game.i18n.localize(key);
+const format = (key, data) => game.i18n.format(key, data);
+
 const queues = new Map();
 const duplicate = value => foundry.utils.duplicate(value);
 
@@ -34,10 +37,10 @@ export async function renderTestRequestMessage(request) {
   const targets = await Promise.all(request.targets.map(async target => {
     const actor = await resolveTarget(target);
     let unavailableReason = null;
-    if (!actor) unavailableReason = "O personagem não está mais disponível.";
+    if (!actor) unavailableReason = localize("GUM.TestRequest.CharacterUnavailable");
     else if (request.test.type === "attribute") {
       const value = Number(actor.system?.attributes?.[request.test.attributeKey]?.final ?? actor.system?.attributes?.[request.test.attributeKey]?.value);
-      if (!Number.isFinite(value)) unavailableReason = "O atributo solicitado não está disponível.";
+      if (!Number.isFinite(value)) unavailableReason = localize("GUM.TestRequest.AttributeUnavailable");
     } else {
       const definition = canonicalSkill ? { ...request.test, predefined: canonicalSkill.system?.predefined } : request.test;
       const resolution = await resolveRequestedTest(actor, definition);
@@ -46,10 +49,11 @@ export async function renderTestRequestMessage(request) {
     const response = getTestRequestResponse(request, target.targetKey);
     const user = response ? game.users.get(response.userId) : null;
     const history = prepareResponseHistory(response);
-    return { ...target, unavailableReason, response, status: response ? formatTestRequestStatus(response) : unavailableReason ? "Indisponível" : "Aguardando",
+    return { ...target, unavailableReason, response, status: response ? formatTestRequestStatus(response) : unavailableReason ? localize("GUM.TestRequest.Status.Unavailable") : localize("GUM.TestRequest.Status.Waiting"),
       hasResponse: Boolean(response), encodedKey: encodeURIComponent(target.targetKey), responseUserName: user?.name ?? response?.userId ?? "—",
       submittedAtLabel: response?.submittedAt ? new Date(response.submittedAt).toLocaleString(game.i18n?.lang || "pt-BR") : "",
-      responsePurposeLabels: getPurposeLabels(response?.purposeIds), modifierBreakdown: prepareModifierBreakdown(response, request.test.fixedModifier, request.test.fixedModifierLabel), ...history };
+      responsePurposeLabels: getPurposeLabels(response?.purposeIds), modifierBreakdown: prepareModifierBreakdown(response, request.test.fixedModifier, request.test.fixedModifierLabel),
+      historyLabel: format("GUM.TestRequest.Card.PreviousAttempts", { count: history.historyCount }), ...history };
   }));
   return renderTemplate("systems/gum/templates/chat/test-request-card.hbs", { request, progress, progressPercent, purposes, targets,
     testLabel: request.test.type === "attribute" ? request.test.attributeKey?.toUpperCase() : request.test.skillName });
@@ -68,10 +72,10 @@ export async function rollTestRequest(messageId, targetKey, { replace = false } 
   const message = game.messages.get(messageId);
   const request = message?.getFlag("gum", "testRequest");
   const target = request?.targets?.find(entry => entry.targetKey === targetKey);
-  if (!target) return ui.notifications.warn("Alvo do pedido não encontrado.");
+  if (!target) return ui.notifications.warn(localize("GUM.TestRequest.TargetNotFound"));
   const actor = await resolveTarget(target);
-  if (!isUserAuthorizedForTarget(game.user, actor, target)) return ui.notifications.error("Você não pode rolar por este personagem.");
-  if (replace && !await Dialog.confirm({ title: "Refazer teste", content: "<p>Substituir o resultado atual?</p>" })) return;
+  if (!isUserAuthorizedForTarget(game.user, actor, target)) return ui.notifications.error(localize("GUM.TestRequest.NotAuthorized"));
+  if (replace && !await Dialog.confirm({ title: localize("GUM.TestRequest.ReplaceTitle"), content: `<p>${localize("GUM.TestRequest.ReplaceContent")}</p>` })) return;
     const outcome = await executeRollRequest(request, targetKey, { onResult: async response => {
     const socketPayload = { type: "testRequest:submitResponse", messageId, requestId: request.id, targetKey, userId: game.user.id, replace, response };
     // Socket.IO does not echo a system event back to its sender consistently
@@ -79,13 +83,13 @@ export async function rollTestRequest(messageId, targetKey, { replace = false } 
     // own response directly; player responses still go to the responsible GM.
     if (game.user.isGM) {
       const accepted = await enqueueResponse(socketPayload);
-      if (accepted) ui.notifications.info("Resultado incorporado ao pedido de teste.");
+      if (accepted) ui.notifications.info(localize("GUM.TestRequest.ResultIncorporated"));
     } else {
       game.socket.emit("system.gum", socketPayload);
-      ui.notifications.info("Resultado enviado ao Mestre.");
+      ui.notifications.info(localize("GUM.TestRequest.ResultSentToGM"));
     }
     }});
-  if (!outcome.accepted) ui.notifications.warn(outcome.reason === "processing" ? "Este teste já está sendo processado." : "O teste está indisponível para este personagem.");
+  if (!outcome.accepted) ui.notifications.warn(outcome.reason === "processing" ? localize("GUM.TestRequest.AlreadyProcessing") : localize("GUM.TestRequest.TestUnavailable"));
 }
 
 async function processResponse(payload) {
@@ -148,10 +152,10 @@ function showTestRequestNotification(messageId, title, targets) {
   const escape = value => foundry.utils.escapeHTML(String(value ?? ""));
   const names = targets.map(target => `<li>${escape(target.actorName)}</li>`).join("");
   const buttons = {
-    open: { icon: '<i class="fas fa-comments"></i>', label: "Abrir pedido", callback: () => openTestRequestInChat(messageId) }
+    open: { icon: '<i class="fas fa-comments"></i>', label: localize("GUM.TestRequest.Notification.OpenRequest"), callback: () => openTestRequestInChat(messageId) }
   };
-  if (targets.length === 1) buttons.roll = { icon: '<i class="fas fa-dice"></i>', label: "Rolar teste", callback: () => rollTestRequest(messageId, targets[0].targetKey) };
-  new Dialog({ title: escape(title || "Teste solicitado pelo Mestre"), content: `<div class="test-request-notification-content"><p>Você pode responder pelos seguintes personagens:</p><ul>${names}</ul><small>O pedido continuará disponível no chat.</small></div>`, buttons, default: targets.length === 1 ? "roll" : "open" }, { classes: ["gum", "test-request-notification"] }).render(true);
+  if (targets.length === 1) buttons.roll = { icon: '<i class="fas fa-dice"></i>', label: localize("GUM.TestRequest.Notification.RollTest"), callback: () => rollTestRequest(messageId, targets[0].targetKey) };
+  new Dialog({ title: escape(title || localize("GUM.TestRequest.DefaultTitle")), content: `<div class="test-request-notification-content"><p>${escape(localize("GUM.TestRequest.Notification.CanRespond"))}</p><ul>${names}</ul><small>${escape(localize("GUM.TestRequest.Notification.RemainsInChat"))}</small></div>`, buttons, default: targets.length === 1 ? "roll" : "open" }, { classes: ["gum", "test-request-notification"] }).render(true);
 }
 
 export function activateTestRequestChatListeners(html) {

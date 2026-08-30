@@ -8,6 +8,9 @@ import { appendResistanceRequestResult, renderPendingChatRollRequest } from "../
 import { evaluateGurpsRollResult } from "../utils/gurps-roll-result.mjs";
 import { createRollRequestExecutor } from "./roll-request-executor.mjs";
 
+const localize = key => game.i18n.localize(key);
+const format = (key, data) => game.i18n.format(key, data);
+
 const resultQueues = new Map();
 
 export async function resolveRollRequestTarget(target) {
@@ -19,11 +22,11 @@ export async function resolveRollRequestTarget(target) {
 export async function resolveRequestedTest(actor, rawTest = {}) {
   const request = normalizeRollRequest({ test: rawTest });
   const test = request.test;
-  if (test.type === "fixed") return { available: true, value: test.fixedValue, label: `Valor fixo ${test.fixedValue}`, type: "attribute" };
+  if (test.type === "fixed") return { available: true, value: test.fixedValue, label: format("GUM.TestRequest.FixedValue", { value: test.fixedValue }), type: "attribute" };
   if (test.type === "attribute") {
     const value = Number(actor?.system?.attributes?.[test.attributeKey]?.final ?? actor?.system?.attributes?.[test.attributeKey]?.value);
     return Number.isFinite(value) ? { available: true, value, label: test.attributeKey.toUpperCase(), type: "attribute", attributeKey: test.attributeKey }
-      : { available: false, reason: "O atributo solicitado não está disponível." };
+      : { available: false, reason: localize("GUM.TestRequest.AttributeUnavailable") };
   }
   let definition = test;
   const localResolution = resolveSkillDefault(actor, test);
@@ -42,7 +45,7 @@ export async function resolveRequestedTest(actor, rawTest = {}) {
     if (canonical) definition = { ...test, skillUuid: canonical.uuid, predefined: canonical.system?.predefined };
   }
   const resolved = resolveSkillDefault(actor, definition);
-  return { ...resolved, type: "skill", attributeKey: test.customDefault?.attributeKey ?? null };
+  return { ...resolved, reason: resolved.available ? resolved.reason : localize("GUM.TestRequest.SkillUnavailable"), type: "skill", attributeKey: test.customDefault?.attributeKey ?? null };
 }
 
 export function serializeRollRequestResult(result, { target = {}, resolution = {}, userId = game.user.id } = {}) {
@@ -85,17 +88,17 @@ export function activateRollRequestChatListeners(html) {
     const outcome = await executeRollRequest(request, targetKey, { onResult: async response => {
       if (!game.user.isGM) {
         game.socket.emit("system.gum", { type: "rollRequest:chatResult", messageId: message.id, requestId: request.id, targetKey, userId: game.user.id, result: response });
-        ui.notifications.info("Resultado enviado ao Mestre.");
+        ui.notifications.info(localize("GUM.TestRequest.ResultSentToGM"));
         return;
       }
       const updated = { ...request, status: "resolved", responses: [...(request.responses ?? []), response] };
-      const content = appendResistanceRequestResult(message.content, { result: response, consequenceLabel: "Resposta registrada", purposeLabels: getPurposeLabels(response.purposeIds), userName: game.users.get(response.userId)?.name });
+      const content = appendResistanceRequestResult(message.content, { result: response, consequenceLabel: localize("GUM.TestRequest.ResponseRecorded"), purposeLabels: getPurposeLabels(response.purposeIds), userName: game.users.get(response.userId)?.name });
       await message.update({ content, "flags.gum.rollRequest": updated });
     }});
     if (!outcome.accepted) {
       button.disabled = false;
       const reason = !outcome.reason || ["target", "permission", "processing"].includes(outcome.reason)
-        ? "Não foi possível realizar este teste."
+        ? localize("GUM.TestRequest.CouldNotPerformTest")
         : outcome.reason;
       ui.notifications.warn(reason);
     }
@@ -122,7 +125,7 @@ async function processChatRollResult(payload) {
   payload.result = { ...payload.result, margin: canonical.margin, outcome: canonical.outcome, resultLabel: canonical.resultLabel };
   await message.update({ "flags.gum.rollRequest.status": "processing" });
   const updated = { ...request, status: "resolved", responses: [...(request.responses ?? []), payload.result] };
-  const content = appendResistanceRequestResult(message.content, { result: payload.result, consequenceLabel: "Resposta registrada", purposeLabels: getPurposeLabels(payload.result.purposeIds), userName: sender.name });
+  const content = appendResistanceRequestResult(message.content, { result: payload.result, consequenceLabel: localize("GUM.TestRequest.ResponseRecorded"), purposeLabels: getPurposeLabels(payload.result.purposeIds), userName: sender.name });
   await message.update({ content, "flags.gum.rollRequest": updated });
   return true;
 }

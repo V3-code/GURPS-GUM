@@ -3,6 +3,9 @@ import { buildTestRequestTargets } from "../utils/test-request-targets.mjs";
 import { normalizeSkillText } from "../utils/skill-default-resolver.mjs";
 import { createTestRequestMessage } from "../services/test-request-service.js";
 
+const localize = key => game.i18n.localize(key);
+const format = (key, data) => game.i18n.format(key, data);
+
 let launcher;
 export function openTestRequestLauncher() {
   launcher ??= new TestRequestLauncher();
@@ -14,7 +17,7 @@ export class TestRequestLauncher extends FormApplication {
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
       id: "gum-test-request-launcher",
-      title: "Solicitar Teste",
+      title: localize("GUM.TestRequest.Title"),
       template: "systems/gum/templates/apps/test-request-launcher.hbs",
       width: 580,
       height: 760,
@@ -34,20 +37,21 @@ export class TestRequestLauncher extends FormApplication {
       return result;
     }, {});
     const targetGroupOrder = [
-      "Tokens selecionados",
-      "Personagens atribuídos a jogadores ativos",
-      "Personagens atribuídos a jogadores offline",
-      "Personagens com proprietário ativo",
-      "Personagens com proprietário offline",
-      "Combatentes",
-      "Personagens sem jogador proprietário/NPCs"
+      { id: "Tokens selecionados", localizationKey: "GUM.TestRequest.Groups.SelectedTokens" },
+      { id: "Personagens atribuídos a jogadores ativos", localizationKey: "GUM.TestRequest.Groups.ActiveAssignedCharacters" },
+      { id: "Personagens atribuídos a jogadores offline", localizationKey: "GUM.TestRequest.Groups.OfflineAssignedCharacters" },
+      { id: "Personagens com proprietário ativo", localizationKey: "GUM.TestRequest.Groups.ActiveOwnerCharacters" },
+      { id: "Personagens com proprietário offline", localizationKey: "GUM.TestRequest.Groups.OfflineOwnerCharacters" },
+      { id: "Combatentes", localizationKey: "GUM.TestRequest.Groups.Combatants" },
+      { id: "Personagens sem jogador proprietário/NPCs", localizationKey: "GUM.TestRequest.Groups.UnownedCharacters" }
     ];
     const groupedTargets = targetGroupOrder
-      .filter(label => groups[label]?.length)
-      .map(label => ({
-        label,
-        targets: groups[label],
-        isOpen: label !== "Personagens sem jogador proprietário/NPCs" || groups[label].some(target => target.selected)
+      .filter(group => groups[group.id]?.length)
+      .map(group => ({
+        id: group.id,
+        label: localize(group.localizationKey),
+        targets: groups[group.id],
+        isOpen: group.id !== "Personagens sem jogador proprietário/NPCs" || groups[group.id].some(target => target.selected)
       }));
 
     const pack = game.packs.get("gum.skills");
@@ -81,7 +85,7 @@ export class TestRequestLauncher extends FormApplication {
       purposes: getGroupedRollPurposes().filter(group => group.id !== "general"),
       purposeSectionOpen: Boolean(this.purposeSectionOpen),
       skills: deduped,
-      attributes: [{ key: "st", label: "ST" }, { key: "dx", label: "DX" }, { key: "iq", label: "IQ" }, { key: "ht", label: "HT" }, { key: "per", label: "PER" }, { key: "vont", label: "VONT" }]
+      attributes: [{ key: "st", label: "ST" }, { key: "dx", label: "DX" }, { key: "iq", label: "IQ" }, { key: "ht", label: "HT" }, { key: "per", label: "Per" }, { key: "vont", label: localize("GUM.RollPrompt.WillAbbreviation") }]
     };
   }
 
@@ -95,7 +99,10 @@ export class TestRequestLauncher extends FormApplication {
     });
     html.find("[data-action=select-visible]").click(() => html.find(".target-option:not([hidden]) input").prop("checked", true));
     html.find("[data-action=clear]").click(() => html.find("input[name=targets]").prop("checked", false));
-    const updateTargetCount = () => html.find("[data-selected-target-count]").text(html.find("input[name=targets]:checked").length);
+    const updateTargetCount = () => {
+      const count = html.find("input[name=targets]:checked").length;
+      html.find("[data-selected-target-summary]").text(count ? format("GUM.TestRequest.SelectedCount", { count }) : localize("GUM.TestRequest.NoneSelected"));
+    };
     html.find("input[name=targets]").on("change", updateTargetCount);
     html.find("[data-action=select-visible], [data-action=clear]").on("click", updateTargetCount);
     updateTargetCount();
@@ -127,7 +134,7 @@ html.find("input[name=customSkillName]").val(option ? "" : event.currentTarget.v
     const updatePurposeSelection = () => {
       const selected = html.find("input[name=purposes]:checked");
       const labels = selected.map((_index, input) => $(input).siblings("span").text().trim()).get();
-      html.find(".purpose-selection-summary").text(labels.length ? labels.join(", ") : "Nenhuma selecionada");
+      html.find(".purpose-selection-summary").text(labels.length ? labels.join(", ") : localize("GUM.TestRequest.NoneSelected"));
       selected.each((_index, input) => { input.closest(".purpose-group").open = true; });
     };
     const applyPurposeSearch = () => {
@@ -165,7 +172,7 @@ html.find("input[name=customSkillName]").val(option ? "" : event.currentTarget.v
   async _updateObject(_event, formData) {
     const data = foundry.utils.expandObject(formData); const selected = Array.isArray(data.targets) ? data.targets : data.targets ? [data.targets] : [];
     const context = await this.getData(); const targets = context.groupedTargets.flatMap(group => group.targets).filter(target => selected.includes(target.targetKey)).map(({ selected: _selected, group: _group, ...target }) => target);
-    if (!targets.length) return ui.notifications.warn("Selecione ao menos um personagem.");
+    if (!targets.length) return ui.notifications.warn(localize("GUM.TestRequest.SelectAtLeastOneCharacter"));
     const purposes = Array.isArray(data.purposes) ? data.purposes : data.purposes ? [data.purposes] : [];
     let skill = context.skills.find(entry => entry.uuid === data.skillUuid); let type = data.testType;
     if (type === "skill" && !skill) type = "customSkill";

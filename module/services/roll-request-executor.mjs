@@ -2,6 +2,8 @@
  * Dependency-injected execution core. Keeping Foundry documents and UI behind
  * adapters makes the request lifecycle testable without a running world.
  */
+const localize = (key, fallback) => globalThis.game?.i18n?.localize?.(key) ?? fallback;
+
 export function createRollRequestExecutor({
   normalizeRequest,
   resolveTarget,
@@ -38,7 +40,7 @@ export function createRollRequestExecutor({
       requestedPurposeIds: request.test.requestedPurposeIds,
       purposeIds: request.test.requestedPurposeIds,
       fixedModifier: request.test.fixedModifier,
-      fixedModifierLabel: request.test.fixedModifierLabel || "Modificador fixo",
+      fixedModifierLabel: request.test.fixedModifierLabel || localize("GUM.TestRequest.FixedModifier", "Modificador fixo"),
       defaultLabel: resolution.label,
       initialBaseKey: resolution.type === "attribute" ? (resolution.attributeKey || "fixed") : "skill",
       img: resolvedTarget.actor.img

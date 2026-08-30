@@ -1,23 +1,23 @@
 <form class="gum-test-request-form">
   <header class="request-launcher-hero">
-    <h2>Solicitar Teste</h2>
+    <h2>{{localize "GUM.TestRequest.Title"}}</h2>
   </header>
 
   <section class="request-form-section request-basics">
-    <div class="request-section-heading"><i class="fas fa-pen"></i><span>Apresentação</span></div>
-    <label class="request-field request-title-field"><span>Título do Teste</span><input type="text" name="title" value="Teste solicitado pelo Mestre"></label>
-    <label class="request-field"><span>Descrição <small>opcional</small></span><textarea name="description" rows="2" placeholder="Contexto breve para os jogadores"></textarea></label>
+    <div class="request-section-heading"><i class="fas fa-pen"></i><span>{{localize "GUM.TestRequest.Presentation"}}</span></div>
+    <label class="request-field request-title-field"><span>{{localize "GUM.TestRequest.TestTitle"}}</span><input type="text" name="title" value="{{localize "GUM.TestRequest.DefaultTitle"}}"></label>
+    <label class="request-field"><span>{{localize "GUM.TestRequest.Description"}} <small>{{localize "GUM.TestRequest.Optional"}}</small></span><textarea name="description" rows="2" placeholder="{{localize "GUM.TestRequest.DescriptionPlaceholder"}}"></textarea></label>
   </section>
 
   <section class="request-form-section">
     <div class="request-section-heading">
-      <i class="fas fa-users"></i><span>Personagens</span>
-      <span class="request-selection-count"><strong data-selected-target-count>0</strong> selecionado(s)</span>
+      <i class="fas fa-users"></i><span>{{localize "GUM.TestRequest.Characters"}}</span>
+      <span class="request-selection-count" data-selected-target-summary>{{localize "GUM.TestRequest.NoneSelected"}}</span>
     </div>
     <div class="target-tools">
-      <label class="request-search"><i class="fas fa-search"></i><input class="target-search" type="search" placeholder="Buscar por nome"></label>
-      <button type="button" class="request-tool-button" data-action="select-visible"><i class="fas fa-check-double"></i> Visíveis</button>
-      <button type="button" class="request-tool-button" data-action="clear"><i class="fas fa-eraser"></i> Limpar</button>
+      <label class="request-search"><i class="fas fa-search"></i><input class="target-search" type="search" placeholder="{{localize "GUM.TestRequest.SearchByName"}}"></label>
+      <button type="button" class="request-tool-button" data-action="select-visible"><i class="fas fa-check-double"></i> {{localize "GUM.TestRequest.Visible"}}</button>
+      <button type="button" class="request-tool-button" data-action="clear"><i class="fas fa-eraser"></i> {{localize "GUM.TestRequest.Clear"}}</button>
     </div>
     <div class="target-list">
       {{#each groupedTargets}}
@@ -37,22 +37,22 @@
   </section>
 
   <section class="request-form-section">
-    <div class="request-section-heading"><i class="fas fa-bullseye"></i><span>Teste</span></div>
+    <div class="request-section-heading"><i class="fas fa-bullseye"></i><span>{{localize "GUM.TestRequest.Test"}}</span></div>
    <div class="request-test-fields">
       <div class="attribute-fields request-test-row">
-        <label class="request-test-choice"><input type="radio" name="testType" value="attribute" checked><span><i class="fas fa-shield-alt"></i> Atributo</span></label>
-        <select id="gum-test-request-attribute" name="attributeKey" aria-label="Atributo">{{#each attributes}}<option value="{{key}}">{{label}}</option>{{/each}}</select>
+        <label class="request-test-choice"><input type="radio" name="testType" value="attribute" checked><span><i class="fas fa-shield-alt"></i> {{localize "GUM.TestRequest.Attribute"}}</span></label>
+        <select id="gum-test-request-attribute" name="attributeKey" aria-label="{{localize "GUM.TestRequest.Attribute"}}">{{#each attributes}}<option value="{{key}}">{{label}}</option>{{/each}}</select>
       </div>
       <div class="skill-fields request-test-row">
-        <label class="request-test-choice"><input type="radio" name="testType" value="skill"><span><i class="fas fa-book-open"></i> Perícia</span></label>
-        <div class="skill-field-content"><input id="gum-test-request-skill-search" name="skillSearch" type="search" list="gum-test-request-skills" autocomplete="off" placeholder="Digite o nome ou a especialização" aria-label="Perícia">
+        <label class="request-test-choice"><input type="radio" name="testType" value="skill"><span><i class="fas fa-book-open"></i> {{localize "GUM.TestRequest.Skill"}}</span></label>
+        <div class="skill-field-content"><input id="gum-test-request-skill-search" name="skillSearch" type="search" list="gum-test-request-skills" autocomplete="off" placeholder="{{localize "GUM.TestRequest.SkillPlaceholder"}}" aria-label="{{localize "GUM.TestRequest.Skill"}}">
           <input name="skillUuid" type="hidden">
           <datalist id="gum-test-request-skills">{{#each skills}}<option value="{{displayName}}" data-uuid="{{uuid}}"></option>{{/each}}</datalist>
-          <p class="unregistered-skill-notice" hidden><i class="fas fa-triangle-exclamation"></i><span><strong>Perícia não registrada.</strong> Informe o pré-definido personalizado.</span></p>
+          <p class="unregistered-skill-notice" hidden><i class="fas fa-triangle-exclamation"></i><span><strong>{{localize "GUM.TestRequest.UnregisteredSkill"}}</strong> {{localize "GUM.TestRequest.CustomDefaultPrompt"}}</span></p>
           <div class="custom-skill-fields" hidden>
             <input name="customSkillName" type="hidden">
-            <label>Atributo base <select name="customAttributeKey">{{#each attributes}}<option value="{{key}}">{{label}}</option>{{/each}}</select></label>
-            <label>Modificador <input type="number" name="customModifier" value="-5"></label>
+            <label>{{localize "GUM.TestRequest.BaseAttribute"}} <select name="customAttributeKey">{{#each attributes}}<option value="{{key}}">{{label}}</option>{{/each}}</select></label>
+            <label>{{localize "GUM.TestRequest.Modifier"}} <input type="number" name="customModifier" value="-5"></label>
           </div>
         </div>
       </div>
@@ -60,24 +60,24 @@
   </section>
 
   <details class="request-form-section request-purpose-section" {{#if purposeSectionOpen}}open{{/if}}>
-    <summary class="request-section-heading"><i class="fas fa-tags"></i><span>Finalidades</span><small>opcional</small><span class="purpose-selection-summary">Nenhuma selecionada</span><i class="fas fa-chevron-down purpose-section-chevron"></i></summary>
+    <summary class="request-section-heading"><i class="fas fa-tags"></i><span>{{localize "GUM.TestRequest.Purposes"}}</span><small>{{localize "GUM.TestRequest.Optional"}}</small><span class="purpose-selection-summary">{{localize "GUM.TestRequest.NoneSelected"}}</span><i class="fas fa-chevron-down purpose-section-chevron"></i></summary>
     <div class="request-purpose-content">
-    <div class="purpose-search" role="search"><i class="fas fa-search"></i><input class="purpose-search-input" type="search" placeholder="Buscar finalidade" aria-label="Buscar finalidade"><button class="purpose-search-clear" type="button" title="Limpar busca" aria-label="Limpar busca"><i class="fas fa-times"></i></button></div>
+    <div class="purpose-search" role="search"><i class="fas fa-search"></i><input class="purpose-search-input" type="search" placeholder="{{localize "GUM.TestRequest.SearchPurpose"}}" aria-label="{{localize "GUM.TestRequest.SearchPurpose"}}"><button class="purpose-search-clear" type="button" title="{{localize "GUM.TestRequest.ClearSearch"}}" aria-label="{{localize "GUM.TestRequest.ClearSearch"}}"><i class="fas fa-times"></i></button></div>
     <div class="purpose-list">
       {{#each purposes}}<details class="purpose-group" data-group-label="{{label}}"><summary><span>{{label}}</span><i class="fas fa-chevron-down"></i></summary><div>{{#each purposes}}<label class="purpose-option" tabindex="0"><input type="checkbox" name="purposes" value="{{id}}"><span>{{label}}</span><i class="fas fa-check purpose-check"></i></label>{{/each}}</div></details>{{/each}}
     </div>
-    <p class="purpose-search-empty" hidden>Nenhuma finalidade encontrada.</p>
+    <p class="purpose-search-empty" hidden>{{localize "GUM.TestRequest.NoPurposeFound"}}</p>
     </div>
   </details>
 
   <section class="request-form-section request-delivery-section">
-    <div class="request-section-heading"><i class="fas fa-sliders-h"></i><span>Condições e entrega</span></div>
+    <div class="request-section-heading"><i class="fas fa-sliders-h"></i><span>{{localize "GUM.TestRequest.ConditionsAndDelivery"}}</span></div>
     <div class="modifier-row">
-      <label class="request-field"><span>Modificador do Mestre</span><input type="number" name="fixedModifier" value="0"></label>
-      <label class="request-field"><span>Descrição Simples do Modificador (opcional)</span><input type="text" name="fixedModifierLabel" placeholder="Ex.: Escuridão"></label>
+      <label class="request-field"><span>{{localize "GUM.TestRequest.GMModifier"}}</span><input type="number" name="fixedModifier" value="0"></label>
+      <label class="request-field"><span>{{localize "GUM.TestRequest.SimpleModifierDescription"}} ({{localize "GUM.TestRequest.Optional"}})</span><input type="text" name="fixedModifierLabel" placeholder="{{localize "GUM.TestRequest.ModifierPlaceholder"}}"></label>
     </div>
-    <label class="request-notify-toggle"><input type="checkbox" name="notifyPlayers"><span class="request-toggle-mark"></span><span><strong>Também avisar os jogadores</strong><small>O pedido continuará salvo no chat mesmo que o aviso seja fechado.</small></span></label>
+    <label class="request-notify-toggle"><input type="checkbox" name="notifyPlayers"><span class="request-toggle-mark"></span><span><strong>{{localize "GUM.TestRequest.NotifyPlayers"}}</strong><small>{{localize "GUM.TestRequest.NotifyPlayersHint"}}</small></span></label>
   </section>
 
-  <footer class="request-form-footer"><button type="submit" class="request-submit"><i class="fas fa-paper-plane"></i><span>Publicar pedido</span></button></footer>
+  <footer class="request-form-footer"><button type="submit" class="request-submit"><i class="fas fa-paper-plane"></i><span>{{localize "GUM.TestRequest.PublishRequest"}}</span></button></footer>
 </form>

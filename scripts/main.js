@@ -4201,7 +4201,7 @@ Hooks.on("getSceneControlButtons", (controls) => {
         },
         button: true
     };
-    const requestTestTool = { name: "request-test", title: "Solicitar Teste", icon: "fas fa-dice", visible: true,
+    const requestTestTool = { name: "request-test", title: game.i18n.localize("GUM.TestRequest.Title"), icon: "fas fa-dice", visible: true,
         onChange: () => openTestRequestLauncher(), button: true };
 
     // 5. INJEÇÃO SEGURA NA LISTA DE FERRAMENTAS

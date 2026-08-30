@@ -1,10 +1,12 @@
 import { normalizeRollRequest } from "./roll-request-data.mjs";
 
+const localize = (key, fallback) => globalThis.game?.i18n?.localize?.(key) ?? fallback;
+
 export function createTestRequest(data = {}, { id = null, userId = null, now = Date.now() } = {}) {
   const common = normalizeRollRequest(data, { id, userId, now });
   const requestId = id ?? data.id ?? `${now}`;
   return { version: 1, id: requestId, status: "open", creatorUserId: userId ?? data.creatorUserId ?? null, createdAt: now,
-    title: String(data.title || "Teste solicitado pelo Mestre"), description: String(data.description || ""),
+    title: String(data.title || localize("GUM.TestRequest.DefaultTitle", "Teste solicitado pelo Mestre")), description: String(data.description || ""),
     targets: Array.isArray(data.targets) ? data.targets.map(target => ({ ...target, recipientUserIds: [...new Set(target.recipientUserIds ?? [])] })) : [],
     origin: common.origin, consequence: common.consequence,
     test: common.test,

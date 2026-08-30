@@ -95,6 +95,36 @@ const screens = [
         script: new URL("../module/apps/roll-prompt.js", import.meta.url)
     },
     {
+        name: "test request launcher",
+        template: new URL("../templates/apps/test-request-launcher.hbs", import.meta.url),
+        script: new URL("../module/apps/test-request-launcher.js", import.meta.url)
+    },
+    {
+        name: "test request card",
+        template: new URL("../templates/chat/test-request-card.hbs", import.meta.url),
+        script: new URL("../module/services/test-request-service.js", import.meta.url)
+    },
+    {
+        name: "test request presentation",
+        template: null,
+        script: new URL("../module/utils/test-request-view.mjs", import.meta.url)
+    },
+    {
+        name: "roll request service",
+        template: null,
+        script: new URL("../module/services/roll-request-service.js", import.meta.url)
+    },
+    {
+        name: "roll request executor",
+        template: null,
+        script: new URL("../module/services/roll-request-executor.mjs", import.meta.url)
+    },
+    {
+        name: "test request data",
+        template: null,
+        script: new URL("../module/utils/test-request-data.mjs", import.meta.url)
+    },
+    {
         name: "roll purpose catalog",
         template: null,
         script: new URL("../module/utils/roll-purposes.mjs", import.meta.url)
@@ -1124,4 +1154,45 @@ test("roll prompt preserves purpose, base, defense and cap mechanics", async () 
     assert.match(screen.scriptSource, /defenseMode: this\.defenseMode/);
     assert.match(screen.scriptSource, /defenseTiming: this\.defenseTiming/);
     assert.match(screen.scriptSource, /performGURPSRoll\(this\.actor, rollPayload, rollOptions\)/);
+});
+
+test("test request launcher and card have no fixed Portuguese UI text", async () => {
+    const sources = await readScreenSources();
+    const launcher = sources.find(({ name }) => name === "test request launcher");
+    const card = sources.find(({ name }) => name === "test request card");
+    const templateSource = `${launcher.templateSource}\n${card.templateSource}`.replace(/{{!--[\s\S]*?--}}/g, "");
+    const scriptSource = `${launcher.scriptSource}\n${card.scriptSource}`
+        .replace(/\/\/.*$/gm, "")
+        .replace(/\/\*[\s\S]*?\*\//g, "");
+    const fixedPortuguese = [
+        "Solicitar Teste", "Apresentação", "Título do Teste", "Descrição Simples do Modificador",
+        "Buscar por nome", "Perícia não registrada", "Informe o pré-definido personalizado",
+        "Condições e entrega", "Também avisar os jogadores", "Publicar pedido", "Pedido do Mestre",
+        "Alvo efetivo", "tentativa(s) anterior(es)", "Rolar Teste", "Resultado enviado ao Mestre"
+    ];
+
+    for (const text of fixedPortuguese) {
+        assert.ok(!templateSource.includes(text), `fixed test request template text: ${text}`);
+        assert.ok(!scriptSource.includes(text), `fixed test request script text: ${text}`);
+    }
+});
+
+test("test request localization preserves targets, payloads, authorization and response history", async () => {
+    const sources = await readScreenSources();
+    const launcher = sources.find(({ name }) => name === "test request launcher");
+    const card = sources.find(({ name }) => name === "test request card");
+    const combined = `${launcher.templateSource}\n${launcher.scriptSource}\n${card.templateSource}\n${card.scriptSource}`;
+
+    for (const field of ["targets", "testType", "attributeKey", "skillSearch", "skillUuid", "customAttributeKey", "customModifier", "purposes", "fixedModifier", "fixedModifierLabel", "notifyPlayers"]) {
+        assert.match(launcher.templateSource, new RegExp(`name="${field}"`));
+    }
+    for (const value of ["attribute", "skill", "customSkill"]) assert.ok(combined.includes(value));
+    for (const group of ["Tokens selecionados", "Combatentes", "Personagens sem jogador proprietário/NPCs"]) assert.ok(launcher.scriptSource.includes(group));
+    assert.match(launcher.scriptSource, /createTestRequestMessage\(\{ title: data\.title, description: data\.description, targets, test:/);
+    assert.match(card.templateSource, /data-target-key="{{encodedKey}}"/);
+    assert.match(card.templateSource, /data-replace="true"/);
+    assert.match(card.scriptSource, /isUserAuthorizedForTarget\(game\.user, actor, target\)/);
+    assert.match(card.scriptSource, /type: "testRequest:submitResponse"/);
+    assert.match(card.scriptSource, /insertTestRequestResponse\(current, payload\.targetKey, payload\.response, \{ replace: payload\.replace === true \}\)/);
+    assert.match(card.scriptSource, /"flags\.gum\.testRequest": updated/);
 });
