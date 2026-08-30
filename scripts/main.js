@@ -29,7 +29,7 @@ import { activateRollRequestChatListeners, executeRollRequest, registerRollReque
 import { evaluateBarrierConsequence, isMatchingDamageResistance, normalizeResistanceRoll, normalizeRollRequest } from "../module/utils/roll-request-data.mjs";import { evaluateGurpsRollResult } from "../module/utils/gurps-roll-result.mjs";
 import { registerContextMenuCompatibilityHooks } from "../module/utils/context-menu-compatibility.mjs";
 import { resolveCharacterImage } from "../module/utils/character-image.mjs";
-import { appendResistanceRequestResult, renderPendingResistanceRequest } from "../module/utils/roll-request-view.mjs";
+import { appendResistanceRequestResult, localizedRollOutcome, renderPendingResistanceRequest, ROLL_REQUEST_CARD_KEYS } from "../module/utils/roll-request-view.mjs";
 import { isUserAuthorizedForTarget } from "../module/utils/test-request-targets.mjs";
 import { showDiceForMessageLessRoll } from "../module/utils/dice-so-nice.mjs";
 
@@ -2248,7 +2248,7 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
             }
             : {};
         const silentRequest = {
-            id: foundry.utils.randomID(), title: `Resistência: ${effectItem.name}`,
+            id: foundry.utils.randomID(), title: game.i18n.format(ROLL_REQUEST_CARD_KEYS.resistanceTitle, { effect: effectItem.name }),
             origin: { type: "effect-barrier", sourceActorUuid: sourceActor?.uuid, sourceItemUuid: originItem?.uuid, effectUuid: effectItem.uuid, effectLinkId },
             targets: [{ targetKey, actorUuid: targetToken.actor?.uuid, tokenUuid: targetToken.document?.uuid || targetToken.uuid || null, actorName: targetToken.actor?.name, recipientUserIds: [] }],
             test: { ...normalizedResistance.test, fixedModifier: evaluateNumericFormula(rollData.modifier, { actor: targetToken.actor }) || 0 }, consequence: normalizedResistance.consequence
@@ -2263,7 +2263,7 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
         }});
         return;
     }
-    const applyOnText = rollData.applyOn === 'success' ? 'Em sucesso' : 'Em falha';
+    const applyOnText = game.i18n.localize(rollData.applyOn === 'success' ? ROLL_REQUEST_CARD_KEYS.applyOnSuccess : ROLL_REQUEST_CARD_KEYS.applyOnFailure);
     const marginValue = (rollData.margin !== undefined && rollData.margin !== null && rollData.margin !== '') ? rollData.margin : '—';
     const rawModifier = (rollData.modifier ?? "").toString().trim();
     const previewModifier = evaluateNumericFormula(rawModifier, { actor: targetToken.actor });
@@ -2284,7 +2284,7 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
     };
  const targetKey = targetToken.document?.uuid || targetToken.uuid || targetToken.actor?.uuid;
  const request = {
-        version: 1, id: foundry.utils.randomID(), status: "pending", title: `Resistência: ${effectItem.name}`,
+        version: 1, id: foundry.utils.randomID(), status: "pending", title: game.i18n.format(ROLL_REQUEST_CARD_KEYS.resistanceTitle, { effect: effectItem.name }),
         origin: { type: "effect-barrier", sourceActorUuid: sourceActor?.uuid, sourceItemUuid: originItem?.uuid, effectUuid: effectItem.uuid, effectLinkId },
         targets: [{ targetKey, actorUuid: targetToken.actor?.uuid, tokenUuid: targetToken.document?.uuid || targetToken.uuid || null, actorName: targetToken.actor?.name, recipientUserIds: [] }],
         test: normalizedResistance.test, consequence: normalizedResistance.consequence, delivery: {}, responses: []
@@ -2292,10 +2292,10 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
 
  const content = renderPendingResistanceRequest({
         request, effectName: effectItem.name, effectImg: effectItem.img,
-        originLabel: sourceActor?.name || originItem?.name || "Origem desconhecida",
-        targetName: targetToken.name || targetToken.actor?.name || "Alvo",
+        originLabel: sourceActor?.name || originItem?.name || game.i18n.localize(ROLL_REQUEST_CARD_KEYS.unknownOrigin),
+        targetName: targetToken.name || targetToken.actor?.name || game.i18n.localize(ROLL_REQUEST_CARD_KEYS.target),
         targetImg: resolveCharacterImage(targetToken.actor, { token: targetToken }),
-        testLabel: `Teste de ${testLabel}`, modifierLabel: rawModifier ? `Barreira ${previewModifierSigned}` : "",
+        testLabel: game.i18n.format(ROLL_REQUEST_CARD_KEYS.testOf, { test: testLabel }), modifierLabel: rawModifier ? game.i18n.format(ROLL_REQUEST_CARD_KEYS.barrierModifier, { modifier: previewModifierSigned }) : "",
         applyOnLabel: applyOnText, marginLabel: marginValue,
         purposeLabels: getPurposeLabels(normalizedResistance.test.requestedPurposeIds),
         description: resistanceChatText
@@ -3030,7 +3030,7 @@ async function processResistanceSocketResult(payload) {
     payload.result = { ...payload.result, margin: canonical.margin, outcome: canonical.outcome, resultLabel: canonical.resultLabel };
     const barrier = evaluateBarrierConsequence(payload.result, request.consequence);
     await message.update({ "flags.gum.rollRequest.status": "processing" });
-    let consequenceLabel = barrier.shouldApply ? "Efeito aplicável" : "Efeito bloqueado";
+    let consequenceLabel = game.i18n.localize(barrier.shouldApply ? ROLL_REQUEST_CARD_KEYS.effectApplicable : ROLL_REQUEST_CARD_KEYS.effectBlocked);
     if (payload.type === "rollRequest:damageResult") {
         const application = game.gum?.damageApplications?.get(String(context.damageApplicationId));
         if (!isMatchingDamageResistance(application, { targetActorId: actor.id, effectLinkId: context.effectLinkId, effectUuid: request.origin?.effectUuid })) {
@@ -3038,8 +3038,8 @@ async function processResistanceSocketResult(payload) {
             return;
         }
         const effect = application.availableOnDamageEffects.find(entry => entry.id === context.effectLinkId);
-        await application.updateEffectCard(context.effectLinkId, { isSuccess: barrier.success, shouldApply: barrier.shouldApply, resultText: `${payload.result.total} vs ${payload.result.effectiveTarget} — ${payload.result.resultLabel}`, rollRequestId: request.id, result: payload.result }, effect.item.system, { autoApply: false });
-        consequenceLabel = barrier.shouldApply ? "Aguardando aplicação do dano" : "Efeito bloqueado";
+        await application.updateEffectCard(context.effectLinkId, { isSuccess: barrier.success, shouldApply: barrier.shouldApply, resultText: `${payload.result.total} vs ${payload.result.effectiveTarget} — ${localizedRollOutcome(payload.result)}`, rollRequestId: request.id, result: payload.result }, effect.item.system, { autoApply: false });
+        consequenceLabel = game.i18n.localize(barrier.shouldApply ? ROLL_REQUEST_CARD_KEYS.awaitingDamageApplication : ROLL_REQUEST_CARD_KEYS.effectBlocked);
     } else if (barrier.shouldApply) {
         const effectItem = request.origin?.effectUuid ? await fromUuid(request.origin.effectUuid).catch(() => null) : null;
         if (!effectItem) { await message.update({ "flags.gum.rollRequest.status": "pending" }); return; }
@@ -3049,7 +3049,7 @@ async function processResistanceSocketResult(payload) {
         const originActor = context.sourceActorId ? game.actors.get(context.sourceActorId) : null;
         const conditionContext = context.mode === "condition" && context.conditionId ? { conditionId: context.conditionId, conditionActivationMode: context.conditionActivationMode || null } : {};
         await applySingleEffect(effectItem, targets, { actor: originActor, origin: originItem || effectItem, ...conditionContext });
-        consequenceLabel = "Efeito aplicado";
+        consequenceLabel = game.i18n.localize(ROLL_REQUEST_CARD_KEYS.effectApplied);
     }
     const updated = { ...request, status: "resolved", responses: [...(request.responses || []), { ...payload.result, consequence: consequenceLabel }] };
     await message.update({ content: appendResistanceRequestResult(message.content, { result: payload.result, consequenceLabel, purposeLabels: getPurposeLabels(payload.result.purposeIds), userName: sender.name }), "flags.gum.rollRequest": updated });
@@ -3083,7 +3083,7 @@ $('body').on('click', '.resistance-roll-button', async ev => {
     const targetActor = targetToken?.actor || (context.targetActorId ? game.actors.get(context.targetActorId) : null);
     if (!message || !effectData || !targetActor) {
         button.disabled = false;
-        return ui.notifications.warn("Não foi possível validar o pedido de resistência.");
+        return ui.notifications.warn(game.i18n.localize(ROLL_REQUEST_CARD_KEYS.invalidResistanceRequest));
     }
 
     const targetKey = targetToken?.document?.uuid || targetActor.uuid;
@@ -3097,7 +3097,7 @@ $('body').on('click', '.resistance-roll-button', async ev => {
         version: 1,
         id: storedRequest?.id || `resistance:${message.id}`,
         status: storedRequest?.status || "pending",
-        title: storedRequest?.title || `Resistência: ${effectData.name}`,
+        title: storedRequest?.title || game.i18n.format(ROLL_REQUEST_CARD_KEYS.resistanceTitle, { effect: effectData.name }),
         origin: storedRequest?.origin || { type: context.mode === "damage" ? "damage-barrier" : "effect-barrier", effectUuid: context.effectItemUuid, effectLinkId: context.effectLinkId },
         targets: storedRequest?.targets?.length ? storedRequest.targets : [{ targetKey, actorUuid: targetActor.uuid, tokenUuid: targetToken?.document?.uuid || null, actorName: targetActor.name, recipientUserIds: [] }],
         test: { ...(storedRequest?.test || normalized.test), fixedModifier: evaluatedModifier + dynamicModifier },
@@ -3110,12 +3110,12 @@ $('body').on('click', '.resistance-roll-button', async ev => {
         if (game.user.isGM) await enqueueResistanceSocketResult(payload);
         else {
             game.socket.emit("system.gum", payload);
-            ui.notifications.info("Resultado de resistência enviado ao Mestre.");
+            ui.notifications.info(game.i18n.localize(ROLL_REQUEST_CARD_KEYS.resistanceResultSentToGM));
         }
     }});
     if (!outcome.accepted) {
         button.disabled = false;
-        ui.notifications.warn(typeof outcome.reason === "string" && !["target", "permission", "processing"].includes(outcome.reason) ? outcome.reason : "Não foi possível realizar o teste de resistência.");
+        ui.notifications.warn(typeof outcome.reason === "string" && !["target", "permission", "processing"].includes(outcome.reason) ? outcome.reason : game.i18n.localize(ROLL_REQUEST_CARD_KEYS.resistanceFailure));
     } 
 });
 
@@ -4387,4 +4387,4 @@ Hooks.on("createActiveEffect", async (effect) => {
 });
 
 // 6. MUDANÇAS NA CENA (Adicionar/Remover tokens)
-Hooks.on("canvasReady", refreshGMScreen); // Quando muda de mapa
+Hooks.on("canvasReady", refreshGMScreen); // Quando muda de mapa

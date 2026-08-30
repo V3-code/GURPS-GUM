@@ -110,6 +110,11 @@ const screens = [
         script: new URL("../module/utils/test-request-view.mjs", import.meta.url)
     },
     {
+        name: "roll request card",
+        template: null,
+        script: new URL("../module/utils/roll-request-view.mjs", import.meta.url)
+    },
+    {
         name: "roll request service",
         template: null,
         script: new URL("../module/services/roll-request-service.js", import.meta.url)
