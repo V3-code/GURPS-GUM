@@ -523,13 +523,20 @@
 
      {{#if (or (eq item.type "advantage") (eq item.type "disadvantage"))}}
      <div class="tab item-social-tab" data-tab="social">
-       <div class="item-social-toolbar"><p>{{localize "GUM.Social.ItemHint"}}</p><button type="button" class="add-item-social"><i class="fas fa-plus"></i> {{localize "GUM.Social.AddContribution"}}</button></div>
+       <div class="item-social-toolbar">
+         <div class="item-social-toolbar-copy"><span class="item-social-toolbar-icon"><i class="fas fa-users"></i></span><div><h4>{{localize "GUM.Social.Tab"}}</h4><p>{{localize "GUM.Social.ItemHint"}}</p></div></div>
+         <button type="button" class="add-item-social"><i class="fas fa-plus"></i> {{localize "GUM.Social.AddContribution"}}</button>
+       </div>
+       <div class="item-social-list">
        {{#each socialContributions}}
-       <section class="item-social-contribution" data-id="{{id}}">
-         <header>
-           <select class="item-social-type">{{selectOptions ../socialCategories selected=type valueAttr="type" labelAttr="label"}}</select>
-           <button type="button" class="delete-item-social" data-id="{{id}}" title="{{localize 'GUM.Social.Delete'}}"><i class="fas fa-trash"></i></button>
-         </header>
+       <details class="item-social-contribution" data-id="{{id}}" open>
+         <summary class="item-social-contribution-header">
+           <span class="item-social-number"><i class="{{icon}}"></i></span>
+           <span class="item-social-heading"><strong>{{typeLabel}}</strong><small>{{localize "GUM.Social.ItemContribution"}}</small></span>
+           <span class="item-social-actions"><button type="button" class="delete-item-social" data-id="{{id}}" title="{{localize 'GUM.Social.Delete'}}"><i class="fas fa-trash"></i></button><i class="fas fa-chevron-up item-social-chevron"></i></span>
+         </summary>
+         <div class="item-social-contribution-body">
+         <label class="item-social-type-field"><span>{{localize "GUM.Social.Type"}}</span><select class="item-social-type">{{selectOptions ../socialCategories selected=type valueAttr="type" labelAttr="label"}}</select></label>
          <div class="item-social-fields">
          {{#each fields}}
            <label><span>{{label}}</span>
@@ -537,22 +544,15 @@
            </label>
          {{/each}}
          </div>
-       </section>
+         </div>
+       </details>
        {{/each}}
+       </div>
      </div>
      {{/if}}
 
      {{!-- Aba "Detalhes" --}}
      <div class="tab" data-tab="details">
-
-        {{#if (or (eq item.type "advantage") (eq item.type "disadvantage"))}}
-            <div class="skill-ability-toggle">
-                <label class="custom-checkbox inline-checkbox">
-                    <input type="checkbox" name="system.favorite_in_combat" {{checked system.favorite_in_combat}}/>
-                    <span>Favorito (mostrar na aba Combate do personagem)</span>
-                </label>
-            </div>
-        {{/if}}
         
         {{!-- ===================================================================== --}}
         {{!-- 		ABA DETALHES: ITEM EQUIPAMENTO 				 --}}
@@ -837,84 +837,39 @@
                 {{!-- ===================================================================== --}}
         {{!--           ABA DETALHES: ITEM VANTAGENS E DESVANTAGENS              --}}
         {{!-- ===================================================================== --}}
-        {{#if (or (eq item.type "advantage") (eq item.type "disadvantage"))}}
-
-            <div class="form-section skill-details-compact characteristic-details-form">
-                <h4 class="section-title">Referência</h4>
-                <div class="skill-compact-rows">
-                    <div class="skill-compact-row">
-                        <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> Ref. Página</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.ref" value="{{system.ref}}" placeholder="Ex: B33"/>
-                        </div>
-                    </div>
-                </div>
+                {{#if (or (eq item.type "advantage") (eq item.type "disadvantage"))}}
+          <div class="skill-details-dashboard spell-power-dashboard characteristic-details-dashboard">
+            <div class="characteristic-top-grid">
+              <label class="skill-dashboard-toggle-card characteristic-favorite-card">
+                <span class="skill-dashboard-toggle-icon"><i class="fas fa-star" aria-hidden="true"></i></span>
+                <span class="skill-dashboard-toggle-label">Favorito<small>Mostrar na aba Combate</small></span>
+                <input type="checkbox" name="system.favorite_in_combat" {{checked system.favorite_in_combat}}/>
+              </label>
+              <div class="skill-dashboard-card skill-dashboard-field-card characteristic-organization-card">
+                <label class="skill-dashboard-card-heading"><i class="fas fa-layer-group" aria-hidden="true"></i><span>Organização na Ficha</span></label>
+                <div class="skill-dashboard-card-control"><select name="system.block_id">{{selectOptions characteristic_blocks selected=system.block_id}}</select></div>
+                <small class="characteristic-card-hint">“Nenhuma” usa a organização padrão do tipo.</small>
+              </div>
             </div>
 
-            <div class="form-section skill-details-compact characteristic-details-form">
-                <h4 class="section-title">Organização na Ficha</h4>
-                <div class="skill-compact-rows">
-                    <div class="skill-compact-row">
-                        <label>Bloco na Ficha de Personagem</label>
-                        <div class="skill-compact-controls">
-                            <select name="system.block_id">{{selectOptions characteristic_blocks selected=system.block_id}}</select>
-                        </div>
-                    </div>
-                </div>
-                <p class="notes">"Nenhuma" mantém a organização padrão por tipo (vantagem/desvantagem).</p>
+            <div class="skill-dashboard-section characteristic-dashboard-section">
+              <h4 class="skill-dashboard-section-title"><i class="fas fa-gem" aria-hidden="true"></i> Nível e Pontos</h4>
+              <div class="spell-power-result-grid characteristic-points-grid">
+                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-sort-numeric-up" aria-hidden="true"></i><span>Nível</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.level" value="{{system.level}}"/></div></div>
+                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-coins" aria-hidden="true"></i><span>Pontos Base</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.points" value="{{system.points}}"/></div></div>
+                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>Custo Final</span></label><div class="skill-dashboard-card-control"><div class="calculated-cost value"><span>{{calculatedCost.finalPoints}}</span><small>Mod: {{calculatedCost.totalModifier}}%</small></div></div></div>
+              </div>
             </div>
 
-            <div class="form-section skill-details-compact characteristic-details-form">
-                <h4 class="section-title">Nível e Pontos</h4>
-                <div class="skill-compact-rows">
-                    <div class="skill-compact-row">
-                        <label>Nível</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.level" value="{{system.level}}"/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Pontos Base</label>
-                        <div class="skill-compact-controls">
-                            <input type="number" name="system.points" value="{{system.points}}"/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Custo Final</label>
-                        <div class="skill-compact-controls">
-                            <div class="calculated-cost value">
-                                <span>{{calculatedCost.finalPoints}}</span>
-                                <small>(Mod: {{calculatedCost.totalModifier}}%)</small>
-                            </div>
-                        </div>
-                    </div>
+            <div class="skill-dashboard-section characteristic-dashboard-section">
+              <h4 class="skill-dashboard-section-title"><i class="fas fa-cogs" aria-hidden="true"></i> Mecânica e Contexto</h4>
+              <div class="spell-power-result-grid characteristic-context-grid">
+                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-dice" aria-hidden="true"></i><span>Rolagem de Autocontrole</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.self_control_roll" value="{{system.self_control_roll}}" placeholder="Ex: 12"/></div></div>
+                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-bullseye" aria-hidden="true"></i><span>Especialização</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.specialization" value="{{system.specialization}}" placeholder="Ex: Espadas, Fogo, Social"/></div></div>
+                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-list-alt" aria-hidden="true"></i><span>Características</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.characteristics" value="{{system.characteristics}}" placeholder="Notas curtas para exibir na ficha"/></div></div>
+              </div>
                 </div>
-            </div>
-
-            <div class="form-section skill-details-compact characteristic-details-form">
-                <h4 class="section-title">Mecânica e Contexto</h4>
-                <div class="skill-compact-rows">
-
-                    <div class="skill-compact-row">
-                        <label>Rolagem de Auto-Controle</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.self_control_roll" value="{{system.self_control_roll}}"/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Especialização</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.specialization" value="{{system.specialization}}" placeholder="Ex: Espadas, Fogo, Social"/>
-                        </div>
-                    </div>
-                    <div class="skill-compact-row">
-                        <label>Características</label>
-                        <div class="skill-compact-controls">
-                            <input type="text" name="system.characteristics" value="{{system.characteristics}}" placeholder="Notas curtas para exibir na ficha"/>
-                        </div>
-                    </div>
-                </div>
-            </div>
+          </div>
         {{/if}}
        
 {{!-- ===================================================================== --}}
@@ -1460,7 +1415,7 @@
     {{! ========================================================= }}
     <div class="tab" data-tab="description">
       <div class="description-tab">
-        {{#if (or (eq item.type "skill") (eq item.type "spell") (eq item.type "power") (eq item.type "equipment"))}}
+        {{#if (or (eq item.type "skill") (eq item.type "spell") (eq item.type "power") (eq item.type "equipment") (eq item.type "advantage") (eq item.type "disadvantage"))}}
         <div class="item-description-reference">
           <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> REF</label>
           <div class="item-description-reference-control">

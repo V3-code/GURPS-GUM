@@ -246,6 +246,8 @@ _promptMultipleReferences(parsedList) {
         context.socialCategories = Object.entries(SOCIAL_CATEGORIES).map(([type, config]) => ({ type, label: game.i18n.localize(config.label) }));
         context.socialContributions = Object.entries(itemData.system.social_contributions || {}).map(([id, contribution]) => ({
             id, ...contribution,
+            icon: SOCIAL_CATEGORIES[contribution.type]?.icon || "fas fa-users",
+            typeLabel: game.i18n.localize(SOCIAL_CATEGORIES[contribution.type]?.label || "GUM.Social.Tab"),
             fields: (SOCIAL_CATEGORIES[contribution.type]?.fields || []).map(([name, label, type]) => ({ name, label: game.i18n.localize(label), type, value: contribution[name] ?? "" }))
         }));
  

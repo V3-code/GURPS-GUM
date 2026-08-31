@@ -6143,3 +6143,100 @@ color:#121114;
   .gum-roll-tag-picker .roll-tag-picker-option code { max-width: 100%; }
   .gum-roll-tag-picker .roll-tag-result-count { margin-left: 0; }
 }
+
+/* CHARACTERISTICS — DETAILS DASHBOARD */
+.gum.sheet.item .characteristic-details-dashboard {
+  display: flex;
+}
+
+.gum.sheet.item .characteristic-details-dashboard .characteristic-top-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.gum.sheet.item .characteristic-details-dashboard .skill-dashboard-toggle-label small {
+  display: block;
+  margin-top: 3px;
+  color: var(--item-text-soft);
+  font-family: var(--item-font-body);
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.gum.sheet.item .characteristic-details-dashboard .characteristic-favorite-card,
+.gum.sheet.item .characteristic-details-dashboard .characteristic-organization-card {
+  min-height: 86px;
+}
+
+.gum.sheet.item .characteristic-details-dashboard .characteristic-organization-card select,
+.gum.sheet.item .characteristic-details-dashboard .characteristic-context-grid input {
+  text-align: left;
+}
+
+.gum.sheet.item .characteristic-details-dashboard .characteristic-card-hint {
+  color: var(--item-text-soft);
+  font-size: 0.66rem;
+  line-height: 1.2;
+  text-align: center;
+}
+
+/* CHARACTERISTICS — SOCIAL CONTRIBUTION CARDS */
+.gum.sheet.item .item-social-tab {
+  --social-border: rgba(201, 161, 94, 0.16);
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Preserve the sheet tab controller: only the selected social tab may be flex. */
+.gum.sheet.item .item-social-tab.active {
+  display: flex;
+}
+
+.gum.sheet.item .item-social-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--social-border);
+  border-radius: 10px;
+  background: linear-gradient(145deg, rgba(15, 14, 18, 0.95), rgba(28, 25, 33, 0.92));
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.gum.sheet.item .item-social-toolbar-copy { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.gum.sheet.item .item-social-toolbar-copy h4 { margin: 0 0 3px; color: var(--item-text); font-family: var(--item-font-condensed); font-size: .9rem; letter-spacing: .07em; text-transform: uppercase; }
+.gum.sheet.item .item-social-toolbar-copy p { margin: 0; color: var(--item-text-soft); font-size: .72rem; line-height: 1.25; }
+.gum.sheet.item .item-social-toolbar-icon, .gum.sheet.item .item-social-number { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; border: 1px solid var(--social-border); border-radius: 8px; background: rgba(0,0,0,.24); color: var(--item-accent); }
+.gum.sheet.item .item-social-toolbar-icon { width: 34px; height: 34px; }
+
+.gum.sheet.item .item-social-toolbar .add-item-social { width: auto; min-height: 34px; padding: 6px 12px; border: 1px solid var(--social-border); border-radius: 8px; background: linear-gradient(180deg, rgba(201,161,94,.2), rgba(201,161,94,.1)); color: var(--item-text); font-family: var(--item-font-condensed); font-weight: 800; cursor: pointer; }
+.gum.sheet.item .item-social-list { display: flex; flex-direction: column; gap: 10px; }
+.gum.sheet.item .item-social-contribution { overflow: hidden; margin: 0; padding: 0; border: 1px solid var(--social-border); border-radius: 10px; background: linear-gradient(145deg, rgba(14,13,17,.94), rgba(25,23,30,.92)); box-shadow: 0 8px 20px rgba(0,0,0,.28); }
+.gum.sheet.item .item-social-contribution[open] { border-color: rgba(201,161,94,.3); box-shadow: inset 3px 0 0 rgba(201,161,94,.48), 0 12px 26px rgba(0,0,0,.34); }
+.gum.sheet.item .item-social-contribution-header { display: grid; grid-template-columns: 32px minmax(0,1fr) auto; align-items: center; gap: 10px; min-height: 54px; padding: 9px 11px; list-style: none; cursor: pointer; background: linear-gradient(90deg, rgba(201,161,94,.065), transparent 52%); }
+.gum.sheet.item .item-social-contribution-header::-webkit-details-marker { display: none; }
+.gum.sheet.item .item-social-number { width: 30px; height: 30px; }
+.gum.sheet.item .item-social-heading { display: grid; gap: 2px; min-width: 0; }
+.gum.sheet.item .item-social-heading strong { color: var(--item-text); font-family: var(--item-font-condensed); font-size: .86rem; letter-spacing: .045em; text-transform: uppercase; }
+.gum.sheet.item .item-social-heading small { color: var(--item-text-soft); font-size: .7rem; }
+.gum.sheet.item .item-social-actions { display: inline-flex; align-items: center; gap: 7px; }
+.gum.sheet.item .item-social-actions button { width: 27px; height: 27px; padding: 0; border: 1px solid transparent; border-radius: 7px; background: transparent; color: var(--item-text-muted); }
+.gum.sheet.item .item-social-actions button:hover { border-color: rgba(196,94,94,.24); background: rgba(196,94,94,.12); color: #f2cccc; }
+.gum.sheet.item .item-social-chevron { color: var(--item-text-soft); font-size: .7rem; transition: transform .18s ease; }
+.gum.sheet.item .item-social-contribution:not([open]) .item-social-chevron { transform: rotate(180deg); }
+.gum.sheet.item .item-social-contribution-body { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-top: 1px solid rgba(255,255,255,.055); background: rgba(8,8,11,.22); }
+.gum.sheet.item .item-social-type-field, .gum.sheet.item .item-social-fields label { display: flex; flex-direction: column; gap: 5px; color: var(--item-text-muted); font-family: var(--item-font-condensed); font-size: .65rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+.gum.sheet.item .item-social-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; margin: 0; }
+.gum.sheet.item .item-social-type-field select, .gum.sheet.item .item-social-fields input, .gum.sheet.item .item-social-fields textarea { width: 100%; min-width: 0; border: 1px solid rgba(255,255,255,.075); border-radius: 7px; background: linear-gradient(180deg,rgba(9,9,12,.88),rgba(19,17,23,.92)); color: var(--item-text); box-shadow: inset 0 1px 5px rgba(0,0,0,.48); }
+.gum.sheet.item .item-social-fields textarea { min-height: 64px; resize: vertical; }
+
+@media (max-width: 600px) {
+  .gum.sheet.item .characteristic-details-dashboard .characteristic-top-grid,
+  .gum.sheet.item .item-social-fields { grid-template-columns: 1fr; }
+  .gum.sheet.item .item-social-toolbar { align-items: stretch; flex-direction: column; }
+  .gum.sheet.item .item-social-toolbar .add-item-social { width: 100%; }
+}
