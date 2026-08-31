@@ -330,6 +330,7 @@
       "reputation_entries": {},
       "wealth_entries": {},
       "bond_entries": {},
+      "reaction_modifier_entries": {},
       "sorting": {
         "spells": "manual",
         "powers": "manual",
@@ -495,7 +496,8 @@
       "level": "",
       "specialization": "",
       "characteristics": "",
-      "modifiers": {}
+            "modifiers": {},
+      "social_contributions": {}
     },
     "disadvantage": {
       "templates": [
@@ -507,7 +509,8 @@
       "level": "",
       "specialization": "",
       "characteristics": "",
-      "modifiers": {}
+      "modifiers": {},
+      "social_contributions": {}
     },
     "skill": {
       "templates": [

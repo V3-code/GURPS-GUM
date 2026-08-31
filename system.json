@@ -9,6 +9,9 @@
       "url": "https://github.com/V3-code"
     }
   ],
+  "languages": [
+    { "lang": "pt-BR", "name": "Portugu\u00eas (Brasil)", "path": "lang/pt-BR.json" }
+  ],
   "compatibility": {
     "minimum": "12",
     "verified": "14"

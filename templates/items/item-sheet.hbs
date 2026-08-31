@@ -503,6 +503,9 @@
         {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
         <a class="item" data-tab="modifiers">Modificadores</a>
         {{/if}}
+        {{#if (or (eq item.type "advantage") (eq item.type "disadvantage"))}}
+        <a class="item" data-tab="social">{{localize "GUM.Social.Tab"}}</a>
+        {{/if}}
 
         {{!-- Aba Pré-definido para Perícias --}}
         {{#if (eq item.type "skill")}}
@@ -516,7 +519,28 @@
   </nav>
 
     {{!-- 2. Corpo das Abas --}}
-    <section class="sheet-body-content">
+<section class="sheet-body-content">
+
+     {{#if (or (eq item.type "advantage") (eq item.type "disadvantage"))}}
+     <div class="tab item-social-tab" data-tab="social">
+       <div class="item-social-toolbar"><p>{{localize "GUM.Social.ItemHint"}}</p><button type="button" class="add-item-social"><i class="fas fa-plus"></i> {{localize "GUM.Social.AddContribution"}}</button></div>
+       {{#each socialContributions}}
+       <section class="item-social-contribution" data-id="{{id}}">
+         <header>
+           <select class="item-social-type">{{selectOptions ../socialCategories selected=type valueAttr="type" labelAttr="label"}}</select>
+           <button type="button" class="delete-item-social" data-id="{{id}}" title="{{localize 'GUM.Social.Delete'}}"><i class="fas fa-trash"></i></button>
+         </header>
+         <div class="item-social-fields">
+         {{#each fields}}
+           <label><span>{{label}}</span>
+           {{#if (eq type "textarea")}}<textarea name="system.social_contributions.{{../id}}.{{name}}">{{value}}</textarea>{{else}}<input type="{{type}}" name="system.social_contributions.{{../id}}.{{name}}" value="{{value}}">{{/if}}
+           </label>
+         {{/each}}
+         </div>
+       </section>
+       {{/each}}
+     </div>
+     {{/if}}
 
      {{!-- Aba "Detalhes" --}}
      <div class="tab" data-tab="details">

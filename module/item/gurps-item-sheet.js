@@ -3,7 +3,8 @@ import { ConditionBrowser } from "../apps/condition-browser.js";
 import { EqpModifierBrowser } from "../apps/eqp-modifier-browser.js"; 
 import { ModifierBrowser } from "../apps/modifier-browser.js";
 import { GM_MODIFIER_CATEGORY_OPTIONS } from "../utils/gm-modifier-categories.js"; 
-import { listBodyLocations } from "../config/body-profiles.js"; 
+import { listBodyLocations } from "../config/body-profiles.js";
+import { SOCIAL_CATEGORIES } from "../config/social-aspects.mjs"; 
  
 const { ItemSheet } = foundry.appv1.sheets; 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor; 
@@ -241,6 +242,12 @@ _promptMultipleReferences(parsedList) {
         // Garante acesso fácil ao system e flags 
         context.system = itemData.system; 
         context.flags = itemData.flags; 
+
+        context.socialCategories = Object.entries(SOCIAL_CATEGORIES).map(([type, config]) => ({ type, label: game.i18n.localize(config.label) }));
+        context.socialContributions = Object.entries(itemData.system.social_contributions || {}).map(([id, contribution]) => ({
+            id, ...contribution,
+            fields: (SOCIAL_CATEGORIES[contribution.type]?.fields || []).map(([name, label, type]) => ({ name, label: game.i18n.localize(label), type, value: contribution[name] ?? "" }))
+        }));
  
         // ======================================================= 
         // 1. LISTAS DE CONFIGURAÇÃO (DEFINIÇÃO EXPLÍCITA) 
@@ -583,12 +590,30 @@ _promptMultipleReferences(parsedList) {
     /* Listeners e Callbacks                       */ 
     /* -------------------------------------------- */ 
  
+ async _onAddItemSocial(event) {
+   event.preventDefault();
+   await this.item.update({ [`system.social_contributions.${foundry.utils.randomID()}`]: { type: "status" } });
+ }
+
+ async _onDeleteItemSocial(event) {
+   event.preventDefault();
+   await this.item.update({ [`system.social_contributions.-=${event.currentTarget.dataset.id}`]: null });
+ }
+
+ async _onChangeItemSocialType(event) {
+   const row = event.currentTarget.closest("[data-id]");
+   await this.item.update({ [`system.social_contributions.${row.dataset.id}`]: { type: event.currentTarget.value } });
+ }
+
  activateListeners(html) { 
         super.activateListeners(html); 
         this._bindHeaderNameAutosize(html); 
  
         html.on('click', '.open-reference-link', this._onOpenReferenceLink.bind(this)); 
-        if (!this.isEditable) return; 
+        if (!this.isEditable) return;
+        html.on("click", ".add-item-social", this._onAddItemSocial.bind(this));
+        html.on("click", ".delete-item-social", this._onDeleteItemSocial.bind(this));
+        html.on("change", ".item-social-type", this._onChangeItemSocialType.bind(this)); 
  
         // Auto-Cálculo 
         html.find('input[name="system.auto_points"], select[name="system.difficulty"], input[name="system.skill_level"], select[name="system.cost_mode"], input[name="system.cost_per_level"], select[name="system.tree_hierarchy_type"], input[name="system.tree_skill_level"], input[name="system.tree_points_per_level"]').on('change', this._onAutoCalcPoints.bind(this));

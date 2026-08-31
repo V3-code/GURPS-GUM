@@ -9,6 +9,7 @@ import { GumPreviewDialog } from "../apps/preview-dialog.js";
 import { buildSkillModifierIndicators } from "../utils/skill-modifier-indicators.mjs";
 import { resolveCharacterImage } from "../utils/character-image.mjs";
 import { buildSecondaryStatsRecalculationPlan, buildSecondaryStatsUpdateData, formatBasicDamageDiceCount } from "../utils/secondary-stats-recalculation.mjs";
+import { SOCIAL_CATEGORIES, buildSocialSections, calculateManualSocialPoints } from "../config/social-aspects.mjs";
 
 const { ActorSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -63,7 +64,8 @@ async getData(options) {
           acc[type].push(item);
           return acc;
         }, {});
-        context.itemsByType = itemsByType;
+             context.itemsByType = itemsByType;
+        context.socialSections = buildSocialSections(this.actor.system, Array.from(this.actor.items), key => game.i18n.localize(key));
 // ---------------------------------------------------------
         // PREPARAÇÃO DA ABA DE MODIFICADORES (AGRUPAMENTO LIVRE POR NOME)
         // ---------------------------------------------------------
@@ -1863,6 +1865,8 @@ html.on("click", ".delete-power-source", (ev) => this._onDeletePowerSource(ev));
 html.on("click", ".add-social-entry", (ev) => this._onAddSocialEntry(ev));
 html.on("click", ".edit-social-entry", (ev) => this._onEditSocialEntry(ev));
 html.on("click", ".delete-social-entry", (ev) => this._onDeleteSocialEntry(ev));
+html.on("click", ".edit-social-source", (ev) => this._onEditSocialSource(ev));
+html.on("click", ".add-social-aspect", (ev) => this._onChooseSocialCategory(ev));
 html.on("click", ".edit-race-name", (ev) => this._onEditRaceName(ev));
 
 // -------------------------------------------------------------
@@ -5035,7 +5039,7 @@ _onViewPowerSource(ev) {
 }
 
 _getSocialEntryConfig(type) {
-  const configs = {
+  const legacyConfigs = {
     status: {
       label: "Status Social",
       path: "system.social_status_entries",
@@ -5109,7 +5113,30 @@ _getSocialEntryConfig(type) {
     }
   };
 
-  return configs[type] || null;
+const shared = SOCIAL_CATEGORIES[type];
+  if (!shared) return legacyConfigs[type] || null;
+  return {
+    label: game.i18n.localize(shared.label),
+    path: `system.${shared.actorPath}`,
+    fields: shared.fields.map(([name, label, fieldType]) => ({ name, label: game.i18n.localize(label), type: fieldType }))
+  };
+}
+
+_onEditSocialSource(event) {
+  event.preventDefault();
+  const item = this.actor.items.get(event.currentTarget.dataset.itemId);
+  return item?.sheet.render(true);
+}
+
+async _onChooseSocialCategory(event) {
+  event.preventDefault();
+  const options = Object.entries(SOCIAL_CATEGORIES).map(([type, config]) =>
+    `<option value="${type}">${game.i18n.localize(config.label)}</option>`).join("");
+  new Dialog({
+    title: game.i18n.localize("GUM.Social.AddAspect"),
+    content: `<form><div class="form-group"><select name="type">${options}</select></div></form>`,
+    buttons: { add: { label: game.i18n.localize("GUM.Social.Add"), callback: html => this._onAddSocialEntry({ preventDefault() {}, currentTarget: { dataset: { type: html.find('[name=type]').val() } } }) } }
+  }).render(true);
 }
 
 async _promptSocialEntryData(type, initialData = {}, { isEdit = false } = {}) {
@@ -5237,21 +5264,7 @@ _calculateAttributePoints() {
 }
 
 _calculateSocialPoints() {
-  const system = this.actor.system || {};
-  const entryGroups = [
-    system.social_status_entries,
-    system.organization_entries,
-    system.culture_entries,
-    system.language_entries,
-    system.reputation_entries,
-    system.wealth_entries,
-    system.bond_entries
-  ];
-
-  return entryGroups.reduce((total, group) => {
-    if (!group) return total;
-    return total + Object.values(group).reduce((subtotal, entry) => subtotal + this._getPointsNumber(entry?.points), 0);
-  }, 0);
+  return calculateManualSocialPoints(this.actor.system || {});
 }
 
 _calculatePointsSummary() {
