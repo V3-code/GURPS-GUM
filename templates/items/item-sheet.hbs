@@ -476,6 +476,9 @@
   <nav class="sheet-tabs tabs" data-group="primary">
         <a class="item" data-tab="description">Descrição</a>
         <a class="item" data-tab="details">Detalhes</a>
+        {{#if (or (eq item.type "advantage") (eq item.type "disadvantage"))}}
+        <a class="item" data-tab="social">{{localize "GUM.Social.Tab"}}</a>
+        {{/if}}
 
         {{#if (eq item.type "spell")}}
         <a class="item" data-tab="casting">Conjuração</a>
@@ -503,9 +506,7 @@
         {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
         <a class="item" data-tab="modifiers">Modificadores</a>
         {{/if}}
-        {{#if (or (eq item.type "advantage") (eq item.type "disadvantage"))}}
-        <a class="item" data-tab="social">{{localize "GUM.Social.Tab"}}</a>
-        {{/if}}
+ 
 
         {{!-- Aba Pré-definido para Perícias --}}
         {{#if (eq item.type "skill")}}
@@ -529,21 +530,29 @@
        </div>
        <div class="item-social-list">
        {{#each socialContributions}}
-       <details class="item-social-contribution" data-id="{{id}}" open>
+       <details class="item-social-contribution" data-id="{{id}}" {{#if open}}open{{/if}}>
          <summary class="item-social-contribution-header">
            <span class="item-social-number"><i class="{{icon}}"></i></span>
            <span class="item-social-heading"><strong>{{typeLabel}}</strong><small>{{localize "GUM.Social.ItemContribution"}}</small></span>
-           <span class="item-social-actions"><button type="button" class="delete-item-social" data-id="{{id}}" title="{{localize 'GUM.Social.Delete'}}"><i class="fas fa-trash"></i></button><i class="fas fa-chevron-up item-social-chevron"></i></span>
+           <i class="fas fa-chevron-up item-social-chevron" aria-hidden="true"></i>
          </summary>
+         <button type="button" class="delete-item-social item-social-delete" data-id="{{id}}" title="{{localize 'GUM.Social.Delete'}}" aria-label="{{localize 'GUM.Social.Delete'}}"><i class="fas fa-trash" aria-hidden="true"></i></button>
          <div class="item-social-contribution-body">
-         <label class="item-social-type-field"><span>{{localize "GUM.Social.Type"}}</span><select class="item-social-type">{{selectOptions ../socialCategories selected=type valueAttr="type" labelAttr="label"}}</select></label>
-         <div class="item-social-fields">
-         {{#each fields}}
-           <label><span>{{label}}</span>
-           {{#if (eq type "textarea")}}<textarea name="system.social_contributions.{{../id}}.{{name}}">{{value}}</textarea>{{else}}<input type="{{type}}" name="system.social_contributions.{{../id}}.{{name}}" value="{{value}}">{{/if}}
-           </label>
-         {{/each}}
-         </div>
+           <div class="item-social-field-row item-social-common-row">
+             <label class="item-social-field-card item-social-type-field"><span class="item-social-field-label">{{localize "GUM.Social.Type"}}</span><span class="item-social-field-control"><select class="item-social-type">{{selectOptions ../socialCategories selected=type valueAttr="type" labelAttr="label"}}</select></span></label>
+             <label class="item-social-field-card item-social-points-field"><span class="item-social-field-label">{{localize "GUM.Social.Fields.Points"}}</span><span class="item-social-field-control"><input type="number" name="system.social_contributions.{{id}}.points" value="{{points}}"></span></label>
+           </div>
+           <div class="item-social-fields">
+           {{#each fieldRows}}
+             <div class="item-social-field-row">
+             {{#each fields}}
+               <label class="item-social-field-card {{#if compact}}is-compact{{/if}} {{#if wide}}is-wide{{/if}}"><span class="item-social-field-label">{{label}}</span><span class="item-social-field-control">
+               {{#if (eq type "textarea")}}<textarea name="system.social_contributions.{{../../id}}.{{name}}">{{value}}</textarea>{{else}}<input type="{{type}}" name="system.social_contributions.{{../../id}}.{{name}}" value="{{value}}">{{/if}}</span>
+               </label>
+             {{/each}}
+             </div>
+           {{/each}}
+           </div>
          </div>
        </details>
        {{/each}}

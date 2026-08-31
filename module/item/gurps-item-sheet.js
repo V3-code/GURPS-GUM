@@ -244,12 +244,21 @@ _promptMultipleReferences(parsedList) {
         context.flags = itemData.flags; 
 
         context.socialCategories = Object.entries(SOCIAL_CATEGORIES).map(([type, config]) => ({ type, label: game.i18n.localize(config.label) }));
-        context.socialContributions = Object.entries(itemData.system.social_contributions || {}).map(([id, contribution]) => ({
-            id, ...contribution,
-            icon: SOCIAL_CATEGORIES[contribution.type]?.icon || "fas fa-users",
-            typeLabel: game.i18n.localize(SOCIAL_CATEGORIES[contribution.type]?.label || "GUM.Social.Tab"),
-            fields: (SOCIAL_CATEGORIES[contribution.type]?.fields || []).map(([name, label, type]) => ({ name, label: game.i18n.localize(label), type, value: contribution[name] ?? "" }))
-        }));
+        context.socialContributions = Object.entries(itemData.system.social_contributions || {}).map(([id, contribution]) => {
+            const fields = (SOCIAL_CATEGORIES[contribution.type]?.fields || [])
+                .filter(([name]) => name !== "points")
+                .map(([name, label, type, layout = {}]) => ({ name, label: game.i18n.localize(label), type, value: contribution[name] ?? "", ...layout }));
+            const fieldRows = [...new Set(fields.map(field => field.row || 1))].map(row => ({
+                fields: fields.filter(field => (field.row || 1) === row)
+            }));
+            return {
+                id, ...contribution, points: contribution.points ?? "",
+                open: this._socialContributionOpenState?.get(id) ?? true,
+                icon: SOCIAL_CATEGORIES[contribution.type]?.icon || "fas fa-users",
+                typeLabel: game.i18n.localize(SOCIAL_CATEGORIES[contribution.type]?.label || "GUM.Social.Tab"),
+                fieldRows
+            };
+        });
  
         // ======================================================= 
         // 1. LISTAS DE CONFIGURAÇÃO (DEFINIÇÃO EXPLÍCITA) 
@@ -594,11 +603,15 @@ _promptMultipleReferences(parsedList) {
  
  async _onAddItemSocial(event) {
    event.preventDefault();
-   await this.item.update({ [`system.social_contributions.${foundry.utils.randomID()}`]: { type: "status" } });
+   const id = foundry.utils.randomID();
+   this._socialContributionOpenState ??= new Map();
+   this._socialContributionOpenState.set(id, true);
+   await this.item.update({ [`system.social_contributions.${id}`]: { type: "status" } });
  }
 
  async _onDeleteItemSocial(event) {
    event.preventDefault();
+   this._socialContributionOpenState?.delete(event.currentTarget.dataset.id);
    await this.item.update({ [`system.social_contributions.-=${event.currentTarget.dataset.id}`]: null });
  }
 
@@ -615,7 +628,12 @@ _promptMultipleReferences(parsedList) {
         if (!this.isEditable) return;
         html.on("click", ".add-item-social", this._onAddItemSocial.bind(this));
         html.on("click", ".delete-item-social", this._onDeleteItemSocial.bind(this));
-        html.on("change", ".item-social-type", this._onChangeItemSocialType.bind(this)); 
+        html.on("change", ".item-social-type", this._onChangeItemSocialType.bind(this));
+        html.find(".item-social-contribution").on("toggle", event => {
+            const contribution = event.currentTarget;
+            this._socialContributionOpenState ??= new Map();
+            this._socialContributionOpenState.set(contribution.dataset.id, contribution.open);
+        });
  
         // Auto-Cálculo 
         html.find('input[name="system.auto_points"], select[name="system.difficulty"], input[name="system.skill_level"], select[name="system.cost_mode"], input[name="system.cost_per_level"], select[name="system.tree_hierarchy_type"], input[name="system.tree_skill_level"], input[name="system.tree_points_per_level"]').on('change', this._onAutoCalcPoints.bind(this));
