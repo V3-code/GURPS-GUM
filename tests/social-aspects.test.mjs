@@ -49,3 +49,16 @@ test("social contribution schemas preserve the requested field rows", () => {
   assert.deepEqual(layout("reputation").map(([name, row]) => [name, row]), [["reaction_modifier", 1], ["title", 1], ["scope", 2], ["circumstance", 2], ["recognition_frequency", 2], ["notes", 3]]);
   assert.deepEqual(layout("reaction").map(([name, row]) => [name, row]), [["value", 1], ["title", 1], ["audience", 2], ["circumstance", 2], ["recognition_frequency", 2], ["notes", 3]]);
 });
+
+test("captures social contribution state before Foundry rerenders", () => {
+  const source = readFileSync(new URL("../module/item/gurps-item-sheet.js", import.meta.url), "utf8");
+
+  assert.match(source, /_captureSocialContributionOpenState\(\)[\s\S]*querySelectorAll\("\\.item-social-contribution\[data-id\]"\)[\s\S]*\.set\(id, contribution\.open\)/);
+
+  const renderStart = source.lastIndexOf("async _render(force, options)");
+  const superRender = source.indexOf("await super._render(force, options);", renderStart);
+  const captureCall = source.indexOf("this._captureSocialContributionOpenState();", renderStart);
+
+  assert.ok(renderStart >= 0);
+  assert.ok(captureCall > renderStart && captureCall < superRender, "the live DOM state must be captured before super._render replaces it");
+});
