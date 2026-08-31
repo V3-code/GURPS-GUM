@@ -1969,6 +1969,23 @@ const rangedFields = `
     } 
  
  
+
+    /**
+     * Capture the actual state of every social contribution immediately before
+     * Foundry replaces the sheet DOM. The native details toggle event is not
+     * reliable enough on its own during automatic form submissions.
+     */
+    _captureSocialContributionOpenState() {
+        const root = this.element?.[0] ?? this.element;
+        if (!root?.querySelectorAll) return;
+
+        this._socialContributionOpenState ??= new Map();
+        for (const contribution of root.querySelectorAll(".item-social-contribution[data-id]")) {
+            const id = contribution.dataset.id;
+            if (id) this._socialContributionOpenState.set(id, contribution.open);
+        }
+    }
+
     _saveUIState() { 
         const openDetails = []; 
         this.form.querySelectorAll('details[open]').forEach((el, i) => openDetails.push(el.id || `details-${i}`)); 
@@ -1976,6 +1993,7 @@ const rangedFields = `
     } 
  
  async _render(force, options) { 
+        this._captureSocialContributionOpenState();
         await super._render(force, options); 
         this._refreshHeaderNameAutosize(); 
         if (this._openDetailsState) { 
