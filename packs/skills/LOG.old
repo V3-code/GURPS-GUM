@@ -1,17 +1,10 @@
-2026/08/31-08:44:08.730 3c80 Recovering log #787
-2026/08/31-08:44:08.744 3c80 Level-0 table #789: started
-2026/08/31-08:44:08.757 3c80 Level-0 table #789: 315571 bytes OK
-2026/08/31-08:44:08.760 3c80 Delete type=0 #787
-2026/08/31-08:44:08.760 3c80 Delete type=3 #786
-2026/08/31-08:45:38.057 3f0 Compacting 2@0 + 0@1 files
-2026/08/31-08:45:38.081 3f0 Generated table #791@0: 979 keys, 313829 bytes
-2026/08/31-08:45:38.081 3f0 Compacted 2@0 + 0@1 files => 313829 bytes
-2026/08/31-08:45:38.082 3f0 compacted to: files[ 0 1 1 0 0 0 0 ]
-2026/08/31-08:45:38.093 3f0 Compacting 1@1 + 1@2 files
-2026/08/31-08:45:38.104 3f0 Generated table #792@1: 711 keys, 307206 bytes
-2026/08/31-08:45:38.104 3f0 Compacted 1@1 + 1@2 files => 307206 bytes
-2026/08/31-08:45:38.106 3f0 compacted to: files[ 0 0 1 0 0 0 0 ]
-2026/08/31-08:45:38.107 3f0 Delete type=2 #706
-2026/08/31-08:45:38.107 3f0 Delete type=2 #762
-2026/08/31-08:45:38.108 3f0 Delete type=2 #789
-2026/08/31-08:45:38.108 3f0 Delete type=2 #791
+2026/08/31-09:04:37.920 4830 Recovering log #790
+2026/08/31-09:04:37.920 4830 Level-0 table #794: started
+2026/08/31-09:04:37.940 4830 Level-0 table #794: 350363 bytes OK
+2026/08/31-09:04:37.940 4830 Delete type=0 #790
+2026/08/31-09:04:37.940 4830 Delete type=3 #788
+2026/08/31-09:07:29.234 f50 Moved #794 to level-1 350363 bytes OK: files[ 0 1 1 0 0 0 0 ]
+2026/08/31-09:07:29.248 f50 Compacting 1@1 + 1@2 files
+2026/08/31-09:07:29.275 f50 Generated table #796@1: 711 keys, 333360 bytes
+2026/08/31-09:07:29.275 f50 Compacted 1@1 + 1@2 files => 333360 bytes
+2026/08/31-09:07:29.276 f50 compacted to: files[ 0 0 1 0 0 0 0 ]

@@ -33,7 +33,33 @@ import { appendResistanceRequestResult, renderPendingResistanceRequest } from ".
 import { isUserAuthorizedForTarget } from "../module/utils/test-request-targets.mjs";
 import { showDiceForMessageLessRoll } from "../module/utils/dice-so-nice.mjs";
 
+import { getSkillDisplayName, setDirectoryEntryLabel } from "../module/utils/skill-display-name.mjs";
+
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
+
+async function renderSpecializedSkillNames(app, html) {
+    const root = html?.[0] || html;
+    if (!root?.querySelectorAll) return;
+
+    const pack = app?.collection?.metadata ? app.collection : game.packs.get(app?.options?.collection);
+    const entries = pack
+        ? await pack.getIndex({ fields: ["type", "system.specialization"] })
+        : Array.from(game.items?.contents || []);
+    const skillsById = new Map(entries
+        .filter(item => item.type === "skill" && String(item.system?.specialization || "").trim())
+        .map(item => [item.id || item._id, item]));
+
+    for (const row of root.querySelectorAll("[data-document-id], [data-entry-id]")) {
+        const id = row.dataset.documentId || row.dataset.entryId;
+        const skill = skillsById.get(id);
+        if (!skill) continue;
+        const label = row.querySelector(".entry-name, .document-name");
+        setDirectoryEntryLabel(label, getSkillDisplayName(skill));
+    }
+}
+
+Hooks.on("renderCompendium", renderSpecializedSkillNames);
+Hooks.on("renderItemDirectory", renderSpecializedSkillNames);
 const isEffectDurationPermanent = (duration = {}) => {
     if (!duration || typeof duration !== "object") return false;
     if (duration._uiMode === "permanent") return true;

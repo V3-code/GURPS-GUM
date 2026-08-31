@@ -821,7 +821,7 @@
                             
                             {{!-- Nome (Visualização Rápida) --}}
                             <h4 class="item-quick-view" title="Clique para ver detalhes">
-                                {{this.name}}
+                                {{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}}
                             </h4>
                             
                             {{!-- Linha de Detalhes e Caminho (AGORA SEMPRE VISÍVEL) --}}
