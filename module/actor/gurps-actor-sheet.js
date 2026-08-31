@@ -2935,393 +2935,162 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
 
 
 
-    // EDITOR DE BARRAS DE PV/PF
-    html.on('click', '.edit-resource-bar', ev => {
+    // EDITOR UNIFICADO DE ATRIBUTOS SECUNDÁRIOS
+    html.on('click', '.edit-secondary-stats-btn, .edit-resource-bar, .edit-lifting-st', ev => {
         ev.preventDefault();
-        const button = ev.currentTarget;
-        const statKey = button.dataset.stat; 
-        const statLabel = statKey === 'hp' ? "Pontos de Vida" : "Pontos de Fadiga";
+ 
         const attrs = this.actor.system.attributes;
+        const getAttr = (key, fallback = 10) => attrs[key] ?? {
+            value: fallback, max: fallback, mod: 0, passive: 0, temp: 0, points: 0, final: fallback
+        };
+        const fmt = (value) => Number(value) > 0 ? `+${value}` : Number(value) || 0;
+        const safe = (value) => foundry.utils.escapeHTML(String(value ?? ""));
+        const statRow = (key, label, { base = "value", step = 1, editableTemp = false } = {}) => {
+            const stat = getAttr(key);
+            return `
+                <div class="secondary-editor-row">
+                    <label for="secondary-${key}-${base}">${label}</label>
+                    <input id="secondary-${key}-${base}" type="number" name="${key}.${base}" value="${stat[base] ?? stat.value ?? 0}" step="${step}" />
+                    <input type="number" name="${key}.mod" value="${stat.mod ?? 0}" aria-label="Modificador fixo de ${label}" />
+                    <span class="read-only" title="Modificadores de itens e efeitos passivos">${fmt(stat.passive)}</span>
+                    ${editableTemp
+                        ? `<input type="number" name="${key}.temp" value="${stat.temp ?? 0}" aria-label="Modificador temporário de ${label}" />`
+                        : `<span class="read-only" title="Modificadores de condições e efeitos temporários">${fmt(stat.temp)}</span>`}
+                    <input type="number" name="${key}.points" value="${stat.points ?? 0}" aria-label="Pontos investidos em ${label}" />
+                    <span class="final-display" title="Valor final atual">${stat.final ?? 0}</span>
+                </div>`;
+        };
 
+        const lifting = getAttr('lifting_st', 0);
+        const dodge = getAttr('dodge');
         const content = `
-            <form class="secondary-stats-editor resource-bar-editor">
-                <p class="hint">Ajuste os valores base e os modificadores temporários aqui.</p>
+            <form class="secondary-stats-editor secondary-stats-editor--unified">
+                <aside class="secondary-editor-nav" aria-label="Seções dos atributos secundários">
+                    <button type="button" class="secondary-editor-tab active" data-panel="movement"><i class="fas fa-running"></i><span>Movimento</span></button>
+                    <button type="button" class="secondary-editor-tab" data-panel="resources"><i class="fas fa-heartbeat"></i><span>Recursos</span></button>
+                    <button type="button" class="secondary-editor-tab" data-panel="senses"><i class="fas fa-eye"></i><span>Sentidos</span></button>
+                    <button type="button" class="secondary-editor-tab" data-panel="damage"><i class="fas fa-dice-d6"></i><span>Dano</span></button>
+                </aside>
 
-                <div class="resource-grid resource-grid--header" aria-hidden="true">
-                    <span class="resource-col resource-col--label"></span>
-                    <span class="resource-col">Base</span>
-                    <span class="resource-col">Mod. Temp.</span>
-                    <span class="resource-col">Pontos</span>
-                    <span class="resource-col">Final</span>
-                </div>
+                <div class="secondary-editor-workspace">
+                    <header class="secondary-editor-intro">
+                        <div><span class="secondary-editor-eyebrow">Ficha do personagem</span><h2>Atributos secundários</h2></div>
+                        <p>Edite bases, modificadores e pontos em um único lugar.</p>
+                    </header>
 
-                <div class="resource-grid resource-grid--values">
-                    <label class="resource-col resource-col--label" for="${statKey}-max-input">${statLabel} (Máximo)</label>
-                    <input id="${statKey}-max-input" type="number" name="${statKey}.max" value="${attrs[statKey].max}"/>
-                    <input type="number" name="${statKey}.temp" value="${attrs[statKey].temp}"/>
-                    <input type="number" name="${statKey}.points" value="${attrs[statKey].points ?? 0}" aria-label="Pontos investidos em ${statLabel}"/>
-                    <span class="final-display" title="Valor final atual">${attrs[statKey].final}</span>
-                </div>
-            </form>
-        `;
+                    <div class="secondary-editor-scroll">
+                        <section class="secondary-editor-panel active" data-panel="movement">
+                            <div class="secondary-editor-card">
+                                <header><i class="fas fa-running"></i><div><h3>Mobilidade e defesa</h3><p>Velocidade, deslocamento, tamanho e esquiva.</p></div></header>
+                                <div class="secondary-editor-table">
+                                    <div class="secondary-editor-columns" aria-hidden="true"><span>Atributo</span><span>Base</span><span>Fixo</span><span>Itens</span><span>Temp.</span><span>Pontos</span><span>Final</span></div>
+                                    ${statRow('basic_speed', 'Velocidade', { step: 0.25 })}
+                                    ${statRow('basic_move', 'Deslocamento')}
+                                    ${statRow('enhanced_move', 'Desloc. ampliado')}
+                                    ${statRow('mt', 'MT (SM)')}
+                                    <div class="secondary-editor-row">
+                                        <label>Esquiva</label>
+                                        <span class="read-only">${Math.floor(Number(attrs.basic_speed?.final) || 0) + 3}</span>
+                                        <input type="number" name="dodge.mod" value="${dodge.mod ?? 0}" aria-label="Modificador fixo de Esquiva" />
+                                        <span class="read-only">${fmt(dodge.passive)}</span><span class="read-only">${fmt(dodge.temp)}</span>
+                                        <input type="number" name="dodge.points" value="${dodge.points ?? 0}" aria-label="Pontos investidos em Esquiva" />
+                                        <span class="final-display">${dodge.final ?? 0}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
 
-        new Dialog({
-            title: `Editar ${statLabel}`,
-            content: content,
-            buttons: {
-                save: {
-                    icon: '<i class="fas fa-save"></i>',
-                    label: "Salvar",
-                    callback: (html) => {
-                        const form = html.find('form')[0];
-                        const formData = new FormDataExtended(form).object;
-                        this.actor.update({
-                            [`system.attributes.${statKey}.max`]: Number(formData[`${statKey}.max`]),
-                            [`system.attributes.${statKey}.temp`]: Number(formData[`${statKey}.temp`]),
-                            [`system.attributes.${statKey}.points`]: Number(formData[`${statKey}.points`])
-                        });
-                    }
-                }
-            },
-default: 'save'
-      }, {
-        classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog"],
-        width: 650
-      }).render(true);
-    });
+                        <section class="secondary-editor-panel" data-panel="resources">
+                            <div class="secondary-editor-card">
+                                <header><i class="fas fa-dumbbell"></i><div><h3>Força de levantamento</h3><p>Define a ST usada no cálculo da base de carga.</p></div></header>
+                                <div class="secondary-editor-table">
+                                    <div class="secondary-editor-columns" aria-hidden="true"><span>Atributo</span><span>Base</span><span>Fixo</span><span>Itens</span><span>Temp.</span><span>Pontos</span><span>Final</span></div>
+                                    <div class="secondary-editor-row">
+                                        <label for="secondary-lifting-value">ST de Carga</label>
+                                        <input id="secondary-lifting-value" type="number" name="lifting_st.value" value="${lifting.value ?? 0}" />
+                                        <input type="number" name="lifting_st.mod" value="${lifting.mod ?? 0}" aria-label="Modificador fixo de ST de Carga" />
+                                        <span class="read-only">${fmt(lifting.passive)}</span>
+                                        <input type="number" name="lifting_st.temp" value="${lifting.temp ?? 0}" aria-label="Modificador temporário de ST de Carga" />
+                                        <span class="read-only">—</span><span class="final-display">${lifting.final ?? lifting.final_computed ?? 0}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="secondary-editor-card">
+                                <header><i class="fas fa-heartbeat"></i><div><h3>Reservas</h3><p>Máximos, modificadores temporários e pontos de PV e PF.</p></div></header>
+                                <div class="secondary-editor-table">
+                                    <div class="secondary-editor-columns" aria-hidden="true"><span>Atributo</span><span>Máximo</span><span>Fixo</span><span>Itens</span><span>Temp.</span><span>Pontos</span><span>Final</span></div>
+                                    ${statRow('hp', 'Pontos de Vida', { base: 'max', editableTemp: true })}
+                                    ${statRow('fp', 'Pontos de Fadiga', { base: 'max', editableTemp: true })}
+                                </div>
+                            </div>
+                        </section>
 
-    // EDITOR DE ST DE CARGA
-    html.on('click', '.edit-lifting-st', ev => {
-        ev.preventDefault();
+                        <section class="secondary-editor-panel" data-panel="senses">
+                            <div class="secondary-editor-card">
+                                <header><i class="fas fa-eye"></i><div><h3>Sentidos</h3><p>Percepções especiais e seus modificadores.</p></div></header>
+                                <div class="secondary-editor-table">
+                                    <div class="secondary-editor-columns" aria-hidden="true"><span>Atributo</span><span>Base</span><span>Fixo</span><span>Itens</span><span>Temp.</span><span>Pontos</span><span>Final</span></div>
+                                    ${statRow('vision', 'Visão')}${statRow('hearing', 'Audição')}${statRow('tastesmell', 'Olfato / Paladar')}${statRow('touch', 'Tato')}
+                                </div>
+                            </div>
+                        </section>
 
-        const lifting = this.actor.system.attributes.lifting_st ?? { value: 0, mod: 0, temp: 0, passive: 0, final: 0, final_computed: 0 };
-        const fmt = (val) => (val > 0 ? `+${val}` : val || 0);
-
-        const content = `
-            <form class="secondary-stats-editor">
-                <p class="hint">Defina a ST utilizada para calcular a base de carga.</p>
-                <div class="form-header-grid">
-                    <span>Atributo</span>
-                    <span>Base</span>
-                    <span>Mod. Fixo</span>
-                    <span>Itens/Pass.</span>
-                    <span>Cond./Temp.</span>
-                    <span>Final</span>
-                </div>
-
-                <div class="form-row">
-                    <label>ST de Carga</label>
-                    <input type="number" name="lifting_st.value" value="${lifting.value ?? 0}" />
-                    <input type="number" name="lifting_st.mod" value="${lifting.mod ?? 0}" />
-                    <span class="read-only">${fmt(lifting.passive ?? 0)}</span>
-                    <input type="number" name="lifting_st.temp" value="${lifting.temp ?? 0}" />
-                    <span class="final-display">${lifting.final ?? lifting.final_computed ?? 0}</span>
-                </div>
-            </form>
-
-            <style>
-                .secondary-stats-editor .form-header-grid,
-                .secondary-stats-editor .form-row {
-                    display: grid;
-                    grid-template-columns: 110px 60px 60px 60px 60px 60px;
-                    gap: 5px;
-                    align-items: center;
-                    text-align: center;
-                    margin-bottom: 5px;
-                }
-            </style>
-        `;
-
-        new Dialog({
-            title: "Editar ST de Carga",
-            content: content,
-            buttons: {
-                save: {
-                    icon: '<i class="fas fa-save"></i>',
-                    label: "Salvar",
-                    callback: (html) => {
-                        const form = html.find('form')[0];
-                        const formData = new FormDataExtended(form).object;
-                        const updateData = {};
-
-                        const fields = ["value", "mod", "temp"];
-                        fields.forEach(field => {
-                            if (formData[`lifting_st.${field}`] !== undefined) {
-                                updateData[`system.attributes.lifting_st.${field}`] = Number(formData[`lifting_st.${field}`]);
-                            }
-                        });
-
-                        this.actor.update(updateData);
-                    }
-                }
-            },
-            default: 'save'
-        }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog"], 
-        width: 450,
-        }).render(true);
-    });
-
-    // EDITOR DE ATRIBUTOS SECUNDÁRIOS
-    html.on('click', '.edit-secondary-stats-btn', ev => {
-        ev.preventDefault();
-        const attrs = this.actor.system.attributes;
-        const fmt = (val) => (val > 0 ? `+${val}` : val || 0);
-        
-        const getAttr = (key) => attrs[key] || { value: 10, mod: 0, passive: 0, temp: 0, points: 0, final: 10 };
-        const vision = getAttr('vision');
-        const hearing = getAttr('hearing');
-        const tastesmell = getAttr('tastesmell');
-        const touch = getAttr('touch');
-        const hp = getAttr('hp');
-        const fp = getAttr('fp');
-        const thrustDamage = attrs.thrust_damage ?? "";
-        const swingDamage = attrs.swing_damage ?? "";
-        const thrustDamageAlt = attrs.thrust_damage_alt ?? "";
-        const swingDamageAlt = attrs.swing_damage_alt ?? "";
-        const enhancedMove = getAttr('enhanced_move');
-                const content = `
-        <form class="secondary-stats-editor">
-            <div class="form-header-grid">
-                <span>Atributo</span>
-                <span>Base</span>
-                <span>Mod. Fixo</span>
-                <span>Itens/Pass.</span>
-                <span>Cond./Temp.</span>
-                <span>Pontos</span>
-                <span>Final</span>
-            </div>
-
-            <div class="form-grid-rows">
-                
-                <div class="form-row">
-                    <label>Velocidade</label>
-                    <input type="number" name="basic_speed.value" value="${attrs.basic_speed.value}" step="0.25"/>
-                    <input type="number" name="basic_speed.mod" value="${attrs.basic_speed.mod}"/>
-                    <span class="read-only">${fmt(attrs.basic_speed.passive)}</span>
-                    <span class="read-only">${fmt(attrs.basic_speed.temp)}</span>
-                    <input type="number" name="basic_speed.points" value="${attrs.basic_speed.points || 0}"/>
-                    <span class="final-display">${attrs.basic_speed.final}</span>
-                </div>
-                <div class="form-row">
-                    <label>Deslocamento</label>
-                    <input type="number" name="basic_move.value" value="${attrs.basic_move.value}"/>
-                    <input type="number" name="basic_move.mod" value="${attrs.basic_move.mod}"/>
-                    <span class="read-only">${fmt(attrs.basic_move.passive)}</span>
-                    <span class="read-only">${fmt(attrs.basic_move.temp)}</span>
-                    <input type="number" name="basic_move.points" value="${attrs.basic_move.points || 0}"/>
-                    <span class="final-display">${attrs.basic_move.final}</span>
-                </div>
-                <div class="form-row">
-                    <label>Desloc. Ampliado</label>
-                    <input type="number" name="enhanced_move.value" value="${enhancedMove.value}"/>
-                    <input type="number" name="enhanced_move.mod" value="${enhancedMove.mod}"/>
-                    <span class="read-only">${fmt(enhancedMove.passive)}</span>
-                    <span class="read-only">${fmt(enhancedMove.temp)}</span>
-                    <input type="number" name="enhanced_move.points" value="${enhancedMove.points || 0}"/>
-                    <span class="final-display">${enhancedMove.final}</span>
-                </div>
-                <div class="form-row">
-                    <label>MT (SM)</label>
-                    <input type="number" name="mt.value" value="${attrs.mt.value}"/>
-                    <input type="number" name="mt.mod" value="${attrs.mt.mod}"/>
-                    <span class="read-only">${fmt(attrs.mt.passive)}</span>
-                    <span class="read-only">${fmt(attrs.mt.temp)}</span>
-                    <input type="number" name="mt.points" value="${attrs.mt.points || 0}"/>
-                    <span class="final-display">${attrs.mt.final}</span>
-                </div>
-                <div class="form-row">
-                    <label>Esquiva</label>
-                    <span class="read-only base-calc">${Math.floor(attrs.basic_speed.final) + 3}</span>
-                    <input type="number" name="dodge.mod" value="${attrs.dodge.mod || 0}"/>
-                    <span class="read-only">${fmt(attrs.dodge.passive)}</span>
-                    <span class="read-only">${fmt(attrs.dodge.temp)}</span>
-                    <input type="number" name="dodge.points" value="${attrs.dodge.points || 0}"/>
-                    <span class="final-display">${attrs.dodge.final}</span>
-                </div>
-                                <div class="form-row">
-                    <label>PV</label>
-                    <input type="number" name="hp.max" value="${hp.max ?? hp.value ?? 10}"/>
-                    <input type="number" name="hp.mod" value="${hp.mod || 0}"/>
-                    <span class="read-only">${fmt(hp.passive)}</span>
-                    <span class="read-only">${fmt(hp.temp)}</span>
-                    <input type="number" name="hp.points" value="${hp.points || 0}"/>
-                    <span class="final-display">${hp.final}</span>
-                </div>
-                <div class="form-row">
-                    <label>PF</label>
-                    <input type="number" name="fp.max" value="${fp.max ?? fp.value ?? 10}"/>
-                    <input type="number" name="fp.mod" value="${fp.mod || 0}"/>
-                    <span class="read-only">${fmt(fp.passive)}</span>
-                    <span class="read-only">${fmt(fp.temp)}</span>
-                    <input type="number" name="fp.points" value="${fp.points || 0}"/>
-                    <span class="final-display">${fp.final}</span>
-                </div>
-
-                <hr style="grid-column: 1 / -1; border-color: #aaa;">
-                
-                <div class="form-row">
-                    <label>Visão</label>
-                    <input type="number" name="vision.value" value="${vision.value}"/>
-                    <input type="number" name="vision.mod" value="${vision.mod}"/>
-                    <span class="read-only">${fmt(vision.passive)}</span>
-                    <span class="read-only">${fmt(vision.temp)}</span>
-                    <input type="number" name="vision.points" value="${vision.points || 0}"/>
-                    <span class="final-display">${vision.final}</span>
-                </div>
-
-                <div class="form-row">
-                    <label>Audição</label>
-                    <input type="number" name="hearing.value" value="${hearing.value}"/>
-                    <input type="number" name="hearing.mod" value="${hearing.mod}"/>
-                    <span class="read-only">${fmt(hearing.passive)}</span>
-                    <span class="read-only">${fmt(hearing.temp)}</span>
-                    <input type="number" name="hearing.points" value="${hearing.points || 0}"/>
-                    <span class="final-display">${hearing.final}</span>
-                </div>
-
-                <div class="form-row">
-                    <label>Olfato/Paladar</label>
-                    <input type="number" name="tastesmell.value" value="${tastesmell.value}"/>
-                    <input type="number" name="tastesmell.mod" value="${tastesmell.mod}"/>
-                    <span class="read-only">${fmt(tastesmell.passive)}</span>
-                    <span class="read-only">${fmt(tastesmell.temp)}</span>
-                    <input type="number" name="tastesmell.points" value="${tastesmell.points || 0}"/>
-                    <span class="final-display">${tastesmell.final}</span>
-                </div>
-
-                 <div class="form-row">
-                    <label>Tato</label>
-                    <input type="number" name="touch.value" value="${touch.value}"/>
-                    <input type="number" name="touch.mod" value="${touch.mod}"/>
-                    <span class="read-only">${fmt(touch.passive)}</span>
-                    <span class="read-only">${fmt(touch.temp)}</span>
-                    <input type="number" name="touch.points" value="${touch.points || 0}"/>
-                    <span class="final-display">${touch.final}</span>
-                </div>
-
-              <hr style="grid-column: 1 / -1; border-color: #aaa; margin-top: 5px;">
-
-                <div class="basic-damage-grid">
-                    <div class="basic-damage-col">
-                        <div class="basic-damage-col-title">Dano Básico</div>
-                        <div class="form-row basic-damage-row">
-                            <label>GdP</label>
-                            <input type="text" name="thrust_damage" value="${thrustDamage}" placeholder="ex: 1d6-2"/>
-                        </div>
-                        <div class="form-row basic-damage-row">
-                            <label>GeB</label>
-                            <input type="text" name="swing_damage" value="${swingDamage}" placeholder="ex: 1d6"/>
-                        </div>
-                    </div>
-                    <div class="basic-damage-col">
-                        <div class="basic-damage-col-title">Dano Alternativo</div>
-                        <div class="form-row basic-damage-row">
-                            <label>GdPa</label>
-                            <input type="text" name="thrust_damage_alt" value="${thrustDamageAlt}" placeholder="ex: 2d6-1"/>
-                        </div>
-                        <div class="form-row basic-damage-row">
-                            <label>GeBa</label>
-                            <input type="text" name="swing_damage_alt" value="${swingDamageAlt}" placeholder="ex: 2d6"/>
-                        </div>
+                        <section class="secondary-editor-panel" data-panel="damage">
+                            <div class="secondary-editor-card secondary-damage-card">
+                                <header><i class="fas fa-dice-d6"></i><div><h3>Dano básico</h3><p>Use fórmulas de dados válidas, como 1d6-2.</p></div></header>
+                                <div class="secondary-damage-fields">
+                                    <label><span>GdP <small>Golpe de ponta</small></span><input type="text" name="thrust_damage" value="${safe(attrs.thrust_damage)}" placeholder="1d6-2" /></label>
+                                    <label><span>GeB <small>Golpe em balanço</small></span><input type="text" name="swing_damage" value="${safe(attrs.swing_damage)}" placeholder="1d6" /></label>
+                                    <label><span>GdPa <small>Ponta alternativo</small></span><input type="text" name="thrust_damage_alt" value="${safe(attrs.thrust_damage_alt)}" placeholder="2d6-1" /></label>
+                                    <label><span>GeBa <small>Balanço alternativo</small></span><input type="text" name="swing_damage_alt" value="${safe(attrs.swing_damage_alt)}" placeholder="2d6" /></label>
+                                </div>
+                            </div>
+                        </section>
                     </div>
                 </div>
-            </div>
-        </form>
-        <style>
-            .secondary-stats-editor .form-header-grid,
-            .secondary-stats-editor .form-row {
-                display: grid;
-                grid-template-columns: 110px 60px 60px 60px 60px 60px 60px;
-                gap: 5px;
-                align-items: center;
-                text-align: center;
-                margin-bottom: 5px;
-            }
-            .secondary-stats-editor .form-section-title {
-                grid-column: 1 / -1;
-                font-weight: bold;
-                text-align: left;
-                margin: 8px 0 4px;
-                color: #a53541;
-            }
-            .secondary-stats-editor .basic-damage-grid {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 12px;
-                margin-bottom: 6px;
-            }
-            .secondary-stats-editor .basic-damage-col-title {
-                font-weight: bold;
-                margin-bottom: 6px;
-                color: #a53541;
-                text-align: left;
-            }     
-            .secondary-stats-editor .basic-damage-row {
-                grid-template-columns: 80px 1fr;
-                text-align: left;
-            }
-            .secondary-stats-editor .basic-damage-row input {
-                text-align: left;
-            }
-            .secondary-stats-editor .form-header-grid span { font-weight: bold; font-size: 0.85em; white-space: nowrap; }
-            .secondary-stats-editor label { text-align: left; font-weight: bold; font-size: 0.9em; }
-            .secondary-stats-editor input { text-align: center; }
-            .secondary-stats-editor .read-only { color: #666; font-style: italic; }
-            .secondary-stats-editor .final-display { font-weight: bold; color: #a53541; font-size: 1.1em; }
-        </style>
-        `;
+          </form>`;
 
         new Dialog({
             title: "Editar Atributos Secundários",
-            content: content,
+            content,
+            render: (dialogHtml) => {
+                dialogHtml.on('click', '.secondary-editor-tab', tabEvent => {
+                    const panel = tabEvent.currentTarget.dataset.panel;
+                    dialogHtml.find('.secondary-editor-tab').removeClass('active').attr('aria-selected', 'false');
+                    dialogHtml.find('.secondary-editor-panel').removeClass('active');
+                    $(tabEvent.currentTarget).addClass('active').attr('aria-selected', 'true');
+                    dialogHtml.find(`.secondary-editor-panel[data-panel="${panel}"]`).addClass('active');
+                });
+            },
             buttons: {
                 save: {
-                    icon: '<i class="fas fa-save"></i>',
-                    label: "Salvar",
-                    callback: (html) => {
-                        const form = html.find('form')[0];
-                        const formData = new FormDataExtended(form).object;
-                        const updateData = {};
-                        
-                       const fields = [
-                            "basic_speed.value", "basic_speed.mod", "basic_speed.points",
-                            "basic_move.value", "basic_move.mod", "basic_move.points",
-                            "enhanced_move.value", "enhanced_move.mod", "enhanced_move.points",
-                            "mt.value", "mt.mod", "mt.points",
-                            "dodge.mod", "dodge.points",
-                            "hp.max", "hp.mod", "hp.points",
-                            "fp.max", "fp.mod", "fp.points",
-                            "vision.value", "vision.mod", "vision.points",
-                            "hearing.value", "hearing.mod", "hearing.points",
-                            "tastesmell.value", "tastesmell.mod", "tastesmell.points",
-                            "touch.value", "touch.mod", "touch.points"
+                    icon: '<i class="fas fa-save"></i>', label: "Salvar alterações",
+                    callback: (dialogHtml) => {
+                        const formData = new FormDataExtended(dialogHtml.find('form')[0]).object;
+                        const numericFields = [
+                            "basic_speed.value", "basic_speed.mod", "basic_speed.points", "basic_move.value", "basic_move.mod", "basic_move.points",
+                            "enhanced_move.value", "enhanced_move.mod", "enhanced_move.points", "mt.value", "mt.mod", "mt.points", "dodge.mod", "dodge.points",
+                            "lifting_st.value", "lifting_st.mod", "lifting_st.temp", "hp.max", "hp.mod", "hp.temp", "hp.points", "fp.max", "fp.mod", "fp.temp", "fp.points",
+                            "vision.value", "vision.mod", "vision.points", "hearing.value", "hearing.mod", "hearing.points",
+                            "tastesmell.value", "tastesmell.mod", "tastesmell.points", "touch.value", "touch.mod", "touch.points"
                         ];
-
-                        fields.forEach(field => {
-                            if (formData[field] !== undefined) {
-                                updateData[`system.attributes.${field}`] = Number(formData[field]);
-                            }
-                        });
-
-                        if (formData.thrust_damage !== undefined) {
-                            updateData["system.attributes.thrust_damage"] = formData.thrust_damage.toString().trim();
+                        const updateData = {};
+                        for (const field of numericFields) {
+                            if (formData[field] !== undefined) updateData[`system.attributes.${field}`] = Number(formData[field]);
                         }
-                        if (formData.swing_damage !== undefined) {
-                            updateData["system.attributes.swing_damage"] = formData.swing_damage.toString().trim();
-                        }
-                        if (formData.thrust_damage_alt !== undefined) {
-                            updateData["system.attributes.thrust_damage_alt"] = formData.thrust_damage_alt.toString().trim();
-                        }
-                        if (formData.swing_damage_alt !== undefined) {
-                            updateData["system.attributes.swing_damage_alt"] = formData.swing_damage_alt.toString().trim();
+                        for (const field of ["thrust_damage", "swing_damage", "thrust_damage_alt", "swing_damage_alt"]) {
+                            if (formData[field] !== undefined) updateData[`system.attributes.${field}`] = String(formData[field]).trim();
                         }
                         
-                        this.actor.update(updateData);
+                        return this.actor.update(updateData);
                     }
                 }
             },
             default: 'save'
-       }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog"], width: 510}).render(true);
+        }, {
+            classes: ["dialog", "gum", "secondary-stats-dialog", "secondary-stats-unified-dialog", "gum-sheet-edit-dialog"],
+            width: 780, height: 480, resizable: true
+        }).render(true);
     });
 
     // QUICK VIEW ORIGIN
