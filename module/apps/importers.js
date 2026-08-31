@@ -856,6 +856,15 @@ function isUsableTemplate(candidate, entryType) {
 }
 
 function getSystemTemplate(documentType, entryType) {
+    // `game.model` contém o modelo já expandido (incluindo os templates
+    // declarados em template.json) nas versões atuais do Foundry. Já
+    // `game.system.documentTypes` descreve os tipos, mas não garante que
+    // traga os campos do modelo.
+    const fromGameModel = game.model?.[documentType]?.[entryType];
+    if (isUsableTemplate(fromGameModel, entryType)) {
+        return foundry.utils.deepClone(fromGameModel);
+    }
+
     const docTypeEntry = game.system.documentTypes?.[documentType]?.[entryType];
     const fromDocumentTypes = docTypeEntry?.template ?? docTypeEntry;
     if (isUsableTemplate(fromDocumentTypes, entryType)) {
