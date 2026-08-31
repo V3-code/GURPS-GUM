@@ -63,3 +63,12 @@ test("captures social contribution state before Foundry rerenders", () => {
   assert.ok(renderStart >= 0);
   assert.ok(captureCall > renderStart && captureCall < superRender, "the live DOM state must be captured before super._render replaces it");
 });
+
+
+test("generic details restoration cannot reopen a different social contribution", () => {
+  const source = readFileSync(new URL("../module/item/gurps-item-sheet.js", import.meta.url), "utf8");
+
+  assert.doesNotMatch(source, /querySelectorAll\(['"]details\[open\]['"]\)\.forEach\(\(el, i\)/);
+  assert.ok(source.includes('element.matches(".item-social-contribution[data-id]")'));
+  assert.match(source, /details\.flatMap\(\(element, index\)[\s\S]*return \[\{ id: element\.id \|\| null, index \}\]/);
+});
