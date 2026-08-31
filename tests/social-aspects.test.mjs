@@ -43,11 +43,51 @@ test("social contribution schemas preserve the requested field rows", () => {
 
   assert.deepEqual(layout("status"), [["society", 1, false, true], ["level", 2, true, false], ["status_name", 2, false, false], ["monthly_cost", 2, false, false], ["description", 3, false, true]]);
   assert.deepEqual(layout("culture"), [["level", 1, true, false], ["culture_name", 1, false, false], ["description", 2, false, true]]);
-  assert.deepEqual(layout("language"), [["spoken_level", 1, false, false], ["written_level", 1, false, false], ["description", 2, false, true]]);
+  assert.deepEqual(layout("language"), [["language_name", 1, false, true], ["spoken_level", 2, false, false], ["written_level", 2, false, false], ["description", 3, false, true]]);
   assert.deepEqual(layout("wealth"), [["wealth_level", 1, false, true], ["effects", 2, false, true]]);
   assert.deepEqual(layout("bond"), [["name", 1, false, false], ["bond_type", 1, false, false], ["description", 2, false, true]]);
   assert.deepEqual(layout("reputation").map(([name, row]) => [name, row]), [["reaction_modifier", 1], ["title", 1], ["scope", 2], ["circumstance", 2], ["recognition_frequency", 2], ["notes", 3]]);
   assert.deepEqual(layout("reaction").map(([name, row]) => [name, row]), [["value", 1], ["title", 1], ["audience", 2], ["circumstance", 2], ["recognition_frequency", 2], ["notes", 3]]);
+});
+
+test("actor social entries expose structured identity, metrics, source and observation", () => {
+  const labels = {
+    "GUM.Social.Fields.Level": "Nível",
+    "GUM.Social.Fields.MonthlyCost": "Custo mensal",
+    "GUM.Social.Manual": "Manual"
+  };
+  const system = {
+    social_status_entries: {
+      imperial: {
+        society: "Império Kalashtar",
+        status_name: "Cidadão Livre",
+        level: 0,
+        monthly_cost: "-200",
+        description: "Reconhecido nos distritos centrais."
+      }
+    }
+  };
+  const entry = buildSocialSections(system, [], key => labels[key] ?? key)
+    .find(section => section.type === "status").entries[0];
+
+  assert.equal(entry.primary, "Cidadão Livre");
+  assert.equal(entry.context, "Império Kalashtar");
+  assert.deepEqual(entry.metrics, [
+    { key: "level", label: "Nível", value: 0, tone: "default" },
+    { key: "monthly_cost", label: "Custo mensal", value: "-200", tone: "default" }
+  ]);
+  assert.equal(entry.observation, "Reconhecido nos distritos centrais.");
+  assert.equal(entry.sourceLabel, "Manual");
+});
+
+test("actor social template keeps source at left and observations in a conditional footer", () => {
+  const template = readFileSync(new URL("../templates/actors/characters.hbs", import.meta.url), "utf8");
+
+  assert.match(template, /class="social-entry-portrait \{\{source\}\}"/);
+  assert.match(template, /class="social-entry-primary"/);
+  assert.match(template, /class="social-entry-metrics"/);
+  assert.match(template, /\{\{#if observation\}\}<div class="social-entry-observation"/);
+  assert.match(template, /class="social-origin \{\{source\}\}"/);
 });
 
 test("captures social contribution state before Foundry rerenders", () => {

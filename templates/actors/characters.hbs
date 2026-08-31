@@ -465,18 +465,39 @@
       <div class="social-sections">
       {{#each socialSections}}
         <details class="social-section {{#if featured}}social-section--featured{{/if}}">
-          <summary class="block-header"><i class="{{icon}}"></i><h4>{{label}}</h4><span class="social-count">{{count}}</span><a class="add-social-entry" data-type="{{type}}"><i class="fas fa-plus"></i></a></summary>
-          <ol class="item-list">{{#each entries}}
-            <li class="item item-row" data-entry-id="{{id}}">
-              <div class="item-content-wrapper"><span class="item-name">{{title}}</span><span class="item-details">{{details}}</span></div>
-              <span class="social-origin {{source}}">{{#if sourceImg}}<img src="{{sourceImg}}">{{/if}}{{sourceLabel}}</span>
-              <div class="item-controls">{{#if itemId}}<a class="item-control edit-social-source" data-item-id="{{itemId}}" title="{{localize 'GUM.Social.OpenSource'}}"><i class="fas fa-external-link-alt"></i></a>{{else}}<a class="item-control edit-social-entry" data-type="{{type}}"><i class="fas fa-edit"></i></a><a class="item-control delete-social-entry" data-type="{{type}}"><i class="fas fa-trash"></i></a>{{/if}}</div>
+          <summary class="block-header">
+            <span class="social-section-icon"><i class="{{icon}}"></i></span>
+            <h4>{{label}}</h4>
+            <span class="social-count">{{count}}</span>
+            <a class="add-social-entry" data-type="{{type}}" title="{{localize 'GUM.Social.AddAspect'}}"><i class="fas fa-plus"></i></a>
+            <span class="social-section-chevron"><i class="fas fa-chevron-down"></i></span>
+          </summary>
+          <ol class="item-list social-entry-list">{{#each entries}}
+            <li class="item item-row social-entry-card social-entry-card--{{source}} {{#unless metrics.length}}social-entry-card--no-metrics{{/unless}}" data-entry-id="{{id}}">
+              <div class="social-entry-main">
+                <div class="social-entry-portrait {{source}}" title="{{sourceLabel}}">
+                  {{#if sourceImg}}<img src="{{sourceImg}}" alt="{{sourceLabel}}">{{else}}<i class="{{displayIcon}}"></i>{{/if}}
+                </div>
+                <div class="social-entry-identity">
+                  <strong class="social-entry-primary">{{primary}}</strong>
+                  {{#if context}}<span class="social-entry-context">{{context}}</span>{{/if}}
+                </div>
+                {{#if metrics.length}}
+                <div class="social-entry-metrics">
+                  {{#each metrics}}
+                  <span class="social-metric social-metric--{{tone}}"><small>{{label}}</small><strong>{{value}}</strong></span>
+                  {{/each}}
+                </div>
+                {{/if}}
+                <span class="social-origin {{source}}" title="{{sourceLabel}}">{{#if (eq source "manual")}}<i class="fas fa-pen"></i>{{/if}}<span>{{sourceLabel}}</span></span>
+                <div class="item-controls social-entry-controls">{{#if itemId}}<a class="item-control edit-social-source" data-item-id="{{itemId}}" title="{{localize 'GUM.Social.OpenSource'}}"><i class="fas fa-external-link-alt"></i></a>{{else}}<a class="item-control edit-social-entry" data-type="{{type}}"><i class="fas fa-edit"></i></a><a class="item-control delete-social-entry" data-type="{{type}}"><i class="fas fa-trash"></i></a>{{/if}}</div>
+              </div>
+              {{#if observation}}<div class="social-entry-observation" title="{{observation}}"><i class="fas fa-align-left"></i><span>{{observation}}</span></div>{{/if}}
             </li>{{/each}}</ol>
         </details>
       {{/each}}
       </div>
     </div>
-    
     {{!-- ============================================================= --}}
     {{!--   ABA DE CARACTERÍSTICAS (Layout Colapsável e Elegante)       --}}
     {{!-- ============================================================= --}}
