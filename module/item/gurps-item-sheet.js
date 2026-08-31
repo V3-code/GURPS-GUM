@@ -1986,21 +1986,27 @@ const rangedFields = `
         }
     }
 
-    _saveUIState() { 
-        const openDetails = []; 
-        this.form.querySelectorAll('details[open]').forEach((el, i) => openDetails.push(el.id || `details-${i}`)); 
-        this._openDetailsState = openDetails; 
+    _saveUIState() {
+        const details = Array.from(this.form?.querySelectorAll("details") ?? []);
+        this._openDetailsState = details.flatMap((element, index) => {
+            // Social contributions have their own stable state keyed by contribution ID.
+            if (!element.open || element.matches(".item-social-contribution[data-id]")) return [];
+            return [{ id: element.id || null, index }];
+        });
     } 
  
  async _render(force, options) { 
         this._captureSocialContributionOpenState();
         await super._render(force, options); 
         this._refreshHeaderNameAutosize(); 
-        if (this._openDetailsState) { 
-            this._openDetailsState.forEach(id => { 
-                const el = this.form.querySelector(`#${id}`) || this.form.querySelectorAll('details')[parseInt(id.split('-')[1])]; 
-                if (el) el.open = true; 
-            }); 
+        if (this._openDetailsState) {
+            const details = Array.from(this.form?.querySelectorAll("details") ?? []);
+            for (const state of this._openDetailsState) {
+                const element = state.id
+                    ? details.find(detail => detail.id === state.id)
+                    : details[state.index];
+                if (element) element.open = true;
+            }
         } 
     } 
  
