@@ -73,3 +73,16 @@ test("os pré-definidos são inicializados mesmo quando o modelo não os fornece
   });
   assert.equal(Object.keys(item.system.predefined).length, 6);
 });
+
+test("a importação da biblioteca GCS guarda a especialização no campo da perícia", () => {
+  const item = parseGCSLibrarySkill({
+    name: "Sobrevivência",
+    specialization: "Deserto",
+    difficulty: "per/a",
+    tags: ["Natureza"]
+  });
+
+  assert.equal(item.name, "Sobrevivência");
+  assert.equal(item.system.specialization, "Deserto");
+  assert.equal(item.system.group, "Natureza");
+});

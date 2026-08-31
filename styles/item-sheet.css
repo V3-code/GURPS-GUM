@@ -4494,7 +4494,7 @@ color:#121114;
 }
 
 .gum.sheet.item .skill-details-dashboard .skill-standard-core-grid {
-  grid-template-columns: minmax(130px, 0.9fr) minmax(230px, 1.35fr) minmax(150px, 1fr);
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
 }
 
 .gum.sheet.item .skill-details-dashboard .skill-standard-result-grid,
@@ -4578,7 +4578,7 @@ color:#121114;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  width: fit-content;
+  /*width: fit-content;*/ justify-content: center;
   margin: 0;
   padding: 4px 11px;
   border: 1px solid rgba(201, 161, 94, 0.38);

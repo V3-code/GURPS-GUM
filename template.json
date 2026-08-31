@@ -515,6 +515,7 @@
       ],
       "points": 2,
       "group": "Geral",
+      "specialization": "",
       "base_attribute": "DX",
       "skill_level": 0,
       "nh_mod": 0,

@@ -1544,9 +1544,18 @@ function enforceGCSTechniqueBaseOnImportedItem(
     return itemData;
 }
 
-function parseGCSLibrarySkill(gcsSkill) {
+export function parseGCSLibrarySkill(gcsSkill) {
     const resolvedSkill = resolveGCSImportSkill(gcsSkill);
     let template = getSystemTemplate("Item", "skill");
+
+    if (!template.predefined) {
+        template.predefined = Object.fromEntries(
+            Array.from({ length: 6 }, (_, index) => [
+                `slot${index + 1}`,
+                { name: "", specialization: "", modifier: 0 }
+            ])
+        );
+    }
 
     const importInfo =
         resolvedSkill._gumTechniqueImport || {};
@@ -1564,19 +1573,6 @@ function parseGCSLibrarySkill(gcsSkill) {
     const rawName = String(
         resolvedSkill.name || "Perícia"
     ).trim();
-
-    // Impede que o nome fique, por exemplo:
-    // "Arma de Arremesso (Faca) (Faca)".
-    const alreadyHasSpecialization =
-        specialization &&
-        rawName.toLowerCase().endsWith(
-            `(${specialization.toLowerCase()})`
-        );
-
-    const skillName =
-        specialization && !alreadyHasSpecialization
-            ? `${rawName} (${specialization})`
-            : rawName;
 
     const resolvedRelativeLevel =
     isTechnique
@@ -1596,8 +1592,9 @@ function parseGCSLibrarySkill(gcsSkill) {
     template.ref =
         resolvedSkill.reference || "";
 
+    template.specialization = specialization;
+
     template.group =
-        specialization ||
         resolvedSkill.tags?.[0] ||
         template.group ||
         "";
@@ -1724,7 +1721,7 @@ if (isTechnique) {
     delete resolvedSkill._gumTechniqueImport;
 
     return applyAutoPointsBaselineOnImport({
-        name: skillName,
+        name: rawName,
         type: "skill",
         system: template
     });
@@ -2515,7 +2512,7 @@ function buildIndexEntryFromItemDocument(item, sourceType, packCollection = "") 
         name: item.name,
         nameNorm: normalizeHybridText(parts.full),
         baseNameNorm: normalizeHybridText(parts.base),
-        specializationNorm: normalizeHybridText(item.system?.group || parts.specialization),
+        specializationNorm: normalizeHybridText(item.system?.specialization || parts.specialization),
         refNorm: normalizeHybridText(item.system?.ref)
     };
 }
@@ -2530,7 +2527,7 @@ async function buildHybridItemIndex() {
     }
 
     for (const pack of game.packs.filter(p => p.documentName === "Item")) {
-        const index = await pack.getIndex({ fields: ["type", "system.ref", "system.group"] }).catch(() => null);
+        const index = await pack.getIndex({ fields: ["type", "system.ref", "system.specialization"] }).catch(() => null);
         if (!index?.contents?.length) continue;
 
         for (const row of index.contents) {
@@ -2545,7 +2542,7 @@ async function buildHybridItemIndex() {
                 name: row.name,
                 nameNorm: normalizeHybridText(parts.full),
                 baseNameNorm: normalizeHybridText(parts.base),
-                specializationNorm: normalizeHybridText(row.system?.group || parts.specialization),
+                specializationNorm: normalizeHybridText(row.system?.specialization || parts.specialization),
                 refNorm: normalizeHybridText(row.system?.ref)
             });
         }
@@ -2568,7 +2565,7 @@ async function resolveHybridSourceItem({ gcsNode, parsedItem }) {
     const wantedRef = normalizeHybridText(gcsNode?.reference || parsedItem.system?.ref);
     const wantedFullName = normalizeHybridText(parsedParts.full || gcsParts.full);
     const wantedBaseName = normalizeHybridText(parsedParts.base || gcsParts.base);
-    const wantedSpec = normalizeHybridText(gcsNode?.specialization || parsedItem.system?.group || parsedParts.specialization || gcsParts.specialization);
+    const wantedSpec = normalizeHybridText(gcsNode?.specialization || parsedItem.system?.specialization || parsedParts.specialization || gcsParts.specialization);
 
     const candidates = index.filter(entry => entry.type === wantedType);
 
