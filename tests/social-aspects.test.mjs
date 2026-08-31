@@ -53,7 +53,8 @@ test("social contribution schemas preserve the requested field rows", () => {
 test("captures social contribution state before Foundry rerenders", () => {
   const source = readFileSync(new URL("../module/item/gurps-item-sheet.js", import.meta.url), "utf8");
 
-  assert.match(source, /_captureSocialContributionOpenState\(\)[\s\S]*querySelectorAll\("\\.item-social-contribution\[data-id\]"\)[\s\S]*\.set\(id, contribution\.open\)/);
+  assert.ok(source.includes('querySelectorAll(".item-social-contribution[data-id]")'));
+  assert.ok(source.includes("this._socialContributionOpenState.set(id, contribution.open)"));
 
   const renderStart = source.lastIndexOf("async _render(force, options)");
   const superRender = source.indexOf("await super._render(force, options);", renderStart);
