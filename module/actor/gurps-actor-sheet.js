@@ -4254,12 +4254,15 @@ async _onViewHitLocations(ev) {
 ).join("");
 
 const profileSelectorHtml = `
-  <div class="gum-rd-profile-row">
-    <label>Tipo Corporal</label>
-    <select class="gum-body-profile-select" name="body_profile">
+  <div class="gum-rd-profile-card">
+    <div class="gum-rd-profile-copy">
+      <span class="gum-rd-eyebrow"><i class="fas fa-shield-alt"></i> Configuração de proteção</span>
+      <label for="gum-rd-body-profile">Tipo corporal</label>
+      <span class="gum-rd-profile-hint">Define as localizações exibidas abaixo.</span>
+    </div>
+    <select id="gum-rd-body-profile" class="gum-body-profile-select" name="body_profile" aria-label="Tipo corporal">
       ${profileOptionsHtml}
     </select>
-    <span class="gum-rd-profile-hint">(altera as localizações exibidas)</span>
   </div>
 `;
 
@@ -4268,6 +4271,13 @@ const profileSelectorHtml = `
     ${profileSelectorHtml}
 
     <div class="gurps-rd-table">
+        <div class="gum-rd-table-title">
+          <div>
+            <span class="gum-rd-eyebrow">Resistência a dano</span>
+            <strong>Localizações de acerto</strong>
+          </div>
+          <span class="gum-rd-table-help"><i class="fas fa-pen"></i> Edite apenas a coluna Manual</span>
+        </div>
         <div class="table-header">
           <div>Local</div>
           <div>Armadura</div>
