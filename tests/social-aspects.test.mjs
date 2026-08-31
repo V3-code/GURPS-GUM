@@ -80,7 +80,7 @@ test("actor social entries expose structured identity, metrics, source and obser
   assert.equal(entry.sourceLabel, "Manual");
 });
 
-test("actor social template keeps source at left and observations in a conditional footer", () => {
+test("actor social template keeps the source image at left and observations in a conditional footer", () => {
   const template = readFileSync(new URL("../templates/actors/characters.hbs", import.meta.url), "utf8");
   const styles = readFileSync(new URL("../styles/styles.css", import.meta.url), "utf8");
 
@@ -88,7 +88,7 @@ test("actor social template keeps source at left and observations in a condition
   assert.match(template, /class="social-entry-primary"/);
   assert.match(template, /class="social-entry-metrics"/);
   assert.match(template, /\{\{#if observation\}\}<div class="social-entry-observation"/);
-  assert.match(template, /class="social-origin \{\{source\}\}"/);
+  assert.doesNotMatch(template, /class="social-origin /);
   assert.match(styles, /\.tab\[data-tab="social"\] \.social-entry-list > \.social-entry-card \{ display:block;/);
 });
 

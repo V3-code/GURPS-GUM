@@ -489,7 +489,6 @@
                   {{/each}}
                 </div>
                 {{/if}}
-                <span class="social-origin {{source}}" title="{{sourceLabel}}">{{#if (eq source "manual")}}<i class="fas fa-pen"></i>{{/if}}<span>{{sourceLabel}}</span></span>
                 <div class="item-controls social-entry-controls">{{#if itemId}}<a class="item-control edit-social-source" data-item-id="{{itemId}}" title="{{localize 'GUM.Social.OpenSource'}}"><i class="fas fa-external-link-alt"></i></a>{{else}}<a class="item-control edit-social-entry" data-type="{{type}}"><i class="fas fa-edit"></i></a><a class="item-control delete-social-entry" data-type="{{type}}"><i class="fas fa-trash"></i></a>{{/if}}</div>
               </div>
               {{#if observation}}<div class="social-entry-observation" title="{{observation}}"><i class="fas fa-align-left"></i><span>{{observation}}</span></div>{{/if}}
