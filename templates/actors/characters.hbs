@@ -1629,7 +1629,23 @@
 
           {{!-- Grupo fixo de Registros de Combate --}}
           <div class="attack-group-list-v2 combat-fixed-groups-list">
-            <details class="attack-group-details gum-unified-section combat-meters-box combat-fixed-group" data-group-id="combat-meters-group" {{collapsibleState "combat-meters-group" @root.collapsedData}}>
+            <details class="attack-group-details gum-unified-section combat-fixed-group wounds-box" data-group-id="wounds-group" {{collapsibleState "wounds-group" @root.collapsedData}}>
+              <summary class="group-summary gum-unified-header">
+                <div class="summary-left"><i class="fas fa-chevron-right indicator"></i><i class="fas fa-bandage item-icon"></i><span class="group-name">Ferimentos</span></div>
+                <div class="summary-right"><span class="group-tag">{{preparedWounds.length}} card(s)</span><a class="add-wound" title="Adicionar Ferimento"><i class="fas fa-plus"></i></a></div>
+              </summary>
+              <div class="group-content wound-list">
+                {{#each preparedWounds}}
+                  <article class="wound-card" data-wound-id="{{this.id}}">
+                    <div class="wound-card-heading"><strong>{{this.title}}</strong><span>{{this.value}}{{#if this.remaining}} / {{this.remaining}} restante{{/if}}</span></div>
+                    <div class="wound-card-tags"><span>{{this.poolLabel}}</span>{{#if this.natureDisplay}}<span>{{this.natureDisplay}}</span>{{/if}}{{#if this.location}}<span>{{this.location}}</span>{{/if}}</div>
+                    {{#if this.origin}}<small>{{this.origin}}</small>{{/if}}{{#if this.notes}}<p>{{this.notes}}</p>{{/if}}
+                    <div class="item-controls"><a class="edit-wound" title="Editar"><i class="fas fa-edit"></i></a><a class="delete-wound" title="Excluir"><i class="fas fa-trash"></i></a></div>
+                  </article>
+                {{else}}<div class="placeholder-text">Nenhum ferimento registrado.</div>{{/each}}
+              </div>
+            </details>
+            <details class="attack-group-details gum-unified-section combat-meters-box combat-fixed-group" data-group-id="combat-meters-group" {{collapsibleState "combat-meters-group" @root.collapsedData}}>>
               <summary class="group-summary gum-unified-header">
                 <div class="summary-left">
                   <i class="fas fa-chevron-right indicator"></i>

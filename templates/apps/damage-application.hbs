@@ -282,7 +282,19 @@
 <footer class="damage-app-footer">
     <div class="footer-top">
         <div class="footer-column effects-summary">
-            <div class="placeholder">Efeitos a serem aplicados</div>
+          <div class="wound-registration-options">
+                <label class="custom-checkbox wound-registration-toggle">
+                    <input type="checkbox" name="register_wound"/>
+                    <span>Registrar ferimento</span>
+                </label>
+                <select name="existing_wound" title="Criar um card ou somar a um card existente compatível">
+                    <option value="">Criar novo card</option>
+                    {{#each existingWounds}}<option value="{{this.id}}" data-pool-path="{{this.poolPath}}" data-nature-id="{{this.nature.id}}">Somar a: {{this.title}} — {{this.poolLabel}} {{#if this.nature.label}}[{{this.nature.label}}]{{/if}}</option>{{/each}}
+                </select>
+            </div>
+            <div class="effects-list-summary">
+                <div class="placeholder">Efeitos a serem aplicados</div>
+            </div>
         </div>
 
         <div class="footer-column calculation-summary">
@@ -308,9 +320,16 @@
                 </div>
             </div>
             
-            <div class="calc-item-compact single">
-                <label>Mod. Ferimento</label>
-                <span class="calc-field-compact" data-field="wounding_mod">x1</span>
+            <div class="calc-group-compact damage-nature-group">
+                <div class="calc-item-compact">
+                    <label>Mod. Ferimento</label>
+                    <span class="calc-field-compact" data-field="wounding_mod">x1</span>
+                </div>
+                <div class="calc-item-compact">
+                    <label>Natureza do Dano</label>
+                    <datalist id="gum-application-damage-natures">{{#each natureOptions}}<option value="{{this.value}}">{{this.label}}</option>{{/each}}</datalist>
+                    <input type="text" name="damage_nature" class="calc-input-compact" value="{{activeNature}}" list="gum-application-damage-natures" placeholder="Opcional"/>
+                </div>
             </div>
 
             <div class="calculation-notes">

@@ -8662,3 +8662,10 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.item .item-social-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 12px; margin-top:8px; }
 .gum.sheet.item .item-social-fields label { display:flex; flex-direction:column; gap:3px; }
 @media (max-width:700px) { .gum.sheet.item .item-social-fields { grid-template-columns:1fr; } .gum.sheet.actor .social-origin { max-width:110px; } }
+/* Ferimentos: cards intentionally independent from their original attack/message. */
+.wound-list { display: grid; gap: .5rem; padding: .5rem; }
+.wound-card { position: relative; padding: .65rem; border: 1px solid var(--color-border-light-tertiary, #806b45); background: rgba(20,16,13,.65); border-radius: 4px; }
+.wound-card-heading { display:flex; justify-content:space-between; gap:.5rem; color:#d8c29a; }
+.wound-card-tags { display:flex; flex-wrap:wrap; gap:.3rem; margin:.35rem 0; }
+.wound-card-tags span { border:1px solid rgba(190,150,80,.45); border-radius:10px; padding:.1rem .4rem; font-size:.8em; }
+.wound-card .item-controls { position:absolute; right:.4rem; bottom:.3rem; display:flex; gap:.45rem; }

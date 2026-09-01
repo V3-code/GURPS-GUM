@@ -13,12 +13,16 @@
     {{/each}}
   </section>
   <section class="damage-modifier-section">
+    <datalist id="gum-damage-natures">
+      {{#each natureOptions}}<option value="{{this.value}}">{{this.label}}</option>{{/each}}
+    </datalist>
     <h4>Modificadores de Dano Situacionais</h4>
 
     <div class="damage-row">
       <label>Dano Padrão</label>
       <input type="text" name="mainAdditional" data-formula-input="true" placeholder="Ex: 2d6+3" />
-      <input type="text" value="{{main.type}}" disabled />
+            <input type="text" value="{{main.type}}" disabled />
+      <input type="text" name="mainNature" value="{{main.natureDisplay}}" list="gum-damage-natures" placeholder="Natureza (opcional)" />
     </div>
 
     <div class="damage-row">
@@ -28,7 +32,8 @@
         <input type="text" value="{{fragmentation.type}}" disabled />
       {{else}}
         <input type="text" name="fragmentationType" data-type-input="true" placeholder="Tipo..." />
-      {{/if}}
+            {{/if}}
+      <input type="text" name="fragmentationNature" value="{{fragmentation.natureDisplay}}" list="gum-damage-natures" placeholder="Natureza (opcional)" />
     </div>
 
     <div class="damage-row">
@@ -38,7 +43,8 @@
         <input type="text" value="{{followUp.type}}" disabled />
       {{else}}
         <input type="text" name="followUpType" data-type-input="true" placeholder="Tipo..." />
-      {{/if}}
+            {{/if}}
+      <input type="text" name="followUpNature" value="{{followUp.natureDisplay}}" list="gum-damage-natures" placeholder="Natureza (opcional)" />
     </div>
   </section>
 

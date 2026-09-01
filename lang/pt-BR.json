@@ -54,5 +54,11 @@
   "GUM.Social.Fields.BondType": "Tipo de vínculo",
   "GUM.Social.Fields.BondDescription": "Descrição do vínculo",
   "GUM.Social.Fields.ReactionTitle": "Título do modificador",
-  "GUM.Social.Fields.ReactionDescription": "Descrição do modificador"
+    "GUM.Social.Fields.ReactionDescription": "Descrição do modificador",
+  "GUM.Damage.Nature": "Natureza do Dano",
+  "GUM.Damage.NatureNone": "Sem natureza",
+  "GUM.Wounds.Title": "Ferimentos",
+  "GUM.Wounds.Register": "Registrar ferimento",
+  "GUM.Wounds.New": "Criar novo card",
+  "GUM.Wounds.AddExisting": "Somar a ferimento existente"
 }

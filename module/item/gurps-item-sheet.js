@@ -1692,26 +1692,30 @@ new Dialog({
                     <div class="damage-table-spacer"></div>
                     <div class="damage-col-label">Fórmula</div>
                     <div class="damage-col-label">Tipo</div>
-                    <div class="damage-col-label">Escala</div>
+                    <div class="damage-col-label">Natureza</div>
                     <div class="damage-col-label">Div.</div>
+                    <div class="damage-col-label">Escala</div>
 
                     <div class="row-label">Dano Primário</div>
                     <input type="text" data-name="${basePath}.damage_formula" value="${safe(attackData.damage_formula)}"/>
                     <input type="text" data-name="${basePath}.damage_type" value="${safe(attackData.damage_type)}"/>
-                    <input type="text" data-name="${basePath}.damage_scaling" value="${safe(attackData.damage_scaling)}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/>
+                    <input type="text" data-name="${basePath}.damage_nature" value="${safe(attackData.damage_nature)}" placeholder="FOG"/>
                     <input type="number" step="0.1" data-name="${basePath}.armor_divisor" value="${safe(attackData.armor_divisor)}" title="Divisor de Armadura"/>
-
+                    <input type="text" data-name="${basePath}.damage_scaling" value="${safe(attackData.damage_scaling)}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/>
+                    
                     <div class="row-label">Dano Acompanhamento</div>
                     <input type="text" data-name="${basePath}.follow_up_damage.formula" value="${safe(followUp.formula)}"/>
                     <input type="text" data-name="${basePath}.follow_up_damage.type" value="${safe(followUp.type)}"/>
-                    <input type="text" data-name="${basePath}.follow_up_damage.scaling" value="${safe(followUp.scaling)}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/>
+                    <input type="text" data-name="${basePath}.follow_up_damage.nature" value="${safe(followUp.nature)}" placeholder="Natureza"/>
                     <input type="number" step="0.1" data-name="${basePath}.follow_up_damage.armor_divisor" value="${safe(followUp.armor_divisor)}" title="Divisor"/>
+                    <input type="text" data-name="${basePath}.follow_up_damage.scaling" value="${safe(followUp.scaling)}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/>
 
                     <div class="row-label">Dano de Fragmentação</div>
                     <input type="text" data-name="${basePath}.fragmentation_damage.formula" value="${safe(fragmentation.formula)}"/>
                     <input type="text" data-name="${basePath}.fragmentation_damage.type" value="${safe(fragmentation.type)}"/>
-                    <input type="text" data-name="${basePath}.fragmentation_damage.scaling" value="${safe(fragmentation.scaling)}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/>
+                    <input type="text" data-name="${basePath}.fragmentation_damage.nature" value="${safe(fragmentation.nature)}" placeholder="Natureza"/>
                     <input type="number" step="0.1" data-name="${basePath}.fragmentation_damage.armor_divisor" value="${safe(fragmentation.armor_divisor)}" title="Divisor"/>
+                    <input type="text" data-name="${basePath}.fragmentation_damage.scaling" value="${safe(fragmentation.scaling)}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/>
                 </div>
             </div>
         `; 

@@ -1440,6 +1440,7 @@ async function _rollDamageFromChatAction(payload) {
                 name: payload.sourceLabel || `${item.name} (${attack.mode ?? attackId})`,
                 formula: attack.damage_formula,
                 type: attack.damage_type,
+                nature: attack.damage_nature || "",
                 armor_divisor: attack.armor_divisor,
                 follow_up_damage: foundry.utils.duplicate(attack.follow_up_damage || {}),
                 fragmentation_damage: foundry.utils.duplicate(attack.fragmentation_damage || {}),
@@ -1458,6 +1459,7 @@ async function _rollDamageFromChatAction(payload) {
             name: payload.sourceLabel || item.name,
             formula: dmg.formula,
             type: dmg.type,
+            nature: dmg.nature || "",
             armor_divisor: dmg.armor_divisor,
             follow_up_damage: foundry.utils.duplicate(dmg.follow_up_damage || {}),
             fragmentation_damage: foundry.utils.duplicate(dmg.fragmentation_damage || {}),
@@ -1527,7 +1529,7 @@ async function _rollDamageFromChatAction(payload) {
 
     const summarySegments = [];
     const mainDisplayFormula = extractMathFormula(resolveBaseDamage(actor, normalizedAttack.formula));
-    summarySegments.push(`${mainDisplayFormula} ${normalizedAttack.type || ""}`.trim());
+        summarySegments.push(`${mainDisplayFormula} ${normalizedAttack.type || ""}${normalizedAttack.nature?.label ? ` [${normalizedAttack.nature.label}]` : ""}`.trim());
     if (normalizedAttack.follow_up_damage?.formula) {
         const fuDisplay = extractMathFormula(resolveBaseDamage(actor, normalizedAttack.follow_up_damage.formula));
         summarySegments.push(`FU: ${fuDisplay} ${normalizedAttack.follow_up_damage.type || ""}`.trim());
@@ -1543,15 +1545,18 @@ async function _rollDamageFromChatAction(payload) {
             formula: normalizedAttack.formula,
             displayFormula: mainDisplayFormula,
             summaryFormula: summarySegments.join(" • "),
-            type: normalizedAttack.type || ""
+                        type: normalizedAttack.type || "",
+            natureDisplay: normalizedAttack.nature || ""
         },
         followUp: {
             formula: normalizedAttack.follow_up_damage?.formula || "",
-            type: normalizedAttack.follow_up_damage?.type || ""
+            type: normalizedAttack.follow_up_damage?.type || "",
+            natureDisplay: normalizedAttack.follow_up_damage?.nature || ""
         },
         fragmentation: {
             formula: normalizedAttack.fragmentation_damage?.formula || "",
-            type: normalizedAttack.fragmentation_damage?.type || ""
+            type: normalizedAttack.fragmentation_damage?.type || "",
+            natureDisplay: normalizedAttack.fragmentation_damage?.nature || ""
         }
     });
 
@@ -1565,17 +1570,20 @@ async function _rollDamageFromChatAction(payload) {
     };
 
     normalizedAttack.formula = appendAdditional(normalizedAttack.formula, promptResult.mainAdditional);
+      normalizedAttack.nature = promptResult.mainNature || null;
 
     if (promptResult.followUpAdditional) {
         normalizedAttack.follow_up_damage = normalizedAttack.follow_up_damage || { formula: "", type: "", armor_divisor: 1 };
         normalizedAttack.follow_up_damage.formula = appendAdditional(normalizedAttack.follow_up_damage.formula || "0", promptResult.followUpAdditional);
         if (!normalizedAttack.follow_up_damage.type && promptResult.followUpType) normalizedAttack.follow_up_damage.type = promptResult.followUpType;
+        normalizedAttack.follow_up_damage.nature = promptResult.followUpNature || null;
     }
 
     if (promptResult.fragmentationAdditional) {
         normalizedAttack.fragmentation_damage = normalizedAttack.fragmentation_damage || { formula: "", type: "", armor_divisor: 1 };
         normalizedAttack.fragmentation_damage.formula = appendAdditional(normalizedAttack.fragmentation_damage.formula || "0", promptResult.fragmentationAdditional);
         if (!normalizedAttack.fragmentation_damage.type && promptResult.fragmentationType) normalizedAttack.fragmentation_damage.type = promptResult.fragmentationType;
+        normalizedAttack.fragmentation_damage.nature = promptResult.fragmentationNature || null;
     }
 
     const rolls = [];
@@ -1615,6 +1623,7 @@ async function _rollDamageFromChatAction(payload) {
         main: {
             total: mainRoll.total,
             type: normalizedAttack.type || "",
+            nature: normalizedAttack.nature || null,
             armorDivisor: normalizedAttack.armor_divisor || 1
         },
         onDamageEffects: combinedOnDamageEffects,
@@ -1625,6 +1634,7 @@ async function _rollDamageFromChatAction(payload) {
         damagePackage.followUp = {
             total: followUpRoll.total,
             type: normalizedAttack.follow_up_damage.type || "",
+            nature: normalizedAttack.follow_up_damage.nature || null,
             armorDivisor: normalizedAttack.follow_up_damage.armor_divisor || 1
         };
     }
@@ -1633,13 +1643,14 @@ async function _rollDamageFromChatAction(payload) {
         damagePackage.fragmentation = {
             total: fragRoll.total,
             type: normalizedAttack.fragmentation_damage.type || "",
+            nature: normalizedAttack.fragmentation_damage.nature || null,
             armorDivisor: normalizedAttack.fragmentation_damage.armor_divisor || 1
         };
     }
 
     const mainDiceHtml = mainRoll.dice.flatMap((d) => d.results).map((r) => `<span class="die-damage">${r.result}</span>`).join("");
     const formulaSegments = [];
-    formulaSegments.push(`${mainFormula}${normalizedAttack.armor_divisor && normalizedAttack.armor_divisor !== 1 ? `(${normalizedAttack.armor_divisor})` : ""} ${normalizedAttack.type || ""}`.trim());
+    formulaSegments.push(`${mainFormula}${normalizedAttack.armor_divisor && normalizedAttack.armor_divisor !== 1 ? `(${normalizedAttack.armor_divisor})` : ""} ${normalizedAttack.type || ""}${normalizedAttack.nature?.label ? ` [${normalizedAttack.nature.label}]` : ""}`.trim());
     if (followUpRoll) {
         formulaSegments.push(`${followUpFormula}${normalizedAttack.follow_up_damage.armor_divisor && normalizedAttack.follow_up_damage.armor_divisor !== 1 ? `(${normalizedAttack.follow_up_damage.armor_divisor})` : ""} ${normalizedAttack.follow_up_damage.type || ""}`.trim());
     }

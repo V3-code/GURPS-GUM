@@ -859,3 +859,38 @@
     grid-template-columns: repeat(2, minmax(120px, 1fr));
   }
 }
+/* Damage nature and optional wound registration */
+.damage-application-window .selector-row > select { width: 100%; }
+
+.damage-application-dialog .effects-list-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.damage-application-dialog .wound-registration-options {
+  display: grid;
+  grid-template-columns: minmax(145px, auto) minmax(180px, 1fr);
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 7px;
+  border: 1px solid rgba(197, 160, 91, 0.42);
+  border-radius: 4px;
+  background: rgba(197, 160, 91, 0.06);
+}
+
+.damage-application-dialog .wound-registration-options .wound-registration-toggle {
+  min-height: 28px;
+  white-space: nowrap;
+}
+
+.damage-application-dialog .wound-registration-options select {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.28);
+  color: #e1e1e1;
+}

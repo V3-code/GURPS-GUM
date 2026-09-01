@@ -10,6 +10,7 @@ import { buildSkillModifierIndicators } from "../utils/skill-modifier-indicators
 import { resolveCharacterImage } from "../utils/character-image.mjs";
 import { buildSecondaryStatsRecalculationPlan, buildSecondaryStatsUpdateData, formatBasicDamageDiceCount } from "../utils/secondary-stats-recalculation.mjs";
 import { SOCIAL_CATEGORIES, SOCIAL_MANUAL_LAYOUTS, buildSocialSections, calculateManualSocialPoints } from "../config/social-aspects.mjs";
+import { DAMAGE_NATURES, formatDamageNature, resolveDamageNature } from "../utils/damage-nature.mjs";
 
 const { ActorSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -988,6 +989,9 @@ async getData(options) {
                 preparedCombatMeters.sort((a, b) => a.meter.name.localeCompare(b.meter.name));
 
                 context.preparedCombatMeters = preparedCombatMeters;
+                context.preparedWounds = Object.entries(context.actor.system.combat?.wounds || {}).map(([id, wound]) => ({
+                    id, ...wound, natureDisplay: formatDamageNature(wound.nature)
+                })).sort((a, b) => Number(b.updatedAt || b.createdAt || 0) - Number(a.updatedAt || a.createdAt || 0));
                 context.showHiddenMeters = includeHiddenMeters;
                 context.spellReserves = this._normalizeResourceCollection(context.actor.system.spell_reserves || {}, { defaultName: "Reserva de Magia" });
                 context.powerReserves = this._normalizeResourceCollection(context.actor.system.power_reserves || {}, { defaultName: "Reserva de Poder" });
@@ -1837,6 +1841,9 @@ html.on("click", ".delete-combat-meter", (ev) => this._onDeleteCombatMeter(ev));
 html.on("click", ".hide-combat-meter", (ev) => this._onToggleCombatMeterVisibility(ev));
 html.on("click", ".show-hidden-meters", (ev) => this._onToggleHiddenMeters(ev));
 html.on("change", ".combat-meters-box .meter-inputs input", (ev) => this._onCombatMeterInputChange(ev));
+html.on("click", ".add-wound", (ev) => this._onEditWound(ev));
+html.on("click", ".edit-wound", (ev) => this._onEditWound(ev));
+html.on("click", ".delete-wound", (ev) => this._onDeleteWound(ev));
 this._setupActionMenuListeners(html);
 
 // -------------------------------------------------------------
@@ -2470,6 +2477,7 @@ html.on("click", ".rollable-damage", async (ev) => {
       name: `${item.name} (${attack.mode ?? attackId})`,
       formula: attack.damage_formula,
       type: attack.damage_type,
+      nature: attack.damage_nature || "",
       armor_divisor: attack.armor_divisor,
       follow_up_damage: foundry.utils.duplicate(attack.follow_up_damage || {}),
       fragmentation_damage: foundry.utils.duplicate(attack.fragmentation_damage || {}),
@@ -2490,6 +2498,7 @@ html.on("click", ".rollable-damage", async (ev) => {
       name: item.name,
       formula: dmg.formula,
       type: dmg.type,
+      nature: dmg.nature || "",
       armor_divisor: dmg.armor_divisor,
       follow_up_damage: foundry.utils.duplicate(dmg.follow_up_damage || {}),
       fragmentation_damage: foundry.utils.duplicate(dmg.fragmentation_damage || {}),
@@ -2568,7 +2577,7 @@ html.on("click", ".rollable-damage", async (ev) => {
 
   const summarySegments = [];
   const mainDisplayFormula = extractMathFormula(resolveBaseDamage(this.actor, normalizedAttack.formula));
-  summarySegments.push(`${mainDisplayFormula} ${normalizedAttack.type || ""}`.trim());
+  summarySegments.push(`${mainDisplayFormula} ${normalizedAttack.type || ""}${normalizedAttack.nature?.label ? ` [${normalizedAttack.nature.label}]` : ""}`.trim());
   if (normalizedAttack.follow_up_damage?.formula) {
     const fuDisplay = extractMathFormula(resolveBaseDamage(this.actor, normalizedAttack.follow_up_damage.formula));
     summarySegments.push(`FU: ${fuDisplay} ${normalizedAttack.follow_up_damage.type || ""}`.trim());
@@ -2584,17 +2593,20 @@ html.on("click", ".rollable-damage", async (ev) => {
       formula: normalizedAttack.formula,
       displayFormula: mainDisplayFormula,
       summaryFormula: summarySegments.join(" • "),
-      type: normalizedAttack.type || ""
+      type: normalizedAttack.type || "",
+      natureDisplay: normalizedAttack.nature || ""
     },
     followUp: {
       formula: normalizedAttack.follow_up_damage?.formula || "",
       displayFormula: normalizedAttack.follow_up_damage?.formula ? extractMathFormula(resolveBaseDamage(this.actor, normalizedAttack.follow_up_damage.formula)) : "",
-      type: normalizedAttack.follow_up_damage?.type || ""
+      type: normalizedAttack.follow_up_damage?.type || "",
+      natureDisplay: normalizedAttack.follow_up_damage?.nature || ""
     },
     fragmentation: {
       formula: normalizedAttack.fragmentation_damage?.formula || "",
       displayFormula: normalizedAttack.fragmentation_damage?.formula ? extractMathFormula(resolveBaseDamage(this.actor, normalizedAttack.fragmentation_damage.formula)) : "",
-      type: normalizedAttack.fragmentation_damage?.type || ""
+      type: normalizedAttack.fragmentation_damage?.type || "",
+      natureDisplay: normalizedAttack.fragmentation_damage?.nature || ""
     }
   });
 
@@ -2608,17 +2620,20 @@ html.on("click", ".rollable-damage", async (ev) => {
   };
 
   normalizedAttack.formula = appendAdditional(normalizedAttack.formula, promptResult.mainAdditional);
+  normalizedAttack.nature = promptResult.mainNature || null;
 
   if (promptResult.followUpAdditional) {
     normalizedAttack.follow_up_damage = normalizedAttack.follow_up_damage || { formula: "", type: "", armor_divisor: 1 };
     normalizedAttack.follow_up_damage.formula = appendAdditional(normalizedAttack.follow_up_damage.formula || "0", promptResult.followUpAdditional);
     if (!normalizedAttack.follow_up_damage.type && promptResult.followUpType) normalizedAttack.follow_up_damage.type = promptResult.followUpType;
+    normalizedAttack.follow_up_damage.nature = promptResult.followUpNature || null;
   }
 
   if (promptResult.fragmentationAdditional) {
     normalizedAttack.fragmentation_damage = normalizedAttack.fragmentation_damage || { formula: "", type: "", armor_divisor: 1 };
     normalizedAttack.fragmentation_damage.formula = appendAdditional(normalizedAttack.fragmentation_damage.formula || "0", promptResult.fragmentationAdditional);
     if (!normalizedAttack.fragmentation_damage.type && promptResult.fragmentationType) normalizedAttack.fragmentation_damage.type = promptResult.fragmentationType;
+    normalizedAttack.fragmentation_damage.nature = promptResult.fragmentationNature || null;
   }
 
   // --------------------------------------------------
@@ -2673,6 +2688,7 @@ html.on("click", ".rollable-damage", async (ev) => {
       main: {
         total: mainRoll.total,
         type: normalizedAttack.type || "",
+        nature: normalizedAttack.nature || null,
         armorDivisor: normalizedAttack.armor_divisor || 1
       },
       onDamageEffects: combinedOnDamageEffects,
@@ -2683,6 +2699,7 @@ html.on("click", ".rollable-damage", async (ev) => {
       damagePackage.followUp = {
         total: followUpRoll.total,
         type: normalizedAttack.follow_up_damage.type || "",
+        nature: normalizedAttack.follow_up_damage.nature || null,
         armorDivisor: normalizedAttack.follow_up_damage.armor_divisor || 1
       };
     }
@@ -2691,6 +2708,7 @@ html.on("click", ".rollable-damage", async (ev) => {
       damagePackage.fragmentation = {
         total: fragRoll.total,
         type: normalizedAttack.fragmentation_damage.type || "",
+        nature: normalizedAttack.fragmentation_damage.nature || null,
         armorDivisor: normalizedAttack.fragmentation_damage.armor_divisor || 1
       };
     }
@@ -2699,7 +2717,7 @@ html.on("click", ".rollable-damage", async (ev) => {
      const mainDiceHtml = mainRoll.dice.flatMap((d) => d.results).map((r) => `<span class="die-damage">${r.result}</span>`).join("");
 
     const formulaSegments = [];
-    formulaSegments.push(`${mainFormula}${normalizedAttack.armor_divisor && normalizedAttack.armor_divisor !== 1 ? `(${normalizedAttack.armor_divisor})` : ""} ${normalizedAttack.type || ""}`.trim());
+    formulaSegments.push(`${mainFormula}${normalizedAttack.armor_divisor && normalizedAttack.armor_divisor !== 1 ? `(${normalizedAttack.armor_divisor})` : ""} ${normalizedAttack.type || ""}${normalizedAttack.nature?.label ? ` [${normalizedAttack.nature.label}]` : ""}`.trim());
     if (followUpRoll) {
       formulaSegments.push(`${fuClean}${normalizedAttack.follow_up_damage.armor_divisor && normalizedAttack.follow_up_damage.armor_divisor !== 1 ? `(${normalizedAttack.follow_up_damage.armor_divisor})` : ""} ${normalizedAttack.follow_up_damage.type || ""}`.trim());
     }
@@ -4234,6 +4252,38 @@ async _onDeleteCombatMeter(ev) {
       await this.actor.update({ [`system.combat.combat_meters.-=${meterId}`]: null });
     }
   });
+}
+
+async _onEditWound(ev) {
+  ev.preventDefault();
+  const woundId = ev.currentTarget.closest(".wound-card")?.dataset?.woundId || foundry.utils.randomID();
+  const current = this.actor.system.combat?.wounds?.[woundId] || {};
+  const natureOptions = DAMAGE_NATURES.map(n => `<option value="${formatDamageNature(n)}"></option>`).join("");
+  const esc = value => foundry.utils.escapeHTML(String(value ?? ""));
+  const content = `<form class="gum-popup-form gum-wound-form" autocomplete="off">
+    <datalist id="gum-wound-natures">${natureOptions}</datalist>
+    <div class="form-group form-group--full"><label>Título</label><input name="title" value="${esc(current.title)}" required></div>
+    <div class="form-group"><label>Valor</label><input name="value" type="number" min="0" value="${Number(current.value || 0)}"></div>
+    <div class="form-group"><label>Restante</label><input name="remaining" type="number" min="0" value="${Number(current.remaining ?? current.value ?? 0)}"></div>
+    <div class="form-group"><label>Destino</label><input name="poolLabel" value="${esc(current.poolLabel)}"></div>
+    <div class="form-group"><label>Natureza</label><input name="nature" list="gum-wound-natures" value="${esc(formatDamageNature(current.nature))}"></div>
+    <div class="form-group"><label>Local</label><input name="location" value="${esc(current.location)}"></div>
+    <div class="form-group"><label>Origem</label><input name="origin" value="${esc(current.origin)}"></div>
+    <div class="form-group form-group--full"><label>Observação</label><textarea name="notes">${esc(current.notes)}</textarea></div>
+  </form>`;
+  new Dialog({ title: current.title ? "Editar Ferimento" : "Novo Ferimento", content, buttons: { save: { label: "Salvar", callback: async html => {
+    const f = html.find("form")[0]; const rawNature = f.nature.value.trim(); const nature = rawNature ? resolveDamageNature(rawNature) : null;
+    if (!f.title.value.trim()) return ui.notifications.warn("Informe o título do ferimento.");
+    if (rawNature && !nature) return ui.notifications.warn("Natureza inválida.");
+    await this.actor.update({ [`system.combat.wounds.${woundId}`]: { ...current, title: f.title.value.trim(), value: Number(f.value.value)||0, remaining: Number(f.remaining.value)||0, poolLabel: f.poolLabel.value.trim(), nature, location: f.location.value.trim(), origin: f.origin.value.trim(), notes: f.notes.value.trim(), createdAt: current.createdAt || Date.now(), updatedAt: Date.now() }});
+  }}, cancel: { label: "Cancelar" } }, default: "save" }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog"] }).render(true);
+}
+
+async _onDeleteWound(ev) {
+  ev.preventDefault();
+  const id = ev.currentTarget.closest(".wound-card")?.dataset?.woundId;
+  if (!id) return;
+  Dialog.confirm({ title: "Excluir ferimento?", content: "<p>Este card será removido permanentemente.</p>", yes: () => this.actor.update({ [`system.combat.wounds.-=${id}`]: null }) });
 }
 
 async _onToggleCombatMeterVisibility(ev) {

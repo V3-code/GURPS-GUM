@@ -254,7 +254,8 @@
         "defense_bonus": 0,
         "dr_mods": {},
         "dr_temp_mods": {},
-        "combat_meters": {}
+        "combat_meters": {},
+        "wounds": {}
       },
       "notes": {
         "combat": "",
@@ -446,14 +447,17 @@
         "formula": "",
         "type": "",
         "scaling": "",
-        "armor_divisor": 1
+        "armor_divisor": 1,
+        "nature": ""
       },
       "fragmentation_damage": {
         "formula": "",
         "type": "",
         "scaling": "",
-        "armor_divisor": 1
-      }
+        "armor_divisor": 1,
+        "nature": ""
+      },
+      "damage_nature": ""
     },
     "attack_ranged": {
       "mode": "Novo Ataque L.D.",
@@ -477,14 +481,17 @@
         "formula": "",
         "type": "",
         "scaling": "",
-        "armor_divisor": 1
+        "armor_divisor": 1,
+        "nature": ""
       },
       "fragmentation_damage": {
         "formula": "",
         "type": "",
         "scaling": "",
-        "armor_divisor": 1
-      }
+        "armor_divisor": 1,
+        "nature": ""
+      },
+      "damage_nature": ""
     },
     "advantage": {
       "templates": [
@@ -629,14 +636,17 @@
           "formula": "",
           "type": "",
           "scaling": "",
-          "armor_divisor": 1
+          "armor_divisor": 1,
+          "nature": ""
         },
         "fragmentation_damage": {
           "formula": "",
           "type": "",
           "scaling": "",
-          "armor_divisor": 1
-        }
+          "armor_divisor": 1,
+          "nature": ""
+        },
+        "nature": ""
       }
     },
      "power": {
@@ -685,14 +695,17 @@
           "formula": "",
           "type": "",
           "scaling": "",
-          "armor_divisor": 1
+          "armor_divisor": 1,
+          "nature": ""
         },
         "fragmentation_damage": {
           "formula": "",
           "type": "",
           "scaling": "",
-          "armor_divisor": 1
-        }
+          "armor_divisor": 1,
+          "nature": ""
+        },
+        "nature": ""
       }
     },
     "condition": {

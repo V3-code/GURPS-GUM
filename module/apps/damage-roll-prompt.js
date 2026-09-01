@@ -1,4 +1,5 @@
 import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
+import { DAMAGE_NATURES, formatDamageNature, resolveDamageNature } from "../utils/damage-nature.mjs";
 export class GurpsDamageRollPrompt extends FormApplication {
     constructor(options = {}) {
         super(options);
@@ -12,7 +13,7 @@ export class GurpsDamageRollPrompt extends FormApplication {
             title: "Configurar Rolagem de Dano",
             id: "gurps-damage-roll-prompt",
             template: "systems/gum/templates/apps/damage-roll-prompt.hbs",
-            width: 460,
+            width: 560,
             height: "auto",
             classes: ["gum", "damage-roll-prompt", "theme-dark"],
             closeOnSubmit: true
@@ -64,6 +65,7 @@ export class GurpsDamageRollPrompt extends FormApplication {
             main,
             followUp,
             fragmentation,
+            natureOptions: DAMAGE_NATURES.map(nature => ({ value: formatDamageNature(nature), label: formatDamageNature(nature) })),
             visualCards,
             mainTypeLocked: !!main.type,
             followUpTypeLocked: !!followUp.type,
@@ -266,6 +268,15 @@ export class GurpsDamageRollPrompt extends FormApplication {
             { key: "fragmentation", expr: fragExpr, type: this.damageData.fragmentation?.type || formData.fragmentationType || "", fallbackType: formData.fragmentationType || "" }
         ];
 
+        const natureFields = ["mainNature", "followUpNature", "fragmentationNature"];
+        const natures = natureFields.map(key => {
+            const raw = String(formData[key] || "").trim();
+            return raw ? resolveDamageNature(raw) : null;
+        });
+        if (natureFields.some((key, i) => String(formData[key] || "").trim() && !natures[i])) {
+            return { valid: false, error: "Natureza inválida. Use uma opção conhecida ou Nome [ABC]." };
+        }
+
         for (const section of sections) {
             if (!this._isValidAdditionalFormula(section.expr)) {
                 return { valid: false, error: `Expressão inválida em ${section.key}.` };
@@ -283,6 +294,9 @@ export class GurpsDamageRollPrompt extends FormApplication {
                 fragmentationAdditional: this._normalizeAdditionalFormula(fragExpr),
                 followUpType: sections[1].type,
                 fragmentationType: sections[2].type
+                ,mainNature: natures[0]
+                ,followUpNature: natures[1]
+                ,fragmentationNature: natures[2]
             }
         };
     }

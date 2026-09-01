@@ -494,7 +494,10 @@
 }
 .gum-damage-roll-prompt .damage-modifier-section h4 { margin: 0 0 8px; color: var(--gum-accent-gold); text-transform: uppercase; font-size: 12px; letter-spacing: 1.2px; text-align: center; }
 .gum-damage-roll-prompt .damage-row {
-  display:grid; grid-template-columns: 1.4fr 1fr .8fr; gap:8px; align-items:center;
+  display: grid;
+  grid-template-columns: minmax(145px, 1.35fr) minmax(125px, 1fr) minmax(100px, 0.8fr) minmax(120px, 1fr);
+  gap: 8px;
+  align-items: center;
   margin-bottom:6px; padding: 6px; border-radius: 8px;
   background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
 }

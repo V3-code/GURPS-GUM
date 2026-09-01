@@ -320,7 +320,7 @@
 
 .gum.sheet.item .item-damage-table {
   display: grid;
-  grid-template-columns: 0.95fr 0.45fr 0.35fr 0.45fr 0.2fr;
+    grid-template-columns: minmax(110px, 1.15fr) minmax(75px, 0.8fr) minmax(55px, 0.55fr) minmax(85px, 0.85fr) minmax(48px, 0.4fr) minmax(90px, 1fr);
   gap: 5px;
   align-items: center;
   margin-top: 10px;
@@ -1491,7 +1491,7 @@ color:#121114;
 
 .attack-editor-dialog .attack-damage-table {
   display: grid;
-  grid-template-columns: 0.75fr 0.45fr 0.35fr 0.45fr 0.2fr;
+    grid-template-columns: minmax(110px, 1.15fr) minmax(75px, 0.8fr) minmax(55px, 0.55fr) minmax(85px, 0.85fr) minmax(48px, 0.4fr) minmax(90px, 1fr);
   gap: 5px;
   align-items: center;
   margin-top: 10px;

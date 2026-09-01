@@ -7,6 +7,7 @@ import { evaluateBarrierConsequence, normalizeResistanceRoll } from "../../modul
 import { executeRollRequest } from "../../module/services/roll-request-service.js";
 import { getPurposeLabels } from "../../module/utils/roll-purposes.mjs";
 import { renderPendingResistanceRequest } from "../../module/utils/roll-request-view.mjs";
+import { DAMAGE_NATURES, formatDamageNature, resolveDamageNature } from "../../module/utils/damage-nature.mjs";
 
 export default class DamageApplicationWindow extends Application {
     
@@ -451,7 +452,10 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
     async getData() {
         // ... (Seu método getData, 100% preservado e sem alterações)
         const context = await super.getData();
-        context.damage = this.damageData;
+        context.damage = this.damageData;        
+        context.natureOptions = DAMAGE_NATURES.map(nature => ({ value: formatDamageNature(nature), label: formatDamageNature(nature) }));
+        context.activeNature = formatDamageNature(this.damageData.main?.nature);
+        context.existingWounds = Object.entries(this.targetActor.system?.combat?.wounds || {}).map(([id, wound]) => ({ id, ...wound }))
         context.attacker = {
             id: this.attackerActor?.id,
             name: this.attackerActor?.name,
@@ -536,7 +540,24 @@ const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
     activateListeners(html) {
         super.activateListeners(html);
         const form = html[0];
-        this.form = form;
+        this.form = form;        
+
+        const syncCompatibleWounds = () => {
+            const poolPath = form.querySelector('[name="damage_target_pool"]')?.value || "";
+            const nature = resolveDamageNature(form.querySelector('[name="damage_nature"]')?.value || "");
+            const select = form.querySelector('[name="existing_wound"]');
+            if (!select) return;
+            for (const option of [...select.options].slice(1)) {
+                // Without a nature, every existing card remains available for explicit manual selection.
+                const compatible = !nature || (option.dataset.poolPath === poolPath && option.dataset.natureId === nature.id);
+                option.hidden = !compatible;
+                option.disabled = !compatible;
+            }
+            if (select.selectedOptions[0]?.disabled) select.value = "";
+        };
+        form.querySelector('[name="damage_target_pool"]')?.addEventListener('change', syncCompatibleWounds);
+        form.querySelector('[name="damage_nature"]')?.addEventListener('input', syncCompatibleWounds);
+        syncCompatibleWounds();
 
         // --- SEUS LISTENERS ORIGINAIS (INTACTOS) ---
         form.querySelectorAll('.damage-card').forEach(card => {
@@ -572,8 +593,11 @@ const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
                 const newDamage = this.damageData[ev.currentTarget.dataset.damageKey];
                 const damageInput = form.querySelector('[name="damage_rolled"]');
                 const armorInput = form.querySelector('[name="armor_divisor"]');
+                const natureInput = form.querySelector('[name="damage_nature"]');
                 if (damageInput) damageInput.value = newDamage.total || 0;
                 if (armorInput) armorInput.value = newDamage.armorDivisor || 1;
+                if (natureInput) natureInput.value = formatDamageNature(newDamage.nature);
+                syncCompatibleWounds();
                 this._updateDamageCalculation(form);
             });
         });
@@ -890,7 +914,7 @@ async _updateDamageCalculation(form) {
     if (notesContainer) { notesContainer.innerHTML = notesHtml ? `<ul>${notesHtml}</ul>` : ""; }
     
     // --- LÓGICA DE PREVIEW DE EFEITOS "AO CAUSAR DANO" ---
-    const effectsSummaryEl = form.querySelector(".effects-summary");
+    const effectsSummaryEl = form.querySelector(".effects-list-summary");
     const actionButtonsEl = form.querySelector(".action-buttons");
     if (!effectsSummaryEl || !actionButtonsEl) return;
     let potentialEffectsHTML = '';
@@ -1161,7 +1185,10 @@ async _onNpcResistanceRoll(effectId) {
             const selectedPoolPath = form.querySelector('[name="damage_target_pool"]').value;
             if (!selectedPoolPath) { this.isApplying = false; return ui.notifications.error("Nenhum alvo para o dano foi selecionado."); }
             const currentPoolValue = foundry.utils.getProperty(this.targetActor, selectedPoolPath);
-            const poolLabel = form.querySelector('[name="damage_target_pool"] option:checked').textContent;
+            const poolLabel = form.querySelector('[name="damage_target_pool"] option:checked').textContent;            
+            const natureRaw = form.querySelector('[name="damage_nature"]')?.value || "";
+            const damageNature = natureRaw ? resolveDamageNature(natureRaw) : null;
+            if (natureRaw && !damageNature) { this.isApplying = false; return ui.notifications.error("Natureza do dano inválida."); }
             let summaryMessage = null;
             let eventData = null;
             
@@ -1195,6 +1222,10 @@ async _onNpcResistanceRoll(effectId) {
                 const sign = applyAsHeal ? 1 : -1;
                 const newPoolValue = currentPoolValue + (sign * finalInjury);
                 await this.targetActor.update({ [selectedPoolPath]: newPoolValue });
+            }
+
+            if (form.querySelector('[name="register_wound"]')?.checked && !applyAsHeal && !effectsOnlyChecked && finalInjury > 0) {
+                await this._registerWound(form, { amount: finalInjury, poolPath: selectedPoolPath, poolLabel, nature: damageNature });
             }
 
             const appliedEffectNames = [];
@@ -1290,6 +1321,31 @@ async _onNpcResistanceRoll(effectId) {
         } finally {
             this.isApplying = false;
         }
+    }
+
+    async _registerWound(form, { amount, poolPath, poolLabel, nature }) {
+        const wounds = this.targetActor.system?.combat?.wounds || {};
+        const selectedId = form.querySelector('[name="existing_wound"]')?.value || "";
+        if (selectedId && wounds[selectedId]) {
+            const wound = wounds[selectedId];
+            await this.targetActor.update({
+                [`system.combat.wounds.${selectedId}.value`]: Number(wound.value || 0) + amount,
+                [`system.combat.wounds.${selectedId}.remaining`]: Number(wound.remaining ?? wound.value ?? 0) + amount,
+                [`system.combat.wounds.${selectedId}.updatedAt`]: Date.now()
+            });
+            return;
+        }
+        const activeLocation = form.querySelector('.location-row.active .label')?.textContent?.trim() || "";
+        const title = `${poolLabel}: ${amount}`;
+        const id = foundry.utils.randomID();
+        await this.targetActor.update({ [`system.combat.wounds.${id}`]: {
+            title, value: amount, remaining: amount, poolPath, poolLabel,
+            nature: nature || null, location: activeLocation,
+            origin: this.damageData.sourceName || this.attackerActor?.name || "",
+            attacker: this.attackerActor?.name || "",
+            notes: "",
+            createdAt: Date.now(), updatedAt: Date.now()
+        }});
     }
 
     async _executeContingentAction(effect, eventContext) {
