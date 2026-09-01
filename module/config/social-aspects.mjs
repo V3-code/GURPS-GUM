@@ -18,6 +18,18 @@ export const SOCIAL_CATEGORIES = Object.freeze({
     ["value", "GUM.Social.Fields.ReactionValue", "number", { row: 1, compact: true }], ["title", "GUM.Social.Fields.ReputationTitle", "text", { row: 1 }], ["audience", "GUM.Social.Fields.Audience", "text", { row: 2 }], ["circumstance", "GUM.Social.Fields.Circumstance", "text", { row: 2 }], ["recognition_frequency", "GUM.Social.Fields.Frequency", "text", { row: 2 }], ["notes", "GUM.Social.Fields.ReactionDescription", "textarea", { row: 3, wide: true }], ["points", "GUM.Social.Fields.Points", "number"] ] }
 });
 
+/** Field order and width (on a 12-column grid) used by manual actor dialogs. */
+export const SOCIAL_MANUAL_LAYOUTS = Object.freeze({
+  status: [["society", 9], ["points", 3], ["level", 2], ["status_name", 5], ["monthly_cost", 5], ["description", 12]],
+  organization: [["organization_name", 9], ["points", 3], ["level", 2], ["status_name", 5], ["salary", 5], ["description", 12]],
+  culture: [["culture_name", 7], ["points", 2], ["level", 3], ["description", 12]],
+  language: [["language_name", 9], ["points", 3], ["spoken_level", 6], ["written_level", 6], ["description", 12]],
+  wealth: [["wealth_level", 9], ["points", 3], ["effects", 12]],
+  bond: [["name", 5], ["bond_type", 5], ["points", 2], ["description", 12]],
+  reputation: [["title", 8], ["reaction_modifier", 2], ["points", 2], ["scope", 4], ["circumstance", 4], ["recognition_frequency", 4], ["notes", 12]],
+  reaction: [["title", 8], ["value", 2], ["points", 2], ["audience", 4], ["circumstance", 4], ["recognition_frequency", 4], ["notes", 12]]
+});
+
 const values = (collection) => collection ? Object.entries(collection) : [];
 
 const SOCIAL_PRESENTATION = Object.freeze({

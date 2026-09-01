@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { SOCIAL_CATEGORIES, buildSocialSections, calculateManualSocialPoints } from "../module/config/social-aspects.mjs";
+import { SOCIAL_CATEGORIES, SOCIAL_MANUAL_LAYOUTS, buildSocialSections, calculateManualSocialPoints } from "../module/config/social-aspects.mjs";
 
 const item = (id, contributions) => ({ id, type: "advantage", name: "Aliados", img: "ally.webp", system: { points: 10, social_contributions: contributions } });
 test("supports multiple contributions and combines legacy manual records", () => {
@@ -128,6 +128,24 @@ test("manual social dialogs use the shared dark editor presentation", () => {
   assert.match(styles, /\.dialog\.gum\.gum-social-category-dialog \.window-header/);
   assert.match(styles, /button\[data-button="save"\]/);
   assert.match(styles, /button\[data-button="add"\]/);
+});
+
+test("manual social dialogs keep compact values beside their related fields", () => {
+  assert.deepEqual(SOCIAL_MANUAL_LAYOUTS.status, [["society", 9], ["points", 3], ["level", 2], ["status_name", 5], ["monthly_cost", 5], ["description", 12]]);
+  assert.deepEqual(SOCIAL_MANUAL_LAYOUTS.organization, [["organization_name", 9], ["points", 3], ["level", 2], ["status_name", 5], ["salary", 5], ["description", 12]]);
+  assert.deepEqual(SOCIAL_MANUAL_LAYOUTS.culture, [["culture_name", 7], ["points", 2], ["level", 3], ["description", 12]]);
+  assert.deepEqual(SOCIAL_MANUAL_LAYOUTS.language, [["language_name", 9], ["points", 3], ["spoken_level", 6], ["written_level", 6], ["description", 12]]);
+  assert.deepEqual(SOCIAL_MANUAL_LAYOUTS.wealth, [["wealth_level", 9], ["points", 3], ["effects", 12]]);
+  assert.deepEqual(SOCIAL_MANUAL_LAYOUTS.bond, [["name", 5], ["bond_type", 5], ["points", 2], ["description", 12]]);
+  assert.deepEqual(SOCIAL_MANUAL_LAYOUTS.reputation, [["title", 8], ["reaction_modifier", 2], ["points", 2], ["scope", 4], ["circumstance", 4], ["recognition_frequency", 4], ["notes", 12]]);
+  assert.deepEqual(SOCIAL_MANUAL_LAYOUTS.reaction, [["title", 8], ["value", 2], ["points", 2], ["audience", 4], ["circumstance", 4], ["recognition_frequency", 4], ["notes", 12]]);
+
+  const source = readFileSync(new URL("../module/actor/gurps-actor-sheet.js", import.meta.url), "utf8");
+  const styles = readFileSync(new URL("../styles/styles.css", import.meta.url), "utf8");
+  assert.match(source, /--social-field-span:\$\{field\.span \|\| 6\}/);
+  assert.match(source, /signedNumberFields = \["reaction_modifier", "value"\]/);
+  assert.match(styles, /grid-template-columns: repeat\(12, minmax\(0, 1fr\)\)/);
+  assert.match(styles, /grid-column: span var\(--social-field-span, 6\)/);
 });
 
 test("captures social contribution state before Foundry rerenders", () => {

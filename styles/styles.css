@@ -6412,6 +6412,10 @@ background-color: var(--gum-accent-gold);
     gap: 9px 10px;
 }
 
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
 .dialog.gum .gum-social-dialog-intro {
     display: flex;
     grid-column: 1 / -1;
@@ -6457,6 +6461,10 @@ background-color: var(--gum-accent-gold);
     border: 1px solid rgba(255, 255, 255, 0.055);
     border-radius: 6px;
     background: rgba(9, 10, 13, 0.22);
+}
+
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form .form-group {
+    grid-column: span var(--social-field-span, 6);
 }
 
 .dialog.gum.gum-social-edit-dialog .gum-social-entry-form label,
@@ -6567,6 +6575,10 @@ background-color: var(--gum-accent-gold);
     .dialog.gum.gum-social-edit-dialog .dialog-buttons,
     .dialog.gum.gum-social-category-dialog .dialog-buttons {
         padding: 9px 10px 10px;
+    }
+
+    .dialog.gum.gum-social-edit-dialog .gum-social-entry-form .form-group {
+        grid-column: 1 / -1;
     }
 }
 @media (max-width: 520px) {

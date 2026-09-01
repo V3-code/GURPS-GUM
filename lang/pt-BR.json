@@ -48,7 +48,7 @@
   "GUM.Social.Fields.SpokenLevel": "Nível de fala",
   "GUM.Social.Fields.WrittenLevel": "Nível de escrita",
   "GUM.Social.Fields.LanguageDescription": "Descrição sobre o idioma",
-  "GUM.Social.Fields.ReputationTitle": "Título da reputação",
+  "GUM.Social.Fields.ReputationTitle": "Título da reputação/modificador",
   "GUM.Social.Fields.ReputationDescription": "Descrição da reputação",
   "GUM.Social.Fields.WealthDescription": "Descrição da riqueza",
   "GUM.Social.Fields.BondType": "Tipo de vínculo",
