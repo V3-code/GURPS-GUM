@@ -138,7 +138,7 @@
         <div class="body-column situational-mods-panel">
   <div class="panel-header">Situações Especiais</div>
   <div class="situational-options">
-   
+
     <label class="custom-checkbox">
         <input type="checkbox" name="special_apply_effects_only" />
         <span title="Ignora a Lesão e aplica apenas os efeitos contingentes ao alvo.">Aplicar Apenas Efeitos</span>
@@ -177,29 +177,34 @@
     <span title="Calcula projeção normalmente, mas zera o dano direto aplicado.">Apenas Projeção</span>
   </label>
 
+   <label class="custom-checkbox">
+          <input type="checkbox" name="damage_reduction_enabled"/>
+          <span title="Aplica após subtrair RD e aplicar modificadores de ferimento.">Redução de Dano</span>
+            <label class="custom-reduction-input">
+              <input type="number" name="damage_reduction_value" min="2" max="4" step="1" value="2"/>
+            </label>
+        </label>
 
-<div class="injury-tolerance-section">
-<label class="custom-select">
-  <span>Tolerância a Ferimentos:</span>
-  <select name="tolerance_type">
-    <option value="">Nenhuma</option>
-    <option value="nao-vivo">Não Vivo</option>
-    <option value="homogeneo">Homogêneo</option>
-    <option value="difuso">Difuso (máx. 1 lesão)</option>
-  </select>
-  
-  <div class="injury-reduction-section">
-    <label class="custom-checkbox">
-      <input type="checkbox" name="damage_reduction_enabled"/>
-      <span title="Aplica após subtrair RD e aplicar modificadores de ferimento.">Redução de Dano</span>
-        <label class="custom-reduction-input">
-      <input type="number" name="damage_reduction_value" min="2" max="4" step="1" value="2"/>
-    </label>
+
+  <div class="injury-tolerance-section">
+    <label class="custom-select">
+      <span>Tolerância a Ferimentos:</span>
+      <select name="tolerance_type">
+        <option value="">Nenhuma</option>
+        <option value="nao-vivo">Não Vivo</option>
+        <option value="homogeneo">Homogêneo</option>
+        <option value="difuso">Difuso (máx. 1 lesão)</option>
+      </select>
+      
     </label>
   </div>
-</label>
-</div>
 
+    <div class="wound-registration-options">
+      <label class="custom-checkbox wound-registration-toggle">
+        <input type="checkbox" name="register_wound"/>
+        <span>Registrar ferimento</span>
+      </label>
+    </div>
 
 
   </div>
@@ -282,16 +287,6 @@
 <footer class="damage-app-footer">
     <div class="footer-top">
         <div class="footer-column effects-summary">
-          <div class="wound-registration-options">
-                <label class="custom-checkbox wound-registration-toggle">
-                    <input type="checkbox" name="register_wound"/>
-                    <span>Registrar ferimento</span>
-                </label>
-                <select name="existing_wound" title="Criar um card ou somar a um card existente compatível">
-                    <option value="">Criar novo card</option>
-                    {{#each existingWounds}}<option value="{{this.id}}" data-pool-path="{{this.poolPath}}" data-nature-id="{{this.nature.id}}">Somar a: {{this.title}} — {{this.poolLabel}} {{#if this.nature.label}}[{{this.nature.label}}]{{/if}}</option>{{/each}}
-                </select>
-            </div>
             <div class="effects-list-summary">
                 <div class="placeholder">Efeitos a serem aplicados</div>
             </div>

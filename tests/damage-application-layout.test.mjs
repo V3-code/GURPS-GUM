@@ -15,15 +15,20 @@ test("damage nature is editable beside the wounding modifier", () => {
   assert.match(source, /Natureza do dano inválida/);
 });
 
-test("wound registration stays above the independently refreshed effects list", () => {
+test("wound registration is in the right body column without an existing-wound dropdown", () => {
+  const rightBodyColumn = template.slice(
+    template.indexOf('<div class="body-column situational-mods-panel">'),
+    template.indexOf('</main>'),
+  );
   const effectsColumn = template.slice(
     template.indexOf('<div class="footer-column effects-summary">'),
     template.indexOf('<div class="footer-column calculation-summary">'),
   );
 
-  assert.match(effectsColumn, /wound-registration-options[\s\S]+effects-list-summary/);
-  assert.match(effectsColumn, /register_wound[\s\S]+existing_wound/);
-  assert.doesNotMatch(effectsColumn, /wound_title|wound_notes|<textarea/);
+  assert.match(rightBodyColumn, /wound-registration-options[\s\S]+name="register_wound"/);
+  assert.doesNotMatch(effectsColumn, /register_wound|wound-registration-options/);
+  assert.doesNotMatch(template, /name="existing_wound"|Criar novo card|Somar a:/);
+  assert.doesNotMatch(source, /existingWounds|existing_wound|syncCompatibleWounds/);
   assert.match(source, /querySelector\("\.effects-list-summary"\)/);
   assert.doesNotMatch(source, /querySelector\("\.effects-summary"\)/);
 });
