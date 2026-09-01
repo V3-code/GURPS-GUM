@@ -5336,27 +5336,38 @@ async _onOpenPointsSummary(ev) {
   const summary = this._calculatePointsSummary();
   const attrRows = summary.attributeRows.map((row) => `
     <div class="points-attribute-row">
-      <span>${row.label}</span>
-      <input type="number" name="${row.key}" value="${row.cost}" />
-      <small>${row.current} - ${row.base} = ${row.current - row.base}</small>
-      <strong>${row.points} pts</strong>
+      <span class="points-attribute-name">${row.label}</span>
+      <label class="points-cost-field">
+        <span>Custo/nível</span>
+        <input type="number" name="${row.key}" value="${row.cost}" aria-label="Custo por nível de ${row.label}" />
+      </label>
+      <span class="points-attribute-calculation">${row.current} − ${row.base} = ${row.current - row.base}</span>
+      <strong class="${row.points < 0 ? "negative" : ""}">${row.points} <small>pts</small></strong>
     </div>`).join("");
 
-  const rowsHtml = summary.rows.map(([label, points]) => `
-    <div class="points-summary-row ${points < 0 ? "negative" : ""}">
+  const summaryIcons = ["fist-raised", "running", "graduation-cap", "star", "exclamation-triangle", "hat-wizard", "bolt", "users"];
+  const rowsHtml = summary.rows.map(([label, points], index) => `
+    <div class="points-summary-card ${points < 0 ? "negative" : ""}">
+      <span class="points-summary-icon"><i class="fas fa-${summaryIcons[index]}" aria-hidden="true"></i></span>
       <span class="points-summary-label">${label}</span>
-      <span class="points-summary-dots"></span>
-      <strong>${points} pts</strong>
+      <strong>${points} <small>pts</small></strong>
     </div>`).join("");
 
   const content = `
     <form class="points-summary-dialog-form">
-      <h3>Distribuição de Pontos na Ficha do Personagem</h3>
-      <div class="points-summary-list">${rowsHtml}</div>
-      <div class="points-summary-total"><span>Total gasto calculado</span><strong>${summary.spent} pts</strong></div>
-      <hr>
-      <p class="hint">Custos por nível dos atributos primários. Estes valores ficam salvos apenas nesta ficha.</p>
-      <div class="points-attribute-costs">${attrRows}</div>
+      <header class="points-summary-header">
+        <span class="points-summary-header-icon"><i class="fas fa-chart-pie" aria-hidden="true"></i></span>
+        <div><h3>Distribuição de Pontos</h3><p>Visão geral dos investimentos desta ficha</p></div>
+      </header>
+      <section class="points-summary-section points-costs-section" aria-labelledby="points-costs-heading">
+        <div class="points-section-heading"><div><h4 id="points-costs-heading">Custos dos atributos</h4><p class="hint">Valores por nível, salvos apenas nesta ficha.</p></div><i class="fas fa-sliders-h" aria-hidden="true"></i></div>
+        <div class="points-attribute-costs">${attrRows}</div>
+      </section>
+      <section class="points-summary-section" aria-labelledby="points-breakdown-heading">
+        <h4 id="points-breakdown-heading">Resumo por categoria</h4>
+        <div class="points-summary-list">${rowsHtml}</div>
+        <div class="points-summary-total"><span><small>Total</small>Total gasto calculado</span><strong>${summary.spent} <small>pts</small></strong></div>
+      </section>
     </form>`;
 
   new Dialog({

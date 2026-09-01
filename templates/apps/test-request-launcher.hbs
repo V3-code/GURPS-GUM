@@ -59,6 +59,15 @@
     </div>
   </section>
 
+    <section class="request-form-section request-delivery-section">
+    <div class="request-section-heading"><i class="fas fa-sliders-h"></i><span>Condições e entrega</span></div>
+    <div class="modifier-row">
+      <label class="request-field"><span>Modificador do Mestre</span><input type="number" name="fixedModifier" value="0"></label>
+      <label class="request-field"><span>Descrição Simples do Modificador (opcional)</span><input type="text" name="fixedModifierLabel" placeholder="Ex.: Escuridão"></label>
+    </div>
+    <label class="request-notify-toggle"><input type="checkbox" name="notifyPlayers"><span class="request-toggle-mark"></span><span><strong>Também avisar os jogadores</strong><small>O pedido continuará salvo no chat mesmo que o aviso seja fechado.</small></span></label>
+  </section>
+
   <details class="request-form-section request-purpose-section" {{#if purposeSectionOpen}}open{{/if}}>
     <summary class="request-section-heading"><i class="fas fa-tags"></i><span>Finalidades</span><small>opcional</small><span class="purpose-selection-summary">Nenhuma selecionada</span><i class="fas fa-chevron-down purpose-section-chevron"></i></summary>
     <div class="request-purpose-content">
@@ -70,14 +79,7 @@
     </div>
   </details>
 
-  <section class="request-form-section request-delivery-section">
-    <div class="request-section-heading"><i class="fas fa-sliders-h"></i><span>Condições e entrega</span></div>
-    <div class="modifier-row">
-      <label class="request-field"><span>Modificador do Mestre</span><input type="number" name="fixedModifier" value="0"></label>
-      <label class="request-field"><span>Descrição Simples do Modificador (opcional)</span><input type="text" name="fixedModifierLabel" placeholder="Ex.: Escuridão"></label>
-    </div>
-    <label class="request-notify-toggle"><input type="checkbox" name="notifyPlayers"><span class="request-toggle-mark"></span><span><strong>Também avisar os jogadores</strong><small>O pedido continuará salvo no chat mesmo que o aviso seja fechado.</small></span></label>
-  </section>
+
 
   <footer class="request-form-footer"><button type="submit" class="request-submit"><i class="fas fa-paper-plane"></i><span>Publicar pedido</span></button></footer>
 </form>
