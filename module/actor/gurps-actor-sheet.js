@@ -9,7 +9,7 @@ import { GumPreviewDialog } from "../apps/preview-dialog.js";
 import { buildSkillModifierIndicators } from "../utils/skill-modifier-indicators.mjs";
 import { resolveCharacterImage } from "../utils/character-image.mjs";
 import { buildSecondaryStatsRecalculationPlan, buildSecondaryStatsUpdateData, formatBasicDamageDiceCount } from "../utils/secondary-stats-recalculation.mjs";
-import { SOCIAL_CATEGORIES, SOCIAL_MANUAL_LAYOUTS, buildSocialSections, calculateManualSocialPoints } from "../config/social-aspects.mjs";
+import { SOCIAL_CATEGORIES, buildSocialSections, calculateManualSocialPoints } from "../config/social-aspects.mjs";
 
 const { ActorSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -5115,16 +5115,10 @@ _getSocialEntryConfig(type) {
 
 const shared = SOCIAL_CATEGORIES[type];
   if (!shared) return legacyConfigs[type] || null;
-  const manualLayout = new Map((SOCIAL_MANUAL_LAYOUTS[type] || []).map(([name, span], order) => [name, { span, order }]));
   return {
     label: game.i18n.localize(shared.label),
     path: `system.${shared.actorPath}`,
-    fields: shared.fields
-      .map(([name, label, fieldType], sourceOrder) => {
-        const layout = manualLayout.get(name) || { span: fieldType === "textarea" ? 12 : 6, order: sourceOrder };
-        return { name, label: game.i18n.localize(label), type: fieldType, span: layout.span, order: layout.order };
-      })
-      .sort((a, b) => a.order - b.order)
+    fields: shared.fields.map(([name, label, fieldType]) => ({ name, label: game.i18n.localize(label), type: fieldType }))
   };
 }
 
@@ -5161,6 +5155,89 @@ async _onChooseSocialCategory(event) {
     default: "add"
   }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-social-category-dialog"], width: 430, height: "auto" }).render(true);
 }
+
+async _promptSocialEntryData(type, initialData = {}, { isEdit = false } = {}) {
+  const config = this._getSocialEntryConfig(type);
+  if (!config) return null;
+
+  const fieldHtml = config.fields.map((field) => {
+    const value = initialData[field.name] ?? "";
+    const groupClasses = ["form-group", `form-group--${field.type}`];
+    if (field.type === "textarea") groupClasses.push("form-group--full");
+
+    if (field.type === "textarea") {
+      return `
+        <div class="${groupClasses.join(" ")}">
+          <label>${field.label}</label>
+          <textarea class="gum-input-left" name="${field.name}" rows="3" placeholder="${field.placeholder || ""}">${value}</textarea>
+        </div>`;
+    }
+
+    const placeholder = field.placeholder ? `placeholder="${field.placeholder}"` : "";
+    const min = field.type === "number" && field.name !== "points" ? "min=\"0\"" : "";
+    const inputClass = field.type === "number" ? "" : "gum-input-left";
+
+    return `
+      <div class="${groupClasses.join(" ")}">
+        <label>${field.label}</label>
+        <input class="${inputClass}" type="${field.type}" name="${field.name}" value="${value}" ${placeholder} ${min}/>
+      </div>`;
+  }).join("");
+
+  const content = `
+    <form class="gum-social-entry-form" autocomplete="off">
+      <div class="gum-social-dialog-intro">
+        <span class="gum-social-dialog-intro__icon"><i class="fas fa-user-tag"></i></span>
+        <p class="hint">Preencha os dados do aspecto social. Você poderá editar este registro posteriormente pela ficha.</p>
+      </div>
+      ${fieldHtml}
+    </form>`;
+
+  return new Promise((resolve) => {
+    let resolved = false;
+    const finish = (value) => {
+      if (resolved) return;
+      resolved = true;
+      resolve(value);
+    };
+
+    new Dialog({
+      title: isEdit ? `Editar ${config.label}` : `Adicionar ${config.label}`,
+      content,
+      buttons: {
+        save: {
+          icon: '<i class="fas fa-save"></i>',
+          label: "Salvar",
+          callback: (html) => {
+            const form = html.find("form")[0];
+            const formData = new FormDataExtended(form).object;
+            const entryData = {};
+
+            for (const field of config.fields) {
+              let value = formData[field.name];
+              if (field.type === "number") {
+                value = Number(value) || 0;
+              } else {
+                value = (value ?? "").toString().trim();
+              }
+              entryData[field.name] = value;
+            }
+
+            finish(entryData);
+          }
+        },
+        cancel: {
+          icon: '<i class="fas fa-times"></i>',
+          label: "Cancelar",
+          callback: () => finish(null)
+        }
+      },
+      default: "save",
+      close: () => finish(null)
+    }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-social-edit-dialog"], width: 560, height: "auto" }).render(true);
+  });
+}
+
 
 _getPointsNumber(value) {
   const parsed = Number(value);
