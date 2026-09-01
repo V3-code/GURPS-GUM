@@ -6412,6 +6412,36 @@ background-color: var(--gum-accent-gold);
     gap: 9px 10px;
 }
 
+/* Category-aware layout for manually created social aspects. */
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form .form-group {
+    grid-column: span var(--social-field-span, 6);
+    padding: 8px 9px 9px;
+    border: 0;
+    border-radius: 6px;
+    background: rgba(105, 119, 139, 0.11);
+}
+
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form .form-group:nth-of-type(3n) {
+    background: rgba(139, 116, 80, 0.12);
+}
+
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form .form-group--points,
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form .form-group--level,
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form .form-group--reaction_modifier,
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form .form-group--value {
+    background: rgba(181, 151, 83, 0.14);
+}
+
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form .form-group--textarea {
+    background: rgba(76, 84, 96, 0.13);
+}
+
+
 .dialog.gum .gum-social-dialog-intro {
     display: flex;
     grid-column: 1 / -1;
@@ -6516,6 +6546,31 @@ background-color: var(--gum-accent-gold);
     color: #ded8ce;
 }
 
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form input,
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form select,
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form textarea {
+    border: 0;
+    background: rgba(5, 6, 8, 0.38);
+    box-shadow: inset 0 -1px rgba(181, 151, 83, 0.18);
+}
+
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form input:hover,
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form select:hover,
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form textarea:hover {
+    border: 0;
+    background: rgba(5, 6, 8, 0.5);
+    box-shadow: inset 0 -1px rgba(181, 151, 83, 0.38);
+}
+
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form input:focus,
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form select:focus,
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form textarea:focus {
+    border: 0;
+    background: rgba(5, 6, 8, 0.62);
+    box-shadow: inset 0 -2px #b59753, 0 0 8px rgba(181, 151, 83, 0.08);
+}
+
+
 .dialog.gum.gum-social-category-dialog .gum-social-category-form {
     display: grid;
     grid-template-columns: 1fr;
@@ -6567,6 +6622,10 @@ background-color: var(--gum-accent-gold);
     .dialog.gum.gum-social-edit-dialog .dialog-buttons,
     .dialog.gum.gum-social-category-dialog .dialog-buttons {
         padding: 9px 10px 10px;
+    }
+
+    .dialog.gum.gum-social-edit-dialog .gum-social-entry-form .form-group {
+        grid-column: 1 / -1;
     }
 }
 @media (max-width: 520px) {

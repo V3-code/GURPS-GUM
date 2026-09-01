@@ -9,7 +9,7 @@ import { GumPreviewDialog } from "../apps/preview-dialog.js";
 import { buildSkillModifierIndicators } from "../utils/skill-modifier-indicators.mjs";
 import { resolveCharacterImage } from "../utils/character-image.mjs";
 import { buildSecondaryStatsRecalculationPlan, buildSecondaryStatsUpdateData, formatBasicDamageDiceCount } from "../utils/secondary-stats-recalculation.mjs";
-import { SOCIAL_CATEGORIES, buildSocialSections, calculateManualSocialPoints } from "../config/social-aspects.mjs";
+import { SOCIAL_CATEGORIES, SOCIAL_MANUAL_LAYOUTS, buildSocialSections, calculateManualSocialPoints } from "../config/social-aspects.mjs";
 
 const { ActorSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -5115,10 +5115,16 @@ _getSocialEntryConfig(type) {
 
 const shared = SOCIAL_CATEGORIES[type];
   if (!shared) return legacyConfigs[type] || null;
+  const layout = new Map((SOCIAL_MANUAL_LAYOUTS[type] || []).map(([name, span], order) => [name, { span, order }]));
   return {
     label: game.i18n.localize(shared.label),
     path: `system.${shared.actorPath}`,
-    fields: shared.fields.map(([name, label, fieldType]) => ({ name, label: game.i18n.localize(label), type: fieldType }))
+    fields: shared.fields
+      .map(([name, label, fieldType], sourceOrder) => {
+        const fieldLayout = layout.get(name) || { span: fieldType === "textarea" ? 12 : 6, order: sourceOrder };
+        return { name, label: game.i18n.localize(label), type: fieldType, ...fieldLayout };
+      })
+      .sort((a, b) => a.order - b.order)
   };
 }
 
@@ -5162,12 +5168,13 @@ async _promptSocialEntryData(type, initialData = {}, { isEdit = false } = {}) {
 
   const fieldHtml = config.fields.map((field) => {
     const value = initialData[field.name] ?? "";
-    const groupClasses = ["form-group", `form-group--${field.type}`];
+        const groupClasses = ["form-group", `form-group--${field.type}`, `form-group--${field.name}`];
+    const groupStyle = `style="--social-field-span: ${field.span || 6}"`;
     if (field.type === "textarea") groupClasses.push("form-group--full");
 
     if (field.type === "textarea") {
       return `
-        <div class="${groupClasses.join(" ")}">
+        <div class="${groupClasses.join(" ")}" ${groupStyle}>
           <label>${field.label}</label>
           <textarea class="gum-input-left" name="${field.name}" rows="3" placeholder="${field.placeholder || ""}">${value}</textarea>
         </div>`;
@@ -5178,7 +5185,7 @@ async _promptSocialEntryData(type, initialData = {}, { isEdit = false } = {}) {
     const inputClass = field.type === "number" ? "" : "gum-input-left";
 
     return `
-      <div class="${groupClasses.join(" ")}">
+      <div class="${groupClasses.join(" ")}" ${groupStyle}>
         <label>${field.label}</label>
         <input class="${inputClass}" type="${field.type}" name="${field.name}" value="${value}" ${placeholder} ${min}/>
       </div>`;
