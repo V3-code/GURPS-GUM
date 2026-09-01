@@ -6352,6 +6352,223 @@ background-color: var(--gum-accent-gold);
     text-align: left;
 }
 
+/* Social entry dialogs: same dark, restrained visual language as GUM editors */
+.dialog.gum.gum-social-edit-dialog,
+.dialog.gum.gum-social-category-dialog {
+    border: 1px solid rgba(181, 151, 83, 0.38);
+    border-radius: 7px;
+    background: #181a1f;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.025);
+    overflow: hidden;
+}
+
+.dialog.gum.gum-social-edit-dialog .window-header,
+.dialog.gum.gum-social-category-dialog .window-header {
+    flex: 0 0 38px;
+    min-height: 38px;
+    padding: 0 12px;
+    border: 0;
+    border-bottom: 1px solid rgba(181, 151, 83, 0.32);
+    background: linear-gradient(180deg, #18191d, #111216);
+    color: #d9c48f;
+    font-family: var(--gum-font-condensed);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
+}
+
+.dialog.gum.gum-social-edit-dialog .window-header .window-title,
+.dialog.gum.gum-social-category-dialog .window-header .window-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dialog.gum.gum-social-edit-dialog .window-header .header-button,
+.dialog.gum.gum-social-category-dialog .window-header .header-button {
+    color: #9e8b68;
+    font-size: 11px;
+}
+
+.dialog.gum.gum-social-edit-dialog .window-header .header-button:hover,
+.dialog.gum.gum-social-category-dialog .window-header .header-button:hover {
+    color: #ead39c;
+}
+
+.dialog.gum.gum-social-edit-dialog .window-content,
+.dialog.gum.gum-social-category-dialog .window-content {
+    padding: 0;
+    background: linear-gradient(180deg, #22252c, #1b1d23);
+}
+
+.dialog.gum.gum-social-edit-dialog .dialog-content,
+.dialog.gum.gum-social-category-dialog .dialog-content {
+    padding: 14px 16px 12px;
+}
+
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form,
+.dialog.gum.gum-social-category-dialog .gum-social-category-form {
+    gap: 9px 10px;
+}
+
+.dialog.gum .gum-social-dialog-intro {
+    display: flex;
+    grid-column: 1 / -1;
+    align-items: center;
+    gap: 10px;
+    min-height: 46px;
+    margin: 0 0 3px;
+    padding: 8px 10px;
+    border: 1px solid rgba(181, 151, 83, 0.18);
+    border-radius: 6px;
+    background: rgba(12, 13, 16, 0.38);
+}
+
+.dialog.gum .gum-social-dialog-intro__icon {
+    display: grid;
+    flex: 0 0 30px;
+    width: 30px;
+    height: 30px;
+    place-items: center;
+    border: 1px solid rgba(181, 151, 83, 0.28);
+    border-radius: 50%;
+    background: rgba(181, 151, 83, 0.08);
+    color: #b99a60;
+    font-size: 11px;
+}
+
+.dialog.gum .gum-social-dialog-intro p,
+.dialog.gum.gum-sheet-edit-dialog .gum-social-entry-form .gum-social-dialog-intro .hint {
+    margin: 0;
+    color: #aaa49a;
+    font-size: 10px;
+    line-height: 1.35;
+}
+
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form .form-group,
+.dialog.gum.gum-social-category-dialog .gum-social-category-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+    margin: 0;
+    padding: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.055);
+    border-radius: 6px;
+    background: rgba(9, 10, 13, 0.22);
+}
+
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form label,
+.dialog.gum.gum-social-category-dialog .gum-social-category-field > span {
+    color: #aaa18f;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.045em;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form input,
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form select,
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form textarea,
+.dialog.gum.gum-social-category-dialog .gum-social-category-form select {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    border: 1px solid rgba(181, 151, 83, 0.22);
+    border-radius: 5px;
+    background: #15171c;
+    color: #ded8ce;
+}
+
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form input,
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form select,
+.dialog.gum.gum-social-category-dialog .gum-social-category-form select {
+    height: 30px;
+    padding: 3px 8px;
+}
+
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form textarea {
+    min-height: 92px;
+    padding: 7px 8px;
+    line-height: 1.35;
+}
+
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form input:hover,
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form select:hover,
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form textarea:hover,
+.dialog.gum.gum-social-category-dialog .gum-social-category-form select:hover {
+    border-color: rgba(181, 151, 83, 0.42);
+}
+
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form input:focus,
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form select:focus,
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form textarea:focus,
+.dialog.gum.gum-social-category-dialog .gum-social-category-form select:focus {
+    border-color: #b59753;
+    box-shadow: 0 0 0 1px rgba(181, 151, 83, 0.18), 0 0 8px rgba(181, 151, 83, 0.08);
+}
+
+.dialog.gum.gum-social-edit-dialog .gum-social-entry-form select option,
+.dialog.gum.gum-social-category-dialog .gum-social-category-form select option {
+    background: #181a20;
+    color: #ded8ce;
+}
+
+.dialog.gum.gum-social-category-dialog .gum-social-category-form {
+    display: grid;
+    grid-template-columns: 1fr;
+}
+
+.dialog.gum.gum-social-edit-dialog .dialog-buttons,
+.dialog.gum.gum-social-category-dialog .dialog-buttons {
+    flex: 0 0 auto;
+    gap: 8px;
+    margin: 0;
+    padding: 10px 16px 12px;
+    border-top: 1px solid rgba(181, 151, 83, 0.16);
+    background: #17191e;
+}
+
+.dialog.gum.gum-social-edit-dialog .dialog-buttons button,
+.dialog.gum.gum-social-category-dialog .dialog-buttons button {
+    min-height: 32px;
+    margin: 0;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 5px;
+    background: #292c33;
+    color: #bdb7ae;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.dialog.gum.gum-social-edit-dialog .dialog-buttons button[data-button="save"],
+.dialog.gum.gum-social-category-dialog .dialog-buttons button[data-button="add"] {
+    border-color: rgba(197, 166, 96, 0.5);
+    background: linear-gradient(180deg, #b49655, #92743d);
+    color: #171511;
+    font-weight: 800;
+}
+
+.dialog.gum.gum-social-edit-dialog .dialog-buttons button:hover,
+.dialog.gum.gum-social-category-dialog .dialog-buttons button:hover {
+    border-color: rgba(220, 190, 122, 0.55);
+    filter: brightness(1.1);
+    box-shadow: none;
+}
+
+@media (max-width: 520px) {
+    .dialog.gum.gum-social-edit-dialog .dialog-content,
+    .dialog.gum.gum-social-category-dialog .dialog-content {
+        padding: 10px;
+    }
+
+    .dialog.gum.gum-social-edit-dialog .dialog-buttons,
+    .dialog.gum.gum-social-category-dialog .dialog-buttons {
+        padding: 9px 10px 10px;
+    }
+}
 @media (max-width: 520px) {
     .dialog.gum.gum-sheet-edit-dialog .resource-grid {
         grid-template-columns: 1fr;

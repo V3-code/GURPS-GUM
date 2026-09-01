@@ -5133,10 +5133,27 @@ async _onChooseSocialCategory(event) {
   const options = Object.entries(SOCIAL_CATEGORIES).map(([type, config]) =>
     `<option value="${type}">${game.i18n.localize(config.label)}</option>`).join("");
   new Dialog({
-    title: game.i18n.localize("GUM.Social.AddAspect"),
-    content: `<form><div class="form-group"><select name="type">${options}</select></div></form>`,
-    buttons: { add: { label: game.i18n.localize("GUM.Social.Add"), callback: html => this._onAddSocialEntry({ preventDefault() {}, currentTarget: { dataset: { type: html.find('[name=type]').val() } } }) } }
-  }).render(true);
+    title: game.i18n.localize("GUM.Social.AddAspectTitle"),
+    content: `
+      <form class="gum-social-category-form" autocomplete="off">
+        <div class="gum-social-dialog-intro">
+          <span class="gum-social-dialog-intro__icon"><i class="fas fa-users"></i></span>
+          <p>${game.i18n.localize("GUM.Social.ChooseAspectHint")}</p>
+        </div>
+        <label class="gum-social-category-field">
+          <span>${game.i18n.localize("GUM.Social.AspectType")}</span>
+          <select name="type">${options}</select>
+        </label>
+      </form>`,
+    buttons: {
+      add: {
+        icon: '<i class="fas fa-plus"></i>',
+        label: game.i18n.localize("GUM.Social.Add"),
+        callback: html => this._onAddSocialEntry({ preventDefault() {}, currentTarget: { dataset: { type: html.find('[name=type]').val() } } })
+      }
+    },
+    default: "add"
+  }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-social-category-dialog"], width: 430, height: "auto" }).render(true);
 }
 
 async _promptSocialEntryData(type, initialData = {}, { isEdit = false } = {}) {
@@ -5169,7 +5186,10 @@ async _promptSocialEntryData(type, initialData = {}, { isEdit = false } = {}) {
 
   const content = `
     <form class="gum-social-entry-form" autocomplete="off">
-      <p class="hint">Preencha os dados do aspecto social. Você pode editar depois no card desta seção.</p>
+      <div class="gum-social-dialog-intro">
+        <span class="gum-social-dialog-intro__icon"><i class="fas fa-user-tag"></i></span>
+        <p class="hint">Preencha os dados do aspecto social. Você poderá editar este registro posteriormente pela ficha.</p>
+      </div>
       ${fieldHtml}
     </form>`;
 
@@ -5214,7 +5234,7 @@ async _promptSocialEntryData(type, initialData = {}, { isEdit = false } = {}) {
       },
       default: "save",
       close: () => finish(null)
-    }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-social-edit-dialog"] }).render(true);
+    }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-social-edit-dialog"], width: 560, height: "auto" }).render(true);
   });
 }
 

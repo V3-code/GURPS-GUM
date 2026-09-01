@@ -117,6 +117,19 @@ test("actor social template keeps the source image at left and observations in a
   assert.match(styles, /\.tab\[data-tab="social"\] \.social-entry-list > \.social-entry-card \{ display:block;/);
 });
 
+test("manual social dialogs use the shared dark editor presentation", () => {
+  const source = readFileSync(new URL("../module/actor/gurps-actor-sheet.js", import.meta.url), "utf8");
+  const styles = readFileSync(new URL("../styles/styles.css", import.meta.url), "utf8");
+
+  assert.match(source, /class="gum-social-category-form"/);
+  assert.match(source, /class="gum-social-dialog-intro"/);
+  assert.match(source, /gum-sheet-edit-dialog", "gum-social-category-dialog/);
+  assert.match(source, /gum-sheet-edit-dialog", "gum-social-edit-dialog/);
+  assert.match(styles, /\.dialog\.gum\.gum-social-category-dialog \.window-header/);
+  assert.match(styles, /button\[data-button="save"\]/);
+  assert.match(styles, /button\[data-button="add"\]/);
+});
+
 test("captures social contribution state before Foundry rerenders", () => {
   const source = readFileSync(new URL("../module/item/gurps-item-sheet.js", import.meta.url), "utf8");
 
