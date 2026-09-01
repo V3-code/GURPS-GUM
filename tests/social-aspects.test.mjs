@@ -16,11 +16,15 @@ test("derived records disappear with their item and retain source navigation", (
   assert.equal(withItem.find(s => s.type === "wealth").entries[0].itemId, "source");
   assert.equal(buildSocialSections({}, []).find(s => s.type === "wealth").count, 0);
 });
-test("reputation modifier is projected into reaction summary", () => {
-  const sections = buildSocialSections({ reputation_entries: { rep: { title: "Herói", reaction_modifier: 2, scope: "Cidade" } } });
+test("reputations share the reaction group without a duplicate section", () => {
+  const sections = buildSocialSections({ reputation_entries: {
+    rep: { title: "Herói", reaction_modifier: 2, scope: "Cidade" },
+    pending: { title: "Desconhecido", reaction_modifier: "", scope: "Guilda" }
+  } });
   const reactions = sections.find(s => s.type === "reaction");
-  assert.equal(reactions.count, 1);
-assert.equal(reactions.entries[0].type, "reputation");
+  assert.equal(reactions.count, 2);
+  assert.ok(reactions.entries.every(entry => entry.type === "reputation"));
+  assert.equal(sections.some(s => s.type === "reputation"), false);
 });
 
 test("item sheet presents social aspects after details with card fields", () => {
@@ -50,10 +54,12 @@ test("social contribution schemas preserve the requested field rows", () => {
   assert.deepEqual(layout("reaction").map(([name, row]) => [name, row]), [["value", 1], ["title", 1], ["audience", 2], ["circumstance", 2], ["recognition_frequency", 2], ["notes", 3]]);
 });
 
-test("actor social entries expose structured identity, metrics, source and observation", () => {
+test("status and organization use society as identity and status as a metric", () => {
   const labels = {
     "GUM.Social.Fields.Level": "Nível",
+    "GUM.Social.Fields.Status": "Status",
     "GUM.Social.Fields.MonthlyCost": "Custo mensal",
+    "GUM.Social.Fields.Salary": "Salário",
     "GUM.Social.Manual": "Manual"
   };
   const system = {
@@ -65,19 +71,38 @@ test("actor social entries expose structured identity, metrics, source and obser
         monthly_cost: "-200",
         description: "Reconhecido nos distritos centrais."
       }
+    },
+    organization_entries: {
+      guild: {
+        organization_name: "Guilda Alquimista",
+        status_name: "Aprendiz",
+        level: 1,
+        salary: "650",
+        description: "Membro em treinamento."
+      }
     }
   };
-  const entry = buildSocialSections(system, [], key => labels[key] ?? key)
-    .find(section => section.type === "status").entries[0];
+  const sections = buildSocialSections(system, [], key => labels[key] ?? key);
+  const entry = sections.find(section => section.type === "status").entries[0];
+  const organization = sections.find(section => section.type === "organization").entries[0];
 
-  assert.equal(entry.primary, "Cidadão Livre");
-  assert.equal(entry.context, "Império Kalashtar");
+  assert.equal(entry.primary, "Império Kalashtar");
+  assert.equal(entry.context, "");
   assert.deepEqual(entry.metrics, [
     { key: "level", label: "Nível", value: 0, tone: "default" },
+    { key: "status_name", label: "Status", value: "Cidadão Livre", tone: "default" },
     { key: "monthly_cost", label: "Custo mensal", value: "-200", tone: "default" }
   ]);
   assert.equal(entry.observation, "Reconhecido nos distritos centrais.");
   assert.equal(entry.sourceLabel, "Manual");
+  assert.equal(organization.primary, "Guilda Alquimista");
+  assert.equal(organization.context, "");
+  assert.deepEqual(organization.metrics, [
+    { key: "level", label: "Nível", value: 1, tone: "default" },
+    { key: "status_name", label: "Status", value: "Aprendiz", tone: "default" },
+    { key: "salary", label: "Salário", value: "650", tone: "default" }
+  ]);
+  assert.equal(organization.observation, "Membro em treinamento.");
 });
 
 test("actor social template keeps the source image at left and observations in a conditional footer", () => {

@@ -1,8 +1,8 @@
 /** Shared schema used by actor and characteristic item sheets. */
 export const SOCIAL_CATEGORIES = Object.freeze({
-  status: { label: "GUM.Social.Status", icon: "fas fa-crown", actorPath: "social_status_entries", title: ["society", "status_name"], detail: ["level", "monthly_cost"], fields: [
+  status: { label: "GUM.Social.Status", icon: "fas fa-crown", actorPath: "social_status_entries", title: ["society"], detail: ["level", "status_name", "monthly_cost"], fields: [
     ["society", "GUM.Social.Fields.Society", "text", { row: 1, wide: true }], ["level", "GUM.Social.Fields.Level", "number", { row: 2, compact: true }], ["status_name", "GUM.Social.Fields.Status", "text", { row: 2 }], ["monthly_cost", "GUM.Social.Fields.MonthlyCost", "text", { row: 2 }], ["description", "GUM.Social.Fields.SocietyDescription", "textarea", { row: 3, wide: true }], ["points", "GUM.Social.Fields.Points", "number"] ] },
-  organization: { label: "GUM.Social.Organization", icon: "fas fa-landmark", actorPath: "organization_entries", title: ["organization_name", "status_name"], detail: ["level", "salary"], fields: [
+  organization: { label: "GUM.Social.Organization", icon: "fas fa-landmark", actorPath: "organization_entries", title: ["organization_name"], detail: ["level", "status_name", "salary"], fields: [
     ["organization_name", "GUM.Social.Fields.Organization", "text", { row: 1, wide: true }], ["level", "GUM.Social.Fields.Level", "number", { row: 2, compact: true }], ["status_name", "GUM.Social.Fields.Status", "text", { row: 2 }], ["salary", "GUM.Social.Fields.Salary", "text", { row: 2 }], ["description", "GUM.Social.Fields.OrganizationDescription", "textarea", { row: 3, wide: true }], ["points", "GUM.Social.Fields.Points", "number"] ] },
   culture: { label: "GUM.Social.Culture", icon: "fas fa-globe-americas", actorPath: "culture_entries", title: ["culture_name"], detail: ["level"], fields: [
     ["level", "GUM.Social.Fields.Level", "number", { row: 1, compact: true }], ["culture_name", "GUM.Social.Fields.Culture", "text", { row: 1 }], ["description", "GUM.Social.Fields.CultureDescription", "textarea", { row: 2, wide: true }], ["points", "GUM.Social.Fields.Points", "number"] ] },
@@ -22,12 +22,12 @@ const values = (collection) => collection ? Object.entries(collection) : [];
 
 const SOCIAL_PRESENTATION = Object.freeze({
   status: {
-    primary: ["status_name", "society"], context: ["society"], observation: ["description"],
-    metrics: [["level", "GUM.Social.Fields.Level"], ["monthly_cost", "GUM.Social.Fields.MonthlyCost"]]
+    primary: ["society", "status_name"], context: [], observation: ["description"],
+    metrics: [["level", "GUM.Social.Fields.Level"], ["status_name", "GUM.Social.Fields.Status"], ["monthly_cost", "GUM.Social.Fields.MonthlyCost"]]
   },
   organization: {
-    primary: ["status_name", "organization_name"], context: ["organization_name"], observation: ["description"],
-    metrics: [["level", "GUM.Social.Fields.Level"], ["salary", "GUM.Social.Fields.Salary"]]
+    primary: ["organization_name", "status_name"], context: [], observation: ["description"],
+    metrics: [["level", "GUM.Social.Fields.Level"], ["status_name", "GUM.Social.Fields.Status"], ["salary", "GUM.Social.Fields.Salary"]]
   },
   culture: {
     primary: ["culture_name"], context: [], observation: ["description"],
@@ -110,14 +110,13 @@ export function buildSocialSections(system = {}, items = [], localize = key => k
     }
     return { type, label: localize(config.label), icon: config.icon, featured: config.featured, entries, count: entries.length };
   });
-  // Reputations also participate in the reaction summary, without copying data.
+  // Reputations and direct reaction modifiers share one presentation group.
   const reactions = sections.find(s => s.type === "reaction");
   for (const reputation of sections.find(s => s.type === "reputation").entries) {
-    if (reputation.entry.reaction_modifier === "" || reputation.entry.reaction_modifier == null) continue;
     reactions.entries.push({ ...reputation, id: reputation.id, type: "reputation", reputationSummary: true });
   }
   reactions.count = reactions.entries.length;
-  return sections;
+  return sections.filter(section => section.type !== "reputation");
 }
 
 export function calculateManualSocialPoints(system = {}) {
