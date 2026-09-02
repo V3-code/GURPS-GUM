@@ -4876,7 +4876,7 @@ background-color: var(--gum-accent-gold);
 
 /* Tags do Cabeçalho */
 .gum.sheet.actor .group-tag {
-    font-size: 'Roboto Condensed';
+    font-family: 'Roboto Condensed';
     font-size: 8px;
     padding: 2px 6px;
     border-radius: 3px;
@@ -7028,7 +7028,7 @@ background-color: var(--gum-accent-gold);
     margin: 0;
     text-shadow: none;
     font-family: var(--gum-font-condensed);
-    font-size: var(--gum-font-size-header);
+    font-size: var(--gum-font-size-base);
 }
 
 .gum.sheet.actor .gum-unified-header .header-counter {
@@ -8707,3 +8707,27 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .wound-controls .gum-action-menu__toggle:hover { color:#f0d79f; text-decoration:none; }
 @media (max-width:900px) { .gum.sheet.actor .wound-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:620px) { .gum.sheet.actor .wound-grid { grid-template-columns:minmax(0,1fr); } }
+
+/* Registros de combate: mesma linguagem compacta dos cards de ferimento. */
+.gum.sheet.actor .combat-meter-group-content { display:block; padding:6px; overflow:visible; background:none; }
+.gum.sheet.actor .combat-meter-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; width:100%; }
+.gum.sheet.actor .combat-meter-grid > .placeholder-text { grid-column:1 / -1; }
+.gum.sheet.actor .combat-meters-box .combat-meter-card { position:relative; display:flex; flex-direction:column; align-items:stretch; gap:5px; min-width:0; margin:0; padding:6px 5px 5px; border:0; border-radius:4px; background:rgba(255,255,255,.045); box-shadow:inset 0 0 0 1px rgba(140,164,181,.12); }
+.gum.sheet.actor .combat-meters-box .combat-meter-card:hover { border:0; background:rgba(255,255,255,.065); box-shadow:inset 0 0 0 1px rgba(140,164,181,.24); }
+.gum.sheet.actor .combat-meters-box .combat-meter-card::before { display:none; }
+.gum.sheet.actor .combat-meter-card-header { display:grid; grid-template-columns:28px minmax(0,1fr) 28px; align-items:center; gap:3px; min-width:0; }
+.gum.sheet.actor .combat-meter-icon { display:grid; width:22px; height:22px; place-items:center; justify-self:center; color:rgba(174,198,213,.8); font-size:12px; }
+.gum.sheet.actor .combat-meter-name { min-width:0; overflow:hidden; color:var(--gum-text-claro); font-family:var(--gum-font-secondary); font-size:12px; font-weight:650; line-height:1.2; text-overflow:ellipsis; white-space:nowrap; }
+.gum.sheet.actor .combat-meter-controls { display:flex; position:static; justify-self:center; justify-content:center; }
+.gum.sheet.actor .combat-meter-controls .gum-action-menu__toggle { width:22px; height:22px; color:rgba(224,234,240,.55); }
+.gum.sheet.actor .combat-meter-controls .gum-action-menu__toggle:hover { color:#cae1ed; text-decoration:none; }
+.gum.sheet.actor .combat-meter-value-controls { display:grid; grid-template-columns:22px minmax(25px,auto) 22px; align-items:center; align-self:center; gap:3px; }
+.gum.sheet.actor .combat-meter-adjust { display:grid; width:22px; height:22px; min-height:0; margin:0; padding:0; place-items:center; border:0; border-radius:3px; background:rgba(255,255,255,.055); box-shadow:none; color:rgba(224,234,240,.72); font-size:9px; line-height:1; }
+.gum.sheet.actor .combat-meter-adjust:hover,
+.gum.sheet.actor .combat-meter-adjust:focus-visible { background:rgba(123,164,187,.16); box-shadow:inset 0 0 0 1px rgba(140,181,204,.28); color:#d8edf7; }
+.gum.sheet.actor .combat-meter-value { min-width:25px; color:#d8e8f0; font-family:var(--gum-font-condensed); font-size:16px; line-height:1; text-align:center; }
+.gum.sheet.actor .combat-meter-meta { display:flex; align-items:center; align-self:center; gap:5px; color:rgba(224,234,240,.55); font-family:var(--gum-font-condensed); font-size:10px; line-height:1; }
+.gum.sheet.actor .combat-meter-meta strong { color:rgba(224,234,240,.78); font-weight:700; }
+.gum.sheet.actor .combat-meter-meta-separator { color:rgba(140,181,204,.42); }
+@media (max-width:900px) { .gum.sheet.actor .combat-meter-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:620px) { .gum.sheet.actor .combat-meter-grid { grid-template-columns:minmax(0,1fr); } }

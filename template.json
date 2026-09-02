@@ -884,7 +884,7 @@
       "variable_value": false,
       "max": "0",
       "source": "",
-      "hidden": false,
+       
       "exists_policy": "ignore",
       "duration": {
         "value": 1,

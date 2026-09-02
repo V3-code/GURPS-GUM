@@ -1573,7 +1573,7 @@ new Dialog({
             default: "save" 
         }, { 
             classes: ["dialog", "gum-dialog", "attack-editor-dialog", "gum", "sheet", "item"],
-            width: 460,
+            width: 560,
             height: 660,
             resizable: true
         }).render(true); 

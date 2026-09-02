@@ -32,3 +32,11 @@ test("wound registration is in the right body column without an existing-wound d
   assert.match(source, /querySelector\("\.effects-list-summary"\)/);
   assert.doesNotMatch(source, /querySelector\("\.effects-summary"\)/);
 });
+
+test("selecting a combat meter uses its DR in the custom hit location", () => {
+  assert.match(template, /data-pool-type="{{pool\.type}}" data-dr="{{pool\.dr}}"/);
+  assert.match(source, /type: "combat-meter",[\s\S]+dr: Math\.max\(0, Number\(meter\.dr\) \|\| 0\)/);
+  assert.match(source, /selectedPool\?\.dataset\.poolType !== "combat-meter"/);
+  assert.match(source, /customDR\.value = String\(Math\.max\(0, Number\(selectedPool\.dataset\.dr\) \|\| 0\)\)/);
+  assert.match(source, /location-row\[data-location-key="custom"\][\s\S]+customLocation\?\.click\(\)/);
+});

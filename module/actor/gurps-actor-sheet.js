@@ -1027,16 +1027,15 @@ async getData(options) {
                 });              
                 context.survivalBlockWasOpen = this._survivalBlockOpen || false;
 
-                this._showHiddenMeters = this._showHiddenMeters ?? false;
+                 
                 const combatMeters = context.actor.system.combat.combat_meters || {};
-                const includeHiddenMeters = this._showHiddenMeters === true;
+ 
 
                 const preparedCombatMeters = Object.entries(combatMeters)
                     .map(([id, meter]) => {
-                        const normalized = this._normalizeResourceEntry(meter, { defaultName: "Registro", allowHidden: true });
+                        const normalized = this._normalizeResourceEntry(meter, { defaultName: "Registro", includeDR: true })
                         return { id, meter: normalized };
-                    })
-                    .filter((m) => includeHiddenMeters || !m.meter.hidden);
+                    });
 
                 preparedCombatMeters.sort((a, b) => a.meter.name.localeCompare(b.meter.name));
 
@@ -1044,7 +1043,7 @@ async getData(options) {
                 context.preparedWounds = Object.entries(context.actor.system.combat?.wounds || {})
                     .map(([id, wound]) => prepareWoundForDisplay(id, wound))
                     .sort((a, b) => Number(b.updatedAt || b.createdAt || 0) - Number(a.updatedAt || a.createdAt || 0));
-                context.showHiddenMeters = includeHiddenMeters;
+ 
                 context.spellReserves = this._normalizeResourceCollection(context.actor.system.spell_reserves || {}, { defaultName: "Reserva de Magia" });
                 context.powerReserves = this._normalizeResourceCollection(context.actor.system.power_reserves || {}, { defaultName: "Reserva de Poder" });
                 context.spellReserveCount = Object.keys(context.spellReserves).length;
@@ -1361,7 +1360,7 @@ _getSubmitData(updateData) {
         return drObject;
     }
 
-    _normalizeResourceEntry(entry = {}, { defaultName = "Registro", allowHidden = false } = {}) {
+    _normalizeResourceEntry(entry = {}, { defaultName = "Registro", includeDR = false } = {}) {
         const data = foundry.utils.duplicate(entry || {});
         data.name = data.name || defaultName;
         const current = Number(data.current ?? data.value ?? 0);
@@ -1369,7 +1368,7 @@ _getSubmitData(updateData) {
         data.current = current;
         data.max = max;
         data.value = data.value ?? current; // Mantém compatibilidade com referências antigas
-        if (allowHidden) data.hidden = Boolean(data.hidden);
+        if (includeDR) data.dr = Math.max(0, Number(data.dr) || 0);
         return data;
     }
 
@@ -1890,9 +1889,7 @@ if (modifierSearchInput.length) {
 html.on("click", ".add-combat-meter", (ev) => this._onAddCombatMeter(ev));
 html.on("click", ".edit-combat-meter", (ev) => this._onEditCombatMeter(ev));
 html.on("click", ".delete-combat-meter", (ev) => this._onDeleteCombatMeter(ev));
-html.on("click", ".hide-combat-meter", (ev) => this._onToggleCombatMeterVisibility(ev));
-html.on("click", ".show-hidden-meters", (ev) => this._onToggleHiddenMeters(ev));
-html.on("change", ".combat-meters-box .meter-inputs input", (ev) => this._onCombatMeterInputChange(ev));
+html.on("click", ".adjust-combat-meter", (ev) => this._onAdjustCombatMeter(ev));
 html.on("click", ".add-wound", (ev) => this._onEditWound(ev));
 html.on("click", ".edit-wound", (ev) => this._onEditWound(ev));
 html.on("click", ".delete-wound", (ev) => this._onDeleteWound(ev));
@@ -4356,68 +4353,45 @@ async _onAdjustWound(ev) {
 }
 
 
-async _onToggleCombatMeterVisibility(ev) {
-  ev.preventDefault();
-  const meterId = ev.currentTarget.closest(".meter-card")?.dataset?.meterId;
-  if (!meterId) return;
-
-  const current = this.actor.system.combat.combat_meters?.[meterId];
-  if (!current) return;
-
-  const newState = !current.hidden;
-  await this.actor.update({ [`system.combat.combat_meters.${meterId}.hidden`]: newState });
-}
-
-_onToggleHiddenMeters(ev) {
-  ev.preventDefault();
-  this._showHiddenMeters = !this._showHiddenMeters;
-  this.render(false);
-}
-
-async _onCombatMeterInputChange(ev) {
+async _onAdjustCombatMeter(ev) {
   ev.preventDefault();
   ev.stopPropagation();
-  ev.stopImmediatePropagation();
+  const meterId = ev.currentTarget.closest(".meter-card")?.dataset?.meterId;
+  const meter = this.actor.system.combat.combat_meters?.[meterId];
+  if (!meterId || !meter) return;
 
-  const input = ev.currentTarget;
-  const meterCard = input.closest(".meter-card");
-  if (!meterCard) return;
+  const adjustment = Number(ev.currentTarget.dataset.adjustment) || 0;
+  const current = Number(meter.current ?? meter.value ?? 0) || 0;
+  const value = current + adjustment;
+  if (value === current) return;
 
-  const meterId = meterCard.dataset.meterId;
-  const prop =
-    input.name?.split(".").pop() ||
-    input.dataset.property;
-  if (!meterId || !prop) return;
-
-  const value = Number(input.value) || 0;
-  const updateData = { [`system.combat.combat_meters.${meterId}.${prop}`]: value };
-  if (prop === "current") updateData[`system.combat.combat_meters.${meterId}.value`] = value;
-
-  await this.actor.update(updateData);
+  await this.actor.update({
+    [`system.combat.combat_meters.${meterId}.current`]: value,
+    [`system.combat.combat_meters.${meterId}.value`]: value
+  });
 }
 
 async _promptCombatMeterData(initialData = {}, { isEdit = false } = {}) {
-  const data = this._normalizeResourceEntry(initialData, { defaultName: "Registro", allowHidden: true });
+  const data = this._normalizeResourceEntry(initialData, { defaultName: "Registro", includeDR: true });
+  const escapedName = foundry.utils.escapeHTML(String(data.name || ""));
   const content = `
     <form class="gum-meter-form gum-popup-form gum-combat-meter-form" autocomplete="off">
       <p class="hint form-group--full">Preencha os dados do registro de combate. Você pode editar depois no card.</p>
       <div class="form-group form-group--full">
         <label>Nome do Registro</label>
-        <input class="gum-input-left" type="text" name="name" value="${data.name || ""}" required/>
+        <input class="gum-input-left" type="text" name="name" value="${escapedName}" required/>
       </div>
       <div class="form-group form-group--number">
         <label>Valor Atual</label>
-        <input type="number" name="current" value="${data.current ?? 0}" min="0"/>
+        <input type="number" name="current" value="${data.current ?? 0}"/>
       </div>
       <div class="form-group form-group--number">
-        <label>Valor Máximo</label>
+        <label>Valor de Referência</label>
         <input type="number" name="max" value="${data.max ?? 0}" min="0"/>
       </div>
-      <div class="form-group form-group--full">
-        <label class="checkbox">
-          <input type="checkbox" name="hidden" ${data.hidden ? "checked" : ""}/>
-          Ocultar na ficha
-        </label>
+      <div class="form-group form-group--number">
+        <label>RD</label>
+        <input type="number" name="dr" value="${data.dr ?? 0}" min="0"/>
       </div>
     </form>`;
 
@@ -4445,9 +4419,9 @@ async _promptCombatMeterData(initialData = {}, { isEdit = false } = {}) {
 
             const current = Number(form.current.value) || 0;
             const max = Number(form.max.value) || 0;
-            const hidden = form.hidden?.checked ?? false;
+             const dr = Math.max(0, Number(form.dr.value) || 0);
 
-            finish({ name, current, max, value: current, hidden });
+            finish({ name, current, max, value: current, dr });
           }
         },
         cancel: {

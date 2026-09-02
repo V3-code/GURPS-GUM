@@ -35,7 +35,7 @@
   <div class="header-row selector-row">
     <select name="damage_target_pool">
       {{#each damageablePools as |pool|}}
-        <option value="{{pool.path}}">{{pool.label}}</option>
+        <option value="{{pool.path}}" data-pool-type="{{pool.type}}" data-dr="{{pool.dr}}">{{pool.label}}</option>
       {{/each}}
     </select>
   </div>

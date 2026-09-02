@@ -35,7 +35,7 @@ test("wound cards expose compact accessible controls and a discreet action menu"
 });
 
 test("wound adjustment preserves the card at zero and legacy values remain compatible", () => {
-  const adjustHandler = actorSheet.slice(actorSheet.indexOf("async _onAdjustWound"), actorSheet.indexOf("async _onToggleCombatMeterVisibility"));
+  const adjustHandler = actorSheet.slice(actorSheet.indexOf("async _onAdjustWound"), actorSheet.indexOf("async _onAdjustCombatMeter"));
 
   assert.match(actorSheet, /wound\.remaining \?\? wound\.value \?\? 0/);
   assert.match(actorSheet, /Math\.max\(0, currentRemaining \+ adjustment\)/);
@@ -45,5 +45,31 @@ test("wound adjustment preserves the card at zero and legacy values remain compa
   assert.match(styles, /\.wound-list \{ display:block;/);
   assert.match(styles, /\.wound-card \{[^}]*display:grid; grid-template-columns:28px minmax\(0,1fr\) 28px;/);
   assert.match(styles, /\.wound-value-controls \{[^}]*justify-self:center;/);
-  assert.match(styles, /max-width:900px[^}]+\.wound-grid \{ grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+assert.match(styles, /max-width:900px[^}]+\.wound-grid \{ grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+});
+
+test("combat meters use compact cards with unrestricted controls, reference, DR and no hiding", () => {
+  const meterSection = template.slice(
+    template.indexOf('class="group-content combat-meter-group-content"'),
+    template.indexOf("{{!-- Grupo fixo de Favoritos", template.indexOf('class="group-content combat-meter-group-content"')),
+  );
+  const meterPrompt = actorSheet.slice(actorSheet.indexOf("async _promptCombatMeterData"), actorSheet.indexOf("async _onAddEnergyReserve"));
+  const meterAdjust = actorSheet.slice(actorSheet.indexOf("async _onAdjustCombatMeter"), actorSheet.indexOf("async _promptCombatMeterData"));
+
+  assert.match(meterSection, /class="combat-meter-grid"/);
+  assert.match(meterSection, /combat-meter-card-header[\s\S]+combat-meter-name/);
+  assert.match(meterSection, /adjust-combat-meter combat-meter-adjust[^>]+data-adjustment="-1"/);
+  assert.match(meterSection, /adjust-combat-meter combat-meter-adjust[^>]+data-adjustment="1"/);
+  assert.match(meterSection, /ref\. <strong>{{this\.meter\.max}}<\/strong>[\s\S]+RD <strong>{{this\.meter\.dr}}<\/strong>/);
+  assert.match(meterSection, /edit-combat-meter gum-action-menu__item/);
+  assert.match(meterSection, /delete-combat-meter gum-action-menu__item is-danger/);
+  assert.doesNotMatch(meterSection, /meter\.hidden|show-hidden-meters|hide-combat-meter|meter-inputs/);
+  assert.match(meterPrompt, /Valor de Referência/);
+  assert.match(meterPrompt, /name="dr"[^>]+min="0"/);
+  assert.match(meterPrompt, /name="current" value="\$\{data\.current \?\? 0}"\/>/);
+  assert.doesNotMatch(meterPrompt, /name="hidden"|Ocultar na ficha/);
+  assert.match(meterAdjust, /meter\.current \?\? meter\.value \?\? 0/);
+  assert.match(meterAdjust, /const value = current \+ adjustment/);
+  assert.doesNotMatch(meterAdjust, /Math\.max|Math\.min/);
+  assert.match(styles, /\.combat-meter-grid \{ display:grid; grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
 });
