@@ -1930,39 +1930,51 @@
                   </div>
 
                   <div class="attack-primary-stats">
-                    <div class="attack-pill-stat">
+<a class="attack-pill-stat rollable" data-type="attack" data-attack-type="{{attack.attack_type}}" data-roll-value="{{attack.final_nh}}" data-label="{{group.name}} ({{attack.name}})" data-item-id="{{attack.itemId}}" title="Rolar ataque">
                       <span class="attack-label">NH</span>
-                      <a class="rollable attack-value" data-type="attack" data-attack-type="{{attack.attack_type}}" data-roll-value="{{attack.final_nh}}" data-label="{{group.name}} ({{attack.name}})" data-item-id="{{attack.itemId}}">{{attack.final_nh}}</a>
-                    </div>
+                      <span class="attack-value">{{attack.final_nh}}</span>
+                    </a>
 
-                    <div class="attack-pill-stat damage">
+                    <a class="attack-pill-stat damage rollable-damage"
+                        title="Rolar dano"
+                        data-item-id="{{attack.itemId}}"
+                        data-attack-id="{{attack.id}}"
+                        data-dmg-formula="{{attack.damage_formula}}"
+                        data-dmg-type="{{attack.damage_type}}"
+                        data-armor-divisor="{{attack.armor_divisor}}"
+                        {{#with attack.follow_up_damage}}
+                          {{#if this.formula}}
+                            data-followup-formula="{{this.formula}}"
+                            data-followup-type="{{this.type}}"
+                          {{/if}}
+                        {{/with}}>
                       <span class="attack-label">Dano</span>
-                      <a class="rollable-damage attack-value attack-damage-main"
-                          title="Rolar Dano"
-                          data-item-id="{{attack.itemId}}"
-                          data-attack-id="{{attack.id}}"
-                          data-dmg-formula="{{attack.damage_formula}}"
-                          data-dmg-type="{{attack.damage_type}}"
-                          data-armor-divisor="{{attack.armor_divisor}}"
-                          {{#with attack.follow_up_damage}}
-                            {{#if this.formula}}
-                              data-followup-formula="{{this.formula}}"
-                              data-followup-type="{{this.type}}"
-                            {{/if}}
-                          {{/with}}>
+                      <span class="attack-value attack-damage-main">
                           {{attack.damage_formula}}{{#if (gt attack.armor_divisor 1)}}({{attack.armor_divisor}}){{/if}} {{attack.damage_type}}{{#if attack.damage_scaling}} ({{attack.damage_scaling}}){{/if}}
-                      </a>
-                    </div>
+                      </span>
+                    </a>
 
                     {{#if (eq attack.attack_type "melee")}}
-                    <div class="attack-pill-stat defense">
+                    {{#if attack.final_parry}}
+                    <a class="attack-pill-stat defense rollable" data-type="defense" data-roll-value="{{attack.final_parry}}" data-label="Teste de Aparar" data-defense-type="parry" title="Rolar aparar">
                       <span class="attack-label">APR</span>
-                      <a class="rollable attack-value" data-type="defense" data-roll-value="{{attack.final_parry}}" data-label="Teste de Aparar" data-defense-type="parry">{{attack.final_parry}}</a>
+                      <span class="attack-value">{{attack.final_parry}}</span>
+                    </a>
+                      {{else}}
+                    <div class="attack-pill-stat defense is-disabled">
+                      <span class="attack-label">APR</span>
+                      <span class="attack-value is-empty" title="Este modo não permite aparar" aria-label="Aparar indisponível">—</span>
                     </div>
+                    {{/if}}
                     {{#if attack.final_block}}
-                    <div class="attack-pill-stat defense">
+                    <a class="attack-pill-stat defense rollable" data-type="defense" data-roll-value="{{attack.final_block}}" data-label="Teste de Bloqueio" data-defense-type="block" title="Rolar bloqueio">
                       <span class="attack-label">BLQ</span>
-                      <a class="rollable attack-value" data-type="defense" data-roll-value="{{attack.final_block}}" data-label="Teste de Bloqueio" data-defense-type="block">{{attack.final_block}}</a>
+                      <span class="attack-value">{{attack.final_block}}</span>
+                    </a>
+                      {{else}}
+                    <div class="attack-pill-stat defense is-disabled">
+                      <span class="attack-label">BLQ</span>
+                      <span class="attack-value is-empty" title="Este modo não permite bloquear" aria-label="Bloqueio indisponível">—</span>
                     </div>
                     {{/if}}
                     {{/if}}

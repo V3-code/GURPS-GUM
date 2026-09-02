@@ -7143,25 +7143,18 @@ background-color: var(--gum-accent-gold);
     display: flex;
     grid-template-columns: none !important; 
     flex-direction: column;
-    gap: 5px;
-    padding: 7px 8px;
-    border: 1px solid rgba(199, 129, 74, 0.22);
+    gap: 6px;
+    padding: 7px 8px 6px;
+    border: 0;
     border-radius: 4px;
-    background:
-        linear-gradient(270deg, rgba(24, 22, 24, 0.96), rgba(39, 35, 33, 0.96)),
-        var(--item-panel-texture) repeat;
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.04),
-        0 2px 8px rgba(0, 0, 0, 0.24);
+    background: rgba(255, 255, 255, 0.04);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--attack-card-accent) 12%, transparent);
     overflow: visible;
 }
 
 .gum.sheet.actor .attack-group-list-v2:not(.combat-favorites-list) .attack-card-two-line--ranged {
     --attack-card-accent: #6fa6c8;
-    border-color: rgba(111, 166, 200, 0.24);
-    background:
-        linear-gradient(135deg, rgba(19, 23, 28, 0.96), rgba(30, 38, 45, 0.96)),
-        var(--item-panel-texture) repeat;
+    background: rgba(255, 255, 255, 0.04);
 }
 
 .gum.sheet.actor .attack-group-list-v2:not(.combat-favorites-list) .attack-card-two-line::before {
@@ -7170,16 +7163,15 @@ background-color: var(--gum-accent-gold);
     inset: 0;
     pointer-events: none;
     border-radius: inherit;
-    background:
-        radial-gradient(circle at 10% 0%, color-mix(in srgb, var(--attack-card-accent) 25%, transparent), transparent 36%),
-        linear-gradient(90deg, rgba(255,255,255,0.03), transparent 40%);
+    width: 2px;
+    right: auto;
+    border-radius: 4px 0 0 4px;
+    background: color-mix(in srgb, var(--attack-card-accent) 58%, transparent);
 }
 
 .gum.sheet.actor .attack-group-list-v2:not(.combat-favorites-list) .attack-card-two-line:hover {
-    border-color: color-mix(in srgb, var(--attack-card-accent) 55%, transparent);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.06),
-        0 3px 12px rgba(0, 0, 0, 0.32);
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--attack-card-accent) 22%, transparent);
 }
 
 .gum.sheet.actor .attack-card-two-line .attack-card-primary {
@@ -7223,11 +7215,16 @@ background-color: var(--gum-accent-gold);
 }
 
 .gum.sheet.actor .attack-card-two-line .attack-primary-stats {
-    display: flex;
+    display: grid;
+    grid-template-columns: 48px minmax(76px, auto) 48px 48px;
     align-items: stretch;
     justify-content: flex-end;
     gap: 5px;
     min-width: 0;
+}
+
+.gum.sheet.actor .attack-card-two-line--ranged .attack-primary-stats {
+    grid-template-columns: 48px minmax(76px, auto);
 }
 
 .gum.sheet.actor .attack-card-two-line .attack-pill-stat {
@@ -7236,37 +7233,68 @@ background-color: var(--gum-accent-gold);
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1px;
-    padding: 3px 6px;
-    border: 1px solid color-mix(in srgb, var(--attack-card-accent) 28%, transparent);
-    border-radius: 5px;
-    background: linear-gradient(180deg, rgba(8, 8, 10, 0.44), rgba(0, 0, 0, 0.28));
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.035);
+    gap: 2px;
+    min-height: 34px;
+    padding: 3px 7px;
+    border: 1px solid rgba(255, 255, 255, 0.055);
+    border-radius: 4px;
+    background: rgba(5, 5, 7, 0.28);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.018);
+    color: inherit;
+    text-decoration: none;
+    transition: background 120ms ease, border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
 }
+
+.gum.sheet.actor .attack-card-two-line a.attack-pill-stat { cursor: pointer; }
+.gum.sheet.actor .attack-card-two-line .attack-pill-stat.is-disabled { background: rgba(5, 5, 7, 0.16); }
+
+.gum.sheet.actor .attack-card-two-line a.attack-pill-stat:hover,
+.gum.sheet.actor .attack-card-two-line a.attack-pill-stat:focus-visible {
+    border-color: color-mix(in srgb, var(--attack-card-accent) 32%, rgba(255, 255, 255, 0.08));
+    background: color-mix(in srgb, var(--attack-card-accent) 9%, rgba(5, 5, 7, 0.38));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 0 0 1px rgba(0, 0, 0, 0.12);
+    color: inherit;
+    text-decoration: none;
+}
+
+.gum.sheet.actor .attack-card-two-line a.attack-pill-stat:active { transform: translateY(1px); }
 
 .gum.sheet.actor .attack-card-two-line .attack-pill-stat.damage {
     min-width: 76px;
 }
 
 .gum.sheet.actor .attack-card-two-line .attack-pill-stat.defense .attack-value {
-    color: #9ec8ff;
+    color: #eee7dc;
 }
 
 .gum.sheet.actor .attack-card-two-line .attack-label {
-    color: rgba(247, 233, 215, 0.58);
-    font-size: 9px;
+    color: rgba(247, 233, 215, 0.48);
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.35px;
+    text-transform: uppercase;
 }
 
 .gum.sheet.actor .attack-card-two-line .attack-value {
-    color: #f8d894;
-    font-size: 11px;
+    color: #eee7dc;
+    font-size: 12px;
     font-weight: 700;
     padding: 0;
     white-space: nowrap;
 }
 
+.gum.sheet.actor .attack-card-two-line .attack-value.is-empty {
+    color: rgba(158, 200, 255, 0.3);
+    cursor: default;
+}
+
+.gum.sheet.actor .attack-card-two-line .attack-value.is-empty {
+    color: rgba(238, 231, 220, 0.28);
+    cursor: default;
+}
+
 .gum.sheet.actor .attack-card-two-line .attack-damage-main {
-    color: #f07a82;
+    color: #eee7dc;
 }
 
 .gum.sheet.actor .attack-card-two-line .attack-card-secondary {
@@ -7275,9 +7303,9 @@ background-color: var(--gum-accent-gold);
     flex-wrap: wrap;
     gap: 4px 10px;
     padding-left: 32px;
-    padding-top: 5px;
-    border-top: 1px solid color-mix(in srgb, var(--attack-card-accent) 20%, transparent);
-    color: rgba(247, 233, 215, 0.62);
+    padding-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.055);
+    color: rgba(247, 233, 215, 0.58);
     font-size: 10px;
     line-height: 1.2;
 }
@@ -7313,7 +7341,11 @@ background-color: var(--gum-accent-gold);
     .gum.sheet.actor .attack-card-two-line .attack-primary-stats {
         grid-column: 2 / -1;
         justify-content: flex-start;
-        flex-wrap: wrap;
+        grid-template-columns: 48px minmax(76px, auto) 48px 48px;
+    }
+
+    .gum.sheet.actor .attack-card-two-line--ranged .attack-primary-stats {
+        grid-template-columns: 48px minmax(76px, auto);
     }
 
     .gum.sheet.actor .attack-card-two-line .attack-card-secondary {
