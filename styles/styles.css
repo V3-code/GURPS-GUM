@@ -6264,6 +6264,45 @@ background-color: var(--gum-accent-gold);
     height: 14px;
 }
 
+/* Editores manuais de registros: superfícies leves substituem caixas e divisórias fortes. */
+.dialog.gum.gum-record-edit-dialog .window-content { padding:0; background:#202126; }
+.dialog.gum.gum-record-edit-dialog .dialog-content { padding:14px 16px 10px; }
+.dialog.gum.gum-record-edit-dialog .gum-record-editor { gap:10px 12px; }
+.dialog.gum.gum-wound-edit-dialog .gum-wound-form { grid-template-columns:repeat(12,minmax(0,1fr)); gap:8px; }
+.dialog.gum.gum-record-edit-dialog .gum-record-editor__intro { display:flex; align-items:center; gap:11px; margin:-14px -16px 3px; padding:13px 16px; background:rgba(255,255,255,.035); }
+.dialog.gum.gum-record-edit-dialog .gum-record-editor__intro > span:last-child { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.dialog.gum.gum-record-edit-dialog .gum-record-editor__intro strong { color:#eee7dc; font-size:12px; letter-spacing:.04em; text-transform:uppercase; }
+.dialog.gum.gum-record-edit-dialog .gum-record-editor__intro small { color:rgba(238,231,220,.58); font-size:10px; line-height:1.35; }
+.dialog.gum.gum-record-edit-dialog .gum-record-editor__icon { display:grid; flex:0 0 32px; width:32px; height:32px; place-items:center; border-radius:8px; background:rgba(197,160,91,.12); color:#d2b578; font-size:13px; }
+.dialog.gum.gum-record-edit-dialog .gum-record-editor__icon--blue { background:rgba(126,165,188,.12); color:#a9c7d8; }
+.dialog.gum.gum-record-edit-dialog .gum-record-editor__section { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 12px; padding:10px; border-radius:7px; background:rgba(255,255,255,.025); }
+.dialog.gum.gum-wound-edit-dialog .gum-wound-form .gum-record-field { grid-column:span 3; margin:0; padding:8px 9px 9px; border:0; border-radius:6px; background:rgba(105,119,139,.11); }
+.dialog.gum.gum-wound-edit-dialog .gum-wound-form .gum-record-field--title { grid-column:span 6; background:rgba(181,151,83,.14); }
+.dialog.gum.gum-wound-edit-dialog .gum-wound-form .gum-record-field--nature { background:rgba(139,116,80,.12); }
+.dialog.gum.gum-wound-edit-dialog .gum-wound-form .gum-record-field--initial { background:rgba(181,151,83,.14); }
+.dialog.gum.gum-wound-edit-dialog .gum-wound-form .gum-record-context-field { grid-column:span 3; margin:0; padding:8px 9px 9px; border:0; border-radius:6px; background:rgba(76,84,96,.1); }
+.dialog.gum.gum-record-edit-dialog .gum-record-editor__section-label { display:flex; align-items:center; gap:6px; margin:2px 0 -2px; color:rgba(224,211,190,.72); font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+.dialog.gum.gum-record-edit-dialog .gum-record-editor__section-label i { color:rgba(197,160,91,.72); font-size:9px; }
+.dialog.gum.gum-record-edit-dialog .gum-record-editor__section-label span { margin-left:auto; color:rgba(224,211,190,.38); font-size:8px; font-weight:500; }
+.dialog.gum.gum-record-edit-dialog .dialog-content label { color:rgba(235,225,210,.58); font-size:9px; }
+.dialog.gum.gum-record-edit-dialog .dialog-content input,
+.dialog.gum.gum-record-edit-dialog .dialog-content textarea { border:0; border-radius:5px; background:rgba(255,255,255,.065); box-shadow:inset 0 -1px rgba(255,255,255,.06); }
+.dialog.gum.gum-record-edit-dialog .dialog-content input { width:100%; min-width:0; height:30px; margin:0; padding:3px 8px; }
+.dialog.gum.gum-record-edit-dialog .dialog-content input:hover,
+.dialog.gum.gum-record-edit-dialog .dialog-content textarea:hover { background:rgba(255,255,255,.085); }
+.dialog.gum.gum-record-edit-dialog .dialog-content input:focus,
+.dialog.gum.gum-record-edit-dialog .dialog-content textarea:focus { border:0; background:rgba(255,255,255,.1); box-shadow:inset 0 -2px rgba(197,160,91,.55); }
+.dialog.gum.gum-record-edit-dialog .dialog-buttons { margin:0; padding:10px 16px 14px; border:0; background:rgba(0,0,0,.1); }
+.dialog.gum.gum-record-edit-dialog .dialog-buttons button { min-height:30px; border:0; background:rgba(255,255,255,.07); }
+.dialog.gum.gum-record-edit-dialog .dialog-buttons button[data-button="save"] { background:rgba(197,160,91,.82); color:#181715; font-weight:700; }
+.dialog.gum.gum-record-edit-dialog .dialog-buttons button[data-button="save"]:hover { background:#d0ad68; }
+@media (max-width:520px) {
+  .dialog.gum.gum-record-edit-dialog .gum-record-editor,
+  .dialog.gum.gum-record-edit-dialog .gum-record-editor__section { grid-template-columns:minmax(0,1fr); }
+  .dialog.gum.gum-wound-edit-dialog .gum-wound-form .gum-record-field,
+  .dialog.gum.gum-wound-edit-dialog .gum-wound-form .gum-record-context-field { grid-column:1 / -1; }
+}
+
 .dialog.gum.gum-sheet-edit-dialog.gum-magic-view-dialog .casting-ability-preview {
     display: flex;
     flex-direction: column;

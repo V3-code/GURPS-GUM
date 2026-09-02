@@ -4324,23 +4324,25 @@ async _onEditWound(ev) {
   const natureOptions = buildDamageNatureSearchOptions()
     .map(option => `<option value="${esc(option.value)}" label="${esc(option.label)}"></option>`)
     .join("");
-  const content = `<form class="gum-popup-form gum-wound-form" autocomplete="off">
+  const content = `<form class="gum-popup-form gum-wound-form gum-record-editor" autocomplete="off">
     <datalist id="gum-wound-natures">${natureOptions}</datalist>
-    <div class="form-group form-group--full"><label>Título</label><input name="title" value="${esc(current.title)}" required></div>
-    <div class="form-group"><label>Valor</label><input name="value" type="number" min="0" value="${Number(current.value || 0)}"></div>
-    <div class="form-group"><label>Restante</label><input name="remaining" type="number" min="0" value="${Number(current.remaining ?? current.value ?? 0)}"></div>
-    <div class="form-group"><label>Destino</label><input name="poolLabel" value="${esc(current.poolLabel)}"></div>
-    <div class="form-group"><label>Natureza</label><input name="nature" list="gum-wound-natures" value="${esc(formatDamageNature(current.nature))}"></div>
-    <div class="form-group"><label>Local</label><input name="location" value="${esc(current.location)}"></div>
-    <div class="form-group"><label>Origem</label><input name="origin" value="${esc(current.origin)}"></div>
-    <div class="form-group form-group--full"><label>Observação</label><textarea name="notes">${esc(current.notes)}</textarea></div>
-  </form>`;
+    <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon"><i class="fas fa-bandage" aria-hidden="true"></i></span><span><strong>Dados do ferimento</strong><small>Crie um card independente para acompanhar a lesão durante o jogo.</small></span></header>
+    <div class="form-group gum-record-field gum-record-field--title"><label>Título</label><input name="title" value="${esc(current.title)}" placeholder="Ex.: Corte no braço" required></div>
+    <div class="form-group gum-record-field gum-record-field--nature"><label>Natureza</label><input name="nature" list="gum-wound-natures" value="${esc(formatDamageNature(current.nature))}"></div>
+    <div class="form-group gum-record-field gum-record-field--initial"><label>Valor inicial</label><input name="value" type="number" min="0" value="${Number(current.value || 0)}"></div>
+    <p class="gum-record-editor__section-label form-group--full"><i class="fas fa-crosshairs" aria-hidden="true"></i> Contexto <span>opcional</span></p>
+    <div class="form-group gum-record-context-field"><label>Valor restante</label><input name="remaining" type="number" min="0" value="${Number(current.remaining ?? current.value ?? 0)}"></div>
+    <div class="form-group gum-record-context-field"><label>Destino</label><input name="poolLabel" value="${esc(current.poolLabel)}"></div>
+    <div class="form-group gum-record-context-field"><label>Local</label><input name="location" value="${esc(current.location)}"></div>
+    <div class="form-group gum-record-context-field"><label>Origem</label><input name="origin" value="${esc(current.origin)}"></div>
+    <div class="form-group form-group--full form-group--textarea"><label>Observação</label><textarea name="notes" placeholder="Detalhes úteis para o acompanhamento">${esc(current.notes)}</textarea></div>
+    </form>`;
   new Dialog({ title: current.title ? "Editar Ferimento" : "Novo Ferimento", content, buttons: { save: { label: "Salvar", callback: async html => {
     const f = html.find("form")[0]; const rawNature = f.nature.value.trim(); const nature = rawNature ? resolveDamageNature(rawNature) : null;
     if (!f.title.value.trim()) return ui.notifications.warn("Informe o título do ferimento.");
     if (rawNature && !nature) return ui.notifications.warn("Natureza inválida.");
     await this.actor.update({ [`system.combat.wounds.${woundId}`]: { ...current, title: f.title.value.trim(), value: Number(f.value.value)||0, remaining: Number(f.remaining.value)||0, poolLabel: f.poolLabel.value.trim(), nature, location: f.location.value.trim(), origin: f.origin.value.trim(), notes: f.notes.value.trim(), createdAt: current.createdAt || Date.now(), updatedAt: Date.now() }});
-  }}, cancel: { label: "Cancelar" } }, default: "save" }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog"] }).render(true);
+  }}, cancel: { label: "Cancelar" } }, default: "save" }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-record-edit-dialog", "gum-wound-edit-dialog"], width: 480 }).render(true);
 }
 
 async _onDeleteWound(ev) {
@@ -4387,12 +4389,13 @@ async _promptCombatMeterData(initialData = {}, { isEdit = false } = {}) {
   const data = this._normalizeResourceEntry(initialData, { defaultName: "Registro", includeDR: true });
   const escapedName = foundry.utils.escapeHTML(String(data.name || ""));
   const content = `
-    <form class="gum-meter-form gum-popup-form gum-combat-meter-form" autocomplete="off">
-      <p class="hint form-group--full">Preencha os dados do registro de combate. Você pode editar depois no card.</p>
+    <form class="gum-meter-form gum-popup-form gum-combat-meter-form gum-record-editor" autocomplete="off">
+      <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon gum-record-editor__icon--blue"><i class="fas fa-clipboard-list" aria-hidden="true"></i></span><span><strong>Registro de combate</strong><small>Acompanhe manualmente um recurso, marcador ou contador da cena.</small></span></header>
       <div class="form-group form-group--full">
         <label>Nome do Registro</label>
-        <input class="gum-input-left" type="text" name="name" value="${escapedName}" required/>
+        <input class="gum-input-left" type="text" name="name" value="${escapedName}" placeholder="Ex.: Cobertura do escudo" required/>
       </div>
+      <p class="gum-record-editor__section-label form-group--full"><i class="fas fa-sliders-h" aria-hidden="true"></i> Valores</p>
       <div class="form-group form-group--number">
         <label>Valor Atual</label>
         <input type="number" name="current" value="${data.current ?? 0}"/>
