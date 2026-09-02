@@ -322,7 +322,7 @@
                 </div>
                 <div class="calc-item-compact">
                     <label>Natureza do Dano</label>
-                    <datalist id="gum-application-damage-natures">{{#each natureOptions}}<option value="{{this.value}}">{{this.label}}</option>{{/each}}</datalist>
+<datalist id="gum-application-damage-natures">{{#each natureOptions}}<option value="{{this.value}}" label="{{this.label}}"></option>{{/each}}</datalist>
                     <input type="text" name="damage_nature" class="calc-input-compact" value="{{activeNature}}" list="gum-application-damage-natures" placeholder="Opcional"/>
                 </div>
             </div>

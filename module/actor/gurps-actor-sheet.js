@@ -10,7 +10,7 @@ import { buildSkillModifierIndicators } from "../utils/skill-modifier-indicators
 import { resolveCharacterImage } from "../utils/character-image.mjs";
 import { buildSecondaryStatsRecalculationPlan, buildSecondaryStatsUpdateData, formatBasicDamageDiceCount } from "../utils/secondary-stats-recalculation.mjs";
 import { SOCIAL_CATEGORIES, SOCIAL_MANUAL_LAYOUTS, buildSocialSections, calculateManualSocialPoints } from "../config/social-aspects.mjs";
-import { DAMAGE_NATURES, formatDamageNature, resolveDamageNature } from "../utils/damage-nature.mjs";
+import { buildDamageNatureSearchOptions, formatDamageNature, resolveDamageNature } from "../utils/damage-nature.mjs";
 
 const WOUND_NATURE_ICONS = Object.freeze({
   fire: "fa-fire",
@@ -4311,8 +4311,10 @@ async _onEditWound(ev) {
   ev.preventDefault();
   const woundId = ev.currentTarget.closest(".wound-card")?.dataset?.woundId || foundry.utils.randomID();
   const current = this.actor.system.combat?.wounds?.[woundId] || {};
-  const natureOptions = DAMAGE_NATURES.map(n => `<option value="${formatDamageNature(n)}"></option>`).join("");
   const esc = value => foundry.utils.escapeHTML(String(value ?? ""));
+  const natureOptions = buildDamageNatureSearchOptions()
+    .map(option => `<option value="${esc(option.value)}" label="${esc(option.label)}"></option>`)
+    .join("");
   const content = `<form class="gum-popup-form gum-wound-form" autocomplete="off">
     <datalist id="gum-wound-natures">${natureOptions}</datalist>
     <div class="form-group form-group--full"><label>Título</label><input name="title" value="${esc(current.title)}" required></div>

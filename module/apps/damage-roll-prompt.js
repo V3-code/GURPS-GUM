@@ -1,5 +1,5 @@
 import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
-import { DAMAGE_NATURES, formatDamageNature, resolveDamageNature } from "../utils/damage-nature.mjs";
+import { buildDamageNatureSearchOptions, formatDamageNature, resolveDamageNature } from "../utils/damage-nature.mjs";
 export class GurpsDamageRollPrompt extends FormApplication {
     constructor(options = {}) {
         super(options);
@@ -65,7 +65,7 @@ export class GurpsDamageRollPrompt extends FormApplication {
             main,
             followUp,
             fragmentation,
-            natureOptions: DAMAGE_NATURES.map(nature => ({ value: formatDamageNature(nature), label: formatDamageNature(nature) })),
+            natureOptions: buildDamageNatureSearchOptions(),
             visualCards,
             mainTypeLocked: !!main.type,
             followUpTypeLocked: !!followUp.type,

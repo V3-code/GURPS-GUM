@@ -7,7 +7,7 @@ import { evaluateBarrierConsequence, normalizeResistanceRoll } from "../../modul
 import { executeRollRequest } from "../../module/services/roll-request-service.js";
 import { getPurposeLabels } from "../../module/utils/roll-purposes.mjs";
 import { renderPendingResistanceRequest } from "../../module/utils/roll-request-view.mjs";
-import { DAMAGE_NATURES, formatDamageNature, resolveDamageNature } from "../../module/utils/damage-nature.mjs";
+import { buildDamageNatureSearchOptions, formatDamageNature, resolveDamageNature } from "../../module/utils/damage-nature.mjs";
 
 export default class DamageApplicationWindow extends Application {
     
@@ -453,7 +453,7 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
         // ... (Seu método getData, 100% preservado e sem alterações)
         const context = await super.getData();
         context.damage = this.damageData;        
-        context.natureOptions = DAMAGE_NATURES.map(nature => ({ value: formatDamageNature(nature), label: formatDamageNature(nature) }));
+        context.natureOptions = buildDamageNatureSearchOptions();
         context.activeNature = formatDamageNature(this.damageData.main?.nature);
         context.attacker = {
             id: this.attackerActor?.id,
