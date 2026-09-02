@@ -6274,6 +6274,8 @@ background-color: var(--gum-accent-gold);
 .dialog.gum.gum-record-edit-dialog .gum-record-editor__intro strong { color:#eee7dc; font-size:12px; letter-spacing:.04em; text-transform:uppercase; }
 .dialog.gum.gum-record-edit-dialog .gum-record-editor__intro small { color:rgba(238,231,220,.58); font-size:10px; line-height:1.35; }
 .dialog.gum.gum-record-edit-dialog .gum-record-editor__icon { display:grid; flex:0 0 32px; width:32px; height:32px; place-items:center; border-radius:8px; background:rgba(197,160,91,.12); color:#d2b578; font-size:13px; }
+.dialog.gum.gum-record-edit-dialog .gum-record-editor__icon--magic { background:rgba(123,105,183,.14); color:#c5b8ed; }
+.dialog.gum.gum-record-edit-dialog .gum-record-editor__icon--power { background:rgba(181,132,67,.14); color:#e1b875; }
 .dialog.gum.gum-record-edit-dialog .gum-record-editor__icon--blue { background:rgba(126,165,188,.12); color:#a9c7d8; }
 .dialog.gum.gum-record-edit-dialog .gum-record-editor__section { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 12px; padding:10px; border-radius:7px; background:rgba(255,255,255,.025); }
 .dialog.gum.gum-wound-edit-dialog .gum-wound-form .gum-record-field { grid-column:span 3; margin:0; padding:8px 9px 9px; border:0; border-radius:6px; background:rgba(105,119,139,.11); }
@@ -6296,11 +6298,28 @@ background-color: var(--gum-accent-gold);
 .dialog.gum.gum-record-edit-dialog .dialog-buttons button { min-height:30px; border:0; background:rgba(255,255,255,.07); }
 .dialog.gum.gum-record-edit-dialog .dialog-buttons button[data-button="save"] { background:rgba(197,160,91,.82); color:#181715; font-weight:700; }
 .dialog.gum.gum-record-edit-dialog .dialog-buttons button[data-button="save"]:hover { background:#d0ad68; }
+
+/* Registros de combate e reservas usam a mesma composição leve dos cards de ferimento. */
+.dialog.gum.gum-resource-edit-dialog .gum-record-editor { grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; }
+.dialog.gum.gum-resource-edit-dialog .gum-resource-field { grid-column:span 2; min-width:0; margin:0; padding:8px 9px 9px; border:0; border-radius:6px; background:rgba(105,119,139,.11); }
+.dialog.gum.gum-resource-edit-dialog .gum-resource-field--name { grid-column:1 / -1; background:rgba(126,151,168,.13); }
+.dialog.gum.gum-resource-edit-dialog .gum-resource-field--source { grid-column:1 / -1; background:rgba(86,96,113,.12); }
+.dialog.gum.gum-resource-edit-dialog .gum-resource-field--current { background:rgba(181,151,83,.14); }
+.dialog.gum.gum-resource-edit-dialog .gum-resource-field--max { background:rgba(105,119,139,.13); }
+.dialog.gum.gum-resource-edit-dialog .gum-resource-field--dr { background:rgba(91,125,143,.13); }
+.dialog.gum.gum-energy-reserve-edit-dialog .gum-resource-field--current,
+.dialog.gum.gum-energy-reserve-edit-dialog .gum-resource-field--max { grid-column:span 3; }
+.dialog.gum.gum-energy-reserve-edit-dialog--spell .gum-resource-field--name { background:rgba(123,105,183,.13); }
+.dialog.gum.gum-energy-reserve-edit-dialog--power .gum-resource-field--name { background:rgba(181,132,67,.13); }
+.dialog.gum.gum-resource-edit-dialog .gum-resource-field label { display:block; margin-bottom:4px; }
+.dialog.gum.gum-resource-edit-dialog .gum-record-editor__section-label { grid-column:1 / -1; }
+
 @media (max-width:520px) {
   .dialog.gum.gum-record-edit-dialog .gum-record-editor,
   .dialog.gum.gum-record-edit-dialog .gum-record-editor__section { grid-template-columns:minmax(0,1fr); }
   .dialog.gum.gum-wound-edit-dialog .gum-wound-form .gum-record-field,
   .dialog.gum.gum-wound-edit-dialog .gum-wound-form .gum-record-context-field { grid-column:1 / -1; }
+  .dialog.gum.gum-resource-edit-dialog .gum-resource-field { grid-column:1 / -1; }
 }
 
 .dialog.gum.gum-sheet-edit-dialog.gum-magic-view-dialog .casting-ability-preview {

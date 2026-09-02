@@ -4391,20 +4391,20 @@ async _promptCombatMeterData(initialData = {}, { isEdit = false } = {}) {
   const content = `
     <form class="gum-meter-form gum-popup-form gum-combat-meter-form gum-record-editor" autocomplete="off">
       <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon gum-record-editor__icon--blue"><i class="fas fa-clipboard-list" aria-hidden="true"></i></span><span><strong>Registro de combate</strong><small>Acompanhe manualmente um recurso, marcador ou contador da cena.</small></span></header>
-      <div class="form-group form-group--full">
+      <div class="form-group form-group--full gum-resource-field gum-resource-field--name">
         <label>Nome do Registro</label>
         <input class="gum-input-left" type="text" name="name" value="${escapedName}" placeholder="Ex.: Cobertura do escudo" required/>
       </div>
       <p class="gum-record-editor__section-label form-group--full"><i class="fas fa-sliders-h" aria-hidden="true"></i> Valores</p>
-      <div class="form-group form-group--number">
+      <div class="form-group form-group--number gum-resource-field gum-resource-field--current">
         <label>Valor Atual</label>
         <input type="number" name="current" value="${data.current ?? 0}"/>
       </div>
-      <div class="form-group form-group--number">
+      <div class="form-group form-group--number gum-resource-field gum-resource-field--max">
         <label>Valor de Referência</label>
         <input type="number" name="max" value="${data.max ?? 0}" min="0"/>
       </div>
-      <div class="form-group form-group--number">
+      <div class="form-group form-group--number gum-resource-field gum-resource-field--dr">
         <label>RD</label>
         <input type="number" name="dr" value="${data.dr ?? 0}" min="0"/>
       </div>
@@ -4447,7 +4447,7 @@ async _promptCombatMeterData(initialData = {}, { isEdit = false } = {}) {
       },
       default: "save",
       close: () => finish(null)
-    }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-meter-edit-dialog"] }).render(true);
+        }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-record-edit-dialog", "gum-resource-edit-dialog", "gum-combat-meter-edit-dialog"], width: 460 }).render(true);
   });
 }
 
@@ -4517,22 +4517,29 @@ async _onEnergyReserveInputChange(ev) {
 
 async _promptEnergyReserveData(reserveType, initialData = {}, { isEdit = false } = {}) {
   const data = this._normalizeResourceEntry(initialData, { defaultName: reserveType === "power" ? "Reserva de Poder" : "Reserva de Magia" });
+  const esc = value => foundry.utils.escapeHTML(String(value ?? ""));
+  const isPowerReserve = reserveType === "power";
+  const reserveLabel = isPowerReserve ? "Reserva de poder" : "Reserva de magia";
+  const reserveDescription = isPowerReserve
+    ? "Acompanhe a energia disponível para uma fonte de poderes."
+    : "Acompanhe a energia disponível para conjurar suas magias.";
   const content = `
-    <form class="gum-meter-form gum-popup-form gum-energy-reserve-form" autocomplete="off">
-      <p class="hint form-group--full">Configure a reserva e origem. Você pode editar depois no card.</p>
-      <div class="form-group form-group--full">
+    <form class="gum-meter-form gum-popup-form gum-energy-reserve-form gum-record-editor" autocomplete="off">
+      <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon ${isPowerReserve ? "gum-record-editor__icon--power" : "gum-record-editor__icon--magic"}"><i class="fas ${isPowerReserve ? "fa-bolt" : "fa-hat-wizard"}" aria-hidden="true"></i></span><span><strong>${reserveLabel}</strong><small>${reserveDescription}</small></span></header>
+      <div class="form-group form-group--full gum-resource-field gum-resource-field--name">
         <label>Nome</label>
-        <input class="gum-input-left" type="text" name="name" value="${data.name || ""}" required/>
+        <input class="gum-input-left" type="text" name="name" value="${esc(data.name)}" placeholder="${isPowerReserve ? "Ex.: Chi" : "Ex.: Reserva de mana"}" required/>
       </div>
-      <div class="form-group form-group--full">
+      <div class="form-group form-group--full gum-resource-field gum-resource-field--source">
         <label>Fonte / Origem</label>
-        <input class="gum-input-left" type="text" name="source" value="${data.source || ""}" />
+                <input class="gum-input-left" type="text" name="source" value="${esc(data.source)}" placeholder="${isPowerReserve ? "Ex.: Poderes psíquicos" : "Ex.: Aptidão Mágica"}" />
       </div>
-      <div class="form-group form-group--number">
+      <p class="gum-record-editor__section-label form-group--full"><i class="fas fa-sliders-h" aria-hidden="true"></i> Valores</p>
+      <div class="form-group form-group--number gum-resource-field gum-resource-field--current">
         <label>Valor Atual</label>
         <input type="number" name="current" value="${data.current ?? 0}" min="0"/>
       </div>
-      <div class="form-group form-group--number">
+     <div class="form-group form-group--number gum-resource-field gum-resource-field--max">
         <label>Valor Máximo</label>
         <input type="number" name="max" value="${data.max ?? 0}" min="0"/>
       </div>
@@ -4577,7 +4584,7 @@ async _promptEnergyReserveData(reserveType, initialData = {}, { isEdit = false }
       },
       default: "save",
       close: () => finish(null)
-    }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-meter-edit-dialog"] }).render(true);
+    }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-record-edit-dialog", "gum-resource-edit-dialog", "gum-energy-reserve-edit-dialog", `gum-energy-reserve-edit-dialog--${reserveType}`], width: 460 }).render(true);
   });
 }
 
