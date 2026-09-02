@@ -1627,6 +1627,8 @@
         {{! --- COLUNA DA DIREITA (LARGA) --- }}
         <div class="combat-right-column">
 
+          <div class="combat-area-label" aria-hidden="true"><span>Controle de Combate</span></div>
+
           {{!-- Grupo fixo de Registros de Combate --}}
           <div class="attack-group-list-v2 combat-fixed-groups-list">
             <details class="attack-group-details gum-unified-section combat-fixed-group wounds-box" data-group-id="wounds-group" {{collapsibleState "wounds-group" @root.collapsedData}}>
@@ -1635,14 +1637,27 @@
                 <div class="summary-right"><span class="group-tag">{{preparedWounds.length}} card(s)</span><a class="add-wound" title="Adicionar Ferimento"><i class="fas fa-plus"></i></a></div>
               </summary>
               <div class="group-content wound-list">
-                {{#each preparedWounds}}
-                  <article class="wound-card" data-wound-id="{{this.id}}">
-                    <div class="wound-card-heading"><strong>{{this.title}}</strong><span>{{this.value}}{{#if this.remaining}} / {{this.remaining}} restante{{/if}}</span></div>
-                    <div class="wound-card-tags"><span>{{this.poolLabel}}</span>{{#if this.natureDisplay}}<span>{{this.natureDisplay}}</span>{{/if}}{{#if this.location}}<span>{{this.location}}</span>{{/if}}</div>
-                    {{#if this.origin}}<small>{{this.origin}}</small>{{/if}}{{#if this.notes}}<p>{{this.notes}}</p>{{/if}}
-                    <div class="item-controls"><a class="edit-wound" title="Editar"><i class="fas fa-edit"></i></a><a class="delete-wound" title="Excluir"><i class="fas fa-trash"></i></a></div>
-                  </article>
-                {{else}}<div class="placeholder-text">Nenhum ferimento registrado.</div>{{/each}}
+                <div class="wound-grid">
+                  {{#each preparedWounds}}
+                    <article class="wound-card" data-wound-id="{{this.id}}" title="{{this.woundTooltip}}" aria-label="Ferimento: {{this.woundTooltip}}">
+                      <i class="fas {{this.natureIcon}} wound-nature-icon" title="{{this.natureTooltip}}" aria-label="{{this.natureTooltip}}"></i>
+                      <div class="wound-value-controls">
+                        <button type="button" class="adjust-wound wound-adjust" data-adjustment="-1" title="Diminuir ferimento em uma unidade" aria-label="Diminuir ferimento em uma unidade"><i class="fas fa-minus" aria-hidden="true"></i></button>
+                        <strong class="wound-value" aria-label="Valor restante: {{this.remaining}}">{{this.remaining}}</strong>
+                        <button type="button" class="adjust-wound wound-adjust" data-adjustment="1" title="Aumentar ferimento em uma unidade" aria-label="Aumentar ferimento em uma unidade"><i class="fas fa-plus" aria-hidden="true"></i></button>
+                      </div>
+                      <div class="item-controls wound-controls">
+                        <div class="gum-action-menu js-action-menu">
+                          <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções do ferimento" aria-label="Opções do ferimento" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+                          <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações do ferimento">
+                            <a class="item-control edit-wound gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>Editar</span></a>
+                            <a class="item-control delete-wound gum-action-menu__item is-danger" role="menuitem" title="Excluir"><i class="fas fa-trash"></i><span>Excluir</span></a>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  {{else}}<div class="placeholder-text">Nenhum ferimento registrado.</div>{{/each}}
+                </div>
               </div>
             </details>
             <details class="attack-group-details gum-unified-section combat-meters-box combat-fixed-group" data-group-id="combat-meters-group" {{collapsibleState "combat-meters-group" @root.collapsedData}}>>
@@ -1884,8 +1899,10 @@
             </details>
           </div>
 
+          <div class="combat-area-label" aria-hidden="true"><span>Ações de Combate</span></div>
+
           {{!-- Bloco de Lista de ataque --}}
-<div class="attack-group-list-v2">
+    <div class="attack-group-list-v2 combat-actions-list">
     {{#each attackGroups as |group|}}
     {{!-- USANDO group.id EM VEZ DE group.name --}}
     <details class="attack-group-details gum-unified-section" data-group-id="attack-group-{{group.id}}" {{collapsibleState (concat "attack-group-" group.id) @root.collapsedData}}>

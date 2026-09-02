@@ -4876,7 +4876,8 @@ background-color: var(--gum-accent-gold);
 
 /* Tags do Cabeçalho */
 .gum.sheet.actor .group-tag {
-    font-size: var(--gum-font-size-meta);
+    font-size: 'Roboto Condensed';
+    font-size: 8px;
     padding: 2px 6px;
     border-radius: 3px;
     font-weight: 600;
@@ -8662,10 +8663,47 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.item .item-social-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 12px; margin-top:8px; }
 .gum.sheet.item .item-social-fields label { display:flex; flex-direction:column; gap:3px; }
 @media (max-width:700px) { .gum.sheet.item .item-social-fields { grid-template-columns:1fr; } .gum.sheet.actor .social-origin { max-width:110px; } }
-/* Ferimentos: cards intentionally independent from their original attack/message. */
-.wound-list { display: grid; gap: .5rem; padding: .5rem; }
-.wound-card { position: relative; padding: .65rem; border: 1px solid var(--color-border-light-tertiary, #806b45); background: rgba(20,16,13,.65); border-radius: 4px; }
-.wound-card-heading { display:flex; justify-content:space-between; gap:.5rem; color:#d8c29a; }
-.wound-card-tags { display:flex; flex-wrap:wrap; gap:.3rem; margin:.35rem 0; }
-.wound-card-tags span { border:1px solid rgba(190,150,80,.45); border-radius:10px; padding:.1rem .4rem; font-size:.8em; }
-.wound-card .item-controls { position:absolute; right:.4rem; bottom:.3rem; display:flex; gap:.45rem; }
+
+/* Combate: hierarquia leve entre informações operacionais e ações ofensivas. */
+.gum.sheet.actor .combat-area-label {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-height:12px;
+  color:rgba(216,194,154,.58);
+  font-family:var(--gum-font-condensed);
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.12em;
+  line-height:1;
+  text-transform:uppercase;
+}
+.gum.sheet.actor .combat-area-label::after { content:""; flex:1; height:1px; background:linear-gradient(90deg,rgba(197,160,91,.22),transparent); }
+.gum.sheet.actor .combat-fixed-group > .gum-unified-header {
+  padding:5px 9px;
+  background:rgba(45,43,47,.78);
+  border-bottom:0;
+  letter-spacing:.35px;
+}
+.gum.sheet.actor .combat-fixed-group > .gum-unified-header:hover,
+.gum.sheet.actor .combat-fixed-group[open] > .gum-unified-header { background:rgba(54,50,55,.9); }
+.gum.sheet.actor .combat-fixed-group { border-radius:4px; box-shadow:none; }
+.gum.sheet.actor .combat-fixed-group > .group-content { border-top:1px solid rgba(197,160,91,.1); }
+
+/* Ferimentos: registros compactos e independentes do ataque/mensagem original. */
+.gum.sheet.actor .wound-list { display:block; padding:6px; overflow:visible; }
+.gum.sheet.actor .wound-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; width:100%; }
+.gum.sheet.actor .wound-grid > .placeholder-text { grid-column:1 / -1; }
+.gum.sheet.actor .wound-card { position:relative; display:grid; grid-template-columns:28px minmax(0,1fr) 28px; align-items:center; gap:3px; min-width:0; padding:6px 5px 5px; border:0; border-radius:4px; background:rgba(255,255,255,.045); box-shadow:inset 0 0 0 1px rgba(197,160,91,.1); }
+.gum.sheet.actor .wound-card:hover { background:rgba(255,255,255,.065); box-shadow:inset 0 0 0 1px rgba(197,160,91,.2); }
+.gum.sheet.actor .wound-nature-icon { display:grid; width:22px; height:22px; place-items:center; justify-self:center; color:rgba(216,194,154,.8); font-size:12px; }
+.gum.sheet.actor .wound-value-controls { display:grid; grid-template-columns:22px minmax(25px,auto) 22px; align-items:center; justify-self:center; gap:3px; }
+.gum.sheet.actor .wound-adjust { display:grid; width:22px; height:22px; min-height:0; margin:0; padding:0; place-items:center; border:0; border-radius:3px; background:rgba(255,255,255,.055); box-shadow:none; color:rgba(240,228,212,.72); font-size:9px; line-height:1; }
+.gum.sheet.actor .wound-adjust:hover,
+.gum.sheet.actor .wound-adjust:focus-visible { background:rgba(197,160,91,.16); box-shadow:inset 0 0 0 1px rgba(197,160,91,.25); color:#f0d79f; }
+.gum.sheet.actor .wound-value { min-width:25px; color:#ead6af; font-family:var(--gum-font-condensed); font-size:16px; line-height:1; text-align:center; }
+.gum.sheet.actor .wound-controls { display:flex; position:static; justify-self:center; justify-content:center; }
+.gum.sheet.actor .wound-controls .gum-action-menu__toggle { width:22px; height:22px; color:rgba(240,228,212,.55); }
+.gum.sheet.actor .wound-controls .gum-action-menu__toggle:hover { color:#f0d79f; text-decoration:none; }
+@media (max-width:900px) { .gum.sheet.actor .wound-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:620px) { .gum.sheet.actor .wound-grid { grid-template-columns:minmax(0,1fr); } }

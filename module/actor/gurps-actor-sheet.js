@@ -12,6 +12,58 @@ import { buildSecondaryStatsRecalculationPlan, buildSecondaryStatsUpdateData, fo
 import { SOCIAL_CATEGORIES, SOCIAL_MANUAL_LAYOUTS, buildSocialSections, calculateManualSocialPoints } from "../config/social-aspects.mjs";
 import { DAMAGE_NATURES, formatDamageNature, resolveDamageNature } from "../utils/damage-nature.mjs";
 
+const WOUND_NATURE_ICONS = Object.freeze({
+  fire: "fa-fire",
+  cold: "fa-snowflake",
+  electricity: "fa-bolt",
+  acid: "fa-flask",
+  poison: "fa-skull-crossbones",
+  psychic: "fa-brain",
+  necrotic: "fa-skull",
+  radiant: "fa-sun",
+  sonic: "fa-volume-high",
+  "magical-force": "fa-wand-magic-sparkles",
+  cosmic: "fa-meteor",
+  radiation: "fa-radiation",
+  water: "fa-droplet",
+  air: "fa-wind",
+  earth: "fa-mountain",
+  "direct-trauma": "fa-hand-fist"
+});
+
+function prepareWoundForDisplay(id, wound = {}) {
+  const nature = typeof wound.nature === "object" && wound.nature?.id
+    ? wound.nature
+    : resolveDamageNature(wound.nature);
+  const natureLabel = nature?.label || "Natureza indefinida";
+  const natureAbbreviation = nature?.abbreviation || "";
+  const originDisplay = String(wound.origin || wound.attacker || "").trim();
+  const locationDisplay = String(wound.location || "").trim();
+  const natureDisplay = formatDamageNature(nature);
+  const tooltipLines = [
+    wound.title,
+    natureDisplay ? `Natureza: ${natureDisplay}` : "Natureza: indefinida",
+    wound.poolLabel ? `Destino: ${wound.poolLabel}` : "",
+    originDisplay ? `Origem: ${originDisplay}` : "",
+    locationDisplay ? `Local: ${locationDisplay}` : "",
+    wound.notes ? `Observações: ${wound.notes}` : ""
+  ].map(value => String(value || "").trim()).filter(Boolean);
+
+  return {
+    id,
+    ...wound,
+    remaining: Math.max(0, Number(wound.remaining ?? wound.value ?? 0) || 0),
+    natureDisplay,
+    natureIcon: WOUND_NATURE_ICONS[nature?.id] || "fa-bandage",
+    natureTooltip: nature
+      ? `Natureza: ${natureLabel}${natureAbbreviation ? ` [${natureAbbreviation}]` : ""}`
+      : natureLabel,
+    originDisplay,
+    locationDisplay,
+    woundTooltip: tooltipLines.join("\n")
+  };
+}
+
 const { ActorSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
@@ -989,9 +1041,9 @@ async getData(options) {
                 preparedCombatMeters.sort((a, b) => a.meter.name.localeCompare(b.meter.name));
 
                 context.preparedCombatMeters = preparedCombatMeters;
-                context.preparedWounds = Object.entries(context.actor.system.combat?.wounds || {}).map(([id, wound]) => ({
-                    id, ...wound, natureDisplay: formatDamageNature(wound.nature)
-                })).sort((a, b) => Number(b.updatedAt || b.createdAt || 0) - Number(a.updatedAt || a.createdAt || 0));
+                context.preparedWounds = Object.entries(context.actor.system.combat?.wounds || {})
+                    .map(([id, wound]) => prepareWoundForDisplay(id, wound))
+                    .sort((a, b) => Number(b.updatedAt || b.createdAt || 0) - Number(a.updatedAt || a.createdAt || 0));
                 context.showHiddenMeters = includeHiddenMeters;
                 context.spellReserves = this._normalizeResourceCollection(context.actor.system.spell_reserves || {}, { defaultName: "Reserva de Magia" });
                 context.powerReserves = this._normalizeResourceCollection(context.actor.system.power_reserves || {}, { defaultName: "Reserva de Poder" });
@@ -1844,7 +1896,8 @@ html.on("change", ".combat-meters-box .meter-inputs input", (ev) => this._onComb
 html.on("click", ".add-wound", (ev) => this._onEditWound(ev));
 html.on("click", ".edit-wound", (ev) => this._onEditWound(ev));
 html.on("click", ".delete-wound", (ev) => this._onDeleteWound(ev));
-this._setupActionMenuListeners(html);
+html.on("click", ".adjust-wound", (ev) => this._onAdjustWound(ev));
+this._setupActionMenuListeners(html);;
 
 // -------------------------------------------------------------
 //  RESERVAS DE ENERGIA (MAGIA / PODER)
@@ -4285,6 +4338,21 @@ async _onDeleteWound(ev) {
   if (!id) return;
   Dialog.confirm({ title: "Excluir ferimento?", content: "<p>Este card será removido permanentemente.</p>", yes: () => this.actor.update({ [`system.combat.wounds.-=${id}`]: null }) });
 }
+
+async _onAdjustWound(ev) {
+  ev.preventDefault();
+  const woundId = ev.currentTarget.closest(".wound-card")?.dataset?.woundId;
+  const wound = this.actor.system.combat?.wounds?.[woundId];
+  if (!woundId || !wound) return;
+
+  const adjustment = Number(ev.currentTarget.dataset.adjustment) || 0;
+  const currentRemaining = Math.max(0, Number(wound.remaining ?? wound.value ?? 0) || 0);
+  const remaining = Math.max(0, currentRemaining + adjustment);
+  if (remaining === currentRemaining) return;
+
+  await this.actor.update({ [`system.combat.wounds.${woundId}.remaining`]: remaining });
+}
+
 
 async _onToggleCombatMeterVisibility(ev) {
   ev.preventDefault();
