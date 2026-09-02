@@ -892,25 +892,27 @@
           <div class="group-content spell-energy-reserves-content">
             <div class="meter-list energy-reserves-list">
               {{#each spellReserves}}
-              <div class="item-row reserve-card meter-card" data-reserve-id="{{@key}}" data-reserve-type="spell">
-                <div class="meter-main">
-                  <span class="item-name">{{this.name}} <small>{{this.source}}</small></span>
-                  <div class="meter-inputs">
-                    <input type="number" data-property="current" value="{{this.current}}"/>
-                    <span>/</span>
-                    <input type="number" data-property="max" value="{{this.max}}"/>
-                  </div>
-                  <div class="item-controls meter-controls">
+              <article class="reserve-card energy-reserve-card energy-reserve-card--spell" data-reserve-id="{{@key}}" data-reserve-type="spell" title="{{this.name}} — {{this.current}} de {{this.max}}" aria-label="Reserva de magia {{this.name}}: valor atual {{this.current}}, máximo {{this.max}}">
+                <header class="energy-reserve-card-header">
+                  <i class="fas fa-magic energy-reserve-icon" aria-hidden="true"></i>
+                  <strong class="energy-reserve-name">{{this.name}}</strong>
+                  <div class="item-controls energy-reserve-controls">
                     <div class="gum-action-menu js-action-menu">
                       <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da reserva" aria-label="Opções da reserva" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
                       <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da reserva">
                         <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>Editar</span></a>
-                        <a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem" title="Deletar"><i class="fas fa-trash"></i><span>Deletar</span></a>
+                        <a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem" title="Excluir"><i class="fas fa-trash"></i><span>Excluir</span></a>
                       </div>
                     </div>
                   </div>
+                </header>
+                <div class="energy-reserve-value-controls">
+                  <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="-1" title="Diminuir energia em uma unidade" aria-label="Diminuir {{this.name}} em uma unidade"><i class="fas fa-minus" aria-hidden="true"></i></button>
+                  <strong class="energy-reserve-value" aria-label="Valor atual: {{this.current}}">{{this.current}}</strong>
+                  <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="1" title="Aumentar energia em uma unidade" aria-label="Aumentar {{this.name}} em uma unidade"><i class="fas fa-plus" aria-hidden="true"></i></button>
                 </div>
-              </div>
+                <div class="energy-reserve-meta" aria-hidden="true"><span>máx. <strong>{{this.max}}</strong></span>{{#if this.source}}<span class="energy-reserve-meta-separator">·</span><span>{{this.source}}</span>{{/if}}</div>
+              </article>
                             {{/each}}
               {{#unless spellReserveCount}}
               <div class="placeholder-text combat-meter-placeholder">Nenhuma reserva de energia cadastrada.</div>
@@ -1105,25 +1107,27 @@
           <div class="group-content spell-energy-reserves-content">
             <div class="meter-list energy-reserves-list">
               {{#each powerReserves}}
-              <div class="item-row reserve-card meter-card" data-reserve-id="{{@key}}" data-reserve-type="power">
-                <div class="meter-main">
-                  <span class="item-name">{{this.name}} <small>{{this.source}}</small></span>
-                  <div class="meter-inputs">
-                    <input type="number" data-property="current" value="{{this.current}}"/>
-                    <span>/</span>
-                    <input type="number" data-property="max" value="{{this.max}}"/>
-                  </div>
-                  <div class="item-controls meter-controls">
+              <article class="reserve-card energy-reserve-card energy-reserve-card--power" data-reserve-id="{{@key}}" data-reserve-type="power" title="{{this.name}} — {{this.current}} de {{this.max}}" aria-label="Reserva de poder {{this.name}}: valor atual {{this.current}}, máximo {{this.max}}">
+                <header class="energy-reserve-card-header">
+                  <i class="fas fa-bolt energy-reserve-icon" aria-hidden="true"></i>
+                  <strong class="energy-reserve-name">{{this.name}}</strong>
+                  <div class="item-controls energy-reserve-controls">
                     <div class="gum-action-menu js-action-menu">
                       <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da reserva" aria-label="Opções da reserva" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
                       <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da reserva">
                         <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>Editar</span></a>
-                        <a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem" title="Deletar"><i class="fas fa-trash"></i><span>Deletar</span></a>
+                        <a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem" title="Excluir"><i class="fas fa-trash"></i><span>Excluir</span></a>
                       </div>
                     </div>
                   </div>
+                </header>
+                <div class="energy-reserve-value-controls">
+                  <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="-1" title="Diminuir energia em uma unidade" aria-label="Diminuir {{this.name}} em uma unidade"><i class="fas fa-minus" aria-hidden="true"></i></button>
+                  <strong class="energy-reserve-value" aria-label="Valor atual: {{this.current}}">{{this.current}}</strong>
+                  <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="1" title="Aumentar energia em uma unidade" aria-label="Aumentar {{this.name}} em uma unidade"><i class="fas fa-plus" aria-hidden="true"></i></button>
                 </div>
-              </div>
+                <div class="energy-reserve-meta" aria-hidden="true"><span>máx. <strong>{{this.max}}</strong></span>{{#if this.source}}<span class="energy-reserve-meta-separator">·</span><span>{{this.source}}</span>{{/if}}</div>
+              </article>
                             {{/each}}
               {{#unless powerReserveCount}}
               <div class="placeholder-text combat-meter-placeholder">Nenhuma reserva de energia cadastrada.</div>

@@ -1914,7 +1914,7 @@ this._setupActionMenuListeners(html);;
 html.on("click", ".add-energy-reserve", (ev) => this._onAddEnergyReserve(ev));
 html.on("click", ".edit-energy-reserve", (ev) => this._onEditEnergyReserve(ev));
 html.on("click", ".delete-energy-reserve", (ev) => this._onDeleteEnergyReserve(ev));
-html.on("change", ".reserve-card .meter-inputs input", (ev) => this._onEnergyReserveInputChange(ev));
+html.on("click", ".adjust-energy-reserve", (ev) => this._onAdjustEnergyReserve(ev));
 
 // -------------------------------------------------------------
 //  HABILIDADES DE CONJURAÇÃO
@@ -4493,26 +4493,25 @@ async _onDeleteEnergyReserve(ev) {
   });
 }
 
-async _onEnergyReserveInputChange(ev) {
+async _onAdjustEnergyReserve(ev) {
   ev.preventDefault();
-  ev.stopPropagation();
-  ev.stopImmediatePropagation();
+  const card = ev.currentTarget.closest(".reserve-card");
+  const reserveId = card?.dataset?.reserveId;
+  const reserveType = card?.dataset?.reserveType === "power" ? "power" : "spell";
+  const adjustment = Number(ev.currentTarget.dataset.adjustment) || 0;
+  if (!reserveId || !adjustment) return;
 
-  const input = ev.currentTarget;
-  const card = input.closest(".reserve-card");
-  if (!card) return;
+  const reserve = this.actor.system?.[`${reserveType}_reserves`]?.[reserveId];
+  if (!reserve) return;
 
-  const reserveId = card.dataset.reserveId;
-  const reserveType = card.dataset.reserveType === "power" ? "power" : "spell";
-  const prop = input.dataset.property;
-  if (!reserveId || !prop) return;
-
-  const value = Number(input.value) || 0;
+  const current = Number(reserve.current ?? reserve.value ?? 0) || 0;
+  const max = Math.max(0, Number(reserve.max) || 0);
+  const value = Math.max(0, Math.min(max, current + adjustment));
   const pathBase = `system.${reserveType}_reserves.${reserveId}`;
-  const updateData = { [`${pathBase}.${prop}`]: value };
-  if (prop === "current") updateData[`${pathBase}.value`] = value;
-
-  await this.actor.update(updateData);
+  await this.actor.update({
+    [`${pathBase}.current`]: value,
+    [`${pathBase}.value`]: value
+  });
 }
 
 async _promptEnergyReserveData(reserveType, initialData = {}, { isEdit = false } = {}) {
