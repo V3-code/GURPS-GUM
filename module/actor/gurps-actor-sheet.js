@@ -11,6 +11,7 @@ import { resolveCharacterImage } from "../utils/character-image.mjs";
 import { buildSecondaryStatsRecalculationPlan, buildSecondaryStatsUpdateData, formatBasicDamageDiceCount } from "../utils/secondary-stats-recalculation.mjs";
 import { SOCIAL_CATEGORIES, SOCIAL_MANUAL_LAYOUTS, buildSocialSections, calculateManualSocialPoints } from "../config/social-aspects.mjs";
 import { buildDamageNatureSearchOptions, formatDamageNature, resolveDamageNature } from "../utils/damage-nature.mjs";
+import { resolveAttackDamageDisplay } from "../utils/attack-damage-display.mjs";
 
 const WOUND_NATURE_ICONS = Object.freeze({
   fire: "fa-fire",
@@ -907,6 +908,15 @@ async getData(options) {
         };
 
         const equipmentAttackGroups = (context.equipmentInUseForCombat || []).map(item => {
+            const prepareDamageDisplay = (damage = {}) => ({
+                ...damage,
+                display_formula: resolveAttackDamageDisplay(damage.formula, this.actor.system.attributes)
+            });
+            const prepareAttackDamageDisplay = (attack) => ({
+                damage_display_formula: resolveAttackDamageDisplay(attack.damage_formula, this.actor.system.attributes),
+                follow_up_damage: prepareDamageDisplay(attack.follow_up_damage),
+                fragmentation_damage: prepareDamageDisplay(attack.fragmentation_damage)
+            });
             
             // 2. Processa os Ataques Corpo a Corpo (Melee)
             // ✅ MUDANÇA: Removemos toda a lógica de cálculo de NH daqui
@@ -921,6 +931,7 @@ async getData(options) {
                 const normalizedBlock = normalizeDefenseValue(blockValue);
                 return {
                     ...attack, // Traz todos os campos do 'attack_melee'
+                    ...prepareAttackDamageDisplay(attack),
                     id: id,
                     name: attack.mode, 
                     attack_type: "melee",
@@ -944,6 +955,7 @@ async getData(options) {
             const rangedAttacks = Object.entries(item.system.ranged_attacks || {}).map(([id, attack]) => {
                 return {
                     ...attack, // Traz todos os campos do 'attack_ranged'
+                    ...prepareAttackDamageDisplay(attack),
                     id: id,
                     name: attack.mode,
                     attack_type: "ranged",

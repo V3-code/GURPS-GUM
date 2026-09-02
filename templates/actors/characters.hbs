@@ -1950,7 +1950,7 @@
                         {{/with}}>
                       <span class="attack-label">Dano</span>
                       <span class="attack-value attack-damage-main">
-                          {{attack.damage_formula}}{{#if (gt attack.armor_divisor 1)}}({{attack.armor_divisor}}){{/if}} {{attack.damage_type}}{{#if attack.damage_scaling}} ({{attack.damage_scaling}}){{/if}}
+                          {{attack.damage_display_formula}}{{#if (gt attack.armor_divisor 1)}}({{attack.armor_divisor}}){{/if}} {{attack.damage_type}}{{#if attack.damage_scaling}} ({{attack.damage_scaling}}){{/if}}
                       </span>
                     </a>
 
@@ -2001,12 +2001,12 @@
 
                   {{#with attack.fragmentation_damage}}
                     {{#if this.formula}}
-                    <span class="attack-damage-extra"><strong>FR</strong> {{this.formula}} {{this.type}}</span>
+                    <span class="attack-damage-extra"><strong>FR</strong> {{this.display_formula}} {{this.type}}</span>
                     {{/if}}
                   {{/with}}
                   {{#with attack.follow_up_damage}}
                     {{#if this.formula}}
-                    <span class="attack-damage-extra"><strong>FU</strong> {{this.formula}} {{this.type}}</span>
+                    <span class="attack-damage-extra"><strong>FU</strong> {{this.display_formula}} {{this.type}}</span>
                     {{/if}}
                   {{/with}}
                 </div>
