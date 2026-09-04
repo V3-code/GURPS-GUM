@@ -4,7 +4,8 @@ import { EqpModifierBrowser } from "../apps/eqp-modifier-browser.js";
 import { ModifierBrowser } from "../apps/modifier-browser.js";
 import { GM_MODIFIER_CATEGORY_OPTIONS } from "../utils/gm-modifier-categories.js"; 
 import { listBodyLocations } from "../config/body-profiles.js";
-import { SOCIAL_CATEGORIES } from "../config/social-aspects.mjs"; 
+import { SOCIAL_CATEGORIES } from "../config/social-aspects.mjs";
+import { normalizeContextCsv, openContextPicker } from "../apps/context-picker.mjs"; 
  
 const { ItemSheet } = foundry.appv1.sheets; 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor; 
@@ -774,15 +775,7 @@ _promptMultipleReferences(parsedList) {
 if (this.item?.type === "gm_modifier") { 
             this._activateGmModifierBehaviors(html); 
  
-            const contextIds = new Set(ROLL_CONTEXT_OPTIONS.map(opt => opt.id)); 
-            const normalizeCsv = (value) => { 
-                const parts = `${value || ""}`.split(',').map(v => v.trim()).filter(Boolean); 
-                if (!parts.length) return "all"; 
-                const valid = [...new Set(parts.filter(v => contextIds.has(v)))]; 
-                if (!valid.length) return "all"; 
-                if (valid.includes("all")) return "all"; 
-                return valid.join(','); 
-            }; 
+            const normalizeCsv = value => normalizeContextCsv(value, ROLL_CONTEXT_OPTIONS);
  
             html.on('change blur', '.context-csv-input', (ev) => { 
                 ev.currentTarget.value = normalizeCsv(ev.currentTarget.value); 

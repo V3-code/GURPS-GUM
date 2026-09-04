@@ -2,6 +2,7 @@
 import { getGroupedRollTags, isKnownRollTag, normalizeRollTags, ROLL_TAG_ALIASES } from "../../module/utils/roll-tags.mjs";
 import { normalizePurposeIds } from "../../module/utils/roll-purposes.mjs";
 import { formatPurposeSelection, openRollPurposePicker } from "../../module/apps/roll-purpose-picker.mjs";
+import { normalizeContextCsv, openContextPicker } from "../../module/apps/context-picker.mjs";
 
 const { ItemSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -463,15 +464,7 @@ activateListeners(html) {
         await this.item.update({ "system.actions": actions });
     });
 
-    const contextIds = new Set(ROLL_MODIFIER_CONTEXT_OPTIONS.map(opt => opt.id));
-    const normalizeCsv = (value) => {
-        const parts = `${value || ""}`.split(',').map(v => v.trim()).filter(Boolean);
-        if (!parts.length) return "all";
-        const valid = [...new Set(parts.filter(v => contextIds.has(v)))];
-        if (!valid.length) return "all";
-        if (valid.includes("all")) return "all";
-        return valid.join(',');
-    };
+    const normalizeCsv = value => normalizeContextCsv(value, ROLL_MODIFIER_CONTEXT_OPTIONS);
 
     html.on('change blur', '.context-csv-input', (ev) => {
         ev.currentTarget.value = normalizeCsv(ev.currentTarget.value);
@@ -482,30 +475,7 @@ activateListeners(html) {
         const targetInputName = ev.currentTarget.dataset.targetInput;
         const input = this.form?.querySelector(`[name="${targetInputName}"]`);
         if (!input) return;
-        const selected = new Set(normalizeCsv(input.value).split(',').filter(Boolean));
-
-        const content = `<div class="gum-context-picker">${ROLL_MODIFIER_CONTEXT_OPTIONS.map(opt => `
-            <label class="gm-checkbox" style="display:flex; gap:6px; margin:2px 0;">
-                <input type="checkbox" name="ctx" value="${opt.id}" ${selected.has(opt.id) ? "checked" : ""}/>
-                <span>${opt.label} <small style="opacity:.7">(${opt.id})</small></span>
-            </label>`).join('')}</div>`;
-
-        new Dialog({
-            title: "Selecionar Contextos",
-            content,
-            buttons: {
-                ok: {
-                    icon: '<i class="fas fa-check"></i>',
-                    label: 'Aplicar',
-                    callback: (dlgHtml) => {
-                        const checked = dlgHtml.find('input[name="ctx"]:checked').toArray().map(el => el.value);
-                        input.value = normalizeCsv(checked.join(','));
-                    }
-                },
-                cancel: { icon: '<i class="fas fa-times"></i>', label: 'Cancelar' }
-            },
-            default: 'ok'
-        }).render(true);
+        openContextPicker({ input, options: ROLL_MODIFIER_CONTEXT_OPTIONS });
      });
     html.on("click", ".open-purpose-picker", event => {
         event.preventDefault();

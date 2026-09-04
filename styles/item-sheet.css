@@ -5955,14 +5955,6 @@ color:#121114;
     flex-direction: row;
   }
 }
-/* Keep the context selector usable when all roll contexts are displayed. */
-.gum-context-picker {
-  max-height: min(55vh, 360px);
-  overflow-y: auto;
-  padding-right: 6px;
-  scrollbar-gutter: stable;
-}
-
 /* GM modifier configuration dashboard. */
 .gum.sheet.item .gm-modifier-config-workspace.effect-premium-workspace {
   --fx-workspace-bg: #111015;
@@ -6099,13 +6091,111 @@ color:#121114;
   }
 
 }
-/* Keep the context selector usable when all roll contexts are displayed. */
+/* Minimal context selector shared by effects and GM modifiers. */
+.gum-context-picker-window {
+  width: min(540px, 92vw) !important;
+  max-width: 92vw;
+  background: #17191f;
+  color: #ece8e1;
+}
+
+.gum-context-picker-window .window-header {
+  border: 0;
+  border-bottom: 1px solid rgba(201, 161, 94, 0.22);
+  background: #17191f;
+  color: #d1b77e;
+  font-family: var(--item-font-condensed, "Roboto Condensed", sans-serif);
+  letter-spacing: 0.04em;
+}
+
+.gum-context-picker-window .window-content {
+  padding: 14px;
+  background: #1d2027;
+  color: #ece8e1;
+}
+
+.gum-context-picker-window .dialog-buttons {
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.gum-context-picker-window .dialog-buttons button {
+  min-height: 32px;
+  border: 0;
+  border-radius: 6px;
+  background: #292d35;
+  color: #ddd9d1;
+}
+
+.gum-context-picker-window .dialog-buttons [data-button="apply"] {
+  background: #b89a5c;
+  color: #17150f;
+  font-weight: 700;
+}
+
 .gum-context-picker {
-  max-height: min(55vh, 360px);
+  max-height: min(58vh, 430px);
   overflow-y: auto;
-  padding-right: 6px;
+  padding-right: 5px;
   scrollbar-gutter: stable;
 }
+
+.gum-context-picker-intro {
+  margin: 0 0 11px;
+  color: #a9adb6;
+  font-size: 0.78rem;
+}
+
+.gum-context-picker-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.gum-context-picker-option {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  padding: 8px 9px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.035);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.gum-context-picker-option:hover { background: rgba(255, 255, 255, 0.07); }
+.gum-context-picker-option.is-selected { background: rgba(201, 161, 94, 0.13); }
+.gum-context-picker-option input { position: absolute; opacity: 0; pointer-events: none; }
+
+.gum-context-picker-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: #30343d;
+  color: transparent;
+  font-size: 9px;
+}
+
+.gum-context-picker-option.is-selected .gum-context-picker-check {
+  background: #b89a5c;
+  color: #17150f;
+}
+
+.gum-context-picker-copy { display: flex; flex-direction: column; min-width: 0; }
+.gum-context-picker-copy strong { color: #e8e5df; font-size: 0.76rem; font-weight: 600; }
+.gum-context-picker-copy small { color: #858b96; font-size: 0.65rem; }
+.gum-context-picker-option.is-selected .gum-context-picker-copy small { color: #c5ad78; }
+.gum-context-picker-option:focus-within { outline: 2px solid rgba(201, 161, 94, 0.7); outline-offset: -2px; }
+
+@media (max-width: 520px) {
+  .gum-context-picker-options { grid-template-columns: minmax(0, 1fr); }
+}
+
 
 .gum-roll-tag-picker-window { width: min(740px, 92vw) !important; max-width: 92vw; max-height: 85vh; background: var(--gum-bg-darkest, #16191f); color: var(--gum-text-claro, #eee); }
 .gum-roll-tag-picker-window .window-header { flex: 0 0 auto; border: 0; border-bottom: 1px solid rgba(181,151,83,.32); background: var(--gum-bg-darkest, #16191f); color: var(--gum-accent-gold, #b59753); font-family: var(--gum-font-secondary, serif); font-size: .78rem; letter-spacing: .05em; text-transform: uppercase; }
