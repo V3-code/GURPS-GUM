@@ -3,6 +3,8 @@ import { getGroupedRollTags, isKnownRollTag, normalizeRollTags, ROLL_TAG_ALIASES
 import { normalizePurposeIds } from "../../module/utils/roll-purposes.mjs";
 import { formatPurposeSelection, openRollPurposePicker } from "../../module/apps/roll-purpose-picker.mjs";
 import { normalizeContextCsv, openContextPicker } from "../../module/apps/context-picker.mjs";
+import { openEffectPathPicker } from "../../module/apps/effect-path-picker.mjs";
+
 
 const { ItemSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -477,6 +479,13 @@ activateListeners(html) {
         if (!input) return;
         openContextPicker({ input, options: ROLL_MODIFIER_CONTEXT_OPTIONS });
      });
+    html.on("click", ".open-effect-path-picker", event => {
+        event.preventDefault();
+        const button = event.currentTarget;
+        const pathInput = this.form?.querySelector(`[name="${button.dataset.targetInput}"]`);
+        const operationInput = this.form?.querySelector(`[name="${button.dataset.operationInput}"]`);
+        openEffectPathPicker({ pathInput, operationInput, durationMode: this.item.system.duration?._uiMode || "permanent" });
+    });
     html.on("click", ".open-purpose-picker", event => {
         event.preventDefault();
         event.stopPropagation();

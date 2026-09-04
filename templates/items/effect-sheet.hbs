@@ -231,13 +231,17 @@
                                                         </label>
 
                                                         <div class="effect-premium-field-control">
-                                                            <input
-                                                                type="text"
-                                                                class="effect-code-input"
-                                                                name="system.actions.{{action.index}}.path"
-                                                                value="{{action.path}}"
-                                                               placeholder="Ex: system.attributes.dx.mod ou system.combat.dr_passive_mods.torso.base"
-                                                            />
+                                                            <div class="effect-path-input-row">
+                                                                <input
+                                                                    type="text"
+                                                                    class="effect-code-input"
+                                                                    name="system.actions.{{action.index}}.path"
+                                                                    value="{{action.path}}"
+                                                                    placeholder="Ex: system.attributes.dx.passive"
+                                                                />
+                                                                <button type="button" class="open-effect-path-picker effect-premium-icon-button" data-target-input="system.actions.{{action.index}}.path" data-operation-input="system.actions.{{action.index}}.operation" title="Selecionar um caminho suportado" aria-label="Selecionar caminho"><i class="fas fa-sitemap" aria-hidden="true"></i></button>
+                                                            </div>
+                                                            <p class="effect-premium-field-hint">Selecione um destino do sistema ou informe um caminho personalizado.</p>
                                                         </div>
                                                     </div>
 

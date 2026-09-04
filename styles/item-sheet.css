@@ -5366,6 +5366,18 @@ color:#121114;
   font-size: 0.74rem;
 }
 
+.gum.sheet.item.effect-sheet .effect-path-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
+  gap: 6px;
+}
+
+.gum.sheet.item.effect-sheet .effect-path-input-row .effect-premium-icon-button {
+  width: 34px;
+  min-width: 34px;
+  padding: 0;
+}
+
 .gum.sheet.item.effect-sheet .effect-compact-value {
   text-align: center;
 }
@@ -6192,8 +6204,44 @@ color:#121114;
 .gum-context-picker-option.is-selected .gum-context-picker-copy small { color: #c5ad78; }
 .gum-context-picker-option:focus-within { outline: 2px solid rgba(201, 161, 94, 0.7); outline-offset: -2px; }
 
+/* Supported Active Effect path selector. */
+.gum-effect-path-picker-window { width: min(720px, 94vw) !important; height: auto !important; max-width: 94vw; max-height: 90vh; background: #17191f; color: #ece8e1; }
+.gum-effect-path-picker-window .window-content { flex: 0 1 auto; min-height: 0; height: auto; padding: 14px; overflow: hidden; background: #1d2027; }
+.gum-effect-path-picker-window .dialog-content { flex: 0 1 auto; min-height: 0; overflow: hidden; }
+.gum-effect-path-picker-window .dialog-buttons { flex: 0 0 auto; gap: 8px; margin: 12px 0 0; padding: 0; display: flex; }
+.gum-effect-path-picker-window .dialog-buttons button { min-height: 32px; border: 0; border-radius: 6px; background: #292d35; color: #ddd9d1; }
+.gum-effect-path-picker-window .dialog-buttons [data-button="apply"] { background: #b89a5c; color: #17150f; font-weight: 700; }
+.gum-effect-path-picker { color: #ece8e1; }
+.effect-path-intro, .effect-path-custom-note { margin: 0 0 10px; color: #a9adb6; font-size: .78rem; }
+.effect-path-searchbox { display: grid; grid-template-columns: 22px minmax(0, 1fr); align-items: center; margin-bottom: 10px; padding: 0 9px; border: 1px solid rgba(201, 161, 94, .28); border-radius: 7px; background: #111319; color: #b89a5c; }
+.effect-path-searchbox input { height: 34px; border: 0; background: transparent; color: #ece8e1; box-shadow: none; }
+.effect-path-results { max-height: min(58vh, 450px); overflow-y: auto; padding-right: 5px; scrollbar-gutter: stable; }
+.effect-path-group { margin: 0 0 7px; border: 1px solid rgba(255,255,255,.07); border-radius: 7px; background: rgba(255,255,255,.025); }
+.effect-path-group > summary { padding: 8px 10px; color: #d1b77e; cursor: pointer; font-size: .77rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.effect-path-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; padding: 0 7px 7px; }
+.effect-path-option { display: block; min-width: 0; padding: 8px 9px; border-radius: 6px; background: rgba(255,255,255,.035); cursor: pointer; }
+.effect-path-option:hover, .effect-path-option.is-selected { background: rgba(201, 161, 94, .13); }
+.effect-path-option input { position: absolute; opacity: 0; pointer-events: none; }
+.effect-path-option span { display: flex; flex-direction: column; min-width: 0; }
+.effect-path-option strong { color: #e8e5df; font-size: .76rem; }
+.effect-path-option code, .effect-path-dr-preview { overflow: hidden; color: #858b96; font-size: .64rem; text-overflow: ellipsis; white-space: nowrap; }
+.effect-path-option.is-selected code { color: #c5ad78; }
+.effect-path-dr-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; padding: 0 8px 8px; }
+.effect-path-dr-grid label { display: flex; flex-direction: column; gap: 4px; color: #aaaeb7; font-size: .7rem; }
+.effect-path-dr-grid select { width: 100%; min-width: 0; height: 32px; border: 1px solid rgba(201,161,94,.28); color: #f4f1ea; color-scheme: dark; background: #111319; }
+.effect-path-dr-grid select option { color: #f4f1ea; background-color: #17191f; }
+.effect-path-dr-grid select option:checked { color: #fff; background-color: #315f9f; }
+.effect-path-dr-grid .select-dr-path { grid-column: 1 / -1; min-height: 31px; border: 1px solid rgba(201,161,94,.3); border-radius: 6px; background: rgba(201,161,94,.1); color: #d1b77e; }
+.effect-path-dr-preview { display: block; margin: 0 8px 8px; padding: 7px; border-radius: 5px; background: #111319; color: #c5ad78; }
+.effect-path-empty { padding: 18px; color: #a9adb6; text-align: center; }
+.effect-path-custom-note { margin: 10px 0 0; }
+
 @media (max-width: 520px) {
   .gum-context-picker-options { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 600px) {
+  .effect-path-options, .effect-path-dr-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 
