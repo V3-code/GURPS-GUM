@@ -254,6 +254,11 @@
         "defense_bonus": 0,
         "dr_mods": {},
         "dr_temp_mods": {},
+        "dr_passive_mods": {},
+        "dr_overrides": {},
+        "dr_final_computed": {},
+        "dr_locations": {},
+        "dr_from_armor": {},
         "combat_meters": {},
         "wounds": {}
       },

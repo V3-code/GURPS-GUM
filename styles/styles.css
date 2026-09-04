@@ -6901,7 +6901,7 @@ background-color: var(--gum-accent-gold);
 .gum-rd-form .gum-rd-table-help { white-space: nowrap; }
 .gum-rd-form .gurps-rd-table .table-header,
 .gum-rd-form .gurps-rd-table .table-row {
-    grid-template-columns: minmax(92px, 1.25fr) repeat(4, minmax(58px, 1fr));
+    grid-template-columns: minmax(92px, 1.25fr) repeat(6, minmax(58px, 1fr));
     gap: 7px;
 }
 .gum-rd-form .gurps-rd-table .table-header {
@@ -6958,7 +6958,7 @@ background-color: var(--gum-accent-gold);
     .gum-rd-form .gum-rd-table-help { display: none; }
     .gum-rd-form .gurps-rd-table .table-header,
     .gum-rd-form .gurps-rd-table .table-row {
-        grid-template-columns: minmax(78px, 1.2fr) repeat(4, minmax(48px, 1fr));
+       grid-template-columns: minmax(78px, 1.2fr) repeat(6, minmax(48px, 1fr));
         gap: 4px;
     }
 }

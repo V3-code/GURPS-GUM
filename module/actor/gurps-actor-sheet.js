@@ -1214,6 +1214,17 @@ _getSubmitData(updateData) {
       return parts.join(", ");
     }
 
+        _formatDROverrideToString(drObject) {
+        if (!drObject || typeof drObject !== "object") return "—";
+        const parts = [];
+        if (drObject.base !== null && drObject.base !== undefined) parts.push(String(drObject.base));
+        for (const [type, value] of Object.entries(drObject)) {
+            if (type === "base" || value === null || value === undefined) continue;
+            parts.push(`${value} ${type}`);
+        }
+        return parts.join(", ") || "—";
+    }
+
  _buildDrDisplayRows(profile, drLocations) {
         const rows = [];
         const order = profile.order ?? Object.keys(profile.locations || {});
@@ -4081,6 +4092,9 @@ async _onViewHitLocations(ev) {
   const actorDR_Armor = actor.system.combat.dr_from_armor || {};
   const actorDR_Mods  = actor.system.combat.dr_mods || {};
   const actorDR_Temp  = actor.system.combat.dr_temp_mods || {};
+    const actorDR_Passive = actor.system.combat.dr_passive_mods || {};
+  const actorDR_Overrides = actor.system.combat.dr_overrides || {};
+  const actorDR_Computed = actor.system.combat.dr_final_computed || {};
   const actorDR_Total = actor.system.combat.dr_locations || {};
 
    let tableRows = "";
@@ -4101,7 +4115,10 @@ async _onViewHitLocations(ev) {
     if (!loc) continue;
     const armorDR_String  = this._formatDRObjectToString(actorDR_Armor[key]);
     const tempDR_String   = this._formatDRObjectToString(actorDR_Temp[key]);
+    const passiveDR_String = this._formatDRObjectToString(actorDR_Passive[key]);
     const manualMod_String= this._formatDRObjectToString(actorDR_Mods[key]);
+    const overrideDR_String = this._formatDROverrideToString(actorDR_Overrides[key]);
+    const computedDR_String = this._formatDRObjectToString(actorDR_Computed[key]);
     const totalDR_String  = this._formatDRObjectToString(actorDR_Total[key]);
 
     tableRows += `
@@ -4109,10 +4126,10 @@ async _onViewHitLocations(ev) {
         <div class="loc-label">${loc.label ?? loc.name ?? key}</div>
         <div class="loc-rd-armor" title="RD da Armadura">${armorDR_String}</div>
         <div class="loc-rd-temp" title="Bônus Temporários">${tempDR_String}</div>
-        <div class="loc-rd-mod">
-          <input type="text" name="${key}" value="${manualMod_String}" />
-        </div>
-        <div class="loc-rd-total"><strong>${totalDR_String}</strong></div>
+        <div class="loc-rd-passive" title="Bônus Permanentes">${passiveDR_String}</div>
+        <div class="loc-rd-mod"><input type="text" name="${key}" value="${manualMod_String}" /></div>
+        <div class="loc-rd-total" title="Valor calculado antes do override: ${computedDR_String}"><strong>${totalDR_String}</strong></div>
+        <div class="loc-rd-override" title="RD Sobrescrita: substitui o valor final calculado">${overrideDR_String}</div>
       </div>
     `;
   }
@@ -4150,8 +4167,10 @@ const profileSelectorHtml = `
           <div>Local</div>
           <div>Armadura</div>
           <div>Temp.</div>
+          <div>Perm.</div>
           <div>Manual</div>
           <div>Total</div>
+          <div title="RD sobrescrita substitui o total calculado">Sobrescrita</div>
         </div>
         <div class="table-body">
           ${tableRows}
@@ -4205,7 +4224,7 @@ const dlg = new Dialog({
     });
   }
 
-}, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-rd-edit-dialog"], width: 650 });
+}, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-rd-edit-dialog"], width: 780 });
 
 dlg.render(true);
 

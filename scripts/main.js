@@ -23,6 +23,7 @@ import { GurpsRollPrompt } from "../module/apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../module/apps/damage-roll-prompt.js";
 import { getPurposeLabels, matchesRollTags, resolveRollMetadata, shouldIncludeInPermanentNh } from "../module/utils/roll-purposes.mjs";
 import { getBodyProfile, getBodyLocationDefinition } from "../module/config/body-profiles.js";
+import { calculateDamageResistance, mergeDamageResistance, parseDamageResistanceEffectPath } from "../module/utils/damage-resistance.mjs";
 import { openTestRequestLauncher } from "../module/apps/test-request-launcher.js";
 import { activateTestRequestChatListeners, registerTestRequestSocket } from "../module/services/test-request-service.js";
 import { activateRollRequestChatListeners, executeRollRequest, registerRollRequestSocket } from "../module/services/roll-request-service.js";
@@ -332,6 +333,9 @@ const allAttributes = ['st', 'dx', 'iq', 'ht', 'vont', 'per', 'hp', 'fp', 'mt', 
             }
         });
 const activeEffects = Array.isArray(this.effects) ? this.effects : Array.from(this.effects?.values?.() || []);
+        combat.dr_temp_mods = {};
+        combat.dr_passive_mods = {};
+        combat.dr_overrides = {};
         for (const effect of activeEffects) {
             const gumDuration = foundry.utils.getProperty(effect, "flags.gum.duration") || {};
             const isPendingCombat = gumDuration.pendingCombat === true;
@@ -339,6 +343,24 @@ const activeEffects = Array.isArray(this.effects) ? this.effects : Array.from(th
             if (effect?.disabled || effect?.isSuppressed || isPendingCombat || isPendingStart) continue;
             for (const change of effect?.changes || []) {
                 const normalizedPath = normalizeEffectPath(change.key);
+                const drChange = parseDamageResistanceEffectPath(normalizedPath);
+                if (drChange) {
+                    const changeType = getEffectChangeType(change);
+                    const isPermanent = gumDuration._uiMode === "permanent" || gumDuration.isPermanent === true;
+                    const layer = changeType === "override" || drChange.requestedLayer === "overrides"
+                        ? "dr_overrides"
+                        : drChange.requestedLayer === "temp_mods"
+                            ? "dr_temp_mods"
+                            : drChange.requestedLayer === "passive_mods"
+                                ? "dr_passive_mods"
+                                : isPermanent ? "dr_passive_mods" : "dr_temp_mods";
+                    const targetPath = `${layer}.${drChange.location}.${drChange.damageType}`;
+                    const numericValue = Number(change.value) || 0;
+                    const currentValue = foundry.utils.getProperty(combat, targetPath) ?? 0;
+                    foundry.utils.setProperty(combat, targetPath,
+                        layer === "dr_overrides" ? numericValue : Number(currentValue) + numericValue);
+                    continue;
+                }
                 if (!normalizedPath?.startsWith("system.attributes.")) continue;
                 if (!normalizedPath.endsWith(".passive") && !normalizedPath.endsWith(".temp") && !normalizedPath.endsWith(".override")) continue;
                 let value = change.value;
@@ -357,9 +379,6 @@ const activeEffects = Array.isArray(this.effects) ? this.effects : Array.from(th
                     foundry.utils.setProperty(this, normalizedPath, currentVal + numericValue);
                 }
             }
-        }
-        if (combat.dr_temp_mods) {
-            for (const key in combat.dr_temp_mods) combat.dr_temp_mods[key] = 0;
         }
         
         // (Removido: combat.defense_bonus = 0)
@@ -621,22 +640,19 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
         }
 
         // --- ETAPA 7: CÁLCULO DE RD ---
-        function _mergeDRObjects(target, source) {
-            if (!source || typeof source !== 'object') {
-                const value = Number(source) || 0;
-                if (value > 0) target.base = (target.base || 0) + value;
-                return;
-            }
-            for (const [type, value] of Object.entries(source)) {
-                target[type] = (target[type] || 0) + (Number(value) || 0);
-            }
-        }
+ 
         const profileId = combat?.body_profile || "humanoid";
         const profile = getBodyProfile(profileId);
          const baseLocationKeys = Object.keys(profile.locations || {});
         const locationKeySet = new Set(baseLocationKeys);
         const extraLocationKeys = new Set();
         const drFromArmor = {};
+
+        for (const source of [combat.dr_mods, combat.dr_temp_mods, combat.dr_passive_mods, combat.dr_overrides]) {
+            for (const loc of Object.keys(source || {})) {
+                if (!locationKeySet.has(loc) && getBodyLocationDefinition(loc)) extraLocationKeys.add(loc);
+            }
+        }
 
         for (let i of this.items) { 
             const hasArmorDR = (i.type === 'equipment')
@@ -668,20 +684,29 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                 const itemDrLocations = i.system.dr_locations || {};
                 for (const [loc, drObject] of Object.entries(itemDrLocations)) {
                     if (!allLocationKeySet.has(loc)) continue;
-                    _mergeDRObjects(drFromArmor[loc], drObject);
+                     mergeDamageResistance(drFromArmor[loc], drObject);
                 }
             }
         }
 
         const totalDr = {};
         const drMods = combat.dr_mods || {}; 
-        const drTempMods = combat.dr_temp_mods || {}; 
+        const drTempMods = combat.dr_temp_mods || {};
+        const drPassiveMods = combat.dr_passive_mods || {};
+        const drOverrides = combat.dr_overrides || {};
+        const computedDr = {}; 
         for (let key of locationKeys) {
-            totalDr[key] = {}; 
-            _mergeDRObjects(totalDr[key], drFromArmor[key]); 
-            _mergeDRObjects(totalDr[key], drMods[key]);      
-            _mergeDRObjects(totalDr[key], drTempMods[key]); 
+            const result = calculateDamageResistance({
+                armor: drFromArmor[key],
+                mod: drMods[key],
+                temp: drTempMods[key],
+                passive: drPassiveMods[key],
+                override: drOverrides[key]
+            });
+            computedDr[key] = result.computed;
+            totalDr[key] = result.final;
         }
+        combat.dr_final_computed = computedDr;
         combat.dr_locations = totalDr; 
         combat.dr_from_armor = drFromArmor;
         
