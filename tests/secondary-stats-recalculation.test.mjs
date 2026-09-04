@@ -120,3 +120,22 @@ test("dano com muitos dados preserva explicitamente as faces d6", () => {
   assert.equal(formatBasicDamageDiceCount(30), "30d6");
   assert.equal(formatBasicDamageDiceCount(59), "59d6");
 });
+
+test("opção de modificador fixo da velocidade atualiza deslocamento e esquiva sem acumular modificadores", () => {
+  const system = fixture();
+  system.attributes.dx = attribute(14);
+  system.attributes.ht = attribute(13);
+  system.attributes.basic_speed = attribute(6.75, { mod: 0.25, final: 7 });
+  system.attributes.basic_move = attribute(6);
+  system.attributes.dodge = attribute(9);
+
+  const defaultPlan = buildSecondaryStatsRecalculationPlan(system, damage);
+  assert.equal(defaultPlan.find(entry => entry.id === "basic-move").proposedValue, 6);
+  assert.equal(defaultPlan.find(entry => entry.id === "dodge").proposedValue, 9);
+
+  const fixedModifierPlan = buildSecondaryStatsRecalculationPlan(system, damage, { considerBasicSpeedFixedModifier: true });
+  assert.equal(fixedModifierPlan.find(entry => entry.id === "basic-move").proposedValue, 7);
+  assert.equal(fixedModifierPlan.find(entry => entry.id === "dodge").proposedValue, 10);
+  assert.equal(system.attributes.basic_move.mod, 0);
+  assert.equal(system.attributes.dodge.mod, 0);
+});

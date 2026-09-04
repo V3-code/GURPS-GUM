@@ -8482,6 +8482,14 @@ background-color: var(--gum-accent-gold);
 .secondary-preview-header p { margin: 0 0 3px; font-size: 12px; color: #eceaed; }
 .secondary-preview-header small { color: #aaa8ae; font-size: 10px; }
 .secondary-preview-header small i { margin-right: 4px; color: #8fa5b5; }
+.secondary-preview-option {
+  display: flex; align-items: center; gap: 9px; margin: 0 0 10px; padding: 8px 10px;
+  border: 1px solid #45444a; border-radius: 7px; background: #29292e; cursor: pointer;
+}
+.secondary-preview-option input { flex: 0 0 auto; margin: 0; }
+.secondary-preview-option span { display: flex; flex-direction: column; gap: 2px; }
+.secondary-preview-option strong { color: #e7d3a5; font-size: 11px; }
+.secondary-preview-option small { color: #aaa8ae; font-size: 10px; }
 .secondary-preview-header-icon {
     display: grid;
     flex: 0 0 31px;

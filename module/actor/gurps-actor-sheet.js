@@ -3867,15 +3867,27 @@ async _onRecalculateSecondaryStats(ev) {
     return;
   }
 
-  const groups = [
-    ["resources", "Recursos", "fas fa-heart"], ["physical", "Capacidade física", "fas fa-dumbbell"],
-    ["movement", "Movimento e defesa", "fas fa-running"], ["senses", "Sentidos", "fas fa-eye"],
-    ["damage", "Dano básico", "fas fa-fist-raised"]
-  ].map(([id, label, icon]) => {
-    const entries = plan.filter(entry => entry.group === id);
-    return { id, label, icon, entries, changedCount: entries.filter(entry => entry.changed).length };
-  });
-  const content = await renderTemplate("systems/gum/templates/apps/secondary-stats-recalculation.hbs", { groups });
+const renderPreview = async (currentPlan, considerBasicSpeedFixedModifier = false) => {
+    const groups = [
+      ["resources", "Recursos", "fas fa-heart"], ["physical", "Capacidade física", "fas fa-dumbbell"],
+      ["movement", "Movimento e defesa", "fas fa-running"], ["senses", "Sentidos", "fas fa-eye"],
+      ["damage", "Dano básico", "fas fa-fist-raised"]
+    ].map(([id, label, icon]) => {
+      const entries = currentPlan.filter(entry => entry.group === id);
+      return { id, label, icon, entries, changedCount: entries.filter(entry => entry.changed).length };
+    });
+    return renderTemplate("systems/gum/templates/apps/secondary-stats-recalculation.hbs", { groups, considerBasicSpeedFixedModifier });
+  };
+  const content = await renderPreview(plan);
+  const activatePreview = html => {
+    const handleCalculationModeChange = async considerBasicSpeedFixedModifier => {
+      plan = this._buildSecondaryStatsRecalculationPlan({ considerBasicSpeedFixedModifier });
+      const replacement = await renderPreview(plan, considerBasicSpeedFixedModifier);
+      html.find(".secondary-stats-preview").replaceWith(replacement);
+      activatePreview(html);
+    };
+    this._activateSecondaryStatsPreview(html, plan, handleCalculationModeChange);
+  };
 
   new Dialog({
     title: "Revisar atributos derivados",
@@ -3900,15 +3912,15 @@ async _onRecalculateSecondaryStats(ev) {
       cancel: { icon: '<i class="fas fa-times"></i>', label: "Cancelar" }
     },
     default: "apply",
-    render: html => this._activateSecondaryStatsPreview(html, plan)
+    render: activatePreview
   }, { classes: ["dialog", "gum", "secondary-stats-recalculation-dialog"], width: 680, height: "auto" }).render(true);
 }
 
-_buildSecondaryStatsRecalculationPlan() {
-  return buildSecondaryStatsRecalculationPlan(this.actor.system, st => this._getBasicDamageFromST(st));
+_buildSecondaryStatsRecalculationPlan(options = {}) {
+  return buildSecondaryStatsRecalculationPlan(this.actor.system, st => this._getBasicDamageFromST(st), options);
 }
 
-_activateSecondaryStatsPreview(html, plan) {
+_activateSecondaryStatsPreview(html, plan, onCalculationModeChange = null) {
   const fields = html.find('input[name="secondary-stat"]');
   const applyButton = html.closest(".app").find('button[data-button="apply"]');
   const updateState = () => {
@@ -3938,6 +3950,9 @@ _activateSecondaryStatsPreview(html, plan) {
   html.find('[data-action="unchanged"]').on("click", event => {
     const shown = html.toggleClass("show-unchanged").hasClass("show-unchanged");
     event.currentTarget.setAttribute("aria-pressed", String(shown));
+  });
+    html.find('input[name="consider-basic-speed-fixed-modifier"]').on("change", event => {
+    onCalculationModeChange?.(event.currentTarget.checked);
   });
   updateState();
 }

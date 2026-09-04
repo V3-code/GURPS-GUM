@@ -35,7 +35,7 @@ function estimatedFinal(attribute, proposedBase, { pool = false } = {}) {
 }
 
 /** Builds a side-effect-free snapshot of every value handled by the sidebar recalculate action. */
-export function buildSecondaryStatsRecalculationPlan(system, getBasicDamageFromST) {
+export function buildSecondaryStatsRecalculationPlan(system, getBasicDamageFromST, { considerBasicSpeedFixedModifier = false } = {}) {
   const attrs = system?.attributes || {};
   const st = getPreparedPrimaryAttributeValue(attrs.st);
   const dx = getPreparedPrimaryAttributeValue(attrs.dx);
@@ -48,6 +48,7 @@ export function buildSecondaryStatsRecalculationPlan(system, getBasicDamageFromS
     per: primaryReason("Per", attrs.per, per)
   };
   const speed = Math.round((((dx + ht) / 4) + Number.EPSILON) * 100) / 100;
+  const derivedSpeed = speed + (considerBasicSpeedFixedModifier ? number(attrs.basic_speed?.mod) : 0);
   const speedFinal = estimatedFinal(attrs.basic_speed, speed);
   const damage = getBasicDamageFromST(st);
 
@@ -56,8 +57,8 @@ export function buildSecondaryStatsRecalculationPlan(system, getBasicDamageFromS
     ["fp-max", "resources", "PF Máximo", "system.attributes.fp.max", attrs.fp?.max, ht, `Calculado a partir de ${sourceReasons.ht}`, ["ht"], { pool: true }],
     ["lifting-st", "physical", "ST de Levantamento", "system.attributes.lifting_st.value", attrs.lifting_st?.value, st, `Calculada a partir de ${sourceReasons.st}`, ["st"]],
     ["basic-speed", "movement", "Velocidade Básica", "system.attributes.basic_speed.value", attrs.basic_speed?.value, speed, `Calculada a partir de ${sourceReasons.dx} e ${sourceReasons.ht}`, ["dx", "ht"], { precision: 2 }],
-    ["basic-move", "movement", "Deslocamento Básico", "system.attributes.basic_move.value", attrs.basic_move?.value, Math.floor(speed), "Calculado a partir da nova Velocidade Básica", ["basic-speed"]],
-    ["dodge", "movement", "Esquiva-base", "system.attributes.dodge.value", attrs.dodge?.value, Math.floor(speed) + 3, "Calculada pela mesma Velocidade Básica proposta", ["basic-speed"], { dodge: true }],
+    ["basic-move", "movement", "Deslocamento Básico", "system.attributes.basic_move.value", attrs.basic_move?.value, Math.floor(derivedSpeed), considerBasicSpeedFixedModifier ? "Calculado a partir da Velocidade Básica com seu modificador fixo" : "Calculado a partir da nova Velocidade Básica", ["basic-speed"]],
+    ["dodge", "movement", "Esquiva-base", "system.attributes.dodge.value", attrs.dodge?.value, Math.floor(derivedSpeed) + 3, considerBasicSpeedFixedModifier ? "Calculada pela Velocidade Básica com seu modificador fixo" : "Calculada pela mesma Velocidade Básica proposta", ["basic-speed"], { dodge: true }],
     ["vision", "senses", "Visão", "system.attributes.vision.value", attrs.vision?.value, per, `Calculada a partir de ${sourceReasons.per}`, ["per"]],
     ["hearing", "senses", "Audição", "system.attributes.hearing.value", attrs.hearing?.value, per, `Calculada a partir de ${sourceReasons.per}`, ["per"]],
     ["tastesmell", "senses", "Paladar/Olfato", "system.attributes.tastesmell.value", attrs.tastesmell?.value, per, `Calculado a partir de ${sourceReasons.per}`, ["per"]],

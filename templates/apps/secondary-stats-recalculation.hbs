@@ -7,6 +7,14 @@
     </div>
   </header>
 
+    <label class="secondary-preview-option">
+    <input type="checkbox" name="consider-basic-speed-fixed-modifier" {{#if considerBasicSpeedFixedModifier}}checked{{/if}} />
+    <span>
+      <strong>Considerar o modificador fixo da Velocidade</strong>
+      <small>Usa a Velocidade com o ajuste manual para calcular Deslocamento e Esquiva.</small>
+    </span>
+  </label>
+
   <nav class="secondary-preview-actions" aria-label="Ações rápidas">
     <button type="button" data-action="recommended"><i class="fas fa-star"></i> Recomendados</button>
     <button type="button" data-action="all"><i class="fas fa-check-double"></i> Todos</button>
