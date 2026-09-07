@@ -6,7 +6,7 @@
 
 Um ambiente completo para criar personagens, conduzir combates e administrar campanhas de GURPS no Foundry VTT.
 
-![Versão](https://img.shields.io/badge/versão-1.0.0-8a7d5f)
+![Versão](https://img.shields.io/badge/versão-1.1.3-8a7d5f)
 ![Foundry VTT](https://img.shields.io/badge/Foundry_VTT-12–14-8a7d5f)
 ![Status](https://img.shields.io/badge/status-beta_funcional-4f6b58)
 ![Idiomas](https://img.shields.io/badge/idiomas-PT--BR_%7C_EN-596878)
@@ -35,7 +35,7 @@ As novas versões serão detectadas pelo próprio Foundry. Se preferir, você ta
 
 | Informação | Estado atual |
 | --- | --- |
-| Versão do GUM | 1.0.0 |
+| Versão do GUM | 1.1.3 |
 | Foundry VTT mínimo | 12 |
 | Foundry VTT verificado | 14 |
 | Idiomas da interface | Português (Brasil) e inglês |
@@ -50,6 +50,6 @@ As novas versões serão detectadas pelo próprio Foundry. Se preferir, você ta
 
 ## Autor e licença
 
-Desenvolvido por [Victor Valentim](https://github.com/V3-code) e distribuído sob a licença [CC BY-NC-ND 4.0](LICENSE.md).
+Desenvolvido por [V3-Code](https://github.com/V3-code) e distribuído sob a licença [CC BY-NC-ND 4.0](LICENSE.md).
 
 > **Projeto não oficial e sem fins lucrativos.** GURPS é marca registrada da Steve Jackson Games. O GURPS GUM é uma adaptação feita por fãs e não é afiliado, licenciado ou endossado pela Steve Jackson Games.
