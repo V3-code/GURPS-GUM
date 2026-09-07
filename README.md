@@ -6,7 +6,7 @@
 
 Um ambiente completo para criar personagens, conduzir combates e administrar campanhas de GURPS no Foundry VTT.
 
-![Versão](https://img.shields.io/badge/versão-1.1.3-8a7d5f)
+![Versão](https://img.shields.io/badge/versão-1.1.6-8a7d5f)
 ![Foundry VTT](https://img.shields.io/badge/Foundry_VTT-12–14-8a7d5f)
 ![Status](https://img.shields.io/badge/status-beta_funcional-4f6b58)
 ![Idiomas](https://img.shields.io/badge/idiomas-PT--BR_%7C_EN-596878)
