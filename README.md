@@ -1,189 +1,55 @@
-# GURPS GUM (Não Oficial)
+<div align="center">
 
-Sistema para Foundry Virtual Tabletop inspirado no GURPS, mantido pela comunidade. 
+# GURPS GUM
 
-Verão Beta funcional - ajustes de melhoria sendo feitos.
+### Sistema não oficial de GURPS para Foundry Virtual Tabletop
 
-**Autor:** V3-code 
-**Versão:** `1.0.0`  
-**Compatibilidade Foundry VTT:** `12` (mínimo) / `14` (verificado)
+Um ambiente completo para criar personagens, conduzir combates e administrar campanhas de GURPS no Foundry VTT.
 
-> Projeto não oficial e sem fins lucrativos. GURPS é marca registrada de Steve Jackson Games. Este repositório não é afiliado, licenciado ou endossado pela Steve Jackson Games.
+![Versão](https://img.shields.io/badge/versão-1.0.0-8a7d5f)
+![Foundry VTT](https://img.shields.io/badge/Foundry_VTT-12–14-8a7d5f)
+![Status](https://img.shields.io/badge/status-beta_funcional-4f6b58)
+![Idiomas](https://img.shields.io/badge/idiomas-PT--BR_%7C_EN-596878)
 
-**Instalação**
-
-Como o GURPS GUM ainda não está na lista oficial de sistemas do Foundry, a instalação deve ser feita manualmente via Manifest URL.
-
-Passo a passo:
-
-1. Abra o Foundry VTT
-2. Vá até a aba "Game Systems"
-3. Clique em "Install System"
-4. No campo "Manifest URL", cole o link abaixo:
-
- https://raw.githubusercontent.com/V3-code/GURPS-GUM/master/system.json
-
-5. Clique em "Install"
-
-Pronto! O sistema será instalado automaticamente.
-
-Sempre que uma nova versão for publicada, o Foundry detectará automaticamente e permitirá atualizar o sistema.
-
-## Visão geral
-
-O GUM oferece uma base completa para campanhas no estilo GURPS dentro do Foundry VTT, com:
-
-1. ficha de personagem dedicada;
-2. compêndios prontos para uso;
-3. ferramentas para mestre (Escudo do Mestre, Solicitar Testes, Janela de Aplicação de Dano etc.);
-4. importação e exportação de dados do GCS: Fichas de personagens, Templates, bibliotecas de equipamentos, vantagens, ampliações, modificadores etc.
-5. automações de regras e gerenciamento de estados.
-
-## Recursos disponíveis para usuários
-
-### 1) Ficha e mecânicas de personagem
-
-- atributos, recursos (HP/FP), iniciativa e cálculos derivados;
-- controle de carga/encumbrance e efeitos de equipamento;
-- estados e penalidades com ícones próprios;
-- suporte a condições e efeitos aplicados ao personagem.
-
-### 2) Compêndios prontos
-
-O sistema inclui compêndios públicos com conteúdo para uso direto em jogo:
-
-- Modelos;
-- Ampliações e Limitações;
-- Gatilhos;
-- Efeitos;
-- Condições;
-- Condições Passivas (Regras);
-- Perícias;
-- Vantagens;
-- Desvantagens;
-- Magias;
-- Poderes;
-- Equipamentos;
-- Modificadores de Equipamento;
-- Modificadores de Rolagem;
-- Macros.
-
-### 3) Ferramentas para mestre
-
-- navegador de modificadores;
-- navegador de condições, efeitos, gatilhos e modelos;
-- escudo do mestre (GM Screen);
-- aplicação de dano;
-- sincronização das regras passivas do compêndio para personagens existentes.
-
-### 4) Importação e exportação
-
-Disponível nas configurações do sistema:
-
-- importar personagem do GCS (`.gcs`);
-- importar template do GCS (`.gct/.gcs`);
-- importar itens por JSON para compêndios;
-- exportar compêndio para JSON;
-- exportar ficha de personagem para JSON.
-
-## Como usar no dia a dia
-
-### Para jogadores
-
-1. Crie ou abra um personagem no mundo configurado com GUM.
-2. Preencha atributos, perícias, vantagens/desvantagens, equipamentos e recursos.
-3. Use os itens dos compêndios para montar a ficha com mais rapidez.
-4. Acompanhe condições e estados ativos diretamente na ficha/token.
-
-### Para mestres
-
-1. Importe conteúdos iniciais pelos compêndios e ferramentas de importação.
-2. Use os navegadores de condições/efeitos/modificadores durante a sessão.
-3. Acione a sincronização de regras quando atualizar compêndios de condições passivas.
-4. Utilize exportação JSON como rotina de backup e migração.
-
-## Sintaxe de modificadores de rolagem (efeitos)
-
-O campo **Valor** em ações de **Modificador de Rolagem** aceita expressões.
-
-Resumo rápido:
-
-- número fixo: `-2`, `+1`;
-- referências de atributo/perícia: `dx`, `per`, `Furtividade`;
-- parâmetros do item/ataque atual: `item.holdout`, `attack.accuracy`, `attack.mag`;
-- funções: `maior(a,b)` / `menor(a,b)` (sinônimos: `max` / `min`);
-- operações aritméticas: `+`, `-`, `*`, `/`, incluindo unário (`-mag`).
+</div>
 
 ## Instalação
 
-### Opção A — URL de manifesto (recomendada)
+No Foundry VTT, acesse **Game Systems → Install System**, cole a URL abaixo no campo **Manifest URL** e clique em **Install**:
 
-Como o GURPS GUM ainda não está na lista oficial de sistemas do Foundry, a instalação deve ser feita manualmente via Manifest URL.
+```text
+https://raw.githubusercontent.com/V3-code/GURPS-GUM/master/system.json
+```
 
-Passo a passo:
+As novas versões serão detectadas pelo próprio Foundry. Se preferir, você também pode baixar o pacote na página de [releases](https://github.com/V3-code/GURPS-GUM/releases/latest).
 
-1. Abra o Foundry VTT
-2. Vá até a aba "Game Systems"
-3. Clique em "Install System"
-4. No campo "Manifest URL", cole o link abaixo:
+## O que o GUM oferece
 
- https://raw.githubusercontent.com/V3-code/GURPS-GUM/master/system.json
+- **Ficha completa:** atributos, perícias, vantagens, desvantagens, equipamentos, magias, poderes, recursos e cálculos derivados.
+- **Integração com o GCS:** importação de personagens, templates e bibliotecas, além de ferramentas de importação e exportação em JSON.
+- **Compêndios prontos:** conteúdo organizado para agilizar a criação de personagens e a preparação das sessões.
+- **Combate assistido:** aplicação de dano, ferimentos, condições, efeitos, modificadores e gerenciamento de estados.
+- **Ferramentas para o mestre:** Escudo do Mestre, solicitação de testes e navegadores de regras e conteúdos.
 
-5. Clique em "Install"
+## Compatibilidade e desenvolvimento
 
-Pronto! O sistema será instalado automaticamente.
+| Informação | Estado atual |
+| --- | --- |
+| Versão do GUM | 1.0.0 |
+| Foundry VTT mínimo | 12 |
+| Foundry VTT verificado | 14 |
+| Idiomas da interface | Português (Brasil) e inglês |
+| Estado do projeto | Beta funcional, em melhoria contínua |
 
-Sempre que uma nova versão for publicada, o Foundry detectará automaticamente e permitirá atualizar o sistema.
+## Documentação e suporte
 
-### Opção B — instalação manual
+- [Histórico de alterações](CHANGELOG.md)
+- [Manual de solicitação de testes](docs/test-request-manual.md)
+- [Versões publicadas](https://github.com/V3-code/GURPS-GUM/releases)
+- [Relatar um problema ou sugerir uma melhoria](https://github.com/V3-code/GURPS-GUM/issues)
 
-1. Baixe o arquivo `.zip` da release;
-2. Extraia para `Data/systems/gum`;
-3. Reinicie o Foundry VTT;
-4. Selecione o sistema GUM ao criar/editar um mundo.
+## Autor e licença
 
-## Atualizações
+Desenvolvido por [Victor Valentim](https://github.com/V3-code) e distribuído sob a licença [CC BY-NC-ND 4.0](LICENSE.md).
 
-- atualizações automáticas no Foundry dependem do campo `download` no `system.json`;
-- cada release deve publicar o artefato `gum.zip`;
-- consulte o histórico em [`CHANGELOG.md`](CHANGELOG.md).
-
-## Estrutura do repositório
-
-- `system.json`: manifesto do sistema;
-- `scripts/` e `module/`: lógica principal e aplicações;
-- `templates/`: templates Handlebars;
-- `styles/`: estilos da interface;
-- `packs/`: compêndios;
-- `icons/` e `fonts/`: ativos visuais.
-
-## Solução de problemas
-
-Se algo não carregar corretamente:
-
-1. verifique a versão do Foundry (v12 ou v13);
-2. abra o console do navegador (F12) e confira erros;
-3. faça refresh forçado (Ctrl+F5);
-4. teste em um mundo limpo, sem módulos de terceiros.
-
-Se o problema persistir, abra uma issue:  
-https://github.com/V3-code/GURPS-GUM/issues
-
-## Versionamento
-
-O projeto segue SemVer (`MAJOR.MINOR.PATCH`).  
-Fluxo de release em [`RELEASE.md`](RELEASE.md).
-
-## Licença
-
-Licenciado sob **CC BY-NC-ND 4.0**.  
-Detalhes em [`LICENSE.md`](LICENSE.md).
-
-## Contato
-
-- GitHub: https://github.com/V3-code
-- Issues: https://github.com/V3-code/GURPS-GUM/issues
-
-## Créditos e direitos
-
-GURPS © Steve Jackson Games. Este sistema é uma adaptação feita por fãs e distribuída gratuitamente.
+> **Projeto não oficial e sem fins lucrativos.** GURPS é marca registrada da Steve Jackson Games. O GURPS GUM é uma adaptação feita por fãs e não é afiliado, licenciado ou endossado pela Steve Jackson Games.
