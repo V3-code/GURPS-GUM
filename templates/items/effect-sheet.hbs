@@ -310,6 +310,23 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <div class="effect-premium-grid effect-premium-grid-single">
+                                                    <div class="effect-premium-field">
+                                                        <label class="effect-premium-field-label">
+                                                            <i class="fas fa-message" aria-hidden="true"></i>
+                                                            Exibição do valor no chat
+                                                        </label>
+                                                        <div class="effect-premium-field-control">
+                                                            <select name="system.actions.{{action.index}}.attribute_chat_visibility">
+                                                                <option value="public" {{#if (eq action.attribute_chat_visibility "public")}}selected{{/if}}>Público</option>
+                                                                <option value="owners" {{#if (eq action.attribute_chat_visibility "owners")}}selected{{/if}}>Privado para donos e Mestre</option>
+                                                                <option value="gm" {{#if (eq action.attribute_chat_visibility "gm")}}selected{{/if}}>Somente Mestre (rolagem oculta)</option>
+                                                                <option value="none" {{#if (eq action.attribute_chat_visibility "none")}}selected{{/if}}>Não mostrar</option>
+                                                            </select>
+                                                            <p class="effect-premium-field-hint">Define quem vê o valor calculado. Não altera a aplicação do efeito.</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             {{/if}}
 
                                             {{! ============================================= }}

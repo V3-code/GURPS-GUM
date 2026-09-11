@@ -877,6 +877,7 @@
       "operation": "ADD",
       "value": "1",
       "value_mode": "fixed",
+      "attribute_chat_visibility": "public",
       "key": "",
       "flag_value": "",
       "chat_text": "",

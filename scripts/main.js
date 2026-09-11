@@ -171,6 +171,7 @@ async function migrateEffectActionsSchema() {
             "system.path": firstAction.path ?? "",
             "system.operation": firstAction.operation ?? "ADD",
             "system.value": firstAction.value ?? "",
+            "system.attribute_chat_visibility": firstAction.attribute_chat_visibility ?? "public",
             "system.key": firstAction.key ?? "",
             "system.flag_value": firstAction.flag_value ?? "",
             "system.chat_text": firstAction.chat_text ?? "",

@@ -5,6 +5,10 @@ import { formatPurposeSelection, openRollPurposePicker } from "../../module/apps
 import { normalizeContextCsv, openContextPicker } from "../../module/apps/context-picker.mjs";
 import { openEffectPathPicker } from "../../module/apps/effect-path-picker.mjs";
 import { normalizeBarrierBranches } from "../../module/utils/roll-request-data.mjs";
+import {
+    ATTRIBUTE_CHAT_VISIBILITIES,
+    normalizeAttributeChatVisibility
+} from "../../module/utils/effect-chat-visibility.mjs";
 
 
 const { ItemSheet } = foundry.appv1.sheets;
@@ -86,7 +90,7 @@ const buildRollEntrySummary = (entry = {}) => {
 const buildActionSummary = (action = {}) => {
     switch (action.type) {
         case "attribute":
-            return compactParts(action.path, action.operation, action.value).join(" · ") || "Modificador de atributo";
+            return compactParts(action.path, action.operation, action.value, ATTRIBUTE_CHAT_VISIBILITIES[action.attribute_chat_visibility]).join(" · ") || "Modificador de atributo";
         case "status":
             return `Status: ${action.statusLabel || action.statusId || "não definido"}`;
         case "resource_change":
@@ -114,6 +118,7 @@ const DEFAULT_EFFECT_ACTION = {
     operation: "ADD",
     value: "1",
     value_mode: "fixed",
+    attribute_chat_visibility: "public",
     key: "",
     flag_value: "",
     chat_text: "",
@@ -154,6 +159,7 @@ const normalizeRollModifierEntryValue = (value) => {
 
 const normalizeAction = (action = {}) => {
     const next = foundry.utils.mergeObject(foundry.utils.deepClone(DEFAULT_EFFECT_ACTION), action || {}, { inplace: false, overwrite: true });
+    next.attribute_chat_visibility = normalizeAttributeChatVisibility(next.attribute_chat_visibility);
     const rawEntries = Array.isArray(next.roll_modifier_entries) ? next.roll_modifier_entries : [];
     next.roll_modifier_entries = rawEntries.length
         ? rawEntries.map((entry) => ({
@@ -1075,6 +1081,7 @@ activateListeners(html) {
             formData["system.operation"] = firstAction.operation;
             formData["system.value"] = firstAction.value;
             formData["system.value_mode"] = firstAction.value_mode;
+            formData["system.attribute_chat_visibility"] = firstAction.attribute_chat_visibility;
             formData["system.key"] = firstAction.key;
             formData["system.flag_value"] = firstAction.flag_value;
             formData["system.chat_text"] = firstAction.chat_text;

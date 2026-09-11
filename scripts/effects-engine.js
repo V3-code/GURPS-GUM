@@ -1,5 +1,9 @@
 import { createSingleRollRequestMessage } from "../module/services/roll-request-service.js";
 import { normalizeChatRoll } from "../module/utils/roll-request-data.mjs";
+import {
+    getAttributeRollMessageOptions,
+    normalizeAttributeChatVisibility
+} from "../module/utils/effect-chat-visibility.mjs";
 
 /**
  * O "Motor de Efeitos" central do sistema. (Versão 5.0 - Rollback Controlado)
@@ -157,6 +161,7 @@ const DEFAULT_EFFECT_ACTION = {
     path: "system.attributes.st.passive",
     operation: "ADD",
     value: "1",
+    attribute_chat_visibility: "public",
     key: "",
     flag_value: "",
     chat_text: "",
@@ -212,6 +217,7 @@ const normalizeRollModifierApplicationSide = (value) => {
 
 const normalizeEffectAction = (action = {}) => {
     const next = foundry.utils.mergeObject(foundry.utils.deepClone(DEFAULT_EFFECT_ACTION), action || {}, { inplace: false, overwrite: true });
+    next.attribute_chat_visibility = normalizeAttributeChatVisibility(next.attribute_chat_visibility);
     if (!Array.isArray(next.roll_modifier_entries) || next.roll_modifier_entries.length === 0) {
         next.roll_modifier_entries = [{
             label: "",
@@ -448,11 +454,17 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                             value: resolvedValue.effectiveValue                            
                         }));
                         activeEffectData.flags.gum.valueScaling = resolvedValue;
-                        if (roll) {
+                        const messageOptions = getAttributeRollMessageOptions({
+                            visibility: action.attribute_chat_visibility,
+                            actor: targetActor,
+                            users: game.users
+                        });
+                        if (roll && messageOptions) {
                             await roll.toMessage({
                                 speaker: ChatMessage.getSpeaker({ actor: targetActor }),
-                                flavor: `${effectItem.name} • ${action.label || "Modificador de Atributo"} (${formula})`
-                            });
+                                flavor: `${effectItem.name} • ${action.label || "Modificador de Atributo"} (${formula})`,
+                                ...messageOptions.messageData
+                            }, messageOptions.creationOptions);
                         }
                     }
 
