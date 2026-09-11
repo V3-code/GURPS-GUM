@@ -6666,18 +6666,143 @@ color:#121114;
 }
 /* Resultados condicionais da Barreira de Resistência */
 .gum-item-sheet.effect-sheet .is-hidden { display: none !important; }
-.gum-item-sheet.effect-sheet .resistance-mode-field { margin-bottom: 10px; }
-.gum-item-sheet.effect-sheet .resistance-branches { display: grid; gap: 8px; margin: 12px 0 15px; }
+.gum-item-sheet.effect-sheet .effect-resistance-body {
+  display: grid;
+  gap: 10px;
+}
+.gum-item-sheet.effect-sheet .effect-resistance-body > .effect-field,
+.gum-item-sheet.effect-sheet .effect-resistance-body > .effect-resistance-grid,
+.gum-item-sheet.effect-sheet .effect-resistance-body > .effect-inline-checkbox {
+  margin: 0 !important;
+  padding: 10px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.035);
+}
+.gum-item-sheet.effect-sheet .effect-resistance-body > .effect-field:nth-child(even),
+.gum-item-sheet.effect-sheet .effect-resistance-body > .effect-inline-checkbox {
+  background: rgba(201, 161, 94, 0.07);
+}
+.gum-item-sheet.effect-sheet .effect-resistance-body textarea {
+  width: 100%;
+  min-height: 52px;
+  resize: vertical;
+}
+.gum-item-sheet.effect-sheet .resistance-mode-field select,
+.gum-item-sheet.effect-sheet .effect-resistance-grid input,
+.gum-item-sheet.effect-sheet .effect-resistance-grid select,
+.gum-item-sheet.effect-sheet .effect-resistance-body > .effect-field > input {
+  width: 100%;
+}
+.gum-item-sheet.effect-sheet .effect-resistance-grid {
+  margin: 0;
+  text-align: left;
+}
+.gum-item-sheet.effect-sheet .resistance-branches { display: grid; gap: 9px; margin: 2px 0; }
 .gum-item-sheet.effect-sheet .resistance-branches-header,
 .gum-item-sheet.effect-sheet .resistance-branch-heading,
 .gum-item-sheet.effect-sheet .resistance-branch-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.gum-item-sheet.effect-sheet .resistance-branches-header { font-weight: 700; }
-.gum-item-sheet.effect-sheet .resistance-branch { padding: 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 6px; background: rgba(0,0,0,.14); }
-.gum-item-sheet.effect-sheet .resistance-branch-heading input { flex: 1; font-weight: 700; }
-.gum-item-sheet.effect-sheet .resistance-branch-condition { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 8px 0; }
-.gum-item-sheet.effect-sheet .resistance-branch-condition label { display: flex; align-items: center; gap: 5px; }
-.gum-item-sheet.effect-sheet .resistance-branch-condition input { min-width: 45px; }
+.gum-item-sheet.effect-sheet .resistance-branches-header {
+  padding: 2px 1px;
+  color: var(--item-text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.gum-item-sheet.effect-sheet .resistance-branches button {
+  width: auto;
+  min-height: 27px;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(201, 161, 94, 0.13);
+  color: var(--item-text);
+}
+.gum-item-sheet.effect-sheet .resistance-branches button:hover {
+  background: rgba(201, 161, 94, 0.23);
+}
+.gum-item-sheet.effect-sheet .resistance-branch {
+  overflow: hidden;
+  padding: 10px;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(10, 10, 14, 0.32);
+  box-shadow: inset 3px 0 rgba(201, 161, 94, 0.34);
+}
+.gum-item-sheet.effect-sheet .resistance-branch:nth-of-type(even) {
+  background: rgba(201, 161, 94, 0.055);
+}
+.gum-item-sheet.effect-sheet .resistance-branch-heading input {
+  flex: 1;
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.045);
+  font-weight: 700;
+}
+.gum-item-sheet.effect-sheet .resistance-branch-heading button {
+  flex: 0 0 28px;
+  padding: 0;
+  background: transparent;
+  color: var(--item-text-muted);
+}
+.gum-item-sheet.effect-sheet .resistance-branch-heading button:hover {
+  background: rgba(201, 161, 94, 0.12);
+  color: var(--item-accent);
+}
+.gum-item-sheet.effect-sheet .resistance-branch-condition {
+  display: grid;
+  grid-template-columns: minmax(110px, 1.25fr) minmax(90px, .8fr) repeat(2, minmax(88px, .7fr));
+  gap: 7px;
+  margin: 10px 0;
+  padding: 9px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.035);
+  align-items: end;
+}
+.gum-item-sheet.effect-sheet .resistance-condition-label {
+  grid-column: 1 / -1;
+  color: var(--item-text-muted);
+  font-family: var(--item-font-condensed);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.gum-item-sheet.effect-sheet .resistance-branch-condition label {
+  display: grid;
+  gap: 3px;
+  color: var(--item-text-muted);
+  font-size: .62rem;
+  text-align: center;
+}
+.gum-item-sheet.effect-sheet .resistance-branch-condition input,
+.gum-item-sheet.effect-sheet .resistance-branch-condition select { min-width: 0; width: 100%; }
+.gum-item-sheet.effect-sheet .resistance-branch-actions {
+  min-height: 30px;
+  padding-top: 2px;
+}
 .gum-item-sheet.effect-sheet .resistance-action-summary { min-width: 0; opacity: .82; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gum-item-sheet.effect-sheet .effect-resistance-body > .effect-inline-checkbox {
+  min-height: 38px;
+}
+.gum-item-sheet.effect-sheet .effect-resistance-body > .effect-field:last-child {
+  padding: 11px;
+  background: rgba(201, 161, 94, 0.1);
+}
+.gum-item-sheet.effect-sheet .effect-resistance-body .effect-purpose-control {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.gum-item-sheet.effect-sheet .effect-resistance-body .effect-purpose-summary {
+  min-width: 0;
+  color: var(--item-text-muted);
+  font-size: .7rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 620px) {
+  .gum-item-sheet.effect-sheet .resistance-branch-condition {
+    grid-template-columns: 1fr 1fr;
+  }
+}
 .gum-resistance-action-picker .resistance-action-search { width: 100%; margin-bottom: 8px; }
 .gum-resistance-action-options { display: grid; gap: 5px; max-height: 320px; overflow: auto; }
 .gum-resistance-action-option { display: flex; align-items: center; gap: 7px; padding: 5px; border-radius: 4px; }
