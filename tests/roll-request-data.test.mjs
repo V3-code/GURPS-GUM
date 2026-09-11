@@ -52,3 +52,67 @@ test("resultado de dano só retorna à janela, alvo, link e efeito correspondent
   assert.equal(isMatchingDamageResistance({ ...application, isDialogClosed: true }, { targetActorId: "actor", effectLinkId: "link", effectUuid: "Item.effect" }), false);
   assert.equal(isMatchingDamageResistance(application, { targetActorId: "actor", effectLinkId: "wrong", effectUuid: "Item.effect" }), false);
 });
+test("Barreira condicional permite ações compartilhadas entre resultados", () => {
+  const consequence = normalizeResistanceRoll({
+    mode: "conditional",
+    branches: [
+      { id: "success", label: "Sucesso", outcome: "success", actionIds: ["a", "b", "a"] },
+      { id: "failure", label: "Falha", outcome: "failure", actionIds: ["a", "c"] }
+    ]
+  }).consequence;
+  assert.deepEqual(evaluateBarrierConsequence({ outcome: "success", margin: 2 }, consequence).actionIds, ["a", "b"]);
+  const failure = evaluateBarrierConsequence({ outcome: "failure", margin: -1 }, consequence);
+  assert.equal(failure.branchId, "failure");
+  assert.deepEqual(failure.actionIds, ["a", "c"]);
+});
+
+test("Barreira condicional respeita margem, ordem e caso contrário", () => {
+  const consequence = normalizeResistanceRoll({
+    mode: "conditional",
+    branches: [
+      { id: "severe", label: "Falha grave", condition: { outcome: "failure", minimumMargin: 5 }, actionIds: ["a"] },
+      { id: "fallback", label: "Caso contrário", condition: { type: "otherwise" }, actionIds: ["b"] }
+    ]
+  }).consequence;
+  assert.equal(evaluateBarrierConsequence({ outcome: "critical-failure", margin: -7 }, consequence).branchId, "severe");
+  assert.equal(evaluateBarrierConsequence({ outcome: "failure", margin: -4 }, consequence).branchId, "fallback");
+  assert.equal(evaluateBarrierConsequence({ outcome: "success", margin: 3 }, consequence).branchId, "fallback");
+});
+
+test("Barreira condicional sem correspondência não aplica ações", () => {
+  const consequence = normalizeResistanceRoll({ mode: "conditional", branches: [{ id: "success", outcome: "success", actionIds: ["a"] }] }).consequence;
+  const result = evaluateBarrierConsequence({ outcome: "failure", margin: -2 }, consequence);
+  assert.equal(result.shouldApply, false);
+  assert.equal(result.branchId, null);
+  assert.deepEqual(result.actionIds, []);
+});
+
+test("Barreira condicional combina todas as condições de margem atendidas", () => {
+  const consequence = normalizeResistanceRoll({
+    mode: "conditional",
+    branches: [
+      { id: "failure-2", outcome: "failure", minimumMargin: 2, actionIds: ["a"] },
+      { id: "failure-4", outcome: "failure", minimumMargin: 4, actionIds: ["b"] },
+      { id: "fallback", condition: { type: "otherwise" }, actionIds: ["c"] }
+    ]
+  }).consequence;
+  const result = evaluateBarrierConsequence({ outcome: "failure", margin: -10 }, consequence);
+  assert.deepEqual(result.branchIds, ["failure-2", "failure-4"]);
+  assert.deepEqual(result.actionIds, ["a", "b"]);
+});
+
+test("Barreira condicional aceita intervalos sobrepostos e usa fallback somente sem correspondência", () => {
+  const consequence = normalizeResistanceRoll({
+    mode: "conditional",
+    branches: [
+      { id: "range-a", outcome: "success", minimumMargin: 1, maximumMargin: 4, actionIds: ["a", "shared"] },
+      { id: "range-b", outcome: "success", minimumMargin: 3, maximumMargin: 6, actionIds: ["b", "shared"] },
+      { id: "fallback", condition: { type: "otherwise" }, actionIds: ["c"] }
+    ]
+  }).consequence;
+  assert.deepEqual(evaluateBarrierConsequence({ outcome: "success", margin: 0 }, consequence).actionIds, ["c"]);
+  assert.deepEqual(evaluateBarrierConsequence({ outcome: "success", margin: 2 }, consequence).actionIds, ["a", "shared"]);
+  assert.deepEqual(evaluateBarrierConsequence({ outcome: "success", margin: 3 }, consequence).actionIds, ["a", "shared", "b"]);
+  assert.deepEqual(evaluateBarrierConsequence({ outcome: "success", margin: 6 }, consequence).actionIds, ["b", "shared"]);
+  assert.deepEqual(evaluateBarrierConsequence({ outcome: "success", margin: 8 }, consequence).actionIds, ["c"]);
+});

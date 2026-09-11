@@ -1,7 +1,6 @@
 import { GMModifierBrowser } from "./gm-modifier-browser.js";
 import { EffectBrowser } from "./effect-browser.js";
-import { applyCurrentRollPrivacy, performGURPSRoll } from "../../scripts/main.js";
-import { applySingleEffect } from "../../scripts/effects-engine.js";
+import { applyCurrentRollPrivacy, applyEffectWithResistance, performGURPSRoll } from "../../scripts/main.js";
 import { GurpsRollPrompt } from "./roll-prompt.js";
 import { GurpsDamageRollPrompt } from "./damage-roll-prompt.js";
 import { GumPreviewDialog } from "./preview-dialog.js";
@@ -1262,6 +1261,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
         const currentMods = actor.getFlag("gum", "gm_modifiers") || [];
         let countMods = 0;
         let countEffects = 0;
+        let countResistanceRequests = 0;
 
         const effectUuids = [];
         const configuredUuids = this._getConfiguredItemUuids();
@@ -1334,18 +1334,21 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
                 const effectItem = await fromUuid(effectUuid);
                 if (!effectItem || effectItem.type !== "effect") continue;
 
-                await applySingleEffect(effectItem, targets, {
+                const application = await applyEffectWithResistance(effectItem, targets, {
                     actor,
                     origin: effectItem,
-                    source: "GM Screen"
+                    source: "GM Screen",
+                    mode: "gm-screen"
                 });
-                countEffects++;
+                if (application.requested) countResistanceRequests++;
+                if (application.applied) countEffects++;
             }
         }
 
         // Garante atualização visual imediata das badges do card no Escudo do Mestre,
         // mesmo quando a criação de ActiveEffect não dispara updateActor instantaneamente.
-        ui.notifications.info(`Aplicado em ${actor.name}: ${countMods} modificador(es) e ${countEffects} efeito(s).`);
+        const resistanceSummary = countResistanceRequests ? `; ${countResistanceRequests} resistência(s) solicitada(s)` : "";
+        ui.notifications.info(`Aplicado em ${actor.name}: ${countMods} modificador(es) e ${countEffects} efeito(s)${resistanceSummary}.`);
     }
     
        async _showQuickView(item) {

@@ -1,5 +1,4 @@
-import { performGURPSRoll } from "/systems/gum/scripts/main.js";
-import { applySingleEffect } from "/systems/gum/scripts/effects-engine.js";
+import { applyEffectWithResistance, performGURPSRoll } from "/systems/gum/scripts/main.js";
 import { GurpsRollPrompt } from "../apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../apps/damage-roll-prompt.js";
 import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
@@ -1557,7 +1556,7 @@ async _onDrop(event) {
             event.preventDefault();
             const activeTokens = this.actor.getActiveTokens(true);
             const targets = activeTokens.length ? activeTokens : [{ actor: this.actor }];
-            await applySingleEffect(item, targets, { actor: this.actor, origin: item });
+            await applyEffectWithResistance(item, targets, { actor: this.actor, origin: item, mode: "sheet-drop" });
             return;
         }
     }

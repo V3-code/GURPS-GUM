@@ -4,6 +4,7 @@ import { normalizePurposeIds } from "../../module/utils/roll-purposes.mjs";
 import { formatPurposeSelection, openRollPurposePicker } from "../../module/apps/roll-purpose-picker.mjs";
 import { normalizeContextCsv, openContextPicker } from "../../module/apps/context-picker.mjs";
 import { openEffectPathPicker } from "../../module/apps/effect-path-picker.mjs";
+import { normalizeBarrierBranches } from "../../module/utils/roll-request-data.mjs";
 
 
 const { ItemSheet } = foundry.appv1.sheets;
@@ -106,6 +107,7 @@ const buildActionSummary = (action = {}) => {
 };
 
 const DEFAULT_EFFECT_ACTION = {
+    id: "",
     label: "",
     type: "attribute",
     path: "system.attributes.st.passive",
@@ -190,13 +192,14 @@ const normalizeAction = (action = {}) => {
     next.roll_modifier_cap = next.roll_modifier_entries[0]?.cap ?? "";
     next.roll_modifier_context = next.roll_modifier_entries[0]?.contexts ?? "all";
     next.roll_modifier_application_side = next.roll_modifier_entries[0]?.application_side ?? "self";
+    next.id = String(next.id || "");
     next.requestedPurposeIds = normalizePurposeIds(next.requestedPurposeIds ?? next.roll_requested_purpose_ids);
     return next;
 };
 
 const getEffectActionsFromSystem = (system = {}) => {
-    if (Array.isArray(system.actions)) return system.actions.map(normalizeAction);
-    return [normalizeAction(system)];
+    if (Array.isArray(system.actions)) return system.actions.map((action, index) => ({ ...normalizeAction(action), id: String(action?.id || `legacy-action-${index + 1}`) }));
+    return [{ ...normalizeAction(system), id: String(system.id || "legacy-action-1") }];
 };
 
 export class EffectSheet extends ItemSheet {
@@ -320,6 +323,15 @@ export class EffectSheet extends ItemSheet {
         const resistancePurposeIds = normalizePurposeIds(context.system.resistanceRoll?.requestedPurposeIds);
         context.resistancePurposeIdsCsv = resistancePurposeIds.join(",");
         context.resistancePurposeSummary = formatPurposeSelection(resistancePurposeIds);
+        const barrierMode = context.system.resistanceRoll?.mode === "conditional" ? "conditional" : "simple";
+        context.isConditionalResistance = barrierMode === "conditional";
+        const actionLabels = new Map(context.effectActions.map(action => [action.id, action.label || `Ação ${action.displayIndex}`]));
+        context.resistanceBranches = normalizeBarrierBranches(context.system.resistanceRoll?.branches).map((branch, index) => ({
+            ...branch, index, displayIndex: index + 1, isOtherwise: branch.condition.type === "otherwise",
+            isSuccess: branch.condition.outcome === "success", actionIdsCsv: branch.actionIds.join(","),
+            maximumMargin: branch.condition.maximumMargin ?? "",
+            actionSummary: branch.actionIds.map(id => actionLabels.get(id) || `Ação removida (${id})`).join(", ") || "Nenhuma ação selecionada"
+        }));
 
         return context;
     }
@@ -448,7 +460,7 @@ activateListeners(html) {
         html.on("click", ".add-effect-action", async (ev) => {
         ev.preventDefault();
         const actions = getEffectActionsFromSystem(this.item.system);
-        actions.push(normalizeAction({}));
+        actions.push(normalizeAction({ id: foundry.utils.randomID() }));
         const newIndex = actions.length - 1;
         this._ensureExpandedActions().add(newIndex);
         this._pendingScrollSelector = `.effect-premium-action[data-action-index="${newIndex}"]`;
@@ -461,9 +473,68 @@ activateListeners(html) {
         const index = Number(ev.currentTarget.dataset.index);
         const actions = getEffectActionsFromSystem(this.item.system);
         if (Number.isNaN(index) || index < 0 || index >= actions.length) return;
-        actions.splice(index, 1);
+        const [removed] = actions.splice(index, 1);
+        const branches = normalizeBarrierBranches(this.item.system.resistanceRoll?.branches).map(branch => ({ ...branch, actionIds: branch.actionIds.filter(id => id !== removed.id) }));
         this._reindexExpandedActionsAfterRemoval(index);
-        await this.item.update({ "system.actions": actions });
+        await this.item.update({ "system.actions": actions, "system.resistanceRoll.branches": branches });
+    });
+
+    html.on("change", '[name="system.resistanceRoll.mode"]', async ev => {
+        await this.item.update({ "system.resistanceRoll.mode": ev.currentTarget.value === "conditional" ? "conditional" : "simple" });
+    });
+
+    html.on("click", ".add-resistance-branch", async ev => {
+        ev.preventDefault();
+        const resistanceRoll = foundry.utils.deepClone(this.item.system.resistanceRoll || {});
+        const branches = normalizeBarrierBranches(resistanceRoll.branches);
+        branches.push({ id: foundry.utils.randomID(), label: `Resultado ${branches.length + 1}`, condition: { type: "outcome", outcome: "failure", minimumMargin: 0, maximumMargin: null }, actionIds: [] });
+        await this.item.update({ "system.resistanceRoll.mode": "conditional", "system.resistanceRoll.branches": branches });
+    });
+
+    html.on("click", ".remove-resistance-branch", async ev => {
+        ev.preventDefault();
+        const index = Number(ev.currentTarget.dataset.index);
+        const branches = normalizeBarrierBranches(this.item.system.resistanceRoll?.branches);
+        if (!Number.isInteger(index) || index < 0 || index >= branches.length) return;
+        branches.splice(index, 1);
+        await this.item.update({ "system.resistanceRoll.branches": branches });
+    });
+
+    html.on("click", ".move-resistance-branch", async ev => {
+        ev.preventDefault();
+        const index = Number(ev.currentTarget.dataset.index);
+        const direction = Number(ev.currentTarget.dataset.direction);
+        const branches = normalizeBarrierBranches(this.item.system.resistanceRoll?.branches);
+        const destination = index + direction;
+        if (!Number.isInteger(index) || ![-1, 1].includes(direction) || destination < 0 || destination >= branches.length) return;
+        [branches[index], branches[destination]] = [branches[destination], branches[index]];
+        await this.item.update({ "system.resistanceRoll.branches": normalizeBarrierBranches(branches) });
+    });
+
+    html.on("click", ".select-resistance-actions", ev => {
+        ev.preventDefault();
+        const index = Number(ev.currentTarget.dataset.index);
+        const input = this.form?.querySelector(`[name="system.resistanceRoll.branches.${index}.actionIds"]`);
+        if (!input) return;
+        const selected = new Set(String(input.value || "").split(",").map(value => value.trim()).filter(Boolean));
+        const actions = getEffectActionsFromSystem(this.item.system);
+        const escape = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
+        const options = actions.map((action, actionIndex) => `<label class="gum-resistance-action-option" data-search="${escape(action.label || `ação ${actionIndex + 1}`)}"><input type="checkbox" value="${escape(action.id)}" ${selected.has(action.id) ? "checked" : ""}> <span>${escape(action.label || `Ação ${actionIndex + 1}`)}</span></label>`).join("");
+        new Dialog({
+            title: "Selecionar ações do resultado",
+            content: `<div class="gum-resistance-action-picker"><input type="search" placeholder="Buscar ação..." class="resistance-action-search"><div class="gum-resistance-action-options">${options || "<p>Nenhuma ação disponível.</p>"}</div></div>`,
+            buttons: { apply: { icon: '<i class="fas fa-check"></i>', label: "Confirmar", callback: dialogHtml => {
+                const ids = dialogHtml.find('input[type="checkbox"]:checked').map((_, element) => element.value).get();
+                input.value = [...new Set(ids)].join(",");
+                input.dispatchEvent(new Event("change", { bubbles: true }));
+                const summary = ev.currentTarget.closest(".resistance-branch")?.querySelector(".resistance-action-summary");
+                if (summary) summary.textContent = actions.filter(action => ids.includes(action.id)).map((action, i) => action.label || `Ação ${i + 1}`).join(", ") || "Nenhuma ação selecionada";
+            } } },
+            render: dialogHtml => dialogHtml.find(".resistance-action-search").on("input", event => {
+                const query = event.currentTarget.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+                dialogHtml.find(".gum-resistance-action-option").each((_, option) => { option.hidden = !option.dataset.search.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(query); });
+            })
+        }).render(true);
     });
 
     const normalizeCsv = value => normalizeContextCsv(value, ROLL_MODIFIER_CONTEXT_OPTIONS);
@@ -875,12 +946,21 @@ activateListeners(html) {
     async _updateObject(event, formData) {
         const actionEntries = new Map();
         const rollEntries = new Map();
+        const branchEntries = new Map();
         if (Object.hasOwn(formData, "system.resistanceRoll.requestedPurposeIds")) {
             formData["system.resistanceRoll.requestedPurposeIds"] = normalizePurposeIds(formData["system.resistanceRoll.requestedPurposeIds"]);
         }
 
         for (const [key, value] of Object.entries(formData)) {
             const actionMatch = key.match(/^system\.actions\.(\d+)\.([a-zA-Z0-9_]+)$/);
+            const branchMatch = key.match(/^system\.resistanceRoll\.branches\.(\d+)\.(id|label|actionIds|condition\.(?:type|outcome|minimumMargin|maximumMargin))$/);
+            if (branchMatch) {
+                const branchIndex = Number(branchMatch[1]);
+                if (!branchEntries.has(branchIndex)) branchEntries.set(branchIndex, {});
+                branchEntries.get(branchIndex)[branchMatch[2]] = value;
+                delete formData[key];
+                continue;
+            }
             const rollEntryMatch = key.match(/^system\.actions\.(\d+)\.roll_modifier_entries\.(\d+)\.(label|value|value_mode|cap|contexts|application_side|target_kind|target_mode|target_values|source_item_ids|source_attack_ids|roll_tags|roll_tag_match|nh_display_mode)$/); 
             if (rollEntryMatch) {
                 const actionIndex = Number(rollEntryMatch[1]);
@@ -917,6 +997,25 @@ activateListeners(html) {
                 actionEntries.get(actionIndex)[field] = value;
                 delete formData[key];
             }
+        }
+
+        if (branchEntries.size) {
+            const previous = normalizeBarrierBranches(this.item.system.resistanceRoll?.branches);
+            const branches = Array.from(branchEntries.entries()).sort((a, b) => a[0] - b[0]).map(([index, entry]) => {
+                const fallback = previous[index] || {};
+                return {
+                    id: entry.id || fallback.id || foundry.utils.randomID(),
+                    label: entry.label ?? fallback.label ?? `Resultado ${index + 1}`,
+                    condition: {
+                        type: entry["condition.type"] ?? fallback.condition?.type ?? "outcome",
+                        outcome: entry["condition.outcome"] ?? fallback.condition?.outcome ?? "failure",
+                        minimumMargin: entry["condition.minimumMargin"] ?? fallback.condition?.minimumMargin ?? 0,
+                        maximumMargin: entry["condition.maximumMargin"] ?? fallback.condition?.maximumMargin ?? null
+                    },
+                    actionIds: String(entry.actionIds ?? fallback.actionIds?.join(",") ?? "").split(",").map(id => id.trim()).filter(Boolean)
+                };
+            });
+            formData["system.resistanceRoll.branches"] = normalizeBarrierBranches(branches);
         }
 
         if (actionEntries.size || rollEntries.size) {

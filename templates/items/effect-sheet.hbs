@@ -120,6 +120,7 @@
                                     </summary>
 
                                     <div class="effect-premium-action-body">
+                                        <input type="hidden" name="system.actions.{{action.index}}.id" value="{{action.id}}" />
 
                                         {{!-- IDENTIFICAÇÃO DA AÇÃO --}}
                                         <div class="effect-premium-identification-grid">
@@ -1273,9 +1274,17 @@
                             >{{system.resistanceRoll.chatText}}</textarea>
                         </div>
 
+                        <div class="effect-field effect-field-full resistance-mode-field">
+                            <div class="effect-label">Modo de aplicação</div>
+                            <select name="system.resistanceRoll.mode" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}>
+                                <option value="simple" {{#unless isConditionalResistance}}selected{{/unless}}>Simples — aplicar todas as ações</option>
+                                <option value="conditional" {{#if isConditionalResistance}}selected{{/if}}>Resultados condicionais</option>
+                            </select>
+                        </div>
+
                         <div class="effect-row-grid effect-resistance-grid">
 
-                            <div class="effect-field">
+                            <div class="effect-field {{#if isConditionalResistance}}is-hidden{{/if}}">
                                 <div class="effect-label">
                                     Aplicar efeito em
                                 </div>
@@ -1311,7 +1320,7 @@
                                 />
                             </div>
 
-                            <div class="effect-field">
+                            <div class="effect-field {{#if isConditionalResistance}}is-hidden{{/if}}">
                                 <div class="effect-label">Margem Min</div>
 
                                 <input
@@ -1346,6 +1355,45 @@
                                 <span class="effect-purpose-summary">{{resistancePurposeSummary}}</span>
                             </div>
                         </div>
+
+                        {{#if isConditionalResistance}}
+                            <div class="resistance-branches">
+                                <div class="resistance-branches-header">
+                                    <div>Resultados (todas as condições compatíveis serão aplicadas)</div>
+                                    <button type="button" class="add-resistance-branch"><i class="fas fa-plus"></i> Adicionar resultado</button>
+                                </div>
+                                {{#each resistanceBranches as |branch|}}
+                                    <div class="resistance-branch" data-branch-index="{{branch.index}}">
+                                        <input type="hidden" name="system.resistanceRoll.branches.{{branch.index}}.id" value="{{branch.id}}">
+                                        <div class="resistance-branch-heading">
+                                            <input type="text" name="system.resistanceRoll.branches.{{branch.index}}.label" value="{{branch.label}}" aria-label="Nome do resultado">
+                                            <button type="button" class="move-resistance-branch" data-index="{{branch.index}}" data-direction="-1" title="Mover para cima"><i class="fas fa-arrow-up"></i></button>
+                                            <button type="button" class="move-resistance-branch" data-index="{{branch.index}}" data-direction="1" title="Mover para baixo"><i class="fas fa-arrow-down"></i></button>
+                                            <button type="button" class="remove-resistance-branch" data-index="{{branch.index}}" title="Remover resultado"><i class="fas fa-trash"></i></button>
+                                        </div>
+                                        <div class="resistance-branch-condition">
+                                            <select name="system.resistanceRoll.branches.{{branch.index}}.condition.type">
+                                                <option value="outcome" {{#unless branch.isOtherwise}}selected{{/unless}}>Resultado do teste</option>
+                                                <option value="otherwise" {{#if branch.isOtherwise}}selected{{/if}}>Nenhuma outra condição</option>
+                                            </select>
+                                            <select name="system.resistanceRoll.branches.{{branch.index}}.condition.outcome" {{#if branch.isOtherwise}}disabled{{/if}}>
+                                                <option value="failure" {{#unless branch.isSuccess}}selected{{/unless}}>Falha</option>
+                                                <option value="success" {{#if branch.isSuccess}}selected{{/if}}>Sucesso</option>
+                                            </select>
+                                            <label>Margem mín. <input type="number" min="0" step="1" name="system.resistanceRoll.branches.{{branch.index}}.condition.minimumMargin" value="{{branch.condition.minimumMargin}}" {{#if branch.isOtherwise}}disabled{{/if}}></label>
+                                            <label>Margem máx. <input type="number" min="0" step="1" name="system.resistanceRoll.branches.{{branch.index}}.condition.maximumMargin" value="{{branch.maximumMargin}}" placeholder="Sem limite" {{#if branch.isOtherwise}}disabled{{/if}}></label>
+                                        </div>
+                                        <input type="hidden" name="system.resistanceRoll.branches.{{branch.index}}.actionIds" value="{{branch.actionIdsCsv}}">
+                                        <div class="resistance-branch-actions">
+                                            <span class="resistance-action-summary">{{branch.actionSummary}}</span>
+                                            <button type="button" class="select-resistance-actions" data-index="{{branch.index}}"><i class="fas fa-search"></i> Selecionar ações</button>
+                                        </div>
+                                    </div>
+                                {{else}}
+                                    <p class="hint">Adicione um resultado e escolha quais ações ele deve aplicar.</p>
+                                {{/each}}
+                            </div>
+                        {{/if}}
 
                         <label class="custom-checkbox block effect-inline-checkbox">
                             <input

@@ -2230,8 +2230,7 @@ async function applyActivationEffects(item, actor, outcome, activationOptions = 
             }
             // Se o efeito tiver barreira de resistência ativada, disparamos o prompt antes de aplicar.
             const requiresResistance = effectItem.system?.resistanceRoll?.isResisted;
-            const suppressResistanceCard = effectItem.system?.resistanceRoll?.skipPromptCard || activationOptions.suppressResistanceCard;
-            if (requiresResistance && !suppressResistanceCard) {
+            if (requiresResistance) {
                 for (const targetToken of finalTargets) {
                     await _promptActivationResistance(effectItem, targetToken, actor, item, effectData.id, activationOptions);
                 }
@@ -2279,8 +2278,7 @@ async function applyUseEventEffects(item, actor, trigger, options = {}) {
         }
 
         const requiresResistance = effectItem.system?.resistanceRoll?.isResisted;
-        const suppressResistanceCard = effectItem.system?.resistanceRoll?.skipPromptCard || options.suppressResistanceCard;
-        if (requiresResistance && !suppressResistanceCard) {
+         if (requiresResistance) {
             for (const targetToken of finalTargets) {
                 await _promptActivationResistance(effectItem, targetToken, actor, item, effectData.id, {
                     ...options,
@@ -2322,12 +2320,12 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
                 return;
             }
             const barrier = evaluateBarrierConsequence(result, normalizedResistance.consequence);
-            if (barrier.shouldApply) await applySingleEffect(effectItem, [targetToken], { actor: sourceActor, origin: originItem || effectItem, ...conditionContext });
+            if (barrier.shouldApply) await applySingleEffect(effectItem, [targetToken], { actor: sourceActor, origin: originItem || effectItem, actionIds: barrier.actionIds, ...conditionContext });
         }});
         return;
     }
-    const applyOnText = rollData.applyOn === 'success' ? 'Em sucesso' : 'Em falha';
-    const marginValue = (rollData.margin !== undefined && rollData.margin !== null && rollData.margin !== '') ? rollData.margin : '—';
+    const applyOnText = rollData.mode === 'conditional' ? 'Resultados condicionais' : (rollData.applyOn === 'success' ? 'Em sucesso' : 'Em falha');
+    const marginValue = rollData.mode === 'conditional' ? 'por resultado' : ((rollData.margin !== undefined && rollData.margin !== null && rollData.margin !== '') ? rollData.margin : '—');
     const rawModifier = (rollData.modifier ?? "").toString().trim();
     const previewModifier = evaluateNumericFormula(rawModifier, { actor: targetToken.actor });
     const previewModifierSigned = previewModifier > 0 ? `+${previewModifier}` : `${previewModifier}`;
@@ -2373,6 +2371,31 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
     ChatMessage.create(chatData);
 }
 
+/**
+ * Ponto de entrada comum para aplicações diretas de Itens de Efeito.
+ * Garante que arrastar para a ficha, usar o Escudo do Mestre e outros
+ * consumidores não contornem a Barreira de Resistência.
+ */
+export async function applyEffectWithResistance(effectItem, targets, context = {}) {
+    if (!effectItem || !Array.isArray(targets) || targets.length === 0) return { requested: false, applied: false };
+    const resistanceRoll = effectItem.system?.resistanceRoll || {};
+    if (!resistanceRoll.isResisted) {
+        await applySingleEffect(effectItem, targets, context);
+        return { requested: false, applied: true };
+    }
+
+    for (const target of targets) {
+        await _promptActivationResistance(
+            effectItem,
+            target,
+            context.actor || target.actor,
+            context.origin || effectItem,
+            context.effectLinkId || null,
+            { ...context, mode: context.mode || "direct" }
+        );
+    }
+    return { requested: true, applied: false };
+}
 
 // ================================================================== //
 //  2. HOOK DE INICIALIZAÇÃO (`init`)
@@ -3076,7 +3099,7 @@ async function processResistanceSocketResult(payload) {
             const targetToken = target.tokenUuid ? await fromUuid(target.tokenUuid).catch(() => null) : null;
             const targets = targetToken ? [targetToken.object || targetToken] : (actor.getActiveTokens?.().length ? actor.getActiveTokens() : [{ actor, name: actor.name }]);
             const conditionContext = payload.context?.conditionId ? { conditionId: payload.context.conditionId, conditionActivationMode: payload.context.conditionActivationMode || null } : {};
-            await applySingleEffect(effectItem, targets, { actor: request.origin.sourceActorUuid ? await fromUuid(request.origin.sourceActorUuid).catch(() => null) : null, origin: request.origin.sourceItemUuid ? await fromUuid(request.origin.sourceItemUuid).catch(() => effectItem) : effectItem, ...conditionContext });
+            await applySingleEffect(effectItem, targets, { actor: request.origin.sourceActorUuid ? await fromUuid(request.origin.sourceActorUuid).catch(() => null) : null, origin: request.origin.sourceItemUuid ? await fromUuid(request.origin.sourceItemUuid).catch(() => effectItem) : effectItem, actionIds: barrier.actionIds, ...conditionContext });
         }
         return;
     }
@@ -3094,7 +3117,7 @@ async function processResistanceSocketResult(payload) {
     payload.result = { ...payload.result, margin: canonical.margin, outcome: canonical.outcome, resultLabel: canonical.resultLabel };
     const barrier = evaluateBarrierConsequence(payload.result, request.consequence);
     await message.update({ "flags.gum.rollRequest.status": "processing" });
-    let consequenceLabel = barrier.shouldApply ? "Efeito aplicável" : "Efeito bloqueado";
+        let consequenceLabel = barrier.shouldApply ? (barrier.branchLabels?.length ? `Resultados: ${barrier.branchLabels.join(", ")}` : "Efeito aplicável") : "Efeito bloqueado";
     if (payload.type === "rollRequest:damageResult") {
         const application = game.gum?.damageApplications?.get(String(context.damageApplicationId));
         if (!isMatchingDamageResistance(application, { targetActorId: actor.id, effectLinkId: context.effectLinkId, effectUuid: request.origin?.effectUuid })) {
@@ -3102,7 +3125,7 @@ async function processResistanceSocketResult(payload) {
             return;
         }
         const effect = application.availableOnDamageEffects.find(entry => entry.id === context.effectLinkId);
-        await application.updateEffectCard(context.effectLinkId, { isSuccess: barrier.success, shouldApply: barrier.shouldApply, resultText: `${payload.result.total} vs ${payload.result.effectiveTarget} — ${payload.result.resultLabel}`, rollRequestId: request.id, result: payload.result }, effect.item.system, { autoApply: false });
+        await application.updateEffectCard(context.effectLinkId, { isSuccess: barrier.success, shouldApply: barrier.shouldApply, branchId: barrier.branchId, branchLabel: barrier.branchLabel, branchIds: barrier.branchIds, branchLabels: barrier.branchLabels, actionIds: barrier.actionIds, resultText: `${payload.result.total} vs ${payload.result.effectiveTarget} — ${payload.result.resultLabel}`, rollRequestId: request.id, result: payload.result }, effect.item.system, { autoApply: false });
         consequenceLabel = barrier.shouldApply ? "Aguardando aplicação do dano" : "Efeito bloqueado";
     } else if (barrier.shouldApply) {
         const effectItem = request.origin?.effectUuid ? await fromUuid(request.origin.effectUuid).catch(() => null) : null;
@@ -3112,7 +3135,7 @@ async function processResistanceSocketResult(payload) {
         const originItem = context.originItemUuid ? await fromUuid(context.originItemUuid).catch(() => null) : null;
         const originActor = context.sourceActorId ? game.actors.get(context.sourceActorId) : null;
         const conditionContext = context.mode === "condition" && context.conditionId ? { conditionId: context.conditionId, conditionActivationMode: context.conditionActivationMode || null } : {};
-        await applySingleEffect(effectItem, targets, { actor: originActor, origin: originItem || effectItem, ...conditionContext });
+                await applySingleEffect(effectItem, targets, { actor: originActor, origin: originItem || effectItem, actionIds: barrier.actionIds, ...conditionContext });
         consequenceLabel = "Efeito aplicado";
     }
     const updated = { ...request, status: "resolved", responses: [...(request.responses || []), { ...payload.result, consequence: consequenceLabel }] };

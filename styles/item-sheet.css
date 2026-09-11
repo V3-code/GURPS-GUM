@@ -6664,3 +6664,21 @@ color:#121114;
     width: 100%;
   }
 }
+/* Resultados condicionais da Barreira de Resistência */
+.gum-item-sheet.effect-sheet .is-hidden { display: none !important; }
+.gum-item-sheet.effect-sheet .resistance-mode-field { margin-bottom: 10px; }
+.gum-item-sheet.effect-sheet .resistance-branches { display: grid; gap: 8px; margin: 12px 0 15px; }
+.gum-item-sheet.effect-sheet .resistance-branches-header,
+.gum-item-sheet.effect-sheet .resistance-branch-heading,
+.gum-item-sheet.effect-sheet .resistance-branch-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.gum-item-sheet.effect-sheet .resistance-branches-header { font-weight: 700; }
+.gum-item-sheet.effect-sheet .resistance-branch { padding: 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 6px; background: rgba(0,0,0,.14); }
+.gum-item-sheet.effect-sheet .resistance-branch-heading input { flex: 1; font-weight: 700; }
+.gum-item-sheet.effect-sheet .resistance-branch-condition { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 8px 0; }
+.gum-item-sheet.effect-sheet .resistance-branch-condition label { display: flex; align-items: center; gap: 5px; }
+.gum-item-sheet.effect-sheet .resistance-branch-condition input { min-width: 45px; }
+.gum-item-sheet.effect-sheet .resistance-action-summary { min-width: 0; opacity: .82; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gum-resistance-action-picker .resistance-action-search { width: 100%; margin-bottom: 8px; }
+.gum-resistance-action-options { display: grid; gap: 5px; max-height: 320px; overflow: auto; }
+.gum-resistance-action-option { display: flex; align-items: center; gap: 7px; padding: 5px; border-radius: 4px; }
+.gum-resistance-action-option:hover { background: rgba(127,127,127,.15); }

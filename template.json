@@ -896,6 +896,8 @@
         "modifier": "0",
         "applyOn": "failure",
         "margin": "",
+        "mode": "simple",
+        "branches": [],
         "chatText": "",
         "skipPromptCard": false,
         "requestedPurposeIds": []

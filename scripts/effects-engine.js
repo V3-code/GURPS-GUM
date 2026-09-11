@@ -151,6 +151,7 @@ const escapeHtml = (value) => String(value ?? "")
     .replace(/'/g, "&#39;");
 
 const DEFAULT_EFFECT_ACTION = {
+    id: "",
     label: "",
     type: "attribute",
     path: "system.attributes.st.passive",
@@ -277,8 +278,8 @@ const buildFallbackActionLabel = (action = {}) => {
 };
 
 export const getEffectActions = (effectSystem = {}) => {
-    if (Array.isArray(effectSystem?.actions)) return effectSystem.actions.map(normalizeEffectAction);
-    return [normalizeEffectAction(effectSystem)];
+    if (Array.isArray(effectSystem?.actions)) return effectSystem.actions.map((action, index) => ({ ...normalizeEffectAction(action), id: String(action?.id || `legacy-action-${index + 1}`) }));
+    return [{ ...normalizeEffectAction(effectSystem), id: String(effectSystem?.id || "legacy-action-1") }];
 };
 
 const selectCarrierActionIndex = (actions = []) => {
@@ -300,7 +301,9 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
     if (!effectItem || targets.length === 0) return;
 
     const effectSystem = effectItem.system;
-    const actions = getEffectActions(effectSystem);
+    const allActions = getEffectActions(effectSystem);
+    const selectedActionIds = Array.isArray(context.actionIds) ? new Set(context.actionIds.map(String)) : null;
+    const actions = selectedActionIds ? allActions.filter(action => selectedActionIds.has(action.id)) : allActions;
     if (!actions.length) return;
     const conditionFlags = context.conditionId
         ? { conditionEffect: true, conditionId: context.conditionId, conditionIds: [context.conditionId] }

@@ -1019,7 +1019,7 @@ async _onNpcResistanceRoll(effectId) {
         const barrier = evaluateBarrierConsequence(result, normalized.consequence);
         const simpleResultText = `${result.total} vs ${result.effectiveTarget} — ${result.resultLabel}`;
         const chatResultText = `<div class="gurps-roll-card premium roll-result"><header class="card-header"><h3>Teste de Resistência</h3><small>${target?.name || "Alvo"}</small></header><div class="card-content"><p>${simpleResultText}</p><p>Margem ${result.margin}</p></div></div>`;
-        await this.updateEffectCard(effectId, { isSuccess: barrier.success, shouldApply: barrier.shouldApply, resultText: simpleResultText, chatResultText, result }, effect.item.system, { autoApply: false });
+        await this.updateEffectCard(effectId, { isSuccess: barrier.success, shouldApply: barrier.shouldApply, branchId: barrier.branchId, branchLabel: barrier.branchLabel, actionIds: barrier.actionIds, resultText: simpleResultText, chatResultText, result }, effect.item.system, { autoApply: false });
     }});
     if (!outcome.accepted) ui.notifications.warn(outcome.reason || "Não foi possível realizar a resistência.");
 }
@@ -1230,6 +1230,7 @@ async _onNpcResistanceRoll(effectId) {
                     if (chanceRoll.total > effect.activationChance) continue;
                 }
 
+                let resistanceActionIds = null;
                 if (effect.requiresResistance) {
                     const resistanceResult = state.resistanceResult;
                     if (!resistanceResult) {
@@ -1243,10 +1244,11 @@ async _onNpcResistanceRoll(effectId) {
                         this.pendingResistanceEffects.delete(effect.id);
                         continue;
                     }
+                    resistanceActionIds = resistanceResult.actionIds ?? null;
                 }
 
                 if (effectTargets.length > 0) {
-                    await applySingleEffect(effect.item, effectTargets, { actor: this.attackerActor, origin: effect.item });
+                    await applySingleEffect(effect.item, effectTargets, { actor: this.attackerActor, origin: effect.item, actionIds: resistanceActionIds });
                     appliedEffectNames.push(effect.item.name);
                     state.applied = true;
                     this.pendingResistanceEffects.delete(effect.id);
@@ -1365,7 +1367,7 @@ async _onNpcResistanceRoll(effectId) {
         if (!effect || !state?.checked || state.applied || !effect.meetsRequirements || !effect.item) return;
         const effectTargets = this._resolveEffectTargets();
         if (effectTargets.length === 0) return;
-        await applySingleEffect(effect.item, effectTargets, { actor: this.attackerActor, origin: effect.item });
+                await applySingleEffect(effect.item, effectTargets, { actor: this.attackerActor, origin: effect.item, actionIds: state.resistanceResult?.actionIds ?? null });
         state.applied = true;
         ui.notifications.info(`Efeito aplicado: ${effect.item.name}`);
     }
@@ -1375,8 +1377,8 @@ async _onNpcResistanceRoll(effectId) {
         const rollData = effect.item.system?.resistanceRoll || {};
         const target = this.targetActor;
         const targetToken = this.targetActor?.getActiveTokens?.()[0] || null;
-        const applyOnText = rollData.applyOn === 'success' ? 'Aplicar em Sucesso' : 'Aplicar em Falha';
-        const marginValue = (rollData.margin !== undefined && rollData.margin !== null && rollData.margin !== '') ? rollData.margin : '—';
+                const applyOnText = rollData.mode === 'conditional' ? 'Resultados condicionais' : (rollData.applyOn === 'success' ? 'Aplicar em Sucesso' : 'Aplicar em Falha');
+        const marginValue = rollData.mode === 'conditional' ? 'por resultado' : ((rollData.margin !== undefined && rollData.margin !== null && rollData.margin !== '') ? rollData.margin : '—');
         const rawModifier = (rollData.modifier ?? "").toString().trim();
         const resolvedModifier = evaluateNumericFormula(rawModifier, {
             actor: target,
