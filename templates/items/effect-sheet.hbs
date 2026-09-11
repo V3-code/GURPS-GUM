@@ -1509,15 +1509,6 @@
                             </div>
                         {{/if}}
 
-                        <div class="effect-field effect-field-full" style="margin-bottom: 15px;">
-                            <div class="effect-label">Finalidades do teste</div>
-                            <div class="effect-purpose-control">
-                                <input type="hidden" name="system.resistanceRoll.requestedPurposeIds" value="{{resistancePurposeIdsCsv}}" />
-                                <button type="button" class="open-purpose-picker" data-target-input="system.resistanceRoll.requestedPurposeIds" data-attribute-input="system.resistanceRoll.attribute" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}><i class="fas fa-list-check"></i> Selecionar finalidades</button>
-                                <span class="effect-purpose-summary">{{resistancePurposeSummary}}</span>
-                            </div>
-                        </div>
-
                         <label class="custom-checkbox block effect-inline-checkbox">
                             <input
                                 type="checkbox"
@@ -1530,6 +1521,23 @@
                                 Realizar o teste automaticamente, mas não publicar no chat.
                             </span>
                         </label>
+
+                        <div class="effect-field effect-field-full" style="margin-bottom: 15px;">
+                            <div class="effect-purpose-control resistance-purpose-control">
+                                <input type="hidden" name="system.resistanceRoll.requestedPurposeIds" value="{{resistancePurposeIdsCsv}}" />
+                                <div class="resistance-purpose-heading">
+                                    <div class="effect-label">Finalidades do teste</div>
+                                    <button type="button" class="open-purpose-picker resistance-purpose-add" data-target-input="system.resistanceRoll.requestedPurposeIds" data-attribute-input="system.resistanceRoll.attribute" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}><i class="fas fa-pen-nib" aria-hidden="true"></i> Editar finalidades</button>
+                                </div>
+                                <div class="resistance-purpose-list{{#unless resistancePurposeLabels.length}} is-empty{{/unless}}" aria-live="polite">
+                                    {{#each resistancePurposeLabels as |purposeLabel|}}
+                                        <span class="resistance-purpose-item">{{purposeLabel}}</span>
+                                    {{else}}
+                                        <span class="resistance-purpose-empty">Nenhuma finalidade adicionada</span>
+                                    {{/each}}
+                                </div>
+                            </div>
+                        </div>
 
 
                      </div>

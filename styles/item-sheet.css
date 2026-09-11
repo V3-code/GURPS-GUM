@@ -6798,6 +6798,63 @@ color:#121114;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.gum-item-sheet.effect-sheet .effect-resistance-body .resistance-purpose-control {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 7px;
+}
+.gum-item-sheet.effect-sheet .effect-resistance-body .resistance-purpose-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+.gum-item-sheet.effect-sheet .effect-resistance-body .resistance-purpose-heading .effect-label {
+  margin: 0;
+}
+.gum-item-sheet.effect-sheet .effect-resistance-body .resistance-purpose-add {
+  width: auto;
+  min-height: 28px;
+  margin: 0;
+  padding: 4px 9px;
+  border: 1px solid rgba(201, 161, 94, 0.22);
+  border-radius: 5px;
+  background: rgba(201, 161, 94, 0.06);
+  color: rgba(240, 235, 227, 0.78);
+  font-size: .68rem;
+  font-weight: 650;
+  box-shadow: none;
+}
+.gum-item-sheet.effect-sheet .effect-resistance-body .resistance-purpose-add:hover:not(:disabled),
+.gum-item-sheet.effect-sheet .effect-resistance-body .resistance-purpose-add:focus-visible {
+  border-color: rgba(201, 161, 94, 0.46);
+  background: rgba(201, 161, 94, 0.12);
+  color: var(--item-text);
+}
+.gum-item-sheet.effect-sheet .effect-resistance-body .resistance-purpose-add:disabled {
+  opacity: .42;
+}
+.gum-item-sheet.effect-sheet .resistance-purpose-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  width: 100%;
+}
+.gum-item-sheet.effect-sheet .resistance-purpose-item {
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(240, 235, 227, 0.82);
+  font-size: .68rem;
+  line-height: 1.25;
+}
+.gum-item-sheet.effect-sheet .resistance-purpose-empty {
+  color: var(--item-text-muted);
+  font-size: .66rem;
+  font-style: italic;
+  opacity: .7;
+}
 @media (max-width: 620px) {
   .gum-item-sheet.effect-sheet .resistance-branch-condition {
     grid-template-columns: 1fr 1fr;

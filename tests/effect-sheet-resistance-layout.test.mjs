@@ -31,3 +31,12 @@ test("resultados condicionais usam cards sem bordas", () => {
   assert.match(styles, /\.resistance-branch \{[\s\S]*?border: 0;[\s\S]*?background:/);
   assert.match(styles, /\.resistance-branch-condition \{[\s\S]*?grid-template-columns:/);
 });
+
+test("finalidades da barreira usam seletor compacto e lista abaixo", () => {
+  assert.match(template, /class="resistance-purpose-heading"[\s\S]*?Finalidades do teste[\s\S]*?Adicionar finalidade[\s\S]*?<\/div>/);
+  assert.match(template, /class="open-purpose-picker resistance-purpose-add"[\s\S]*?>[\s\S]*?Adicionar finalidade<\/button>/);
+  assert.match(template, /class="resistance-purpose-list[\s\S]*?{{#each resistancePurposeLabels/);
+  assert.match(styles, /\.resistance-purpose-control \{[\s\S]*?flex-direction: column;/);
+  assert.match(styles, /\.resistance-purpose-heading \{[\s\S]*?justify-content: space-between;/);
+  assert.match(styles, /\.resistance-purpose-list \{[\s\S]*?flex-wrap: wrap;/);
+});

@@ -1,6 +1,6 @@
 // GUM/scripts/apps/effect-sheet.js
 import { getGroupedRollTags, isKnownRollTag, normalizeRollTags, ROLL_TAG_ALIASES } from "../../module/utils/roll-tags.mjs";
-import { normalizePurposeIds } from "../../module/utils/roll-purposes.mjs";
+import { getPurposeLabels, normalizePurposeIds } from "../../module/utils/roll-purposes.mjs";
 import { formatPurposeSelection, openRollPurposePicker } from "../../module/apps/roll-purpose-picker.mjs";
 import { normalizeContextCsv, openContextPicker } from "../../module/apps/context-picker.mjs";
 import { openEffectPathPicker } from "../../module/apps/effect-path-picker.mjs";
@@ -323,6 +323,7 @@ export class EffectSheet extends ItemSheet {
         const resistancePurposeIds = normalizePurposeIds(context.system.resistanceRoll?.requestedPurposeIds);
         context.resistancePurposeIdsCsv = resistancePurposeIds.join(",");
         context.resistancePurposeSummary = formatPurposeSelection(resistancePurposeIds);
+        context.resistancePurposeLabels = getPurposeLabels(resistancePurposeIds);
         const barrierMode = context.system.resistanceRoll?.mode === "conditional" ? "conditional" : "simple";
         context.isConditionalResistance = barrierMode === "conditional";
         const actionLabels = new Map(context.effectActions.map(action => [action.id, action.label || `Ação ${action.displayIndex}`]));
@@ -572,6 +573,23 @@ activateListeners(html) {
                 input.dispatchEvent(new Event("change", { bubbles: true }));
                 const summary = button.closest(".effect-purpose-control")?.querySelector(".effect-purpose-summary");
                 if (summary) summary.textContent = formatPurposeSelection(ids);
+                const purposeList = button.closest(".resistance-purpose-control")?.querySelector(".resistance-purpose-list");
+                if (purposeList) {
+                    const labels = getPurposeLabels(ids);
+                    purposeList.replaceChildren(...labels.map(label => {
+                        const item = document.createElement("span");
+                        item.className = "resistance-purpose-item";
+                        item.textContent = label;
+                        return item;
+                    }));
+                    purposeList.classList.toggle("is-empty", labels.length === 0);
+                    if (!labels.length) {
+                        const empty = document.createElement("span");
+                        empty.className = "resistance-purpose-empty";
+                        empty.textContent = "Nenhuma finalidade adicionada";
+                        purposeList.append(empty);
+                    }
+                }
             }
         });
     });
