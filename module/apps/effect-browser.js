@@ -1,4 +1,5 @@
 import { prepareCompendiumFolderFilters, recordMatchesFolderFilter } from "./compendium-folder-filter.js";
+import { effectMatchesTypeFilter, getEffectActionTypes } from "../utils/effect-browser-filter.mjs";
 // GUM/module/apps/effect-browser.js
 import { GumPreviewDialog } from "./preview-dialog.js";
 
@@ -7,7 +8,11 @@ import { GumPreviewDialog } from "./preview-dialog.js";
 const EFFECT_TYPE_LABELS = {
     attribute: "Atributo",
     flag: "Flag",
-    roll_modifier: "Modificador de Rolagem",
+    roll_modifier: "Modificador de Rolagem",    
+    resource_change: "Alteração de Recurso",
+    resource_create: "Criação de Recurso",
+    chat: "Chat",
+    macro: "Macro",
     status: "Status"
 };
 
@@ -137,7 +142,9 @@ _onFilterResults(event) {
     const typesToShow = {
         attribute: form.querySelector('[name="filter-attribute"]').checked,
         status: form.querySelector('[name="filter-status"]').checked,
-        roll_modifier: form.querySelector('[name="filter-roll_modifier"]').checked,
+        roll_modifier: form.querySelector('[name="filter-roll_modifier"]').checked,        
+        resource_change: form.querySelector('[name="filter-resource_change"]').checked,
+        resource_create: form.querySelector('[name="filter-resource_create"]').checked,
         chat: form.querySelector('[name="filter-chat"]').checked,
         macro: form.querySelector('[name="filter-macro"]').checked,
         flag: form.querySelector('[name="filter-flag"]').checked
@@ -161,7 +168,7 @@ _onFilterResults(event) {
         }
 
         // 2. Aplica o filtro de tipo, se houver algum ativo
-        if (hasActiveTypeFilter && !typesToShow[effect.system.type]) {
+        if (hasActiveTypeFilter && !effectMatchesTypeFilter(effect.system, typesToShow)) {
             isVisible = false;
         }
 
@@ -188,7 +195,7 @@ _onFilterResults(event) {
         img: effect?.img || "icons/svg/mystery-man.svg",
         description: await GumPreviewDialog.enrichDescription(quickDescriptionSource),
         tags: [
-          { label: "Tipo", value: getEffectTypeLabel(system.type) },
+          { label: "Tipo", value: getEffectActionTypes(system).map(getEffectTypeLabel).join(", ") || "-" },
           { label: "Modificador", value: getPrimaryRollModifierValue(system) },
           { label: "REF", value: effectRef }
         ],

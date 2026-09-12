@@ -125,10 +125,11 @@ async function reconcileActiveGroup(item, group, activationId, resolved) {
   return { reconciled: true, created };
 }
 
-async function performItemStateEffectSync(item, { assumeInactive = false } = {}) {
+async function performItemStateEffectSync(item, { assumeInactive = false, forceActivationGroupIds = [] } = {}) {
   const actor = item?.parent;
   if (!actor || !item.id) return { groups: [], errors: [] };
   const report = { groups: [], errors: [] };
+  const forcedActivations = new Set(Array.from(forceActivationGroupIds || [], String));
 
   for (const group of getStateEffectGroups(item)) {
     const desired = isStateEffectGroupDesired(group, item.system);
@@ -157,7 +158,7 @@ async function performItemStateEffectSync(item, { assumeInactive = false } = {})
       continue;
     }
     try {
-      const result = !activationId
+      const result = !activationId || forcedActivations.has(String(group.id))
         ? await activateGroup(item, group, resolved)
         : await reconcileActiveGroup(item, group, activationId, resolved);
       report.groups.push({ id: group.id, active: true, ...result });
@@ -197,7 +198,13 @@ export async function setStateEffectGroupActive(item, groupId, active) {
   const updates = { [`system.stateEffectGroups.${groupId}.active`]: active === true };
   if (active) Object.assign(updates, buildExclusiveGroupUpdates(groups, groupId));
   await item.update(updates, { gumStateToggle: true });
-  const report = await syncItemStateEffects(item, { refreshActive: true });
+  // A intenção da interação precisa chegar diretamente à sincronização. Ações
+  // instantâneas não criam ActiveEffect e um activationId antigo ou atrasado não
+  // pode transformar uma reativação explícita em uma simples reconciliação.
+  const report = await syncItemStateEffects(item, {
+    refreshActive: true,
+    forceActivationGroupIds: active ? [groupId] : []
+  });
   return report.errors.length === 0;
 }
 

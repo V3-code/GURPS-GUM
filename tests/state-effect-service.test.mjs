@@ -108,3 +108,38 @@ test("manual group creates persistent effects, records the activation and remove
   if (originalSlugify) String.prototype.slugify = originalSlugify;
   else delete String.prototype.slugify;
 });
+
+test("manual group reapplies an instant resource action on every activation", async () => {
+  globalThis.game = { users: [], user: { id: "u1", isGM: true }, gum: {} };
+  globalThis.ui = { notifications: { error() {} } };
+  globalThis.foundry = { data: { operators: { ForcedDeletion: Symbol("ForcedDeletion") } }, utils: {
+    randomID: (() => { let id = 0; return () => `activation-${++id}`; })()
+  }};
+  const actor = { effects: [], system: { attributes: { fp: { value: 10 } } }, async deleteEmbeddedDocuments() {} };
+  const item = {
+    id: "item-resource", uuid: "Actor.a.Item.item-resource", name: "Cansaço",
+    parent: actor,
+    system: { stateEffectGroups: { cost: {
+      id: "cost", name: "Custo", mode: "manual", active: false,
+      activationId: "stale-activation",
+      effects: { fp: { effectUuid: "Item.fp" } }
+    } } },
+    async update(changes) { for (const [path, value] of Object.entries(changes)) setPath(this, path, value); }
+  };
+  const effectItem = { name: "Perder PF", system: { actions: [{ id: "fp", type: "resource_change", value: -2 }] } };
+  globalThis.fromUuid = async () => effectItem;
+  game.gum.getEffectActions = system => system.actions;
+  game.gum.applySingleEffect = async (_effect, targets, context) => {
+    if (!context.skipInstantEffects) targets[0].actor.system.attributes.fp.value -= 2;
+  };
+
+  const { setStateEffectGroupActive } = await import("../module/services/state-effect-service.js");
+  assert.equal(await setStateEffectGroupActive(item, "cost", true), true);
+  assert.equal(actor.system.attributes.fp.value, 8);
+  const firstActivation = item.system.stateEffectGroups.cost.activationId;
+  assert.notEqual(firstActivation, "stale-activation");
+  assert.equal(await setStateEffectGroupActive(item, "cost", false), true);
+  assert.equal(await setStateEffectGroupActive(item, "cost", true), true);
+  assert.equal(actor.system.attributes.fp.value, 6);
+  assert.notEqual(item.system.stateEffectGroups.cost.activationId, firstActivation);
+});
