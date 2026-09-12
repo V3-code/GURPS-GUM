@@ -5,6 +5,25 @@ export const BASIC_DAMAGE_KEYS = Object.freeze([
   "swing_damage_alt"
 ]);
 
+const BASIC_DAMAGE_OVERRIDE_PATH = new RegExp(
+  `^system\\.attributes\\.(${BASIC_DAMAGE_KEYS.join("|")})\\.override$`,
+  "i"
+);
+
+/** Identifies the attribute paths whose override is a damage formula, not a rolled value. */
+export function isBasicDamageOverridePath(path) {
+  let normalized = String(path ?? "").trim();
+  if (normalized.startsWith("actor.")) normalized = normalized.slice(6);
+  if (normalized.startsWith("data.")) normalized = normalized.replace(/^data\./, "system.");
+  if (normalized.startsWith("attributes.")) normalized = `system.${normalized}`;
+  return BASIC_DAMAGE_OVERRIDE_PATH.test(normalized);
+}
+
+/** Keeps a basic-damage override as a canonical formula for the eventual damage roll. */
+export function resolveBasicDamageOverride(value) {
+  return String(value ?? "").trim();
+}
+
 const DEFAULTS = Object.freeze({
   thrust_damage: "1d6-2",
   swing_damage: "1d6",

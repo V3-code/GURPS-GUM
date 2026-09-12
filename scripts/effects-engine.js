@@ -17,6 +17,10 @@ import {
     normalizeEffectValueMode,
     resolveEffectValueMetadata
 } from "../module/utils/effect-value-scaling.mjs";
+import {
+    isBasicDamageOverridePath,
+    resolveBasicDamageOverride
+} from "../module/utils/basic-damage.mjs";
 
 const normalizeLookupKey = (value) => value
     ?.toString()
@@ -450,8 +454,18 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
 
                     if (action.type === "attribute") {
                         if (!action.path) throw new Error("Ação de atributo sem caminho.");
-                        const { value: computedValue, roll, formula } = await evaluateEffectValue(action.value, targetActor);
-                        const resolvedValue = resolveEffectValueMetadata(computedValue, action.value_mode, context.origin);
+                        const isDamageFormulaOverride = action.operation === "OVERRIDE"
+                            && isBasicDamageOverridePath(action.path);
+                        const evaluated = isDamageFormulaOverride
+                            ? { value: resolveBasicDamageOverride(action.value), roll: null, formula: null }
+                            : await evaluateEffectValue(action.value, targetActor);
+                        // Damage overrides describe the future damage roll. They must neither
+                        // roll on effect application nor be numerically scaled by origin level.
+                        const resolvedValue = resolveEffectValueMetadata(
+                            evaluated.value,
+                            isDamageFormulaOverride ? "fixed" : action.value_mode,
+                            context.origin
+                        );
                         activeEffectData.changes.push(buildActiveEffectChange({
                             key: action.path,
                             operation: action.operation,
@@ -463,10 +477,10 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                             actor: targetActor,
                             users: game.users
                         });
-                        if (roll && messageOptions) {
-                            await roll.toMessage({
+                        if (evaluated.roll && messageOptions) {
+                            await evaluated.roll.toMessage({
                                 speaker: ChatMessage.getSpeaker({ actor: targetActor }),
-                                flavor: `${effectItem.name} • ${action.label || "Modificador de Atributo"} (${formula})`,
+                                flavor: `${effectItem.name} • ${action.label || "Modificador de Atributo"} (${evaluated.formula})`,
                                 ...messageOptions.messageData
                             }, messageOptions.creationOptions);
                         }

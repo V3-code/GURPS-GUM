@@ -2,7 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { resolveAttackDamageDisplay } from "../module/utils/attack-damage-display.mjs";
-import { addBasicDamageModifier, prepareBasicDamageAttributes } from "../module/utils/basic-damage.mjs";
+import {
+  addBasicDamageModifier,
+  isBasicDamageOverridePath,
+  prepareBasicDamageAttributes,
+  resolveBasicDamageOverride
+} from "../module/utils/basic-damage.mjs";
 
 const attributes = {
   thrust_damage: "1d6-2",
@@ -52,4 +57,25 @@ test("normalizes legacy strings and appends modifiers safely to custom formulas"
   assert.equal(legacy.thrust_damage.final, "1d6-2");
   assert.equal(addBasicDamageModifier("2d6+1", -2), "2d6-1");
   assert.equal(addBasicDamageModifier("1d8", 2), "1d8+2");
+});
+
+test("recognizes only canonical basic-damage override paths", () => {
+  assert.equal(isBasicDamageOverridePath("system.attributes.thrust_damage.override"), true);
+  assert.equal(isBasicDamageOverridePath("actor.system.attributes.swing_damage_alt.override"), true);
+  assert.equal(isBasicDamageOverridePath("data.attributes.swing_damage.override"), true);
+  assert.equal(isBasicDamageOverridePath("attributes.thrust_damage_alt.override"), true);
+  assert.equal(isBasicDamageOverridePath("system.attributes.thrust_damage.passive"), false);
+  assert.equal(isBasicDamageOverridePath("system.attributes.st.override"), false);
+});
+
+test("preserves damage override formulas instead of resolving their dice", () => {
+  assert.equal(resolveBasicDamageOverride(" 1d6-1 "), "1d6-1");
+  const attributesWithOverride = {
+    thrust_damage: { value: "1d6-2", override: resolveBasicDamageOverride("1d6-1") },
+    swing_damage: "1d6",
+    thrust_damage_alt: "",
+    swing_damage_alt: ""
+  };
+  prepareBasicDamageAttributes(attributesWithOverride);
+  assert.equal(attributesWithOverride.thrust_damage.final, "1d6-1");
 });
