@@ -2016,7 +2016,49 @@ html.on('click', '.dr-group-toggle', (ev) => {
         }
     });
 
-    html.find('details[data-group-id]').on('toggle', this._onDetailsToggle.bind(this));
+ html.find('details[data-group-id]').on('toggle', this._onDetailsToggle.bind(this));
+
+    // Controles dos grupos de efeitos de estado são anexados a qualquer card de item.
+    html.find('.item[data-item-id]').each((_, element) => {
+        const row = $(element);
+        const item = this.actor.items.get(row.data('itemId'));
+        const controls = row.find('.item-controls').first();
+        if (!item || !controls.length) return;
+        for (const [groupId, group] of Object.entries(item.system.stateEffectGroups || {})) {
+            const mode = group.mode || 'manual';
+            const manual = mode === 'manual' || mode === 'equipped_manual';
+            const equipped = item.system.equipped === true || item.system.location === 'equipped';
+            const carried = equipped || (item.system.location === 'carried' && item.system.stored !== true);
+            const desired = mode === 'present'
+                || (mode === 'equipped' && equipped)
+                || (mode === 'carried' && carried)
+                || (mode === 'equipped_manual' && equipped && group.active === true)
+                || (mode === 'manual' && group.active === true);
+            const active = desired && Boolean(group.activationId);
+            const button = $('<a class="item-control item-toggle-state-effect-group"></a>')
+                .attr('data-group-id', groupId)
+                .attr('title', `${group.name || 'Grupo de efeitos'} — ${active ? 'Ativo' : 'Inativo'}${manual ? '' : ' (automático)'}`)
+                .toggleClass('active', active)
+                .toggleClass('is-automatic', !manual)
+                .append($(`<i class="fas ${active ? 'fa-toggle-on' : 'fa-toggle-off'}"></i>`));
+            controls.prepend(button);
+        }
+    });
+
+    html.find('.item-toggle-state-effect-group').click(async ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const row = $(ev.currentTarget).closest('.item');
+        const item = this.actor.items.get(row.data('itemId'));
+        const groupId = $(ev.currentTarget).data('groupId');
+        const group = item?.system.stateEffectGroups?.[groupId];
+        if (!item || !group) return;
+        if (!["manual", "equipped_manual"].includes(group.mode || "manual")) {
+            return ui.notifications.info('Este grupo é controlado automaticamente pelo estado do item.');
+        }
+        await game.gum.setStateEffectGroupActive(item, groupId, group.active !== true);
+    });
+
 
     // -------------------------------------------------------------
     // 2. MOVER EQUIPAMENTO (Botão Camiseta: Equipar / Desequipar)
@@ -2051,6 +2093,7 @@ html.on('click', '.dr-group-toggle', (ev) => {
             // 2. Sistema de String (Para o main.js calcular peso e lógica futura)
             "system.location": newState ? "equipped" : "carried" 
         });
+        await game.gum.syncItemStateEffects(item);
 
         // Feedback visual opcional
         if (newState) ui.notifications.info(`${item.name} equipado.`);
@@ -2097,7 +2140,8 @@ html.on('click', '.dr-group-toggle', (ev) => {
 
             // 2. Sistema de String
             "system.location": newState ? "stored" : "carried"
-        });
+        });     
+        await game.gum.syncItemStateEffects(item);
 
  if (newState) ui.notifications.info(`${item.name} guardado no baú.`);
         else ui.notifications.info(`${item.name} sacado para a mochila.`);

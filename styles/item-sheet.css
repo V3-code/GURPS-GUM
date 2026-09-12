@@ -6864,3 +6864,8 @@ color:#121114;
 .gum-resistance-action-options { display: grid; gap: 5px; max-height: 320px; overflow: auto; }
 .gum-resistance-action-option { display: flex; align-items: center; gap: 7px; padding: 5px; border-radius: 4px; }
 .gum-resistance-action-option:hover { background: rgba(127,127,127,.15); }
+.state-effect-group { border: 1px solid rgba(255,255,255,.14); border-radius: 6px; margin: 8px 0; padding: 8px; }
+.state-effect-group-header { display: grid; grid-template-columns: minmax(120px,1.2fr) minmax(140px,1fr) minmax(140px,1fr) auto; gap: 6px; align-items: center; }
+.state-effects-block .effects-add-button { cursor: pointer; }
+.item-toggle-state-effect-group.active { color: #46c37b; }
+.item-toggle-state-effect-group.is-automatic { opacity: .75; }

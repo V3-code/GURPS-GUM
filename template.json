@@ -402,7 +402,8 @@
         "onDamageEffects": {},
         "generalConditions": {},
         "passiveEffects": {},
-        "useEventEffects": {}
+        "useEventEffects": {},
+        "stateEffectGroups": {}
       },
       "equipment_base": {
         "quantity": 1,

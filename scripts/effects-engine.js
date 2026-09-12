@@ -366,6 +366,9 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     effectUuid: effectItem.uuid,
                     source: context.source || null,
                     originItemId: context.originItemId ?? null,
+                    stateEffectGroupId: context.stateEffectGroupId ?? null,
+                    stateEffectLinkId: context.stateEffectLinkId ?? null,
+                    stateEffectActivationId: context.stateEffectActivationId ?? null,
                     conditionActivationMode: context.conditionActivationMode ?? null,
                     statusBindingRuleUuid: context.statusBindingRuleUuid ?? null,
                     statusBindingStatusId: context.statusBindingStatusId ?? null,
@@ -435,7 +438,8 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     }
                     const { activeEffectData, gumDuration, fallbackCoreStatusId } = buildCommonActiveEffectData(targetActor, actionIndex);
                     activeEffectData.name = (action.label || "").trim() || buildFallbackActionLabel(action) || effectItem.name;
-                    activeEffectData.flags.gum.actionIndex = actionIndex;
+                    activeEffectData.flags.gum.actionIndex = actionIndex;                    
+                    activeEffectData.flags.gum.actionId = action.id;
                     activeEffectData.flags.gum.actionType = action.type;
                     activeEffectData.flags.gum.actionLabel = (action.label || "").trim();
                     const isIconCarrier = shouldShowTokenIcon(effectSystem, gumDuration) && baseIconCarrierIndex === actionIndex;
@@ -536,6 +540,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
             }
 
             if (action.type === "resource_change") {
+                if (context.skipInstantEffects) continue;
                 let valueToChange = action.value;
 
                 if (action.confirm_prompt) {
@@ -627,6 +632,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
             }
 
              if (action.type === "resource_create") {
+                if (context.skipInstantEffects) continue;
                 const resourceName = (action.name || "").toString().trim();
                 if (!resourceName) {
                     ui.notifications.warn(`[GUM] Ação Criar Recurso de "${effectItem.name}" sem nome definido.`);
@@ -700,6 +706,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
             }
 
             if (action.type === "macro") {
+                if (context.skipInstantEffects) continue;
                 if (!action.value) continue;
                 const macro = game.macros.getName(action.value);
                 if (macro) macro.execute({ actor: context.actor, origin: context.origin, targets });
@@ -708,6 +715,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
             }
 
             if (action.type === "chat") {
+                if (context.skipInstantEffects) continue;
                 if (!action.chat_text) continue;
                 for (const target of targets) {
                     const targetActor = target.actor;

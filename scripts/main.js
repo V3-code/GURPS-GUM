@@ -16,6 +16,7 @@ import { ConditionSheet } from "./apps/condition-sheet.js";
 import { EffectSheet } from './apps/effect-sheet.js';
 import { TriggerSheet } from './apps/trigger-sheet.js';
 import { applySingleEffect, getEffectActions } from './effects-engine.js';
+import { reconcileAllStateEffects, removeAllStateEffectsForItem, setStateEffectGroupActive, syncItemStateEffects } from '../module/services/state-effect-service.js';
 import { GUM } from '../module/config.js';
 import { importFromGCS } from "../module/apps/importers.js";
 import { GumGMScreen } from "../module/apps/gm-screen.js";
@@ -2409,6 +2410,10 @@ Hooks.once('init', async function() {
     game.gum.importFromGCS = importFromGCS;
     game.gum.rollFromHotbar = rollFromHotbar;
     game.gum.applyUseEventEffects = applyUseEventEffects;
+    game.gum.applySingleEffect = applySingleEffect;
+    game.gum.getEffectActions = getEffectActions;
+    game.gum.setStateEffectGroupActive = setStateEffectGroupActive;
+    game.gum.syncItemStateEffects = syncItemStateEffects;
 
     CONFIG.statusEffects = GUM.statusEffects;
     CONFIG.Actor.documentClass = GurpsActor;
@@ -2584,6 +2589,7 @@ Hooks.on("createItem", async (item, options, userId) => {
             actor.sheet.render(false);
             actor.getActiveTokens().forEach(token => token.drawEffects());
         }
+        await syncItemStateEffects(item, { assumeInactive: true });
     });
 
     Hooks.on("updateItem", async (item, changes, options, userId) => {
@@ -2604,12 +2610,15 @@ Hooks.on("createItem", async (item, options, userId) => {
         // =============================================================
         // Verifica se o item atualizado tem a capacidade de ter passiveEffects
         // Usamos hasOwnProperty para ser seguro, mas podemos checar 'item.system.passiveEffects'
-        if (item.system.passiveEffects) {
+                const passiveEffectsChanged = foundry.utils.hasProperty(changes, "system.passiveEffects")
+            || Object.keys(changes || {}).some(key => key.startsWith("system.passiveEffects"));
+        if (item.system.passiveEffects && passiveEffectsChanged) {
             
             // 1. Encontra e Deleta TODOS os ActiveEffects existentes originados deste item
             const updatedItemId = item.id;
             const effectsToDelete = actor.effects.filter(effect => 
-                foundry.utils.getProperty(effect, "flags.gum.originItemId") === updatedItemId
+            foundry.utils.getProperty(effect, "flags.gum.originItemId") === updatedItemId                    
+                && foundry.utils.getProperty(effect, "flags.gum.source") === "passiveItem"
             );
 
             if (effectsToDelete.length > 0) {
@@ -2636,7 +2645,8 @@ Hooks.on("createItem", async (item, options, userId) => {
                                 actor,
                                 origin: item,
                                 source: "passiveItem",
-                                originItemId: item.id
+                                originItemId: item.id,                                
+                                skipInstantEffects: true
                             });
                         } catch (err) {
                             console.error(`[GUM] Falha ao criar ActiveEffect passivo (update):`, err);
@@ -2645,6 +2655,11 @@ Hooks.on("createItem", async (item, options, userId) => {
                 }
             }
         } // Fim do if (item.system.passiveEffects)
+        if (!options.gumStateSync && !options.gumStateToggle) {
+            const stateGroupsChanged = foundry.utils.hasProperty(changes, "system.stateEffectGroups")
+                || Object.keys(changes || {}).some(key => key.startsWith("system.stateEffectGroups"));
+            await syncItemStateEffects(item, { refreshActive: stateGroupsChanged });
+        }
         // =============================================================
         
         // --- Chamada final de atualização ---
@@ -2661,6 +2676,7 @@ Hooks.on("createItem", async (item, options, userId) => {
 
         const actor = item.parent; // Define o ator uma vez
         const deletedItemId = item.id; // ID do item que foi removido
+        await removeAllStateEffectsForItem(item);
 
         // --- LÓGICA PARA CONDIÇÕES (Sua lógica original) ---
         if (item.type === "condition") {
@@ -4476,3 +4492,11 @@ Hooks.on("createActiveEffect", async (effect) => {
 
 // 6. MUDANÇAS NA CENA (Adicionar/Remover tokens)
 Hooks.on("canvasReady", refreshGMScreen); // Quando muda de mapa
+
+Hooks.once("ready", async () => {
+    try {
+        await reconcileAllStateEffects();
+    } catch (error) {
+        console.error("GUM | Falha ao reconciliar os Efeitos de Estado ao iniciar o mundo.", error);
+    }
+});

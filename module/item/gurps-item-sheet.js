@@ -558,8 +558,14 @@ _promptMultipleReferences(parsedList) {
             onDamage: await _prepareLinkedItems(this.item.system.onDamageEffects), 
             general: await _prepareLinkedItems(this.item.system.generalConditions), 
             passive: await _prepareLinkedItems(this.item.system.passiveEffects), 
-            useEvent: await _prepareLinkedItems(this.item.system.useEventEffects) 
-        }; 
+            useEvent: await _prepareLinkedItems(this.item.system.useEventEffects),
+            stateGroups: await Promise.all(Object.entries(this.item.system.stateEffectGroups || {}).map(async ([id, group]) => ({
+                id,
+                ...group,
+                effects: await _prepareLinkedItems(group.effects),
+                isManual: ["manual", "equipped_manual"].includes(group.mode || "manual")
+            })))
+        };
  
         // ======================================================= 
         // 5. LISTA DE MODIFICADORES 
@@ -996,8 +1002,23 @@ html.find('.delete-modifier').click(async ev => {
             }).render(true); 
         }); 
          
-        // Efeitos 
-        html.find('.add-effect').click(async (ev) => { 
+        // Efeitos
+        html.find('.add-state-effect-group').click(async ev => {
+            ev.preventDefault();
+            const id = foundry.utils.randomID();
+            await this.item.update({ [`system.stateEffectGroups.${id}`]: {
+                id, name: "Novo grupo", mode: "manual", active: false,
+                runtimeActive: false, exclusiveSet: "", effects: {}
+            }});
+        });
+        html.find('.delete-state-effect-group').click(async ev => {
+            ev.preventDefault();
+            const id = $(ev.currentTarget).closest('[data-state-group-id]').data('state-group-id');
+            if (!id) return;
+            const confirmed = await Dialog.confirm({ title: "Excluir grupo", content: "<p>Excluir este grupo e desativar seus efeitos?</p>" });
+            if (confirmed) await this.item.update({ [`system.stateEffectGroups.-=${id}`]: null });
+        });
+        html.find('.add-effect').click(async (ev) => {
             const targetList = $(ev.currentTarget).data('target-list'); 
             new EffectBrowser(this.item, { 
                 onSelect: (selectedEffects) => { 

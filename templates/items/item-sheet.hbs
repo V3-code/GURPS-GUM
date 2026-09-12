@@ -357,6 +357,43 @@
                 <li class="effects-empty">Nenhum efeito.</li>
             {{/each}}
  </ol>
+ </div>
+
+        {{!-- ================================================== --}}
+        {{!-- EFEITOS DE ESTADO --}}
+        {{!-- ================================================== --}}
+        <div class="effects-block state-effects-block">
+            <div class="effects-block-header">
+                <div><h4 class="effects-block-title">Efeitos de Estado</h4><small>Grupos ativados manualmente ou pelo estado do item.</small></div>
+                <a class="effects-add-button add-state-effect-group" title="Adicionar grupo de efeitos"><i class="fas fa-plus"></i></a>
+            </div>
+            {{#each system.preparedEffects.stateGroups as |group|}}
+            <section class="state-effect-group" data-state-group-id="{{group.id}}">
+                <div class="state-effect-group-header">
+                    <input type="text" name="system.stateEffectGroups.{{group.id}}.name" value="{{group.name}}" placeholder="Nome do grupo" />
+                    <select name="system.stateEffectGroups.{{group.id}}.mode" title="Modo de ativação">
+                        <option value="manual" {{#if (eq group.mode "manual")}}selected{{/if}}>Manual</option>
+                        <option value="equipped" {{#if (eq group.mode "equipped")}}selected{{/if}}>Enquanto equipado</option>
+                        <option value="carried" {{#if (eq group.mode "carried")}}selected{{/if}}>Enquanto carregado</option>
+                        <option value="present" {{#if (eq group.mode "present")}}selected{{/if}}>Enquanto presente</option>
+                        <option value="equipped_manual" {{#if (eq group.mode "equipped_manual")}}selected{{/if}}>Equipado e ligado</option>
+                    </select>
+                    <input type="text" name="system.stateEffectGroups.{{group.id}}.exclusiveSet" value="{{group.exclusiveSet}}" placeholder="Conjunto exclusivo (opcional)" title="Grupos com o mesmo conjunto desligam-se mutuamente" />
+                    <a class="delete-state-effect-group" title="Excluir grupo"><i class="fas fa-trash"></i></a>
+                </div>
+                <ol class="effects-line-list">
+                    {{#each group.effects as |effect|}}
+                    <li class="effects-line-item" data-list-name="stateEffectGroups.{{group.id}}.effects" data-effect-id="{{effect.id}}">
+                        <div class="effects-line effects-line-passive">
+                            <div class="effects-cell effects-identity"><img src="{{effect.img}}" class="effects-icon" /><div class="effects-name">{{effect.name}}</div></div>
+                            <div class="effects-cell effects-actions"><span class="effects-controls"><a class="view-original-effect" data-uuid="{{effect.uuid}}" title="Ver Efeito Original"><i class="fas fa-eye"></i></a><a class="delete-effect" title="Remover Efeito"><i class="fas fa-trash"></i></a></span></div>
+                        </div>
+                    </li>
+                    {{else}}<li class="effects-empty">Nenhum efeito neste grupo.</li>{{/each}}
+                </ol>
+                <a class="effects-add-button add-effect" data-target-list="stateEffectGroups.{{group.id}}.effects"><i class="fas fa-plus"></i> Adicionar efeito</a>
+            </section>
+            {{else}}<p class="effects-empty">Nenhum grupo configurado.</p>{{/each}}
         </div>
 
         {{!-- ================================================== --}}

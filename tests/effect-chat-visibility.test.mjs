@@ -39,6 +39,17 @@ test("mensagem exclusiva do mestre usa a rolagem oculta nativa do Foundry", () =
   );
 });
 
+test("Foundry 14 usa messageMode sem emitir o aviso legado de rollMode", () => {
+  assert.deepEqual(
+    getAttributeRollMessageOptions({ visibility: "public", actor, users, generation: 14 }),
+    { messageData: {}, creationOptions: { messageMode: "publicroll" } }
+  );
+  assert.deepEqual(
+    getAttributeRollMessageOptions({ visibility: "gm", actor, users, generation: 14 }),
+    { messageData: {}, creationOptions: { messageMode: "blindroll" } }
+  );
+});
+
 test("opção silenciosa não cria configuração de mensagem", () => {
   assert.equal(getAttributeRollMessageOptions({ visibility: "none", actor, users }), null);
 });
@@ -56,7 +67,8 @@ test("ficha oferece todas as opções de exibição na ação de atributo", () =
   }
 });
 
-test("motor entrega o rollMode como opção nativa de criação da rolagem", () => {
+test("motor informa a geração do Foundry ao preparar a opção nativa de mensagem", () => {
   const engine = fs.readFileSync(new URL("../scripts/effects-engine.js", import.meta.url), "utf8");
+  assert.match(engine, /generation: game\.release\?\.generation/);
   assert.match(engine, /roll\.toMessage\([\s\S]*?messageOptions\.messageData[\s\S]*?}, messageOptions\.creationOptions\)/);
 });
