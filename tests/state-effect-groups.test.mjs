@@ -57,10 +57,11 @@ test("exclusive set names are matched without case or surrounding spaces", () =>
 });
 
 test("wires state groups through the item model, sheets and lifecycle hooks", async () => {
-  const [model, itemTemplate, actorSheet, main, engine, service] = await Promise.all([
+  const [model, itemTemplate, actorSheet, actorStyles, main, engine, service] = await Promise.all([
     readFile(new URL("../template.json", import.meta.url), "utf8"),
     readFile(new URL("../templates/items/item-sheet.hbs", import.meta.url), "utf8"),
     readFile(new URL("../module/actor/gurps-actor-sheet.js", import.meta.url), "utf8"),
+    readFile(new URL("../styles/styles.css", import.meta.url), "utf8"),
     readFile(new URL("../scripts/main.js", import.meta.url), "utf8"),
     readFile(new URL("../scripts/effects-engine.js", import.meta.url), "utf8"),
     readFile(new URL("../module/services/state-effect-service.js", import.meta.url), "utf8")
@@ -69,6 +70,11 @@ test("wires state groups through the item model, sheets and lifecycle hooks", as
   assert.match(itemTemplate, /data-state-group-id/);
   assert.match(itemTemplate, /equipped_manual/);
   assert.match(actorSheet, /item-toggle-state-effect-group/);
+  assert.match(actorSheet, /state-effect-automation__trigger/);
+  assert.match(actorSheet, /groups\.length <= 2/);
+  assert.match(actorSheet, /\.prop\('disabled', !manual\)/);
+  assert.match(actorStyles, /characteristic-card \.item-controls \{[\s\S]*flex: 1 0 calc\(100% - 40px\)/);
+  assert.match(actorStyles, /characteristic-card \.item-controls \.state-effect-automation \{ margin-right: auto; \}/);
   assert.match(main, /syncItemStateEffects\(item/);
   assert.match(engine, /stateEffectActivationId/);
   assert.match(engine, /context\.skipInstantEffects/);

@@ -2019,30 +2019,92 @@ html.on('click', '.dr-group-toggle', (ev) => {
  html.find('details[data-group-id]').on('toggle', this._onDetailsToggle.bind(this));
 
     // Controles dos grupos de efeitos de estado são anexados a qualquer card de item.
+    const stateEffectModeLabels = {
+        manual: 'controle manual',
+        equipped_manual: 'controle manual enquanto equipado',
+        equipped: 'automático enquanto equipado',
+        carried: 'automático enquanto carregado',
+        present: 'automático enquanto presente'
+    };
+
+    const buildStateEffectSwitch = (groupId, group, { expanded = false } = {}) => {
+        const mode = group.mode || 'manual';
+        const manual = mode === 'manual' || mode === 'equipped_manual';
+        const equipped = group._itemSystem.equipped === true || group._itemSystem.location === 'equipped';
+        const carried = equipped || (group._itemSystem.location === 'carried' && group._itemSystem.stored !== true);
+        const desired = mode === 'present'
+            || (mode === 'equipped' && equipped)
+            || (mode === 'carried' && carried)
+            || (mode === 'equipped_manual' && equipped && group.active === true)
+            || (mode === 'manual' && group.active === true);
+        const active = desired && Boolean(group.activationId);
+        const name = group.name || 'Grupo de efeitos';
+        const modeLabel = stateEffectModeLabels[mode] || stateEffectModeLabels.manual;
+        const title = `${name} — ${active ? 'ativo' : 'inativo'} (${modeLabel})`;
+        const button = $('<button type="button" class="state-effect-switch item-toggle-state-effect-group"></button>')
+            .attr('data-group-id', groupId)
+            .attr('title', title)
+            .attr('aria-label', title)
+            .attr('aria-checked', String(active))
+            .attr('role', 'switch')
+            .toggleClass('is-active', active)
+            .toggleClass('is-automatic', !manual)
+            .prop('disabled', !manual)
+            .append('<span class="state-effect-switch__track" aria-hidden="true"><span class="state-effect-switch__thumb"></span></span>');
+
+        if (!expanded) return button;
+
+        const entry = $('<div class="state-effect-automation__entry"></div>');
+        const text = $('<span class="state-effect-automation__text"></span>')
+            .append($('<strong></strong>').text(name))
+            .append($('<small></small>').text(`${active ? 'Ativo' : 'Inativo'} · ${modeLabel}`));
+        if (!manual) text.prepend('<i class="fas fa-gear state-effect-automation__mode" aria-hidden="true"></i>');
+        return entry.append(text, button);
+    };
+
     html.find('.item[data-item-id]').each((_, element) => {
         const row = $(element);
         const item = this.actor.items.get(row.data('itemId'));
         const controls = row.find('.item-controls').first();
         if (!item || !controls.length) return;
-        for (const [groupId, group] of Object.entries(item.system.stateEffectGroups || {})) {
-            const mode = group.mode || 'manual';
-            const manual = mode === 'manual' || mode === 'equipped_manual';
-            const equipped = item.system.equipped === true || item.system.location === 'equipped';
-            const carried = equipped || (item.system.location === 'carried' && item.system.stored !== true);
-            const desired = mode === 'present'
-                || (mode === 'equipped' && equipped)
-                || (mode === 'carried' && carried)
-                || (mode === 'equipped_manual' && equipped && group.active === true)
-                || (mode === 'manual' && group.active === true);
-            const active = desired && Boolean(group.activationId);
-            const button = $('<a class="item-control item-toggle-state-effect-group"></a>')
-                .attr('data-group-id', groupId)
-                .attr('title', `${group.name || 'Grupo de efeitos'} — ${active ? 'Ativo' : 'Inativo'}${manual ? '' : ' (automático)'}`)
-                .toggleClass('active', active)
-                .toggleClass('is-automatic', !manual)
-                .append($(`<i class="fas ${active ? 'fa-toggle-on' : 'fa-toggle-off'}"></i>`));
-            controls.prepend(button);
+        const groups = Object.entries(item.system.stateEffectGroups || {})
+            .map(([groupId, group]) => [groupId, { ...group, _itemSystem: item.system }]);
+        if (!groups.length) return;
+
+        const cluster = $('<div class="state-effect-automation"></div>');
+        if (groups.length <= 2) {
+            const switches = $('<div class="state-effect-automation__switches"></div>');
+            groups.forEach(([groupId, group]) => switches.append(buildStateEffectSwitch(groupId, group)));
+            cluster.append(switches);
+        } else {
+            const activeCount = groups.filter(([, group]) => Boolean(group.activationId)).length;
+            const triggerLabel = `Automações: ${activeCount} de ${groups.length} ativas`;
+            const trigger = $('<button type="button" class="state-effect-automation__trigger"></button>')
+                .attr('title', triggerLabel)
+                .attr('aria-label', triggerLabel)
+                .attr('aria-expanded', 'false')
+                .append('<i class="fas fa-sliders" aria-hidden="true"></i>')
+                .append($('<span></span>').text(`${activeCount}/${groups.length}`));
+            const panel = $('<div class="state-effect-automation__panel" hidden></div>')
+                .attr('aria-label', 'Automações do item');
+            groups.forEach(([groupId, group]) => panel.append(buildStateEffectSwitch(groupId, group, { expanded: true })));
+            cluster.append(trigger, panel);
         }
+        controls.prepend(cluster);
+    });
+
+    html.on('click', '.state-effect-automation__trigger', ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const trigger = $(ev.currentTarget);
+        const cluster = trigger.closest('.state-effect-automation');
+        const willOpen = !cluster.hasClass('is-open');
+        html.find('.state-effect-automation.is-open').not(cluster).removeClass('is-open')
+            .find('.state-effect-automation__trigger').attr('aria-expanded', 'false').end()
+            .find('.state-effect-automation__panel').prop('hidden', true);
+        cluster.toggleClass('is-open', willOpen);
+        trigger.attr('aria-expanded', String(willOpen));
+        cluster.find('.state-effect-automation__panel').prop('hidden', !willOpen);
     });
 
     html.find('.item-toggle-state-effect-group').click(async ev => {
@@ -2052,10 +2114,7 @@ html.on('click', '.dr-group-toggle', (ev) => {
         const item = this.actor.items.get(row.data('itemId'));
         const groupId = $(ev.currentTarget).data('groupId');
         const group = item?.system.stateEffectGroups?.[groupId];
-        if (!item || !group) return;
-        if (!["manual", "equipped_manual"].includes(group.mode || "manual")) {
-            return ui.notifications.info('Este grupo é controlado automaticamente pelo estado do item.');
-        }
+        if (!item || !group || !["manual", "equipped_manual"].includes(group.mode || "manual")) return;
         await game.gum.setStateEffectGroupActive(item, groupId, group.active !== true);
     });
 

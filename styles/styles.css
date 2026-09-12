@@ -5247,6 +5247,7 @@ background-color: var(--gum-accent-gold);
 /* --- CARD INDIVIDUAL (MANTIDO DO ANTERIOR) --- */
 .gum.sheet.actor .characteristic-card {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 8px;
     background: linear-gradient(to bottom, #fff, #fdfbf7);
@@ -5283,7 +5284,7 @@ background-color: var(--gum-accent-gold);
 
 .gum.sheet.actor .characteristic-card .card-info {
     flex-grow: 1; display: flex; flex-direction: row; justify-content: space-between;
-    align-items: flex-start; overflow: hidden; min-width: 0; gap: 8px;
+    align-items: flex-start; overflow: hidden; min-width: 0; width: calc(100% - 40px); gap: 8px;
 }
 
 .gum.sheet.actor .characteristic-card .card-main {
@@ -5328,13 +5329,18 @@ background-color: var(--gum-accent-gold);
 }
 
 .gum.sheet.actor .characteristic-card .item-controls {
-    display: none;
+    display: flex;
+    flex: 1 0 calc(100% - 40px);
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
     gap: 4px;
-    margin-left: 4px;
-    padding-left: 4px;
-    border-left: 1px solid rgba(0,0,0,0.1);
+    min-height: 25px;
+
+    padding: 3px 0 0;
+    border-top: 1px dotted rgba(0,0,0,0.1);
 }
-.gum.sheet.actor .characteristic-card:hover .item-controls { display: flex; flex-direction: column; }
+.gum.sheet.actor .characteristic-card .item-controls .state-effect-automation { margin-right: auto; }
 .gum.sheet.actor .characteristic-card .item-controls a { color: var(--gum-text-medio); font-size: 0.65em; padding: 2px; }
 .gum.sheet.actor .characteristic-card .item-controls a:hover { color: var(--gum-accent-gold); }
 .gum.sheet.actor .characteristic-card .item-controls a.item-delete:hover { color: var(--gum-accent-red); }
@@ -5764,6 +5770,161 @@ background-color: var(--gum-accent-gold);
 /* Mantém o menu contextual opaco quando aberto (mesmo sem hover na linha). */
 .gum.sheet.actor .item-controls.menu-open {
     opacity: 1;
+}
+
+/* Automações persistentes dos itens: switches compactos e um painel escalável. */
+.gum.sheet.actor .state-effect-automation {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+}
+
+.gum.sheet.actor .state-effect-automation__switches {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.gum.sheet.actor .state-effect-switch {
+    width: 34px;
+    min-width: 34px;
+    height: 24px;
+    margin: 0;
+    padding: 4px 3px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    cursor: pointer;
+}
+
+.gum.sheet.actor .state-effect-switch__track {
+    position: relative;
+    display: block;
+    width: 28px;
+    height: 16px;
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 10px;
+    background: #555b64;
+    transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.gum.sheet.actor .state-effect-switch__thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #f7f3ec;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.45);
+    transition: transform 0.18s ease;
+}
+
+.gum.sheet.actor .state-effect-switch.is-active .state-effect-switch__track {
+    border-color: rgba(126,220,176,0.7);
+    background: #389c68;
+}
+
+.gum.sheet.actor .state-effect-switch.is-active .state-effect-switch__thumb {
+    transform: translateX(12px);
+}
+
+.gum.sheet.actor .state-effect-switch:hover:not(:disabled) .state-effect-switch__track,
+.gum.sheet.actor .state-effect-switch:focus-visible .state-effect-switch__track {
+    border-color: var(--gum-accent-gold);
+    box-shadow: 0 0 0 2px rgba(197,160,91,0.18);
+}
+
+.gum.sheet.actor .state-effect-switch.is-automatic {
+    cursor: default;
+    filter: saturate(0.65);
+    opacity: 0.78;
+}
+
+.gum.sheet.actor .state-effect-automation__trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 48px;
+    height: 24px;
+    margin: 0;
+    padding: 2px 7px;
+    border: 1px solid rgba(197,160,91,0.45);
+    border-radius: 12px;
+    background: rgba(18,21,26,0.72);
+    color: #ddd9d1;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    box-shadow: none;
+}
+
+.gum.sheet.actor .state-effect-automation__trigger:hover,
+.gum.sheet.actor .state-effect-automation__trigger:focus-visible,
+.gum.sheet.actor .state-effect-automation.is-open .state-effect-automation__trigger {
+    border-color: var(--gum-accent-gold);
+    color: #fff2d8;
+}
+
+.gum.sheet.actor .state-effect-automation__panel {
+    position: absolute;
+    z-index: 30;
+    right: 0;
+    top: calc(100% + 5px);
+    width: max-content;
+    min-width: 210px;
+    max-width: 300px;
+    padding: 5px;
+    border: 1px solid rgba(197,160,91,0.45);
+    border-radius: 7px;
+    background: #252a32;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.42);
+}
+
+.gum.sheet.actor .state-effect-automation__panel[hidden] { display: none; }
+
+.gum.sheet.actor .state-effect-automation__entry {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 34px;
+    padding: 4px 5px;
+    border-radius: 4px;
+}
+
+.gum.sheet.actor .state-effect-automation__entry + .state-effect-automation__entry {
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.gum.sheet.actor .state-effect-automation__text {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    min-width: 0;
+    color: #f1e8dc;
+}
+
+.gum.sheet.actor .state-effect-automation__text strong,
+.gum.sheet.actor .state-effect-automation__text small {
+    grid-column: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gum.sheet.actor .state-effect-automation__text small {
+    color: rgba(247,233,215,0.62);
+    font-size: 9px;
+    font-weight: 400;
+}
+
+.gum.sheet.actor .state-effect-automation__mode {
+    grid-row: 1 / 3;
+    align-self: center;
+    margin-right: 6px;
+    color: rgba(197,160,91,0.85);
+    font-size: 10px;
 }
 
 /* Ficam totalmente visíveis ao passar o mouse na linha */
@@ -7603,7 +7764,7 @@ background-color: var(--gum-accent-gold);
 }
 
 .gum.sheet.actor .gum-unified-section .characteristic-card .item-controls {
-    border-left: 1px dotted rgba(255,255,255,0.12);
+    border-top: 1px dotted rgba(255,255,255,0.12);
 }
 
 .gum.sheet.actor .gum-unified-section .characteristic-card .item-controls a {
