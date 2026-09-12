@@ -16,6 +16,7 @@ import { ConditionSheet } from "./apps/condition-sheet.js";
 import { EffectSheet } from './apps/effect-sheet.js';
 import { TriggerSheet } from './apps/trigger-sheet.js';
 import { applySingleEffect, getEffectActions } from './effects-engine.js';
+import { buildActorEffectTarget, buildActorEffectTargets, getActorEvaluationKey } from '../module/utils/condition-actor-context.mjs';
 import { reconcileAllStateEffects, removeAllStateEffectsForItem, setStateEffectGroupActive, syncItemStateEffects } from '../module/services/state-effect-service.js';
 import { GUM } from '../module/config.js';
 import { importFromGCS } from "../module/apps/importers.js";
@@ -2561,8 +2562,7 @@ Hooks.on("createItem", async (item, options, userId) => {
             const passiveEffectLinks = Object.values(item.system.passiveEffects);
             console.log(`[GUM] Item "${item.name}" adicionado a ${actor.name}. Aplicando ${passiveEffectLinks.length} efeito(s) passivo(s)...`);
 
-            const activeTokens = actor.getActiveTokens();
-            const targets = activeTokens.length ? activeTokens : [buildFallbackTokenForActor(actor)];
+        const targets = buildActorEffectTargets(actor);
             for (const linkData of passiveEffectLinks) {
                 const effectUuid = linkData.effectUuid || linkData.uuid;
                 if (!effectUuid) continue;
@@ -2632,8 +2632,7 @@ Hooks.on("createItem", async (item, options, userId) => {
                      const passiveEffectLinks = Object.values(item.system.passiveEffects || {});
             if (passiveEffectLinks.length > 0) {
                 console.log(`[GUM] ...Recriando ${passiveEffectLinks.length} efeito(s) passivo(s) atualizado(s).`);
-                const activeTokens = actor.getActiveTokens();
-                const targets = activeTokens.length ? activeTokens : [buildFallbackTokenForActor(actor)];
+const targets = buildActorEffectTargets(actor);
                 for (const linkData of passiveEffectLinks) {
                     const effectUuid = linkData.effectUuid || linkData.uuid;
                     if (!effectUuid) continue;
@@ -3557,8 +3556,9 @@ const loadStatusBindingRules = async () => {
 };
 
 async function processStatusBindings(actor) {
-    if (!actor || processingStatusBindingActors.has(actor.id)) return;
-    processingStatusBindingActors.add(actor.id);
+    const evaluationKey = getActorEvaluationKey(actor);
+    if (!evaluationKey || processingStatusBindingActors.has(evaluationKey)) return;
+    processingStatusBindingActors.add(evaluationKey);
     try {
         const activeStatuses = getActorActiveNativeStatusSet(actor);
         const statusRules = await loadStatusBindingRules();
@@ -3609,9 +3609,7 @@ async function processStatusBindings(actor) {
 
                 const effectItem = await fromUuid(effectUuid).catch(() => null);
                 if (!effectItem?.system) continue;
-                const targets = actor.getActiveTokens();
-                const finalTargets = targets.length ? targets : [buildFallbackTokenForActor(actor)];
-                await applySingleEffect(effectItem, finalTargets, {
+await applySingleEffect(effectItem, buildActorEffectTargets(actor), {
                     actor,
                     origin: rule,
                     source: "statusBinding",
@@ -3626,7 +3624,7 @@ async function processStatusBindings(actor) {
             await actor.deleteEmbeddedDocuments("ActiveEffect", uniqueIds);
         }
     } finally {
-        processingStatusBindingActors.delete(actor.id);
+        processingStatusBindingActors.delete(evaluationKey);
     }
 }
 
@@ -3635,17 +3633,13 @@ async function processConditions(actor, eventData = null) {
     // baseadas na MUDANÇA DE ESTADO desses ITENS.
     // **NÃO GERENCIA MAIS ÍCONES DE STATUS.**
     
-    if (!actor || evaluatingActors.has(actor.id)) return;
-    evaluatingActors.add(actor.id);
+    const evaluationKey = getActorEvaluationKey(actor);
+    if (!evaluationKey || evaluatingActors.has(evaluationKey)) return;
+    evaluatingActors.add(evaluationKey);
 
  try {
         const conditions = actor.items.filter(i => i.type === "condition");
-        const buildFallbackToken = (fallbackActor) => ({
-            actor: fallbackActor,
-            id: null,
-            name: fallbackActor?.name || "Alvo",
-            document: { texture: { src: fallbackActor?.img || "icons/svg/mystery-man.svg" } }
-        });
+const conditionTarget = buildActorEffectTarget(actor);
         const normalizeEffectPath = (path) => {
             if (!path || typeof path !== "string") return path;
             let normalized = path.trim();
@@ -3726,22 +3720,18 @@ async function processConditions(actor, eventData = null) {
                         if (!effectItem?.system) continue;
                         const requiresResistance = effectItem.system?.resistanceRoll?.isResisted;
                         if (requiresResistance) {
-                            const activeTokens = actor.getActiveTokens();
-                            const resistanceTargets = activeTokens.length ? activeTokens : [buildFallbackToken(actor)];
-                            for (const targetToken of resistanceTargets) {
-                                await _promptActivationResistance(
-                                    effectItem,
-                                    targetToken,
-                                    actor,
-                                    condition,
-                                    link.id || null,
-                                                                        {
-                                        mode: "condition",
-                                        conditionId: condition.id,
-                                        conditionActivationMode
-                                    }
-                                );
-                            }
+                            await _promptActivationResistance(
+                                effectItem,
+                                conditionTarget,
+                                actor,
+                                condition,
+                                link.id || null,
+                                {
+                                    mode: "condition",
+                                    conditionId: condition.id,
+                                    conditionActivationMode
+                                }
+                            );
                             continue;
                         }
 
@@ -3754,9 +3744,7 @@ async function processConditions(actor, eventData = null) {
                         const skipPersistentEffects = Boolean(existingConditionEffect && !isPulseEvent);
 
                         if (!hasPersistentActions || !skipPersistentEffects || isPulseEvent) {
-                            const activeTokens = actor.getActiveTokens();
-                            const targetsForApply = activeTokens.length ? activeTokens : [buildFallbackToken(actor)];
-                            await applySingleEffect(effectItem, targetsForApply, {
+await applySingleEffect(effectItem, [conditionTarget], {
                                 actor,
                                 origin: condition,
                                 source: "condition",
@@ -3838,7 +3826,7 @@ async function processConditions(actor, eventData = null) {
         // Nenhuma lógica de sincronização de ícones ('toggleStatusEffect') aqui.
 
     } finally {
-        evaluatingActors.delete(actor.id); // Libera o ator para a próxima avaliação
+        evaluatingActors.delete(evaluationKey); // Libera este contexto de ator para a próxima avaliação
     }
 }
 
