@@ -37,6 +37,7 @@ import { isUserAuthorizedForTarget } from "../module/utils/test-request-targets.
 import { showDiceForMessageLessRoll } from "../module/utils/dice-so-nice.mjs";
 import { BASIC_DAMAGE_KEYS, normalizeBasicDamageData, prepareBasicDamageAttributes } from "../module/utils/basic-damage.mjs";
 import { resolveAttackDamageDisplay } from "../module/utils/attack-damage-display.mjs";
+import { canUserCreateActors } from "../module/utils/actor-creation-permission.mjs";
 
 import { getSkillDisplayName, setDirectoryEntryLabel } from "../module/utils/skill-display-name.mjs";
 
@@ -2808,8 +2809,8 @@ const targets = buildActorEffectTargets(actor);
     // ✅ NOVO HOOK: Adiciona o botão "Importar GCS" na barra de Atores
     // ==========================================================
 Hooks.on("renderActorDirectory", (app, html, data) => {
-        // Apenas GMs podem ver o botão
-        if (!game.user.isGM) return;
+        // Exibe para mestres e para jogadores autorizados a criar atores.
+        if (!canUserCreateActors(game.user)) return;
 
         const button = $(`
             <button class="gcs-import-button" type="button" style="width: 100%; margin-bottom: 5px;">
