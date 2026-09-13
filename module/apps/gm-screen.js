@@ -20,6 +20,11 @@ export class GumGMScreen extends Application {
         
         // Cache para os inputs manuais não resetarem ao renderizar
         this.manualCache = { name: "GM.MOD", value: 0 };
+        
+        // Mantém a rolagem rápida durante as renderizações automáticas da tela.
+        // O Escudo é renderizado novamente por várias interações e atualizações
+        // de atores, portanto esses valores não podem ficar fixos no template.
+        this.quickRollCache = { formula: "1d6", type: "cont" };
 
         // Estado local de blocos colapsáveis da sidebar
         this.sidebarState = {
@@ -145,6 +150,7 @@ async getData() {
             activeMainTab,
             isManualActive: this.selectedModifiers.has("manual"),
             manualCache: this.manualCache,
+            quickRollCache: this.quickRollCache,
             quickRollCollapsed: this.sidebarState.quickRollCollapsed,
             manualCollapsed: this.sidebarState.manualCollapsed
         };
@@ -294,6 +300,16 @@ activateListeners(html) {
         
         // Atualiza display do rolador assim que abre
         this._updateQRDisplay(html);
+
+        
+        // Preserva os dados digitados caso qualquer outra ação provoque uma
+        // nova renderização do Escudo antes de a rolagem ser efetuada.
+        html.find('.qr-formula').on('input change', ev => {
+            this.quickRollCache.formula = ev.currentTarget.value;
+        });
+        html.find('.qr-type').on('input change', ev => {
+            this.quickRollCache.type = ev.currentTarget.value;
+        });
 
         html.find('.collapse-toggle').click(ev => {
             ev.preventDefault();
