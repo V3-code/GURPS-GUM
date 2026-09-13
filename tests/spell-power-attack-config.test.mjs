@@ -19,6 +19,10 @@ test("spell and power attack rolls expose the configured attack base to the prom
 });
 
 test("spell and power sheets provide type-specific attack statistics", () => {
+  assert.equal((itemTemplate.match(/name="system\.uses_attack"/g) || []).length, 2,
+    "both spell and power forms must expose the attack-roll toggle");
+  assert.match(itemTemplate, /class="spell-uses-attack-toggle"/);
+  assert.match(itemTemplate, /class="power-uses-attack-toggle"/);
   assert.equal((itemTemplate.match(/data-attack-fields="melee"/g) || []).length, 2);
   assert.equal((itemTemplate.match(/data-attack-fields="ranged"/g) || []).length, 2);
   assert.equal((itemTemplate.match(/name="system\.attack_roll\.min_strength"/g) || []).length, 2,
