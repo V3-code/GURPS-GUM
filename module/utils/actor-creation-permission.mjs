@@ -7,3 +7,9 @@
 export function canUserCreateActors(user) {
     return Boolean(user?.isGM || user?.can?.("ACTOR_CREATE"));
 }
+
+/** Indica se o usuário pode importar dados para este Ator específico. */
+export function canUserImportIntoActor(user, actor) {
+    if (!actor || actor.type !== "character") return false;
+    return Boolean(user?.isGM || actor.isOwner);
+}

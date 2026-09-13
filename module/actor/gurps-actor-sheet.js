@@ -11,6 +11,7 @@ import { buildSecondaryStatsRecalculationPlan, buildSecondaryStatsUpdateData, fo
 import { SOCIAL_CATEGORIES, SOCIAL_MANUAL_LAYOUTS, buildSocialSections, calculateManualSocialPoints } from "../config/social-aspects.mjs";
 import { buildDamageNatureSearchOptions, formatDamageNature, resolveDamageNature } from "../utils/damage-nature.mjs";
 import { resolveAttackDamageDisplay } from "../utils/attack-damage-display.mjs";
+import { canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
 
 const WOUND_NATURE_ICONS = Object.freeze({
   fire: "fa-fire",
@@ -84,6 +85,19 @@ const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? 
           tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "combat" }]
         });
       }
+
+_getHeaderButtons() {
+    const buttons = super._getHeaderButtons();
+    if (canUserImportIntoActor(game.user, this.actor)) {
+        buttons.unshift({
+            label: "Importar GCS",
+            class: "gcs-import-sheet",
+            icon: "fas fa-file-import",
+            onclick: () => game.gum.importFromGCS({ actor: this.actor })
+        });
+    }
+    return buttons;
+}
 
 _getContainerDescendants(containerId, acc = []) {
     if (!containerId) return acc;

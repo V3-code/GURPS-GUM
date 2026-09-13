@@ -1,4 +1,6 @@
 import { getBodyLocationDefinition, getBodyProfile } from "../config/body-profiles.js";
+import { buildGCSActorReconciliation } from "../utils/gcs-actor-reconciliation.mjs";
+import { canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
 /**
  * Lida com a importação de um arquivo JSON (formato customizado) OU
  * um arquivo de Biblioteca GCS (.skl, .spl, .eqp, .adq, .adm, .eqm) para um compêndio.
@@ -291,11 +293,102 @@ for (const entry of importEntries) {
     }
 }
 
+function escapeImportHTML(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function chooseGCSActorChanges(plan) {
+    const section = (title, entries, kind, checked) => {
+        if (!entries.length) return "";
+        const rows = entries.map((entry, index) => {
+            const item = entry.incoming || entry;
+            return `<label style="display:flex;gap:.5rem;align-items:center"><input type="checkbox" name="${kind}" value="${index}" ${checked ? "checked" : ""}> <span>${escapeImportHTML(item.name)} <small>(${escapeImportHTML(item.type)})</small></span></label>`;
+        }).join("");
+        return `<fieldset><legend>${title} (${entries.length})</legend>${rows}</fieldset>`;
+    };
+    const unchanged = plan.unchanged.map(entry => escapeImportHTML(entry.incoming.name)).join(", ");
+    const content = `<form class="gcs-actor-import-review">
+        <p>Os dados gerais da ficha serão atualizados. Revise os itens incorporados abaixo.</p>
+        ${section("Adicionar", plan.additions, "additions", true)}
+        ${section("Atualizar", plan.updates, "updates", true)}
+        ${section("Remover (desmarcado por segurança)", plan.removals, "removals", false)}
+        ${unchanged ? `<p><strong>Sem alterações (${plan.unchanged.length}):</strong> ${unchanged}</p>` : ""}
+    </form>`;
+
+    return new Promise(resolve => {
+        new Dialog({
+            title: "Revisar importação do GCS",
+            content,
+            buttons: {
+                import: {
+                    icon: '<i class="fas fa-file-import"></i>',
+                    label: "Aplicar importação",
+                    callback: html => {
+                        const selected = kind => new Set(Array.from($(html).find(`input[name="${kind}"]:checked`)).map(input => Number(input.value)));
+                        resolve({ additions: selected("additions"), updates: selected("updates"), removals: selected("removals") });
+                    }
+                },
+                cancel: { label: "Cancelar", callback: () => resolve(null) }
+            },
+            default: "import",
+            close: () => resolve(null)
+        }).render(true);
+    });
+}
+
+async function updateActorFromGCS(actor, actorData, fileName) {
+    if (!canUserImportIntoActor(game.user, actor)) {
+        ui.notifications.error("Sua permissão sobre esta ficha foi removida antes da importação.");
+        return false;
+    }
+    const plan = buildGCSActorReconciliation(Array.from(actor.items || []), actorData.items || []);
+    const selection = await chooseGCSActorChanges(plan);
+    if (!selection) return false;
+
+    await actor.update({
+        name: actorData.name,
+        img: actorData.img,
+        "prototypeToken.texture.src": actorData.prototypeToken["texture.src"],
+        system: actorData.system,
+        "flags.gum.gcsImport": {
+            fileName,
+            importedAt: new Date().toISOString()
+        }
+    });
+
+    const additions = plan.additions
+        .filter((entry, index) => selection.additions.has(index))
+        .map(entry => {
+            const data = foundry.utils.deepClone(entry);
+            delete data._id;
+            return data;
+        });
+    const updates = plan.updates
+        .filter((entry, index) => selection.updates.has(index))
+        .map(({ existing, incoming }) => ({ ...foundry.utils.deepClone(incoming), _id: existing.id || existing._id }));
+    const removals = plan.removals
+        .filter((entry, index) => selection.removals.has(index))
+        .map(entry => entry.id || entry._id);
+
+    if (additions.length) await actor.createEmbeddedDocuments("Item", additions);
+    if (updates.length) await actor.updateEmbeddedDocuments("Item", updates);
+    if (removals.length) await actor.deleteEmbeddedDocuments("Item", removals);
+    return true;
+}
+
 
 /**
- * Lida com a importação de um arquivo .gcs (JSON) para criar um Ator.
+ * Importa um arquivo .gcs, criando um Ator ou atualizando exclusivamente o Ator informado.
  */
-export async function importFromGCS() {
+export async function importFromGCS({ actor = null } = {}) {
+    if (actor && !canUserImportIntoActor(game.user, actor)) {
+        return ui.notifications.error("Você não tem permissão para importar nesta ficha.");
+    }
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.gcs'; 
@@ -310,9 +403,17 @@ export async function importFromGCS() {
         
         try {
             const gcsData = JSON.parse(fileContent); 
-            const actorData = await parseGCSCharacter(gcsData);
-            await Actor.create(actorData);
-            ui.notifications.info(`Personagem "${actorData.name}" importado com sucesso!`);
+            const actorData = await parseGCSCharacter(gcsData, actor ? {
+                fallbackActorImage: actor.img,
+                fallbackTokenImage: actor.prototypeToken?.texture?.src
+            } : {});
+            if (actor) {
+                const imported = await updateActorFromGCS(actor, actorData, file.name);
+                if (imported) ui.notifications.info(`Ficha "${actor.name}" atualizada com sucesso!`);
+            } else {
+                await Actor.create(actorData);
+                ui.notifications.info(`Personagem "${actorData.name}" importado com sucesso!`);
+            }
         } catch (err) {
             console.error("GUM | Erro ao processar arquivo GCS:", err);
             ui.notifications.error("Ocorreu um erro ao processar o arquivo GCS. Verifique o console (F12).");
@@ -3136,7 +3237,7 @@ function formatGCSCharacterNotes(notes) {
     return String(notes || "");
 }
 
-async function parseGCSCharacter(gcsData) {
+async function parseGCSCharacter(gcsData, { fallbackActorImage = CONST.DEFAULT_TOKEN, fallbackTokenImage = CONST.DEFAULT_TOKEN } = {}) {
     ui.notifications.info("Lendo dados do GCS... Mapeando atributos.");
     
     const systemData = getSystemTemplate("Actor", "character");
@@ -3197,8 +3298,8 @@ async function parseGCSCharacter(gcsData) {
     // =============================================================
     // MAPEAMENTO DE IMAGEM (PORTRAIT)
     // =============================================================
-    let actorImgPath = CONST.DEFAULT_TOKEN; 
-    let tokenImgPath = CONST.DEFAULT_TOKEN;
+    let actorImgPath = fallbackActorImage || CONST.DEFAULT_TOKEN;
+    let tokenImgPath = fallbackTokenImage || fallbackActorImage || CONST.DEFAULT_TOKEN;
 
     if (gcsData.profile?.portrait) {
         try {
