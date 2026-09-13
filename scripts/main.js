@@ -34,6 +34,7 @@ import { registerContextMenuCompatibilityHooks } from "../module/utils/context-m
 import { resolveCharacterImage } from "../module/utils/character-image.mjs";
 import { appendResistanceRequestResult, renderPendingResistanceRequest } from "../module/utils/roll-request-view.mjs";
 import { isUserAuthorizedForTarget } from "../module/utils/test-request-targets.mjs";
+import { getResistanceChatPrivacy } from "../module/utils/effect-chat-visibility.mjs";
 import { showDiceForMessageLessRoll } from "../module/utils/dice-so-nice.mjs";
 import { BASIC_DAMAGE_KEYS, normalizeBasicDamageData, prepareBasicDamageAttributes } from "../module/utils/basic-damage.mjs";
 import { resolveAttackDamageDisplay } from "../module/utils/attack-damage-display.mjs";
@@ -2367,12 +2368,26 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
     });
 
 
-    const chatData = applyCurrentRollPrivacy({
+    const chatData = {
         speaker: ChatMessage.getSpeaker({ actor: targetToken.actor || sourceActor }),
         content,
         flags: { gum: { rollRequest: request, resistanceContext: chatPayload } }
+    };
+    const privacy = getResistanceChatPrivacy({
+        visibility: rollData.chatVisibility,
+        actor: targetToken.actor,
+        users: game.users
     });
-    ChatMessage.create(chatData);
+        if (privacy.mode === "publicroll") {
+        const publicData = typeof ChatMessage.applyMode === "function"
+            ? ChatMessage.applyMode(chatData, privacy.mode)
+            : typeof ChatMessage.applyRollMode === "function"
+                ? ChatMessage.applyRollMode(chatData, privacy.mode)
+                : { ...chatData, rollMode: privacy.mode };
+        ChatMessage.create(publicData);
+    } else {
+        ChatMessage.create({ ...chatData, whisper: privacy.whisper });
+    }
 }
 
 /**

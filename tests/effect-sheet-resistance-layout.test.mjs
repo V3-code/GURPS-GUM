@@ -40,3 +40,9 @@ test("finalidades da barreira usam seletor compacto e lista abaixo", () => {
   assert.match(styles, /\.resistance-purpose-heading \{[\s\S]*?justify-content: space-between;/);
   assert.match(styles, /\.resistance-purpose-list \{[\s\S]*?flex-wrap: wrap;/);
 });
+
+test("modo de aplicação e visibilidade ocupam cards lado a lado", () => {
+  assert.match(template, /class="effect-row-grid resistance-settings-row"[\s\S]*?resistance-mode-field[\s\S]*?system\.resistanceRoll\.mode[\s\S]*?resistance-visibility-field[\s\S]*?system\.resistanceRoll\.chatVisibility/);
+  assert.match(styles, /\.resistance-settings-row \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(styles, /\.resistance-setting-card \{[\s\S]*?background:/);
+});

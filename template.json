@@ -902,6 +902,7 @@
         "branches": [],
         "chatText": "",
         "skipPromptCard": false,
+        "chatVisibility": "owners",
         "requestedPurposeIds": []
       },
       "category": "pf",

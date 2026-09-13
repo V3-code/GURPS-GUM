@@ -1413,12 +1413,23 @@
                             >{{system.resistanceRoll.chatText}}</textarea>
                         </div>
 
-                        <div class="effect-field effect-field-full resistance-mode-field">
-                            <div class="effect-label">Modo de aplicação</div>
-                            <select name="system.resistanceRoll.mode" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}>
-                                <option value="simple" {{#unless isConditionalResistance}}selected{{/unless}}>Simples — aplicar todas as ações</option>
-                                <option value="conditional" {{#if isConditionalResistance}}selected{{/if}}>Resultados condicionais</option>
-                            </select>
+                        <div class="effect-row-grid resistance-settings-row">
+                            <div class="effect-field resistance-setting-card resistance-mode-field">
+                                <div class="effect-label">Modo de aplicação</div>
+                                <select name="system.resistanceRoll.mode" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}>
+                                    <option value="simple" {{#unless isConditionalResistance}}selected{{/unless}}>Simples — aplicar todas as ações</option>
+                                    <option value="conditional" {{#if isConditionalResistance}}selected{{/if}}>Resultados condicionais</option>
+                                </select>
+                            </div>
+
+                            <div class="effect-field resistance-setting-card resistance-visibility-field">
+                                <div class="effect-label">Visibilidade do teste</div>
+                                <select name="system.resistanceRoll.chatVisibility" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}>
+                                    <option value="public" {{#if (eq system.resistanceRoll.chatVisibility "public")}}selected{{/if}}>Público (todos)</option>
+                                    <option value="owners" {{#unless (or (eq system.resistanceRoll.chatVisibility "public") (eq system.resistanceRoll.chatVisibility "target"))}}selected{{/unless}}>Alvo e Mestre</option>
+                                    <option value="target" {{#if (eq system.resistanceRoll.chatVisibility "target")}}selected{{/if}}>Somente o alvo</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="effect-row-grid effect-resistance-grid">

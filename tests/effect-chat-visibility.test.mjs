@@ -4,7 +4,9 @@ import test from "node:test";
 
 import {
   getAttributeRollMessageOptions,
-  normalizeAttributeChatVisibility
+    getResistanceChatPrivacy,
+  normalizeAttributeChatVisibility,
+  normalizeResistanceChatVisibility
 } from "../module/utils/effect-chat-visibility.mjs";
 
 const users = [
@@ -71,4 +73,51 @@ test("motor informa a geração do Foundry ao preparar a opção nativa de mensa
   const engine = fs.readFileSync(new URL("../scripts/effects-engine.js", import.meta.url), "utf8");
   assert.match(engine, /generation: game\.release\?\.generation/);
   assert.match(engine, /roll\.toMessage\([\s\S]*?messageOptions\.messageData[\s\S]*?}, messageOptions\.creationOptions\)/);
+});
+
+test("Barreira usa Alvo e Mestre por padrão e aceita modo público", () => {
+  const activeUsers = users.map(user => ({ ...user, active: true }));
+  assert.equal(normalizeResistanceChatVisibility(undefined), "owners");
+  assert.deepEqual(
+    getResistanceChatPrivacy({ actor, users: activeUsers }),
+    { mode: null, whisper: ["owner", "gm"] }
+  );
+  assert.deepEqual(
+    getResistanceChatPrivacy({ visibility: "public", actor, users: activeUsers }),
+    { mode: "publicroll", whisper: [] }
+  );
+});
+
+test("Barreira exclusiva do alvo não inclui Mestre e recua ao Mestre sem proprietário", () => {
+  const activeUsers = users.map(user => ({ ...user, active: true }));
+  assert.deepEqual(
+    getResistanceChatPrivacy({ visibility: "target", actor, users: activeUsers }),
+    { mode: null, whisper: ["owner"] }
+  );
+  assert.deepEqual(
+    getResistanceChatPrivacy({ visibility: "target", actor: {}, users: activeUsers }),
+    { mode: null, whisper: ["gm"] }
+  );
+});
+
+test("ficha da Barreira oferece as três opções de visibilidade", () => {
+  const template = fs.readFileSync(new URL("../templates/items/effect-sheet.hbs", import.meta.url), "utf8");
+  const barrierPanel = template.slice(template.indexOf("BARREIRA DE RESISTÊNCIA"));
+  assert.match(barrierPanel, /name="system\.resistanceRoll\.chatVisibility"/);
+  for (const value of ["public", "owners", "target"]) {
+    assert.match(barrierPanel, new RegExp(`option value="${value}"`));
+  }
+
+  const schema = JSON.parse(fs.readFileSync(new URL("../template.json", import.meta.url), "utf8"));
+  assert.equal(schema.Item.effect.resistanceRoll.chatVisibility, "owners");
+});
+
+test("publicação da Barreira aplica a privacidade persistida no item", () => {
+  const main = fs.readFileSync(new URL("../scripts/main.js", import.meta.url), "utf8");
+  const resistanceFlow = main.slice(
+    main.indexOf("async function _promptActivationResistance"),
+    main.indexOf("export async function applyEffectWithResistance")
+  );
+  assert.match(resistanceFlow, /getResistanceChatPrivacy\(\{[\s\S]*?visibility: rollData\.chatVisibility/);
+  assert.match(resistanceFlow, /ChatMessage\.create\(\{ \.\.\.chatData, whisper: privacy\.whisper \}\)/);
 });

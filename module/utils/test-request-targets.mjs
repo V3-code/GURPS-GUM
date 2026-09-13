@@ -1,13 +1,15 @@
 export function recipientUserIdsForActor(actor, users = []) {
   const activePlayers = users.filter(user => user.active && !user.isGM);
-  const assigned = activePlayers.filter(user => user.character?.id === actor?.id).map(user => user.id);
+  const assigned = actor?.id
+    ? activePlayers.filter(user => user.character?.id === actor.id).map(user => user.id)
+    : [];
   if (assigned.length) return assigned;
   return activePlayers.filter(user => actor?.testUserPermission?.(user, "OWNER") || actor?.ownership?.[user.id] === 3).map(user => user.id);
 }
 
 function actorOwnershipGroup(actor, users = []) {
   const players = users.filter(user => !user.isGM);
-  const assigned = players.filter(user => user.character?.id === actor?.id);
+  const assigned = actor?.id ? players.filter(user => user.character?.id === actor.id) : [];
   if (assigned.some(user => user.active)) return "Personagens atribuídos a jogadores ativos";
   if (assigned.length) return "Personagens atribuídos a jogadores offline";
   const owners = players.filter(user => actor?.testUserPermission?.(user, "OWNER") || actor?.ownership?.[user.id] === 3);
@@ -19,7 +21,7 @@ function actorOwnershipGroup(actor, users = []) {
 export function isUserAuthorizedForTarget(user, actor, target = {}) {
   if (user?.isGM) return true;
   if (!user?.active || !actor) return false;
-return target.recipientUserIds?.includes(user.id) || user.character?.id === actor.id || actor.testUserPermission?.(user, "OWNER") || actor.ownership?.[user.id] === 3;
+return target.recipientUserIds?.includes(user.id) || (actor.id && user.character?.id === actor.id) || actor.testUserPermission?.(user, "OWNER") || actor.ownership?.[user.id] === 3;
 }
 
 export function buildTestRequestTargets({ actors = [], tokens = [], users = [], selectedTokenIds = [] } = {}) {
