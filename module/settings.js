@@ -182,6 +182,20 @@ export const registerSystemSettings = function() {
         default: "standard"
     });
 
+        game.settings.register("gum", "autoSizeModifierMode", {
+        name: "Modificador de Tamanho automático",
+        hint: "Em rolagens de ataque com um único alvo, aplica o MT final do alvo pela regra básica ou calcula o MT relativo (MT do alvo menos MT da origem).",
+        scope: "world",
+        config: true,
+        type: String,
+        choices: {
+            off: "Desativado",
+            target: "MT do alvo (regra básica)",
+            relative: "MT relativo (alvo menos origem)"
+        },
+        default: "off"
+    });
+
     game.settings.register("gum", "normalizeGurpsDamageDice", {
         name: "Normalizar dados de dano",
         hint: "(GURPS: Modifying Dice + Adds) Converte automaticamente fórmulas Xd6+Y/Xd6-Y com modificadores altos para mais/menos dados, sem reduzir abaixo de 1d6.",

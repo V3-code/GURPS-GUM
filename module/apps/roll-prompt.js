@@ -6,6 +6,7 @@ import { getContextualPurposeIds, getInitialContextualFilterState, getRelatedPur
 import { normalizeRollTags } from "../utils/roll-tags.mjs";
 import { resolveRollPromptImage } from "../utils/roll-prompt-image.mjs";
 import { measureGridDistance } from "../utils/grid-distance.mjs";
+import { AUTO_SIZE_MODIFIER_MODES, calculateAttackSizeModifier } from "../utils/size-modifier.mjs";
 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
@@ -55,6 +56,7 @@ export class GurpsRollPrompt extends FormApplication {
         this._loadEffectModifiers();
         this._loadTargetCounterModifiers();
         this._loadAutoDistanceModifier();
+        this._loadAutoSizeModifier();
         
         console.log("GUM | Roll Prompt Iniciado");
         console.log(" -> Dados recebidos:", rollData);
@@ -444,6 +446,30 @@ export class GurpsRollPrompt extends FormApplication {
             value: modifier,
             isGM: true,
             isAutoDistance: true
+        });
+    }
+
+     _loadAutoSizeModifier() {
+        const mode = game.settings.get("gum", "autoSizeModifierMode") || AUTO_SIZE_MODIFIER_MODES.OFF;
+        if (mode === AUTO_SIZE_MODIFIER_MODES.OFF) return;
+        if (!["attack_melee", "attack_ranged"].includes(this.context)) return;
+
+        const targetToken = this._resolveSingleTargetToken();
+        if (!targetToken?.actor) return;
+
+        const result = calculateAttackSizeModifier(
+            foundry.utils.getProperty(this.actor, "system.attributes.mt.final"),
+            foundry.utils.getProperty(targetToken.actor, "system.attributes.mt.final"),
+            mode
+        );
+        if (!result) return;
+
+        this.selectedModifiers.push({
+            id: "auto_size_modifier",
+            label: result.label,
+            value: result.modifier,
+            isGM: true,
+            isAutoSizeModifier: true
         });
     }
 
