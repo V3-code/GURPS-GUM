@@ -44,8 +44,8 @@ test("roll prompt treats a spell or power attack configuration as its attack con
   assert.match(rollPrompt, /attack: item\.system\.attack_roll \|\| null/);
 });
 
-test("attack cards share one complete four-column grid", () => {
-  assert.match(itemStyles, /spell-power-result-grid\.spell-power-attack-grid \{[\s\S]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+test("attack cards share one complete three-column grid", () => {
+  assert.match(itemStyles, /spell-power-result-grid\.spell-power-attack-grid \{[\s\S]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(itemStyles, /spell-power-attack-type-fields \{[\s\S]*display: contents/);
   assert.match(itemStyles, /@media \(max-width: 520px\)[\s\S]*spell-power-result-grid\.spell-power-attack-grid \{[\s\S]*grid-template-columns: minmax\(0, 1fr\)/);
 });
