@@ -35,7 +35,7 @@ As novas versões serão detectadas pelo próprio Foundry. Se preferir, você ta
 
 | Informação | Estado atual |
 | --- | --- |
-| Versão do GUM | 1.1.8-beta |
+| Versão do GUM | 1.2.1-beta |
 | Foundry VTT mínimo | 12 |
 | Foundry VTT verificado | 14 |
 | Idiomas da interface | Português (Brasil)  |
@@ -47,6 +47,20 @@ As novas versões serão detectadas pelo próprio Foundry. Se preferir, você ta
 - [Manual de solicitação de testes](docs/test-request-manual.md)
 - [Versões publicadas](https://github.com/V3-code/GURPS-GUM/releases)
 - [Relatar um problema ou sugerir uma melhoria](https://github.com/V3-code/GURPS-GUM/issues)
+
+### Comandos rápidos no chat
+
+O namespace `/gum` oferece rolagens rápidas e exibe uma ajuda resumida no chat ao iniciar o sistema:
+
+```text
+/gum                         Exibe a ajuda
+/gum nh 14-4                 Rola contra um NH informado
+/gum furtividade-4           Usa o NH da perícia na ficha
+/gum dmg 3d6+1 cont          Rola dano com botão para aplicar ao alvo
+```
+
+Aliases de NH: `n`, `niv`, `nivel` e `nível`. Aliases de dano: `d`, `damage` e `dano`.
+
 
 ## Autor e licença
 

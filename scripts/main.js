@@ -41,6 +41,7 @@ import { resolveAttackDamageDisplay } from "../module/utils/attack-damage-displa
 import { canUserCreateActors } from "../module/utils/actor-creation-permission.mjs";
 
 import { getSkillDisplayName, setDirectoryEntryLabel } from "../module/utils/skill-display-name.mjs";
+import { installGumChatCommandInterceptor, normalizeGumLookup, resolveGumCommandActor, splitSkillModifier } from "../module/utils/gum-chat-command.mjs";
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
 
@@ -1755,6 +1756,143 @@ async function _rollDamageFromChatAction(payload) {
     await ChatMessage.create(chatData);
 }
 
+const GUM_CHAT_HELP = `
+  <div class="gum-command-help">
+    <h3><i class="fas fa-dice" style="font-size: x-large; text-transform: uppercase;"></i> Comandos do GUM</h3>
+    <p><strong>NH informado:</strong> <code>/gum nh value+-mods</code></p>
+    <p><strong>Perícia da ficha:</strong> <code>/gum skill+-mods</code></p>
+    <p><strong>Dano:</strong> <code>/gum dmg dice+-mods type</code></p>
+    <p><small>Aliases: nh, n, niv, nível · dmg, d, damage, dano · /gum help</small></p>
+  </div>`;
+
+function _gumCommandActor() {
+    return resolveGumCommandActor({
+        controlledTokens: canvas?.tokens?.controlled ?? [],
+        assignedActor: game.user?.character ?? null,
+        actors: game.actors?.contents ?? game.actors ?? [],
+        user: game.user
+    });
+}
+
+function _gumGmPresenter() {
+    return { name: "Mestre", img: "icons/svg/mystery-man.svg", id: null };
+}
+
+async function _showGumCommandHelp({ startup = false } = {}) {
+    return ChatMessage.create({
+        user: game.user.id,
+        speaker: { alias: "GURPS GUM" },
+        content: GUM_CHAT_HELP,
+        whisper: [game.user.id],
+        flags: { gum: { commandHelp: true, startup } }
+    });
+}
+
+async function _rollGumManualDamage(actor, formula, damageType) {
+    const roll = new Roll(formula);
+    await roll.evaluate();
+    const diceHtml = roll.dice.flatMap(die => die.results).map(result => `<span class="die-damage">${result.result}</span>`).join("");
+    const escapedFormula = foundry.utils.escapeHTML(formula);
+    const escapedType = foundry.utils.escapeHTML(damageType);
+    const damagePackage = {
+        attackerId: actor?.id ?? null,
+        attackerName: actor?.name || "Mestre",
+        sourceName: "Dano via comando",
+        main: { total: roll.total, type: damageType, armorDivisor: 1 },
+        onDamageEffects: {},
+        generalConditions: {}
+    };
+    const encodedDamage = foundry.utils.escapeHTML(JSON.stringify(damagePackage));
+    const content = `
+      <div class="gurps-damage-card">
+        <header class="card-header"><h3>Dano via comando</h3></header>
+        <div class="card-formula-container"><span class="formula-pill">${escapedFormula} ${escapedType}</span></div>
+        <div class="card-content"><div class="card-main-flex">
+          <div class="roll-column"><span class="column-label">Dados</span><div class="individual-dice-damage">${diceHtml}</div></div>
+          <div class="column-separator"></div>
+          <div class="target-column"><span class="column-label">Dano Total</span><div class="damage-total"><span class="damage-value">${roll.total}</span><span class="damage-type">${escapedType}</span></div></div>
+        </div></div>
+        <footer class="card-actions"><button type="button" class="apply-damage-button" data-damage='${encodedDamage}'><i class="fas fa-crosshairs"></i> Aplicar ao Alvo</button></footer>
+      </div>`;
+    const chatData = applyCurrentRollPrivacy({
+        user: game.user.id,
+        speaker: actor?.id ? ChatMessage.getSpeaker({ actor }) : { alias: "Mestre" },
+        content,
+        rolls: [roll]
+    });
+    await ChatMessage.create(chatData);
+}
+
+function _findGumSkill(actor, query) {
+    const skills = actor?.items?.filter(item => item.type === "skill") ?? [];
+    const matches = name => skills.filter(skill =>
+        [skill.name, getSkillDisplayName(skill)].some(candidate => normalizeGumLookup(candidate) === normalizeGumLookup(name))
+    );
+    const exact = matches(query);
+    if (exact.length) return { matches: exact, modifier: 0 };
+    const parsed = splitSkillModifier(query);
+    return { matches: matches(parsed.name), modifier: parsed.modifier };
+}
+
+async function _executeGumChatCommand(command) {
+    if (command.type === "help") return _showGumCommandHelp();
+    if (command.type === "error") {
+        const usage = command.reason === "damage" ? "/gum dmg 3d6+1 cont" : "/gum nh 14-4";
+        return ui.notifications.warn(`[GUM] Comando inválido. Exemplo: ${usage}`);
+    }
+
+    const selection = _gumCommandActor();
+    if (command.type === "damage") {
+        const actor = selection.actor || (game.user?.isGM ? _gumGmPresenter() : null);
+        if (!actor) return ui.notifications.warn("[GUM] Selecione um token ou vincule um personagem para rolar dano.");
+        return _rollGumManualDamage(actor, command.formula, command.damageType);
+    }
+
+    if (command.type === "nh") {
+        if (selection.multiple && !game.user?.isGM) return ui.notifications.warn("[GUM] Selecione somente um token.");
+        const actor = selection.actor || (game.user?.isGM ? _gumGmPresenter() : null);
+        if (!actor) return ui.notifications.warn("[GUM] Selecione um token ou vincule um personagem.");
+        return performGURPSRoll(actor, { label: "Teste de NH", type: "attribute", value: command.value, modifier: command.modifier });
+    }
+
+    if (selection.multiple) return ui.notifications.warn("[GUM] Selecione somente um token para usar uma perícia da ficha.");
+    if (!selection.actor) {
+        const guidance = selection.ambiguousOwners
+            ? "Você possui mais de um ator. Selecione um token ou atribua um personagem ao seu usuário."
+            : "Selecione um token para usar uma perícia da ficha ou use /gum nh 14-4.";
+        return ui.notifications.warn(`[GUM] ${guidance}`);
+    }
+    const { matches, modifier } = _findGumSkill(selection.actor, command.query);
+    if (matches.length !== 1) {
+        const message = matches.length > 1 ? "há mais de uma perícia com esse nome" : `perícia \"${command.query}\" não encontrada`;
+        return ui.notifications.warn(`[GUM] ${message}.`);
+    }
+    const skill = matches[0];
+    const value = Number(skill.system?.final_nh ?? skill.system?.nh);
+    if (!Number.isFinite(value)) return ui.notifications.warn(`[GUM] A perícia \"${getSkillDisplayName(skill)}\" não possui NH válido.`);
+    return performGURPSRoll(selection.actor, {
+        label: getSkillDisplayName(skill),
+        type: "skill",
+        value,
+        modifier,
+        itemId: skill.id,
+        itemUuid: skill.uuid,
+        attributeKey: skill.system?.base_attribute || null
+    });
+}
+
+function _registerGumChatCommands() {
+    const installed = installGumChatCommandInterceptor(ui.chat, async command => {
+        try {
+            await _executeGumChatCommand(command);
+        } catch (error) {
+            console.error("GUM | Falha ao executar comando de chat:", error);
+            ui.notifications.error("[GUM] Não foi possível executar o comando.");
+        }
+    });
+    if (!installed) console.warn("GUM | O processador de comandos do chat não está disponível.");
+}
+
 function _determineRollContext(actor, rollData) {
     const type = rollData.type;
     const itemId = rollData.itemId;
@@ -2856,6 +2994,12 @@ Hooks.once('ready', async function() {
     registerRollRequestSocket();
     game.socket.on("system.gum", enqueueResistanceSocketResult);
     console.log("GUM | Fase 'ready': Aplicando configurações.");
+
+    _registerGumChatCommands();
+
+    await _showGumCommandHelp({ startup: true }).catch(error => {
+        console.warn("GUM | Não foi possível publicar a ajuda de comandos no chat.", error);
+    });
 
     await migrateEffectTokenIconPolicy();
     await migrateEffectActionsSchema();
