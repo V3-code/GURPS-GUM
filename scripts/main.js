@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 55590)
-Total output lines: 4667
-
 // ================================================================== //
 //  1. IMPORTAÇÕES 
 // ================================================================== //
@@ -22,7 +19,7 @@ import { applySingleEffect, getEffectActions } from './effects-engine.js';
 import { buildActorEffectTarget, buildActorEffectTargets, getActorEvaluationKey } from '../module/utils/condition-actor-context.mjs';
 import { reconcileAllStateEffects, removeAllStateEffectsForItem, setStateEffectGroupActive, syncItemStateEffects } from '../module/services/state-effect-service.js';
 import { GUM } from '../module/config.js';
-import { importFromGCS, importFromJson } from "../module/apps/importers.js";
+import { importFromGCS } from "../module/apps/importers.js";
 import { GumGMScreen } from "../module/apps/gm-screen.js";
 import { GurpsRollPrompt } from "../module/apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../module/apps/damage-roll-prompt.js";
@@ -71,22 +68,6 @@ async function renderSpecializedSkillNames(app, html) {
 
 Hooks.on("renderCompendium", renderSpecializedSkillNames);
 Hooks.on("renderItemDirectory", renderSpecializedSkillNames);
-
-function renderItemLibraryImportButton(_app, html) {
-    if (!game.user?.isGM) return;
-    const root = $(html);
-    if (root.find(".gum-item-library-import").length) return;
-
-    const button = $(`
-        <button class="gum-item-library-import" type="button" style="width: 100%; margin-bottom: 5px;">
-            <i class="fas fa-file-import"></i> Importar Biblioteca
-        </button>
-    `);
-    button.on("click", () => importFromJson());
-    root.find(".directory-header .header-actions").append(button);
-}
-
-Hooks.on("renderItemDirectory", renderItemLibraryImportButton);
 const isEffectDurationPermanent = (duration = {}) => {
     if (!duration || typeof duration !== "object") return false;
     if (duration._uiMode === "permanent") return true;
@@ -2101,7 +2082,462 @@ function _evaluateModifierValue(actor, rawValue, rollData = {}) {
     const evaluateArithmetic = (expression) => {
         const tokenRegex = /[A-Za-zÀ-ÿ_][A-Za-z0-9À-ÿ_]*(?:\.[A-Za-zÀ-ÿ_][A-Za-z0-9À-ÿ_]*)*/g;
         const reserved = new Set(["maior", "menor", "max", "min", "math"]);
-        const prepared = expression.replace(tokenRegex, (to…5590 tokens truncated…, targets, context);
+        const prepared = expression.replace(tokenRegex, (token) => {
+            if (reserved.has(token.toLowerCase())) return token;
+            return `get(\"${token}\")`;
+        });
+        try {
+            return Function(
+                "get",
+                "maior",
+                "menor",
+                "max",
+                "min",
+                `"use strict"; return (${prepared});`
+            )(
+                (token) => _resolveModifierReferenceValue(actor, token, rollData),
+                (...args) => Math.max(...args),
+                (...args) => Math.min(...args),
+                (...args) => Math.max(...args),
+                (...args) => Math.min(...args)
+            );
+        } catch (_) {
+            return null;
+        }
+    };
+
+    const expressionMatch = source.match(/^(maior|menor|max|min)\s*\((.*)\)$/i);
+    if (expressionMatch) {
+        const mode = /^(menor|min)$/i.test(expressionMatch[1]) ? "min" : "max";
+        const values = _splitModifierArgs(expressionMatch[2]).map((entry) => {
+            const arithmeticEntry = evaluateArithmetic(entry);
+            if (Number.isFinite(arithmeticEntry)) return arithmeticEntry;
+            return _resolveModifierReferenceValue(actor, entry, rollData);
+        });
+        if (!values.length) return 0;
+        return mode === "min" ? Math.min(...values) : Math.max(...values);
+    }
+
+    const arithmeticResult = evaluateArithmetic(source);
+    if (Number.isFinite(arithmeticResult)) return arithmeticResult;
+
+    return _resolveModifierReferenceValue(actor, source, rollData);
+}
+
+function _normalizeRollModifierFilterTokens(rawValue, { lower = false } = {}) {
+    return String(rawValue ?? "")
+        .split(",")
+ .map((value) => value.trim())
+        .filter(Boolean)
+        .map((value) => lower ? value.toLowerCase() : value);
+}
+
+function _getRollSourceItem(actor, rollData = {}) {
+    const itemId = String(rollData?.itemId ?? "").trim();
+    const itemName = String(rollData?.itemName ?? "").trim().toLowerCase();
+    if (itemId) return actor?.items?.get(itemId) || null;
+    if (!itemName) return null;
+    return actor?.items?.find((candidate) => candidate.name?.trim().toLowerCase() === itemName) || null;
+}
+
+function _getRollSourceAttack(item = null, rollData = {}) {
+    if (!item) return null;
+    const attackId = String(rollData?.attackId ?? "").trim();
+    if (attackId) {
+        return item.system?.melee_attacks?.[attackId] ?? item.system?.ranged_attacks?.[attackId] ?? null;
+    }
+
+    const rangedAttacks = Object.values(item.system?.ranged_attacks || {});
+    const meleeAttacks = Object.values(item.system?.melee_attacks || {});
+    const allAttacks = [...meleeAttacks, ...rangedAttacks].filter(Boolean);
+    return allAttacks.length === 1 ? allAttacks[0] : null;
+}
+
+function _matchesRollModifierItemFilter(entry = {}, item = null) {
+    const sourceItemFilters = _normalizeRollModifierFilterTokens(entry?.source_item_ids, { lower: true });
+    if (sourceItemFilters.length) {
+        if (!item) return false;
+        const sourceCandidates = [item.id, item.uuid, item.name]
+            .map((value) => String(value ?? "").trim().toLowerCase())
+            .filter(Boolean);
+        if (!sourceItemFilters.some((filter) => sourceCandidates.includes(filter))) return false;
+    }
+
+    const legacyNameFilters = _normalizeRollModifierFilterTokens(entry?.target_values, { lower: true });
+    if (!legacyNameFilters.length) return true;
+    if (!item) return false;
+
+    const itemName = String(item?.name ?? "").trim().toLowerCase();
+    return itemName ? legacyNameFilters.includes(itemName) : false;
+}
+
+function _matchesRollModifierAttackFilter(entry = {}, attack = null, rollData = {}) {
+    const attackFilters = _normalizeRollModifierFilterTokens(entry?.source_attack_ids, { lower: true });
+    if (!attackFilters.length) return true;
+
+    const attackCandidates = [
+        rollData?.attackId,
+        attack?.id,
+        attack?.mode,
+        attack?.name
+    ].map((value) => String(value ?? "").trim().toLowerCase()).filter(Boolean);
+
+    return attackCandidates.length > 0 && attackFilters.some((filter) => attackCandidates.includes(filter));
+}
+
+function _matchesNhDisplayContextForItem(entry = {}, item = null) {
+    const context = (entry?.contexts ?? entry?.context ?? "all").toString().trim();
+    if (!context || context === "all") return true;
+    const contexts = context.includes(",") ? context.split(",").map(c => c.trim()) : [context];
+    const baseAttr = (item?.system?.base_attribute || "").toString().trim().toLowerCase();
+    return contexts.some((ctx) => {
+        if (ctx === "skill") return item?.type === "skill";
+        if (ctx === "spell") return item?.type === "spell";
+        if (ctx === "power") return item?.type === "power";
+        if (ctx.startsWith("skill_")) return item?.type === "skill" && baseAttr === ctx.replace("skill_", "");
+        return false;
+    });
+}
+
+function _matchesNhDisplayContextForAttack(entry = {}, attackType = "") {
+    const context = (entry?.contexts ?? entry?.context ?? "all").toString().trim();
+    if (!context || context === "all") return true;
+    const contexts = context.includes(",") ? context.split(",").map(c => c.trim()) : [context];
+    return contexts.some((ctx) => {
+        if (ctx === "attack") return true;
+        if (ctx === "attack_melee") return attackType === "melee";
+        if (ctx === "attack_ranged") return attackType === "ranged";
+        return false;
+    });
+}
+
+function _matchesNhDisplayContextForDefense(entry = {}, defenseType = "") {
+    const context = (entry?.contexts ?? entry?.context ?? "all").toString().trim();
+    if (!context || context === "all") return true;
+    const contexts = context.includes(",") ? context.split(",").map(c => c.trim()) : [context];
+    const normalizedDefenseType = `${defenseType ?? ""}`.trim().toLowerCase();
+    return contexts.some((ctx) => {
+        if (ctx === "defense") return true;
+        if (ctx === "defense_parry") return normalizedDefenseType === "parry";
+        if (ctx === "defense_block") return normalizedDefenseType === "block";
+        return false;
+    });
+}
+
+
+function _matchesRollTargetFilter(actor, rollData = {}, entry = {}) {
+    const item = _getRollSourceItem(actor, rollData);
+    const attack = _getRollSourceAttack(item, rollData);
+    if (!_matchesRollModifierItemFilter(entry, item)) return false;
+    if (!_matchesRollModifierAttackFilter(entry, attack, rollData)) return false;
+    return true;
+}
+
+function _collectEffectRollModifiers(actor, rollContext, rollData = {}) {
+    const activeEffects = Array.from(actor?.appliedEffects ?? actor?.effects ?? []);
+    const mods = [];
+    for (const effect of activeEffects) {
+        const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
+        if (!data) continue;
+        const entries = Array.isArray(data.entries) && data.entries.length
+            ? data.entries
+            : [{ value: data.value, cap: data.cap, context: data.context, application_side: data.applicationSide ?? "self" }];
+
+        entries.forEach((entry, index) => {
+            const context = entry?.contexts ?? entry?.context ?? data.context ?? "all";
+            if (!_matchesRollContext(context, rollContext)) return;
+            if (!matchesRollTags(entry, rollData.rollTags)) return;
+            if (!_matchesRollTargetFilter(actor, rollData, entry)) return;
+            if ((entry?.nh_display_mode || "roll_only") === "include_in_nh") return;
+            const applicationSide = _resolveRollModifierApplicationSide(entry, data);
+            if (applicationSide !== "self") return;
+            mods.push({
+                id: `${effect.id}::${index}`,
+                value: entry?.value ?? data.value,
+                cap: entry?.cap ?? entry?.nh_cap ?? data.cap
+            });
+        });
+    }
+    return mods;
+}
+
+function _resolveRollModifierApplicationSide(entry = {}, fallback = {}) {
+    const side = entry?.application_side ?? entry?.applicationSide ?? fallback?.applicationSide ?? "self";
+    return `${side}`.trim() || "self";
+}
+
+function _isCounterContextSupported(rollContext) {
+    const context = `${rollContext ?? ""}`.trim();
+    return context.length > 0;
+}
+
+function _buildCounterGroupKey(entry = {}, effect = {}, entryIndex = 0) {
+    const label = (entry?.label || "").toString().trim();
+    if (label) return label.slugify({ strict: true }) || `entry-${entryIndex}`;
+    const effectName = (effect?.name || "").toString().trim();
+    if (effectName) return effectName.slugify({ strict: true }) || `entry-${entryIndex}`;
+    return `effect-${effect?.id || "unknown"}-${entryIndex}`;
+}
+
+function _resolveCounterTargetsForRoll(rollData = {}) {
+    const byRollData = rollData?.targetTokenId ? canvas.tokens?.get(rollData.targetTokenId) : null;
+    if (byRollData?.actor) return [byRollData];
+    return Array.from(game.user.targets || []).filter((token) => token?.actor);
+}
+
+function _collectCounterCandidatesFromTarget(targetActor, rollContext, rollData = {}) {
+    const candidates = [];
+    if (!targetActor) return candidates;
+    const activeEffects = Array.from(targetActor.appliedEffects ?? targetActor.effects ?? []);
+
+    for (const effect of activeEffects) {
+        const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
+        if (!data) continue;
+
+        const entries = Array.isArray(data.entries) && data.entries.length
+            ? data.entries
+            : [{ value: data.value, cap: data.cap, context: data.context, application_side: data.applicationSide ?? "self" }];
+
+        entries.forEach((entry, entryIndex) => {
+            const context = entry?.contexts ?? entry?.context ?? data.context ?? "all";
+            if (!_matchesRollContext(context, rollContext)) return;
+            if (!matchesRollTags(entry, rollData.rollTags)) return;
+            if (!_matchesRollTargetFilter(targetActor, rollData, entry)) return;
+            if ((entry?.nh_display_mode || "roll_only") === "include_in_nh") return;
+            if (_resolveRollModifierApplicationSide(entry, data) !== "vs_targeter") return;
+            candidates.push({ effect, entry, entryIndex });
+        });
+    }
+
+    return candidates;
+}
+
+function _collectTargetCounterRollModifiers(actor, rollContext, rollData = {}) {
+    if (!actor || !_isCounterContextSupported(rollContext)) return [];
+
+    const targets = _resolveCounterTargetsForRoll(rollData);
+    if (targets.length !== 1) return [];
+
+    const [targetToken] = targets;
+    const candidates = _collectCounterCandidatesFromTarget(targetToken.actor, rollContext, rollData);
+    if (!candidates.length) return [];
+
+    const grouped = new Map();
+    for (const candidate of candidates) {
+        const key = _buildCounterGroupKey(candidate.entry, candidate.effect, candidate.entryIndex);
+        const value = candidate.entry?.value ?? 0;
+        const cap = candidate.entry?.cap ?? candidate.entry?.nh_cap ?? "";
+        const current = grouped.get(key);
+        if (!current || Number(value) < Number(current.value)) {
+            grouped.set(key, {
+                id: `counter::${targetToken.id}::${key}`,
+                value,
+                cap
+            });
+        }
+    }
+    return Array.from(grouped.values());
+}
+
+
+/**
+ * O "Despachante" de Efeitos de Ativação.
+ * Pega os efeitos de sucesso/falha de um item e os envia para o "Motor" applySingleEffect.
+ */
+async function applyActivationEffects(item, actor, outcome, activationOptions = {}) {
+    if (!item || !item.system.activationEffects || !item.system.activationEffects[outcome]) {
+        return;
+    }
+
+    const effectsList = item.system.activationEffects[outcome];
+    
+    for (const effectData of Object.values(effectsList)) {
+        const effectItem = await fromUuid(effectData.effectUuid);
+        if (effectItem) {
+            let finalTargets = [];
+            if (effectData.recipient === 'self') {
+                const activeTokens = actor.getActiveTokens();
+                finalTargets = activeTokens.length ? activeTokens : [buildFallbackTokenForActor(actor)];
+            } else {
+                finalTargets = Array.from(game.user.targets);
+            }
+
+            if (finalTargets.length === 0) {
+                 // Se o alvo for 'target' mas nenhum foi selecionado, podemos usar o próprio ator como fallback ou avisar.
+                 // Usar o próprio ator como fallback pode ser um bom padrão.
+                 if (effectData.recipient === 'target') {
+                    ui.notifications.warn(`O efeito "${effectItem.name}" precisa de um alvo. Aplicando em si mesmo como padrão.`);
+                 }
+                 const activeTokens = actor.getActiveTokens();
+                 finalTargets = activeTokens.length ? activeTokens : [buildFallbackTokenForActor(actor)];
+            }
+            // Se o efeito tiver barreira de resistência ativada, disparamos o prompt antes de aplicar.
+            const requiresResistance = effectItem.system?.resistanceRoll?.isResisted;
+            if (requiresResistance) {
+                for (const targetToken of finalTargets) {
+                    await _promptActivationResistance(effectItem, targetToken, actor, item, effectData.id, activationOptions);
+                }
+            } else {
+                await applySingleEffect(effectItem, finalTargets, { actor: actor, origin: item });
+            }
+        }
+    }
+}
+
+/**
+ * Aplica os efeitos do grupo "Evento de Uso" para um gatilho específico.
+ * trigger: "consume" | "activate"
+ */
+async function applyUseEventEffects(item, actor, trigger, options = {}) {
+    if (!item || !actor) return;
+    const normalizedTrigger = `${trigger || ""}`.trim().toLowerCase();
+    if (!normalizedTrigger) return;
+
+    const useEventEffects = item.system?.useEventEffects || {};
+    const effectsList = Object.values(useEventEffects).filter((effectData) => {
+        const entryTrigger = `${effectData?.useEventTrigger || "consume"}`.trim().toLowerCase();
+        return entryTrigger === normalizedTrigger;
+    });
+    if (!effectsList.length) return;
+
+    for (const effectData of effectsList) {
+        const effectItem = await fromUuid(effectData.effectUuid).catch(() => null);
+        if (!effectItem) continue;
+
+        let finalTargets = [];
+        if (effectData.recipient === "self") {
+            const activeTokens = actor.getActiveTokens();
+            finalTargets = activeTokens.length ? activeTokens : [buildFallbackTokenForActor(actor)];
+        } else {
+            finalTargets = Array.from(game.user.targets || []);
+        }
+
+        if (finalTargets.length === 0) {
+            if (effectData.recipient === "target") {
+                ui.notifications.warn(`O efeito "${effectItem.name}" precisa de um alvo. Aplicando em si mesmo como padrão.`);
+            }
+            const activeTokens = actor.getActiveTokens();
+            finalTargets = activeTokens.length ? activeTokens : [buildFallbackTokenForActor(actor)];
+        }
+
+        const requiresResistance = effectItem.system?.resistanceRoll?.isResisted;
+         if (requiresResistance) {
+            for (const targetToken of finalTargets) {
+                await _promptActivationResistance(effectItem, targetToken, actor, item, effectData.id, {
+                    ...options,
+                    mode: options.mode || "use-event"
+                });
+            }
+        } else {
+            await applySingleEffect(effectItem, finalTargets, { actor, origin: item });
+        }
+    }
+}
+
+
+/**
+ * Cria uma mensagem de chat solicitando o teste de resistência de um efeito de ativação.
+ * O teste usa os dados de barreira configurados no item efeito.
+ */
+async function _promptActivationResistance(effectItem, targetToken, sourceActor, originItem, effectLinkId, options = {}) {
+    const rollData = effectItem.system?.resistanceRoll || {};
+    const normalizedResistance = normalizeResistanceRoll(rollData);
+    const suppressResistanceCard = rollData.skipPromptCard || options.suppressResistanceCard;
+    if (suppressResistanceCard) {
+        const targetKey = targetToken.document?.uuid || targetToken.uuid || targetToken.actor?.uuid;
+        const conditionContext = options.conditionId
+            ? {
+                conditionId: options.conditionId,
+                conditionActivationMode: options.conditionActivationMode || null
+            }
+            : {};
+        const silentRequest = {
+            id: foundry.utils.randomID(), title: `Resistência: ${effectItem.name}`,
+            origin: { type: "effect-barrier", sourceActorUuid: sourceActor?.uuid, sourceItemUuid: originItem?.uuid, effectUuid: effectItem.uuid, effectLinkId },
+            targets: [{ targetKey, actorUuid: targetToken.actor?.uuid, tokenUuid: targetToken.document?.uuid || targetToken.uuid || null, actorName: targetToken.actor?.name, recipientUserIds: [] }],
+            test: { ...normalizedResistance.test, fixedModifier: evaluateNumericFormula(rollData.modifier, { actor: targetToken.actor }) || 0 }, consequence: normalizedResistance.consequence
+        };
+        await executeRollRequest(silentRequest, targetKey, { prompt: false, onResult: async result => {
+            if (!game.user.isGM) {
+                game.socket.emit("system.gum", { type: "rollRequest:silentBarrierResult", request: silentRequest, targetKey, userId: game.user.id, result, context: { conditionId: options.conditionId || null, conditionActivationMode: options.conditionActivationMode || null } });
+                return;
+            }
+            const barrier = evaluateBarrierConsequence(result, normalizedResistance.consequence);
+            if (barrier.shouldApply) await applySingleEffect(effectItem, [targetToken], { actor: sourceActor, origin: originItem || effectItem, actionIds: barrier.actionIds, ...conditionContext });
+        }});
+        return;
+    }
+    const applyOnText = rollData.mode === 'conditional' ? 'Resultados condicionais' : (rollData.applyOn === 'success' ? 'Em sucesso' : 'Em falha');
+    const marginValue = rollData.mode === 'conditional' ? 'por resultado' : ((rollData.margin !== undefined && rollData.margin !== null && rollData.margin !== '') ? rollData.margin : '—');
+    const rawModifier = (rollData.modifier ?? "").toString().trim();
+    const previewModifier = evaluateNumericFormula(rawModifier, { actor: targetToken.actor });
+    const previewModifierSigned = previewModifier > 0 ? `+${previewModifier}` : `${previewModifier}`;
+    const testLabel = `${(rollData.attribute || 'HT').toUpperCase()}${rawModifier && previewModifier !== 0 ? ` ${previewModifierSigned}` : ''}`;
+    const resistanceChatText = (rollData.chatText || "").toString().trim();
+ 
+    const chatPayload = {
+        mode: options.mode || "activation",
+        targetActorId: targetToken.actor?.id,
+        targetTokenId: targetToken.id,
+        effectItemUuid: effectItem.uuid || null,
+        sourceActorId: sourceActor?.id || null,
+        originItemUuid: originItem?.uuid || null,
+        effectLinkId: effectLinkId || null,
+                conditionId: options.conditionId || null,
+        conditionActivationMode: options.conditionActivationMode || null
+    };
+ const targetKey = targetToken.document?.uuid || targetToken.uuid || targetToken.actor?.uuid;
+ const request = {
+        version: 1, id: foundry.utils.randomID(), status: "pending", title: `Resistência: ${effectItem.name}`,
+        origin: { type: "effect-barrier", sourceActorUuid: sourceActor?.uuid, sourceItemUuid: originItem?.uuid, effectUuid: effectItem.uuid, effectLinkId },
+        targets: [{ targetKey, actorUuid: targetToken.actor?.uuid, tokenUuid: targetToken.document?.uuid || targetToken.uuid || null, actorName: targetToken.actor?.name, recipientUserIds: [] }],
+        test: normalizedResistance.test, consequence: normalizedResistance.consequence, delivery: {}, responses: []
+    };
+
+ const content = renderPendingResistanceRequest({
+        request, effectName: effectItem.name, effectImg: effectItem.img,
+        originLabel: sourceActor?.name || originItem?.name || "Origem desconhecida",
+        targetName: targetToken.name || targetToken.actor?.name || "Alvo",
+        targetImg: resolveCharacterImage(targetToken.actor, { token: targetToken }),
+        testLabel: `Teste de ${testLabel}`, modifierLabel: rawModifier ? `Barreira ${previewModifierSigned}` : "",
+        applyOnLabel: applyOnText, marginLabel: marginValue,
+        purposeLabels: getPurposeLabels(normalizedResistance.test.requestedPurposeIds),
+        description: resistanceChatText
+    });
+
+
+    const chatData = {
+        speaker: ChatMessage.getSpeaker({ actor: targetToken.actor || sourceActor }),
+        content,
+        flags: { gum: { rollRequest: request, resistanceContext: chatPayload } }
+    };
+    const privacy = getResistanceChatPrivacy({
+        visibility: rollData.chatVisibility,
+        actor: targetToken.actor,
+        users: game.users
+    });
+        if (privacy.mode === "publicroll") {
+        const publicData = typeof ChatMessage.applyMode === "function"
+            ? ChatMessage.applyMode(chatData, privacy.mode)
+            : typeof ChatMessage.applyRollMode === "function"
+                ? ChatMessage.applyRollMode(chatData, privacy.mode)
+                : { ...chatData, rollMode: privacy.mode };
+        ChatMessage.create(publicData);
+    } else {
+        ChatMessage.create({ ...chatData, whisper: privacy.whisper });
+    }
+}
+
+/**
+ * Ponto de entrada comum para aplicações diretas de Itens de Efeito.
+ * Garante que arrastar para a ficha, usar o Escudo do Mestre e outros
+ * consumidores não contornem a Barreira de Resistência.
+ */
+export async function applyEffectWithResistance(effectItem, targets, context = {}) {
+    if (!effectItem || !Array.isArray(targets) || targets.length === 0) return { requested: false, applied: false };
+    const resistanceRoll = effectItem.system?.resistanceRoll || {};
+    if (!resistanceRoll.isResisted) {
+        await applySingleEffect(effectItem, targets, context);
         return { requested: false, applied: true };
     }
 
@@ -2127,7 +2563,6 @@ Hooks.once('init', async function() {
     GumPreviewDialog.registerChatDetailsHandler();
     game.gum = {};
     game.gum.importFromGCS = importFromGCS;
-    game.gum.importItemLibrary = importFromJson;
     game.gum.rollFromHotbar = rollFromHotbar;
     game.gum.applyUseEventEffects = applyUseEventEffects;
     game.gum.applySingleEffect = applySingleEffect;
