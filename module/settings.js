@@ -242,8 +242,8 @@ export const registerSystemSettings = function() {
     });
 
     game.settings.register("gum", "importJSONButton", {
-        name: "Importar Itens (JSON)",
-        hint: "Ferramenta do Mestre. Importa um arquivo .json de itens (Perícias, Vantagens, etc.) diretamente para o compêndio do sistema correspondente.",
+        name: "Importar Biblioteca de Itens",
+        hint: "Ferramenta do Mestre. Identifica o conteúdo de uma biblioteca GCS/GUM e permite escolher um compêndio de Itens como destino.",
         scope: "world",
         config: true,
         type: Boolean,

@@ -1,6 +1,7 @@
 import { getBodyLocationDefinition, getBodyProfile } from "../config/body-profiles.js";
 import { buildGCSActorReconciliation } from "../utils/gcs-actor-reconciliation.mjs";
 import { canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
+import { analyzeItemLibrary } from "../utils/item-library-import.mjs";
 /**
  * Lida com a importação de um arquivo JSON (formato customizado) OU
  * um arquivo de Biblioteca GCS (.skl, .spl, .eqp, .adq, .adm, .eqm) para um compêndio.
@@ -9,7 +10,7 @@ export async function importFromJson() {
     // 1. Cria um elemento <input> de arquivo, escondido
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.json, .gcs, .skl, .spl, .eqp, .adq, .adm, .eqm';
+    input.accept = '.json, .skl, .spl, .eqp, .adq, .adm, .eqm';
 
     // 2. Adiciona um "listener"
     input.onchange = async (e) => {
@@ -28,47 +29,34 @@ export async function importFromJson() {
             return ui.notifications.error("O arquivo está corrompido ou não é um JSON válido.");
         }
 
-        const extension = (file.name?.split('.')?.pop() || '').toLowerCase();
-
-        // 5. Determina o que importar
-let importEntries = [];
-        if (Array.isArray(data)) {
-            const looksLikeGCSRows = data.some(entry =>
-                entry && typeof entry === "object" && (
-                    Array.isArray(entry.children) ||
-                    Array.isArray(entry.modifiers) ||
-                    entry.base_points !== undefined ||
-                    entry.points_per_level !== undefined ||
-                    entry.reference !== undefined
-                )
-            );
-
-            importEntries = looksLikeGCSRows
-                ? collectGCSImportEntries(data)
-                : data.map(item => ({ itemData: item, folderPath: [] })); // Formato JSON Simples
-        } else if (data.rows && Array.isArray(data.rows)) {
-            importEntries = collectGCSImportEntries(data.rows); // Formato de Biblioteca GCS (com children)
-        } else if (
-            Array.isArray(data.skills) ||
-            Array.isArray(data.spells) ||
-            Array.isArray(data.equipment) ||
-            Array.isArray(data.traits) ||
-            Array.isArray(data.modifiers)
-        ) {
-            const roots = data.skills || data.spells || data.equipment || data.traits || data.modifiers || [];
-            importEntries = collectGCSImportEntries(roots);
-        } else {
-            return ui.notifications.error("O formato do JSON não foi reconhecido. Esperando uma lista de itens ou um objeto GCS com uma propriedade 'rows'.");
+        // 5. Identifica o conteúdo sem consultar o compêndio de destino.
+        let libraryAnalysis;
+        try {
+            libraryAnalysis = analyzeItemLibrary(data, file.name);
+        } catch (error) {
+            return ui.notifications.error(error.message);
         }
+
+        const importEntries = libraryAnalysis.sections.flatMap(section => {
+            if (section.kind === "foundry") {
+                return section.rows.map(item => ({
+                    itemData: item,
+                    folderPath: [],
+                    itemKind: "foundry"
+                }));
+            }
+
+            return collectGCSImportEntries(section.rows).map(entry => ({
+                ...entry,
+                itemKind: section.kind
+            }));
+        });
 
         if (importEntries.length === 0) {
             return ui.notifications.error("Nenhum item encontrado no arquivo.");
         }
 
-        const isCompendiumJson = Array.isArray(data) && importEntries.some(entry =>
-            entry?.itemData && typeof entry.itemData === "object" &&
-            (entry.itemData._id || entry.itemData.system)
-        );
+        const isCompendiumJson = libraryAnalysis.isCompendiumJson;
 
         if (isCompendiumJson) {
             const missingIds = importEntries.filter(entry => !entry.itemData._id);
@@ -101,7 +89,9 @@ let importEntries = [];
             title: "Selecionar Destino da Importação",
             content: `
                 <div style="padding: 10px 0;">
-                    <p>Encontrados <strong>${importEntries.length}</strong> itens no arquivo JSON.</p>
+                    <p><strong>Conteúdo detectado:</strong> ${escapeImportHTML(libraryAnalysis.label)}</p>
+                    <p>Encontrados <strong>${importEntries.length}</strong> itens no arquivo.</p>
+                    ${libraryAnalysis.warnings.map(warning => `<p style="color: var(--color-warm-2, #c9a86a);">${escapeImportHTML(warning)}</p>`).join("")}
                     <p>Por favor, escolha o compêndio de destino:</p>
                     <div class="form-group" style="margin-top: 10px;">
                         <label style="font-weight: bold;">Compêndio:</label>
@@ -158,47 +148,10 @@ let importEntries = [];
  */
 async function importToCompendium(pack, importEntries) {
     if (!pack || !importEntries) return;
-    
+
     ui.notifications.info(`Traduzindo ${importEntries.length} itens do GCS/JSON...`);
     const itemsToCreate = [];
     let packWasLocked = pack.locked;
-    
-    const packName = pack.metadata.name; 
-    const packNameToType = {
-        "skills": "skill",
-        "advantages": "advantage",
-        "disadvantages": "disadvantage",
-        "spells": "spell",
-        "powers": "power",
-        "equipment": "equipment",
-        "modifiers": "modifier",
-        "eqp_modifiers": "eqp_modifier"
-    };
-
-    let itemType = packNameToType[packName];
-    let isGenericJson = false;
-    
-    if (!itemType) {
-        console.warn(`GUM | O compêndio "${pack.title}" não tem um tradutor GCS mapeado. Os dados JSON serão importados "como estão".`);
-        const firstItemType = importEntries[0]?.itemData?.type;
-        if (!firstItemType) {
-            return ui.notifications.error("O JSON não tem um 'type' e o compêndio não é padrão. Importação cancelada.");
-        }
-        itemType = firstItemType; // Usa o tipo do primeiro item
-        isGenericJson = true; // Marca que não precisamos de tradução
-    }
-
-    // ✅ INÍCIO DA CORREÇÃO: Detecta o formato do arquivo
-    // Verifica o primeiro item. Se ele tiver a chave "system",
-    // asumimos que o arquivo inteiro já está no formato do Foundry.
-    const isFoundryFormat = importEntries[0]?.itemData?.system && importEntries[0]?.itemData?.type;
-    
-    if (isFoundryFormat) {
-         console.log("GUM | Detectado JSON pré-formatado. Importando diretamente.");
-         isGenericJson = true; // Trata como genérico para pular a tradução
-    }
-    // ✅ FIM DA CORREÇÃO
-
      try {
         // Pastas de compêndio também respeitam lock; precisamos liberar antes de criar a árvore.
         await pack.configure({ locked: false });
@@ -209,18 +162,21 @@ let lastGCSBaseSkill = null;
 for (const entry of importEntries) {
     let gcsItemData = entry?.itemData;
     const folderPath = Array.isArray(entry?.folderPath) ? entry.folderPath : [];
+    const itemKind = entry?.itemKind;
 
     if (!gcsItemData) continue;
 
     let foundryItemData = null;
 
-    // Se for genérico ou pré-formatado, não traduz.
-    if (isGenericJson) {
-        foundryItemData = gcsItemData;
+    // Documentos exportados pelo GUM já estão no formato do Foundry.
+    if (itemKind === "foundry") {
+        foundryItemData = foundry.utils.deepClone(gcsItemData);
+        delete foundryItemData._id;
+        delete foundryItemData.folder;
     }
 
-    // Caso contrário, traduz.
-    else if (itemType === "skill") {
+    // Bibliotecas do GCS usam o tradutor identificado pelo próprio arquivo.
+    else if (itemKind === "skill") {
         gcsItemData = resolveGCSImportSkill(
             gcsItemData,
             lastGCSBaseSkill
@@ -247,24 +203,19 @@ for (const entry of importEntries) {
                 specialization: gcsItemData.specialization || ""
             };
         }
-    } else if (itemType === "advantage" || itemType === "disadvantage") {
+    } else if (itemKind === "trait") {
                 foundryItemData = parseGCSLibraryTrait(gcsItemData);
-            } else if (itemType === "equipment") {
+            } else if (itemKind === "equipment") {
                 foundryItemData = parseGCSLibraryEquipment(gcsItemData);
-            } else if (itemType === "spell") {
+            } else if (itemKind === "spell") {
                 foundryItemData = parseGCSLibrarySpell(gcsItemData);
-            } else if (itemType === "modifier") {
+            } else if (itemKind === "modifier") {
                 foundryItemData = parseGCSLibraryModifier(gcsItemData);
-            } else if (itemType === "eqp_modifier") {
+            } else if (itemKind === "eqp_modifier") {
                 foundryItemData = parseGCSLibraryEquipmentModifier(gcsItemData);
             }
 
             if (foundryItemData) {
-                // Garante que o tipo do item seja o tipo esperado pelo compêndio
-                // (Se for genérico, o tipo já deve estar correto no JSON)
-                if(!isGenericJson) {
-                    foundryItemData.type = itemType;
-                }
                 const folderId = await ensureCompendiumFolderPath(pack, folderPath, folderCache);
                 if (folderId) foundryItemData.folder = folderId;
                 applyAutoPointsBaselineOnImport(foundryItemData);
@@ -3794,21 +3745,10 @@ async function synchronizeCompendiumJson(pack, importEntries, { removeMissing = 
         }
 
         const existingDocuments = await pack.getDocuments();
-        const expectedMappedType = {
-            skills: "skill", advantages: "advantage", disadvantages: "disadvantage",
-            spells: "spell", powers: "power", equipment: "equipment",
-            modifiers: "modifier", eqp_modifiers: "eqp_modifier"
-        }[pack.metadata.name];
-        const existingTypes = new Set(existingDocuments.map(document => document.type).filter(Boolean));
-        const allowedTypes = expectedMappedType ? new Set([expectedMappedType]) : existingTypes;
         const incomingTypes = new Set(incoming.map(document => document.type).filter(Boolean));
 
-        if (incomingTypes.size !== 1) {
-            throw new Error("O JSON de compêndio deve conter um único tipo de Item.");
-        }
-        const [incomingType] = incomingTypes;
-        if (allowedTypes.size && !allowedTypes.has(incomingType)) {
-            throw new Error(`Tipo incompatível: o JSON contém "${incomingType}", mas o compêndio "${pack.title}" contém/espera ${[...allowedTypes].map(type => `"${type}"`).join(", ")}.`);
+        if (incomingTypes.size === 0 || incoming.some(document => !document.type)) {
+            throw new Error("O JSON contém documento(s) sem um tipo de Item válido.");
         }
 
         if (originalLocked) await pack.configure({ locked: false });
