@@ -10,7 +10,7 @@ test("manual wound and combat record dialogs use the shared minimal editor", () 
   assert.match(actorSheet, /gum-combat-meter-form gum-record-editor/);
   assert.match(actorSheet, /gum-wound-edit-dialog/);
   assert.match(actorSheet, /gum-record-field--title[\s\S]+gum-record-field--nature[\s\S]+gum-record-field--initial/);
-  assert.match(actorSheet, /gum-wound-edit-dialog"\], width: 600, height: "auto"/);
+  assert.match(actorSheet, /gum-wound-edit-dialog"\], width: 480/);
   assert.match(actorSheet, /Registro de combate[\s\S]+Acompanhe manualmente/);
 });
 

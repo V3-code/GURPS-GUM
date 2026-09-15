@@ -18,13 +18,13 @@ test("regra relativa subtrai o MT da origem do MT do alvo", () => {
   assert.equal(calculateAttackSizeModifier(-2, 1, AUTO_SIZE_MODIFIER_MODES.RELATIVE)?.modifier, 3);
 });
 
-test("regra relativa preserva resultado zero e detalha os operandos", () => {
+test("regra relativa preserva resultado zero e exibe valor conciso", () => {
   assert.deepEqual(calculateAttackSizeModifier("3", "3", AUTO_SIZE_MODIFIER_MODES.RELATIVE), {
     mode: "relative",
     sourceMT: 3,
     targetMT: 3,
     modifier: 0,
-    label: "MT relativo (alvo +3 − origem +3)"
+    label: "MT relativo (+0)"
   });
 });
 
