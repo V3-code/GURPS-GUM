@@ -79,11 +79,11 @@ test("importação de biblioteca exige permissão de Mestre", () => {
 });
 
 test("aba Itens oferece o importador diretamente ao Mestre", () => {
-    const source = readFileSync(new URL("../scripts/main.js", import.meta.url), "utf8");
+    const source = readFileSync(new URL("../module/apps/item-library-directory.js", import.meta.url), "utf8");
 
     assert.match(source, /Hooks\.on\("renderItemDirectory", renderItemLibraryImportButton\)/);
     assert.match(source, /class="gum-item-library-import"/);
-    assert.match(source, /button\.on\("click", \(\) => importFromJson\(\)\)/);
+        assert.match(source, /button\.addEventListener\("click", \(\) => importFromJson\(\)\)/);
     assert.match(source, /if \(!game\.user\?\.isGM\) return/);
 });
 
