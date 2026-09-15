@@ -44,11 +44,11 @@ test("mensagem exclusiva do mestre usa a rolagem oculta nativa do Foundry", () =
 test("Foundry 14 usa messageMode sem emitir o aviso legado de rollMode", () => {
   assert.deepEqual(
     getAttributeRollMessageOptions({ visibility: "public", actor, users, generation: 14 }),
-    { messageData: {}, creationOptions: { messageMode: "publicroll" } }
+    { messageData: {}, creationOptions: { messageMode: "public" } }
   );
   assert.deepEqual(
     getAttributeRollMessageOptions({ visibility: "gm", actor, users, generation: 14 }),
-    { messageData: {}, creationOptions: { messageMode: "blindroll" } }
+    { messageData: {}, creationOptions: { messageMode: "blind" } }
   );
 });
 
