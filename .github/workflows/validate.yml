@@ -2,6 +2,8 @@ name: Validate System Manifest
 
 on:
   push:
+    tags:
+      - "v*"
     paths:
       - "system.json"
       - "README.md"
@@ -42,6 +44,29 @@ jobs:
                   raise SystemExit(f'compatibility.{k} ausente em system.json')
 
           print('system.json validado com sucesso')
+          PY
+
+      - name: Validate tag matches manifest version
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          version = json.loads(Path('system.json').read_text(encoding='utf-8'))['version']
+          expected_tag = f'v{version}'
+          release_tag = os.environ['RELEASE_TAG']
+
+          if release_tag != expected_tag:
+              raise SystemExit(
+                  f'A tag {release_tag!r} não corresponde à versão do manifesto '
+                  f'({version!r}); use a tag {expected_tag!r}.'
+              )
+
+          print(f'Tag {release_tag} corresponde ao system.json')
           PY
 
       - name: Validate local paths in manifest

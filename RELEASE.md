@@ -27,6 +27,17 @@ Nome do arquivo esperado no release:
 3. Anexar `gum.zip` como asset da release;
 4. Confirmar que `system.json` público já contém a versão correta.
 
+A tag deve ser exatamente `v` seguido do valor de `version` no manifesto. Por
+exemplo, para `"version": "1.2.2-beta"`, use a tag `v1.2.2-beta`. A validação
+automática rejeita tags que não correspondam ao manifesto.
+
+Antes de anexar o pacote, confirme também que o manifesto dentro dele possui a
+mesma versão:
+
+```bash
+unzip -p gum.zip system.json | python -m json.tool | grep '"version"'
+```
+
 ## 4) Pós-publicação
 
 - Testar instalação limpa por Manifest URL;
