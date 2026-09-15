@@ -38,9 +38,19 @@ export const getResistanceChatPrivacy = ({ visibility, actor, users = [] } = {})
   };
 };
 
-const rollModeCreationOptions = (mode, generation = 12) => (
-  Number(generation) >= 14 ? { messageMode: mode } : { rollMode: mode }
-);
+const MESSAGE_MODE_BY_ROLL_MODE = Object.freeze({
+  publicroll: "public",
+  selfroll: "self",
+  gmroll: "gm",
+  blindroll: "blind"
+});
+
+const rollModeCreationOptions = (mode, generation = 12) => {
+  if (Number(generation) >= 14) {
+    return { messageMode: MESSAGE_MODE_BY_ROLL_MODE[mode] ?? mode };
+  }
+  return { rollMode: mode };
+};
 
 export const getAttributeRollMessageOptions = ({ visibility, actor, users = [], generation = 12 } = {}) => {
   const normalized = normalizeAttributeChatVisibility(visibility);

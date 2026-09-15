@@ -39,6 +39,6 @@ export function calculateAttackSizeModifier(sourceMT, targetMT, mode = AUTO_SIZE
     sourceMT: source,
     targetMT: target,
     modifier,
-    label: `MT relativo [${signed(target)} − (${signed(source)})]`
+    label: `MT relativo (${signed(modifier)})`
   };
 }

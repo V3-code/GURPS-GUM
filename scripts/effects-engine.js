@@ -475,7 +475,8 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                         const messageOptions = getAttributeRollMessageOptions({
                             visibility: action.attribute_chat_visibility,
                             actor: targetActor,
-                            users: game.users
+                            users: game.users,
+                            generation: game.release?.generation
                         });
                         if (evaluated.roll && messageOptions) {
                             await evaluated.roll.toMessage({

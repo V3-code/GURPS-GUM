@@ -33,8 +33,8 @@ test("resultados condicionais usam cards sem bordas", () => {
 });
 
 test("finalidades da barreira usam seletor compacto e lista abaixo", () => {
-  assert.match(template, /class="resistance-purpose-heading"[\s\S]*?Finalidades do teste[\s\S]*?Adicionar finalidade[\s\S]*?<\/div>/);
-  assert.match(template, /class="open-purpose-picker resistance-purpose-add"[\s\S]*?>[\s\S]*?Adicionar finalidade<\/button>/);
+  assert.match(template, /class="resistance-purpose-heading"[\s\S]*?Finalidades do teste[\s\S]*?Editar finalidades[\s\S]*?<\/div>/);
+  assert.match(template, /class="open-purpose-picker resistance-purpose-add"[\s\S]*?>[\s\S]*?Editar finalidades<\/button>/);
   assert.match(template, /class="resistance-purpose-list[\s\S]*?{{#each resistancePurposeLabels/);
   assert.match(styles, /\.resistance-purpose-control \{[\s\S]*?flex-direction: column;/);
   assert.match(styles, /\.resistance-purpose-heading \{[\s\S]*?justify-content: space-between;/);

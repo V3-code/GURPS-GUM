@@ -489,7 +489,12 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
                const combatMeters = this.targetActor.system.combat.combat_meters || {};
         for (const [key, meter] of Object.entries(combatMeters)) {
             const meterPath = `system.combat.combat_meters.${key}.${meter.current !== undefined ? "current" : "value"}`;
-            damageablePools.push({ path: meterPath, label: meter.name });
+            damageablePools.push({
+                path: meterPath,
+                label: meter.name,
+                type: "combat-meter",
+                dr: Math.max(0, Number(meter.dr) || 0)
+            });
         }
         const spellReserves = this.targetActor.system.spell_reserves || {};
         for (const [key, reserve] of Object.entries(spellReserves)) {
@@ -540,6 +545,18 @@ const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
         super.activateListeners(html);
         const form = html[0];
         this.form = form;        
+
+        const damageTargetPool = form.querySelector('[name="damage_target_pool"]');
+        damageTargetPool?.addEventListener("change", () => {
+            const selectedPool = damageTargetPool.selectedOptions?.[0];
+            if (selectedPool?.dataset.poolType !== "combat-meter") return;
+            const customDR = form.querySelector('input[name="custom_dr"]');
+            if (customDR) {
+                customDR.value = String(Math.max(0, Number(selectedPool.dataset.dr) || 0));
+            }
+            const customLocation = form.querySelector('.location-row[data-location-key="custom"]');
+            customLocation?.click();
+        });
 
 // --- SEUS LISTENERS ORIGINAIS (INTACTOS) ---
         form.querySelectorAll('.damage-card').forEach(card => {
