@@ -3006,7 +3006,9 @@ async function buildGCSCharacterEquipmentItems(nodes, { location = "carried", pa
         const childPath = hasChildren && label ? [...path, label] : path;
         let nextParentContainerId = parentContainerId;
 
-        const resolvedLocation = node?.equipped === true ? "equipped" : location;
+        // The originating inventory list determines placement for the entire tree.
+        // GCS equipped flags can also be true in other_equipment.
+        const resolvedLocation = location;
         const item = await buildHybridActorItemFromGCS(node, parseGCSLibraryEquipment);
         if (item) {
             item.system = item.system || {};
@@ -3046,6 +3048,12 @@ async function buildGCSCharacterEquipmentItems(nodes, { location = "carried", pa
     return items;
 }
 
+
+async function buildGCSCharacterInventoryItems(gcsData) {
+    const equipped = await buildGCSCharacterEquipmentItems(gcsData.equipment || [], { location: "equipped" });
+    const carried = await buildGCSCharacterEquipmentItems(gcsData.other_equipment || [], { location: "carried" });
+    return [...equipped, ...carried];
+}
 
 async function buildTemplateEntryFromGCSNode(gcsNode, parserFn, itemType, { defaultCost = 0 } = {}) {
     if (itemType === "advantage") {
@@ -3595,15 +3603,7 @@ for (const {
     // =============================================================
     ui.notifications.info("Mapeando Equipamentos...");
 
-    const carriedEquipment = await buildGCSCharacterEquipmentItems(gcsData.equipment || [], { location: "carried" });
-    for (const item of carriedEquipment) {
-        itemsToCreate.push(item);
-    }
-
-    const storedEquipment = await buildGCSCharacterEquipmentItems(gcsData.other_equipment || [], { location: "stored" });
-    for (const item of storedEquipment) {
-        itemsToCreate.push(item);
-    }
+    itemsToCreate.push(...await buildGCSCharacterInventoryItems(gcsData));
 
     // =============================================================
     // MAPEAMENTO DE MAGIAS (Spell)
