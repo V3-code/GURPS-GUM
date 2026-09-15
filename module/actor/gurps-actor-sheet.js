@@ -1,3 +1,4 @@
+import { calculateItemTraitCost } from "../utils/trait-cost.mjs";
 import { applyEffectWithResistance, performGURPSRoll } from "/systems/gum/scripts/main.js";
 import { GurpsRollPrompt } from "../apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../apps/damage-roll-prompt.js";
@@ -704,23 +705,7 @@ async getData(options) {
             return a.localeCompare(b);
         });
 
-        const getCharacteristicFinalPoints = (item) => {
-                        const usesAlternativeCost = item.type === "power" && item.system?.cost_paid === "alternative";
-            const basePoints = usesAlternativeCost ? (Number(item.system?.alternative_points) || 0) : (Number(item.system?.points) || 0);
-            const modifiers = item.system?.modifiers || {};
-            let totalModPercent = 0;
-
-            for (const modifier of Object.values(modifiers)) {
-                totalModPercent += parseInt(modifier.cost, 10) || 0;
-            }
-
-            const cappedModPercent = Math.max(-80, totalModPercent);
-            const finalPoints = Math.round(basePoints * (1 + (cappedModPercent / 100)));
-
-            if (basePoints > 0 && finalPoints < 1) return 1;
-            if (basePoints < 0 && finalPoints > -1) return -1;
-            return finalPoints;
-        };
+        const getCharacteristicFinalPoints = (item) => calculateItemTraitCost(item).finalPoints;
 
         const prepareCharacteristicDisplay = (item) => {
             if (!["advantage", "disadvantage"].includes(item.type)) return item;
@@ -5676,21 +5661,7 @@ _getPointsNumber(value) {
 }
 
 _getCharacteristicFinalPoints(item) {
-  const usesAlternativeCost = item.type === "power" && item.system?.cost_paid === "alternative";
-  const basePoints = usesAlternativeCost ? this._getPointsNumber(item.system?.alternative_points) : this._getPointsNumber(item.system?.points);
-  const modifiers = item.system?.modifiers || {};
-  let totalModPercent = 0;
-
-  for (const modifier of Object.values(modifiers)) {
-    totalModPercent += parseInt(modifier.cost, 10) || 0;
-  }
-
-  const cappedModPercent = Math.max(-80, totalModPercent);
-  const finalPoints = Math.round(basePoints * (1 + cappedModPercent / 100));
-
-  if (basePoints > 0 && finalPoints < 1) return 1;
-  if (basePoints < 0 && finalPoints > -1) return -1;
-  return finalPoints;
+  return calculateItemTraitCost(item).finalPoints;
 }
 
 _calculateAttributePoints() {
@@ -6326,9 +6297,13 @@ async _resolveTemplateEntrySourceItem(entry) {
 
 _buildActorItemFromTemplateEntry(sourceItem, entry, templateItem) {
   const data = sourceItem.toObject();
+  if (["advantage", "disadvantage"].includes(data.type) && entry.trait_cost) {
+    Object.assign(data.system, foundry.utils.deepClone(entry.trait_cost));
+  }
+
   const pointsField = sourceItem.type === "power" ? "points_skill" : "points";
 
-  if (["skill", "spell", "power", "advantage", "disadvantage"].includes(sourceItem.type)) {
+  if (["skill", "spell", "power"].includes(sourceItem.type)) {
     data.system[pointsField] = Number(entry.cost ?? data.system?.[pointsField] ?? 0);
   }
 
@@ -6620,9 +6595,13 @@ _buildActorItemFromInlineTemplateEntry(entry, templateItem) {
   };
 
   data.name = entry.name || data.name;
+  if (["advantage", "disadvantage"].includes(data.type) && entry.trait_cost) {
+    Object.assign(data.system, foundry.utils.deepClone(entry.trait_cost));
+  }
+
   data.img = entry.img || data.img;
 
-  if (["skill", "spell", "power", "advantage", "disadvantage"].includes(data.type)) {
+  if (["skill", "spell", "power"].includes(data.type)) {
     data.system = data.system || {};
     data.system[pointsField] = Number(entry.cost ?? data.system[pointsField] ?? 0);
   }

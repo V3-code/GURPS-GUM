@@ -1,3 +1,4 @@
+import { calculateItemTraitCost } from "../module/utils/trait-cost.mjs";
 // ================================================================== //
 //  1. IMPORTAÇÕES 
 // ================================================================== //
@@ -3478,27 +3479,8 @@ Handlebars.registerHelper("signedMod", function (value) {
 });
 
 Handlebars.registerHelper("characteristicPoints", function (item) {
-  const displayPoints = item?.displayPoints;
-  if (displayPoints !== undefined && displayPoints !== null && displayPoints !== "") return displayPoints;
-
-  const system = item?.system || {};
-    const usesAlternativeCost = item?.type === "power" && system.cost_paid === "alternative";
-  const basePoints = usesAlternativeCost ? (Number(system.alternative_points) || 0) : (Number(system.points) || 0);
-  const modifiers = system.modifiers || {};
-  let totalModPercent = 0;
-
-  for (const modifier of Object.values(modifiers)) {
-    totalModPercent += parseInt(modifier?.cost, 10) || 0;
-  }
-
-  const cappedModPercent = Math.max(-80, totalModPercent);
-  const finalPoints = Math.round(basePoints * (1 + (cappedModPercent / 100)));
-
-  if (basePoints > 0 && finalPoints < 1) return 1;
-  if (basePoints < 0 && finalPoints > -1) return -1;
-  return finalPoints;
+  return calculateItemTraitCost(item).finalPoints;
 });
-
 
 const normalizeLookupKey = (value) => value
     ?.toString()

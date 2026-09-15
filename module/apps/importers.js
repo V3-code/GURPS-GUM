@@ -1,3 +1,4 @@
+import { calculateItemTraitCost, importGCSTraitCost, importGCSModifier } from "../utils/trait-cost.mjs";
 import { getBodyLocationDefinition, getBodyProfile } from "../config/body-profiles.js";
 import { buildGCSActorReconciliation } from "../utils/gcs-actor-reconciliation.mjs";
 import { canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
@@ -460,7 +461,7 @@ export async function importTemplateFromGCS() {
  * Mantém apenas linhas que parecem ser itens importáveis e ignora
  * nós puramente organizacionais.
  */
-function collectGCSImportEntries(rows, collector = [], folderPath = []) {
+function collectGCSImportEntries(rows, collector = [], folderPath = [], inherited = []) {
     for (const row of rows || []) {
         const copy = foundry.utils.deepClone(row);
         const children = Array.isArray(copy.children) ? copy.children : [];
@@ -469,12 +470,13 @@ function collectGCSImportEntries(rows, collector = [], folderPath = []) {
 
         if (isContainer) {
             const nextPath = containerName ? [...folderPath, containerName] : folderPath;
-            collectGCSImportEntries(children, collector, nextPath);
+            collectGCSImportEntries(children, collector, nextPath, [...inherited, ...(copy.modifiers || [])]);
             continue;
         }
 
         if (!isImportableGCSRow(copy, false)) continue;
 
+        copy._inheritedModifiers = inherited;
         const expandedRows = expandChoiceModifiersAsIndividualRows(copy);
         for (const expanded of expandedRows) {
             collector.push({
@@ -544,7 +546,7 @@ function expandChoiceModifiersAsIndividualRows(row) {
     const modifiers = Array.isArray(row?.modifiers) ? row.modifiers : [];
     if (!modifiers.length) return [row];
 
-    const basePoints = Number(row.calc?.points ?? row.base_points ?? row.points_per_level ?? row.points ?? 0) || 0;
+    const basePoints = Number(row.base_points || 0) + Number(row.points_per_level || 0) * Number(row.levels || 0);
     const hasEnabledModifier = modifiers.some(mod => !mod?.disabled);
     const hasAnyCostOption = modifiers.some(mod => parseCostAdjustmentValue(mod?.cost_adj ?? mod?.cost ?? 0) !== 0);
 
@@ -552,17 +554,10 @@ function expandChoiceModifiersAsIndividualRows(row) {
 
     return modifiers.map(mod => {
         const optionName = String(mod?.name || "").trim();
-        const optionPoints = parseCostAdjustmentValue(mod?.cost_adj ?? mod?.cost ?? 0);
         const clone = foundry.utils.deepClone(row);
         const rowLabel = getGCSRowLabel(row);
         clone.name = optionName ? `${rowLabel} (${optionName})` : rowLabel;
-        clone.base_points = optionPoints;
-        clone.points = optionPoints;
-        clone.calc = {
-            ...(clone.calc || {}),
-            points: optionPoints
-        };
-        clone.modifiers = [];
+        clone.modifiers = [{ ...mod, disabled: false }];
         if (getGCSItemNotes(mod)) {
             const notes = [getGCSItemNotes(clone), getGCSItemNotes(mod)]
                 .map(text => String(text || "").trim())
@@ -984,44 +979,14 @@ function getSystemTemplate(documentType, entryType) {
 
 
 function parseGCSLibraryTrait(gcsTrait) {
-    const points = Number(gcsTrait.calc?.points ?? gcsTrait.base_points ?? gcsTrait.points_per_level ?? gcsTrait.points ?? 0) || 0;
-    let type, template;
-
-    if (points >= 0) {
-        type = "advantage";
-        template = getSystemTemplate("Item", "advantage");
-        template.block_id = "block2";
-    } else {
-        type = "disadvantage";
-        template = getSystemTemplate("Item", "disadvantage");
-        template.block_id = "block3";
-    }
-
-    template.points = points;
+    const pricing = importGCSTraitCost(gcsTrait, gcsTrait._inheritedModifiers || []);
+    const provisional = { system: pricing };
+    const type = calculateItemTraitCost(provisional).finalPoints < 0 ? "disadvantage" : "advantage";
+    const template = Object.assign(getSystemTemplate("Item", type), pricing);
+    template.block_id = type === "advantage" ? "block2" : "block3";
     template.ref = gcsTrait.reference || "";
-    template.level = gcsTrait.levels || "";
-    applyGCSImportedDescriptions(template, getGCSItemNotes(gcsTrait));  
-
-    if (gcsTrait.modifiers) {
-        template.modifiers = {}; 
-        for (const gcsMod of gcsTrait.modifiers) {
-            if (gcsMod.disabled) continue; 
-            const newModId = foundry.utils.randomID();
-            template.modifiers[newModId] = {
-                id: newModId,
-                name: gcsMod.name,
-                cost: (gcsMod.cost_adj ?? gcsMod.cost ?? 0).toString(), 
-                ref: gcsMod.reference || "",
-                description: getGCSItemNotes(gcsMod)
-            };
-        }
-    }
-    
-  return {
-        name: gcsTrait.name,
-        type: type, 
-        system: template 
-    };
+    applyGCSImportedDescriptions(template, getGCSItemNotes(gcsTrait));
+    return { name: gcsTrait.name, type, system: template };
 }
 
 function parseAttributeTemplateEntryFromGCSTrait(gcsTrait) {
@@ -1080,7 +1045,7 @@ function parseAttributeTemplateEntryFromGCSTrait(gcsTrait) {
         attributes,
         costs: {},
         linkSecondary: ["st", "dx", "iq", "ht"].includes(attrMatch.key),
-        cost: Number(gcsTrait.calc?.points ?? gcsTrait.base_points ?? gcsTrait.points_per_level ?? 0) || 0
+        cost: calculateItemTraitCost({ type: "advantage", system: importGCSTraitCost(gcsTrait, gcsTrait._inheritedModifiers || []) }).finalPoints
     };
 }
 
@@ -2339,31 +2304,11 @@ function parseGCSLibrarySpell(gcsSpell) {
 }
 
 function parseGCSLibraryModifier(gcsMod) {
-    let template = getSystemTemplate("Item", "modifier");
-
-    // Custo base do modificador no GCS vem normalmente como string: "10%", "-20%" etc.
-    // Vamos preservar como string porque o item modifier do GUM já trabalha bem com esse formato.
-    template.cost = gcsMod.cost_adj || "0%";
-
-    // Alguns modificadores possuem níveis. Se não houver, deixamos vazio.
-    template.level = gcsMod.levels || "";
-
-    // Referência de livro/página
-    template.ref = gcsMod.reference || "";
-
-    // O GCS às vezes traz notas locais pedindo preenchimento manual ou explicação do efeito.
-    // Vamos usar applied_effect como campo principal curto
+    const template = Object.assign(getSystemTemplate("Item", "modifier"), importGCSModifier(gcsMod));
     const notes = getGCSItemNotes(gcsMod);
     template.applied_effect = notes;
-
-    // Se quiser manter também uma descrição mais completa:
     applyGCSImportedDescriptions(template, notes);
-
-    return {
-        name: gcsMod.name || "Modificador",
-        type: "modifier",
-        system: template
-    };
+    return { name: gcsMod.name || "Modificador", type: "modifier", system: template };
 }
 
 function parseGCSLibraryEquipmentModifier(gcsMod) {
@@ -2743,6 +2688,10 @@ function mergeHybridImportedData(sourceItem, parsedItem, { gcsNode = null, mode 
         overwrite: true
     });
 
+    if (["advantage", "disadvantage"].includes(parsedItem.type)) {
+        mergedSystem.modifiers = foundry.utils.deepClone(parsedItem.system.modifiers);
+    }
+
     if (parsedItem.type === "equipment" && Array.isArray(gcsNode?.weapons) && gcsNode.weapons.length > 0) {
         // Ataques são objetos indexados por IDs aleatórios. No merge híbrido, mesclar a
         // coleção do item-base com a coleção recém-parseada duplica modos equivalentes.
@@ -2882,6 +2831,18 @@ function getGCSChildren(node) {
 
 function getGCSContainerPathLabel(node) {
     return getGCSRowLabel(node) || String(node?.id || "").trim();
+}
+
+function collectGCSPricedTraits(nodes, multiplicative = false, path = [], inherited = [], result = []) {
+    for (const node of nodes || []) {
+        if (node.disabled) continue;
+        const children = getGCSChildren(node);
+        if (children.length) {
+            if (node.container_type === "alternative_abilities") throw new Error("Importação de custos de habilidades alternativas ainda não suportada.");
+            collectGCSPricedTraits(children, multiplicative, [...path, getGCSContainerPathLabel(node)], [...inherited, ...(node.modifiers || [])], result);
+        } else result.push({ node: { ...node, _inheritedModifiers: inherited, _multiplicativeModifiers: multiplicative }, path });
+    }
+    return result;
 }
 
 function collectGCSCharacterLeafEntries(nodes, path = [], collector = []) {
@@ -3064,7 +3025,7 @@ async function buildTemplateEntryFromGCSNode(gcsNode, parserFn, itemType, { defa
     const parsedItem = parserFn(gcsNode);
     if (!parsedItem) return null;
 
-    const resolvedCost = Number(
+    const resolvedCost = ["advantage", "disadvantage"].includes(parsedItem.type) ? calculateItemTraitCost(parsedItem).finalPoints : Number(
         gcsNode.calc?.points
         ?? gcsNode.base_points
         ?? gcsNode.points_per_level
@@ -3089,6 +3050,11 @@ async function buildTemplateEntryFromGCSNode(gcsNode, parserFn, itemType, { defa
         level: resolvedLevel,
         cost: resolvedCost
     };
+
+    if (["advantage", "disadvantage"].includes(parsedItem.type)) {
+        entry.trait_cost = importGCSTraitCost(gcsNode, gcsNode._inheritedModifiers || []);
+        entry.level = entry.trait_cost.level;
+    }
 
     const { item: sourceItem, matchedBy } = await resolveHybridSourceItem({ gcsNode, parsedItem });
     if (sourceItem) {
@@ -3147,7 +3113,7 @@ async function buildTemplateOptionEntryFromNode(node, parserFn, itemType, path =
         img: "icons/svg/upgrade.svg",
         quantity: 1,
         level: "",
-        cost: Number(node.calc?.points ?? node.base_points ?? node.points ?? 0) || 0,
+        cost: subBlocks.filter(block => block.type === "guaranteed").reduce((sum, block) => sum + block.contents.reduce((subtotal, entry) => subtotal + Number(entry.cost || 0), 0), 0),
         localNotes: getGCSItemNotes(node),
         subBlocks
     };
@@ -3159,7 +3125,10 @@ async function buildTemplateBlocksRecursive(container, parserFn, itemType, path 
     const nodeName = String(container.name || "Bloco").trim() || "Bloco";
     const currentPath = [...path, nodeName];
     const title = currentPath.join(" › ");
-    const children = Array.isArray(container.children) ? container.children : [];
+    if (itemType === "advantage" && container.container_type === "alternative_abilities") throw new Error("Importação de custos de habilidades alternativas ainda não suportada.");
+    const children = (Array.isArray(container.children) ? container.children : []).filter(child => !child.disabled).map(child => itemType === "advantage"
+        ? { ...child, _inheritedModifiers: [...(container._inheritedModifiers || []), ...(container.modifiers || [])], _multiplicativeModifiers: container._multiplicativeModifiers }
+        : child);
     const hasPicker = Boolean(container.template_picker);
     const blocks = [];
 
@@ -3209,7 +3178,7 @@ async function parseGCSTemplate(gcsData, fileName = "") {
 
     const traitRoots = Array.isArray(gcsData.traits) ? gcsData.traits : [];
     for (const root of traitRoots) {
-        const rootBlocks = await buildTemplateBlocksRecursive(root, parseGCSLibraryTrait, "advantage", []);
+        const rootBlocks = await buildTemplateBlocksRecursive({ ...root, _multiplicativeModifiers: Boolean(gcsData.settings?.use_multiplicative_modifiers) }, parseGCSLibraryTrait, "advantage", []);
         blocks.push(...rootBlocks);
     }
 
@@ -3525,7 +3494,7 @@ async function parseGCSCharacter(gcsData, { fallbackActorImage = CONST.DEFAULT_T
     }
 
     const traitRoots = (gcsData.traits || []).filter(gcsTrait => !isGCSNaturalAttacksTrait(gcsTrait));
-    const traitEntries = collectGCSCharacterLeafEntries(traitRoots);
+    const traitEntries = collectGCSPricedTraits(traitRoots, Boolean(gcsData.settings?.use_multiplicative_modifiers));
     for (const { node: gcsTrait, path } of traitEntries) {
         if (isGCSNaturalAttacksTrait(gcsTrait)) continue;
 

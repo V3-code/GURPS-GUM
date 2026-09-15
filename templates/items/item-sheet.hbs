@@ -903,7 +903,7 @@
               <div class="spell-power-result-grid characteristic-points-grid">
                 <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-sort-numeric-up" aria-hidden="true"></i><span>Nível</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.level" value="{{system.level}}"/></div></div>
                 <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-coins" aria-hidden="true"></i><span>Pontos Base</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.points" value="{{system.points}}"/></div></div>
-                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>Custo Final</span></label><div class="skill-dashboard-card-control"><div class="calculated-cost value"><span>{{calculatedCost.finalPoints}}</span><small>Mod: {{calculatedCost.totalModifier}}%</small></div></div></div>
+                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>Custo Final</span></label><div class="skill-dashboard-card-control"><div class="calculated-cost value"><span>{{calculatedCost.finalPoints}}</span><small>{{calculatedCost.description}}</small></div></div></div>
               </div>
             </div>
 
@@ -1206,7 +1206,7 @@
                 <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-coins" aria-hidden="true"></i><span>Custo Integral</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.points" value="{{system.points}}"/></div></div>
                 <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-receipt" aria-hidden="true"></i><span>Custo Alternativo</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.alternative_points" value="{{system.alternative_points}}"/></div></div>
                 <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-wallet" aria-hidden="true"></i><span>Custo Pago</span></label><div class="skill-dashboard-card-control"><select name="system.cost_paid"><option value="full" {{#if (eq system.cost_paid "full")}}selected{{/if}}>Integral</option><option value="alternative" {{#if (eq system.cost_paid "alternative")}}selected{{/if}}>Alternativo</option></select></div></div>
-                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>Custo com Modificador</span></label><div class="skill-dashboard-card-control"><div class="calculated-cost value"><span>{{calculatedCost.finalPoints}}</span><small>{{#if (eq system.cost_paid "alternative")}}Alternativo{{else}}Integral{{/if}} · Mod: {{calculatedCost.totalModifier}}%</small></div></div></div>
+                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>Custo com Modificador</span></label><div class="skill-dashboard-card-control"><div class="calculated-cost value"><span>{{calculatedCost.finalPoints}}</span><small>{{#if (eq system.cost_paid "alternative")}}Alternativo{{else}}Integral{{/if}} · {{calculatedCost.description}}</small></div></div></div>
             </div>
         </div>
 
@@ -1232,16 +1232,38 @@
         {{!-- ===================================================================== --}}
         {{!-- 		ABA DETALHES: ITEM MODIFICADORES 				 --}}
         {{!-- ===================================================================== --}}
+        {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
+        <div class="form-section"><h4 class="section-title">Cálculo do custo</h4>
+          {{#if (eq item.type "power")}}<div class="form-group"><label>Nível da característica</label><input type="number" step="any" min="0" name="system.level" value="{{system.level}}"/></div>{{/if}}
+          <div class="form-grid-3">
+            <label><input type="checkbox" name="system.can_level" {{checked system.can_level}}/> Possui custo por nível</label>
+            <div class="form-group"><label>Pontos por nível</label><input type="number" step="any" name="system.points_per_level" value="{{system.points_per_level}}"/></div>
+            <div class="form-group"><label>Multiplicador final</label><input type="number" step="any" min="0" name="system.cost_multiplier" value="{{system.cost_multiplier}}"/></div>
+          </div>
+          <label><input type="checkbox" name="system.round_down" {{checked system.round_down}}/> Arredondar para baixo</label>
+          <label><input type="checkbox" name="system.multiplicative_modifiers" {{checked system.multiplicative_modifiers}}/> Regra opcional de modificadores multiplicativos</label>
+        </div>
+        {{/if}}
         {{#if (eq item.type "modifier")}}
         <div class="form-section"><h4 class="section-title">Dados do Modificador</h4>
         <div class="form-grid-3">
             <div class="form-group">
-            <label>Custo do Modificador (%)</label>
-            <input type="text" name="system.cost" value="{{system.cost}}" placeholder="+10%, -20%..."/>
+            <label>Ajuste de custo</label>
+            <input type="text" name="system.cost" value="{{system.cost}}" placeholder="+10%, -20%, +5, x2"/>
             </div>
             <div class="form-group">
             <label>Nível (se aplicável)</label>
             <input type="number" name="system.level" value="{{system.level}}"/>
+            </div><div class="form-group">
+              <label>Aplicar a</label>
+              <select name="system.affects">
+                <option value="total" {{#if (eq system.affects "total")}}selected{{/if}}>Base e níveis</option>
+                <option value="base_only" {{#if (eq system.affects "base_only")}}selected{{/if}}>Somente base</option>
+                <option value="levels_only" {{#if (eq system.affects "levels_only")}}selected{{/if}}>Somente níveis</option>
+              </select>
+              <label><input type="checkbox" name="system.use_level_from_trait" {{checked system.use_level_from_trait}}/> Usar nível da característica</label>
+              <label><input type="checkbox" name="system.cost_ignores_level" {{checked system.cost_ignores_level}}/> Não multiplicar ajuste pelo nível</label>
+              <label><input type="checkbox" name="system.disabled" {{checked system.disabled}}/> Desabilitado</label>
             </div>
             
             {{!-- Campo REF com botão --}}

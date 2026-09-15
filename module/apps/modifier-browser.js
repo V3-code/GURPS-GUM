@@ -169,6 +169,11 @@ if (showEnhancements && showLimitations && !isEnhancement && !isLimitation) isVi
         newModifiersData[`system.modifiers.${newKey}`] = {
           name: sourceModifier.name,
           cost: sourceModifier.system.cost,
+          level: sourceModifier.system.level,
+          affects: sourceModifier.system.affects,
+          use_level_from_trait: sourceModifier.system.use_level_from_trait,
+          cost_ignores_level: sourceModifier.system.cost_ignores_level,
+          disabled: sourceModifier.system.disabled,
           ref: sourceModifier.system.ref,
           applied_effect: sourceModifier.system.applied_effect,
           source_id: sourceModifier.uuid,
