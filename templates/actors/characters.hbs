@@ -497,150 +497,284 @@
       {{/each}}
       </div>
     </div>
+
+    
     {{!-- ============================================================= --}}
     {{!--   ABA DE CARACTERÍSTICAS (Layout Colapsável e Elegante)       --}}
     {{!-- ============================================================= --}}
-     <div class="tab" data-group="primary" data-tab="characteristics">
+    <div class="tab" data-group="primary" data-tab="characteristics">
       <div class="characteristics-main-content">
-        
-        {{!-- COLUNA DA ESQUERDA --}}
-        <div class="characteristics-left-column">
-          
-          {{!-- BLOCO RACIAIS --}}
-          <details class="form-section gum-details gum-unified-section" id="char-section-block1" data-group-id="char-section-block1" {{collapsibleState "char-section-block1" @root.collapsedData}}>
-            <summary class="block-header gum-unified-header">
-              <div class="header-left">
-                <i class="fas fa-chevron-right indicator"></i>
-                <h4 class="block-title">Raciais</h4>
-              </div>
-              <a class="sort-control" data-item-type="characteristic" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
-            </summary>
-            <div class="racial-name-row">
-              <span class="racial-name-value">{{#if raceName}}{{raceName}}{{else}}Sem raça definida{{/if}}</span>
-              <a class="edit-race-name" title="Editar nome da raça"><i class="fas fa-edit"></i></a>
+
+        {{!-- BLOCO RACIAIS --}}
+        <details class="form-section gum-details gum-unified-section" id="char-section-block1" data-group-id="char-section-block1" {{collapsibleState "char-section-block1" @root.collapsedData}}>
+          <summary class="block-header gum-unified-header">
+            <div class="header-left">
+              <i class="fas fa-chevron-right indicator"></i>
+              <h4 class="block-title">Raciais</h4>
             </div>
-            <ol class="item-list flex-wrap-container" data-item-type="characteristic">
-              {{#each racialCharacteristics.advantages}}
-                <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
-                  <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
-                  <div class="card-info">
-                    <div class="card-main">
-                      <span class="item-name"><a class="item-quick-view" title="Visualizar Descrição">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}}{{#if this.system.level}} {{this.system.level}}{{/if}}</a></span>
-                      {{#if this.system.characteristics}}<span class="characteristic-notes">{{this.system.characteristics}}</span>{{/if}}
-                    </div>
-                    <div class="card-details">
-                          <span class="card-points" title="Custo em Pontos">{{characteristicPoints this}} pts</span>
-                      {{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}
-                    </div>
+            <a class="sort-control" data-item-type="characteristic" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
+          </summary>
+
+          <div class="racial-name-row">
+            <span class="racial-name-value">{{#if raceName}}{{raceName}}{{else}}Sem raça definida{{/if}}</span>
+            <a class="edit-race-name" title="Editar nome da raça"><i class="fas fa-edit"></i></a>
+          </div>
+
+          <ol class="item-list flex-wrap-container" data-item-type="characteristic">
+            {{#each racialCharacteristics.advantages}}
+              <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
+                <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
+
+                <div class="card-info">
+                  <div class="card-main">
+                    <span class="item-name">
+                      <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}}{{#if this.system.level}} {{this.system.level}}{{/if}}</a>
+                    </span>
+
+                    {{#if this.system.characteristics}}
+                      <span class="characteristic-notes">{{this.system.characteristics}}</span>
+                    {{/if}}
                   </div>
-                  <div class="item-controls"><a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a><a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a></div>
-                </li>
-              {{/each}}
 
-              {{#if racialCharacteristics.disadvantages.length}}
-                <li class="racial-divider" aria-hidden="true"></li>
-              {{/if}}
+                  <div class="card-details">
+                    <span class="card-points" title="Custo em Pontos">{{characteristicPoints this}} pts</span>
 
-              {{#each racialCharacteristics.disadvantages}}
-                <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
-                  <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
-                  <div class="card-info">
-                    <div class="card-main">
-                      <span class="item-name"><a class="item-quick-view" title="Visualizar Descrição">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}}{{#if this.system.level}} {{this.system.level}}{{/if}}</a></span>
-                      {{#if this.system.characteristics}}<span class="characteristic-notes">{{this.system.characteristics}}</span>{{/if}}
-                    </div>
-                    <div class="card-details">
-                          <span class="card-points" title="Custo em Pontos">{{characteristicPoints this}} pts</span>
-                      {{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}
-                    </div>
+                    {{#if this.system.self_control_roll}}
+                      <a
+                        class="rollable card-cr"
+                        title="Teste de Autocontrole"
+                        data-type="attribute"
+                        data-roll-value="{{this.system.self_control_roll}}"
+                        data-label="Autocontrole: {{this.name}}"
+                        data-item-id="{{this.id}}"
+                      >CR: {{this.system.self_control_roll}}</a>
+                    {{/if}}
                   </div>
-                  <div class="item-controls"><a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a><a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a></div>
-                </li>
-              {{/each}}
+                </div>
 
-              {{#unless racialCharacteristics.hasAny}}
-                <li class="placeholder-text">Nenhuma característica racial adicionada.</li>
-              {{/unless}}
-            </ol>
-          </details>
+                <div class="item-controls">
+                  <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                  <a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
+                </div>
+              </li>
+            {{/each}}
 
-          {{!-- BLOCO DAS VANTAGENS --}}
-          <details class="form-section gum-details gum-unified-section" id="char-section-block2" data-group-id="char-section-block2" {{collapsibleState "char-section-block2" @root.collapsedData}}>
-            <summary class="block-header gum-unified-header">
-              <div class="header-left"><i class="fas fa-chevron-right indicator"></i><h4 class="block-title">Vantagens</h4></div>
-              <a class="sort-control" data-item-type="characteristic" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
-            </summary>
-            <ol class="item-list flex-wrap-container" data-item-type="characteristic">
-              {{#each characteristicsByBlock.block2}}
-                <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
-                  <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
-                  <div class="card-info">
-                    <div class="card-main">
-                      <span class="item-name"><a class="item-quick-view" title="Visualizar Descrição">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}} {{#if this.system.level}} {{this.system.level}}{{/if}}</a></span>
-                      {{#if this.system.characteristics}}<span class="characteristic-notes">{{this.system.characteristics}}</span>{{/if}}
-                    </div>
-                    <div class="card-details">{{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}<span class="card-points" title="Custo em Pontos">{{characteristicPoints this}} pts</span></div>
+            {{#if racialCharacteristics.disadvantages.length}}
+              <li class="racial-divider" aria-hidden="true"></li>
+            {{/if}}
+
+            {{#each racialCharacteristics.disadvantages}}
+              <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
+                <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
+
+                <div class="card-info">
+                  <div class="card-main">
+                    <span class="item-name">
+                      <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}}{{#if this.system.level}} {{this.system.level}}{{/if}}</a>
+                    </span>
+
+                    {{#if this.system.characteristics}}
+                      <span class="characteristic-notes">{{this.system.characteristics}}</span>
+                    {{/if}}
                   </div>
-                  <div class="item-controls"><a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a><a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a></div>
-                </li>
-              {{/each}}
-              {{#unless characteristicsByBlock.block2}}<li class="placeholder-text">Arraste itens para cá.</li>{{/unless}}
-            </ol>
-          </details>
 
-        </div>
+                  <div class="card-details">
+                    <span class="card-points" title="Custo em Pontos">{{characteristicPoints this}} pts</span>
 
-        {{!-- COLUNA DA DIREITA --}}
-        <div class="characteristics-right-column">
-
-          {{!-- BLOCO ESPECIAIS --}}
-          <details class="form-section gum-details gum-unified-section" id="char-section-block4" data-group-id="char-section-block4" {{collapsibleState "char-section-block4" @root.collapsedData}}>
-            <summary class="block-header gum-unified-header">
-              <div class="header-left"><i class="fas fa-chevron-right indicator"></i><h4 class="block-title">Especiais</h4></div>
-              <a class="sort-control" data-item-type="characteristic" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
-            </summary>
-            <ol class="item-list flex-wrap-container" data-item-type="characteristic">
-              {{#each characteristicsByBlock.block4}}
-                <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
-                  <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
-                  <div class="card-info">
-                    <div class="card-main">
-                      <span class="item-name"><a class="item-quick-view" title="Visualizar Descrição">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}}{{#if this.system.level}} {{this.system.level}}{{/if}}</a></span>
-                      {{#if this.system.characteristics}}<span class="characteristic-notes">{{this.system.characteristics}}</span>{{/if}}
-                    </div>
-                    <div class="card-details"><span class="card-points" title="Custo em Pontos">{{characteristicPoints this}} pts</span>{{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}</div>
+                    {{#if this.system.self_control_roll}}
+                      <a
+                        class="rollable card-cr"
+                        title="Teste de Autocontrole"
+                        data-type="attribute"
+                        data-roll-value="{{this.system.self_control_roll}}"
+                        data-label="Autocontrole: {{this.name}}"
+                        data-item-id="{{this.id}}"
+                      >CR: {{this.system.self_control_roll}}</a>
+                    {{/if}}
                   </div>
-                  <div class="item-controls"><a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a><a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a></div>
-                </li>
-              {{/each}}
-              {{#unless characteristicsByBlock.block4}}<li class="placeholder-text">Arraste itens para cá.</li>{{/unless}}
-            </ol>
-          </details>
+                </div>
 
-          {{!-- BLOCO DAS DESVANTAGENS --}}
-          <details class="form-section gum-details gum-unified-section" id="char-section-block3" data-group-id="char-section-block3" {{collapsibleState "char-section-block3" @root.collapsedData}}>
-            <summary class="block-header gum-unified-header">
-              <div class="header-left"><i class="fas fa-chevron-right indicator"></i><h4 class="block-title">Desvantagens</h4></div>
-              <a class="sort-control" data-item-type="characteristic" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
-            </summary>
-            <ol class="item-list flex-wrap-container" data-item-type="characteristic">
-              {{#each characteristicsByBlock.block3}}
-                <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
-                  <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
-                  <div class="card-info">
-                    <div class="card-main">
-                      <span class="item-name"><a class="item-quick-view" title="Visualizar Descrição">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}} {{#if this.system.level}}{{this.system.level}}{{/if}}</a></span>
-                      {{#if this.system.characteristics}}<span class="characteristic-notes">{{this.system.characteristics}}</span>{{/if}}
-                    </div>
-                    <div class="card-details">{{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}<span class="card-points" title="Custo em Pontos">{{characteristicPoints this}} pts</span></div>
+                <div class="item-controls">
+                  <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                  <a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
+                </div>
+              </li>
+            {{/each}}
+
+            {{#unless racialCharacteristics.hasAny}}
+              <li class="placeholder-text">Nenhuma característica racial adicionada.</li>
+            {{/unless}}
+          </ol>
+        </details>
+
+        {{!-- BLOCO DAS VANTAGENS --}}
+        <details class="form-section gum-details gum-unified-section" id="char-section-block2" data-group-id="char-section-block2" {{collapsibleState "char-section-block2" @root.collapsedData}}>
+          <summary class="block-header gum-unified-header">
+            <div class="header-left">
+              <i class="fas fa-chevron-right indicator"></i>
+              <h4 class="block-title">Vantagens</h4>
+            </div>
+
+            <a class="sort-control" data-item-type="characteristic" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
+          </summary>
+
+          <ol class="item-list flex-wrap-container" data-item-type="characteristic">
+            {{#each characteristicsByBlock.block2}}
+              <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
+                <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
+
+                <div class="card-info">
+                  <div class="card-main">
+                    <span class="item-name">
+                      <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}}{{#if this.system.level}} {{this.system.level}}{{/if}}</a>
+                    </span>
+
+                    {{#if this.system.characteristics}}
+                      <span class="characteristic-notes">{{this.system.characteristics}}</span>
+                    {{/if}}
                   </div>
-                  <div class="item-controls"><a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a><a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a></div>
-                </li>
-              {{/each}}
-              {{#unless characteristicsByBlock.block3}}<li class="placeholder-text">Arraste itens para cá.</li>{{/unless}}
-            </ol>
-          </details>
-        </div>
+
+                  <div class="card-details">
+                    {{#if this.system.self_control_roll}}
+                      <a
+                        class="rollable card-cr"
+                        title="Teste de Autocontrole"
+                        data-type="attribute"
+                        data-roll-value="{{this.system.self_control_roll}}"
+                        data-label="Autocontrole: {{this.name}}"
+                        data-item-id="{{this.id}}"
+                      >CR: {{this.system.self_control_roll}}</a>
+                    {{/if}}
+
+                    <span class="card-points" title="Custo em Pontos">{{characteristicPoints this}} pts</span>
+                  </div>
+                </div>
+
+                <div class="item-controls">
+                  <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                  <a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
+                </div>
+              </li>
+            {{/each}}
+
+            {{#unless characteristicsByBlock.block2}}
+              <li class="placeholder-text">Arraste itens para cá.</li>
+            {{/unless}}
+          </ol>
+        </details>
+
+        {{!-- BLOCO DAS DESVANTAGENS --}}
+        <details class="form-section gum-details gum-unified-section" id="char-section-block3" data-group-id="char-section-block3" {{collapsibleState "char-section-block3" @root.collapsedData}}>
+          <summary class="block-header gum-unified-header">
+            <div class="header-left">
+              <i class="fas fa-chevron-right indicator"></i>
+              <h4 class="block-title">Desvantagens</h4>
+            </div>
+
+            <a class="sort-control" data-item-type="characteristic" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
+          </summary>
+
+          <ol class="item-list flex-wrap-container" data-item-type="characteristic">
+            {{#each characteristicsByBlock.block3}}
+              <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
+                <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
+
+                <div class="card-info">
+                  <div class="card-main">
+                    <span class="item-name">
+                      <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}}{{#if this.system.level}} {{this.system.level}}{{/if}}</a>
+                    </span>
+
+                    {{#if this.system.characteristics}}
+                      <span class="characteristic-notes">{{this.system.characteristics}}</span>
+                    {{/if}}
+                  </div>
+
+                  <div class="card-details">
+                    {{#if this.system.self_control_roll}}
+                      <a
+                        class="rollable card-cr"
+                        title="Teste de Autocontrole"
+                        data-type="attribute"
+                        data-roll-value="{{this.system.self_control_roll}}"
+                        data-label="Autocontrole: {{this.name}}"
+                        data-item-id="{{this.id}}"
+                      >CR: {{this.system.self_control_roll}}</a>
+                    {{/if}}
+
+                    <span class="card-points" title="Custo em Pontos">{{characteristicPoints this}} pts</span>
+                  </div>
+                </div>
+
+                <div class="item-controls">
+                  <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                  <a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
+                </div>
+              </li>
+            {{/each}}
+
+            {{#unless characteristicsByBlock.block3}}
+              <li class="placeholder-text">Arraste itens para cá.</li>
+            {{/unless}}
+          </ol>
+        </details>
+
+        {{!-- BLOCO ESPECIAIS --}}
+        <details class="form-section gum-details gum-unified-section" id="char-section-block4" data-group-id="char-section-block4" {{collapsibleState "char-section-block4" @root.collapsedData}}>
+          <summary class="block-header gum-unified-header">
+            <div class="header-left">
+              <i class="fas fa-chevron-right indicator"></i>
+              <h4 class="block-title">Especiais</h4>
+            </div>
+
+            <a class="sort-control" data-item-type="characteristic" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
+          </summary>
+
+          <ol class="item-list flex-wrap-container" data-item-type="characteristic">
+            {{#each characteristicsByBlock.block4}}
+              <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
+                <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
+
+                <div class="card-info">
+                  <div class="card-main">
+                    <span class="item-name">
+                      <a class="item-quick-view" title="Visualizar Descrição">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}}{{#if this.system.level}} {{this.system.level}}{{/if}}</a>
+                    </span>
+
+                    {{#if this.system.characteristics}}
+                      <span class="characteristic-notes">{{this.system.characteristics}}</span>
+                    {{/if}}
+                  </div>
+
+                  <div class="card-details">
+                    <span class="card-points" title="Custo em Pontos">{{characteristicPoints this}} pts</span>
+
+                    {{#if this.system.self_control_roll}}
+                      <a
+                        class="rollable card-cr"
+                        title="Teste de Autocontrole"
+                        data-type="attribute"
+                        data-roll-value="{{this.system.self_control_roll}}"
+                        data-label="Autocontrole: {{this.name}}"
+                        data-item-id="{{this.id}}"
+                      >CR: {{this.system.self_control_roll}}</a>
+                    {{/if}}
+                  </div>
+                </div>
+
+                <div class="item-controls">
+                  <a class="item-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                  <a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a>
+                </div>
+              </li>
+            {{/each}}
+
+            {{#unless characteristicsByBlock.block4}}
+              <li class="placeholder-text">Arraste itens para cá.</li>
+            {{/unless}}
+          </ol>
+        </details>
+
       </div>
     </div>
 
