@@ -2,11 +2,16 @@ import { getBodyLocationDefinition, getBodyProfile } from "../config/body-profil
 import { buildGCSActorReconciliation } from "../utils/gcs-actor-reconciliation.mjs";
 import { canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
 import { analyzeItemLibrary } from "../utils/item-library-import.mjs";
+import { buildWorldItemFolderChoices, getImportFolderName, getUniqueWorldCompendiumName } from "../utils/item-library-destination.mjs";
 /**
  * Lida com a importação de um arquivo JSON (formato customizado) OU
  * um arquivo de Biblioteca GCS (.skl, .spl, .eqp, .adq, .adm, .eqm) para um compêndio.
  */
 export async function importFromJson() {
+    if (!game.user?.isGM) {
+        return ui.notifications.warn("Apenas o Mestre pode importar bibliotecas de Itens.");
+    }
+
     // 1. Cria um elemento <input> de arquivo, escondido
     const input = document.createElement('input');
     input.type = 'file';
@@ -75,15 +80,18 @@ export async function importFromJson() {
             }
         }
 
-        // 6. Pergunta ao usuário para qual compêndio importar
-        const allItemPacks = game.packs.filter(p => p.metadata.type === "Item");
-        if (allItemPacks.length === 0) {
-            return ui.notifications.error("Nenhum compêndio de Itens encontrado no mundo.");
-        }
-
-        const packOptions = allItemPacks.map(pack => {
-            return `<option value="${pack.collection}">${pack.title}</option>`;
-        }).join('');
+        // 6. O destino é escolhido somente depois que o conteúdo foi analisado.
+        const allItemPacks = game.packs
+            .filter(pack => pack.metadata.type === "Item")
+            .sort((a, b) => a.title.localeCompare(b.title, "pt-BR"));
+        const packOptions = allItemPacks.map(pack =>
+            `<option value="pack:${escapeImportHTML(pack.collection)}">${escapeImportHTML(pack.title)}</option>`
+        ).join("");
+        const automaticFolderName = getImportFolderName(file.name);
+        const worldFolderOptions = buildWorldItemFolderChoices(Array.from(game.folders || []))
+            .map(folder => `<option value="${escapeImportHTML(folder.id)}">${escapeImportHTML(folder.label)}</option>`)
+            .join("");
+        const suggestedPackLabel = String(file.name || libraryAnalysis.label).replace(/\.[^.]+$/, "");
 
         new Dialog({
             title: "Selecionar Destino da Importação",
@@ -92,15 +100,30 @@ export async function importFromJson() {
                     <p><strong>Conteúdo detectado:</strong> ${escapeImportHTML(libraryAnalysis.label)}</p>
                     <p>Encontrados <strong>${importEntries.length}</strong> itens no arquivo.</p>
                     ${libraryAnalysis.warnings.map(warning => `<p style="color: var(--color-warm-2, #c9a86a);">${escapeImportHTML(warning)}</p>`).join("")}
-                    <p>Por favor, escolha o compêndio de destino:</p>
+                    <p><strong>Documentos previstos:</strong> ${importEntries.length}</p>
                     <div class="form-group" style="margin-top: 10px;">
-                        <label style="font-weight: bold;">Compêndio:</label>
-                        <select name="compendium-target" style="width: 100%;">
-                            ${packOptions}
-                    </select>
+                        <label style="font-weight: bold;">Destino:</label>
+                        <select name="import-target" style="width: 100%;">
+                            <option value="world">Itens do mundo</option>
+                            ${packOptions ? `<optgroup label="Compêndios existentes">${packOptions}</optgroup>` : ""}
+                            <option value="new-pack">Criar novo compêndio mundial</option>
+                        </select>
+                    </div>
+                    <div class="form-group" data-import-target-fields="world" style="margin-top: 10px;">
+                        <label style="font-weight: bold;">Pasta nos Itens:</label>
+                        <select name="world-folder" style="width: 100%;">
+                            <option value="__new__">Criar “${escapeImportHTML(automaticFolderName)}”</option>
+                            ${worldFolderOptions ? `<optgroup label="Usar pasta existente">${worldFolderOptions}</optgroup>` : ""}
+                        </select>
+                        <p class="hint">A importação no mundo sempre ficará dentro de uma pasta.</p>
+                    </div>
+                    <div class="form-group" data-import-target-fields="new-pack" style="margin-top: 10px; display: none;">
+                        <label style="font-weight: bold;">Nome do novo compêndio:</label>
+                        <input type="text" name="new-pack-label" value="${escapeImportHTML(suggestedPackLabel)}" style="width: 100%;">
+                        <p class="hint">O compêndio será criado no mundo e não será removido por atualizações do GUM.</p>
                     </div>
                     ${isCompendiumJson ? `
-                    <div class="form-group" style="margin-top: 10px;">
+                    <div class="form-group" data-import-target-fields="sync" style="margin-top: 10px; display: none;">
                         <label>
                             <input type="checkbox" name="remove-missing">
                             Remover do compêndio os itens ausentes deste JSON
@@ -113,26 +136,53 @@ export async function importFromJson() {
                     icon: '<i class="fas fa-file-import"></i>',
                     label: "Importar",
                     callback: async (html) => {
-                        const packName = html.find('select[name="compendium-target"]').val();
-                        if (!packName) return;
+                        const target = String(html.find('select[name="import-target"]').val() || "");
+                        try {
+                            if (target === "world") {
+                                const folderSelection = String(html.find('select[name="world-folder"]').val() || "__new__");
+                                await importToWorldItems(importEntries, { folderSelection, fileName: file.name });
+                                return;
+                            }
 
-                        const pack = game.packs.get(packName);
-                        if (!pack) {
-                            return ui.notifications.error(`Erro: Compêndio "${packName}" não pôde ser encontrado.`);
+                            let pack;
+                            if (target === "new-pack") {
+                                const label = String(html.find('input[name="new-pack-label"]').val() || "").trim();
+                                pack = await createWorldItemCompendium(label);
+                            } else if (target.startsWith("pack:")) {
+                                const packName = target.slice(5);
+                                pack = game.packs.get(packName);
+                                if (!pack) throw new Error(`O compêndio "${packName}" não pôde ser encontrado.`);
+                            } else {
+                                throw new Error("Selecione um destino válido para a importação.");
+                            }
+
+                            if (isCompendiumJson) {
+                                const removeMissing = Boolean(html.find('input[name="remove-missing"]').prop('checked'));
+                                await synchronizeCompendiumJson(pack, importEntries, { removeMissing });
+                            } else {
+                                await importToCompendium(pack, importEntries);
+                            }
+                        } catch (error) {
+                            console.error("GUM | Falha ao preparar o destino da importação:", error);
+                            ui.notifications.error(`Não foi possível importar: ${error.message}`);
                         }
-                        
-                        if (isCompendiumJson) {
-                           const removeMissing = Boolean(html.find('input[name="remove-missing"]').prop('checked'));
-                           await synchronizeCompendiumJson(pack, importEntries, { removeMissing });
-                       } else {
-                           await importToCompendium(pack, importEntries);
-                       }
                     }
                 },
                 cancel: {
                     icon: '<i class="fas fa-times"></i>',
                     label: "Cancelar"
                 }
+            },
+            render: html => {
+                const targetSelect = html.find('select[name="import-target"]');
+                const updateFields = () => {
+                    const value = String(targetSelect.val() || "world");
+                    html.find('[data-import-target-fields="world"]').toggle(value === "world");
+                    html.find('[data-import-target-fields="new-pack"]').toggle(value === "new-pack");
+                    html.find('[data-import-target-fields="sync"]').toggle(value.startsWith("pack:"));
+                };
+                targetSelect.on("change", updateFields);
+                updateFields();
             },
             default: "import"
         }).render(true);
@@ -142,106 +192,172 @@ export async function importFromJson() {
     input.click();
 }
 
-/**
- * Função auxiliar que TRADUZ e importa os dados para um compêndio.
- * (VERSÃO 3 - CORRIGIDA)
- */
+function prepareItemLibraryDocuments(importEntries) {
+    const prepared = [];
+    let lastGCSBaseSkill = null;
+
+    for (const entry of importEntries || []) {
+        let gcsItemData = entry?.itemData;
+        const folderPath = Array.isArray(entry?.folderPath) ? entry.folderPath : [];
+        const itemKind = entry?.itemKind;
+        if (!gcsItemData) continue;
+
+        let foundryItemData = null;
+        if (itemKind === "foundry") {
+            foundryItemData = foundry.utils.deepClone(gcsItemData);
+            delete foundryItemData._id;
+            delete foundryItemData.folder;
+        } else if (itemKind === "skill") {
+            gcsItemData = resolveGCSImportSkill(gcsItemData, lastGCSBaseSkill);
+            foundryItemData = parseGCSLibrarySkill(gcsItemData);
+            enforceGCSTechniqueBaseOnImportedItem(foundryItemData, gcsItemData);
+            if (!isGCSTechnique(gcsItemData)) {
+                lastGCSBaseSkill = {
+                    name: gcsItemData.name,
+                    specialization: gcsItemData.specialization || ""
+                };
+            }
+        } else if (itemKind === "trait") {
+            foundryItemData = parseGCSLibraryTrait(gcsItemData);
+        } else if (itemKind === "equipment") {
+            foundryItemData = parseGCSLibraryEquipment(gcsItemData);
+        } else if (itemKind === "spell") {
+            foundryItemData = parseGCSLibrarySpell(gcsItemData);
+        } else if (itemKind === "modifier") {
+            foundryItemData = parseGCSLibraryModifier(gcsItemData);
+        } else if (itemKind === "eqp_modifier") {
+            foundryItemData = parseGCSLibraryEquipmentModifier(gcsItemData);
+        }
+
+        if (!foundryItemData) continue;
+        applyAutoPointsBaselineOnImport(foundryItemData);
+        prepared.push({ itemData: foundryItemData, folderPath });
+    }
+    return prepared;
+}
+
 async function importToCompendium(pack, importEntries) {
     if (!pack || !importEntries) return;
-
-    ui.notifications.info(`Traduzindo ${importEntries.length} itens do GCS/JSON...`);
-    const itemsToCreate = [];
-    let packWasLocked = pack.locked;
-     try {
-        // Pastas de compêndio também respeitam lock; precisamos liberar antes de criar a árvore.
-        await pack.configure({ locked: false });
-
-const folderCache = new Map();
-let lastGCSBaseSkill = null;
-
-for (const entry of importEntries) {
-    let gcsItemData = entry?.itemData;
-    const folderPath = Array.isArray(entry?.folderPath) ? entry.folderPath : [];
-    const itemKind = entry?.itemKind;
-
-    if (!gcsItemData) continue;
-
-    let foundryItemData = null;
-
-    // Documentos exportados pelo GUM já estão no formato do Foundry.
-    if (itemKind === "foundry") {
-        foundryItemData = foundry.utils.deepClone(gcsItemData);
-        delete foundryItemData._id;
-        delete foundryItemData.folder;
+    if ((pack.metadata?.type || pack.documentName) !== "Item") {
+        throw new Error(`O compêndio "${pack.title}" não aceita documentos do tipo Item.`);
     }
 
-    // Bibliotecas do GCS usam o tradutor identificado pelo próprio arquivo.
-    else if (itemKind === "skill") {
-        gcsItemData = resolveGCSImportSkill(
-            gcsItemData,
-            lastGCSBaseSkill
-        );
+    const prepared = prepareItemLibraryDocuments(importEntries);
+    if (!prepared.length) {
+        return ui.notifications.warn("Nenhum item pôde ser traduzido. A importação foi cancelada.");
+    }
 
-    foundryItemData =
-        parseGCSLibrarySkill(gcsItemData);
-
-    /*
-    * Garante o nome da perícia-base também quando
-    * uma técnica é importada diretamente para
-    * o compêndio de perícias.
-    */
-    enforceGCSTechniqueBaseOnImportedItem(
-        foundryItemData,
-        gcsItemData
-    );
-
-// Guarda a última perícia normal como possível base
-        // para técnicas que usam marcadores como @perícia@.
-        if (!isGCSTechnique(gcsItemData)) {
-            lastGCSBaseSkill = {
-                name: gcsItemData.name,
-                specialization: gcsItemData.specialization || ""
-            };
-        }
-    } else if (itemKind === "trait") {
-                foundryItemData = parseGCSLibraryTrait(gcsItemData);
-            } else if (itemKind === "equipment") {
-                foundryItemData = parseGCSLibraryEquipment(gcsItemData);
-            } else if (itemKind === "spell") {
-                foundryItemData = parseGCSLibrarySpell(gcsItemData);
-            } else if (itemKind === "modifier") {
-                foundryItemData = parseGCSLibraryModifier(gcsItemData);
-            } else if (itemKind === "eqp_modifier") {
-                foundryItemData = parseGCSLibraryEquipmentModifier(gcsItemData);
-            }
-
-            if (foundryItemData) {
-                const folderId = await ensureCompendiumFolderPath(pack, folderPath, folderCache);
-                if (folderId) foundryItemData.folder = folderId;
-                applyAutoPointsBaselineOnImport(foundryItemData);
-                itemsToCreate.push(foundryItemData);
-            }
+    const originalLocked = Boolean(pack.locked);
+    try {
+        if (originalLocked) await pack.configure({ locked: false });
+        const folderCache = new Map();
+        const itemsToCreate = [];
+        for (const entry of prepared) {
+            const itemData = entry.itemData;
+            const folderId = await ensureCompendiumFolderPath(pack, entry.folderPath, folderCache);
+            if (folderId) itemData.folder = folderId;
+            itemsToCreate.push(itemData);
         }
 
-        if (itemsToCreate.length === 0) {
-            return ui.notifications.warn("Nenhum item pôde ser traduzido. A importação foi cancelada.");
-        }
-        ui.notifications.info(`Iniciando importação de ${itemsToCreate.length} itens traduzidos para "${pack.title}".`);
-        
         await Item.createDocuments(itemsToCreate, { pack: pack.collection });
-
         ui.notifications.info(`Importação concluída! ${itemsToCreate.length} itens adicionados a "${pack.title}".`);
-    } catch (err) {
-        if (err.name === "DataModelValidationError") {
-             console.error("GUM | Erro de Validação de Dados:", err.message, itemsToCreate[0]);
-             ui.notifications.error("Erro de Validação: O JSON parece ser para o tipo errado de item. Verifique o console (F12).");
-        } else {
-            console.error(`GUM | Falha ao importar para ${pack.collection}:`, err);
-            ui.notifications.error(`Falha ao importar para ${pack.title}.`);
-        }
+        return { created: itemsToCreate.length, updated: 0, ignored: 0, failed: 0, destination: pack.title };
+    } catch (error) {
+        console.error(`GUM | Falha ao importar para ${pack.collection}:`, error);
+        throw error;
     } finally {
-        await pack.configure({ locked: packWasLocked });
+        if (pack.locked !== originalLocked) await pack.configure({ locked: originalLocked });
     }
+}
+
+async function importToWorldItems(importEntries, { folderSelection = "__new__", fileName = "biblioteca" } = {}) {
+    const prepared = prepareItemLibraryDocuments(importEntries);
+    if (!prepared.length) {
+        return ui.notifications.warn("Nenhum item pôde ser traduzido. A importação foi cancelada.");
+    }
+
+    let rootFolderId = null;
+    if (folderSelection === "__new__") {
+        rootFolderId = await ensureWorldItemFolderPath(null, [getImportFolderName(fileName)]);
+    } else {
+        const selectedFolder = game.folders?.get?.(folderSelection)
+            || Array.from(game.folders || []).find(folder => folder.id === folderSelection);
+        if (!selectedFolder || selectedFolder.type !== "Item" || selectedFolder.pack) {
+            throw new Error("A pasta de destino não existe mais ou não aceita Itens.");
+        }
+        rootFolderId = selectedFolder.id;
+    }
+
+    const folderCache = new Map();
+    const itemsToCreate = [];
+    for (const entry of prepared) {
+        const itemData = entry.itemData;
+        const folderId = await ensureWorldItemFolderPath(rootFolderId, entry.folderPath, folderCache);
+        itemData.folder = folderId || rootFolderId;
+        itemsToCreate.push(itemData);
+    }
+
+    await Item.createDocuments(itemsToCreate);
+    const rootFolder = game.folders?.get?.(rootFolderId);
+    const destination = rootFolder?.name || getImportFolderName(fileName);
+    ui.notifications.info(`Importação concluída! ${itemsToCreate.length} itens adicionados à pasta "${destination}".`);
+    return { created: itemsToCreate.length, updated: 0, ignored: 0, failed: 0, destination };
+}
+
+async function createWorldItemCompendium(label) {
+    const cleanLabel = String(label || "").trim();
+    if (!cleanLabel) throw new Error("Informe um nome para o novo compêndio.");
+
+    const existingCollections = Array.from(game.packs || []).map(pack => pack.collection);
+    const name = getUniqueWorldCompendiumName(cleanLabel, existingCollections);
+    const CompendiumCollectionClass = foundry.documents.collections.CompendiumCollection;
+    if (!CompendiumCollectionClass?.createCompendium) {
+        throw new Error("Esta versão do Foundry não oferece criação de compêndios durante a importação.");
+    }
+
+    const pack = await CompendiumCollectionClass.createCompendium({
+        label: cleanLabel,
+        name,
+        type: "Item",
+        package: "world"
+    });
+    if (!pack) throw new Error("O Foundry não retornou o novo compêndio criado.");
+    ui.notifications.info(`Compêndio mundial "${cleanLabel}" criado.`);
+    return pack;
+}
+
+async function ensureWorldItemFolderPath(rootFolderId, folderPath = [], folderCache = new Map()) {
+    const sanitizedPath = folderPath.map(part => String(part || "").trim()).filter(Boolean);
+    if (!sanitizedPath.length) return rootFolderId;
+
+    let parentId = rootFolderId || null;
+    const pathKeyParts = [rootFolderId || "world"];
+    for (const segment of sanitizedPath) {
+        pathKeyParts.push(segment);
+        const cacheKey = pathKeyParts.join(" / ");
+        if (folderCache.has(cacheKey)) {
+            parentId = folderCache.get(cacheKey);
+            continue;
+        }
+
+        const existing = Array.from(game.folders || []).find(folder =>
+            folder.type === "Item" &&
+            !folder.pack &&
+            folder.name === segment &&
+            ((folder.folder?.id ?? folder.folder ?? null) === parentId)
+        );
+        if (existing) {
+            parentId = existing.id;
+            folderCache.set(cacheKey, parentId);
+            continue;
+        }
+
+        const created = await Folder.create({ name: segment, type: "Item", folder: parentId });
+        parentId = created?.id || null;
+        if (!parentId) throw new Error(`Não foi possível criar a pasta "${segment}".`);
+        folderCache.set(cacheKey, parentId);
+    }
+    return parentId;
 }
 
 function escapeImportHTML(value) {

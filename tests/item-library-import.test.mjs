@@ -78,15 +78,15 @@ test("conteúdo ambíguo é recusado em vez de depender do nome do compêndio", 
 
 test("o importador não escolhe mais o tradutor pelo nome técnico do compêndio", () => {
     const source = readFileSync(new URL("../module/apps/importers.js", import.meta.url), "utf8");
-    const importFunction = source.slice(
-        source.indexOf("async function importToCompendium"),
+    const importFlow = source.slice(
+        source.indexOf("function prepareItemLibraryDocuments"),
         source.indexOf("function escapeImportHTML")
     );
 
-    assert.doesNotMatch(importFunction, /packNameToType|pack\.metadata\.name/);
-    assert.match(importFunction, /itemKind === "skill"/);
-    assert.match(importFunction, /itemKind === "trait"/);
-    assert.match(importFunction, /itemKind === "equipment"/);
+    assert.doesNotMatch(importFlow, /packNameToType|pack\.metadata\.name/);
+    assert.match(importFlow, /itemKind === "skill"/);
+    assert.match(importFlow, /itemKind === "trait"/);
+    assert.match(importFlow, /itemKind === "equipment"/);
 });
 
 test("sincronização de JSON não limita o tipo pelo nome do compêndio", () => {
