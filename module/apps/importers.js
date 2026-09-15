@@ -1370,6 +1370,12 @@ function resolveGCSImportSkill(
     const defaults =
         getGCSDefaults(clone);
 
+    // Decode criteria before placeholder replacement can stringify the objects.
+    for (const entry of defaults) {
+        entry.name = readGCSDefaultText(entry.name);
+        entry.specialization = readGCSDefaultText(entry.specialization, { allowAny: true });
+    }
+
     const replacements =
         clone.replacements || {};
 
@@ -2177,6 +2183,20 @@ function applyGCSDefaultsToImportedCharacterSkill(
     return itemData;
 }
 
+// GCS versions store default names either as strings or as text criteria.
+// GUM references concrete names; other comparisons cannot be treated as equality.
+function readGCSDefaultText(value, { allowAny = false } = {}) {
+    if (value == null) return "";
+    if (typeof value === "string") return value;
+    if (typeof value === "object" && !Array.isArray(value)) {
+        if (value.compare === "any" && allowAny) return "";
+        if (value.compare === "is" && (value.qualifier == null || typeof value.qualifier === "string")) {
+            return value.qualifier ?? "";
+        }
+    }
+    throw new Error(`Pré-definido GCS não suportado: critério "${value?.compare ?? typeof value}". É necessário um nome exato (is).`);
+}
+
 function normalizeGCSDefault(gcsDefault) {
     if (!gcsDefault || !gcsDefault.type) return null;
 
@@ -2185,8 +2205,8 @@ function normalizeGCSDefault(gcsDefault) {
 
     if (defaultType === "skill") {
         return {
-            name: gcsDefault.name || "",
-            specialization: gcsDefault.specialization || "",
+            name: readGCSDefaultText(gcsDefault.name),
+            specialization: readGCSDefaultText(gcsDefault.specialization, { allowAny: true }),
             modifier
         };
     }
@@ -2209,8 +2229,8 @@ function normalizeGCSDefault(gcsDefault) {
     }
 
     return {
-        name: String(gcsDefault.name || gcsDefault.type || "").toUpperCase(),
-        specialization: gcsDefault.specialization || "",
+        name: (readGCSDefaultText(gcsDefault.name) || gcsDefault.type || "").toUpperCase(),
+        specialization: readGCSDefaultText(gcsDefault.specialization, { allowAny: true }),
         modifier
     };
 }
@@ -2272,7 +2292,7 @@ function parseGCSLibrarySpell(gcsSpell) {
 
     if (gcsSpell.weapons?.length > 0) {
         const gcsWeapon = gcsSpell.weapons[0]; 
-        const defaultSkill = gcsWeapon.defaults?.find(d => d.type === "skill")?.name || gcsWeapon.defaults?.[0]?.type || "DX";
+        const defaultSkill = readGCSDefaultText(gcsWeapon.defaults?.find(d => d.type === "skill")?.name) || gcsWeapon.defaults?.[0]?.type || "DX";
         
         if (!template.attack_roll) {
             template.attack_roll = { skill_name: "", skill_level_mod: 0 };
