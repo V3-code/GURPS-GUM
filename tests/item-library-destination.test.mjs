@@ -55,7 +55,8 @@ test("importação no mundo sempre atribui uma pasta aos documentos", () => {
     );
 
     assert.match(worldImport, /itemData\.folder = folderId \|\| rootFolderId/);
-    assert.match(worldImport, /await Item\.createDocuments\(itemsToCreate\)/);
+    assert.match(worldImport, /planItemLibraryDuplicates\(incomingDocuments, existingDocuments, duplicateMode\)/);
+    assert.match(worldImport, /await Item\.createDocuments\(plan\.toCreate, options\)/);
 });
 
 test("novo compêndio é criado no mundo e aceita Itens", () => {
@@ -75,4 +76,23 @@ test("importação de biblioteca exige permissão de Mestre", () => {
     const entrypoint = source.slice(source.indexOf("export async function importFromJson"), source.indexOf("input.type"));
 
     assert.match(entrypoint, /!game\.user\?\.isGM/);
+});
+
+test("aba Itens oferece o importador diretamente ao Mestre", () => {
+    const source = readFileSync(new URL("../scripts/main.js", import.meta.url), "utf8");
+
+    assert.match(source, /Hooks\.on\("renderItemDirectory", renderItemLibraryImportButton\)/);
+    assert.match(source, /class="gum-item-library-import"/);
+    assert.match(source, /button\.on\("click", \(\) => importFromJson\(\)\)/);
+    assert.match(source, /if \(!game\.user\?\.isGM\) return/);
+});
+
+test("prévia explica duplicações e relatório apresenta todos os resultados", () => {
+    const source = readFileSync(new URL("../module/apps/importers.js", import.meta.url), "utf8");
+
+    assert.match(source, /<option value="skip">\$\{ITEM_LIBRARY_DUPLICATE_MODES\.skip\}<\/option>/);
+    assert.match(source, /<option value="update">\$\{ITEM_LIBRARY_DUPLICATE_MODES\.update\}<\/option>/);
+    assert.match(source, /<option value="create">\$\{ITEM_LIBRARY_DUPLICATE_MODES\.create\}<\/option>/);
+    assert.match(source, /title: "Resultado da Importação"/);
+    assert.match(source, /Criados:[\s\S]*Atualizados:[\s\S]*Ignorados:[\s\S]*Falharam:/);
 });

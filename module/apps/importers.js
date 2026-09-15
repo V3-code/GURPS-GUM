@@ -3,6 +3,7 @@ import { buildGCSActorReconciliation } from "../utils/gcs-actor-reconciliation.m
 import { canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
 import { analyzeItemLibrary } from "../utils/item-library-import.mjs";
 import { buildWorldItemFolderChoices, getImportFolderName, getUniqueWorldCompendiumName } from "../utils/item-library-destination.mjs";
+import { ITEM_LIBRARY_DUPLICATE_MODES, planItemLibraryDuplicates } from "../utils/item-library-duplicates.mjs";
 /**
  * Lida com a importação de um arquivo JSON (formato customizado) OU
  * um arquivo de Biblioteca GCS (.skl, .spl, .eqp, .adq, .adm, .eqm) para um compêndio.
@@ -122,6 +123,17 @@ export async function importFromJson() {
                         <input type="text" name="new-pack-label" value="${escapeImportHTML(suggestedPackLabel)}" style="width: 100%;">
                         <p class="hint">O compêndio será criado no mundo e não será removido por atualizações do GUM.</p>
                     </div>
+                    ${!isCompendiumJson ? `
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label style="font-weight: bold;">Itens repetidos:</label>
+                        <select name="duplicate-mode" style="width: 100%;">
+                            <option value="skip">${ITEM_LIBRARY_DUPLICATE_MODES.skip}</option>
+                            <option value="update">${ITEM_LIBRARY_DUPLICATE_MODES.update}</option>
+                            <option value="create">${ITEM_LIBRARY_DUPLICATE_MODES.create}</option>
+                        </select>
+                        <p class="hint">A comparação usa o tipo, o nome e, nas perícias, a especialização.</p>
+                    </div>` : `
+                    <p class="hint">Em compêndios, este JSON será sincronizado pelos IDs originais. Em Itens do mundo, repetidos serão ignorados por tipo e nome.</p>`}
                     ${isCompendiumJson ? `
                     <div class="form-group" data-import-target-fields="sync" style="margin-top: 10px; display: none;">
                         <label>
@@ -137,10 +149,11 @@ export async function importFromJson() {
                     label: "Importar",
                     callback: async (html) => {
                         const target = String(html.find('select[name="import-target"]').val() || "");
+                        const duplicateMode = String(html.find('select[name="duplicate-mode"]').val() || "skip");
                         try {
                             if (target === "world") {
                                 const folderSelection = String(html.find('select[name="world-folder"]').val() || "__new__");
-                                await importToWorldItems(importEntries, { folderSelection, fileName: file.name });
+                                await importToWorldItems(importEntries, { folderSelection, fileName: file.name, duplicateMode });
                                 return;
                             }
 
@@ -160,7 +173,7 @@ export async function importFromJson() {
                                 const removeMissing = Boolean(html.find('input[name="remove-missing"]').prop('checked'));
                                 await synchronizeCompendiumJson(pack, importEntries, { removeMissing });
                             } else {
-                                await importToCompendium(pack, importEntries);
+                                await importToCompendium(pack, importEntries, { duplicateMode });
                             }
                         } catch (error) {
                             console.error("GUM | Falha ao preparar o destino da importação:", error);
@@ -236,7 +249,7 @@ function prepareItemLibraryDocuments(importEntries) {
     return prepared;
 }
 
-async function importToCompendium(pack, importEntries) {
+async function importToCompendium(pack, importEntries, { duplicateMode = "skip" } = {}) {
     if (!pack || !importEntries) return;
     if ((pack.metadata?.type || pack.documentName) !== "Item") {
         throw new Error(`O compêndio "${pack.title}" não aceita documentos do tipo Item.`);
@@ -248,29 +261,32 @@ async function importToCompendium(pack, importEntries) {
     }
 
     const originalLocked = Boolean(pack.locked);
+    let result;
     try {
         if (originalLocked) await pack.configure({ locked: false });
         const folderCache = new Map();
-        const itemsToCreate = [];
+        const incomingDocuments = [];
         for (const entry of prepared) {
             const itemData = entry.itemData;
             const folderId = await ensureCompendiumFolderPath(pack, entry.folderPath, folderCache);
             if (folderId) itemData.folder = folderId;
-            itemsToCreate.push(itemData);
+            incomingDocuments.push(itemData);
         }
 
-        await Item.createDocuments(itemsToCreate, { pack: pack.collection });
-        ui.notifications.info(`Importação concluída! ${itemsToCreate.length} itens adicionados a "${pack.title}".`);
-        return { created: itemsToCreate.length, updated: 0, ignored: 0, failed: 0, destination: pack.title };
+        const existingDocuments = await pack.getDocuments();
+        const plan = planItemLibraryDuplicates(incomingDocuments, existingDocuments, duplicateMode);
+        result = await applyItemLibraryPlan(plan, { pack: pack.collection, destination: pack.title });
     } catch (error) {
         console.error(`GUM | Falha ao importar para ${pack.collection}:`, error);
         throw error;
     } finally {
         if (pack.locked !== originalLocked) await pack.configure({ locked: originalLocked });
     }
+    showItemLibraryImportResult(result);
+    return result;
 }
 
-async function importToWorldItems(importEntries, { folderSelection = "__new__", fileName = "biblioteca" } = {}) {
+async function importToWorldItems(importEntries, { folderSelection = "__new__", fileName = "biblioteca", duplicateMode = "skip" } = {}) {
     const prepared = prepareItemLibraryDocuments(importEntries);
     if (!prepared.length) {
         return ui.notifications.warn("Nenhum item pôde ser traduzido. A importação foi cancelada.");
@@ -289,19 +305,101 @@ async function importToWorldItems(importEntries, { folderSelection = "__new__", 
     }
 
     const folderCache = new Map();
-    const itemsToCreate = [];
+    const incomingDocuments = [];
     for (const entry of prepared) {
         const itemData = entry.itemData;
         const folderId = await ensureWorldItemFolderPath(rootFolderId, entry.folderPath, folderCache);
         itemData.folder = folderId || rootFolderId;
-        itemsToCreate.push(itemData);
+        incomingDocuments.push(itemData);
     }
 
-    await Item.createDocuments(itemsToCreate);
     const rootFolder = game.folders?.get?.(rootFolderId);
     const destination = rootFolder?.name || getImportFolderName(fileName);
-    ui.notifications.info(`Importação concluída! ${itemsToCreate.length} itens adicionados à pasta "${destination}".`);
-    return { created: itemsToCreate.length, updated: 0, ignored: 0, failed: 0, destination };
+    const folderIds = collectWorldItemFolderIds(rootFolderId);
+    const existingDocuments = Array.from(game.items?.contents || game.items || [])
+        .filter(item => folderIds.has(item.folder?.id ?? item.folder ?? null));
+    const plan = planItemLibraryDuplicates(incomingDocuments, existingDocuments, duplicateMode);
+    const result = await applyItemLibraryPlan(plan, { destination });
+    showItemLibraryImportResult(result);
+    return result;
+}
+
+function collectWorldItemFolderIds(rootFolderId) {
+    const ids = new Set([rootFolderId]);
+    let changed = true;
+    while (changed) {
+        changed = false;
+        for (const folder of Array.from(game.folders || [])) {
+            if (folder.type !== "Item" || folder.pack || ids.has(folder.id)) continue;
+            const parentId = folder.folder?.id ?? folder.folder ?? null;
+            if (ids.has(parentId)) {
+                ids.add(folder.id);
+                changed = true;
+            }
+        }
+    }
+    return ids;
+}
+
+async function applyItemLibraryPlan(plan, { pack = null, destination = "destino selecionado" } = {}) {
+    const options = pack ? { pack } : {};
+    const result = {
+        created: 0,
+        updated: 0,
+        ignored: plan.ignored.length,
+        failed: 0,
+        destination,
+        errors: []
+    };
+
+    if (plan.toUpdate.length) {
+        try {
+            await Item.updateDocuments(plan.toUpdate, options);
+            result.updated = plan.toUpdate.length;
+        } catch (error) {
+            console.error("GUM | Falha ao atualizar itens durante a importação:", error);
+            result.failed += plan.toUpdate.length;
+            result.errors.push(`Atualização: ${error.message}`);
+        }
+    }
+
+    if (plan.toCreate.length) {
+        try {
+            await Item.createDocuments(plan.toCreate, options);
+            result.created = plan.toCreate.length;
+        } catch (error) {
+            console.error("GUM | Falha ao criar itens durante a importação:", error);
+            result.failed += plan.toCreate.length;
+            result.errors.push(`Criação: ${error.message}`);
+        }
+    }
+    return result;
+}
+
+function showItemLibraryImportResult(result) {
+    if (!result) return;
+    const errors = result.errors?.length
+        ? `<div style="margin-top: 10px;"><strong>Erros:</strong><ul>${result.errors.map(error => `<li>${escapeImportHTML(error)}</li>`).join("")}</ul></div>`
+        : "";
+    const content = `<div style="padding: 8px 0;">
+        <p><strong>Destino:</strong> ${escapeImportHTML(result.destination)}</p>
+        <ul>
+            <li>Criados: <strong>${Number(result.created) || 0}</strong></li>
+            <li>Atualizados: <strong>${Number(result.updated) || 0}</strong></li>
+            <li>Ignorados: <strong>${Number(result.ignored) || 0}</strong></li>
+            ${result.removed === undefined ? "" : `<li>Removidos: <strong>${Number(result.removed) || 0}</strong></li>`}
+            <li>Falharam: <strong>${Number(result.failed) || 0}</strong></li>
+        </ul>
+        ${errors}
+    </div>`;
+
+    ui.notifications.info(`Importação concluída: ${result.created} criado(s), ${result.updated} atualizado(s), ${result.ignored} ignorado(s) e ${result.failed} com falha.`);
+    new Dialog({
+        title: "Resultado da Importação",
+        content,
+        buttons: { close: { label: "Fechar" } },
+        default: "close"
+    }).render(true);
 }
 
 async function createWorldItemCompendium(label) {
@@ -3889,10 +3987,30 @@ async function synchronizeCompendiumJson(pack, importEntries, { removeMissing = 
             removed = toRemove.length;
         }
 
-        ui.notifications.info(`Importação concluída em "${pack.title}": ${updated} atualizado(s), ${created} criado(s), ${removed} removido(s) e ${ignored} ignorado(s).`);
+        const result = {
+            created,
+            updated,
+            ignored,
+            failed: 0,
+            removed,
+            destination: pack.title,
+            errors: []
+        };
+        showItemLibraryImportResult(result);
+        return result;
     } catch (err) {
         console.error(`GUM | Falha ao sincronizar o compêndio ${pack.collection}:`, err);
-        ui.notifications.error(`Falha ao importar para "${pack.title}": ${err.message}`);
+        const result = {
+            created,
+            updated,
+            ignored,
+            failed: Math.max(0, incoming.length - created - updated - ignored),
+            removed,
+            destination: pack.title,
+            errors: [err.message]
+        };
+        showItemLibraryImportResult(result);
+        return result;
     } finally {
         if (pack.locked !== originalLocked) {
             try {
