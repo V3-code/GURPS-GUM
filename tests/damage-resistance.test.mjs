@@ -61,10 +61,10 @@ test("actor preparation exposes computed/final DR and rebuilds effect layers", (
   assert.match(source, /combat\.dr_locations = totalDr/);
 });
 
-test("DR dialog identifies permanent and fixed override inputs separately", () => {
+test("DR dialog identifies permanent and override inputs separately", () => {
   const source = readFileSync(new URL("../module/actor/gurps-actor-sheet.js", import.meta.url), "utf8");
   assert.match(source, /<div>Perm\.<\/div>/);
-  assert.match(source, /RD fixa que substitui o total calculado">Fixa<\/div>/);
+  assert.match(source, /RD sobrescrita substitui o total calculado">Sobrescrita<\/div>/);
   assert.doesNotMatch(source, /<div>Override<\/div>/);
   assert.match(source, /Valor calculado antes do override/);
 });
