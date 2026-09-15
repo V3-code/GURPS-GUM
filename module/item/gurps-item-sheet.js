@@ -5,7 +5,8 @@ import { ModifierBrowser } from "../apps/modifier-browser.js";
 import { GM_MODIFIER_CATEGORY_OPTIONS } from "../utils/gm-modifier-categories.js"; 
 import { listBodyLocations } from "../config/body-profiles.js";
 import { SOCIAL_CATEGORIES } from "../config/social-aspects.mjs";
-import { normalizeContextCsv, openContextPicker } from "../apps/context-picker.mjs"; 
+import { normalizeContextCsv, openContextPicker } from "../apps/context-picker.mjs";
+import { getSkillDisplayName } from "../utils/skill-display-name.mjs";
  
 const { ItemSheet } = foundry.appv1.sheets; 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor; 
@@ -1924,7 +1925,12 @@ const rangedFields = `
             return ui.notifications.warn("Nenhuma perícia compatível foi encontrada neste ator."); 
         } 
  
-        let options = skills.map(s => `<option value="${s.name}">${s.name} (NH ${s.system.final_nh})</option>`).join(''); 
+            let options = skills.map((skill) => {
+            const displayName = getSkillDisplayName(skill);
+            const safeName = foundry.utils.escapeHTML(displayName);
+            const safeNh = foundry.utils.escapeHTML(String(skill.system.final_nh ?? "N/A"));
+            return `<option value="${safeName}">${safeName} (NH ${safeNh})</option>`;
+        }).join('');
         new Dialog({ 
             title: "Vincular Perícia", 
             content: `<div class="form-group"><label>Escolha:</label><select name="skill_selector">${options}</select></div>`, 

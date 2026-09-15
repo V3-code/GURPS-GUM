@@ -908,6 +908,7 @@ async getData(options) {
         
         // 1. Usamos a lista 'context.equipmentInUse' que você já calculou
  const calculateDefaultDefense = (nhValue) => {
+            if (nhValue === null || nhValue === undefined || nhValue === "") return null;
             const parsed = Number(nhValue);
             if (!Number.isFinite(parsed)) return null;
             return Math.floor(parsed / 2) + 3;
@@ -934,7 +935,7 @@ async getData(options) {
             // 2. Processa os Ataques Corpo a Corpo (Melee)
             // ✅ MUDANÇA: Removemos toda a lógica de cálculo de NH daqui
             const meleeAttacks = Object.entries(item.system.melee_attacks || {}).map(([id, attack]) => {
-                const finalNh = attack.final_nh || 10;
+                const finalNh = attack.final_nh ?? null;
                 const defaultDefense = calculateDefaultDefense(finalNh);
                 const fallbackParry = attack.parry_default && defaultDefense !== null ? defaultDefense : attack.parry;
                 const fallbackBlock = attack.block_default && defaultDefense !== null ? defaultDefense : attack.block;
@@ -978,7 +979,7 @@ async getData(options) {
                     groupId: item.id,
                     itemId: item.id,
                     // ✅ MUDANÇA: Apenas lê o valor que o main.js já calculou
-                    final_nh: attack.final_nh || 10,
+                    final_nh: attack.final_nh ?? null,
                     skill_name: attack.resolved_skill_name || attack.skill_name || "N/A"
                 };
             });

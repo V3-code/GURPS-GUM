@@ -39,6 +39,7 @@ import { showDiceForMessageLessRoll } from "../module/utils/dice-so-nice.mjs";
 import { BASIC_DAMAGE_KEYS, normalizeBasicDamageData, prepareBasicDamageAttributes } from "../module/utils/basic-damage.mjs";
 import { resolveAttackDamageDisplay } from "../module/utils/attack-damage-display.mjs";
 import { canUserCreateActors } from "../module/utils/actor-creation-permission.mjs";
+import { resolveRollReference } from "../module/utils/roll-reference-resolver.mjs";
 
 import { getSkillDisplayName, setDirectoryEntryLabel } from "../module/utils/skill-display-name.mjs";
 import { installGumChatCommandInterceptor, normalizeGumLookup, resolveGumCommandActor, splitSkillModifier } from "../module/utils/gum-chat-command.mjs";
@@ -736,93 +737,9 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
         combat.dr_from_armor = drFromArmor;
         
           // --- ETAPA 8: CÁLCULO DE NH ---
-        const parseReferenceModifier = (referenceText) => {
-            const raw = String(referenceText ?? "").trim();
-            const modifierMatch = raw.match(/^(.*?)([+-]\d+)\s*$/);
-            if (!modifierMatch) {
-                return { reference: raw, modifier: 0 };
-            }
-
-            const parsedModifier = Number(modifierMatch[2]);
-            if (!Number.isFinite(parsedModifier)) {
-                return { reference: raw, modifier: 0 };
-            }
-
-            const baseReference = modifierMatch[1].trim();
-            if (!baseReference) {
-                return { reference: raw, modifier: 0 };
-            }
-
-            return { reference: baseReference, modifier: parsedModifier };
-        };
-
-        const applyModifierToResolved = (resolvedValue, modifier) => {
-            const safeModifier = Number(modifier) || 0;
-            if (!safeModifier) return resolvedValue;
-            const signedModifier = safeModifier > 0 ? `+${safeModifier}` : String(safeModifier);
-            return {
-                value: resolvedValue.value + safeModifier,
-                label: `${resolvedValue.label}${signedModifier}`
-            };
-        };
-
-        const resolveRollReference = (rawReference, skillList) => {
-            const originalLabel = String(rawReference ?? "").trim();
-            const { reference, modifier } = parseReferenceModifier(originalLabel);
-            const normalizedRef = reference.toLowerCase();
-            const attributeKey = normalizedRef === "will" ? "vont" : normalizedRef;
-            const fixedNumber = Number(normalizedRef);
-            const refSkill = skillList.find(s => s.name?.toLowerCase().trim() === normalizedRef);
-            const attribute = attributes[attributeKey];
-
-            if (attribute?.final !== undefined) {
-                return applyModifierToResolved({
-                    value: Number(attribute.final) || 10,
-                    label: reference || normalizedRef.toUpperCase()
-                }, modifier);
-            }
-
-            if (!isNaN(fixedNumber) && normalizedRef !== "") {
-                return applyModifierToResolved({ value: fixedNumber, label: reference || String(fixedNumber) }, modifier);
-            }
-
-            if (refSkill) {
-                return applyModifierToResolved({
-                    value: Number(refSkill.system.final_nh) || 10,
-                    label: refSkill.name || reference || "N/A"
-                }, modifier);
-            }
-
-            return applyModifierToResolved({ value: 10, label: reference || "DX" }, modifier);
-        };
-
         const evaluateRollReference = (rawReference, skillList) => {
             const source = String(rawReference ?? "").trim();
-            if (!source) return resolveRollReference("dx", skillList);
-
-            const matchExpression = source.match(/^(maior|menor|max|min)\s*\((.*)\)$/i);
-            const fallbackReferences = source.split(",").map(ref => ref.trim()).filter(Boolean);
-
-            let mode = "single";
-            let references = fallbackReferences;
-
-            if (matchExpression) {
-                mode = /^(menor|min)$/i.test(matchExpression[1]) ? "min" : "max";
-                references = matchExpression[2].split(",").map(ref => ref.trim()).filter(Boolean);
-            } else if (fallbackReferences.length > 1) {
-                mode = "max";
-            }
-
-            const resolvedEntries = references.map(ref => resolveRollReference(ref, skillList));
-            if (!resolvedEntries.length) return resolveRollReference("dx", skillList);
-
-            let selected = resolvedEntries[0];
-            if (mode === "max") {
-                selected = resolvedEntries.reduce((best, current) => current.value > best.value ? current : best, resolvedEntries[0]);
-            } else if (mode === "min") {
-                selected = resolvedEntries.reduce((best, current) => current.value < best.value ? current : best, resolvedEntries[0]);
-            }
-            return selected;
+        return resolveRollReference(source || "DX", attributes, skillList);
         };
 
         const skills = this.items.filter(i => i.type === 'skill');
@@ -982,9 +899,9 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                         : nhBase + nhLevel + nhMod + nhPassive + nhTemp;
                    if (i.system.uses_attack && i.system.attack_roll?.skill_name) {
                         const resolvedAttackBase = evaluateRollReference(i.system.attack_roll.skill_name, rollReferences);
-                        const attackBaseVal = Number(resolvedAttackBase.value) || 0;
+                        const attackBaseVal = Number(resolvedAttackBase.value);
                         const attackMod = Number(i.system.attack_roll.skill_level_mod) || 0;
-                        i.system.attack_nh = attackBaseVal + attackMod;
+                        i.system.attack_nh = resolvedAttackBase.available && Number.isFinite(attackBaseVal) ? attackBaseVal + attackMod : null;
                         i.system.attack_roll.resolved_skill_name = resolvedAttackBase.label;
                         } else {
                         i.system.attack_nh = null;
@@ -1000,10 +917,12 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                     for (const [attackId, attack] of Object.entries(i.system.melee_attacks)) {
                         attack.id = attack.id || attackId;
                         const resolvedAttackBase = evaluateRollReference(attack.skill_name, skills);
-                        const attackBaseVal = resolvedAttackBase.value;
-                        const attackSkillNh = attackBaseVal + (Number(attack.skill_level_mod) || 0);
+                        const attackBaseVal = Number(resolvedAttackBase.value);
+                        const attackSkillNh = resolvedAttackBase.available && Number.isFinite(attackBaseVal)
+                            ? attackBaseVal + (Number(attack.skill_level_mod) || 0)
+                            : null;
                         const attackNhBonuses = collectNhBonusesForAttack(i, attack, "melee");
-                        attack.final_nh = attackSkillNh + attackNhBonuses.passive + attackNhBonuses.temp;
+                        attack.final_nh = attackSkillNh === null ? null : attackSkillNh + attackNhBonuses.passive + attackNhBonuses.temp;
                         attack.resolved_skill_name = resolvedAttackBase.label;
 
 const splitDefenseValue = (value) => {
@@ -1027,6 +946,7 @@ const splitDefenseValue = (value) => {
                             if (importedParsed) return addBonusesToDefenseValue(importedFinalDefense, defenseNhBonuses);
 
                             if (!useDefault && (rawDefense === "0" || rawDefense === "No")) return null;
+                            if (attackSkillNh === null) return null;
                             const defenseBase = Math.floor(attackSkillNh / 2) + 3;
                             const parsedDefense = splitDefenseValue(rawDefense);
                             const defenseMod = useDefault ? 0 : (parsedDefense?.number ?? (Number(rawDefense) || 0));
@@ -1048,10 +968,12 @@ const splitDefenseValue = (value) => {
                     for (const [attackId, attack] of Object.entries(i.system.ranged_attacks)) {
                         attack.id = attack.id || attackId;
                         const resolvedAttackBase = evaluateRollReference(attack.skill_name, skills);
-                        const attackBaseVal = resolvedAttackBase.value;
-                        const attackSkillNh = attackBaseVal + (Number(attack.skill_level_mod) || 0);
+                        const attackBaseVal = Number(resolvedAttackBase.value);
+                        const attackSkillNh = resolvedAttackBase.available && Number.isFinite(attackBaseVal)
+                            ? attackBaseVal + (Number(attack.skill_level_mod) || 0)
+                            : null;
                         const attackNhBonuses = collectNhBonusesForAttack(i, attack, "ranged");
-                        attack.final_nh = attackSkillNh + attackNhBonuses.passive + attackNhBonuses.temp;
+                        attack.final_nh = attackSkillNh === null ? null : attackSkillNh + attackNhBonuses.passive + attackNhBonuses.temp;
                         attack.resolved_skill_name = resolvedAttackBase.label;
                     }
                 }
