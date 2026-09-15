@@ -1,4 +1,5 @@
 /** Canonical trait pricing. No Foundry dependency and no legacy calculation mode. */
+const costDisplay = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 10, useGrouping: false });
 function number(value, fallback = 0) {
   if (value === undefined || value === null || value === '') return fallback;
   const result = Number(value);
@@ -62,7 +63,7 @@ export function calculateTraitCost(system = {}) {
   const roundedInput = Math.abs(raw - nearest) <= Number.EPSILON * Math.max(1, Math.abs(raw)) * 8 ? nearest : raw;
   const finalPoints = system.round_down ? Math.floor(roundedInput) : Math.ceil(roundedInput);
   return { finalPoints, raw, breakdown,
-    description: `Base ${base} × ${baseFactor}; níveis ${perLevel} × ${level} × ${levelFactor}; multiplicador ×${multiplier}` };
+    description: `Base ${costDisplay.format(base)} × ${costDisplay.format(baseFactor)}; níveis ${costDisplay.format(perLevel)} × ${costDisplay.format(level)} × ${costDisplay.format(levelFactor)}; multiplicador ×${costDisplay.format(multiplier)}` };
 }
 
 export function calculateItemTraitCost(item) {
