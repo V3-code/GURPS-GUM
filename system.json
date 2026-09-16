@@ -55,7 +55,8 @@
     "module/apps/template-browser.js",
     "module/apps/eqp-modifier-browser.js",
     "module/apps/trigger-browser.js",
-    "module/apps/importers.js"
+    "module/apps/importers.js",
+    "module/apps/content-source-config.js"
   ],
   "styles": [
     "styles/styles.css",

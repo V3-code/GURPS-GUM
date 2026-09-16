@@ -9237,3 +9237,86 @@ background-color: var(--gum-accent-gold);
   .gum.sheet.actor .support-card-grid { grid-template-columns:minmax(0,1fr); }
   .gum.sheet.actor .support-card-grid.is-compact-pair .support-reserve-card.is-first-reserve { grid-column:1; margin-top:3px; }
 }
+/* Configuração central das bibliotecas usadas pelas funções do GUM. */
+.content-source-config .gum-content-source-form {
+  padding: 0.75rem;
+}
+
+.content-source-config .content-source-purpose {
+  border: 1px solid var(--color-border-light-2, #777);
+  border-radius: 5px;
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+}
+
+.content-source-config .content-source-purpose > header,
+.content-source-config .content-source-add,
+.content-source-config .content-source-list li {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.content-source-config .content-source-purpose > header {
+  justify-content: space-between;
+}
+
+.content-source-config .content-source-purpose h2,
+.content-source-config .content-source-purpose p {
+  margin: 0 0 0.25rem;
+}
+
+.content-source-config .content-source-list {
+  list-style: none;
+  margin: 0.75rem 0;
+  padding: 0;
+}
+
+.content-source-config .content-source-list li {
+  border-bottom: 1px solid var(--color-border-light-tertiary, #9995);
+  min-height: 2.5rem;
+  padding: 0.25rem;
+}
+
+.content-source-config .source-order {
+  text-align: center;
+  width: 1.5rem;
+}
+
+.content-source-config .source-details {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.content-source-config .source-details small {
+  opacity: 0.75;
+}
+
+.content-source-config .source-status {
+  color: var(--color-level-success, #18520b);
+}
+
+.content-source-config .is-missing .source-status {
+  color: var(--color-level-warning, #8a4b00);
+}
+
+.content-source-config .source-actions {
+  display: flex;
+}
+
+.content-source-config .source-actions button {
+  line-height: 1.75rem;
+  margin: 0;
+  padding: 0 0.45rem;
+  width: auto;
+}
+
+.content-source-config .content-source-add select {
+  flex: 1;
+}
+
+.content-source-config .empty-source-list {
+  font-style: italic;
+  opacity: 0.75;
+}

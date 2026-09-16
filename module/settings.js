@@ -53,11 +53,31 @@ async function syncCompendiumRules() {
 
 // --- IMPORTA A LÓGICA DOS IMPORTADORES ---
 import { importFromJson, importFromGCS, importTemplateFromGCS, exportCompendiumToJson, exportCharacterToJson } from "./apps/importers.js";
+import { ContentSourceConfig } from "./apps/content-source-config.js";
+import { CONTENT_SOURCE_SETTING } from "./services/content-source-service.mjs";
 
 
 // --- REGISTRO DAS CONFIGURAÇÕES ---
 
 export const registerSystemSettings = function() {
+
+    game.settings.register("gum", CONTENT_SOURCE_SETTING, {
+        name: "Fontes de Conteúdo do GUM",
+        hint: "Configuração interna das bibliotecas utilizadas pelas funções do sistema.",
+        scope: "world",
+        config: false,
+        type: Object,
+        default: {}
+    });
+
+    game.settings.registerMenu("gum", "contentSourceConfig", {
+        name: "Fontes de Conteúdo do GUM",
+        label: "Configurar fontes",
+        hint: "Escolha os compêndios usados pelos navegadores e automações do GUM.",
+        icon: "fas fa-books",
+        type: ContentSourceConfig,
+        restricted: true
+    });
 
  game.settings.register("gum", "effectTokenIconPolicyMigration", {
         name: "Migração interna: Política de ícone de efeito no token",

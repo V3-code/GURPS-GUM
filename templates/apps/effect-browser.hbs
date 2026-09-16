@@ -1,5 +1,12 @@
 <form class="effect-browser-form gum-browser">
 
+    {{#if invalidSources.length}}
+    <div class="notification warning">
+        <strong>Algumas fontes configuradas não puderam ser usadas:</strong>
+        {{#each invalidSources as |source|}}<code>{{source.id}}</code>{{#unless @last}}, {{/unless}}{{/each}}
+    </div>
+    {{/if}}
+
     <div class="browser-container">
 
         {{!-- Coluna da Esquerda (Sidebar de Filtros Simplificada) --}}
@@ -39,7 +46,7 @@
         <main class="browser-content">
             <ol class="results-list">
                 {{#each effects as |effect|}}
-                <li class="result-item" data-item-id="{{effect.id}}">
+                <li class="result-item" data-item-id="{{effect.id}}" data-selection-key="{{effect.selectionKey}}">
                     
                     <div class="item-icon">
                         {{#if effect.displayImg}}
@@ -55,13 +62,13 @@
                         <button type="button" class="browser-quick-view" data-id="{{effect.id}}" title="Visualizar efeito">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <label class="item-select" for="effect-{{effect.id}}">
-                            <input type="checkbox" name="{{effect.id}}" id="effect-{{effect.id}}" />
+                        <label class="item-select">
+                            <input type="checkbox" name="{{effect.selectionKey}}" />
                         </label>
                     </div>
                 </li>
                 {{else}}
-                <li class="placeholder-text">Nenhum efeito encontrado no compêndio "GUM - Efeitos".</li>
+                <li class="placeholder-text">Nenhum efeito encontrado nas fontes configuradas.</li>
                 {{/each}}
             </ol>
         </main>

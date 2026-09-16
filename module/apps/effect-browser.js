@@ -2,13 +2,14 @@ import { prepareCompendiumFolderFilters, recordMatchesFolderFilter } from "./com
 import { effectMatchesTypeFilter, getEffectActionTypes } from "../utils/effect-browser-filter.mjs";
 // GUM/module/apps/effect-browser.js
 import { GumPreviewDialog } from "./preview-dialog.js";
+import { contentSourceService } from "../services/content-source-service.mjs";
 
 // ✅ PASSO 1: Mudar o nome da classe de ModifierBrowser para EffectBrowser
 
 const EFFECT_TYPE_LABELS = {
     attribute: "Atributo",
     flag: "Flag",
-    roll_modifier: "Modificador de Rolagem",    
+    roll_modifier: "Modificador de Rolagem",
     resource_change: "Alteração de Recurso",
     resource_create: "Criação de Recurso",
     chat: "Chat",
@@ -52,7 +53,7 @@ constructor(targetItem, options = {}) {
     super({}, options); // Usamos um objeto vazio como base
     this.targetItem = targetItem;
     // Armazena o callback se ele for passado nas opções
-    this.onSelect = options.onSelect; 
+    this.onSelect = options.onSelect;
     this.allEffects = [];
     this.availableFolders = [];
 }
@@ -70,36 +71,50 @@ constructor(targetItem, options = {}) {
 async getData() {
     const context = await super.getData();
     context.targetItem = this.targetItem;
-    
-    const pack = game.packs.get("gum.efeitos");
-    if (pack) {
- 
 
-        this.allEffects = await pack.getDocuments();
-        this.allEffects = this.allEffects.map(item => ({
-            id: item.id,
-            uuid: item.uuid, // ✅ LINHA CRUCIAL QUE FALTAVA
-            name: item.name, 
-            system: item.system, 
-            img: item.img,
-            folderId: item.folder?.id ?? item.folder ?? item._source?.folder ?? null,
-            displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null
-        }));
-        this.allEffects.sort((a, b) => a.name.localeCompare(b.name));
-        this.availableFolders = prepareCompendiumFolderFilters(this.allEffects, pack.folders ?? []);
+    const { documents, invalidSources } = await contentSourceService.getDocuments("effects");
+    const sources = contentSourceService.resolveSources("effects").filter(source => source.pack);
+    const folderData = [];
+    for (const { id: sourceId, pack } of sources) {
+        for (const folder of pack.folders ?? []) {
+            const parentId = folder.folder?.id ?? folder.folder ?? folder._source?.folder ?? null;
+            folderData.push({
+                id: `${sourceId}:${folder.id}`,
+                name: `${pack.title} / ${folder.name}`,
+                folder: parentId ? `${sourceId}:${parentId}` : null
+            });
+        }
     }
-    context.effects = this.allEffects; 
+
+    this.allEffects = documents.map((item, index) => {
+        const sourceId = item.pack || item.compendium?.collection || item._stats?.compendiumSource?.split(".").slice(1, 3).join(".") || "";
+        const folderId = item.folder?.id ?? item.folder ?? item._source?.folder ?? null;
+        return {
+            id: item.id,
+            selectionKey: `effectSelection-${index}`,
+            uuid: item.uuid,
+            name: item.name,
+            system: item.system,
+            img: item.img,
+            folderId: folderId && sourceId ? `${sourceId}:${folderId}` : null,
+            displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null
+        };
+    });
+    this.allEffects.sort((a, b) => a.name.localeCompare(b.name));
+    this.availableFolders = prepareCompendiumFolderFilters(this.allEffects, folderData);
+    context.invalidSources = invalidSources;
+    context.effects = this.allEffects;
     context.folders = this.availableFolders;
     return context;
 }
 
 activateListeners(html) {
     super.activateListeners(html);
-    
+
     // ✅ AGORA O LISTENER OBSERVA MUDANÇAS EM QUALQUER INPUT DA SIDEBAR ✅
     html.find('.browser-sidebar input').on('keyup change', this._onFilterResults.bind(this));
-    
-    
+
+
     html.find('input[name="search"]').on('keydown', (event) => {
         if (event.key === 'Enter') event.preventDefault();
     });
@@ -121,8 +136,8 @@ activateListeners(html) {
         ev.preventDefault();
         ev.stopPropagation();
         const li = $(ev.currentTarget).closest('.result-item');
-        const effectId = li.data('itemId');
-        const effect = this.allEffects.find(e => e.id === effectId);
+        const selectionKey = li.attr('data-selection-key');
+        const effect = this.allEffects.find(e => e.selectionKey === selectionKey);
         if (effect) await this._showQuickView(effect);
     });
   }
@@ -130,7 +145,7 @@ activateListeners(html) {
 _onFilterResults(event) {
     const form = this.form;
     const resultsList = form.querySelector(".results-list");
-    
+
     // Lê o valor da busca por nome
     const searchQuery = form.querySelector('[name="search"]').value.toLowerCase();
     const selectedFolders = new Set(
@@ -142,7 +157,7 @@ _onFilterResults(event) {
     const typesToShow = {
         attribute: form.querySelector('[name="filter-attribute"]').checked,
         status: form.querySelector('[name="filter-status"]').checked,
-        roll_modifier: form.querySelector('[name="filter-roll_modifier"]').checked,        
+        roll_modifier: form.querySelector('[name="filter-roll_modifier"]').checked,
         resource_change: form.querySelector('[name="filter-resource_change"]').checked,
         resource_create: form.querySelector('[name="filter-resource_create"]').checked,
         chat: form.querySelector('[name="filter-chat"]').checked,
@@ -155,9 +170,9 @@ _onFilterResults(event) {
 
     for (const li of resultsList.children) {
         if (li.classList.contains("placeholder-text")) continue;
-        
-        const effectId = li.querySelector('input[type="checkbox"]').name;
-        const effect = this.allEffects.find(e => e.id === effectId);
+
+        const selectionKey = li.querySelector('input[type="checkbox"]').name;
+        const effect = this.allEffects.find(e => e.selectionKey === selectionKey);
         if (!effect) continue;
 
         let isVisible = true;
@@ -207,10 +222,10 @@ _onFilterResults(event) {
 
   // ✅ PASSO 3: Reescrever a lógica de salvamento
   async _updateObject(event, formData) {
-      const selectedIds = Object.keys(formData).filter(key => formData[key] === true && key.length === 16);
+      const selectedIds = Object.keys(formData).filter(key => formData[key] === true && key.startsWith("effectSelection-"));
       if (selectedIds.length === 0) return ui.notifications.warn("Nenhum efeito foi selecionado.");
-      
-      const selectedEffects = selectedIds.map(id => this.allEffects.find(e => e.id === id)).filter(e => e);
+
+      const selectedEffects = selectedIds.map(id => this.allEffects.find(e => e.selectionKey === id)).filter(e => e);
 
       // ✅ LÓGICA CORRIGIDA: Se um callback onSelect existir, execute-o.
       if (this.onSelect) {
