@@ -61,4 +61,5 @@ test('cost workspaces provide responsive grids and a distinct result card', () =
   assert.match(styles, /\.modifier-cost-options/);
   assert.match(styles, /\.is-cost-disabled/);
   assert.match(styles, /@media \(max-width: 520px\)/);
+  assert.match(styles, /\.characteristic-cost-result small[\s\S]*?white-space: pre-line/);
 });

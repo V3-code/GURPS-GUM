@@ -5757,6 +5757,7 @@ color:#121114;
 .gum.sheet.item .spell-power-dashboard .characteristic-cost-result small {
   line-height: 1.35;
   text-align: left;
+  white-space: pre-line;
 }
 
 .gum.sheet.item .trait-cost-level-card,

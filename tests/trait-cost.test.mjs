@@ -57,3 +57,38 @@ test('invalid data does not produce a plausible zero cost', () => {
   assert.throws(()=>calculate(20,[{cost:'foo'}]), /inválido/);
   assert.throws(()=>calculate(20,[{cost:'5',affects:'unknown'}]), /escopo/);
 });
+
+test('cost explanation always shows its composition', () => {
+  assert.equal(calculate(20).description, 'Composição: base 20');
+  assert.equal(
+    calculate(10, [], {can_level:true, points_per_level:5, level:3}).description,
+    'Composição: base 10 · 3 níveis 15'
+  );
+});
+
+test('cost explanation lists scoped adjustments and the subtotal multiplier', () => {
+  const result = calculate(10, [
+    {cost:'+2', affects:'base_only'},
+    {cost:'+50%', affects:'base_only'},
+    {cost:'-20%', affects:'levels_only'},
+    {cost:'x2'}
+  ], {can_level:true, points_per_level:5, level:3});
+
+  assert.equal(result.finalPoints, 60);
+  assert.equal(result.description,
+    'Composição: base 18 · 3 níveis 12\n' +
+    'Ajustes: base (+2 pts · +50%) · níveis (−20%) · subtotal ×2');
+});
+
+test('cost explanation only shows rounding when it changes the value', () => {
+  assert.equal(calculate(25, [{cost:'50%'}]).description,
+    'Composição: base 37,5\n' +
+    'Ajustes: base (+50%)\n' +
+    'Arredondamento: 37,5 → 38');
+  assert.doesNotMatch(calculate(20, [{cost:'50%'}]).description, /Arredondamento/);
+});
+
+test('cost explanation groups repeated scopes without losing modifiers', () => {
+  assert.equal(calculate(10, [{cost:'-50%'}, {cost:'-25%'}, {cost:'+25%'}]).description,
+    'Composição: base 5\nAjustes: base (−50% · −25% · +25%)');
+});
