@@ -500,6 +500,11 @@
       "damage_nature": ""
     },
     "advantage": {
+      "can_level": false,
+      "points_per_level": 0,
+      "round_down": false,
+      "cost_multiplier": 1,
+      "multiplicative_modifiers": false,
       "templates": [
         "base"
       ],
@@ -513,6 +518,11 @@
       "social_contributions": {}
     },
     "disadvantage": {
+      "can_level": false,
+      "points_per_level": 0,
+      "round_down": false,
+      "cost_multiplier": 1,
+      "multiplicative_modifiers": false,
       "templates": [
         "base"
       ],
@@ -665,6 +675,12 @@
       }
     },
      "power": {
+      "level": 0,
+      "can_level": false,
+      "points_per_level": 0,
+      "round_down": false,
+      "cost_multiplier": 1,
+      "multiplicative_modifiers": false,
       "templates": [
         "base"
       ],
@@ -754,6 +770,10 @@
       }
     },
     "modifier": {
+      "affects": "total",
+      "use_level_from_trait": false,
+      "cost_ignores_level": false,
+      "disabled": false,
       "templates": [
         "base"
       ],

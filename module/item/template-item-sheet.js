@@ -1,3 +1,4 @@
+import { calculateTraitCost, traitCostInput } from "../utils/trait-cost.mjs";
 const { ItemSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
@@ -866,8 +867,8 @@ export class TemplateItemSheet extends ItemSheet {
                 <input type="text" id="entry-level" value="${entry.level ?? ""}">
             </div>
             <div class="form-group">
-                <label>Custo</label>
-                <input type="number" id="entry-cost" value="${entry.cost ?? 0}">
+                <label>${entry.trait_cost ? "Pontos base" : "Custo"}</label>
+                <input type="number" id="entry-cost" value="${entry.trait_cost ? entry.trait_cost.points : (entry.cost ?? 0)}">
             </div>
         </div>
         `;
@@ -882,7 +883,11 @@ export class TemplateItemSheet extends ItemSheet {
                         entry.name = dlgHtml.find("#entry-name").val();
                         entry.quantity = Number(dlgHtml.find("#entry-qty").val()) || 1;
                         entry.level = dlgHtml.find("#entry-level").val();
-                        entry.cost = Number(dlgHtml.find("#entry-cost").val()) || 0;
+                        if (entry.trait_cost) {
+                            entry.trait_cost.points = Number(dlgHtml.find("#entry-cost").val());
+                            entry.trait_cost.level = Number(entry.level);
+                            entry.cost = calculateTraitCost(entry.trait_cost).finalPoints;
+                        } else entry.cost = Number(dlgHtml.find("#entry-cost").val()) || 0;
                         await this._replaceEntry(blockId, entryId, entry);
                     }
                 },
@@ -1051,10 +1056,11 @@ export class TemplateItemSheet extends ItemSheet {
     }
 
     async _promptAdvantageEntry(item, base) {
-        const fixedCost = Number(item.system?.points) || 0;
+        base.trait_cost = foundry.utils.deepClone(traitCostInput(item.system));
+        const fixedCost = calculateTraitCost(base.trait_cost).finalPoints;
         const currentLevel = item.system?.level ?? "";
 
-        if (currentLevel === "" || currentLevel === null || currentLevel === undefined) {
+        if (!item.system.can_level) {
             base.cost = fixedCost;
             return base;
         }
@@ -1069,14 +1075,15 @@ export class TemplateItemSheet extends ItemSheet {
                 </div>
                 <div class="form-group">
                     <label>Custo</label>
-                    <input type="number" id="entry-cost" value="${fixedCost}">
+                    <input type="number" id="entry-cost" value="${fixedCost}" readonly>
                 </div>`,
                 buttons: {
                     save: {
                         label: "Adicionar",
                         callback: (html) => {
                             base.level = html.find("#entry-level").val();
-                            base.cost = Number(html.find("#entry-cost").val()) || fixedCost;
+                            base.trait_cost.level = Number(base.level);
+                            base.cost = calculateTraitCost(base.trait_cost).finalPoints;
                             resolve(base);
                         }
                     },
@@ -1085,7 +1092,11 @@ export class TemplateItemSheet extends ItemSheet {
                         callback: () => resolve(null)
                     }
                 },
-                default: "save"
+                default: "save",
+                render: html => html.find("#entry-level").on("input", () => {
+                    const level = Number(html.find("#entry-level").val());
+                    html.find("#entry-cost").val(calculateTraitCost({ ...base.trait_cost, level }).finalPoints);
+                })
             }, { classes: ["dialog", "gum", "secondary-stats-dialog", "gum-sheet-edit-dialog", "gum-sheet-item", "gum-sheet-edit-dialog", "gum-magic-view-dialog"] }).render(true);
         });
     }

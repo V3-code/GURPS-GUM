@@ -1,3 +1,4 @@
+import { calculateItemTraitCost, parseTraitAdjustment } from "../utils/trait-cost.mjs";
 import { EffectBrowser } from "../apps/effect-browser.js"; 
 import { ConditionBrowser } from "../apps/condition-browser.js"; 
 import { EqpModifierBrowser } from "../apps/eqp-modifier-browser.js"; 
@@ -513,23 +514,7 @@ _promptMultipleReferences(parsedList) {
         // 3. CUSTO DE VANTAGENS 
         // ======================================================= 
         if (['advantage', 'disadvantage', 'power'].includes(this.item.type)) { 
-                        const usesAlternativeCost = this.item.type === 'power' && this.item.system.cost_paid === "alternative";
-            const basePoints = usesAlternativeCost
-                ? (Number(this.item.system.alternative_points) || 0)
-                : (Number(this.item.system.points) || 0);
-            const modifiers = this.item.system.modifiers || {}; 
-            let totalModPercent = 0; 
-            for (const modifier of Object.values(modifiers)) { 
-                totalModPercent += parseInt(modifier.cost, 10) || 0; 
-            } 
-            const cappedModPercent = Math.max(-80, totalModPercent); 
-            const multiplier = 1 + (cappedModPercent / 100); 
-            let finalCost = Math.round(basePoints * multiplier); 
-             
-            if (basePoints > 0 && finalCost < 1) finalCost = 1; 
-            if (basePoints < 0 && finalCost > -1) finalCost = -1; 
-             
-            context.calculatedCost = { totalModifier: cappedModPercent, finalPoints: finalCost }; 
+            context.calculatedCost = calculateItemTraitCost(this.item);
         } 
  
         // ======================================================= 
@@ -578,9 +563,9 @@ _promptMultipleReferences(parsedList) {
         }); 
          
         modifiersArray.sort((a, b) => { 
-            const costA = parseInt(a.cost) || 0;  
-            const costB = parseInt(b.cost) || 0; 
-            if (costB !== costA) return costB - costA; 
+            const costA = String(a.cost || "");
+            const costB = String(b.cost || "");
+            if (costB !== costA) return costA.localeCompare(costB);
             return a.name.localeCompare(b.name); 
         }); 
         context.sortedModifiers = modifiersArray; 
@@ -2210,6 +2195,14 @@ const rangedFields = `
                 } 
             } 
         } 
+        try {
+            const pending = foundry.utils.mergeObject(this.item.toObject(), foundry.utils.expandObject(formData), { inplace: false });
+            if (["advantage", "disadvantage", "power"].includes(this.item.type)) calculateItemTraitCost(pending);
+            if (this.item.type === "modifier") parseTraitAdjustment(pending.system.cost);
+        } catch (error) {
+            ui.notifications.error(error.message);
+            return;
+        }
         this._saveUIState(); 
         return super._updateObject(event, formData); 
     } 
