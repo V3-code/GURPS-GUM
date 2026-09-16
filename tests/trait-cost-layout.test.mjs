@@ -23,9 +23,6 @@ test('advantage and disadvantage cost controls share one dashboard section', () 
   ]) assert.match(block, new RegExp(field.replace('.', '\\.')));
 
   assert.match(block, /Custo Final/);
-  assert.match(block, /calculatedCost\.compositionDescription/);
-  assert.match(block, /calculatedCost\.adjustmentsDescription/);
-  assert.match(block, /calculatedCost\.roundingDescription/);
   assert.doesNotMatch(template, /Nível e Pontos/);
 });
 
@@ -60,9 +57,6 @@ test('cost-dependent inputs have render-time visual state handlers', () => {
 test('cost workspaces provide responsive grids and a distinct result card', () => {
   assert.match(styles, /\.characteristic-cost-grid/);
   assert.match(styles, /\.characteristic-cost-result-card/);
-  assert.match(styles, /\.characteristic-cost-composition/);
-  assert.match(styles, /\.characteristic-cost-adjustments/);
-  assert.match(styles, /\.characteristic-cost-rounding/);
   assert.match(styles, /\.modifier-cost-core-grid/);
   assert.match(styles, /\.modifier-cost-options/);
   assert.match(styles, /\.is-cost-disabled/);

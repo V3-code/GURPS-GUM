@@ -1,8 +1,5 @@
 /** Canonical trait pricing. No Foundry dependency and no legacy calculation mode. */
 const costDisplay = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 10, useGrouping: false });
-const displayCost = value => costDisplay.format(Object.is(value, -0) ? 0 : value).replace(/^-/, '−');
-const signedCost = (value, suffix = '') => `${value > 0 ? '+' : value < 0 ? '−' : ''}${displayCost(Math.abs(value))}${suffix}`;
-
 function number(value, fallback = 0) {
   if (value === undefined || value === null || value === '') return fallback;
   const result = Number(value);
@@ -34,8 +31,7 @@ export function calculateTraitCost(system = {}) {
   let perLevel = system.can_level ? number(system.points_per_level) : 0;
   const level = system.can_level ? number(system.level) : 0;
   if (level < 0) throw new Error('Nível de custo inválido');
-  const configuredMultiplier = number(system.cost_multiplier, 1);
-  let multiplier = configuredMultiplier;
+  let multiplier = number(system.cost_multiplier, 1);
   const scopes = { base: { enhancement: 0, limitation: 0 }, levels: { enhancement: 0, limitation: 0 } };
   const breakdown = [];
   for (const mod of leaves(system.modifiers)) {
@@ -45,7 +41,7 @@ export function calculateTraitCost(system = {}) {
     const ownLevel = mod.use_level_from_trait ? (system.can_level ? level : 0) : number(mod.level);
     const scale = mod.cost_ignores_level || ownLevel <= 0 ? 1 : Math.max(1, ownLevel);
     const value = parsed.value * scale;
-    breakdown.push({ name: mod.name || '', operation: parsed.operation, value, unitValue: parsed.value, scale, affects });
+    breakdown.push({ name: mod.name || '', operation: parsed.operation, value, affects });
     if (parsed.operation === 'points') {
       if (affects === 'levels_only') { if (system.can_level) perLevel += value; }
       else base += value;
@@ -60,62 +56,14 @@ export function calculateTraitCost(system = {}) {
     ? (1 + enhancement / 100) * (1 + Math.max(-80, limitation) / 100)
     : 1 + Math.max(-80, enhancement + limitation) / 100;
   const baseFactor = factor(scopes.base), levelFactor = factor(scopes.levels);
-  const baseComponent = base * baseFactor;
-  const levelsComponent = perLevel * level * levelFactor;
-  const subtotal = baseComponent + levelsComponent;
-  const raw = subtotal * multiplier;
+  const raw = (base * baseFactor + perLevel * level * levelFactor) * multiplier;
   if (!Number.isFinite(raw)) throw new Error('Resultado de custo inválido');
   // Remove only floating-point noise at integer boundaries, not actual fractions.
   const nearest = Math.round(raw);
   const roundedInput = Math.abs(raw - nearest) <= Number.EPSILON * Math.max(1, Math.abs(raw)) * 8 ? nearest : raw;
   const finalPoints = system.round_down ? Math.floor(roundedInput) : Math.ceil(roundedInput);
-
-  const levelSource = level === 1 ? 'de 1 nível' : level > 1 ? `dos ${displayCost(level)} níveis` : 'de 0 níveis';
-  const compositionDescription = system.can_level
-    ? `Composição: ${displayCost(baseComponent)} da base + ${displayCost(levelsComponent)} ${levelSource} = ${displayCost(subtotal)}`
-    : `Composição: ${displayCost(baseComponent)} da base`;
-
-  const scopeLabel = (operation, affects) => {
-    if (operation === 'points') return affects === 'levels_only' ? ' por nível' : ' na base';
-    if (affects === 'base_only') return ' na base';
-    if (affects === 'levels_only') return ' nos níveis';
-    return ' na base e nos níveis';
-  };
-  const adjustmentParts = breakdown.flatMap(entry => {
-    if (entry.value === 0 || (entry.operation === 'multiply' && entry.value === 1)) return [];
-    if (entry.operation === 'multiply') {
-      const scaledFromLevel = entry.scale > 1 ? ` (×${displayCost(entry.unitValue)} × ${displayCost(entry.scale)})` : '';
-      return [`subtotal ×${displayCost(entry.value)}${scaledFromLevel}`];
-    }
-    const suffix = entry.operation === 'percent' ? '%' : ' pts';
-    const scaledValue = `${signedCost(entry.unitValue, suffix)}${entry.scale > 1 ? ` × ${displayCost(entry.scale)}` : ''}`;
-    return [`${scaledValue}${scopeLabel(entry.operation, entry.affects)}`];
-  });
-  if (configuredMultiplier !== 1) adjustmentParts.push(`multiplicador configurado ×${displayCost(configuredMultiplier)}`);
-
-  const capParts = [];
-  for (const [scopeName, values] of Object.entries(scopes)) {
-    if (scopeName === 'levels' && !system.can_level) continue;
-    const uncapped = system.multiplicative_modifiers ? values.limitation : values.enhancement + values.limitation;
-    if (uncapped < -80) {
-      const target = scopeName === 'base' ? 'base' : 'níveis';
-      const subject = system.multiplicative_modifiers ? 'limitações' : 'saldo percentual';
-      capParts.push(`${subject} em ${target}: ${signedCost(uncapped, '%')} → −80%`);
-    }
-  }
-  adjustmentParts.push(...capParts);
-  if (system.multiplicative_modifiers && breakdown.some(entry => entry.operation === 'percent')) {
-    adjustmentParts.push('percentuais pelo método multiplicativo');
-  }
-
-  const adjustmentsDescription = adjustmentParts.length ? `Ajustes: ${adjustmentParts.join(' · ')}` : '';
-  const roundingDescription = roundedInput === finalPoints
-    ? ''
-    : `${system.round_down ? 'Arredondamento para baixo' : 'Arredondamento'}: ${displayCost(roundedInput)} → ${displayCost(finalPoints)}`;
-  const description = [compositionDescription, adjustmentsDescription, roundingDescription].filter(Boolean).join(' · ');
-
-  return { finalPoints, raw, roundedInput, baseComponent, levelsComponent, subtotal, multiplier, breakdown,
-    compositionDescription, adjustmentsDescription, roundingDescription, description };
+  return { finalPoints, raw, breakdown,
+    description: `Base ${costDisplay.format(base)} × ${costDisplay.format(baseFactor)}; níveis ${costDisplay.format(perLevel)} × ${costDisplay.format(level)} × ${costDisplay.format(levelFactor)}; multiplicador ×${costDisplay.format(multiplier)}` };
 }
 
 export function calculateItemTraitCost(item) {

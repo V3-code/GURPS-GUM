@@ -57,37 +57,3 @@ test('invalid data does not produce a plausible zero cost', () => {
   assert.throws(()=>calculate(20,[{cost:'foo'}]), /inválido/);
   assert.throws(()=>calculate(20,[{cost:'5',affects:'unknown'}]), /escopo/);
 });
-
-test('cost explanation separates composition, adjustments and rounding', () => {
-  const plain = calculate(10, [], {can_level:true, points_per_level:5, level:3});
-  assert.equal(plain.compositionDescription, 'Composição: 10 da base + 15 dos 3 níveis = 25');
-  assert.equal(plain.adjustmentsDescription, '');
-  assert.equal(plain.roundingDescription, '');
-
-  const adjusted = calculate(10, [
-    {cost:'+2', affects:'base_only'},
-    {cost:'+50%', affects:'base_only'},
-    {cost:'-20%', affects:'levels_only'},
-    {cost:'x2'}
-  ], {can_level:true, points_per_level:5, level:3});
-  assert.equal(adjusted.finalPoints, 60);
-  assert.equal(adjusted.compositionDescription, 'Composição: 18 da base + 12 dos 3 níveis = 30');
-  assert.equal(adjusted.adjustmentsDescription,
-    'Ajustes: +2 pts na base · +50% na base · −20% nos níveis · subtotal ×2');
-
-  const rounded = calculate(3, [{cost:'+10%'}, {cost:'x2'}]);
-  assert.equal(rounded.roundingDescription, 'Arredondamento: 6,6 → 7');
-});
-
-test('cost explanation identifies modifier levels, caps and round-down', () => {
-  const scaled = calculate(20, [{cost:'+10%', level:3}]);
-  assert.equal(scaled.finalPoints, 26);
-  assert.equal(scaled.adjustmentsDescription, 'Ajustes: +10% × 3 na base e nos níveis');
-
-  const capped = calculate(20, [{cost:'-100%'}]);
-  assert.equal(capped.adjustmentsDescription,
-    'Ajustes: −100% na base e nos níveis · saldo percentual em base: −100% → −80%');
-
-  const roundedDown = calculate(-3, [{cost:'+10%'}], {round_down:true});
-  assert.equal(roundedDown.roundingDescription, 'Arredondamento para baixo: −3,3 → −4');
-});
