@@ -898,12 +898,55 @@
               </div>
             </div>
 
-            <div class="skill-dashboard-section characteristic-dashboard-section">
-              <h4 class="skill-dashboard-section-title"><i class="fas fa-gem" aria-hidden="true"></i> Nível e Pontos</h4>
-              <div class="spell-power-result-grid characteristic-points-grid">
-                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-sort-numeric-up" aria-hidden="true"></i><span>Nível</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.level" value="{{system.level}}"/></div></div>
-                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-coins" aria-hidden="true"></i><span>Pontos Base</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.points" value="{{system.points}}"/></div></div>
-                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>Custo Final</span></label><div class="skill-dashboard-card-control"><div class="calculated-cost value"><span>{{calculatedCost.finalPoints}}</span><small>{{calculatedCost.description}}</small></div></div></div>
+            <div class="skill-dashboard-section characteristic-dashboard-section characteristic-cost-section" data-trait-cost-editor>
+              <h4 class="skill-dashboard-section-title"><i class="fas fa-calculator" aria-hidden="true"></i> Cálculo de Custo</h4>
+
+              <div class="characteristic-cost-options" aria-label="Opções de cálculo">
+                <label class="skill-dashboard-toggle-card characteristic-cost-toggle">
+                  <span class="skill-dashboard-toggle-icon"><i class="fas fa-layer-group" aria-hidden="true"></i></span>
+                  <span class="skill-dashboard-toggle-label">Possui custo por nível</span>
+                  <input class="trait-cost-can-level" type="checkbox" name="system.can_level" {{checked system.can_level}}/>
+                </label>
+                <label class="skill-dashboard-toggle-card characteristic-cost-toggle">
+                  <span class="skill-dashboard-toggle-icon"><i class="fas fa-arrow-down" aria-hidden="true"></i></span>
+                  <span class="skill-dashboard-toggle-label">Arredondar para baixo</span>
+                  <input type="checkbox" name="system.round_down" {{checked system.round_down}}/>
+                </label>
+                <label class="skill-dashboard-toggle-card characteristic-cost-toggle" title="Calcula ampliações e limitações percentuais pelo método multiplicativo opcional.">
+                  <span class="skill-dashboard-toggle-icon"><i class="fas fa-percent" aria-hidden="true"></i></span>
+                  <span class="skill-dashboard-toggle-label">Modificadores multiplicativos <i class="fas fa-circle-info characteristic-cost-info" aria-hidden="true"></i></span>
+                  <input type="checkbox" name="system.multiplicative_modifiers" {{checked system.multiplicative_modifiers}}/>
+                </label>
+              </div>
+
+              <div class="characteristic-cost-grid">
+                <div class="skill-dashboard-card skill-dashboard-stat-card">
+                  <label class="skill-dashboard-card-heading"><i class="fas fa-coins" aria-hidden="true"></i><span>Pontos Base</span></label>
+                  <div class="skill-dashboard-card-control"><input type="number" step="any" name="system.points" value="{{system.points}}"/></div>
+                </div>
+                <div class="skill-dashboard-card skill-dashboard-stat-card trait-cost-level-card">
+                  <label class="skill-dashboard-card-heading"><i class="fas fa-coins" aria-hidden="true"></i><span>Pontos por Nível</span></label>
+                  <div class="skill-dashboard-card-control"><input class="trait-cost-level-dependent" type="number" step="any" name="system.points_per_level" value="{{system.points_per_level}}"/></div>
+                </div>
+                <div class="skill-dashboard-card skill-dashboard-stat-card trait-cost-level-card">
+                  <label class="skill-dashboard-card-heading"><i class="fas fa-sort-numeric-up" aria-hidden="true"></i><span>Nível</span></label>
+                  <div class="skill-dashboard-card-control"><input class="trait-cost-level-dependent" type="number" step="any" min="0" name="system.level" value="{{system.level}}"/></div>
+                </div>
+                <div class="skill-dashboard-card skill-dashboard-stat-card">
+                  <label class="skill-dashboard-card-heading"><i class="fas fa-xmark" aria-hidden="true"></i><span>Multiplicador Final</span></label>
+                  <div class="skill-dashboard-card-control"><input type="number" step="any" min="0" name="system.cost_multiplier" value="{{system.cost_multiplier}}"/></div>
+                </div>
+              </div>
+
+              <div class="skill-dashboard-card characteristic-cost-result-card">
+                <div class="characteristic-cost-result-heading">
+                  <i class="fas fa-receipt" aria-hidden="true"></i>
+                  <span>Custo Final</span>
+                </div>
+                <div class="calculated-cost value characteristic-cost-result">
+                  <span>{{calculatedCost.finalPoints}}</span>
+                  <small>{{calculatedCost.description}}</small>
+                </div>
               </div>
             </div>
 
@@ -1232,9 +1275,9 @@
         {{!-- ===================================================================== --}}
         {{!-- 		ABA DETALHES: ITEM MODIFICADORES 				 --}}
         {{!-- ===================================================================== --}}
-        {{#if (or (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "power"))}}
+        {{#if (eq item.type "power")}}
         <div class="form-section"><h4 class="section-title">Cálculo do custo</h4>
-          {{#if (eq item.type "power")}}<div class="form-group"><label>Nível da característica</label><input type="number" step="any" min="0" name="system.level" value="{{system.level}}"/></div>{{/if}}
+          <div class="form-group"><label>Nível da característica</label><input type="number" step="any" min="0" name="system.level" value="{{system.level}}"/></div>
           <div class="form-grid-3">
             <label><input type="checkbox" name="system.can_level" {{checked system.can_level}}/> Possui custo por nível</label>
             <div class="form-group"><label>Pontos por nível</label><input type="number" step="any" name="system.points_per_level" value="{{system.points_per_level}}"/></div>
@@ -1245,41 +1288,66 @@
         </div>
         {{/if}}
         {{#if (eq item.type "modifier")}}
-        <div class="form-section"><h4 class="section-title">Dados do Modificador</h4>
-        <div class="form-grid-3">
-            <div class="form-group">
-            <label>Ajuste de custo</label>
-            <input type="text" name="system.cost" value="{{system.cost}}" placeholder="+10%, -20%, +5, x2"/>
-            </div>
-            <div class="form-group">
-            <label>Nível (se aplicável)</label>
-            <input type="number" name="system.level" value="{{system.level}}"/>
-            </div><div class="form-group">
-              <label>Aplicar a</label>
-              <select name="system.affects">
-                <option value="total" {{#if (eq system.affects "total")}}selected{{/if}}>Base e níveis</option>
-                <option value="base_only" {{#if (eq system.affects "base_only")}}selected{{/if}}>Somente base</option>
-                <option value="levels_only" {{#if (eq system.affects "levels_only")}}selected{{/if}}>Somente níveis</option>
-              </select>
-              <label><input type="checkbox" name="system.use_level_from_trait" {{checked system.use_level_from_trait}}/> Usar nível da característica</label>
-              <label><input type="checkbox" name="system.cost_ignores_level" {{checked system.cost_ignores_level}}/> Não multiplicar ajuste pelo nível</label>
-              <label><input type="checkbox" name="system.disabled" {{checked system.disabled}}/> Desabilitado</label>
-            </div>
-            
-            {{!-- Campo REF com botão --}}
-            <div class="form-group">
-                <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a>         Ref. Página</label>
-                <div class="input-with-button">
-                    <input type="text" name="system.ref" value="{{system.ref}}"/>
-                    
+        <div class="skill-details-dashboard modifier-cost-dashboard">
+          <div class="skill-dashboard-section modifier-cost-section" data-modifier-cost-editor>
+            <h4 class="skill-dashboard-section-title"><i class="fas fa-calculator" aria-hidden="true"></i> Cálculo do Modificador</h4>
+
+            <div class="modifier-cost-core-grid">
+              <div class="skill-dashboard-card skill-dashboard-stat-card modifier-cost-adjustment-card">
+                <label class="skill-dashboard-card-heading"><i class="fas fa-plus-minus" aria-hidden="true"></i><span>Ajuste de Custo</span></label>
+                <div class="skill-dashboard-card-control"><input class="modifier-cost-input" type="text" name="system.cost" value="{{system.cost}}" placeholder="+10%, -20%, +5, x2"/></div>
+                <small class="modifier-cost-hint">Aceita pontos, percentuais e multiplicadores.</small>
+              </div>
+              <div class="skill-dashboard-card skill-dashboard-field-card modifier-affects-card">
+                <label class="skill-dashboard-card-heading"><i class="fas fa-bullseye" aria-hidden="true"></i><span>Aplicar a</span></label>
+                <div class="skill-dashboard-card-control">
+                  <select class="modifier-affects-select" name="system.affects">
+                    <option value="total" {{#if (eq system.affects "total")}}selected{{/if}}>Base e níveis</option>
+                    <option value="base_only" {{#if (eq system.affects "base_only")}}selected{{/if}}>Somente base</option>
+                    <option value="levels_only" {{#if (eq system.affects "levels_only")}}selected{{/if}}>Somente níveis</option>
+                  </select>
                 </div>
+                <small class="modifier-cost-hint">Multiplicadores sempre atuam sobre o total.</small>
+              </div>
+              <div class="skill-dashboard-card skill-dashboard-stat-card modifier-level-card">
+                <label class="skill-dashboard-card-heading"><i class="fas fa-sort-numeric-up" aria-hidden="true"></i><span>Nível do Modificador</span></label>
+                <div class="skill-dashboard-card-control"><input class="modifier-level-input" type="number" step="any" min="0" name="system.level" value="{{system.level}}"/></div>
+                <small class="modifier-cost-hint">É independente do nível da característica.</small>
+              </div>
             </div>
-        </div>
-        <div class="form-group">
-            <label>Efeito Aplicado</label>
-            <input type="text" name="system.applied_effect" value="{{system.applied_effect}}" placeholder="Ex: Aura, Ataque de Projétil"/>
-        </div>
-        
+
+            <div class="modifier-cost-options" aria-label="Opções do modificador">
+              <label class="skill-dashboard-toggle-card modifier-cost-toggle">
+                <span class="skill-dashboard-toggle-icon"><i class="fas fa-link" aria-hidden="true"></i></span>
+                <span class="skill-dashboard-toggle-label">Usar nível da característica</span>
+                <input class="modifier-use-trait-level" type="checkbox" name="system.use_level_from_trait" {{checked system.use_level_from_trait}}/>
+              </label>
+              <label class="skill-dashboard-toggle-card modifier-cost-toggle">
+                <span class="skill-dashboard-toggle-icon"><i class="fas fa-ban" aria-hidden="true"></i></span>
+                <span class="skill-dashboard-toggle-label">Não multiplicar ajuste pelo nível</span>
+                <input class="modifier-ignore-level" type="checkbox" name="system.cost_ignores_level" {{checked system.cost_ignores_level}}/>
+              </label>
+              <label class="skill-dashboard-toggle-card modifier-cost-toggle modifier-disabled-toggle">
+                <span class="skill-dashboard-toggle-icon"><i class="fas fa-power-off" aria-hidden="true"></i></span>
+                <span class="skill-dashboard-toggle-label">Modificador desabilitado</span>
+                <input type="checkbox" name="system.disabled" {{checked system.disabled}}/>
+              </label>
+            </div>
+          </div>
+
+          <div class="skill-dashboard-section modifier-context-section">
+            <h4 class="skill-dashboard-section-title"><i class="fas fa-book-open" aria-hidden="true"></i> Referência e Contexto</h4>
+            <div class="modifier-context-grid">
+              <div class="skill-dashboard-card skill-dashboard-field-card">
+                <label class="skill-dashboard-card-heading"><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open" aria-hidden="true"></i></a><span>Ref. Página</span></label>
+                <div class="skill-dashboard-card-control"><input type="text" name="system.ref" value="{{system.ref}}"/></div>
+              </div>
+              <div class="skill-dashboard-card skill-dashboard-field-card">
+                <label class="skill-dashboard-card-heading"><i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i><span>Efeito Aplicado</span></label>
+                <div class="skill-dashboard-card-control"><input type="text" name="system.applied_effect" value="{{system.applied_effect}}" placeholder="Ex: Aura, Ataque de Projétil"/></div>
+              </div>
+            </div>
+          </div>
         </div>
         {{/if}}
  </div>

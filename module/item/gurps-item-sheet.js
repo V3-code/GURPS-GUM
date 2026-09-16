@@ -705,6 +705,48 @@ _promptMultipleReferences(parsedList) {
 
         bindAttackFields('.power-uses-attack-toggle');
 
+        const updateTraitCostLevelState = () => {
+            html.find('[data-trait-cost-editor]').each((_index, element) => {
+                const editor = $(element);
+                const canLevel = editor.find('.trait-cost-can-level').is(':checked');
+                editor.find('.trait-cost-level-dependent').prop('disabled', !canLevel);
+                editor.find('.trait-cost-level-card')
+                    .toggleClass('is-cost-disabled', !canLevel)
+                    .attr('aria-disabled', String(!canLevel));
+            });
+        };
+        html.find('.trait-cost-can-level').on('change', updateTraitCostLevelState);
+        updateTraitCostLevelState();
+
+        const updateModifierCostState = () => {
+            html.find('[data-modifier-cost-editor]').each((_index, element) => {
+                const editor = $(element);
+                const costText = String(editor.find('.modifier-cost-input').val() ?? '').trim();
+                const isMultiplier = /^(?:x|×)/i.test(costText);
+                const ignoresLevel = editor.find('.modifier-ignore-level').is(':checked');
+                const useTraitLevel = editor.find('.modifier-use-trait-level').is(':checked');
+
+                editor.find('.modifier-affects-select').prop('disabled', isMultiplier);
+                editor.find('.modifier-affects-card')
+                    .toggleClass('is-cost-disabled', isMultiplier)
+                    .attr('aria-disabled', String(isMultiplier));
+
+                editor.find('.modifier-use-trait-level').prop('disabled', ignoresLevel);
+                editor.find('.modifier-use-trait-level').closest('.modifier-cost-toggle')
+                    .toggleClass('is-cost-disabled', ignoresLevel)
+                    .attr('aria-disabled', String(ignoresLevel));
+
+                const disableOwnLevel = ignoresLevel || useTraitLevel;
+                editor.find('.modifier-level-input').prop('disabled', disableOwnLevel);
+                editor.find('.modifier-level-card')
+                    .toggleClass('is-cost-disabled', disableOwnLevel)
+                    .attr('aria-disabled', String(disableOwnLevel));
+            });
+        };
+        html.find('.modifier-cost-input, .modifier-use-trait-level, .modifier-ignore-level')
+            .on('input change', updateModifierCostState);
+        updateModifierCostState();
+
 
         const updateTreeParentState = (select) => {
             const type = (select.val() || "normal").toString();
