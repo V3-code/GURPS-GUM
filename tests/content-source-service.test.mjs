@@ -57,3 +57,49 @@ test("rejects packs with an incompatible document type", () => {
     { id: "world.macros", status: "incompatible" }
   ]);
 });
+
+test("resolves the Foundry game lazily when it becomes available after construction", async () => {
+  const previousGame = globalThis.game;
+  delete globalThis.game;
+  const service = new ContentSourceService();
+  const effect = { type: "effect", uuid: "Compendium.world.late-effects.Item.a" };
+  const pack = { documentName: "Item", getDocuments: async () => [effect] };
+
+  try {
+    globalThis.game = {
+      packs: new Map([["world.late-effects", pack]]),
+      settings: {
+        get: () => ({ effects: ["world.late-effects"] }),
+        set: async () => undefined
+      }
+    };
+
+    assert.deepEqual(service.getSettings(), { effects: ["world.late-effects"] });
+    assert.deepEqual(service.resolveSources("effects"), [{
+      id: "world.late-effects",
+      pack,
+      status: "available"
+    }]);
+    assert.deepEqual(await service.getDocuments("effects"), {
+      documents: [effect],
+      invalidSources: []
+    });
+  } finally {
+    if (previousGame === undefined) delete globalThis.game;
+    else globalThis.game = previousGame;
+  }
+});
+
+test("reports an explicit error when Foundry is not initialized", () => {
+  const previousGame = globalThis.game;
+  delete globalThis.game;
+  try {
+    assert.throws(
+      () => new ContentSourceService().getSettings(),
+      /antes da inicialização do Foundry.*game indisponível/
+    );
+  } finally {
+    if (previousGame === undefined) delete globalThis.game;
+    else globalThis.game = previousGame;
+  }
+});

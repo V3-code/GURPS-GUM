@@ -45,8 +45,26 @@ export function deduplicateSourceDocuments(documents) {
 }
 
 export class ContentSourceService {
-  constructor(foundryGame = globalThis.game) {
-    this.game = foundryGame;
+  constructor(foundryGame) {
+    this.injectedGame = foundryGame;
+  }
+
+  get game() {
+    return this.injectedGame ?? globalThis.game;
+  }
+
+  requireGame({ settings = false, packs = false } = {}) {
+    const foundryGame = this.game;
+    if (!foundryGame) {
+      throw new Error("O Serviço de Fontes de Conteúdo foi chamado antes da inicialização do Foundry (game indisponível).");
+    }
+    if (settings && (!foundryGame.settings || typeof foundryGame.settings.get !== "function")) {
+      throw new Error("O Serviço de Fontes de Conteúdo foi chamado antes da inicialização das configurações do Foundry (game.settings indisponível).");
+    }
+    if (packs && (!foundryGame.packs || typeof foundryGame.packs.get !== "function")) {
+      throw new Error("O Serviço de Fontes de Conteúdo foi chamado antes da inicialização dos compêndios do Foundry (game.packs indisponível).");
+    }
+    return foundryGame;
   }
 
   getDefinition(purpose) {
@@ -56,7 +74,8 @@ export class ContentSourceService {
   }
 
   getSettings() {
-    return normalizeContentSourceSettings(this.game.settings.get("gum", CONTENT_SOURCE_SETTING));
+    const foundryGame = this.requireGame({ settings: true });
+    return normalizeContentSourceSettings(foundryGame.settings.get("gum", CONTENT_SOURCE_SETTING));
   }
 
   getSourceIds(purpose) {
@@ -65,9 +84,13 @@ export class ContentSourceService {
 
   async setSourceIds(purpose, ids) {
     this.getDefinition(purpose);
+    const foundryGame = this.requireGame({ settings: true });
+    if (typeof foundryGame.settings.set !== "function") {
+      throw new Error("Não foi possível salvar as fontes de conteúdo: game.settings.set indisponível.");
+    }
     const settings = this.getSettings();
     settings[purpose] = uniqueStrings(ids);
-    await this.game.settings.set("gum", CONTENT_SOURCE_SETTING, settings);
+    await foundryGame.settings.set("gum", CONTENT_SOURCE_SETTING, settings);
   }
 
   async restoreDefaults(purpose) {
@@ -77,8 +100,9 @@ export class ContentSourceService {
 
   resolveSources(purpose) {
     const definition = this.getDefinition(purpose);
+    const foundryGame = this.requireGame({ settings: true, packs: true });
     return this.getSourceIds(purpose).map(id => {
-      const pack = this.game.packs.get(id);
+      const pack = foundryGame.packs.get(id);
       const documentName = pack?.documentName || pack?.metadata?.type;
       const valid = Boolean(pack) && documentName === definition.documentName;
       return {
