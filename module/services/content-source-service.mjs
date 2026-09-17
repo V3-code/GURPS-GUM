@@ -1,6 +1,14 @@
 export const CONTENT_SOURCE_SETTING = "contentSources";
 
 export const CONTENT_SOURCE_PURPOSES = Object.freeze({
+  conditions: Object.freeze({
+    id: "conditions",
+    label: "Condições",
+    description: "Bibliotecas usadas pelo navegador e pelos seletores de condições.",
+    defaults: Object.freeze(["gum.conditions"]),
+    documentName: "Item",
+    itemTypes: Object.freeze(["condition"])
+  }),
   effects: Object.freeze({
     id: "effects",
     label: "Efeitos",

@@ -1,8 +1,9 @@
-import { prepareCompendiumFolderFilters, recordMatchesFolderFilter } from "./compendium-folder-filter.js";
+import { recordMatchesFolderFilter } from "./compendium-folder-filter.js";
 import { effectMatchesTypeFilter, getEffectActionTypes } from "../utils/effect-browser-filter.mjs";
 // GUM/module/apps/effect-browser.js
 import { GumPreviewDialog } from "./preview-dialog.js";
 import { contentSourceService } from "../services/content-source-service.mjs";
+import { loadContentSourceBrowserData } from "../utils/content-source-browser.mjs";
 
 // ✅ PASSO 1: Mudar o nome da classe de ModifierBrowser para EffectBrowser
 
@@ -72,36 +73,13 @@ async getData() {
     const context = await super.getData();
     context.targetItem = this.targetItem;
 
-    const { documents, invalidSources } = await contentSourceService.getDocuments("effects");
-    const sources = contentSourceService.resolveSources("effects").filter(source => source.pack);
-    const folderData = [];
-    for (const { id: sourceId, pack } of sources) {
-        for (const folder of pack.folders ?? []) {
-            const parentId = folder.folder?.id ?? folder.folder ?? folder._source?.folder ?? null;
-            folderData.push({
-                id: `${sourceId}:${folder.id}`,
-                name: `${pack.title} / ${folder.name}`,
-                folder: parentId ? `${sourceId}:${parentId}` : null
-            });
-        }
-    }
-
-    this.allEffects = documents.map((item, index) => {
-        const sourceId = item.pack || item.compendium?.collection || item._stats?.compendiumSource?.split(".").slice(1, 3).join(".") || "";
-        const folderId = item.folder?.id ?? item.folder ?? item._source?.folder ?? null;
-        return {
-            id: item.id,
-            selectionKey: `effectSelection-${index}`,
-            uuid: item.uuid,
-            name: item.name,
-            system: item.system,
-            img: item.img,
-            folderId: folderId && sourceId ? `${sourceId}:${folderId}` : null,
-            displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null
-        };
+    const { records, folders, invalidSources } = await loadContentSourceBrowserData({
+        purpose: "effects",
+        selectionPrefix: "effectSelection",
+        service: contentSourceService
     });
-    this.allEffects.sort((a, b) => a.name.localeCompare(b.name));
-    this.availableFolders = prepareCompendiumFolderFilters(this.allEffects, folderData);
+    this.allEffects = records;
+    this.availableFolders = folders;
     context.invalidSources = invalidSources;
     context.effects = this.allEffects;
     context.folders = this.availableFolders;

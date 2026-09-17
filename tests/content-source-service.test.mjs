@@ -9,7 +9,28 @@ import {
 
 test("uses the GUM source by default but preserves an explicitly empty selection", () => {
   assert.deepEqual(getConfiguredSourceIds({}, "effects"), ["gum.efeitos"]);
+  assert.deepEqual(getConfiguredSourceIds({}, "conditions"), ["gum.conditions"]);
   assert.deepEqual(getConfiguredSourceIds({ effects: [] }, "effects"), []);
+});
+
+test("loads only conditions from condition sources", async () => {
+  const condition = { type: "condition", uuid: "Compendium.world.conditions.Item.a" };
+  const effect = { type: "effect", uuid: "Compendium.world.conditions.Item.b" };
+  const service = new ContentSourceService({
+    packs: new Map([["world.conditions", {
+      documentName: "Item",
+      getDocuments: async () => [condition, effect]
+    }]]),
+    settings: {
+      get: () => ({ conditions: ["world.conditions"] }),
+      set: async () => undefined
+    }
+  });
+
+  assert.deepEqual(await service.getDocuments("conditions"), {
+    documents: [condition],
+    invalidSources: []
+  });
 });
 
 test("normalizes source lists without changing their priority", () => {
