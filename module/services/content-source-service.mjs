@@ -17,6 +17,14 @@ export const CONTENT_SOURCE_PURPOSES = Object.freeze({
     documentName: "Item",
     itemTypes: Object.freeze(["modifier"])
   }),
+  templates: Object.freeze({
+    id: "templates",
+    label: "Modelos",
+    description: "Bibliotecas usadas para aplicar modelos aos personagens.",
+    defaults: Object.freeze(["gum.templates"]),
+    documentName: "Item",
+    itemTypes: Object.freeze(["template"])
+  }),
   equipmentModifiers: Object.freeze({
     id: "equipmentModifiers",
     label: "Modificadores de Equipamento",

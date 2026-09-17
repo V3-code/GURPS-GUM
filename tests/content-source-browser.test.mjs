@@ -43,18 +43,24 @@ test("prepares namespaced folders and collision-free selection keys across sourc
     name: record.name,
     selectionKey: record.selectionKey,
     folderId: record.folderId,
+    sourceLabel: record.sourceLabel,
+    folderLabel: record.folderLabel,
     displayImg: record.displayImg
   })), [
     {
       name: "Alfa",
       selectionKey: "conditionSelection-1",
       folderId: "world.conditions:shared-folder",
+      sourceLabel: "Condições da Campanha",
+      folderLabel: "Campanha",
       displayImg: "icons/custom.webp"
     },
     {
       name: "Zeta",
       selectionKey: "conditionSelection-0",
       folderId: "gum.conditions:shared-folder",
+      sourceLabel: "[GUM] Condições",
+      folderLabel: "Básicas",
       displayImg: null
     }
   ]);
