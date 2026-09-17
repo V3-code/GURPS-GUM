@@ -54,6 +54,22 @@ import { importFromJson, importFromGCS, importTemplateFromGCS, exportCompendiumT
 import { ContentSourceConfig } from "./apps/content-source-config.js";
 import { CONTENT_SOURCE_SETTING, contentSourceService } from "./services/content-source-service.mjs";
 
+const STATUS_BINDINGS_MIGRATION_SETTING = "contentSourcesStatusBindingsMigrationV1";
+
+export async function migrateLegacyStatusBindingSource() {
+    if (!game.user?.isGM) return false;
+    if (game.settings.get("gum", STATUS_BINDINGS_MIGRATION_SETTING)) return false;
+
+    const configuredSources = contentSourceService.getSettings();
+    if (!Object.hasOwn(configuredSources, "statusBindings")) {
+        const legacyId = `${game.settings.get("gum", "statusBindingsCompendium") || ""}`.trim();
+        await contentSourceService.setSourceIds("statusBindings", [legacyId || "gum.conditions"]);
+    }
+
+    await game.settings.set("gum", STATUS_BINDINGS_MIGRATION_SETTING, true);
+    return true;
+}
+
 
 // --- REGISTRO DAS CONFIGURAÇÕES ---
 
@@ -66,6 +82,14 @@ export const registerSystemSettings = function() {
         config: false,
         type: Object,
         default: {}
+    });
+
+    game.settings.register("gum", STATUS_BINDINGS_MIGRATION_SETTING, {
+        name: "Migração interna: fontes dos Vínculos de Status",
+        scope: "world",
+        config: false,
+        type: Boolean,
+        default: false
     });
 
     game.settings.registerMenu("gum", "contentSourceConfig", {
@@ -161,7 +185,7 @@ export const registerSystemSettings = function() {
         name: "Compêndio de Vínculos de Status",
         hint: "ID do compêndio que contém Itens Condição no modo 'Vínculo de Status' (ex.: gum.status_bindings). Se vazio, usa gum.conditions.",
         scope: "world",
-        config: true,
+        config: false,
         type: String,
         default: "gum.status_bindings"
     });

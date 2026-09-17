@@ -10,7 +10,7 @@ import { GurpsActorSheet } from "../module/actor/gurps-actor-sheet.js";
 import "../scripts/journal-pdf.js";
 import { GurpsItemSheet } from "../module/item/gurps-item-sheet.js";
 import { TemplateItemSheet } from "../module/item/template-item-sheet.js";
-import { registerSystemSettings } from "../module/settings.js";
+import { migrateLegacyStatusBindingSource, registerSystemSettings } from "../module/settings.js";
 import { GumPreviewDialog } from "../module/apps/preview-dialog.js";
 import DamageApplicationWindow from './apps/damage-application.js';
 import { ConditionSheet } from "./apps/condition-sheet.js";
@@ -3545,16 +3545,9 @@ let evaluatingActors = new Set();
 const processingStatusBindingActors = new Set();
 const STATUS_BINDINGS_CACHE_TTL_MS = 15_000;
 const statusBindingsCache = {
-    packId: null,
+    sourceKey: null,
     docs: [],
     loadedAt: 0
-};
-
-const getConfiguredStatusBindingsPack = () => {
-    const configuredId = (game.settings.get("gum", "statusBindingsCompendium") || "").trim();
-    if (configuredId && game.packs.has(configuredId)) return game.packs.get(configuredId);
-    if (game.packs.has("gum.conditions")) return game.packs.get("gum.conditions");
-    return null;
 };
 
 const normalizeStatusBindingMode = (value) => {
@@ -3601,17 +3594,18 @@ const getActorActiveNativeStatusSet = (actor) => {
 
 const loadStatusBindingRules = async () => {
     const now = Date.now();
-    const pack = getConfiguredStatusBindingsPack();
-    if (!pack) return [];
-    if (statusBindingsCache.packId === pack.collection
+    const sourceKey = contentSourceService.getSourceIds("statusBindings").join("\u0000");
+    if (statusBindingsCache.sourceKey === sourceKey
         && (now - statusBindingsCache.loadedAt) < STATUS_BINDINGS_CACHE_TTL_MS) {
         return statusBindingsCache.docs;
     }
 
-    const docs = await pack.getDocuments();
-    const statusRules = docs.filter((doc) => doc?.type === "condition"
-        && doc.system?.bindingMode === "status-link");
-    statusBindingsCache.packId = pack.collection;
+    const { documents, invalidSources } = await contentSourceService.getDocuments("statusBindings");
+    if (invalidSources.length) {
+        console.warn("GUM | Fontes inválidas de Vínculos de Status:", invalidSources);
+    }
+    const statusRules = documents.filter((doc) => doc.system?.bindingMode === "status-link");
+    statusBindingsCache.sourceKey = sourceKey;
     statusBindingsCache.docs = statusRules;
     statusBindingsCache.loadedAt = now;
     return statusRules;
@@ -4544,6 +4538,11 @@ Hooks.on("createActiveEffect", async (effect) => {
 Hooks.on("canvasReady", refreshGMScreen); // Quando muda de mapa
 
 Hooks.once("ready", async () => {
+    try {
+        await migrateLegacyStatusBindingSource();
+    } catch (error) {
+        console.error("GUM | Falha ao migrar a fonte legada de Vínculos de Status.", error);
+    }
     try {
         await reconcileAllStateEffects();
     } catch (error) {

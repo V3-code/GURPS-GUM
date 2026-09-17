@@ -224,6 +224,27 @@ test("loads valid effect documents in configured priority and reports missing so
   assert.deepEqual(result.invalidSources, [{ id: "missing.effects", status: "missing" }]);
 });
 
+test("loads status bindings from multiple sources in configured priority", async () => {
+  const campaignRule = { type: "condition", uuid: "Compendium.world.bindings.Item.a" };
+  const officialRule = { type: "condition", uuid: "Compendium.gum.status_bindings.Item.b" };
+  const unrelatedItem = { type: "effect", uuid: "Compendium.world.bindings.Item.c" };
+  const service = new ContentSourceService({
+    packs: new Map([
+      ["world.bindings", { documentName: "Item", getDocuments: async () => [campaignRule, unrelatedItem] }],
+      ["gum.status_bindings", { documentName: "Item", getDocuments: async () => [officialRule] }]
+    ]),
+    settings: {
+      get: () => ({ statusBindings: ["world.bindings", "gum.status_bindings"] }),
+      set: async () => undefined
+    }
+  });
+
+  assert.deepEqual(await service.getDocuments("statusBindings"), {
+    documents: [campaignRule, officialRule],
+    invalidSources: []
+  });
+});
+
 test("rejects packs with an incompatible document type", () => {
   const service = new ContentSourceService({
     packs: new Map([["world.macros", { documentName: "Macro" }]]),

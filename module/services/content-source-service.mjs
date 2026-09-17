@@ -57,6 +57,14 @@ export const CONTENT_SOURCE_PURPOSES = Object.freeze({
     documentName: "Item",
     itemTypes: Object.freeze(["condition"])
   }),
+  statusBindings: Object.freeze({
+    id: "statusBindings",
+    label: "Vínculos de Status",
+    description: "Bibliotecas que vinculam os status nativos do Foundry aos efeitos do GUM.",
+    defaults: Object.freeze(["gum.status_bindings"]),
+    documentName: "Item",
+    itemTypes: Object.freeze(["condition"])
+  }),
   effects: Object.freeze({
     id: "effects",
     label: "Efeitos",
