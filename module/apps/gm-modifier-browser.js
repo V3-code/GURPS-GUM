@@ -1,5 +1,8 @@
 import { GumPreviewDialog } from "./preview-dialog.js";
 import { GM_MODIFIER_CATEGORY_OPTIONS, getGMModifierCategoryLabel, normalizeGMModifierCategory } from "../utils/gm-modifier-categories.js";
+import { recordMatchesFolderFilter } from "./compendium-folder-filter.js";
+import { contentSourceService } from "../services/content-source-service.mjs";
+import { loadContentSourceBrowserData } from "../utils/content-source-browser.mjs";
 // GUM/module/apps/gm-modifier-browser.js
 
 export class GMModifierBrowser extends FormApplication {
@@ -26,19 +29,12 @@ export class GMModifierBrowser extends FormApplication {
   async getData() {
     const context = await super.getData();
     
-    // Busca no compêndio correto
-    let pack = game.packs.get("gum.gm_modifiers") || 
-               game.packs.get("world.modificadores-basicos") ||
-               game.packs.find(p => p.metadata.label === "[GUM] Modificadores de Rolagem" || p.metadata.label === "[GUM] Modificadores Básicos");
-    
-    if (pack) {
-        const folderMap = new Map();
-        for (const folder of pack.folders ?? []) {
-            folderMap.set(folder.id, folder.name);
-        }
-
-        const content = await pack.getDocuments();
-        this.allModifiers = content.map(item => {
+    const { records, folders, invalidSources } = await loadContentSourceBrowserData({
+        purpose: "rollModifiers",
+        selectionPrefix: "rollModifierSelection",
+        service: contentSourceService
+    });
+    this.allModifiers = records.map(item => {
             const formattedVal = (item.system.modifier > 0 ? '+' : '') + item.system.modifier;
                         const category = normalizeGMModifierCategory(item.system.ui_category || "situation");
             const categoryLabel = getGMModifierCategoryLabel(category);
@@ -48,32 +44,21 @@ export class GMModifierBrowser extends FormApplication {
             if (item.system.nh_cap) subtitleParts.push(`Teto ${item.system.nh_cap}`);
 
             return {
-                id: item.id,
-                uuid: item.uuid,
-                name: item.name,
-                system: item.system,
-                img: item.img,
-                displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null,
+                ...item,
                 // Prepara dados para filtros
                                 category,
                 categoryLabel,
                 displayGroup,
-                folderId: item.folder?.id ?? item.folder ?? item._source?.folder ?? null,
                 isBonus: item.system.modifier >= 0,
                 formattedVal,
                 modifierSubtitle: subtitleParts.join(" • ")
             };
         });
-        this.allModifiers.sort((a, b) => a.name.localeCompare(b.name));
-
-        const usedFolderIds = new Set(this.allModifiers.map(mod => mod.folderId).filter(Boolean));
-        this.availableFolders = Array.from(usedFolderIds)
-          .map(folderId => ({ id: folderId, name: folderMap.get(folderId) ?? "Pasta" }))
-          .sort((a, b) => a.name.localeCompare(b.name));
-    }
+    this.availableFolders = folders;
     
     context.modifiers = this.allModifiers;
     context.folders = this.availableFolders;
+    context.invalidSources = invalidSources;
     const usedCategories = new Set(this.allModifiers.map(mod => mod.category));
     context.categories = GM_MODIFIER_CATEGORY_OPTIONS.filter(category => usedCategories.has(category.id));
     
@@ -109,8 +94,8 @@ export class GMModifierBrowser extends FormApplication {
             ev.stopPropagation(); // Impede selecionar a linha
 
             const li = $(ev.currentTarget).closest('.result-item');
-            const itemId = li.data('id');
-            const itemData = this.allModifiers.find(m => m.id === itemId);
+            const selectionKey = li.attr('data-selection-key');
+            const itemData = this.allModifiers.find(m => m.selectionKey === selectionKey);
 
             if (itemData) {
                 this._showQuickView(itemData);
@@ -163,11 +148,11 @@ export class GMModifierBrowser extends FormApplication {
     for (const li of resultsList.children) {
         if (li.classList.contains("placeholder-text")) continue;
         
-        const modId = li.dataset.id; // Vamos colocar data-id no LI
+        const selectionKey = li.dataset.selectionKey;
         const modCategory = li.dataset.category;
         const modVal = parseFloat(li.dataset.val);
         const modSearch = (li.dataset.search || li.querySelector('.item-name').innerText).toLowerCase();
-        const modFolderId = li.dataset.folderId || null;
+        const modifier = this.allModifiers.find(mod => mod.selectionKey === selectionKey);
 
         let isVisible = true;
 
@@ -181,7 +166,7 @@ export class GMModifierBrowser extends FormApplication {
         }
 
         // 3. Pasta
-        if (isVisible && hasFolderFilter && !selectedFolders.has(modFolderId)) isVisible = false;
+        if (isVisible && hasFolderFilter && !recordMatchesFolderFilter(modifier, selectedFolders)) isVisible = false;
 
         // 4. Categoria
         if (isVisible && filterCategories) {
@@ -193,12 +178,11 @@ export class GMModifierBrowser extends FormApplication {
   }
 
   async _updateObject(event, formData) {
-    // Filtra apenas as chaves que são IDs (tamanho 16) e estão true
-    const selectedIds = Object.keys(formData).filter(key => formData[key] === true && key.length === 16);
+    const selectedIds = Object.keys(formData).filter(key => formData[key] === true && key.startsWith("rollModifierSelection-"));
     
     if (selectedIds.length === 0) return ui.notifications.warn("Nenhum modificador foi selecionado.");
     
-    const selectedItems = selectedIds.map(id => this.allModifiers.find(m => m.id === id)).filter(m => m);
+    const selectedItems = selectedIds.map(id => this.allModifiers.find(m => m.selectionKey === id)).filter(m => m);
 
     if (this.onSelect) {
         this.onSelect(selectedItems);

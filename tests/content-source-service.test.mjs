@@ -13,8 +13,29 @@ test("uses the GUM source by default but preserves an explicitly empty selection
   assert.deepEqual(getConfiguredSourceIds({}, "modifiers"), ["gum.modifiers"]);
   assert.deepEqual(getConfiguredSourceIds({}, "templates"), ["gum.templates"]);
   assert.deepEqual(getConfiguredSourceIds({}, "equipmentModifiers"), ["gum.eqp_modifiers"]);
+  assert.deepEqual(getConfiguredSourceIds({}, "rollModifiers"), ["gum.gm_modifiers"]);
   assert.deepEqual(getConfiguredSourceIds({}, "triggers"), ["gum.gatilhos"]);
   assert.deepEqual(getConfiguredSourceIds({ effects: [] }, "effects"), []);
+});
+
+test("loads only roll modifiers from roll modifier sources", async () => {
+  const rollModifier = { type: "gm_modifier", uuid: "Compendium.world.roll-modifiers.Item.a" };
+  const traitModifier = { type: "modifier", uuid: "Compendium.world.roll-modifiers.Item.b" };
+  const service = new ContentSourceService({
+    packs: new Map([["world.roll-modifiers", {
+      documentName: "Item",
+      getDocuments: async () => [rollModifier, traitModifier]
+    }]]),
+    settings: {
+      get: () => ({ rollModifiers: ["world.roll-modifiers"] }),
+      set: async () => undefined
+    }
+  });
+
+  assert.deepEqual(await service.getDocuments("rollModifiers"), {
+    documents: [rollModifier],
+    invalidSources: []
+  });
 });
 
 test("loads only templates from template sources", async () => {

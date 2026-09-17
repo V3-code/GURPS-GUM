@@ -33,6 +33,14 @@ export const CONTENT_SOURCE_PURPOSES = Object.freeze({
     documentName: "Item",
     itemTypes: Object.freeze(["eqp_modifier"])
   }),
+  rollModifiers: Object.freeze({
+    id: "rollModifiers",
+    label: "Modificadores de Rolagem",
+    description: "Bibliotecas usadas pela ficha, pelo prompt de rolagem e pelo Escudo do Mestre.",
+    defaults: Object.freeze(["gum.gm_modifiers"]),
+    documentName: "Item",
+    itemTypes: Object.freeze(["gm_modifier"])
+  }),
   effects: Object.freeze({
     id: "effects",
     label: "Efeitos",

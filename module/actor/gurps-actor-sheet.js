@@ -13,6 +13,7 @@ import { SOCIAL_CATEGORIES, SOCIAL_MANUAL_LAYOUTS, buildSocialSections, calculat
 import { buildDamageNatureSearchOptions, formatDamageNature, resolveDamageNature } from "../utils/damage-nature.mjs";
 import { resolveAttackDamageDisplay } from "../utils/attack-damage-display.mjs";
 import { canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
+import { contentSourceService } from "../services/content-source-service.mjs";
 
 const WOUND_NATURE_ICONS = Object.freeze({
   fire: "fa-fire",
@@ -1411,11 +1412,13 @@ _getSubmitData(updateData) {
      * @param {boolean} reset - Se true, apaga os existentes antes de importar.
      */
     async _importModifiersFromCompendium(reset = false) {
-        const pack = game.packs.get("gum.gm_modifiers") || game.packs.find(p => p.metadata.label === "[GUM] Modificadores de Rolagem" || p.metadata.label === "[GUM] Modificadores Básicos");
-        if (!pack) return ui.notifications.warn("Compêndio [GUM] Modificadores de Rolagem não encontrado.");
-
-        const sourceItems = await pack.getDocuments();
-        if (sourceItems.length === 0) return ui.notifications.warn("O Compêndio está vazio.");
+        const { documents: sourceItems, invalidSources } = await contentSourceService.getDocuments("rollModifiers");
+        if (sourceItems.length === 0) {
+            const missing = invalidSources.map(source => source.id).join(", ");
+            return ui.notifications.warn(missing
+                ? `Nenhum modificador disponível. Fontes inválidas: ${missing}.`
+                : "As fontes configuradas de Modificadores de Rolagem estão vazias.");
+        }
 
         // 1. Se for Reset, apaga tudo primeiro
         if (reset) {
