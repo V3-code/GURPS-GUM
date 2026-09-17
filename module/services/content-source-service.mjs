@@ -41,6 +41,14 @@ export const CONTENT_SOURCE_PURPOSES = Object.freeze({
     documentName: "Item",
     itemTypes: Object.freeze(["gm_modifier"])
   }),
+  skills: Object.freeze({
+    id: "skills",
+    label: "Perícias",
+    description: "Bibliotecas usadas nas solicitações e na resolução canônica de testes de perícia.",
+    defaults: Object.freeze(["gum.skills"]),
+    documentName: "Item",
+    itemTypes: Object.freeze(["skill"])
+  }),
   effects: Object.freeze({
     id: "effects",
     label: "Efeitos",
@@ -182,6 +190,35 @@ export class ContentSourceService {
     }
 
     return { documents: deduplicateSourceDocuments(documents), invalidSources };
+  }
+
+  async getIndex(purpose, { fields = [] } = {}) {
+    const definition = this.getDefinition(purpose);
+    const entries = [];
+    const invalidSources = [];
+    const requestedFields = [...new Set(["type", ...fields])];
+
+    for (const source of this.resolveSources(purpose)) {
+      if (!source.pack) {
+        invalidSources.push({ id: source.id, status: source.status });
+        continue;
+      }
+      try {
+        const index = await source.pack.getIndex({ fields: requestedFields });
+        for (const entry of Array.from(index ?? [])) {
+          if (definition.itemTypes?.length && !definition.itemTypes.includes(entry.type)) continue;
+          entries.push({
+            ...entry,
+            uuid: entry.uuid || `Compendium.${source.id}.Item.${entry._id}`,
+            sourcePackId: source.id
+          });
+        }
+      } catch (error) {
+        invalidSources.push({ id: source.id, status: "unreadable", error });
+      }
+    }
+
+    return { entries: deduplicateSourceDocuments(entries), invalidSources };
   }
 }
 

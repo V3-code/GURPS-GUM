@@ -2,6 +2,7 @@ import { getGroupedRollPurposes, normalizePurposeSearch } from "../utils/roll-pu
 import { buildTestRequestTargets } from "../utils/test-request-targets.mjs";
 import { normalizeSkillText } from "../utils/skill-default-resolver.mjs";
 import { createTestRequestMessage } from "../services/test-request-service.js";
+import { contentSourceService } from "../services/content-source-service.mjs";
 
 let launcher;
 export function openTestRequestLauncher() {
@@ -50,12 +51,13 @@ export class TestRequestLauncher extends FormApplication {
         isOpen: label !== "Personagens sem jogador proprietário/NPCs" || groups[label].some(target => target.selected)
       }));
 
-    const pack = game.packs.get("gum.skills");
-    const index = pack ? await pack.getIndex({ fields: ["system.specialization", "flags.core.sourceId"] }) : [];
-    const compendiumSkills = index.map(item => ({
+    const { entries: skillIndex } = await contentSourceService.getIndex("skills", {
+      fields: ["system.specialization", "flags.core.sourceId"]
+    });
+    const compendiumSkills = skillIndex.map(item => ({
       name: item.name,
       specialization: item.system?.specialization ?? "",
-      uuid: item.uuid ?? `Compendium.gum.skills.Item.${item._id}`,
+      uuid: item.uuid,
       sourceId: item.flags?.core?.sourceId ?? null
     }));
     const actorSkills = game.actors.contents.flatMap(actor =>
@@ -70,7 +72,7 @@ export class TestRequestLauncher extends FormApplication {
     );
     const skills = [...compendiumSkills, ...actorSkills];
     const deduped = [...new Map(skills.map(skill => [
-      skill.sourceId || skill.uuid || `${normalizeSkillText(skill.name)}::${normalizeSkillText(skill.specialization)}`,
+      skill.sourceId || `${normalizeSkillText(skill.name)}::${normalizeSkillText(skill.specialization)}`,
       skill
     ])).values()]
       .map(skill => ({ ...skill, displayName: `${skill.name}${skill.specialization ? ` (${skill.specialization})` : ""}` }))

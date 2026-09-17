@@ -7,6 +7,7 @@ import { getPurposeLabels } from "../utils/roll-purposes.mjs";
 import { appendResistanceRequestResult, renderPendingChatRollRequest } from "../utils/roll-request-view.mjs";
 import { evaluateGurpsRollResult } from "../utils/gurps-roll-result.mjs";
 import { createRollRequestExecutor } from "./roll-request-executor.mjs";
+import { contentSourceService } from "./content-source-service.mjs";
 
 const resultQueues = new Map();
 
@@ -32,13 +33,12 @@ export async function resolveRequestedTest(actor, rawTest = {}) {
     const canonical = await fromUuid(test.skillUuid).catch(() => null);
     if (canonical) definition = { ...test, predefined: canonical.system?.predefined };
   } else if (test.skillName) {
-    const pack = game.packs.get("gum.skills");
-    const index = pack ? await pack.getIndex({ fields: ["system.specialization"] }).catch(() => []) : [];
-    const canonicalEntry = Array.from(index).find(entry =>
+    const { entries } = await contentSourceService.getIndex("skills", { fields: ["system.specialization"] });
+    const canonicalEntry = entries.find(entry =>
       normalizeSkillText(entry.name) === normalizeSkillText(test.skillName)
       && (!test.specialization || normalizeSkillText(entry.system?.specialization) === normalizeSkillText(test.specialization))
     );
-    const canonical = canonicalEntry ? await pack.getDocument(canonicalEntry._id).catch(() => null) : null;
+    const canonical = canonicalEntry ? await fromUuid(canonicalEntry.uuid).catch(() => null) : null;
     if (canonical) definition = { ...test, skillUuid: canonical.uuid, predefined: canonical.system?.predefined };
   }
   const resolved = resolveSkillDefault(actor, definition);

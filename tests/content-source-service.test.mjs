@@ -14,8 +14,37 @@ test("uses the GUM source by default but preserves an explicitly empty selection
   assert.deepEqual(getConfiguredSourceIds({}, "templates"), ["gum.templates"]);
   assert.deepEqual(getConfiguredSourceIds({}, "equipmentModifiers"), ["gum.eqp_modifiers"]);
   assert.deepEqual(getConfiguredSourceIds({}, "rollModifiers"), ["gum.gm_modifiers"]);
+  assert.deepEqual(getConfiguredSourceIds({}, "skills"), ["gum.skills"]);
   assert.deepEqual(getConfiguredSourceIds({}, "triggers"), ["gum.gatilhos"]);
   assert.deepEqual(getConfiguredSourceIds({ effects: [] }, "effects"), []);
+});
+
+test("builds a prioritized multi-source skill index with canonical UUIDs", async () => {
+  const calls = [];
+  const makePack = (id, entries) => ({
+    documentName: "Item",
+    getIndex: async options => {
+      calls.push({ id, fields: options.fields });
+      return entries;
+    }
+  });
+  const service = new ContentSourceService({
+    packs: new Map([
+      ["world.skills", makePack("world.skills", [{ _id: "a", type: "skill", name: "Furtividade", system: {} }])],
+      ["gum.skills", makePack("gum.skills", [{ _id: "b", type: "skill", name: "Percepção", system: {} }, { _id: "x", type: "spell", name: "Luz" }])]
+    ]),
+    settings: {
+      get: () => ({ skills: ["world.skills", "gum.skills"] }),
+      set: async () => undefined
+    }
+  });
+
+  const result = await service.getIndex("skills", { fields: ["system.specialization"] });
+  assert.deepEqual(result.entries.map(entry => ({ name: entry.name, uuid: entry.uuid })), [
+    { name: "Furtividade", uuid: "Compendium.world.skills.Item.a" },
+    { name: "Percepção", uuid: "Compendium.gum.skills.Item.b" }
+  ]);
+  assert.deepEqual(calls[0].fields, ["type", "system.specialization"]);
 });
 
 test("loads only roll modifiers from roll modifier sources", async () => {
