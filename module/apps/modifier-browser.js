@@ -1,4 +1,7 @@
 import { GumPreviewDialog } from "./preview-dialog.js";
+import { recordMatchesFolderFilter } from "./compendium-folder-filter.js";
+import { contentSourceService } from "../services/content-source-service.mjs";
+import { loadContentSourceBrowserData } from "../utils/content-source-browser.mjs";
 // GUM/module/apps/modifier-browser.js
 
 export class ModifierBrowser extends FormApplication {
@@ -21,28 +24,14 @@ export class ModifierBrowser extends FormApplication {
   async getData() {
  const context = await super.getData();
     context.targetItem = this.targetItem;
-    const pack = game.packs.get("gum.modifiers");
-    if (pack) {
-        const folderMap = new Map();
-        for (const folder of pack.folders ?? []) {
-          folderMap.set(folder.id, folder.name);
-        }
-
-        this.allModifiers = await pack.getDocuments();
-        this.allModifiers = this.allModifiers.map(item => ({
-            id: item.id,
-            uuid: item.uuid,
-            name: item.name, system: item.system, img: item.img,
-            folderId: item.folder?.id ?? item.folder ?? item._source?.folder ?? null,
-            displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null
-        }));
-        this.allModifiers.sort((a, b) => a.name.localeCompare(b.name));
-
-        const usedFolderIds = new Set(this.allModifiers.map(mod => mod.folderId).filter(Boolean));
-        this.availableFolders = Array.from(usedFolderIds)
-          .map(folderId => ({ id: folderId, name: folderMap.get(folderId) ?? "Pasta" }))
-          .sort((a, b) => a.name.localeCompare(b.name));
-    }
+    const { records, folders, invalidSources } = await loadContentSourceBrowserData({
+        purpose: "modifiers",
+        selectionPrefix: "modifierSelection",
+        service: contentSourceService
+    });
+    this.allModifiers = records;
+    this.availableFolders = folders;
+    context.invalidSources = invalidSources;
     context.modifiers = this.allModifiers; 
     context.folders = this.availableFolders;
     return context;
@@ -72,8 +61,8 @@ activateListeners(html) {
         ev.preventDefault();
         ev.stopPropagation();
         const li = $(ev.currentTarget).closest('.result-item');
-        const modifierId = li.data('itemId');
-        const modifier = this.allModifiers.find(m => m.id === modifierId);
+        const selectionKey = li.attr('data-selection-key');
+        const modifier = this.allModifiers.find(m => m.selectionKey === selectionKey);
         if (modifier) await this._showQuickView(modifier);
     });
   }
@@ -91,8 +80,8 @@ activateListeners(html) {
 
     for (const li of resultsList.children) {
       if (li.classList.contains("placeholder-text")) continue;
-      const modId = li.querySelector('input[type="checkbox"]').name;
-      const mod = this.allModifiers.find(m => m.id === modId);
+      const selectionKey = li.querySelector('input[type="checkbox"]').name;
+      const mod = this.allModifiers.find(m => m.selectionKey === selectionKey);
       if (!mod) continue;
 
       let isVisible = true;
@@ -103,7 +92,7 @@ activateListeners(html) {
       if (showEnhancements && !showLimitations && !isEnhancement) isVisible = false;
       if (showLimitations && !showEnhancements && !isLimitation) isVisible = false;
 if (showEnhancements && showLimitations && !isEnhancement && !isLimitation) isVisible = false;
-      if (isVisible && hasFolderFilter && !selectedFolders.has(mod.folderId)) isVisible = false;
+      if (isVisible && hasFolderFilter && !recordMatchesFolderFilter(mod, selectedFolders)) isVisible = false;
       li.style.display = isVisible ? "grid" : "none";
     }
   }
@@ -158,12 +147,12 @@ if (showEnhancements && showLimitations && !isEnhancement && !isLimitation) isVi
   }
 
   async _updateObject(event, formData) {
-    const selectedIds = Object.keys(formData).filter(key => formData[key] === true && key.length === 16);
+    const selectedIds = Object.keys(formData).filter(key => formData[key] === true && key.startsWith("modifierSelection-"));
     if (selectedIds.length === 0) return ui.notifications.warn("Nenhum modificador foi selecionado.");
     
     const newModifiersData = {};
     for (const id of selectedIds) {
-      const sourceModifier = this.allModifiers.find(m => m.id === id);
+      const sourceModifier = this.allModifiers.find(m => m.selectionKey === id);
       if (sourceModifier) {
         const newKey = foundry.utils.randomID();
         newModifiersData[`system.modifiers.${newKey}`] = {

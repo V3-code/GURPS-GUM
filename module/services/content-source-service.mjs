@@ -9,6 +9,14 @@ export const CONTENT_SOURCE_PURPOSES = Object.freeze({
     documentName: "Item",
     itemTypes: Object.freeze(["condition"])
   }),
+  modifiers: Object.freeze({
+    id: "modifiers",
+    label: "Ampliações e Limitações",
+    description: "Bibliotecas usadas na edição de vantagens, desvantagens e poderes.",
+    defaults: Object.freeze(["gum.modifiers"]),
+    documentName: "Item",
+    itemTypes: Object.freeze(["modifier"])
+  }),
   effects: Object.freeze({
     id: "effects",
     label: "Efeitos",
