@@ -1,5 +1,7 @@
 import { GumPreviewDialog } from "./preview-dialog.js";
-import { prepareCompendiumFolderFilters, recordMatchesFolderFilter } from "./compendium-folder-filter.js";
+import { recordMatchesFolderFilter } from "./compendium-folder-filter.js";
+import { contentSourceService } from "../services/content-source-service.mjs";
+import { loadContentSourceBrowserData } from "../utils/content-source-browser.mjs";
 // systems/gum/module/apps/eqp-modifier-browser.js
 
 export class EqpModifierBrowser extends FormApplication {
@@ -8,7 +10,7 @@ export class EqpModifierBrowser extends FormApplication {
     this.targetItem = targetItem;
     this.allModifiers = [];
     this.availableFolders = [];
-    
+
     // Define os filtros iniciais com base no item
     // Se for uma armadura, já começa com 'armor' marcado, etc.
     const initialFilters = this._detectInitialFilters(targetItem);
@@ -25,10 +27,10 @@ export class EqpModifierBrowser extends FormApplication {
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
       title: "Modificadores de Equipamento",
-      classes: ["gum", "eqp-modifier-browser", "theme-dark"], 
+      classes: ["gum", "eqp-modifier-browser", "theme-dark"],
       template: "systems/gum/templates/apps/eqp-modifier-browser.hbs",
-      width: 900, 
-      height: 700, 
+      width: 900,
+      height: 700,
       resizable: true,
       scrollY: [".browser-results"]
     });
@@ -73,30 +75,24 @@ export class EqpModifierBrowser extends FormApplication {
 
   async getData() {
     const context = await super.getData();
-    
-    const pack = game.packs.get("gum.eqp_modifiers");
-    const packItems = await (pack ? pack.getDocuments() : []);
 
-
-    this.allModifiers = packItems.map(item => ({
-        id: item.id,
-        uuid: item.uuid,
-        name: item.name, 
-        system: item.system, 
-        img: item.img,
-        folderId: item.folder?.id ?? item.folder ?? item._source?.folder ?? null,
-        displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null,
-        formattedCF: this._getCostDisplay(item.system),
-        formattedWeight: item.system.weight_mod || "x1"
+    const { records, folders, invalidSources } = await loadContentSourceBrowserData({
+        purpose: "equipmentModifiers",
+        selectionPrefix: "equipmentModifierSelection",
+        service: contentSourceService
+    });
+    this.allModifiers = records.map(record => ({
+        ...record,
+        formattedCF: this._getCostDisplay(record.system),
+        formattedWeight: record.system.weight_mod || "x1"
     }));
-
-    this.allModifiers.sort((a, b) => a.name.localeCompare(b.name));
-    this.availableFolders = prepareCompendiumFolderFilters(this.allModifiers, pack.folders ?? []);
+    this.availableFolders = folders;
 
     context.modifiers = this.allModifiers;
-    context.filters = this.filters; 
+    context.filters = this.filters;
     context.folders = this.availableFolders;
-    
+    context.invalidSources = invalidSources;
+
     return context;
   }
 
@@ -159,21 +155,21 @@ html.find('input[name="cfMin"], input[name="cfMax"]').on('input', event => {
       checkbox.prop('checked', !checkbox.prop('checked'));
       $(event.currentTarget).toggleClass('selected', checkbox.prop('checked'));
     });
-    
+
     html.find('.results-list input[type="checkbox"]').on('change', event => {
         const li = $(event.currentTarget).closest('.result-item');
         li.toggleClass('selected', event.currentTarget.checked);
     });
-    
+
     html.find('.browser-quick-view').on('click', async event => {
         event.preventDefault();
         event.stopPropagation();
         const li = $(event.currentTarget).closest('.result-item');
-        const modifierId = li.data('id');
-        const modifier = this.allModifiers.find(m => m.id === modifierId);
+        const selectionKey = li.attr('data-selection-key');
+        const modifier = this.allModifiers.find(m => m.selectionKey === selectionKey);
         if (modifier) await this._showQuickView(modifier);
     });
-    
+
     this._applyFilters(html);
   }
 
@@ -201,15 +197,15 @@ html.find('input[name="cfMin"], input[name="cfMax"]').on('input', event => {
 
         // B. Pasta
         if (isVisible && folderIds.length > 0) {
-            const folderId = (item.data('folder-id') || "").toString();
-                       if (!recordMatchesFolderFilter(this.allModifiers.find(mod => mod.id === item.data("id")), new Set(folderIds))) isVisible = false;
+            const selectionKey = item.attr("data-selection-key");
+            if (!recordMatchesFolderFilter(this.allModifiers.find(mod => mod.selectionKey === selectionKey), new Set(folderIds))) isVisible = false;
         }
 
         // D. Categorias (Lógica "OU")
         if (isVisible && !showAll) {
             // O item deve pertencer a PELO MENOS UMA das categorias marcadas
             let matchesCategory = false;
-            
+
             // Verifica se o modificador é "Geral" (aplica em tudo) E se "Geral" está marcado
             if (item.data('cat-general') === true && categories.general) matchesCategory = true;
 
@@ -222,7 +218,7 @@ html.find('input[name="cfMin"], input[name="cfMax"]').on('input', event => {
                     }
                 }
             }
-            
+
             if (!matchesCategory) isVisible = false;
         }
 
@@ -305,12 +301,12 @@ el.style.display = isVisible ? "grid" : "none";
   }
 
   async _updateObject(event, formData) {
-    const selectedIds = Object.keys(formData).filter(key => formData[key] === true && key.length === 16);
+    const selectedIds = Object.keys(formData).filter(key => formData[key] === true && key.startsWith("equipmentModifierSelection-"));
     if (selectedIds.length === 0) return ui.notifications.warn("Nenhum modificador selecionado.");
-    
+
     const newModifiersData = {};
     for (const id of selectedIds) {
-      const sourceModifier = this.allModifiers.find(m => m.id === id);
+      const sourceModifier = this.allModifiers.find(m => m.selectionKey === id);
       if (sourceModifier) {
         const newKey = foundry.utils.randomID();
         newModifiersData[`system.eqp_modifiers.${newKey}`] = {
