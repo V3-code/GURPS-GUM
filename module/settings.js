@@ -190,6 +190,15 @@ export const registerSystemSettings = function() {
         default: "gum.status_bindings"
     });
 
+    game.settings.register("gum", "hybridImportSearchAllCompendia", {
+        name: "Importação híbrida: pesquisar outros compêndios",
+        hint: "Se ativado, a importação de personagens também procura correspondências em todos os compêndios de Itens, depois dos itens do mundo e das fontes configuradas. Pode selecionar conteúdo inesperado de módulos.",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false
+    });
+
 
 
     game.settings.register("gum", "defaultSkillRollFormula", {

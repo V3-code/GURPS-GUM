@@ -2,6 +2,7 @@ import { calculateItemTraitCost, importGCSTraitCost, importGCSModifier } from ".
 import { getBodyLocationDefinition, getBodyProfile } from "../config/body-profiles.js";
 import { buildGCSActorReconciliation } from "../utils/gcs-actor-reconciliation.mjs";
 import { canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
+import { contentSourceService } from "../services/content-source-service.mjs";
 /**
  * Lida com a importação de um arquivo JSON (formato customizado) OU
  * um arquivo de Biblioteca GCS (.skl, .spl, .eqp, .adq, .adm, .eqm) para um compêndio.
@@ -2538,7 +2539,7 @@ function parseGCSLibraryEquipment(gcsEquip) {
 }
 
 const HYBRID_IMPORTABLE_ITEM_TYPES = new Set(["skill", "spell", "power", "advantage", "disadvantage", "equipment"]);
-let HYBRID_ITEM_INDEX_CACHE = null;
+let HYBRID_ITEM_INDEX_CACHE = { key: null, entries: null };
 
 function normalizeHybridText(value) {
     return String(value || "")
@@ -2567,10 +2568,11 @@ function splitNameAndSpecialization(rawName) {
     };
 }
 
-function buildIndexEntryFromItemDocument(item, sourceType, packCollection = "") {
+function buildIndexEntryFromItemDocument(item, sourceType, packCollection = "", priority = 0) {
     const parts = splitNameAndSpecialization(item.name);
     return {
         sourceType,
+        priority,
         packCollection,
         id: item.id,
         uuid: item.uuid,
@@ -2584,7 +2586,17 @@ function buildIndexEntryFromItemDocument(item, sourceType, packCollection = "") 
 }
 
 async function buildHybridItemIndex() {
-    if (HYBRID_ITEM_INDEX_CACHE) return HYBRID_ITEM_INDEX_CACHE;
+    const configuredPackIds = [
+        ...contentSourceService.getSourceIds("skills"),
+        ...contentSourceService.getSourceIds("characterImport")
+    ].filter((id, index, ids) => ids.indexOf(id) === index);
+    const searchAllCompendia = game.settings.get("gum", "hybridImportSearchAllCompendia") === true;
+    const cacheKey = JSON.stringify({
+        worldIds: game.items.contents.map(item => item.id),
+        configuredPackIds,
+        searchAllCompendia
+    });
+    if (HYBRID_ITEM_INDEX_CACHE.key === cacheKey) return HYBRID_ITEM_INDEX_CACHE.entries;
 
     const entries = [];
     for (const item of game.items.contents) {
@@ -2592,7 +2604,15 @@ async function buildHybridItemIndex() {
         entries.push(buildIndexEntryFromItemDocument(item, "world"));
     }
 
-    for (const pack of game.packs.filter(p => p.documentName === "Item")) {
+    const configuredPacks = configuredPackIds
+        .map(id => game.packs.get(id))
+        .filter(pack => pack?.documentName === "Item");
+    const configuredPackSet = new Set(configuredPacks.map(pack => pack.collection));
+    const fallbackPacks = searchAllCompendia
+        ? game.packs.filter(pack => pack.documentName === "Item" && !configuredPackSet.has(pack.collection))
+        : [];
+
+    for (const [packIndex, pack] of [...configuredPacks, ...fallbackPacks].entries()) {
         const index = await pack.getIndex({ fields: ["type", "system.ref", "system.specialization"] }).catch(() => null);
         if (!index?.contents?.length) continue;
 
@@ -2601,6 +2621,7 @@ async function buildHybridItemIndex() {
             const parts = splitNameAndSpecialization(row.name);
             entries.push({
                 sourceType: "compendium",
+                priority: packIndex + 1,
                 packCollection: pack.collection,
                 id: row._id,
                 uuid: `Compendium.${pack.collection}.${row._id}`,
@@ -2614,8 +2635,8 @@ async function buildHybridItemIndex() {
         }
     }
 
-    HYBRID_ITEM_INDEX_CACHE = entries;
-    return HYBRID_ITEM_INDEX_CACHE;
+    HYBRID_ITEM_INDEX_CACHE = { key: cacheKey, entries };
+    return entries;
 }
 
 async function resolveHybridSourceItem({ gcsNode, parsedItem }) {
@@ -2637,8 +2658,9 @@ async function resolveHybridSourceItem({ gcsNode, parsedItem }) {
 
     const unique = (rows) => {
         if (!rows?.length) return null;
-        if (rows.length === 1) return rows[0];
-        return null;
+        const highestPriority = Math.min(...rows.map(row => Number(row.priority) || 0));
+        const preferredRows = rows.filter(row => (Number(row.priority) || 0) === highestPriority);
+        return preferredRows.length === 1 ? preferredRows[0] : null;
     };
 
     let hit = null;

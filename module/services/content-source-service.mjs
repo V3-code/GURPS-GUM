@@ -65,6 +65,14 @@ export const CONTENT_SOURCE_PURPOSES = Object.freeze({
     documentName: "Item",
     itemTypes: Object.freeze(["condition"])
   }),
+  characterImport: Object.freeze({
+    id: "characterImport",
+    label: "Importação Híbrida de Personagens",
+    description: "Bibliotecas adicionais consultadas ao substituir itens importados do GCS por conteúdo do GUM.",
+    defaults: Object.freeze([]),
+    documentName: "Item",
+    itemTypes: Object.freeze(["skill", "spell", "power", "advantage", "disadvantage", "equipment"])
+  }),
   effects: Object.freeze({
     id: "effects",
     label: "Efeitos",
