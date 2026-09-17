@@ -135,46 +135,6 @@
       "private": false
     },
     {
-      "name": "advantages",
-      "label": "[GUM] Vantagens",
-      "system": "gum",
-      "path": "./packs/advantages",
-      "type": "Item",
-      "private": false
-    },
-    {
-      "name": "disadvantages",
-      "label": "[GUM] Desvantagens",
-      "system": "gum",
-      "path": "./packs/disadvantages",
-      "type": "Item",
-      "private": false
-    },
-    {
-      "name": "spells",
-      "label": "[GUM] Magias",
-      "system": "gum",
-      "path": "./packs/spells",
-      "type": "Item",
-      "private": false
-    },
-    {
-      "name": "powers",
-      "label": "[GUM] Poderes",
-      "system": "gum",
-      "path": "./packs/powers",
-      "type": "Item",
-      "private": false
-    },
-    {
-      "name": "equipment",
-      "label": "[GUM] Equipamentos",
-      "system": "gum",
-      "path": "./packs/equipment",
-      "type": "Item",
-      "private": false
-    },
-    {
       "name": "macros",
       "label": "[GUM] Macros",
       "system": "gum",
