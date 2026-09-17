@@ -49,6 +49,14 @@ export const CONTENT_SOURCE_PURPOSES = Object.freeze({
     documentName: "Item",
     itemTypes: Object.freeze(["skill"])
   }),
+  passiveConditions: Object.freeze({
+    id: "passiveConditions",
+    label: "Condições Passivas",
+    description: "Bibliotecas copiadas para novos personagens e usadas na sincronização das condições passivas.",
+    defaults: Object.freeze(["gum.regras"]),
+    documentName: "Item",
+    itemTypes: Object.freeze(["condition"])
+  }),
   effects: Object.freeze({
     id: "effects",
     label: "Efeitos",

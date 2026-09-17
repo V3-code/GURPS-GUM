@@ -6,19 +6,17 @@
 async function syncCompendiumRules() {
     ui.notifications.info("Iniciando sincronização das Regras do Compêndio...");
 
-    const pack = game.packs.get("gum.Regras");
-    if (!pack) {
-        return ui.notifications.error("Compêndio [GUM] Condições Passivas (gum.Regras) não encontrado.");
-    }
-
-    const sourceRules = await pack.getDocuments();
+    const { documents: sourceRules, invalidSources } = await contentSourceService.getDocuments("passiveConditions");
     const sourceRulesMap = new Map();
     for (const rule of sourceRules) {
         sourceRulesMap.set(rule.uuid, rule);
     }
 
     if (sourceRulesMap.size === 0) {
-        return ui.notifications.warn("Compêndio [GUM] Condições Passivas está vazio. Nenhuma regra para sincronizar.");
+        const missing = invalidSources.map(source => source.id).join(", ");
+        return ui.notifications.warn(missing
+            ? `Nenhuma condição passiva disponível. Fontes inválidas: ${missing}.`
+            : "As fontes configuradas de Condições Passivas estão vazias. Nenhuma regra para sincronizar.");
     }
 
     let updateCount = 0;
@@ -54,7 +52,7 @@ async function syncCompendiumRules() {
 // --- IMPORTA A LÓGICA DOS IMPORTADORES ---
 import { importFromJson, importFromGCS, importTemplateFromGCS, exportCompendiumToJson, exportCharacterToJson } from "./apps/importers.js";
 import { ContentSourceConfig } from "./apps/content-source-config.js";
-import { CONTENT_SOURCE_SETTING } from "./services/content-source-service.mjs";
+import { CONTENT_SOURCE_SETTING, contentSourceService } from "./services/content-source-service.mjs";
 
 
 // --- REGISTRO DAS CONFIGURAÇÕES ---
@@ -135,7 +133,7 @@ export const registerSystemSettings = function() {
     // --- CONFIGURAÇÃO DE ADIÇÃO DE REGRAS PADRÃO ---
     game.settings.register("gum", "addDefaultRules", {
         name: "Condições Passivas em Personagens",
-        hint: "Se marcado, adiciona automaticamente todas as 'Condições Passivas' do compêndio [GUM] Condições Passivas a todos os novos Atores de personagem criados.",
+        hint: "Se marcado, adiciona automaticamente aos novos personagens todas as condições das fontes configuradas em 'Condições Passivas'.",
         scope: "world",
         config: true,
         type: Boolean,
@@ -145,7 +143,7 @@ export const registerSystemSettings = function() {
         // --- "BOTÃO" DE ATUALIZAÇÃO ---
     game.settings.register("gum", "syncCompendiumRulesBtn", {
         name: "Sincronizar Condições Passivas",
-        hint: "MARQUE e SALVE para forçar a atualização de todas as 'Condições Passivas' em todos os personagens com as versões mais recentes do compêndio [GUM] Condições Passivas. A caixa desmarcará automaticamente após o uso.",
+        hint: "MARQUE e SALVE para atualizar as Condições Passivas dos personagens a partir das fontes configuradas. A caixa desmarcará automaticamente após o uso.",
         scope: "world",
         config: true,
         type: Boolean,

@@ -15,8 +15,29 @@ test("uses the GUM source by default but preserves an explicitly empty selection
   assert.deepEqual(getConfiguredSourceIds({}, "equipmentModifiers"), ["gum.eqp_modifiers"]);
   assert.deepEqual(getConfiguredSourceIds({}, "rollModifiers"), ["gum.gm_modifiers"]);
   assert.deepEqual(getConfiguredSourceIds({}, "skills"), ["gum.skills"]);
+  assert.deepEqual(getConfiguredSourceIds({}, "passiveConditions"), ["gum.regras"]);
   assert.deepEqual(getConfiguredSourceIds({}, "triggers"), ["gum.gatilhos"]);
   assert.deepEqual(getConfiguredSourceIds({ effects: [] }, "effects"), []);
+});
+
+test("loads only conditions from passive condition sources", async () => {
+  const passive = { type: "condition", uuid: "Compendium.world.passive.Item.a" };
+  const effect = { type: "effect", uuid: "Compendium.world.passive.Item.b" };
+  const service = new ContentSourceService({
+    packs: new Map([["world.passive", {
+      documentName: "Item",
+      getDocuments: async () => [passive, effect]
+    }]]),
+    settings: {
+      get: () => ({ passiveConditions: ["world.passive"] }),
+      set: async () => undefined
+    }
+  });
+
+  assert.deepEqual(await service.getDocuments("passiveConditions"), {
+    documents: [passive],
+    invalidSources: []
+  });
 });
 
 test("builds a prioritized multi-source skill index with canonical UUIDs", async () => {

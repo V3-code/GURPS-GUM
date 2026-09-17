@@ -41,6 +41,7 @@ import { BASIC_DAMAGE_KEYS, normalizeBasicDamageData, prepareBasicDamageAttribut
 import { resolveAttackDamageDisplay } from "../module/utils/attack-damage-display.mjs";
 import { canUserCreateActors } from "../module/utils/actor-creation-permission.mjs";
 import { resolveRollReference } from "../module/utils/roll-reference-resolver.mjs";
+import { contentSourceService } from "../module/services/content-source-service.mjs";
 
 import { getSkillDisplayName, setDirectoryEntryLabel } from "../module/utils/skill-display-name.mjs";
 import { installGumChatCommandInterceptor, normalizeGumLookup, resolveGumCommandActor, splitSkillModifier } from "../module/utils/gum-chat-command.mjs";
@@ -2585,19 +2586,16 @@ Hooks.once('init', async function() {
         };
 
         // 1. REGRAS / CONDIÇÕES PASSIVAS
-        const rulesPack = game.packs.get("gum.regras")
-            || game.packs.find(p => p.metadata.label === "[GUM] Condições Passivas");
-  if (rulesPack) {
-            const rules = await rulesPack.getDocuments();
-            rules.forEach(item => {
-                if (item.type === "condition" && item.system?.bindingMode === "status-link") return;
-                const data = normalizeItemForV13(item.toObject(), item.uuid);
-                itemsToCreate.push(data);
-            });
-            console.log(`GUM | Preparadas ${rules.length} condições passivas para cópia.`);
-        } else {
-            console.warn("GUM | Compêndio de Condições Passivas não encontrado.");
+        const { documents: passiveConditions, invalidSources } = await contentSourceService.getDocuments("passiveConditions");
+        passiveConditions.forEach(item => {
+            if (item.system?.bindingMode === "status-link") return;
+            const data = normalizeItemForV13(item.toObject(), item.uuid);
+            itemsToCreate.push(data);
+        });
+        if (invalidSources.length) {
+            console.warn("GUM | Fontes de Condições Passivas indisponíveis:", invalidSources.map(source => source.id));
         }
+        console.log(`GUM | Preparadas ${itemsToCreate.length} condições passivas para cópia.`);
 
         // 2. CRIAÇÃO EM LOTE (Muito mais rápido)
         if (itemsToCreate.length > 0) {
