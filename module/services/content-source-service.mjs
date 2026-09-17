@@ -16,6 +16,14 @@ export const CONTENT_SOURCE_PURPOSES = Object.freeze({
     defaults: Object.freeze(["gum.efeitos"]),
     documentName: "Item",
     itemTypes: Object.freeze(["effect"])
+  }),
+  triggers: Object.freeze({
+    id: "triggers",
+    label: "Gatilhos",
+    description: "Bibliotecas usadas pelos editores de condições e efeitos.",
+    defaults: Object.freeze(["gum.gatilhos"]),
+    documentName: "Item",
+    itemTypes: Object.freeze(["trigger"])
   })
 });
 

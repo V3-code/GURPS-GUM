@@ -1,4 +1,7 @@
 import { GumPreviewDialog } from "./preview-dialog.js";
+import { recordMatchesFolderFilter } from "./compendium-folder-filter.js";
+import { contentSourceService } from "../services/content-source-service.mjs";
+import { loadContentSourceBrowserData } from "../utils/content-source-browser.mjs";
 // GUM/module/apps/trigger-browser.js
 
 // ✅ Alterado para FormApplication para lidar com o envio do formulário
@@ -23,29 +26,14 @@ export class TriggerBrowser extends FormApplication {
 async getData() {
     const context = await super.getData();
     
-    const pack = game.packs.get("gum.gatilhos");
-    if (pack) {
-        const folderMap = new Map();
-        for (const folder of pack.folders ?? []) {
-            folderMap.set(folder.id, folder.name);
-        }
-
-        this.allTriggers = (await pack.getDocuments()).map(item => ({
-            id: item.id,
-            uuid: item.uuid,
-            name: item.name,
-            system: item.system,
-            img: item.img,
-            folderId: item.folder?.id ?? item.folder ?? item._source?.folder ?? null,
-            displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null
-        }));
-        this.allTriggers.sort((a, b) => a.name.localeCompare(b.name));
-
-        const usedFolderIds = new Set(this.allTriggers.map(trigger => trigger.folderId).filter(Boolean));
-        this.availableFolders = Array.from(usedFolderIds)
-          .map(folderId => ({ id: folderId, name: folderMap.get(folderId) ?? "Pasta" }))
-          .sort((a, b) => a.name.localeCompare(b.name));
-    }
+    const { records, folders, invalidSources } = await loadContentSourceBrowserData({
+        purpose: "triggers",
+        selectionPrefix: "triggerSelection",
+        service: contentSourceService
+    });
+    this.allTriggers = records;
+    this.availableFolders = folders;
+    context.invalidSources = invalidSources;
     context.triggers = this.allTriggers; 
     context.folders = this.availableFolders;
     return context;
@@ -75,8 +63,8 @@ async getData() {
         ev.preventDefault();
         ev.stopPropagation();
         const li = $(ev.currentTarget).closest('.result-item');
-        const triggerId = li.data('itemId');
-        const trigger = this.allTriggers.find(t => t.id === triggerId);
+        const selectionKey = li.attr('data-selection-key');
+        const trigger = this.allTriggers.find(t => t.selectionKey === selectionKey);
         if (trigger) await this._showQuickView(trigger);
     });
   }
@@ -92,12 +80,12 @@ async getData() {
 
     for (let li of resultsList) {
         if (li.classList.contains("placeholder-text")) continue;
-        const triggerId = li.querySelector('input[type="radio"]').value;
-        const trigger = this.allTriggers.find(t => t.id === triggerId);
+        const selectionKey = li.querySelector('input[type="radio"]').value;
+        const trigger = this.allTriggers.find(t => t.selectionKey === selectionKey);
         if (!trigger) continue;
         const triggerName = $(li).find('.item-name').text().toLowerCase();
         let isVisible = triggerName.includes(searchQuery);
-        if (isVisible && hasFolderFilter && !selectedFolders.has(trigger.folderId)) isVisible = false;
+        if (isVisible && hasFolderFilter && !recordMatchesFolderFilter(trigger, selectedFolders)) isVisible = false;
         li.style.display = isVisible ? "grid" : "none";
     }
   }
@@ -108,12 +96,12 @@ async getData() {
    * @param {object} formData Os dados do formulário, contendo o gatilho selecionado.
    */
   async _updateObject(event, formData) {
-    const selectedTriggerId = formData.triggerSelection;
-    if (!selectedTriggerId) {
+    const selectedTriggerKey = formData.triggerSelection;
+    if (!selectedTriggerKey) {
         return ui.notifications.warn("Nenhum gatilho foi selecionado.");
     }
 
-    const trigger = this.allTriggers.find(t => t.id === selectedTriggerId);
+    const trigger = this.allTriggers.find(t => t.selectionKey === selectedTriggerKey);
     if (!trigger) return;
 
     const code = trigger.system.code;

@@ -10,7 +10,28 @@ import {
 test("uses the GUM source by default but preserves an explicitly empty selection", () => {
   assert.deepEqual(getConfiguredSourceIds({}, "effects"), ["gum.efeitos"]);
   assert.deepEqual(getConfiguredSourceIds({}, "conditions"), ["gum.conditions"]);
+  assert.deepEqual(getConfiguredSourceIds({}, "triggers"), ["gum.gatilhos"]);
   assert.deepEqual(getConfiguredSourceIds({ effects: [] }, "effects"), []);
+});
+
+test("loads only triggers from trigger sources", async () => {
+  const trigger = { type: "trigger", uuid: "Compendium.world.triggers.Item.a" };
+  const condition = { type: "condition", uuid: "Compendium.world.triggers.Item.b" };
+  const service = new ContentSourceService({
+    packs: new Map([["world.triggers", {
+      documentName: "Item",
+      getDocuments: async () => [trigger, condition]
+    }]]),
+    settings: {
+      get: () => ({ triggers: ["world.triggers"] }),
+      set: async () => undefined
+    }
+  });
+
+  assert.deepEqual(await service.getDocuments("triggers"), {
+    documents: [trigger],
+    invalidSources: []
+  });
 });
 
 test("loads only conditions from condition sources", async () => {
