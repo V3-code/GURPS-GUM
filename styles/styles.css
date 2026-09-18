@@ -9239,14 +9239,41 @@ background-color: var(--gum-accent-gold);
 }
 /* Configuração central das bibliotecas usadas pelas funções do GUM. */
 .content-source-config .gum-content-source-form {
-  padding: 0.75rem;
+  --source-bg: rgba(24, 27, 30, 0.96);
+  --source-surface: rgba(255, 255, 255, 0.035);
+  --source-surface-alt: rgba(255, 255, 255, 0.055);
+  --source-text: rgba(244, 244, 242, 0.92);
+  --source-muted: rgba(224, 226, 228, 0.58);
+  --source-accent: #aeb8c2;
+  background: var(--source-bg);
+  color: var(--source-text);
+  padding: 1rem;
+}
+
+.content-source-config .content-source-intro {
+  margin: 0 0 1rem;
+  padding: 0.25rem 0.25rem 0.75rem;
+}
+
+.content-source-config .content-source-intro h1 {
+  border: 0;
+  color: var(--source-text);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+}
+
+.content-source-config .content-source-intro p {
+  color: var(--source-muted);
+  margin: 0;
 }
 
 .content-source-config .content-source-purpose {
-  border: 1px solid var(--color-border-light-2, #777);
-  border-radius: 5px;
-  margin: 0.75rem 0;
-  padding: 0.75rem;
+  background: var(--source-surface);
+  border: 0;
+  border-radius: 4px;
+  margin: 0.5rem 0;
+  padding: 0.8rem;
 }
 
 .content-source-config .content-source-purpose > header,
@@ -9261,9 +9288,18 @@ background-color: var(--gum-accent-gold);
   justify-content: space-between;
 }
 
-.content-source-config .content-source-purpose h2,
-.content-source-config .content-source-purpose p {
+.content-source-config .content-source-purpose h2 {
+  border: 0;
+  color: var(--source-text);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   margin: 0 0 0.25rem;
+}
+
+.content-source-config .content-source-purpose p {
+  color: var(--source-muted);
+  margin: 0;
 }
 
 .content-source-config .content-source-list {
@@ -9273,12 +9309,17 @@ background-color: var(--gum-accent-gold);
 }
 
 .content-source-config .content-source-list li {
-  border-bottom: 1px solid var(--color-border-light-tertiary, #9995);
+  background: var(--source-surface-alt);
+  border: 0;
+  border-radius: 3px;
+  margin-top: 0.3rem;
   min-height: 2.5rem;
-  padding: 0.25rem;
+  padding: 0.35rem 0.5rem;
 }
 
 .content-source-config .source-order {
+  color: var(--source-muted);
+  font-size: 0.8rem;
   text-align: center;
   width: 1.5rem;
 }
@@ -9290,15 +9331,17 @@ background-color: var(--gum-accent-gold);
 }
 
 .content-source-config .source-details small {
-  opacity: 0.75;
+  color: var(--source-muted);
+  opacity: 1;
 }
 
 .content-source-config .source-status {
-  color: var(--color-level-success, #18520b);
+  color: #aabcae;
+  font-size: 0.8rem;
 }
 
 .content-source-config .is-missing .source-status {
-  color: var(--color-level-warning, #8a4b00);
+  color: #c7ad8b;
 }
 
 .content-source-config .source-actions {
@@ -9306,17 +9349,66 @@ background-color: var(--gum-accent-gold);
 }
 
 .content-source-config .source-actions button {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: var(--source-muted);
   line-height: 1.75rem;
   margin: 0;
   padding: 0 0.45rem;
   width: auto;
 }
 
+.content-source-config .source-actions button:hover:not(:disabled),
+.content-source-config .source-actions button:focus-visible {
+  box-shadow: none;
+  color: var(--source-text);
+}
+
+.content-source-config .source-actions button:disabled {
+  opacity: 0.25;
+}
+
+.content-source-config .content-source-add {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 3px;
+  padding: 0.35rem;
+}
+
 .content-source-config .content-source-add select {
+  background: rgba(255, 255, 255, 0.065);
+  border: 0;
+  box-shadow: none;
+  color: var(--source-text);
   flex: 1;
 }
 
+.content-source-config .content-source-add select:focus {
+  box-shadow: 0 0 0 1px rgba(174, 184, 194, 0.45);
+}
+
+.content-source-config .content-source-restore,
+.content-source-config .content-source-add-button,
+.content-source-config .sheet-footer button {
+  background: rgba(255, 255, 255, 0.07);
+  border: 0;
+  box-shadow: none;
+  color: var(--source-text);
+}
+
+.content-source-config .content-source-restore:hover,
+.content-source-config .content-source-add-button:hover,
+.content-source-config .sheet-footer button:hover {
+  background: rgba(255, 255, 255, 0.11);
+  box-shadow: none;
+}
+
+.content-source-config .sheet-footer {
+  margin-top: 0.75rem;
+}
+
 .content-source-config .empty-source-list {
+  color: var(--source-muted);
   font-style: italic;
-  opacity: 0.75;
+  opacity: 1;
 }

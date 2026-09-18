@@ -42,6 +42,7 @@ import { resolveAttackDamageDisplay } from "../module/utils/attack-damage-displa
 import { canUserCreateActors } from "../module/utils/actor-creation-permission.mjs";
 import { resolveRollReference } from "../module/utils/roll-reference-resolver.mjs";
 import { contentSourceService } from "../module/services/content-source-service.mjs";
+import { organizeGumCompendia } from "../module/utils/compendium-folder-organizer.mjs";
 
 import { getSkillDisplayName, setDirectoryEntryLabel } from "../module/utils/skill-display-name.mjs";
 import { installGumChatCommandInterceptor, normalizeGumLookup, resolveGumCommandActor, splitSkillModifier } from "../module/utils/gum-chat-command.mjs";
@@ -2927,82 +2928,7 @@ Hooks.once('ready', async function() {
     await migrateBasicDamageSchema();
 
     if (game.user?.isGM) {
-        const ensureCompendiumFolder = async ({ name, color, parent = null }) => {
-            const existing = game.folders?.find(folder =>
-                folder.type === "Compendium" &&
-                folder.name === name &&
-                ((folder.folder?.id ?? folder.folder ?? null) === (parent?.id ?? null))
-            );
-            if (existing) {
-                const updates = {};
-                if (color && existing.color !== color) updates.color = color;
-                if (Object.keys(updates).length > 0) await existing.update(updates);
-                return existing;
-            }
-
-            return Folder.create({
-                name,
-                type: "Compendium",
-                color,
-                folder: parent?.id ?? null
-            });
-        };
-
-        const movePacksToFolder = async (packs, targetFolder) => {
-            for (const pack of packs) {
-                if (!pack || !targetFolder) continue;
-                if (pack.folder?.id === targetFolder.id || pack.folder === targetFolder.id) continue;
-                try {
-                    await pack.configure({ folder: targetFolder.id });
-                } catch (error) {
-                    console.warn(`GUM | Não foi possível mover o compêndio "${pack.collection}" para a pasta "${targetFolder.name}".`, error);
-                }
-            }
-        };
-
-        const pastaSistema = await ensureCompendiumFolder({
-            name: "[GUM] SISTEMA",
-            color: "#4f3c11"
-        });
-        const pastaCondicoesEfeitos = await ensureCompendiumFolder({
-            name: "[GUM] Condições e Efeitos",
-            color: "#7a5d1a",
-            parent: pastaSistema
-        });
-        const pastaModificadores = await ensureCompendiumFolder({
-            name: "[GUM] Modificadores",
-            color: "#7a5d1a",
-            parent: pastaSistema
-        });
-        const pastaCenario = await ensureCompendiumFolder({
-            name: "[GUM] CENÁRIO",
-            color: "#11501b"
-        });
-
-        const packsSistemaCondicoesEfeitos = [
-            game.packs.get("gum.conditions"),
-            game.packs.get("gum.Regras"),
-            game.packs.get("gum.efeitos"),
-            game.packs.get("gum.gatilhos")
-        ].filter(Boolean);
-
-        const packsSistemaModificadores = [
-            game.packs.get("gum.modifiers"),
-            game.packs.get("gum.eqp_modifiers"),
-            game.packs.get("gum.gm_modifiers")
-        ].filter(Boolean);
-
-        const idsSistema = new Set([
-            ...packsSistemaCondicoesEfeitos.map(pack => pack.collection),
-            ...packsSistemaModificadores.map(pack => pack.collection)
-        ]);
-        const packsCenario = game.packs
-            .filter(pack => pack.metadata?.packageType === "system" && pack.metadata?.packageName === "gum")
-            .filter(pack => !idsSistema.has(pack.collection));
-
-        await movePacksToFolder(packsSistemaCondicoesEfeitos, pastaCondicoesEfeitos);
-        await movePacksToFolder(packsSistemaModificadores, pastaModificadores);
-        await movePacksToFolder(packsCenario, pastaCenario);
+        await organizeGumCompendia(game, Folder);
     }
 
     $('body').on('click', '.apply-damage-button', (ev) => {
