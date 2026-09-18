@@ -4,55 +4,46 @@
  * A FUNÇÃO DE SINCRONIZAÇÃO (V2 - Corrigida)
  */
 async function syncCompendiumRules() {
-    ui.notifications.info("Iniciando sincronização das Regras do Compêndio...");
+    ui.notifications.info("Iniciando sincronização das Condições Passivas...");
 
     const { documents: sourceRules, invalidSources } = await contentSourceService.getDocuments("passiveConditions");
-    const sourceRulesMap = new Map();
-    for (const rule of sourceRules) {
-        sourceRulesMap.set(rule.uuid, rule);
-    }
+    const passiveRules = sourceRules.filter(rule => rule.system?.bindingMode !== "status-link");
 
-    if (sourceRulesMap.size === 0) {
+    if (passiveRules.length === 0) {
         const missing = invalidSources.map(source => source.id).join(", ");
         return ui.notifications.warn(missing
             ? `Nenhuma condição passiva disponível. Fontes inválidas: ${missing}.`
             : "As fontes configuradas de Condições Passivas estão vazias. Nenhuma regra para sincronizar.");
     }
 
-    let updateCount = 0;
+    let createdCount = 0;
+    let updatedCount = 0;
     const actorsToUpdate = game.actors.filter(a => a.type === "character");
 
     for (const actor of actorsToUpdate) {
-        const updates = [];
-        const itemsToUpdate = actor.items.filter(i => i._stats.compendiumSource);
-
-        for (const item of itemsToUpdate) {
-            const sourceId = item._stats.compendiumSource; 
-            const sourceRule = sourceRulesMap.get(sourceId);
-
-            if (sourceRule) {
-                const sourceData = sourceRule.toObject();
-                updates.push({
-                    _id: item.id,
-                    system: sourceData.system,
-                    img: sourceData.img
-                });
-            }
-        }
+        const { updates, creates } = buildPassiveConditionSyncOperations(actor.items, passiveRules);
 
         if (updates.length > 0) {
             await actor.updateEmbeddedDocuments("Item", updates);
-            updateCount += updates.length;
+            updatedCount += updates.length;
+        }
+        if (creates.length > 0) {
+            await actor.createEmbeddedDocuments("Item", creates);
+            createdCount += creates.length;
         }
     }
 
-    ui.notifications.info(`Sincronização completa! ${updateCount} regras atualizadas em ${actorsToUpdate.length} personagens.`);
+    if (invalidSources.length) {
+        console.warn("GUM | Fontes de Condições Passivas indisponíveis durante a sincronização:", invalidSources);
+    }
+    ui.notifications.info(`Sincronização completa: ${createdCount} condições adicionadas e ${updatedCount} atualizadas em ${actorsToUpdate.length} personagens.`);
 }
 
 // --- IMPORTA A LÓGICA DOS IMPORTADORES ---
 import { importFromJson, importFromGCS, importTemplateFromGCS, exportCompendiumToJson, exportCharacterToJson } from "./apps/importers.js";
 import { ContentSourceConfig } from "./apps/content-source-config.js";
 import { CONTENT_SOURCE_SETTING, contentSourceService } from "./services/content-source-service.mjs";
+import { buildPassiveConditionSyncOperations } from "./utils/passive-condition-sync.mjs";
 
 const STATUS_BINDINGS_MIGRATION_SETTING = "contentSourcesStatusBindingsMigrationV1";
 
@@ -172,11 +163,17 @@ export const registerSystemSettings = function() {
         config: true,
         type: Boolean,
         default: false,
-        onChange: (value) => {
+        onChange: async (value) => {
             if (value) {
                 console.log("GUM | Sincronização de regras iniciada pelo GM...");
-                syncCompendiumRules(); 
-                game.settings.set("gum", "syncCompendiumRulesBtn", false); 
+                try {
+                    await syncCompendiumRules();
+                } catch (error) {
+                    console.error("GUM | Falha ao sincronizar Condições Passivas.", error);
+                    ui.notifications.error("Não foi possível sincronizar as Condições Passivas. Consulte o console para detalhes.");
+                } finally {
+                    await game.settings.set("gum", "syncCompendiumRulesBtn", false);
+                }
             }
         }
     });

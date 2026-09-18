@@ -28,6 +28,7 @@ O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com
 - Colisões de IDs locais entre documentos de compêndios diferentes nos navegadores.
 - Inicialização prematura do serviço de fontes antes da disponibilidade de `game`, `game.settings` e `game.packs`.
 - Seleção ambígua de perícias com mesmo nome e especializações diferentes durante importações e solicitações.
+- Sincronização de Condições Passivas voltou a adicionar regras novas aos personagens existentes, além de atualizar as cópias já vinculadas.
 
 ## [1.0.0] - 2026-08-01
 
