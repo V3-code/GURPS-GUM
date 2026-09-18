@@ -1,4 +1,7 @@
 import { GumPreviewDialog } from "./preview-dialog.js";
+import { recordMatchesFolderFilter } from "./compendium-folder-filter.js";
+import { contentSourceService } from "../services/content-source-service.mjs";
+import { loadContentSourceBrowserData } from "../utils/content-source-browser.mjs";
 export class TemplateBrowser extends FormApplication {
   constructor(actor, options = {}) {
     super({}, options);
@@ -6,7 +9,6 @@ export class TemplateBrowser extends FormApplication {
     this.onSelect = options.onSelect;
     this.allTemplates = [];
     this.availableFolders = [];
-    this.templatePackId = options.templatePackId || "gum.templates";
   }
 
   static get defaultOptions() {
@@ -22,45 +24,17 @@ export class TemplateBrowser extends FormApplication {
 
   async getData() {
     const context = await super.getData();
-    const records = [];
-
-    const templatePack = game.packs.get(this.templatePackId);
-    if (!templatePack) {
-      ui.notifications.warn("Compêndio de Modelos não encontrado. Verifique se o pack 'templates' está habilitado.");
-    } else {
-      let docs = [];
-      try {
-        docs = await templatePack.getDocuments();
-      } catch (err) {
-        console.warn(`GUM | Falha ao ler compêndio ${templatePack.collection}`, err);
-      }
-
-      const templates = docs.filter(doc => doc.type === "template");
-      const folderInfoById = this._buildCompendiumFolderIndex(templatePack.folders ?? []);
-      for (const item of templates) {
-        const folderId = item.folder?.id ?? item.folder ?? item._source?.folder ?? null;
-        const folderTrail = this._getCompendiumFolderTrail(folderId, folderInfoById);
-        records.push({
-          id: `${templatePack.collection}:${item.id}`,
-          uuid: item.uuid,
-          name: item.name,
-          system: item.system,
-          img: item.img,
-          sourceLabel: templatePack.metadata?.label ?? templatePack.collection,
-          folderId,
-          folderTrail,
-          folderLabel: this._getCompendiumFolderPath(folderId, folderInfoById),
-          displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null
-        });
-      }
-    }
-
-    records.sort((a, b) => a.name.localeCompare(b.name));
+    const { records, folders, invalidSources } = await loadContentSourceBrowserData({
+      purpose: "templates",
+      selectionPrefix: "templateSelection",
+      service: contentSourceService
+    });
     this.allTemplates = records;
-    this.availableFolders = this._collectFolders(records);
+    this.availableFolders = folders;
 
     context.templates = this.allTemplates;
     context.folders = this.availableFolders;
+    context.invalidSources = invalidSources;
     return context;
   }
 
@@ -88,8 +62,8 @@ export class TemplateBrowser extends FormApplication {
       ev.preventDefault();
       ev.stopPropagation();
       const li = $(ev.currentTarget).closest(".result-item");
-      const templateId = li.data("itemId");
-      const template = this.allTemplates.find(t => t.id === templateId);
+      const selectionKey = li.attr("data-selection-key");
+      const template = this.allTemplates.find(t => t.selectionKey === selectionKey);
       if (template) await this._showQuickView(template);
     });
   }
@@ -107,8 +81,8 @@ export class TemplateBrowser extends FormApplication {
     for (const li of resultsList.children) {
       if (li.classList.contains("placeholder-text")) continue;
 
-      const templateId = li.querySelector('input[type="radio"]').value;
-      const template = this.allTemplates.find(t => t.id === templateId);
+      const selectionKey = li.querySelector('input[type="radio"]').value;
+      const template = this.allTemplates.find(t => t.selectionKey === selectionKey);
       if (!template) continue;
 
       let isVisible = true;
@@ -118,9 +92,7 @@ export class TemplateBrowser extends FormApplication {
       }
 
       if (isVisible && hasFolderFilter) {
-        const trail = new Set((template.folderTrail || []).map(node => node.id));
-        const match = Array.from(selectedFolders).some(folderId => trail.has(folderId));
-        if (!match) isVisible = false;
+        if (!recordMatchesFolderFilter(template, selectedFolders)) isVisible = false;
       }
 
       li.style.display = isVisible ? "grid" : "none";
@@ -177,7 +149,7 @@ export class TemplateBrowser extends FormApplication {
     const selectedId = formData.selectedTemplate;
     if (!selectedId) return ui.notifications.warn("Nenhum Modelo foi selecionado.");
 
-    const selectedTemplate = this.allTemplates.find(entry => entry.id === selectedId);
+    const selectedTemplate = this.allTemplates.find(entry => entry.selectionKey === selectedId);
     if (!selectedTemplate) return ui.notifications.error("Modelo selecionado não encontrado.");
 
     if (this.onSelect) {
@@ -185,63 +157,4 @@ export class TemplateBrowser extends FormApplication {
     }
   }
 
-  _collectFolders(records) {
-    const map = new Map();
-    for (const record of records) {
-      const trail = record.folderTrail || [];
-      for (const node of trail) {
-        if (!map.has(node.id)) {
-          map.set(node.id, { id: node.id, name: node.pathName || node.name });
-        }
-      }
-    }
-
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }
-
-  _buildCompendiumFolderIndex(folders) {
-    const map = new Map();
-    for (const folder of folders) {
-      map.set(folder.id, {
-        id: folder.id,
-        name: folder.name,
-        parentId: folder.folder?.id ?? folder.folder ?? folder._source?.folder ?? null
-      });
-    }
-    return map;
-  }
-
-  _getCompendiumFolderTrail(folderId, folderInfoById) {
-    if (!folderId) return [];
-
-    const nodes = [];
-    let cursorId = folderId;
-    while (cursorId) {
-      const node = folderInfoById.get(cursorId);
-      if (!node) break;
-      nodes.unshift({ id: `pack:${node.id}`, name: node.name });
-      cursorId = node.parentId;
-    }
-
-    return nodes.map((entry, idx) => ({
-      ...entry,
-      depth: idx,
-      pathName: nodes.slice(0, idx + 1).map(n => n.name).join(" / ")
-    }));
-  }
-
-  _getCompendiumFolderPath(folderId, folderInfoById) {
-    if (!folderId) return "";
-
-    const names = [];
-    let cursorId = folderId;
-    while (cursorId) {
-      const node = folderInfoById.get(cursorId);
-      if (!node) break;
-      names.unshift(node.name);
-      cursorId = node.parentId;
-    }
-
-    return names.join(" / ");
-  }
 }

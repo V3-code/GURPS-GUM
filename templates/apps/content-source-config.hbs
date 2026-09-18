@@ -1,0 +1,54 @@
+<form class="gum-content-source-form">
+  <div class="content-source-intro">
+    <h1>Fontes de conteúdo</h1>
+    <p>Escolha e ordene as bibliotecas usadas por cada função. A primeira fonte tem maior prioridade.</p>
+  </div>
+
+  {{#each purposes as |purpose|}}
+  <section class="content-source-purpose" data-purpose="{{purpose.id}}">
+    <header class="content-source-purpose-header">
+      <div>
+        <h2>{{purpose.label}}</h2>
+        <p class="notes">{{purpose.description}}</p>
+      </div>
+      <button class="content-source-restore" type="button" data-action="restore-defaults" title="Restaurar a fonte padrão do GUM">
+        <i class="fas fa-undo"></i> Padrão
+      </button>
+    </header>
+
+    <input type="hidden" name="{{purpose.id}}Sources" value='{{purpose.sourceIdsJson}}'>
+    <ol class="content-source-list">
+      {{#each purpose.sources as |source|}}
+      <li data-source-id="{{source.id}}" class="{{#if source.missing}}is-missing{{/if}}">
+        <span class="source-order">{{source.order}}</span>
+        <span class="source-details">
+          <strong>{{source.label}}</strong>
+          <small>{{source.id}}</small>
+        </span>
+        <span class="source-status">
+          {{#if source.missing}}<i class="fas fa-exclamation-triangle"></i> Ausente{{else}}<i class="fas fa-check-circle"></i> Disponível{{/if}}
+        </span>
+        <span class="source-actions">
+          <button type="button" data-action="move-source-up" title="Mover para cima" {{#unless source.canMoveUp}}disabled{{/unless}}><i class="fas fa-arrow-up"></i></button>
+          <button type="button" data-action="move-source-down" title="Mover para baixo" {{#unless source.canMoveDown}}disabled{{/unless}}><i class="fas fa-arrow-down"></i></button>
+          <button type="button" data-action="remove-source" title="Remover fonte"><i class="fas fa-trash"></i></button>
+        </span>
+      </li>
+      {{else}}
+      <li class="empty-source-list">Nenhuma fonte selecionada.</li>
+      {{/each}}
+    </ol>
+
+    <div class="content-source-add">
+      <select name="available-source">
+        {{#each ../itemPacks as |pack|}}<option value="{{pack.id}}">{{pack.label}} — {{pack.id}}</option>{{/each}}
+      </select>
+      <button class="content-source-add-button" type="button" data-action="add-source"><i class="fas fa-plus"></i> Adicionar</button>
+    </div>
+  </section>
+  {{/each}}
+
+  <footer class="sheet-footer flexrow">
+    <button type="submit"><i class="fas fa-save"></i> Salvar fontes</button>
+  </footer>
+</form>

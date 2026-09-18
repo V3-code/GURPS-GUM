@@ -4,60 +4,93 @@
  * A FUNÇÃO DE SINCRONIZAÇÃO (V2 - Corrigida)
  */
 async function syncCompendiumRules() {
-    ui.notifications.info("Iniciando sincronização das Regras do Compêndio...");
+    ui.notifications.info("Iniciando sincronização das Condições Passivas...");
 
-    const pack = game.packs.get("gum.Regras");
-    if (!pack) {
-        return ui.notifications.error("Compêndio [GUM] Condições Passivas (gum.Regras) não encontrado.");
+    const { documents: sourceRules, invalidSources } = await contentSourceService.getDocuments("passiveConditions");
+    const passiveRules = sourceRules.filter(rule => rule.system?.bindingMode !== "status-link");
+
+    if (passiveRules.length === 0) {
+        const missing = invalidSources.map(source => source.id).join(", ");
+        return ui.notifications.warn(missing
+            ? `Nenhuma condição passiva disponível. Fontes inválidas: ${missing}.`
+            : "As fontes configuradas de Condições Passivas estão vazias. Nenhuma regra para sincronizar.");
     }
 
-    const sourceRules = await pack.getDocuments();
-    const sourceRulesMap = new Map();
-    for (const rule of sourceRules) {
-        sourceRulesMap.set(rule.uuid, rule);
-    }
-
-    if (sourceRulesMap.size === 0) {
-        return ui.notifications.warn("Compêndio [GUM] Condições Passivas está vazio. Nenhuma regra para sincronizar.");
-    }
-
-    let updateCount = 0;
+    let createdCount = 0;
+    let updatedCount = 0;
     const actorsToUpdate = game.actors.filter(a => a.type === "character");
 
     for (const actor of actorsToUpdate) {
-        const updates = [];
-        const itemsToUpdate = actor.items.filter(i => i._stats.compendiumSource);
-
-        for (const item of itemsToUpdate) {
-            const sourceId = item._stats.compendiumSource; 
-            const sourceRule = sourceRulesMap.get(sourceId);
-
-            if (sourceRule) {
-                const sourceData = sourceRule.toObject();
-                updates.push({
-                    _id: item.id,
-                    system: sourceData.system,
-                    img: sourceData.img
-                });
-            }
-        }
+        const { updates, creates } = buildPassiveConditionSyncOperations(actor.items, passiveRules);
 
         if (updates.length > 0) {
             await actor.updateEmbeddedDocuments("Item", updates);
-            updateCount += updates.length;
+            updatedCount += updates.length;
+        }
+        if (creates.length > 0) {
+            await actor.createEmbeddedDocuments("Item", creates);
+            createdCount += creates.length;
         }
     }
 
-    ui.notifications.info(`Sincronização completa! ${updateCount} regras atualizadas em ${actorsToUpdate.length} personagens.`);
+    if (invalidSources.length) {
+        console.warn("GUM | Fontes de Condições Passivas indisponíveis durante a sincronização:", invalidSources);
+    }
+    ui.notifications.info(`Sincronização completa: ${createdCount} condições adicionadas e ${updatedCount} atualizadas em ${actorsToUpdate.length} personagens.`);
 }
 
 // --- IMPORTA A LÓGICA DOS IMPORTADORES ---
 import { importFromJson, importFromGCS, importTemplateFromGCS, exportCompendiumToJson, exportCharacterToJson } from "./apps/importers.js";
+import { ContentSourceConfig } from "./apps/content-source-config.js";
+import { CONTENT_SOURCE_SETTING, contentSourceService } from "./services/content-source-service.mjs";
+import { buildPassiveConditionSyncOperations } from "./utils/passive-condition-sync.mjs";
+
+const STATUS_BINDINGS_MIGRATION_SETTING = "contentSourcesStatusBindingsMigrationV1";
+
+export async function migrateLegacyStatusBindingSource() {
+    if (!game.user?.isGM) return false;
+    if (game.settings.get("gum", STATUS_BINDINGS_MIGRATION_SETTING)) return false;
+
+    const configuredSources = contentSourceService.getSettings();
+    if (!Object.hasOwn(configuredSources, "statusBindings")) {
+        const legacyId = `${game.settings.get("gum", "statusBindingsCompendium") || ""}`.trim();
+        await contentSourceService.setSourceIds("statusBindings", [legacyId || "gum.conditions"]);
+    }
+
+    await game.settings.set("gum", STATUS_BINDINGS_MIGRATION_SETTING, true);
+    return true;
+}
 
 
 // --- REGISTRO DAS CONFIGURAÇÕES ---
 
 export const registerSystemSettings = function() {
+
+    game.settings.register("gum", CONTENT_SOURCE_SETTING, {
+        name: "Fontes de Conteúdo do GUM",
+        hint: "Configuração interna das bibliotecas utilizadas pelas funções do sistema.",
+        scope: "world",
+        config: false,
+        type: Object,
+        default: {}
+    });
+
+    game.settings.register("gum", STATUS_BINDINGS_MIGRATION_SETTING, {
+        name: "Migração interna: fontes dos Vínculos de Status",
+        scope: "world",
+        config: false,
+        type: Boolean,
+        default: false
+    });
+
+    game.settings.registerMenu("gum", "contentSourceConfig", {
+        name: "Fontes de Conteúdo do GUM",
+        label: "Configurar fontes",
+        hint: "Escolha os compêndios usados pelos navegadores e automações do GUM.",
+        icon: "fas fa-books",
+        type: ContentSourceConfig,
+        restricted: true
+    });
 
  game.settings.register("gum", "effectTokenIconPolicyMigration", {
         name: "Migração interna: Política de ícone de efeito no token",
@@ -115,7 +148,7 @@ export const registerSystemSettings = function() {
     // --- CONFIGURAÇÃO DE ADIÇÃO DE REGRAS PADRÃO ---
     game.settings.register("gum", "addDefaultRules", {
         name: "Condições Passivas em Personagens",
-        hint: "Se marcado, adiciona automaticamente todas as 'Condições Passivas' do compêndio [GUM] Condições Passivas a todos os novos Atores de personagem criados.",
+        hint: "Se marcado, adiciona automaticamente aos novos personagens todas as condições das fontes configuradas em 'Condições Passivas'.",
         scope: "world",
         config: true,
         type: Boolean,
@@ -125,16 +158,22 @@ export const registerSystemSettings = function() {
         // --- "BOTÃO" DE ATUALIZAÇÃO ---
     game.settings.register("gum", "syncCompendiumRulesBtn", {
         name: "Sincronizar Condições Passivas",
-        hint: "MARQUE e SALVE para forçar a atualização de todas as 'Condições Passivas' em todos os personagens com as versões mais recentes do compêndio [GUM] Condições Passivas. A caixa desmarcará automaticamente após o uso.",
+        hint: "MARQUE e SALVE para atualizar as Condições Passivas dos personagens a partir das fontes configuradas. A caixa desmarcará automaticamente após o uso.",
         scope: "world",
         config: true,
         type: Boolean,
         default: false,
-        onChange: (value) => {
+        onChange: async (value) => {
             if (value) {
                 console.log("GUM | Sincronização de regras iniciada pelo GM...");
-                syncCompendiumRules(); 
-                game.settings.set("gum", "syncCompendiumRulesBtn", false); 
+                try {
+                    await syncCompendiumRules();
+                } catch (error) {
+                    console.error("GUM | Falha ao sincronizar Condições Passivas.", error);
+                    ui.notifications.error("Não foi possível sincronizar as Condições Passivas. Consulte o console para detalhes.");
+                } finally {
+                    await game.settings.set("gum", "syncCompendiumRulesBtn", false);
+                }
             }
         }
     });
@@ -143,9 +182,18 @@ export const registerSystemSettings = function() {
         name: "Compêndio de Vínculos de Status",
         hint: "ID do compêndio que contém Itens Condição no modo 'Vínculo de Status' (ex.: gum.status_bindings). Se vazio, usa gum.conditions.",
         scope: "world",
-        config: true,
+        config: false,
         type: String,
         default: "gum.status_bindings"
+    });
+
+    game.settings.register("gum", "hybridImportSearchAllCompendia", {
+        name: "Importação híbrida: pesquisar outros compêndios",
+        hint: "Se ativado, a importação de personagens também procura correspondências em todos os compêndios de Itens, depois dos itens do mundo e das fontes configuradas. Pode selecionar conteúdo inesperado de módulos.",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false
     });
 
 

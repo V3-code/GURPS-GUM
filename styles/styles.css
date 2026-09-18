@@ -9237,3 +9237,178 @@ background-color: var(--gum-accent-gold);
   .gum.sheet.actor .support-card-grid { grid-template-columns:minmax(0,1fr); }
   .gum.sheet.actor .support-card-grid.is-compact-pair .support-reserve-card.is-first-reserve { grid-column:1; margin-top:3px; }
 }
+/* Configuração central das bibliotecas usadas pelas funções do GUM. */
+.content-source-config .gum-content-source-form {
+  --source-bg: rgba(24, 27, 30, 0.96);
+  --source-surface: rgba(255, 255, 255, 0.035);
+  --source-surface-alt: rgba(255, 255, 255, 0.055);
+  --source-text: rgba(244, 244, 242, 0.92);
+  --source-muted: rgba(224, 226, 228, 0.58);
+  --source-accent: #aeb8c2;
+  background: var(--source-bg);
+  color: var(--source-text);
+  padding: 1rem;
+}
+
+.content-source-config .content-source-intro {
+  margin: 0 0 1rem;
+  padding: 0.25rem 0.25rem 0.75rem;
+}
+
+.content-source-config .content-source-intro h1 {
+  border: 0;
+  color: var(--source-text);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+}
+
+.content-source-config .content-source-intro p {
+  color: var(--source-muted);
+  margin: 0;
+}
+
+.content-source-config .content-source-purpose {
+  background: var(--source-surface);
+  border: 0;
+  border-radius: 4px;
+  margin: 0.5rem 0;
+  padding: 0.8rem;
+}
+
+.content-source-config .content-source-purpose > header,
+.content-source-config .content-source-add,
+.content-source-config .content-source-list li {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.content-source-config .content-source-purpose > header {
+  justify-content: space-between;
+}
+
+.content-source-config .content-source-purpose h2 {
+  border: 0;
+  color: var(--source-text);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin: 0 0 0.25rem;
+}
+
+.content-source-config .content-source-purpose p {
+  color: var(--source-muted);
+  margin: 0;
+}
+
+.content-source-config .content-source-list {
+  list-style: none;
+  margin: 0.75rem 0;
+  padding: 0;
+}
+
+.content-source-config .content-source-list li {
+  background: var(--source-surface-alt);
+  border: 0;
+  border-radius: 3px;
+  margin-top: 0.3rem;
+  min-height: 2.5rem;
+  padding: 0.35rem 0.5rem;
+}
+
+.content-source-config .source-order {
+  color: var(--source-muted);
+  font-size: 0.8rem;
+  text-align: center;
+  width: 1.5rem;
+}
+
+.content-source-config .source-details {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.content-source-config .source-details small {
+  color: var(--source-muted);
+  opacity: 1;
+}
+
+.content-source-config .source-status {
+  color: #aabcae;
+  font-size: 0.8rem;
+}
+
+.content-source-config .is-missing .source-status {
+  color: #c7ad8b;
+}
+
+.content-source-config .source-actions {
+  display: flex;
+}
+
+.content-source-config .source-actions button {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: var(--source-muted);
+  line-height: 1.75rem;
+  margin: 0;
+  padding: 0 0.45rem;
+  width: auto;
+}
+
+.content-source-config .source-actions button:hover:not(:disabled),
+.content-source-config .source-actions button:focus-visible {
+  box-shadow: none;
+  color: var(--source-text);
+}
+
+.content-source-config .source-actions button:disabled {
+  opacity: 0.25;
+}
+
+.content-source-config .content-source-add {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 3px;
+  padding: 0.35rem;
+}
+
+.content-source-config .content-source-add select {
+  background: rgba(255, 255, 255, 0.065);
+  border: 0;
+  box-shadow: none;
+  color: var(--source-text);
+  flex: 1;
+}
+
+.content-source-config .content-source-add select:focus {
+  box-shadow: 0 0 0 1px rgba(174, 184, 194, 0.45);
+}
+
+.content-source-config .content-source-restore,
+.content-source-config .content-source-add-button,
+.content-source-config .sheet-footer button {
+  background: rgba(255, 255, 255, 0.07);
+  border: 0;
+  box-shadow: none;
+  color: var(--source-text);
+}
+
+.content-source-config .content-source-restore:hover,
+.content-source-config .content-source-add-button:hover,
+.content-source-config .sheet-footer button:hover {
+  background: rgba(255, 255, 255, 0.11);
+  box-shadow: none;
+}
+
+.content-source-config .sheet-footer {
+  margin-top: 0.75rem;
+}
+
+.content-source-config .empty-source-list {
+  color: var(--source-muted);
+  font-style: italic;
+  opacity: 1;
+}

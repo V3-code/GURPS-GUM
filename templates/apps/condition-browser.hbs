@@ -1,5 +1,12 @@
 <form class="condition-browser-form gum-browser">
 
+    {{#if invalidSources.length}}
+    <div class="notification warning">
+        <strong>Algumas fontes configuradas não puderam ser usadas:</strong>
+        {{#each invalidSources as |source|}}<code>{{source.id}}</code>{{#unless @last}}, {{/unless}}{{/each}}
+    </div>
+    {{/if}}
+
     <div class="browser-container">
 
         <aside class="browser-sidebar">
@@ -35,7 +42,7 @@
         <main class="browser-content">
             <ol class="results-list">
                 {{#each conditions as |condition|}}
-                <li class="result-item" data-item-id="{{condition.id}}">
+                <li class="result-item" data-item-id="{{condition.id}}" data-selection-key="{{condition.selectionKey}}">
                     
                     <div class="item-icon">
                         {{#if condition.displayImg}}
@@ -51,13 +58,13 @@
                         <button type="button" class="browser-quick-view" data-id="{{condition.id}}" title="Visualizar condição">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <label class="item-select" for="condition-{{condition.id}}">
-                            <input type="checkbox" name="{{condition.id}}" id="condition-{{condition.id}}" />
+                        <label class="item-select">
+                            <input type="checkbox" name="{{condition.selectionKey}}" />
                         </label>
                     </div>
                 </li>
                 {{else}}
-                <li class="placeholder-text">Nenhuma condição encontrada no compêndio "[GUM] Condições".</li>
+                <li class="placeholder-text">Nenhuma condição encontrada nas fontes configuradas.</li>
                 {{/each}}
             </ol>
         </main>

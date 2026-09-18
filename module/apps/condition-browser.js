@@ -1,5 +1,7 @@
 import { GumPreviewDialog } from "./preview-dialog.js";
-import { prepareCompendiumFolderFilters, recordMatchesFolderFilter } from "./compendium-folder-filter.js";
+import { recordMatchesFolderFilter } from "./compendium-folder-filter.js";
+import { contentSourceService } from "../services/content-source-service.mjs";
+import { loadContentSourceBrowserData } from "../utils/content-source-browser.mjs";
 // GUM/module/apps/condition-browser.js
 
 export class ConditionBrowser extends FormApplication {
@@ -24,22 +26,14 @@ constructor(targetItem, options = {}) {
     const context = await super.getData();
     context.targetItem = this.targetItem;
     
-const pack = game.packs.get("gum.conditions");
-    if (pack) {
-
-        this.allConditions = await pack.getDocuments();
-        this.allConditions = this.allConditions.map(item => ({
-            id: item.id,
-            uuid: item.uuid,
-            name: item.name, 
-            system: item.system, 
-            img: item.img,
-            folderId: item.folder?.id ?? item.folder ?? item._source?.folder ?? null,
-            displayImg: item.img !== "icons/svg/mystery-man.svg" ? item.img : null
-        }));
-        this.allConditions.sort((a, b) => a.name.localeCompare(b.name));
-        this.availableFolders = prepareCompendiumFolderFilters(this.allConditions, pack.folders ?? []);
-    }
+    const { records, folders, invalidSources } = await loadContentSourceBrowserData({
+        purpose: "conditions",
+        selectionPrefix: "conditionSelection",
+        service: contentSourceService
+    });
+    this.allConditions = records;
+    this.availableFolders = folders;
+    context.invalidSources = invalidSources;
     context.conditions = this.allConditions; 
     context.folders = this.availableFolders;
     return context;
@@ -70,8 +64,8 @@ const pack = game.packs.get("gum.conditions");
         ev.preventDefault();
         ev.stopPropagation();
         const li = $(ev.currentTarget).closest('.result-item');
-        const conditionId = li.data('itemId');
-        const condition = this.allConditions.find(c => c.id === conditionId);
+        const selectionKey = li.attr('data-selection-key');
+        const condition = this.allConditions.find(c => c.selectionKey === selectionKey);
         if (condition) await this._showQuickView(condition);
     });
   }
@@ -103,8 +97,8 @@ const pack = game.packs.get("gum.conditions");
     for (const li of resultsList.children) {
       if (li.classList.contains("placeholder-text")) continue;
       
-      const conditionId = li.querySelector('input[type="checkbox"]').name;
-      const condition = this.allConditions.find(c => c.id === conditionId);
+      const selectionKey = li.querySelector('input[type="checkbox"]').name;
+      const condition = this.allConditions.find(c => c.selectionKey === selectionKey);
       if (!condition) continue;
 
       let isVisible = true;
@@ -181,10 +175,10 @@ const pack = game.packs.get("gum.conditions");
   }
 
   async _updateObject(event, formData) {
-      const selectedIds = Object.keys(formData).filter(key => formData[key] === true && key.length === 16);
+      const selectedIds = Object.keys(formData).filter(key => formData[key] === true && key.startsWith("conditionSelection-"));
       if (selectedIds.length === 0) return ui.notifications.warn("Nenhuma condição foi selecionada.");
 
-      const selectedConditions = selectedIds.map(id => this.allConditions.find(c => c.id === id)).filter(c => c);
+      const selectedConditions = selectedIds.map(id => this.allConditions.find(c => c.selectionKey === id)).filter(c => c);
 
       if (this.onSelect) {
           this.onSelect(selectedConditions);

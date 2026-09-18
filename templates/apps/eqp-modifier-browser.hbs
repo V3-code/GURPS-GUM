@@ -1,9 +1,16 @@
 <form class="eqp-modifier-browser-form gum-browser" autocomplete="off">
+    {{#if invalidSources.length}}
+    <div class="notification warning">
+        <strong>Algumas fontes configuradas não puderam ser usadas:</strong>
+        {{#each invalidSources as |source|}}<code>{{source.id}}</code>{{#unless @last}}, {{/unless}}{{/each}}
+    </div>
+    {{/if}}
+
     <div class="browser-container">
-        
+
         {{!-- Sidebar (Filtros) --}}
         <div class="browser-sidebar">
-            
+
   <div class="filter-group">
                 <h3 class="filter-title">Buscar</h3>
                 <div class="search-box">
@@ -30,17 +37,17 @@
             <div class="filter-group">
                 <h3 class="filter-title">Categoria</h3>
                 <div class="radio-filter-list">
-                    
+
                     <label class="filter-radio">
                         <input type="checkbox" class="category-filter" value="all" {{checked filters.categories.all}}>
                         <span>Todos</span>
                     </label>
-                    
+
                     <label class="filter-radio">
                         <input type="checkbox" class="category-filter" value="general" {{checked filters.categories.general}}>
                         <span>Geral / Materiais</span>
                     </label>
-                    
+
                     <label class="filter-radio">
                         <input type="checkbox" class="category-filter" value="enchantment" {{checked filters.categories.enchantment}}>
                         <span>Encantamentos</span>
@@ -63,7 +70,7 @@
                         <input type="checkbox" class="category-filter" value="shield" {{checked filters.categories.shield}}>
                         <span>Escudos</span>
                     </label>
-                    
+
                     <label class="filter-radio">
                         <input type="checkbox" class="category-filter" value="ammo" {{checked filters.categories.ammo}}>
                         <span>Munição</span>
@@ -85,8 +92,9 @@
         <main class="browser-content">
             <ol class="results-list">
                 {{#each modifiers}}
-                <li class="result-item" 
-                     data-id="{{this.id}}" 
+                <li class="result-item"
+                     data-id="{{this.id}}"
+                     data-selection-key="{{this.selectionKey}}"
                      data-cf="{{this.system.cost_factor}}"
                      data-tags="{{this.system.tags}}"
                      data-folder-id="{{this.folderId}}"
@@ -98,13 +106,13 @@
                      data-cat-shield="{{this.system.target_type.shield}}"
                      data-cat-ammo="{{this.system.target_type.ammo}}"
                      >
-                     
+
                     <div class="item-icon">
                         {{#if this.displayImg}}
                             <img src="{{this.displayImg}}" alt="{{this.name}}">
                         {{/if}}
                     </div>
-                    
+
                     <div class="item-info">
                         <span class="item-name">{{this.name}}</span>
                     </div>
@@ -114,12 +122,12 @@
                             <i class="fas fa-eye"></i>
                         </button>
                         <label class="item-select">
-                            <input type="checkbox" name="{{this.id}}">
+                            <input type="checkbox" name="{{this.selectionKey}}">
                         </label>
                     </div>
                 </li>
                 {{else}}
-                <li class="placeholder-text">Nenhum modificador de equipamento encontrado.</li>
+                <li class="placeholder-text">Nenhum modificador de equipamento encontrado nas fontes configuradas.</li>
                 {{/each}}
             </ol>
         </main>

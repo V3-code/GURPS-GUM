@@ -1,4 +1,11 @@
 <form class="modifier-browser-form gum-browser" autocomplete="off">
+    {{#if invalidSources.length}}
+    <div class="notification warning">
+        <strong>Algumas fontes configuradas não puderam ser usadas:</strong>
+        {{#each invalidSources as |source|}}<code>{{source.id}}</code>{{#unless @last}}, {{/unless}}{{/each}}
+    </div>
+    {{/if}}
+
     <div class="browser-container">
         
         {{!-- SIDEBAR DE FILTROS --}}
@@ -45,7 +52,7 @@
         <main class="browser-content">
             <ol class="results-list">
                 {{#each modifiers}}
-                <li class="result-item" data-id="{{this.id}}" data-category="{{this.category}}" data-search="{{this.name}} {{this.categoryLabel}} {{this.displayGroup}}" data-val="{{this.system.modifier}}" data-folder-id="{{this.folderId}}">
+                <li class="result-item" data-id="{{this.id}}" data-selection-key="{{this.selectionKey}}" data-category="{{this.category}}" data-search="{{this.name}} {{this.categoryLabel}} {{this.displayGroup}}" data-val="{{this.system.modifier}}" data-folder-id="{{this.folderId}}">
                     
                     <div class="item-icon">
                         {{#if this.displayImg}}
@@ -63,7 +70,7 @@
                             <i class="fas fa-eye"></i>
                         </button>
                         <label class="item-select">
-                            <input type="checkbox" name="{{this.id}}"/>
+                            <input type="checkbox" name="{{this.selectionKey}}"/>
                         </label>
                     </div>
                 </li>
@@ -71,7 +78,7 @@
                 
                 {{#unless modifiers}}
                 <li class="placeholder-text">
-                    Nenhum modificador encontrado no compêndio "[GUM] Modificadores de Rolagem".
+                    Nenhum modificador encontrado nas fontes configuradas.
                 </li>
                 {{/unless}}
             </ol>

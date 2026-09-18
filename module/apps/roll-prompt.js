@@ -7,6 +7,7 @@ import { normalizeRollTags } from "../utils/roll-tags.mjs";
 import { resolveRollPromptImage } from "../utils/roll-prompt-image.mjs";
 import { measureGridDistance } from "../utils/grid-distance.mjs";
 import { AUTO_SIZE_MODIFIER_MODES, calculateAttackSizeModifier } from "../utils/size-modifier.mjs";
+import { contentSourceService } from "../services/content-source-service.mjs";
 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
@@ -1015,11 +1016,8 @@ return 'default';
         const useDefaults = this.actor.getFlag("gum", "useDefaultModifiers");
 
         if (useDefaults) {
-            let pack = game.packs.get("gum.gm_modifiers") || game.packs.find(p => p.metadata.label === "[GUM] Modificadores de Rolagem" || p.metadata.label === "[GUM] Modificadores Básicos");
-            if (pack) {
-                const packIndex = await pack.getDocuments();
-                allModifierItems.push(...packIndex);
-            }
+            const { documents } = await contentSourceService.getDocuments("rollModifiers");
+            allModifierItems.push(...documents);
         }
 
         const actorModifiers = this.actor.items.filter(i => i.type === "gm_modifier");
@@ -1027,7 +1025,7 @@ return 'default';
 
         const uniqueItemsMap = new Map();
         for (const item of allModifierItems) {
-            uniqueItemsMap.set(item.name, item);
+            if (item.parent === this.actor || !uniqueItemsMap.has(item.name)) uniqueItemsMap.set(item.name, item);
         }
 
         for (const item of uniqueItemsMap.values()) {
@@ -1892,4 +1890,4 @@ const rollPayload = {
         if (this.defenseMode === "defense_simple") return baseHalf;
         return parseInt(value) || 0;
     }
-} 
+}

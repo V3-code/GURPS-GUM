@@ -85,9 +85,10 @@ test('modifier browser copies pricing controls into the target item', async () =
   vm.runInContext(read('module/apps/modifier-browser.js').replace(/^import .*;\r?\n/gm,'').replace('export class ','class ')+'\nthis.Browser=ModifierBrowser;',ctx);
   const browser=new ctx.Browser({update:async data=>{update=data;}});
   const system={cost:'10%',level:3,affects:'base_only',use_level_from_trait:true,cost_ignores_level:true};
-  browser.allModifiers=[{id:'abcdefghijklmnop',name:'Test',system}];
-  await browser._updateObject(null,{abcdefghijklmnop:true});
+  browser.allModifiers=[{id:'abcdefghijklmnop',selectionKey:'modifierSelection-0',uuid:'Compendium.world.modifiers.Item.abcdefghijklmnop',name:'Test',system}];
+  await browser._updateObject(null,{'modifierSelection-0':true});
   for(const [key,value] of Object.entries(system))assert.equal(update['system.modifiers.new'][key],value);
+  assert.equal(update['system.modifiers.new'].source_id,'Compendium.world.modifiers.Item.abcdefghijklmnop');
 });
 test('template groups total canonical child costs instead of cached GCS totals', async () => {
   const entry = await context.buildTemplateOptionEntryFromNode({name:'Group',calc:{points:999},modifiers:[{cost_adj:'50%'}],children:[{name:'Child',base_points:20}]},context.parseGCSLibraryTrait,'advantage');

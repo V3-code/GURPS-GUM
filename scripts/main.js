@@ -10,7 +10,7 @@ import { GurpsActorSheet } from "../module/actor/gurps-actor-sheet.js";
 import "../scripts/journal-pdf.js";
 import { GurpsItemSheet } from "../module/item/gurps-item-sheet.js";
 import { TemplateItemSheet } from "../module/item/template-item-sheet.js";
-import { registerSystemSettings } from "../module/settings.js";
+import { migrateLegacyStatusBindingSource, registerSystemSettings } from "../module/settings.js";
 import { GumPreviewDialog } from "../module/apps/preview-dialog.js";
 import DamageApplicationWindow from './apps/damage-application.js';
 import { ConditionSheet } from "./apps/condition-sheet.js";
@@ -41,6 +41,8 @@ import { BASIC_DAMAGE_KEYS, normalizeBasicDamageData, prepareBasicDamageAttribut
 import { resolveAttackDamageDisplay } from "../module/utils/attack-damage-display.mjs";
 import { canUserCreateActors } from "../module/utils/actor-creation-permission.mjs";
 import { resolveRollReference } from "../module/utils/roll-reference-resolver.mjs";
+import { contentSourceService } from "../module/services/content-source-service.mjs";
+import { organizeGumCompendia } from "../module/utils/compendium-folder-organizer.mjs";
 
 import { getSkillDisplayName, setDirectoryEntryLabel } from "../module/utils/skill-display-name.mjs";
 import { installGumChatCommandInterceptor, normalizeGumLookup, resolveGumCommandActor, splitSkillModifier } from "../module/utils/gum-chat-command.mjs";
@@ -2585,19 +2587,16 @@ Hooks.once('init', async function() {
         };
 
         // 1. REGRAS / CONDIÇÕES PASSIVAS
-        const rulesPack = game.packs.get("gum.regras")
-            || game.packs.find(p => p.metadata.label === "[GUM] Condições Passivas");
-  if (rulesPack) {
-            const rules = await rulesPack.getDocuments();
-            rules.forEach(item => {
-                if (item.type === "condition" && item.system?.bindingMode === "status-link") return;
-                const data = normalizeItemForV13(item.toObject(), item.uuid);
-                itemsToCreate.push(data);
-            });
-            console.log(`GUM | Preparadas ${rules.length} condições passivas para cópia.`);
-        } else {
-            console.warn("GUM | Compêndio de Condições Passivas não encontrado.");
+        const { documents: passiveConditions, invalidSources } = await contentSourceService.getDocuments("passiveConditions");
+        passiveConditions.forEach(item => {
+            if (item.system?.bindingMode === "status-link") return;
+            const data = normalizeItemForV13(item.toObject(), item.uuid);
+            itemsToCreate.push(data);
+        });
+        if (invalidSources.length) {
+            console.warn("GUM | Fontes de Condições Passivas indisponíveis:", invalidSources.map(source => source.id));
         }
+        console.log(`GUM | Preparadas ${itemsToCreate.length} condições passivas para cópia.`);
 
         // 2. CRIAÇÃO EM LOTE (Muito mais rápido)
         if (itemsToCreate.length > 0) {
@@ -2929,82 +2928,7 @@ Hooks.once('ready', async function() {
     await migrateBasicDamageSchema();
 
     if (game.user?.isGM) {
-        const ensureCompendiumFolder = async ({ name, color, parent = null }) => {
-            const existing = game.folders?.find(folder =>
-                folder.type === "Compendium" &&
-                folder.name === name &&
-                ((folder.folder?.id ?? folder.folder ?? null) === (parent?.id ?? null))
-            );
-            if (existing) {
-                const updates = {};
-                if (color && existing.color !== color) updates.color = color;
-                if (Object.keys(updates).length > 0) await existing.update(updates);
-                return existing;
-            }
-
-            return Folder.create({
-                name,
-                type: "Compendium",
-                color,
-                folder: parent?.id ?? null
-            });
-        };
-
-        const movePacksToFolder = async (packs, targetFolder) => {
-            for (const pack of packs) {
-                if (!pack || !targetFolder) continue;
-                if (pack.folder?.id === targetFolder.id || pack.folder === targetFolder.id) continue;
-                try {
-                    await pack.configure({ folder: targetFolder.id });
-                } catch (error) {
-                    console.warn(`GUM | Não foi possível mover o compêndio "${pack.collection}" para a pasta "${targetFolder.name}".`, error);
-                }
-            }
-        };
-
-        const pastaSistema = await ensureCompendiumFolder({
-            name: "[GUM] SISTEMA",
-            color: "#4f3c11"
-        });
-        const pastaCondicoesEfeitos = await ensureCompendiumFolder({
-            name: "[GUM] Condições e Efeitos",
-            color: "#7a5d1a",
-            parent: pastaSistema
-        });
-        const pastaModificadores = await ensureCompendiumFolder({
-            name: "[GUM] Modificadores",
-            color: "#7a5d1a",
-            parent: pastaSistema
-        });
-        const pastaCenario = await ensureCompendiumFolder({
-            name: "[GUM] CENÁRIO",
-            color: "#11501b"
-        });
-
-        const packsSistemaCondicoesEfeitos = [
-            game.packs.get("gum.conditions"),
-            game.packs.get("gum.Regras"),
-            game.packs.get("gum.efeitos"),
-            game.packs.get("gum.gatilhos")
-        ].filter(Boolean);
-
-        const packsSistemaModificadores = [
-            game.packs.get("gum.modifiers"),
-            game.packs.get("gum.eqp_modifiers"),
-            game.packs.get("gum.gm_modifiers")
-        ].filter(Boolean);
-
-        const idsSistema = new Set([
-            ...packsSistemaCondicoesEfeitos.map(pack => pack.collection),
-            ...packsSistemaModificadores.map(pack => pack.collection)
-        ]);
-        const packsCenario = game.packs
-            .filter(pack => pack.metadata?.packageType === "system" && pack.metadata?.packageName === "gum")
-            .filter(pack => !idsSistema.has(pack.collection));
-
-        await movePacksToFolder(packsSistemaCondicoesEfeitos, pastaCondicoesEfeitos);
-        await movePacksToFolder(packsSistemaModificadores, pastaModificadores);
-        await movePacksToFolder(packsCenario, pastaCenario);
+        await organizeGumCompendia(game, Folder);
     }
 
     $('body').on('click', '.apply-damage-button', (ev) => {
@@ -3547,16 +3471,9 @@ let evaluatingActors = new Set();
 const processingStatusBindingActors = new Set();
 const STATUS_BINDINGS_CACHE_TTL_MS = 15_000;
 const statusBindingsCache = {
-    packId: null,
+    sourceKey: null,
     docs: [],
     loadedAt: 0
-};
-
-const getConfiguredStatusBindingsPack = () => {
-    const configuredId = (game.settings.get("gum", "statusBindingsCompendium") || "").trim();
-    if (configuredId && game.packs.has(configuredId)) return game.packs.get(configuredId);
-    if (game.packs.has("gum.conditions")) return game.packs.get("gum.conditions");
-    return null;
 };
 
 const normalizeStatusBindingMode = (value) => {
@@ -3603,17 +3520,18 @@ const getActorActiveNativeStatusSet = (actor) => {
 
 const loadStatusBindingRules = async () => {
     const now = Date.now();
-    const pack = getConfiguredStatusBindingsPack();
-    if (!pack) return [];
-    if (statusBindingsCache.packId === pack.collection
+    const sourceKey = contentSourceService.getSourceIds("statusBindings").join("\u0000");
+    if (statusBindingsCache.sourceKey === sourceKey
         && (now - statusBindingsCache.loadedAt) < STATUS_BINDINGS_CACHE_TTL_MS) {
         return statusBindingsCache.docs;
     }
 
-    const docs = await pack.getDocuments();
-    const statusRules = docs.filter((doc) => doc?.type === "condition"
-        && doc.system?.bindingMode === "status-link");
-    statusBindingsCache.packId = pack.collection;
+    const { documents, invalidSources } = await contentSourceService.getDocuments("statusBindings");
+    if (invalidSources.length) {
+        console.warn("GUM | Fontes inválidas de Vínculos de Status:", invalidSources);
+    }
+    const statusRules = documents.filter((doc) => doc.system?.bindingMode === "status-link");
+    statusBindingsCache.sourceKey = sourceKey;
     statusBindingsCache.docs = statusRules;
     statusBindingsCache.loadedAt = now;
     return statusRules;
@@ -4546,6 +4464,11 @@ Hooks.on("createActiveEffect", async (effect) => {
 Hooks.on("canvasReady", refreshGMScreen); // Quando muda de mapa
 
 Hooks.once("ready", async () => {
+    try {
+        await migrateLegacyStatusBindingSource();
+    } catch (error) {
+        console.error("GUM | Falha ao migrar a fonte legada de Vínculos de Status.", error);
+    }
     try {
         await reconcileAllStateEffects();
     } catch (error) {

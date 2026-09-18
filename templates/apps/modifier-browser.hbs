@@ -1,5 +1,12 @@
 <form class="modifier-browser-form gum-browser">
 
+  {{#if invalidSources.length}}
+  <div class="notification warning">
+    <strong>Algumas fontes configuradas não puderam ser usadas:</strong>
+    {{#each invalidSources as |source|}}<code>{{source.id}}</code>{{#unless @last}}, {{/unless}}{{/each}}
+  </div>
+  {{/if}}
+
   <div class="browser-container">
 
     <aside class="browser-sidebar">
@@ -30,7 +37,7 @@
     <main class="browser-content">
       <ol class="results-list">
         {{#each modifiers as |mod|}}
-        <li class="result-item" data-item-id="{{mod.id}}">
+        <li class="result-item" data-item-id="{{mod.id}}" data-selection-key="{{mod.selectionKey}}">
           
           <div class="item-icon">
             {{#if mod.displayImg}}
@@ -46,13 +53,13 @@
             <button type="button" class="browser-quick-view" data-id="{{mod.id}}" title="Visualizar modificador">
               <i class="fas fa-eye"></i>
             </button>
-            <label class="item-select" for="mod-{{mod.id}}">
-              <input type="checkbox" name="{{mod.id}}" id="mod-{{mod.id}}" />
+            <label class="item-select">
+              <input type="checkbox" name="{{mod.selectionKey}}" />
             </label>
           </div>
         </li>
         {{else}}
-        <li class="placeholder-text">Nenhum modificador encontrado.</li>
+        <li class="placeholder-text">Nenhum modificador encontrado nas fontes configuradas.</li>
         {{/each}}
       </ol>
     </main>
