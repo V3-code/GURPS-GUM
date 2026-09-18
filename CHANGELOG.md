@@ -4,6 +4,31 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [Não publicado]
+
+### Added
+
+- Serviço central e janela de configuração para escolher, ordenar e validar múltiplas fontes de conteúdo por função do sistema.
+- Suporte a fontes configuráveis nos navegadores, solicitações de teste, modificadores de rolagem, condições passivas, vínculos de status e importação híbrida de personagens.
+- Migração automática da configuração legada de Vínculos de Status.
+
+### Changed
+
+- Navegadores e automações deixaram de depender de IDs fixos de compêndios e passaram a preservar a identidade completa das fontes.
+- Importação híbrida passou a priorizar Itens do mundo, fontes configuradas e, opcionalmente, outros compêndios.
+- Compêndios funcionais do GUM passaram a ser organizados em uma única pasta raiz `GUM`.
+- Janela de Fontes de Conteúdo recebeu apresentação visual mais sóbria, compacta e objetiva.
+
+### Removed
+
+- Compêndios distribuídos de Vantagens, Desvantagens, Equipamentos, Magias e Poderes, agora substituíveis por bibliotecas mundiais configuradas pelo Mestre.
+
+### Fixed
+
+- Colisões de IDs locais entre documentos de compêndios diferentes nos navegadores.
+- Inicialização prematura do serviço de fontes antes da disponibilidade de `game`, `game.settings` e `game.packs`.
+- Seleção ambígua de perícias com mesmo nome e especializações diferentes durante importações e solicitações.
+
 ## [1.0.0] - 2026-08-01
 
 Primeira versão pública do GURPS GUM para Foundry VTT.
