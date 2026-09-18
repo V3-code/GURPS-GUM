@@ -9412,3 +9412,98 @@ background-color: var(--gum-accent-gold);
   font-style: italic;
   opacity: 1;
 }
+/* Skill cards: full-width groups with a compact, responsive card grid. */
+.gum.sheet.actor .skills-scroll-area.group {
+    column-count: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gum.sheet.actor .skills-scroll-area.group .skill-tree-group {
+    display: block;
+    width: 100%;
+}
+
+.gum.sheet.actor .skills-scroll-area.group .skill-tree-list.group-content {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.gum.sheet.actor .skill-tree-item {
+    flex-wrap: wrap;
+    min-height: 68px;
+}
+
+.gum.sheet.actor .st-item-name h4 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+}
+
+.gum.sheet.actor .skill-modifier-tag {
+    padding: 1px 5px;
+    border: 1px solid rgba(247,233,215,0.18);
+    border-radius: 3px;
+    background: rgba(255,255,255,0.035);
+    color: rgba(247,233,215,0.68);
+    font-size: 9px;
+}
+
+.gum.sheet.actor .skill-modifier-indicators { margin-left: 0; }
+.gum.sheet.actor .skill-modifier-tag.is-included {
+    border-color: rgba(116,192,252,0.28);
+    background: rgba(116,192,252,0.06);
+    color: rgba(208,235,255,0.72);
+}
+.gum.sheet.actor .skill-modifier-tag.is-roll.is-positive {
+    border-color: rgba(126,220,176,0.25);
+    background: rgba(126,220,176,0.06);
+    color: rgba(185,235,208,0.72);
+}
+.gum.sheet.actor .skill-modifier-tag.is-roll.is-negative {
+    border-color: rgba(224,122,122,0.28);
+    background: rgba(224,122,122,0.06);
+    color: rgba(241,184,184,0.74);
+}
+
+.gum.sheet.actor .st-inheritance-path { font-size: 10px; }
+.gum.sheet.actor .st-tree-path {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-top: 3px;
+    color: rgba(247,233,215,0.58);
+    font-size: 9px;
+}
+
+.gum.sheet.actor .st-controls {
+    width: 100%;
+    min-height: 25px;
+    margin: 0;
+    padding-top: 3px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    flex: 1 0 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    opacity: 1;
+}
+
+.gum.sheet.actor .st-controls .state-effect-automation { margin-right: 0; }
+.gum.sheet.actor .st-control-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+.gum.sheet.actor .st-control-actions .item-control { color: rgba(247,233,215,0.58); }
+.gum.sheet.actor .st-control-actions .item-edit:hover { color: var(--gum-accent-gold); }
+.gum.sheet.actor .st-control-actions .item-delete:hover { color: #e07a7a; }
+
+@media (max-width: 680px) {
+    .gum.sheet.actor .skills-scroll-area.group .skill-tree-list.group-content {
+        grid-template-columns: 1fr;
+    }
+}

@@ -451,6 +451,7 @@ async getData(options) {
                 baseAttribute: useTreeFields ? (skill.system?.tree_base_attribute || skill.system?.base_attribute) : skill.system?.base_attribute,
                 difficulty: useTreeFields ? (treePointsPerLevel !== "" ? `${treePointsPerLevel}/nív` : "") : skill.system?.difficulty,
                 skillLevel: useTreeFields ? (skill.system?.tree_skill_level ?? skill.system?.skill_level ?? 0) : (skill.system?.skill_level ?? 0),
+                points: useTreeFields ? (skill.system?.tree_points ?? skill.system?.points ?? 0) : (skill.system?.points ?? 0),
                 nhMod: useTreeFields ? (skill.system?.tree_nh_mod ?? 0) : (skill.system?.nh_mod ?? 0),
                 treeDefaultMod: useTreeFields ? (Number(skill.system?.tree_default_mod) || 0) : 0
             };
