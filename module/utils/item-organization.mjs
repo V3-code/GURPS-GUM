@@ -99,25 +99,49 @@ export function moveOrganizedItem(raw, { itemId, targetGroupId, targetIndex }, i
   return organization;
 }
 
-export function createGroupsFromItemCategories(raw, items = [], createId) {
+export function buildItemCategoryGroupPlan(raw, items = []) {
   const itemIds = items.map(item => cleanId(item?.id)).filter(Boolean);
-  let organization = normalizeItemOrganization(raw, itemIds);
+  const organization = normalizeItemOrganization(raw, itemIds);
   const groupsByName = new Map(
     organization.groupOrder.map(id => [organization.groups[id].name.toLocaleLowerCase(), id])
   );
+  const categories = new Map();
 
   for (const item of items) {
     if (organization.assignments[cleanId(item?.id)]) continue;
     const category = String(item?.system?.group ?? "").trim();
     if (!category || category.toLocaleLowerCase() === "geral") continue;
     const key = category.toLocaleLowerCase();
-    let groupId = groupsByName.get(key);
+    if (!categories.has(key)) categories.set(key, {
+      key,
+      name: category,
+      existingGroupId: groupsByName.get(key) || null,
+      items: []
+    });
+    categories.get(key).items.push({ id: cleanId(item.id), name: String(item.name ?? "Perícia") });
+  }
+
+  return [...categories.values()];
+}
+
+export function createGroupsFromItemCategories(raw, items = [], createId, selectedCategoryKeys = null) {
+  const itemIds = items.map(item => cleanId(item?.id)).filter(Boolean);
+  let organization = normalizeItemOrganization(raw, itemIds);
+  const selected = selectedCategoryKeys === null
+    ? null
+    : new Set([...selectedCategoryKeys].map(value => String(value).toLocaleLowerCase()));
+  const plan = buildItemCategoryGroupPlan(organization, items);
+
+  for (const category of plan) {
+    if (selected && !selected.has(category.key)) continue;
+    let groupId = category.existingGroupId;
     if (!groupId) {
       groupId = cleanId(createId());
-      organization = addItemOrganizationGroup(organization, { id: groupId, name: category }, itemIds);
-      groupsByName.set(key, groupId);
+      organization = addItemOrganizationGroup(organization, { id: groupId, name: category.name }, itemIds);
     }
-    organization = moveOrganizedItem(organization, { itemId: item.id, targetGroupId: groupId }, itemIds);
+    for (const item of category.items) {
+      organization = moveOrganizedItem(organization, { itemId: item.id, targetGroupId: groupId }, itemIds);
+    }
   }
   return organization;
 }

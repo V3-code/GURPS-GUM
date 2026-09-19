@@ -9522,7 +9522,7 @@ background-color: var(--gum-accent-gold);
     border: 0;
     border-bottom: 1px solid rgba(197,160,91,0.2);
     background: transparent;
-    cursor: default;
+    cursor: pointer;
 }
 
 .gum.sheet.actor .skills-scroll-area.group .is-manual-organization > .skill-tree-summary:hover {
@@ -9565,6 +9565,14 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .skill-group-actions a:hover { color: var(--gum-accent-gold); }
 .gum.sheet.actor .skill-group-actions .delete-skill-group:hover { color: #e07a7a; }
 
+.gum.sheet.actor .remove-skill-from-group {
+    margin-left: 1px;
+    color: rgba(247,233,215,0.46);
+    font-size: 10px;
+}
+
+.gum.sheet.actor .remove-skill-from-group:hover { color: var(--gum-accent-gold); }
+
 .gum.sheet.actor [data-organizer-zone] {
     min-height: 26px;
     border-radius: 4px;
@@ -9583,4 +9591,35 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .skills-header-buttons .create-skill-group,
 .gum.sheet.actor .skills-header-buttons .suggest-skill-groups {
     color: var(--gum-text-subtitulo);
+}
+
+.skill-category-preview { margin: 0; }
+.skill-category-preview > p { margin: 0 0 8px; color: var(--gum-text-medio); }
+.skill-category-preview__list {
+    display: grid;
+    gap: 6px;
+    max-height: 360px;
+    overflow-y: auto;
+}
+.skill-category-preview__row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 8px;
+    align-items: start;
+    padding: 7px 8px;
+    border: 1px solid rgba(197,160,91,0.2);
+    border-radius: 5px;
+    background: rgba(255,255,255,0.035);
+}
+.skill-category-preview__row input { margin-top: 2px; }
+.skill-category-preview__row span { display: grid; min-width: 0; gap: 2px; }
+.skill-category-preview__row strong { color: var(--gum-text-claro); }
+.skill-category-preview__row small { color: var(--gum-text-medio); font-size: 10px; }
+.skill-category-preview__row em {
+    overflow: hidden;
+    color: rgba(247,233,215,0.62);
+    font-size: 10px;
+    font-style: normal;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

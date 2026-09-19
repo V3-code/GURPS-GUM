@@ -15,7 +15,7 @@ import { resolveAttackDamageDisplay } from "../utils/attack-damage-display.mjs";
 import { canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
 import { contentSourceService } from "../services/content-source-service.mjs";
 import { attachSheetItemOrganizer } from "../services/sheet-item-organizer.mjs";
-import { UNGROUPED_ORGANIZER_ID, addItemOrganizationGroup, createGroupsFromItemCategories, moveOrganizedItem, normalizeItemOrganization, removeItemOrganizationGroup, renameItemOrganizationGroup } from "../utils/item-organization.mjs";
+import { UNGROUPED_ORGANIZER_ID, addItemOrganizationGroup, buildItemCategoryGroupPlan, createGroupsFromItemCategories, moveOrganizedItem, normalizeItemOrganization, removeItemOrganizationGroup, renameItemOrganizationGroup } from "../utils/item-organization.mjs";
 
 const WOUND_NATURE_ICONS = Object.freeze({
   fire: "fa-fire",
@@ -1621,6 +1621,65 @@ _promptSkillGroupName({ title, initial = "" }) {
     });
 }
 
+_confirmSkillOrganizationAction({ title, content, confirmLabel = "Confirmar" }) {
+    return new Promise(resolve => {
+        let settled = false;
+        const finish = value => {
+            if (settled) return;
+            settled = true;
+            resolve(value);
+        };
+        new Dialog({
+            title,
+            content,
+            buttons: {
+                confirm: { icon: '<i class="fas fa-check"></i>', label: confirmLabel, callback: () => finish(true) },
+                cancel: { label: "Cancelar", callback: () => finish(false) }
+            },
+            default: "cancel",
+            close: () => finish(false)
+        }, { classes: ["gum", "skill-organization-confirm-dialog"] }).render(true);
+    });
+}
+
+_promptSkillCategoryGroupPlan(plan) {
+    return new Promise(resolve => {
+        let settled = false;
+        const finish = value => {
+            if (settled) return;
+            settled = true;
+            resolve(value);
+        };
+        const rows = plan.map((category, index) => {
+            const skillNames = category.items.map(item => foundry.utils.escapeHTML(item.name)).join(", ");
+            const destination = category.existingGroupId ? "Grupo existente" : "Novo grupo";
+            return `<label class="skill-category-preview__row">
+                <input type="checkbox" name="category" value="${index}" checked>
+                <span><strong>${foundry.utils.escapeHTML(category.name)}</strong><small>${destination} · ${category.items.length} perícia(s)</small><em>${skillNames}</em></span>
+            </label>`;
+        }).join("");
+        new Dialog({
+            title: "Organizar pelas categorias das perícias",
+            content: `<form class="skill-category-preview"><p>Selecione as categorias que deseja aplicar à organização visual.</p><div class="skill-category-preview__list">${rows}</div></form>`,
+            buttons: {
+                apply: {
+                    icon: '<i class="fas fa-layer-group"></i>',
+                    label: "Criar selecionados",
+                    callback: html => {
+                        const selected = [...html[0].querySelectorAll('input[name="category"]:checked')]
+                            .map(input => plan[Number(input.value)]?.key)
+                            .filter(Boolean);
+                        finish(selected);
+                    }
+                },
+                cancel: { label: "Cancelar", callback: () => finish(null) }
+            },
+            default: "apply",
+            close: () => finish(null)
+        }, { classes: ["gum", "skill-category-preview-dialog"] }).render(true);
+    });
+}
+
 async _createSkillOrganizationGroup() {
     const name = await this._promptSkillGroupName({ title: "Novo grupo de perícias" });
     if (!name) return;
@@ -1642,12 +1701,10 @@ async _deleteSkillOrganizationGroup(groupId) {
     const { skills, organization } = this._getSkillOrganizationState();
     const group = organization.groups[groupId];
     if (!group) return;
-    const confirmed = await Dialog.confirm({
+    const confirmed = await this._confirmSkillOrganizationAction({
         title: "Excluir grupo de perícias",
         content: `<p>Excluir o grupo <strong>${foundry.utils.escapeHTML(group.name)}</strong>? As perícias voltarão para a área livre.</p>`,
-        yes: () => true,
-        no: () => false,
-        defaultYes: false
+        confirmLabel: "Excluir grupo"
     });
     if (!confirmed) return;
     await this._saveSkillOrganization(removeItemOrganizationGroup(organization, groupId, skills.map(item => item.id)));
@@ -1655,16 +1712,12 @@ async _deleteSkillOrganizationGroup(groupId) {
 
 async _suggestSkillOrganizationGroups() {
     const { skills, organization } = this._getSkillOrganizationState();
-    const confirmed = await Dialog.confirm({
-        title: "Organizar pelas categorias das perícias",
-        content: "<p>Criar grupos visuais a partir do campo conceitual <strong>Grupo</strong> das perícias? A organização manual existente será preservada.</p>",
-        yes: () => true,
-        no: () => false,
-        defaultYes: false
-    });
-    if (!confirmed) return;
+    const plan = buildItemCategoryGroupPlan(organization, skills);
+    if (!plan.length) return ui.notifications.info("Não há categorias disponíveis entre as perícias livres.");
+    const selectedCategories = await this._promptSkillCategoryGroupPlan(plan);
+    if (!selectedCategories?.length) return;
     const createId = () => foundry.utils.randomID?.() ?? crypto.randomUUID();
-    await this._saveSkillOrganization(createGroupsFromItemCategories(organization, skills, createId));
+    await this._saveSkillOrganization(createGroupsFromItemCategories(organization, skills, createId, selectedCategories));
 }
 
 _onEditPortrait() {
@@ -2652,7 +2705,14 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
         ev.preventDefault();
         this._suggestSkillOrganizationGroups();
     });
-    html.find('.skill-tree-group.is-manual-organization > summary').click(ev => ev.preventDefault());
+    html.find('.remove-skill-from-group').click(async ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const itemId = ev.currentTarget.dataset.itemId;
+        const { skills, organization } = this._getSkillOrganizationState();
+        const updated = moveOrganizedItem(organization, { itemId, targetGroupId: UNGROUPED_ORGANIZER_ID }, skills.map(item => item.id));
+        await this._saveSkillOrganization(updated);
+    });
 
     this._skillOrganizerCleanup?.();
     this._skillOrganizerCleanup = null;

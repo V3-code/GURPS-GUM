@@ -21,7 +21,11 @@ test("the group view exposes hybrid organization without deriving visual groups 
   assert.match(skillTab, /create-skill-group/);
   assert.match(skillTab, /rename-skill-group/);
   assert.match(skillTab, /delete-skill-group/);
+  assert.match(skillTab, /remove-skill-from-group/);
+  assert.match(skillTab, /collapsibleState \(concat "skill-" section\.id\)/);
+  assert.doesNotMatch(skillTab, /{{#unless section\.isTree}}open/);
   assert.match(styles, /\.is-manual-organization > \.skill-tree-summary/);
+  assert.match(styles, /\.skill-category-preview__row/);
 });
 
 test("skill cards expose compact mechanics and a dedicated control footer", () => {

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   UNGROUPED_ORGANIZER_ID,
   addItemOrganizationGroup,
+  buildItemCategoryGroupPlan,
   createGroupsFromItemCategories,
   moveOrganizedItem,
   normalizeItemOrganization,
@@ -65,4 +66,28 @@ test("builds optional groups from conceptual categories without moving manually 
   assert.equal(state.assignments.b, "generated-1");
   assert.equal(state.assignments.c, undefined);
   assert.equal(state.groups["generated-1"].name, "Natureza");
+});
+
+test("previews categories and applies only the selected visual groups", () => {
+  const items = [
+    { id: "a", name: "Espada", system: { group: "Combate" } },
+    { id: "b", name: "Rastreamento", system: { group: "Natureza" } },
+    { id: "c", name: "Sobrevivência", system: { group: "Natureza" } }
+  ];
+  const plan = buildItemCategoryGroupPlan({}, items);
+  assert.deepEqual(plan.map(category => ({
+    key: category.key,
+    name: category.name,
+    items: category.items.map(item => item.name)
+  })), [
+    { key: "combate", name: "Combate", items: ["Espada"] },
+    { key: "natureza", name: "Natureza", items: ["Rastreamento", "Sobrevivência"] }
+  ]);
+
+  let counter = 0;
+  const state = createGroupsFromItemCategories({}, items, () => `selected-${++counter}`, ["natureza"]);
+  assert.equal(state.assignments.a, undefined);
+  assert.equal(state.assignments.b, "selected-1");
+  assert.equal(state.assignments.c, "selected-1");
+  assert.equal(state.groups["selected-1"].name, "Natureza");
 });

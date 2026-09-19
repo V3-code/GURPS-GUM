@@ -89,20 +89,22 @@ export function attachSheetItemOrganizer(root, {
     if (!zone || !data || !accepts(event)) return;
     event.preventDefault();
     event.stopPropagation();
+    event.stopImmediatePropagation();
     const targetGroupId = zone.dataset.organizerGroupId || "";
     const targetIndex = getTargetIndex(zone, event, itemSelector, data.itemId);
     clearTarget();
     await onMove({ ...data, targetGroupId, targetIndex });
   };
 
-  root.addEventListener("dragstart", onDragStart);
-  root.addEventListener("dragend", onDragEnd);
-  root.addEventListener("dragover", onDragOver);
-  root.addEventListener("drop", onDrop);
+  // A captura garante que o organizador trate seu payload antes do drop genérico do Foundry.
+  root.addEventListener("dragstart", onDragStart, true);
+  root.addEventListener("dragend", onDragEnd, true);
+  root.addEventListener("dragover", onDragOver, true);
+  root.addEventListener("drop", onDrop, true);
   return () => {
-    root.removeEventListener("dragstart", onDragStart);
-    root.removeEventListener("dragend", onDragEnd);
-    root.removeEventListener("dragover", onDragOver);
-    root.removeEventListener("drop", onDrop);
+    root.removeEventListener("dragstart", onDragStart, true);
+    root.removeEventListener("dragend", onDragEnd, true);
+    root.removeEventListener("dragover", onDragOver, true);
+    root.removeEventListener("drop", onDrop, true);
   };
 }
