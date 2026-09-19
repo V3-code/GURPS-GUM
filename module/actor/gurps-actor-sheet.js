@@ -14,6 +14,8 @@ import { buildDamageNatureSearchOptions, formatDamageNature, resolveDamageNature
 import { resolveAttackDamageDisplay } from "../utils/attack-damage-display.mjs";
 import { canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
 import { contentSourceService } from "../services/content-source-service.mjs";
+import { attachSheetItemOrganizer } from "../services/sheet-item-organizer.mjs";
+import { UNGROUPED_ORGANIZER_ID, addItemOrganizationGroup, createGroupsFromItemCategories, moveOrganizedItem, normalizeItemOrganization, removeItemOrganizationGroup, renameItemOrganizationGroup } from "../utils/item-organization.mjs";
 
 const WOUND_NATURE_ICONS = Object.freeze({
   fire: "fa-fire",
@@ -393,6 +395,7 @@ async getData(options) {
 
         // 2. Separar apenas os itens do tipo 'skill'
         let skills = itemsByType.skill || [];
+        context.hasSkills = skills.length > 0;
                 const actorActiveEffects = Array.from(this.actor?.appliedEffects ?? this.actor?.effects ?? []).map((effect) => ({
             name: effect.name,
             rollModifier: foundry.utils.getProperty(effect, "flags.gum.rollModifier")
@@ -462,23 +465,38 @@ async getData(options) {
 
         if (skillsViewMode === 'group') {
             // -------------------------------------------------------
-            // MODO 1: AGRUPAMENTO SIMPLES (Padrão / Legado)
+            // MODO 1: ORGANIZAÇÃO HÍBRIDA (livres + grupos manuais)
             // -------------------------------------------------------
-                       skills.forEach(skill => {
-                // Normaliza o nome do grupo
-                let groupName = (skill.system.group || "Geral").trim();
-                if (!groupName) groupName = "Geral";
-
-                if (!skillsByGroup[groupName]) skillsByGroup[groupName] = [];
-                
-                // No modo grupo, limpamos a indentação para ficar tudo alinhado
-                skill.indentClass = ""; 
-                skill.isTrunk = false; 
-                // Garante que o modo padrão use sempre o NH base calculado pelo sistema,
-                // evitando carregar valor derivado do modo árvore entre renders.
+            skills.forEach(skill => {
+                skill.indentClass = "";
+                skill.isTrunk = false;
                 delete skill.tree_final_nh;
-                
-                skillsByGroup[groupName].push(skill);
+            });
+
+            const organization = normalizeItemOrganization(this.actor.system.skill_organization, skills.map(skill => skill.id));
+            const skillsById = new Map(skills.map(skill => [skill.id, skill]));
+            const skillSortPref = this.actor.system.sorting?.skill || 'manual';
+            const sortFn = getSortFunction(skillSortPref);
+            const orderedSkills = bucketId => {
+                const entries = (organization.itemOrder[bucketId] || []).map(id => skillsById.get(id)).filter(Boolean);
+                return skillSortPref === 'manual' ? entries : entries.sort(sortFn);
+            };
+
+            context.skillOrganization = organization;
+            context.skillSections = [{
+                id: UNGROUPED_ORGANIZER_ID,
+                name: "Perícias",
+                isUngrouped: true,
+                skills: orderedSkills(UNGROUPED_ORGANIZER_ID)
+            }, ...organization.groupOrder.map(groupId => ({
+                id: groupId,
+                name: organization.groups[groupId].name,
+                isUngrouped: false,
+                skills: orderedSkills(groupId)
+            }))];
+            context.hasSkillCategorySuggestions = skills.some(skill => {
+                const category = String(skill.system?.group ?? "").trim().toLocaleLowerCase();
+                return category && category !== "geral";
             });
 
        } else {
@@ -634,25 +652,23 @@ async getData(options) {
             }
         }
 
-      // Salvamos no contexto antes de tentar ler
+      // Salvamos o contexto legado usado pelo modo árvore.
         context.skillsByGroup = skillsByGroup;
 
-        // 3. Ordenar as Chaves dos Grupos (A-Z) para exibir na ordem certa
+        // Ordenar as chaves dos grupos mecânicos da árvore.
         context.skillGroupsKeys = Object.keys(context.skillsByGroup).sort((a, b) => {
             if (a === "Geral") return -1;
             if (b === "Geral") return 1;
             return a.localeCompare(b);
         });
 
-        // 4. Ordenação Interna (apenas se estiver no modo grupo, pois árvore tem ordem própria)
-        if (skillsViewMode === 'group') {
-            const skillSortPref = this.actor.system.sorting?.skill || 'manual';
-            const sortFn = getSortFunction(skillSortPref); // Usa sua função auxiliar existente
-            
-            for (const groupName in context.skillsByGroup) {
-                context.skillsByGroup[groupName].sort(sortFn);
-            }
-        }
+        if (skillsViewMode === 'tree') context.skillSections = context.skillGroupsKeys.map(groupName => ({
+            id: groupName,
+            name: groupName,
+            isTree: true,
+            isUngrouped: false,
+            skills: context.skillsByGroup[groupName]
+        }));
         
 
   // ================================================================== //
@@ -1566,6 +1582,89 @@ async _onDrop(event) {
     }
 
     return super._onDrop(event);
+}
+
+_getSkillOrganizationState() {
+    const skills = this.actor.items.filter(item => item.type === "skill");
+    return {
+        skills,
+        organization: normalizeItemOrganization(this.actor.system.skill_organization, skills.map(item => item.id))
+    };
+}
+
+async _saveSkillOrganization(organization) {
+    return this.actor.update({ "system.skill_organization": organization });
+}
+
+_promptSkillGroupName({ title, initial = "" }) {
+    return new Promise(resolve => {
+        let settled = false;
+        const finish = value => {
+            if (settled) return;
+            settled = true;
+            resolve(value);
+        };
+        new Dialog({
+            title,
+            content: `<form class="skill-group-name-dialog"><div class="form-group"><label>Nome</label><input type="text" name="name" value="${foundry.utils.escapeHTML(initial)}" autofocus></div></form>`,
+            buttons: {
+                save: {
+                    icon: '<i class="fas fa-check"></i>',
+                    label: "Salvar",
+                    callback: html => finish(String(html.find('[name="name"]').val() ?? "").trim() || null)
+                },
+                cancel: { label: "Cancelar", callback: () => finish(null) }
+            },
+            default: "save",
+            close: () => finish(null)
+        }, { classes: ["gum", "skill-group-dialog"] }).render(true);
+    });
+}
+
+async _createSkillOrganizationGroup() {
+    const name = await this._promptSkillGroupName({ title: "Novo grupo de perícias" });
+    if (!name) return;
+    const { skills, organization } = this._getSkillOrganizationState();
+    const id = foundry.utils.randomID?.() ?? crypto.randomUUID();
+    await this._saveSkillOrganization(addItemOrganizationGroup(organization, { id, name }, skills.map(item => item.id)));
+}
+
+async _renameSkillOrganizationGroup(groupId) {
+    const { skills, organization } = this._getSkillOrganizationState();
+    const current = organization.groups[groupId];
+    if (!current) return;
+    const name = await this._promptSkillGroupName({ title: "Renomear grupo de perícias", initial: current.name });
+    if (!name || name === current.name) return;
+    await this._saveSkillOrganization(renameItemOrganizationGroup(organization, { id: groupId, name }, skills.map(item => item.id)));
+}
+
+async _deleteSkillOrganizationGroup(groupId) {
+    const { skills, organization } = this._getSkillOrganizationState();
+    const group = organization.groups[groupId];
+    if (!group) return;
+    const confirmed = await Dialog.confirm({
+        title: "Excluir grupo de perícias",
+        content: `<p>Excluir o grupo <strong>${foundry.utils.escapeHTML(group.name)}</strong>? As perícias voltarão para a área livre.</p>`,
+        yes: () => true,
+        no: () => false,
+        defaultYes: false
+    });
+    if (!confirmed) return;
+    await this._saveSkillOrganization(removeItemOrganizationGroup(organization, groupId, skills.map(item => item.id)));
+}
+
+async _suggestSkillOrganizationGroups() {
+    const { skills, organization } = this._getSkillOrganizationState();
+    const confirmed = await Dialog.confirm({
+        title: "Organizar pelas categorias das perícias",
+        content: "<p>Criar grupos visuais a partir do campo conceitual <strong>Grupo</strong> das perícias? A organização manual existente será preservada.</p>",
+        yes: () => true,
+        no: () => false,
+        defaultYes: false
+    });
+    if (!confirmed) return;
+    const createId = () => foundry.utils.randomID?.() ?? crypto.randomUUID();
+    await this._saveSkillOrganization(createGroupsFromItemCategories(organization, skills, createId));
 }
 
 _onEditPortrait() {
@@ -2534,6 +2633,41 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
         const newMode = currentMode === 'group' ? 'tree' : 'group';
         await this.actor.setFlag('gum', 'skillsViewMode', newMode);
     });
+
+    html.find('.create-skill-group').click(ev => {
+        ev.preventDefault();
+        this._createSkillOrganizationGroup();
+    });
+    html.find('.rename-skill-group').click(ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        this._renameSkillOrganizationGroup(ev.currentTarget.dataset.groupId);
+    });
+    html.find('.delete-skill-group').click(ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        this._deleteSkillOrganizationGroup(ev.currentTarget.dataset.groupId);
+    });
+    html.find('.suggest-skill-groups').click(ev => {
+        ev.preventDefault();
+        this._suggestSkillOrganizationGroups();
+    });
+    html.find('.skill-tree-group.is-manual-organization > summary').click(ev => ev.preventDefault());
+
+    this._skillOrganizerCleanup?.();
+    this._skillOrganizerCleanup = null;
+    if ((this.actor.getFlag('gum', 'skillsViewMode') || 'group') === 'group') {
+        this._skillOrganizerCleanup = attachSheetItemOrganizer(html[0], {
+            actorUuid: this.actor.uuid,
+            namespace: 'skills',
+            acceptedItemTypes: ['skill'],
+            onMove: async ({ itemId, targetGroupId, targetIndex }) => {
+                const { skills, organization } = this._getSkillOrganizationState();
+                const updated = moveOrganizedItem(organization, { itemId, targetGroupId, targetIndex }, skills.map(item => item.id));
+                await this._saveSkillOrganization(updated);
+            }
+        });
+    }
 
     // MENU DE CONTEXTO (Botão de Opções)
     html.on('click', '.equipment-options-btn', ev => {

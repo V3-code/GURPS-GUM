@@ -14,6 +14,16 @@ test("skill groups use a full-width responsive two-column card grid", () => {
   assert.match(styles, /@media \(max-width:\s*680px\)[\s\S]*grid-template-columns:\s*1fr/);
 });
 
+test("the group view exposes hybrid organization without deriving visual groups in the template", () => {
+  assert.match(skillTab, /{{#each skillSections as \|section\|}}/);
+  assert.match(skillTab, /data-organizer-zone/);
+  assert.match(skillTab, /data-organizer-item-id="{{this\._id}}"/);
+  assert.match(skillTab, /create-skill-group/);
+  assert.match(skillTab, /rename-skill-group/);
+  assert.match(skillTab, /delete-skill-group/);
+  assert.match(styles, /\.is-manual-organization > \.skill-tree-summary/);
+});
+
 test("skill cards expose compact mechanics and a dedicated control footer", () => {
   assert.match(actorSheet, /points:\s*useTreeFields\s*\?/);
   assert.match(skillTab, /title="Pontos investidos">\{\{this\.skillListDisplay\.points\}\} pts/);

@@ -792,14 +792,18 @@
           
           <div class="skills-header-buttons">
               {{!-- NOVO: Botão de Alternar Visualização --}}
-              <a class="toggle-skills-view" title="Alternar: Grupos / Árvore">
+              <a class="toggle-skills-view" title="Alternar: Organização / Árvore">
 {{#if (eq @root.skillsViewMode 'tree')}}
                       <i class="fas fa-sitemap"></i> Árvore
                   {{else}}
-                      <i class="fas fa-layer-group"></i> Grupos
+                      <i class="fas fa-layer-group"></i> Organização
                   {{/if}}
               </a>
 
+              {{#if (eq @root.skillsViewMode 'group')}}
+              <a class="create-skill-group" title="Criar grupo de perícias"><i class="fas fa-folder-plus"></i> Grupo</a>
+              {{#if @root.hasSkillCategorySuggestions}}<a class="suggest-skill-groups" title="Criar grupos a partir das categorias conceituais das perícias"><i class="fas fa-wand-magic-sparkles"></i></a>{{/if}}
+              {{/if}}
               <a class="item-create" data-type="skill" title="Nova Perícia"><i class="fas fa-plus"></i> Nova</a>
               <a class="sort-control" data-item-type="skill" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
           </div>
@@ -809,25 +813,32 @@
       {{!-- Adiciona a classe 'group' ou 'tree' dinamicamente --}}
       <div class="skills-scroll-area {{#if (eq @root.skillsViewMode 'group')}}group{{else}}tree{{/if}}">
 
-        {{!-- Loop de Grupos --}}
-        {{#each skillGroupsKeys as |groupName|}}
-            {{#with (lookup ../skillsByGroup groupName) as |skills|}}
-            
-            {{!-- O ID único combina "skill-" com o nome do grupo para evitar conflitos com outras abas --}}
-            <details class="skill-tree-group gum-unified-section" data-group-id="skill-{{groupName}}" {{collapsibleState (concat "skill-" groupName) @root.collapsedData}}>
+        {{!-- Perícias livres e grupos manuais no modo Organização; troncos no modo Árvore. --}}
+        {{#each skillSections as |section|}}
+            <details class="skill-tree-group gum-unified-section {{#if section.isUngrouped}}is-ungrouped{{/if}} {{#unless section.isTree}}is-manual-organization{{/unless}}"
+                data-group-id="skill-{{section.id}}"
+                data-organizer-section
+                data-organizer-group-id="{{section.id}}"
+                {{#unless section.isTree}}open{{else}}{{collapsibleState (concat "skill-" section.id) @root.collapsedData}}{{/unless}}>
                 <summary class="skill-tree-summary gum-unified-header">
                     <div class="summary-left">
-                        <i class="fas fa-chevron-right st-icon"></i>
-                        <span class="st-group-title">{{groupName}}</span>
+                        {{#if section.isTree}}<i class="fas fa-chevron-right st-icon"></i>{{/if}}
+                        <span class="st-group-title">{{section.name}}</span>
                     </div>
-                    <span class="st-group-count">{{skills.length}}</span>
+                    <span class="st-group-count">{{section.skills.length}}</span>
+                    {{#unless section.isTree}}{{#unless section.isUngrouped}}<span class="skill-group-actions">
+                        <a class="rename-skill-group" data-group-id="{{section.id}}" title="Renomear grupo"><i class="fas fa-pen"></i></a>
+                        <a class="delete-skill-group" data-group-id="{{section.id}}" title="Excluir grupo"><i class="fas fa-trash"></i></a>
+                    </span>{{/unless}}{{/unless}}
                 </summary>
-                
-            <ul class="skill-tree-list group-content">
-                    {{#each skills}}
-                    <li class="item skill-tree-item {{this.indentClass}} {{#if this.isTrunk}}is-trunk{{/if}}" 
-                        data-item-id="{{this._id}}" 
+
+            <ul class="skill-tree-list group-content" data-organizer-zone data-organizer-group-id="{{section.id}}">
+                    {{#each section.skills}}
+                    <li class="item skill-tree-item {{this.indentClass}} {{#if this.isTrunk}}is-trunk{{/if}}"
+                        data-item-id="{{this._id}}"
                         data-item-type="skill"
+                        data-organizer-item-id="{{this._id}}"
+                        data-organizer-item-type="skill"
                         draggable="true">
                         
                         {{!-- Ícone (Visualização Rápida) --}}
@@ -880,11 +891,10 @@
                     {{/each}}
                 </ul>
             </details>
-            {{/with}}
         {{/each}}
 
         {{!-- Vazio --}}
-        {{#unless skillGroupsKeys}}
+        {{#unless @root.hasSkills}}
             <div class="empty-placeholder" style="text-align:center; padding:20px; color:#666;">
                 <p>Nenhuma perícia adicionada.</p>
             </div>
