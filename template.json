@@ -329,6 +329,12 @@
         }
       },
       "skill_group_order": [],
+      "skill_organization": {
+        "groups": {},
+        "groupOrder": [],
+        "assignments": {},
+        "itemOrder": {}
+      },
       "social_status_entries": {},
       "organization_entries": {},
       "culture_entries": {},
