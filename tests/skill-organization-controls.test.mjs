@@ -41,5 +41,12 @@ test("skill search normalizes text, filters cards and restores collapsed state",
 
 test("category preview dialog uses its dedicated polished presentation", () => {
   assert.match(actorSheet, /skill-category-preview__intro/);
-  assert.match(actorSheet, /classes: \["gum", "skill-category-preview-dialog"\], width: 520/);
+  assert.match(actorSheet, /classes: \["dialog", "gum", "gum-sheet-edit-dialog", "skill-category-preview-dialog"\], width: 520/);
+});
+
+test("skill organization dialogs opt into the established minimal sheet dialog classes", () => {
+  assert.match(actorSheet, /gum-popup-form gum-record-editor skill-group-name-dialog/);
+  assert.match(actorSheet, /gum-record-editor__intro form-group--full/);
+  assert.match(actorSheet, /classes: \["dialog", "gum", "gum-sheet-edit-dialog", "gum-record-edit-dialog", "skill-group-dialog"\]/);
+  assert.match(actorSheet, /classes: \["dialog", "gum", "gum-sheet-edit-dialog", "skill-organization-confirm-dialog"\]/);
 });

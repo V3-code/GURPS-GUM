@@ -9608,24 +9608,86 @@ background-color: var(--gum-accent-gold);
     text-align: center;
 }
 
+.dialog.gum.skill-group-dialog,
+.dialog.gum.skill-organization-confirm-dialog,
 .dialog.gum.skill-category-preview-dialog {
     min-width: 440px;
     border: 1px solid rgba(197,160,91,0.42);
     border-radius: 7px;
     background: #1f232a;
     box-shadow: 0 14px 38px rgba(0,0,0,0.55);
+    overflow: hidden;
 }
+.dialog.gum.skill-group-dialog { min-width: 380px; }
+.dialog.gum.skill-group-dialog .window-header,
+.dialog.gum.skill-organization-confirm-dialog .window-header,
 .dialog.gum.skill-category-preview-dialog .window-header {
+    flex: 0 0 38px;
     min-height: 38px;
     padding: 0 12px;
-    border-bottom: 1px solid rgba(197,160,91,0.28);
-    background: #191c22;
-    color: #ece4d8;
+    border: 0;
+    border-bottom: 1px solid rgba(181,151,83,0.3);
+    background: linear-gradient(180deg, #18191d, #111216);
+    color: #d9c48f;
 }
+.dialog.gum.skill-group-dialog .window-title,
+.dialog.gum.skill-organization-confirm-dialog .window-title,
 .dialog.gum.skill-category-preview-dialog .window-title {
     font-family: var(--gum-font-condensed);
     font-size: 12px;
+    font-weight: 700;
     letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.dialog.gum.skill-group-dialog .header-button,
+.dialog.gum.skill-organization-confirm-dialog .header-button,
+.dialog.gum.skill-category-preview-dialog .header-button {
+    color: #9e8b68;
+    font-size: 11px;
+}
+.dialog.gum.skill-group-dialog .header-button:hover,
+.dialog.gum.skill-organization-confirm-dialog .header-button:hover,
+.dialog.gum.skill-category-preview-dialog .header-button:hover { color: #ead39c; }
+.dialog.gum.skill-group-dialog .window-content,
+.dialog.gum.skill-organization-confirm-dialog .window-content {
+    padding: 0;
+    background: linear-gradient(180deg, #22252c, #1b1d23);
+}
+.dialog.gum.skill-group-dialog .dialog-content { padding: 14px 16px 10px; }
+.dialog.gum.skill-group-dialog .skill-group-name-dialog { grid-template-columns: 1fr; gap: 10px; }
+.dialog.gum.skill-group-dialog .skill-group-name-field {
+    margin: 0;
+    padding: 8px 9px 9px;
+    border-radius: 6px;
+    background: rgba(105,119,139,0.11);
+}
+.dialog.gum.skill-group-dialog .skill-group-name-field label {
+    display: block;
+    margin-bottom: 5px;
+    color: rgba(235,225,210,0.58);
+    font-size: 9px;
+}
+.dialog.gum.skill-group-dialog .skill-group-name-field input {
+    width: 100%;
+    height: 30px;
+    margin: 0;
+    border: 0;
+    background: rgba(255,255,255,0.065);
+    box-shadow: inset 0 -1px rgba(255,255,255,0.06);
+}
+.dialog.gum.skill-group-dialog .dialog-buttons,
+.dialog.gum.skill-organization-confirm-dialog .dialog-buttons {
+    margin: 0;
+    padding: 10px 16px 14px;
+    border: 0;
+    background: #191b20;
+}
+.dialog.gum.skill-organization-confirm-dialog .dialog-content { padding: 14px 16px; }
+.dialog.gum.skill-organization-confirm-dialog .dialog-content p { margin: 0; color: #c8c1b7; }
+.dialog.gum.skill-organization-confirm-dialog .dialog-buttons button[data-button="confirm"] {
+    background: rgba(181,90,90,0.82);
+    color: #171313;
+    font-weight: 700;
 }
 .dialog.gum.skill-category-preview-dialog .window-content {
     padding: 0;

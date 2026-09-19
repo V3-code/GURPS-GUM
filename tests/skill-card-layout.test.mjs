@@ -45,6 +45,12 @@ test("category preview dialog has a scoped dark layout and primary action", () =
   assert.match(styles, /button\[data-button="apply"\]/);
 });
 
+test("skill dialogs share a scoped professional window treatment", () => {
+  assert.match(styles, /\.dialog\.gum\.skill-group-dialog,[\s\S]*\.dialog\.gum\.skill-category-preview-dialog\s*\{/);
+  assert.match(styles, /\.skill-group-dialog \.skill-group-name-field/);
+  assert.match(styles, /\.skill-organization-confirm-dialog \.dialog-buttons button\[data-button="confirm"\]/);
+});
+
 test("skill cards expose compact mechanics and a dedicated control footer", () => {
   assert.match(actorSheet, /points:\s*useTreeFields\s*\?/);
   assert.match(skillTab, /title="Pontos investidos">\{\{this\.skillListDisplay\.points\}\} pts/);

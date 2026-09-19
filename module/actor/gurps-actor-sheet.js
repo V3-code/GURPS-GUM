@@ -1621,7 +1621,10 @@ _promptSkillGroupName({ title, initial = "" }) {
         };
         new Dialog({
             title,
-            content: `<form class="skill-group-name-dialog"><div class="form-group"><label>Nome</label><input type="text" name="name" value="${foundry.utils.escapeHTML(initial)}" autofocus></div></form>`,
+            content: `<form class="gum-popup-form gum-record-editor skill-group-name-dialog">
+                <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon"><i class="fas fa-folder-plus" aria-hidden="true"></i></span><span><strong>${foundry.utils.escapeHTML(title)}</strong><small>Use um nome curto e claro para organizar as perícias deste personagem.</small></span></header>
+                <div class="form-group form-group--full skill-group-name-field"><label>Nome do grupo</label><input class="gum-input-left" type="text" name="name" value="${foundry.utils.escapeHTML(initial)}" autocomplete="off" autofocus></div>
+            </form>`,
             buttons: {
                 save: {
                     icon: '<i class="fas fa-check"></i>',
@@ -1632,7 +1635,7 @@ _promptSkillGroupName({ title, initial = "" }) {
             },
             default: "save",
             close: () => finish(null)
-        }, { classes: ["gum", "skill-group-dialog"] }).render(true);
+        }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-record-edit-dialog", "skill-group-dialog"], width: 420, height: "auto" }).render(true);
     });
 }
 
@@ -1653,7 +1656,7 @@ _confirmSkillOrganizationAction({ title, content, confirmLabel = "Confirmar" }) 
             },
             default: "cancel",
             close: () => finish(false)
-        }, { classes: ["gum", "skill-organization-confirm-dialog"] }).render(true);
+        }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "skill-organization-confirm-dialog"], width: 420, height: "auto" }).render(true);
     });
 }
 
@@ -1694,7 +1697,7 @@ _promptSkillCategoryGroupPlan(plan) {
             },
             default: "apply",
             close: () => finish(null)
-        }, { classes: ["gum", "skill-category-preview-dialog"], width: 520 }).render(true);
+        }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "skill-category-preview-dialog"], width: 520, height: "auto" }).render(true);
     });
 }
 
