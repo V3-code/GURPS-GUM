@@ -22,6 +22,7 @@ test("the group view exposes hybrid organization without deriving visual groups 
   assert.match(skillTab, /rename-skill-group/);
   assert.match(skillTab, /delete-skill-group/);
   assert.match(skillTab, /remove-skill-from-group/);
+  assert.match(skillTab, /{{#if this\.skillOrganizationCanRemove}}/);
   assert.match(skillTab, /collapsibleState \(concat "skill-" section\.id\)/);
   assert.doesNotMatch(skillTab, /{{#unless section\.isTree}}open/);
   assert.match(styles, /\.is-manual-organization > \.skill-tree-summary/);

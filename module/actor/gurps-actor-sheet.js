@@ -479,6 +479,7 @@ async getData(options) {
             const sortFn = getSortFunction(skillSortPref);
             const orderedSkills = bucketId => {
                 const entries = (organization.itemOrder[bucketId] || []).map(id => skillsById.get(id)).filter(Boolean);
+                entries.forEach(skill => { skill.skillOrganizationCanRemove = bucketId !== UNGROUPED_ORGANIZER_ID; });
                 return skillSortPref === 'manual' ? entries : entries.sort(sortFn);
             };
 
@@ -669,6 +670,7 @@ async getData(options) {
             isUngrouped: false,
             skills: context.skillsByGroup[groupName]
         }));
+        if (skillsViewMode === 'tree') skills.forEach(skill => { skill.skillOrganizationCanRemove = false; });
         
 
   // ================================================================== //
@@ -1593,7 +1595,20 @@ _getSkillOrganizationState() {
 }
 
 async _saveSkillOrganization(organization) {
-    return this.actor.update({ "system.skill_organization": organization });
+    const current = this.actor.system.skill_organization || {};
+    const withDeletions = (next, previous) => {
+        const payload = { ...next };
+        for (const key of Object.keys(previous || {})) {
+            if (!(key in next)) payload[`-=${key}`] = null;
+        }
+        return payload;
+    };
+    return this.actor.update({
+        "system.skill_organization.groups": withDeletions(organization.groups, current.groups),
+        "system.skill_organization.groupOrder": organization.groupOrder,
+        "system.skill_organization.assignments": withDeletions(organization.assignments, current.assignments),
+        "system.skill_organization.itemOrder": withDeletions(organization.itemOrder, current.itemOrder)
+    });
 }
 
 _promptSkillGroupName({ title, initial = "" }) {
@@ -2685,6 +2700,14 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
         const currentMode = this.actor.getFlag('gum', 'skillsViewMode') || 'group';
         const newMode = currentMode === 'group' ? 'tree' : 'group';
         await this.actor.setFlag('gum', 'skillsViewMode', newMode);
+    });
+
+    html.find('.skill-tree-summary').click(ev => {
+        if ($(ev.target).closest('a, button, .item-control').length) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        const details = ev.currentTarget.closest('details');
+        if (details) details.open = !details.open;
     });
 
     html.find('.create-skill-group').click(ev => {

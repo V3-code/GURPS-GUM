@@ -8,6 +8,9 @@ test("group deletion uses a promise-backed confirmation compatible with the lega
   assert.match(actorSheet, /_confirmSkillOrganizationAction\([\s\S]*new Promise\(resolve/);
   assert.match(actorSheet, /_deleteSkillOrganizationGroup[\s\S]*await this\._confirmSkillOrganizationAction/);
   assert.doesNotMatch(actorSheet, /_deleteSkillOrganizationGroup[\s\S]{0,500}Dialog\.confirm/);
+  assert.match(actorSheet, /payload\[`-=\$\{key\}`\] = null/);
+  assert.match(actorSheet, /skill_organization\.groups": withDeletions/);
+  assert.match(actorSheet, /skill_organization\.assignments": withDeletions/);
 });
 
 test("category suggestions show a selectable preview before changing organization", () => {
@@ -18,6 +21,12 @@ test("category suggestions show a selectable preview before changing organizatio
 });
 
 test("the remove action moves a grouped skill directly to the ungrouped bucket", () => {
+  assert.match(actorSheet, /skill\.skillOrganizationCanRemove = bucketId !== UNGROUPED_ORGANIZER_ID/);
   assert.match(actorSheet, /find\('\.remove-skill-from-group'\)/);
   assert.match(actorSheet, /targetGroupId: UNGROUPED_ORGANIZER_ID/);
+});
+
+test("skill section summaries explicitly toggle their details state", () => {
+  assert.match(actorSheet, /find\('\.skill-tree-summary'\)\.click/);
+  assert.match(actorSheet, /details\.open = !details\.open/);
 });
