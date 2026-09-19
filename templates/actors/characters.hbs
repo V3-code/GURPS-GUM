@@ -515,12 +515,6 @@
         </div>
       </div>
 
-      <div class="characteristics-race-row">
-        <span><i class="fas fa-dna" aria-hidden="true"></i> Raça</span>
-        <strong>{{#if raceName}}{{raceName}}{{else}}Sem raça definida{{/if}}</strong>
-        <a class="edit-race-name" title="Editar nome da raça"><i class="fas fa-edit"></i></a>
-      </div>
-
       <div class="characteristics-main-content characteristics-sections">
         {{#each characteristicSections as |section|}}
           <details class="characteristic-group gum-details gum-unified-section is-manual-organization {{#if section.isUngrouped}}is-ungrouped{{/if}}"

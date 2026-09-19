@@ -7316,13 +7316,11 @@ background-color: var(--gum-accent-gold);
     background: linear-gradient(180deg, #66232d 0%, #4f1a23 100%);
 }
 
-.gum.sheet.actor .conditions-tab .gum-unified-header,
-.gum.sheet.actor .tab[data-tab="characteristics"] .gum-unified-header {
+.gum.sheet.actor .conditions-tab .gum-unified-header {
     background: linear-gradient(180deg, var(--gum-bg-cabecalho) 0%, #4f1a23 100%);
 }
 
-.gum.sheet.actor .conditions-tab .gum-unified-header:hover,
-.gum.sheet.actor .tab[data-tab="characteristics"] .gum-unified-header:hover {
+.gum.sheet.actor .conditions-tab .gum-unified-header:hover {
     background: linear-gradient(180deg, var(--gum-bg-cabecalho) 0%, #4f1a23 100%);
 }
 
@@ -9848,22 +9846,6 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .characteristics-header-buttons a:hover,
 .gum.sheet.actor .characteristics-header-buttons a:hover i { color: var(--gum-accent-red); }
 
-.gum.sheet.actor .characteristics-race-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 8px 5px 0;
-    padding: 5px 8px;
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 4px;
-    background: rgba(0,0,0,0.12);
-    color: var(--gum-text-medio);
-    font-size: 0.78em;
-}
-
-.gum.sheet.actor .characteristics-race-row strong { color: var(--gum-text-subtitulo); }
-.gum.sheet.actor .characteristics-race-row .edit-race-name { margin-left: auto; }
-
 .gum.sheet.actor .characteristics-main-content.characteristics-sections { margin-top: 8px; }
 .gum.sheet.actor .characteristic-group.is-manual-organization {
     margin: 0;
@@ -9876,11 +9858,11 @@ background-color: var(--gum-accent-gold);
     min-height: 28px;
     padding: 4px 7px;
     border-bottom: 1px solid rgba(197,160,91,0.2);
-    background: transparent;
+    background: transparent !important;
 }
 
 .gum.sheet.actor .characteristic-group > .characteristic-group-summary:hover,
-.gum.sheet.actor .characteristic-group[open] > .characteristic-group-summary { background: rgba(255,255,255,0.025); }
+.gum.sheet.actor .characteristic-group[open] > .characteristic-group-summary { background: rgba(255,255,255,0.025) !important; }
 .gum.sheet.actor .characteristic-group .block-title {
     color: rgba(247,233,215,0.76);
     font-family: var(--gum-font-primary);

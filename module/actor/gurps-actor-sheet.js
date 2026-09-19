@@ -1054,7 +1054,6 @@ async getData(options) {
             const blockId = item.system?.block_id || (item.type === 'disadvantage' ? 'block3' : 'block2');
             return ['block1', 'block2', 'block3', 'block4'].includes(blockId);
         });
-        context.raceName = this.actor.system.details?.race_name || "";
 
         // ================================================================== //
         //    ENRIQUECIMENTO DE TEXTO (Seu código original)
@@ -2273,7 +2272,6 @@ html.on("click", ".edit-social-entry", (ev) => this._onEditSocialEntry(ev));
 html.on("click", ".delete-social-entry", (ev) => this._onDeleteSocialEntry(ev));
 html.on("click", ".edit-social-source", (ev) => this._onEditSocialSource(ev));
 html.on("click", ".add-social-aspect", (ev) => this._onChooseSocialCategory(ev));
-html.on("click", ".edit-race-name", (ev) => this._onEditRaceName(ev));
 
 // -------------------------------------------------------------
 //  EDITAR ITEM (ABRIR ITEM SHEET)
@@ -5770,50 +5768,6 @@ async _promptPowerSourceData(initialData = {}, { isEdit = false } = {}) {
       close: () => finish(null)
     }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-magic-edit-dialog"] }).render(true);
   });
-}
-
-async _onEditRaceName(event) {
-  event.preventDefault();
-  event.stopPropagation();
-
-  const currentName = this.actor.system.details?.race_name || "";
-  const raceName = await new Promise((resolve) => {
-    let resolved = false;
-    const finish = (value) => {
-      if (resolved) return;
-      resolved = true;
-      resolve(value);
-    };
-
-    new Dialog({
-      title: "Nome da Raça",
-      content: `
-      <form class="gum-dialog-form gum-popup-form gum-race-name-form" autocomplete="off">
-        <div class="form-group form-group--full">
-          <label>Raça</label>
-          <input class="gum-input-left" type="text" name="race_name" value="${foundry.utils.escapeHTML(currentName)}" placeholder="Ex: Elfo, Anão, Humano..." autofocus />
-        </div>
-      </form>
-    `,
-      buttons: {
-        save: {
-          icon: '<i class="fas fa-save"></i>',
-          label: "Salvar",
-          callback: (html) => finish(html.find('[name="race_name"]').val()?.trim() ?? "")
-        },
-        cancel: {
-          icon: '<i class="fas fa-times"></i>',
-          label: "Cancelar",
-          callback: () => finish(null)
-        }
-      },
-      default: "save",
-      close: () => finish(null)
-    }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-race-edit-dialog"] }).render(true);
-  });
-
-  if (raceName === null || raceName === undefined) return;
-  await this.actor.update({ "system.details.race_name": raceName });
 }
 
 async _onAddPowerSource(ev) {

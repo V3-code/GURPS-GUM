@@ -35,6 +35,13 @@ test("characteristic groups expose complete organizer controls", () => {
   assert.match(characteristicTab, /data-organizer-zone/);
   assert.match(characteristicTab, /data-organizer-item-id="{{this\.id}}"/);
   assert.match(characteristicTab, /characteristic-group-count/);
+  assert.doesNotMatch(characteristicTab, /characteristics-race-row|edit-race-name|raceName/);
+});
+
+test("characteristic group headers do not inherit the legacy red treatment", () => {
+  assert.doesNotMatch(styles, /\.tab\[data-tab="characteristics"\] \.gum-unified-header\s*\{/);
+  assert.match(styles, /\.characteristic-group > \.characteristic-group-summary\s*\{[^}]*background:\s*transparent !important;/s);
+  assert.match(styles, /\.characteristic-group\[open\] > \.characteristic-group-summary\s*\{\s*background:\s*rgba\(255,255,255,0\.025\) !important;/);
 });
 
 test("characteristic organization persists independently in the actor schema", () => {
