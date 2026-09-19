@@ -1015,38 +1015,46 @@ async getData(options) {
         //     FIM DA FASE 3.1                                                //
         // ================================================================== //
 
-        // ================================================================== //
-        //    AGRUPAMENTO E ORDENAÇÃO DE CARACTERÍSTICAS (Seu código original)
-        // ================================================================== //
-           const characteristics = [ ...(itemsByType.advantage || []), ...(itemsByType.disadvantage || []) ]
-                .map(prepareCharacteristicDisplay);
-            context.characteristicsByBlock = characteristics.reduce((acc, char) => {
-            const defaultBlockId = char.type === 'disadvantage' ? 'block3' : 'block2';
-            const blockId = char.system.block_id || defaultBlockId;
-            if (!acc[blockId]) acc[blockId] = [];
-            acc[blockId].push(char);
-            return acc;
-            }, {});
-            
-            const charSortPref = this.actor.system.sorting?.characteristic || 'manual';
-            // Adicionei uma opção de ordenar por pontos como exemplo
-            if(charSortPref === 'points') getSortFunction(charSortPref)
-            // Ordena as características DENTRO de cada bloco
-            for (const blockId in context.characteristicsByBlock) {
-                context.characteristicsByBlock[blockId].sort(getSortFunction(charSortPref));
-            }
-            const racialBlockId = 'block1';
-            const racialItems = context.characteristicsByBlock[racialBlockId] || [];
-            context.racialCharacteristics = {
-                advantages: racialItems
-                    .filter((item) => Number(item.system.points) >= 0)
-                    .sort((a, b) => Number(b.system.points || 0) - Number(a.system.points || 0)),
-                disadvantages: racialItems
-                    .filter((item) => Number(item.system.points) < 0)
-                    .sort((a, b) => Number(b.system.points || 0) - Number(a.system.points || 0))
-            };
-            context.racialCharacteristics.hasAny = racialItems.length > 0;
-            context.raceName = this.actor.system.details?.race_name || "";
+        // Organização híbrida: itens livres primeiro e grupos manuais depois.
+        const characteristics = [ ...(itemsByType.advantage || []), ...(itemsByType.disadvantage || []) ]
+            .map(prepareCharacteristicDisplay);
+        const characteristicOrganization = normalizeItemOrganization(
+            this.actor.system.characteristic_organization,
+            characteristics.map(item => item.id)
+        );
+        const characteristicsById = new Map(characteristics.map(item => [item.id, item]));
+        const charSortPref = this.actor.system.sorting?.characteristic || 'manual';
+        const charSortFn = getSortFunction(charSortPref);
+        const orderedCharacteristics = bucketId => {
+            const entries = (characteristicOrganization.itemOrder[bucketId] || [])
+                .map(id => characteristicsById.get(id))
+                .filter(Boolean);
+            entries.forEach(item => {
+                item.characteristicOrganizationCanRemove = bucketId !== UNGROUPED_ORGANIZER_ID;
+                item.characteristicKindLabel = item.type === 'disadvantage' ? 'Desvantagem' : 'Vantagem';
+                item.characteristicIsRacial = item.system?.block_id === 'block1';
+            });
+            return charSortPref === 'manual' ? entries : entries.sort(charSortFn);
+        };
+
+        context.characteristicOrganization = characteristicOrganization;
+        context.characteristicSections = [{
+            id: UNGROUPED_ORGANIZER_ID,
+            name: "Vantagens e Desvantagens",
+            isUngrouped: true,
+            characteristics: orderedCharacteristics(UNGROUPED_ORGANIZER_ID)
+        }, ...characteristicOrganization.groupOrder.map(groupId => ({
+            id: groupId,
+            name: characteristicOrganization.groups[groupId].name,
+            isUngrouped: false,
+            characteristics: orderedCharacteristics(groupId)
+        }))];
+        context.hasCharacteristics = characteristics.length > 0;
+        context.hasCharacteristicGroupSuggestions = characteristics.some(item => {
+            const blockId = item.system?.block_id || (item.type === 'disadvantage' ? 'block3' : 'block2');
+            return ['block1', 'block2', 'block3', 'block4'].includes(blockId);
+        });
+        context.raceName = this.actor.system.details?.race_name || "";
 
         // ================================================================== //
         //    ENRIQUECIMENTO DE TEXTO (Seu código original)
@@ -1739,6 +1747,143 @@ async _suggestSkillOrganizationGroups() {
     if (!selectedCategories?.length) return;
     const createId = () => foundry.utils.randomID?.() ?? crypto.randomUUID();
     await this._saveSkillOrganization(createGroupsFromItemCategories(organization, skills, createId, selectedCategories));
+}
+
+_getCharacteristicOrganizationState() {
+    const characteristics = this.actor.items.filter(item => ['advantage', 'disadvantage'].includes(item.type));
+    return {
+        characteristics,
+        organization: normalizeItemOrganization(
+            this.actor.system.characteristic_organization,
+            characteristics.map(item => item.id)
+        )
+    };
+}
+
+async _saveCharacteristicOrganization(organization) {
+    const current = this.actor.system.characteristic_organization || {};
+    const withDeletions = (next, previous) => {
+        const payload = { ...next };
+        for (const key of Object.keys(previous || {})) {
+            if (!(key in next)) payload[`-=${key}`] = null;
+        }
+        return payload;
+    };
+    return this.actor.update({
+        "system.characteristic_organization.groups": withDeletions(organization.groups, current.groups),
+        "system.characteristic_organization.groupOrder": organization.groupOrder,
+        "system.characteristic_organization.assignments": withDeletions(organization.assignments, current.assignments),
+        "system.characteristic_organization.itemOrder": withDeletions(organization.itemOrder, current.itemOrder)
+    });
+}
+
+_promptCharacteristicGroupName({ title, initial = "" }) {
+    return new Promise(resolve => {
+        let settled = false;
+        const finish = value => {
+            if (settled) return;
+            settled = true;
+            resolve(value);
+        };
+        new Dialog({
+            title,
+            content: `<form class="gum-popup-form gum-record-editor characteristic-group-name-dialog">
+                <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon"><i class="fas fa-folder-plus" aria-hidden="true"></i></span><span><strong>${foundry.utils.escapeHTML(title)}</strong><small>Use um nome curto e claro para organizar as características deste personagem.</small></span></header>
+                <div class="form-group form-group--full characteristic-group-name-field"><label>Nome do grupo</label><input class="gum-input-left" type="text" name="name" value="${foundry.utils.escapeHTML(initial)}" autocomplete="off" autofocus></div>
+            </form>`,
+            buttons: {
+                save: { icon: '<i class="fas fa-check"></i>', label: "Salvar", callback: html => finish(String(html.find('[name="name"]').val() ?? "").trim() || null) },
+                cancel: { label: "Cancelar", callback: () => finish(null) }
+            },
+            default: "save",
+            close: () => finish(null)
+        }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-record-edit-dialog", "characteristic-group-dialog"], width: 420, height: "auto" }).render(true);
+    });
+}
+
+_characteristicSuggestionItems(characteristics) {
+    const labels = {
+        block1: "Raciais",
+        block2: "Vantagens",
+        block3: "Desvantagens",
+        block4: "Especiais"
+    };
+    return characteristics.map(item => {
+        const fallback = item.type === 'disadvantage' ? 'block3' : 'block2';
+        const blockId = item.system?.block_id || fallback;
+        return { id: item.id, name: item.name, system: { group: labels[blockId] || labels[fallback] } };
+    });
+}
+
+_promptCharacteristicGroupPlan(plan) {
+    return new Promise(resolve => {
+        let settled = false;
+        const finish = value => {
+            if (settled) return;
+            settled = true;
+            resolve(value);
+        };
+        const rows = plan.map((category, index) => {
+            const itemNames = category.items.map(item => foundry.utils.escapeHTML(item.name)).join(", ");
+            const destination = category.existingGroupId ? "Grupo existente" : "Novo grupo";
+            return `<label class="skill-category-preview__row"><input type="checkbox" name="category" value="${index}" checked><span><strong>${foundry.utils.escapeHTML(category.name)}</strong><small>${destination} · ${category.items.length} item(ns)</small><em>${itemNames}</em></span></label>`;
+        }).join("");
+        new Dialog({
+            title: "Organizar vantagens e desvantagens",
+            content: `<form class="skill-category-preview characteristic-category-preview"><div class="skill-category-preview__intro"><i class="fas fa-layer-group"></i><span><strong>Organizar características</strong><small>Selecione as classificações antigas que deseja transformar em grupos visuais.</small></span></div><div class="skill-category-preview__list">${rows}</div></form>`,
+            buttons: {
+                apply: {
+                    icon: '<i class="fas fa-layer-group"></i>',
+                    label: "Criar selecionados",
+                    callback: html => finish([...html[0].querySelectorAll('input[name="category"]:checked')].map(input => plan[Number(input.value)]?.key).filter(Boolean))
+                },
+                cancel: { label: "Cancelar", callback: () => finish(null) }
+            },
+            default: "apply",
+            close: () => finish(null)
+        }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "skill-category-preview-dialog", "characteristic-category-preview-dialog"], width: 520, height: "auto" }).render(true);
+    });
+}
+
+async _createCharacteristicOrganizationGroup() {
+    const name = await this._promptCharacteristicGroupName({ title: "Novo grupo de características" });
+    if (!name) return;
+    const { characteristics, organization } = this._getCharacteristicOrganizationState();
+    const id = foundry.utils.randomID?.() ?? crypto.randomUUID();
+    await this._saveCharacteristicOrganization(addItemOrganizationGroup(organization, { id, name }, characteristics.map(item => item.id)));
+}
+
+async _renameCharacteristicOrganizationGroup(groupId) {
+    const { characteristics, organization } = this._getCharacteristicOrganizationState();
+    const current = organization.groups[groupId];
+    if (!current) return;
+    const name = await this._promptCharacteristicGroupName({ title: "Renomear grupo de características", initial: current.name });
+    if (!name || name === current.name) return;
+    await this._saveCharacteristicOrganization(renameItemOrganizationGroup(organization, { id: groupId, name }, characteristics.map(item => item.id)));
+}
+
+async _deleteCharacteristicOrganizationGroup(groupId) {
+    const { characteristics, organization } = this._getCharacteristicOrganizationState();
+    const group = organization.groups[groupId];
+    if (!group) return;
+    const confirmed = await this._confirmSkillOrganizationAction({
+        title: "Excluir grupo de características",
+        content: `<p>Excluir o grupo <strong>${foundry.utils.escapeHTML(group.name)}</strong>? Seus itens voltarão para a área livre.</p>`,
+        confirmLabel: "Excluir grupo"
+    });
+    if (!confirmed) return;
+    await this._saveCharacteristicOrganization(removeItemOrganizationGroup(organization, groupId, characteristics.map(item => item.id)));
+}
+
+async _suggestCharacteristicOrganizationGroups() {
+    const { characteristics, organization } = this._getCharacteristicOrganizationState();
+    const suggestionItems = this._characteristicSuggestionItems(characteristics);
+    const plan = buildItemCategoryGroupPlan(organization, suggestionItems);
+    if (!plan.length) return ui.notifications.info("Não há classificações disponíveis entre os itens livres.");
+    const selectedCategories = await this._promptCharacteristicGroupPlan(plan);
+    if (!selectedCategories?.length) return;
+    const createId = () => foundry.utils.randomID?.() ?? crypto.randomUUID();
+    await this._saveCharacteristicOrganization(createGroupsFromItemCategories(organization, suggestionItems, createId, selectedCategories));
 }
 
 _onEditPortrait() {
@@ -2699,6 +2844,85 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
 
         input.val(value);
         this.actor.update({ [`system.attributes.${attrKey}.value`]: value });
+    });
+
+    html.find('.characteristic-search-input').on('input', ev => {
+        const normalize = value => String(value ?? "").normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().trim();
+        const query = normalize(ev.currentTarget.value);
+        const sections = html.find('.characteristics-sections .characteristic-group');
+        let totalMatches = 0;
+
+        sections.each((_, details) => {
+            const cards = $(details).find('.characteristic-card');
+            let sectionMatches = 0;
+            cards.each((__, card) => {
+                const matches = !query || normalize(card.dataset.search).includes(query);
+                card.hidden = !matches;
+                if (matches) sectionMatches += 1;
+            });
+            details.hidden = Boolean(query) && sectionMatches === 0;
+            totalMatches += sectionMatches;
+            if (query) {
+                if (!details.dataset.characteristicSearchManaged) {
+                    details.dataset.characteristicSearchWasOpen = String(details.open);
+                    details.dataset.characteristicSearchManaged = 'true';
+                }
+                if (sectionMatches) details.open = true;
+            } else if (details.dataset.characteristicSearchManaged) {
+                details.open = details.dataset.characteristicSearchWasOpen === 'true';
+                setTimeout(() => {
+                    delete details.dataset.characteristicSearchManaged;
+                    delete details.dataset.characteristicSearchWasOpen;
+                }, 0);
+            }
+        });
+        html.find('.characteristics-search-empty').prop('hidden', !query || totalMatches > 0);
+    });
+
+    html.find('.characteristic-group-summary').click(ev => {
+        if ($(ev.target).closest('a, button, .item-control').length) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        const details = ev.currentTarget.closest('details');
+        if (details) details.open = !details.open;
+    });
+    html.find('.create-characteristic-group').click(ev => {
+        ev.preventDefault();
+        this._createCharacteristicOrganizationGroup();
+    });
+    html.find('.rename-characteristic-group').click(ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        this._renameCharacteristicOrganizationGroup(ev.currentTarget.dataset.groupId);
+    });
+    html.find('.delete-characteristic-group').click(ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        this._deleteCharacteristicOrganizationGroup(ev.currentTarget.dataset.groupId);
+    });
+    html.find('.suggest-characteristic-groups').click(ev => {
+        ev.preventDefault();
+        this._suggestCharacteristicOrganizationGroups();
+    });
+    html.find('.remove-characteristic-from-group').click(async ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const itemId = ev.currentTarget.dataset.itemId;
+        const { characteristics, organization } = this._getCharacteristicOrganizationState();
+        const updated = moveOrganizedItem(organization, { itemId, targetGroupId: UNGROUPED_ORGANIZER_ID }, characteristics.map(item => item.id));
+        await this._saveCharacteristicOrganization(updated);
+    });
+
+    this._characteristicOrganizerCleanup?.();
+    this._characteristicOrganizerCleanup = attachSheetItemOrganizer(html[0], {
+        actorUuid: this.actor.uuid,
+        namespace: 'characteristics',
+        acceptedItemTypes: ['advantage', 'disadvantage'],
+        onMove: async ({ itemId, targetGroupId, targetIndex }) => {
+            const { characteristics, organization } = this._getCharacteristicOrganizationState();
+            const updated = moveOrganizedItem(organization, { itemId, targetGroupId, targetIndex }, characteristics.map(item => item.id));
+            await this._saveCharacteristicOrganization(updated);
+        }
     });
 
     // Alternar Modo de Visualização de Perícias
@@ -4201,7 +4425,7 @@ _renderQuickView(item) {
    */
   async _onDetailsToggle(event) {
     const details = event.currentTarget;
-    if (details.dataset.skillSearchManaged === 'true') return;
+    if (details.dataset.skillSearchManaged === 'true' || details.dataset.characteristicSearchManaged === 'true') return;
     
     // Verifica se o elemento tem um ID de grupo para salvar
     const groupId = details.dataset.groupId;
