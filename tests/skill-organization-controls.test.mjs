@@ -30,3 +30,16 @@ test("skill section summaries explicitly toggle their details state", () => {
   assert.match(actorSheet, /find\('\.skill-tree-summary'\)\.click/);
   assert.match(actorSheet, /details\.open = !details\.open/);
 });
+
+test("skill search normalizes text, filters cards and restores collapsed state", () => {
+  assert.match(actorSheet, /find\('\.skill-search-input'\)\.on\('input'/);
+  assert.match(actorSheet, /normalize\('NFD'\)/);
+  assert.match(actorSheet, /card\.hidden = !matches/);
+  assert.match(actorSheet, /skillSearchWasOpen/);
+  assert.match(actorSheet, /skills-search-empty/);
+});
+
+test("category preview dialog uses its dedicated polished presentation", () => {
+  assert.match(actorSheet, /skill-category-preview__intro/);
+  assert.match(actorSheet, /classes: \["gum", "skill-category-preview-dialog"\], width: 520/);
+});

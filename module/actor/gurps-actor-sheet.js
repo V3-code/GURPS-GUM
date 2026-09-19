@@ -1675,7 +1675,10 @@ _promptSkillCategoryGroupPlan(plan) {
         }).join("");
         new Dialog({
             title: "Organizar pelas categorias das perícias",
-            content: `<form class="skill-category-preview"><p>Selecione as categorias que deseja aplicar à organização visual.</p><div class="skill-category-preview__list">${rows}</div></form>`,
+            content: `<form class="skill-category-preview">
+                <div class="skill-category-preview__intro"><i class="fas fa-layer-group"></i><span><strong>Organizar perícias</strong><small>Selecione as categorias que deseja transformar em grupos visuais.</small></span></div>
+                <div class="skill-category-preview__list">${rows}</div>
+            </form>`,
             buttons: {
                 apply: {
                     icon: '<i class="fas fa-layer-group"></i>',
@@ -1691,7 +1694,7 @@ _promptSkillCategoryGroupPlan(plan) {
             },
             default: "apply",
             close: () => finish(null)
-        }, { classes: ["gum", "skill-category-preview-dialog"] }).render(true);
+        }, { classes: ["gum", "skill-category-preview-dialog"], width: 520 }).render(true);
     });
 }
 
@@ -2700,6 +2703,42 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
         const currentMode = this.actor.getFlag('gum', 'skillsViewMode') || 'group';
         const newMode = currentMode === 'group' ? 'tree' : 'group';
         await this.actor.setFlag('gum', 'skillsViewMode', newMode);
+    });
+
+    html.find('.skill-search-input').on('input', ev => {
+        const normalize = value => String(value ?? "").normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().trim();
+        const query = normalize(ev.currentTarget.value);
+        const sections = html.find('.skills-scroll-area .skill-tree-group');
+        let totalMatches = 0;
+
+        sections.each((_, element) => {
+            const details = element;
+            const cards = $(details).find('.skill-tree-item');
+            let sectionMatches = 0;
+            cards.each((__, card) => {
+                const matches = !query || normalize($(card).find('.st-item-name h4').text()).includes(query);
+                card.hidden = !matches;
+                if (matches) sectionMatches += 1;
+            });
+            details.hidden = Boolean(query) && sectionMatches === 0;
+            totalMatches += sectionMatches;
+
+            if (query) {
+                if (!details.dataset.skillSearchManaged) {
+                    details.dataset.skillSearchWasOpen = String(details.open);
+                    details.dataset.skillSearchManaged = 'true';
+                }
+                if (sectionMatches) details.open = true;
+            } else if (details.dataset.skillSearchManaged) {
+                details.open = details.dataset.skillSearchWasOpen === 'true';
+                setTimeout(() => {
+                    delete details.dataset.skillSearchManaged;
+                    delete details.dataset.skillSearchWasOpen;
+                }, 0);
+            }
+        });
+
+        html.find('.skills-search-empty').prop('hidden', !query || totalMatches > 0);
     });
 
     html.find('.skill-tree-summary').click(ev => {
@@ -4159,6 +4198,7 @@ _renderQuickView(item) {
    */
   async _onDetailsToggle(event) {
     const details = event.currentTarget;
+    if (details.dataset.skillSearchManaged === 'true') return;
     
     // Verifica se o elemento tem um ID de grupo para salvar
     const groupId = details.dataset.groupId;

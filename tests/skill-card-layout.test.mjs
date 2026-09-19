@@ -29,6 +29,22 @@ test("the group view exposes hybrid organization without deriving visual groups 
   assert.match(styles, /\.skill-category-preview__row/);
 });
 
+test("skill group tools keep actions together and the count last", () => {
+  assert.match(skillTab, /skill-group-header-tools[\s\S]*skill-group-actions[\s\S]*st-group-count/);
+  assert.match(styles, /\.skill-group-header-tools\s*\{[^}]*margin-left:\s*auto;/s);
+});
+
+test("the skill toolbar relies on import and grouping rather than direct item creation", () => {
+  assert.match(skillTab, /skill-search-input/);
+  assert.doesNotMatch(skillTab, /class="item-create" data-type="skill"/);
+});
+
+test("category preview dialog has a scoped dark layout and primary action", () => {
+  assert.match(styles, /\.dialog\.gum\.skill-category-preview-dialog \.window-content/);
+  assert.match(styles, /\.skill-category-preview__intro/);
+  assert.match(styles, /button\[data-button="apply"\]/);
+});
+
 test("skill cards expose compact mechanics and a dedicated control footer", () => {
   assert.match(actorSheet, /points:\s*useTreeFields\s*\?/);
   assert.match(skillTab, /title="Pontos investidos">\{\{this\.skillListDisplay\.points\}\} pts/);

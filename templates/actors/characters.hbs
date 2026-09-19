@@ -787,7 +787,7 @@
       <div class="skills-header-tools">
           <div class="skills-search-wrapper">
               <i class="fas fa-search"></i>
-              <input type="text" name="search" placeholder="Buscar perícia..." autocomplete="off">
+              <input type="text" class="skill-search-input" name="search" placeholder="Buscar perícia..." autocomplete="off">
           </div>
           
           <div class="skills-header-buttons">
@@ -804,7 +804,6 @@
               <a class="create-skill-group" title="Criar grupo de perícias"><i class="fas fa-folder-plus"></i> Grupo</a>
               {{#if @root.hasSkillCategorySuggestions}}<a class="suggest-skill-groups" title="Prévia de grupos a partir das categorias conceituais das perícias"><i class="fas fa-wand-magic-sparkles"></i> Categorias</a>{{/if}}
               {{/if}}
-              <a class="item-create" data-type="skill" title="Nova Perícia"><i class="fas fa-plus"></i> Nova</a>
               <a class="sort-control" data-item-type="skill" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
           </div>
       </div>
@@ -825,11 +824,13 @@
                         <i class="fas fa-chevron-right st-icon"></i>
                         <span class="st-group-title">{{section.name}}</span>
                     </div>
-                    <span class="st-group-count">{{section.skills.length}}</span>
-                    {{#unless section.isTree}}{{#unless section.isUngrouped}}<span class="skill-group-actions">
-                        <a class="rename-skill-group" data-group-id="{{section.id}}" title="Renomear grupo"><i class="fas fa-pen"></i></a>
-                        <a class="delete-skill-group" data-group-id="{{section.id}}" title="Excluir grupo"><i class="fas fa-trash"></i></a>
-                    </span>{{/unless}}{{/unless}}
+                    <span class="skill-group-header-tools">
+                        {{#unless section.isTree}}{{#unless section.isUngrouped}}<span class="skill-group-actions">
+                            <a class="rename-skill-group" data-group-id="{{section.id}}" title="Renomear grupo"><i class="fas fa-pen"></i></a>
+                            <a class="delete-skill-group" data-group-id="{{section.id}}" title="Excluir grupo"><i class="fas fa-trash"></i></a>
+                        </span>{{/unless}}{{/unless}}
+                        <span class="st-group-count">{{section.skills.length}}</span>
+                    </span>
                 </summary>
 
             <ul class="skill-tree-list group-content" data-organizer-zone data-organizer-group-id="{{section.id}}">
@@ -893,6 +894,8 @@
                 </ul>
             </details>
         {{/each}}
+
+        <div class="skills-search-empty" hidden>Nenhuma perícia encontrada.</div>
 
         {{!-- Vazio --}}
         {{#unless @root.hasSkills}}
