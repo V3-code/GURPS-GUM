@@ -17,6 +17,9 @@ test("Mensagem de Chat com teste usa o mesmo padrão e preserva sua mensagem", (
   assert.match(resolved, /A ponte está cedendo/);
   assert.match(resolved, /gum-roll-request-button[^>]*disabled/);
   assert.ok(resolved.indexOf("gum-roll-request-button") < resolved.indexOf("gum-request-inline-result"));
+  assert.match(resolved, /request-result-resolved[^>]*>Resolvido/);
+  assert.match(resolved, /gum-request-result-block success[^>]*><strong>Sucesso<\/strong><span>Margem 2<\/span>/);
+  assert.doesNotMatch(resolved, /<details open>/);
 });
 
 test("resultado é acrescentado abaixo do botão sem substituir o card solicitado", () => {
@@ -25,5 +28,7 @@ test("resultado é acrescentado abaixo do botão sem substituir o card solicitad
   assert.match(resolved, /gum-test-request gum-resistance-request/);
   assert.match(resolved, /resistance-roll-button[^>]*disabled/);
   assert.match(resolved, /gum-request-inline-result/);
+  assert.match(resolved, /gum-request-result-block failure[^>]*><strong>Falha<\/strong><span>Margem -2<\/span>/);
+  assert.match(resolved, /<details><summary>Detalhes da rolagem<\/summary>/);
   assert.ok(resolved.indexOf("resistance-roll-button") < resolved.indexOf("gum-request-inline-result"));
 });
