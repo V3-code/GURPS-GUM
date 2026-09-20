@@ -833,6 +833,8 @@ async getData(options) {
                 const currentWeight = getContainerContentsWeight(item.id);
                 const maxWeight = Number(s.container?.max_weight || 0);
                 const overweight = Math.max(0, currentWeight - maxWeight);
+                s.container_current_weight_value = currentWeight;
+                s.container_max_weight_value = maxWeight;
                 s.container_current_weight = currentWeight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
                 s.container_overweight = overweight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
                 s.container_is_overweight = maxWeight > 0 && overweight > 0;

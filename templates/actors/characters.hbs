@@ -1193,7 +1193,7 @@
                             <span title="Peso do próprio container"><i class="fas fa-weight-hanging"></i> Peso: {{this.container.system.total_weight}} kg</span>
                             <span class="container-load-value {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}">Carga: {{this.container.system.container_current_weight}} / {{this.container.system.container.max_weight}} kg</span>
                         </div>
-                        <div class="container-capacity-meter {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}" role="progressbar" aria-label="Carga do container" aria-valuenow="{{this.container.system.container_current_weight}}" aria-valuemax="{{this.container.system.container.max_weight}}">
+                        <div class="container-capacity-meter {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}" role="progressbar" aria-label="Carga do container" aria-valuenow="{{this.container.system.container_current_weight_value}}" aria-valuemax="{{this.container.system.container_max_weight_value}}">
                             <span style="width: {{this.container.system.container_fill_percent}}%;"></span>
                         </div>
                     </div>
@@ -1286,7 +1286,7 @@
                             <span title="Peso do próprio container"><i class="fas fa-weight-hanging"></i> Peso: {{this.container.system.total_weight}} kg</span>
                             <span class="container-load-value {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}">Carga: {{this.container.system.container_current_weight}} / {{this.container.system.container.max_weight}} kg</span>
                         </div>
-                        <div class="container-capacity-meter {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}" role="progressbar" aria-label="Carga do container" aria-valuenow="{{this.container.system.container_current_weight}}" aria-valuemax="{{this.container.system.container.max_weight}}">
+                        <div class="container-capacity-meter {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}" role="progressbar" aria-label="Carga do container" aria-valuenow="{{this.container.system.container_current_weight_value}}" aria-valuemax="{{this.container.system.container_max_weight_value}}">
                             <span style="width: {{this.container.system.container_fill_percent}}%;"></span>
                         </div>
                     </div>
@@ -1377,7 +1377,7 @@
                             <span title="Peso do próprio container"><i class="fas fa-weight-hanging"></i> Peso: {{this.container.system.total_weight}} kg</span>
                             <span class="container-load-value {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}">Carga: {{this.container.system.container_current_weight}} / {{this.container.system.container.max_weight}} kg</span>
                         </div>
-                        <div class="container-capacity-meter {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}" role="progressbar" aria-label="Carga do container" aria-valuenow="{{this.container.system.container_current_weight}}" aria-valuemax="{{this.container.system.container.max_weight}}">
+                        <div class="container-capacity-meter {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}" role="progressbar" aria-label="Carga do container" aria-valuenow="{{this.container.system.container_current_weight_value}}" aria-valuemax="{{this.container.system.container_max_weight_value}}">
                             <span style="width: {{this.container.system.container_fill_percent}}%;"></span>
                         </div>
                     </div>

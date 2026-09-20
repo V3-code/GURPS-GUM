@@ -21,6 +21,11 @@ test("character tabs follow the requested workflow", () => {
 test("equipment containers expose weight, capacity and drop zones", () => {
   assert.match(template, /Peso: \{\{this\.container\.system\.total_weight\}\} kg/);
   assert.match(template, /container-capacity-meter/);
+  assert.match(template, /aria-valuenow="\{\{this\.container\.system\.container_current_weight_value\}\}"/);
+  assert.match(template, /aria-valuemax="\{\{this\.container\.system\.container_max_weight_value\}\}"/);
+  assert.doesNotMatch(template, /aria-valuenow="\{\{this\.container\.system\.container_current_weight\}\}"/);
+  assert.match(actorSheet, /s\.container_current_weight_value = currentWeight/);
+  assert.match(actorSheet, /s\.container_max_weight_value = maxWeight/);
   assert.match(template, /Container vazio — arraste itens para cá/);
   assert.match(template, /data-organizer-group-id="container:\{\{this\.container\._id\}\}"/);
   assert.match(template, /data-organizer-group-id="carried"/);
