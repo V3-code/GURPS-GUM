@@ -30,4 +30,10 @@ test("a janela de destino usa formulário e seletor visual de modo", () => {
   assert.match(importer, /gum-compendium-import-form/);
   assert.match(importer, /gum-import-mode-picker/);
   assert.match(importer, /gum-compendium-import-dialog/);
+  assert.match(importer, /classes: \["dialog", "gum", "gum-compendium-import-dialog"\]/);
+});
+
+test("o diretório de atores usa o nome de ação orientado ao personagem", () => {
+  assert.match(main, /Importar Personagem/);
+  assert.doesNotMatch(main, /> Importar do GCS/);
 });

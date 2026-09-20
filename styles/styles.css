@@ -9948,8 +9948,44 @@ background-color: var(--gum-accent-gold);
   margin: 0;
 }
 
-.gum-compendium-import-dialog .window-content {
-  padding: 0.9rem;
+.dialog.gum.gum-compendium-import-dialog {
+  overflow: hidden;
+  border: 1px solid rgba(197, 160, 91, 0.42);
+  border-radius: 7px;
+  background: #1f232a;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.55);
+}
+
+.dialog.gum.gum-compendium-import-dialog .window-header {
+  flex: 0 0 38px;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 0;
+  border-bottom: 1px solid rgba(181, 151, 83, 0.3);
+  background: linear-gradient(180deg, #18191d, #111216);
+  color: #d9c48f;
+}
+
+.dialog.gum.gum-compendium-import-dialog .window-title {
+  font-family: var(--gum-font-condensed);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dialog.gum.gum-compendium-import-dialog .header-button {
+  color: #aa956b;
+}
+
+.dialog.gum.gum-compendium-import-dialog .window-content {
+  padding: 0;
+  background: linear-gradient(180deg, #242831, #1d2026);
+  color: #e7e1d8;
+}
+
+.dialog.gum.gum-compendium-import-dialog .dialog-content {
+  padding: 14px 16px 10px;
 }
 
 .gum-compendium-import-form {
@@ -9964,13 +10000,14 @@ background-color: var(--gum-accent-gold);
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem;
-  border: 1px solid var(--color-border-light-2, #777);
+  border: 1px solid rgba(197, 160, 91, 0.22);
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(197, 160, 91, 0.055);
 }
 
 .gum-import-file-summary > i,
 .gum-import-destination-summary > i {
+  color: #c5a05b;
   font-size: 1.4rem;
 }
 
@@ -9983,6 +10020,7 @@ background-color: var(--gum-accent-gold);
 
 .gum-import-file-summary small,
 .gum-import-destination-summary small {
+  color: #aaa6a0;
   opacity: 0.75;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -10008,21 +10046,67 @@ background-color: var(--gum-accent-gold);
   gap: 0.45rem;
   min-height: 2.25rem;
   padding: 0.35rem 0.6rem;
-  border: 1px solid var(--color-border-light-2, #777);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 5px;
+  background: #2c313a;
+  color: #d5d0c8;
   cursor: pointer;
 }
 
 .gum-import-mode-picker input:checked + span {
-  border-color: var(--color-warm-1, #c9a36a);
-  box-shadow: 0 0 0 1px var(--color-warm-1, #c9a36a) inset;
-  background: rgba(201, 163, 106, 0.12);
+  border-color: rgba(197, 160, 91, 0.72);
+  box-shadow: 0 0 0 1px rgba(197, 160, 91, 0.2) inset;
+  background: rgba(197, 160, 91, 0.16);
+  color: #f0e8dc;
 }
 
-.gum-compendium-import-dialog .form-group {
+.dialog.gum.gum-compendium-import-dialog .form-group {
   margin: 0;
 }
 
-.gum-compendium-import-dialog .dialog-buttons {
-  margin-top: 0.9rem;
+.dialog.gum.gum-compendium-import-dialog .form-group > label {
+  color: #bdb6ac;
+  font-family: var(--gum-font-condensed);
+}
+
+.dialog.gum.gum-compendium-import-dialog select,
+.dialog.gum.gum-compendium-import-dialog input[type="text"] {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 5px;
+  background: #2c313a;
+  color: #eee8df;
+  box-shadow: none;
+}
+
+.dialog.gum.gum-compendium-import-dialog .dialog-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 16px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: #191b20;
+}
+
+.dialog.gum.gum-compendium-import-dialog .dialog-buttons button {
+  min-height: 32px;
+  margin: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  background: #303640;
+  color: #cbc7c0;
+  box-shadow: none;
+  font-family: var(--gum-font-condensed);
+  text-transform: uppercase;
+}
+
+.dialog.gum.gum-compendium-import-dialog .dialog-buttons button[data-button="import"] {
+  border-color: rgba(197, 160, 91, 0.62);
+  background: #a7884e;
+  color: #191817;
+  font-weight: 700;
+}
+
+.dialog.gum.gum-compendium-import-dialog .dialog-buttons button:hover {
+  filter: brightness(1.1);
 }

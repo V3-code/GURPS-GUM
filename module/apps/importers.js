@@ -214,7 +214,7 @@ let importEntries = [];
                 html.find(`[data-destination="${mode}"]`).show();
             })
         }, {
-            classes: ["gum", "gum-compendium-import-dialog"],
+            classes: ["dialog", "gum", "gum-compendium-import-dialog"],
             width: 520
         }).render(true);
     };
