@@ -2887,22 +2887,24 @@ Hooks.on("renderActorDirectory", (app, html, data) => {
         // Exibe para mestres e para jogadores autorizados a criar atores.
         if (!canUserCreateActors(game.user)) return;
 
-        const button = $(`
-            <button class="gcs-import-button" type="button" style="width: 100%; margin-bottom: 5px;">
-                <i class="fas fa-file-import"></i> Importar do GCS
+        const root = html?.querySelector ? html : html?.[0];
+        const headerActions = root?.querySelector?.(".directory-header .header-actions");
+        if (!headerActions || root.querySelector(".gcs-import-button")) return;
+        const row = document.createElement("div");
+        row.className = "gum-directory-import-actions";
+        row.innerHTML = `
+            <button class="gcs-import-button" type="button">
+                <i class="fas fa-file-import"></i> Importar Personagem
             </button>
-        `);
+        `;
+        const button = row.querySelector("button");
         
-        button.on("click", () => {
+        button.addEventListener("click", () => {
             // Chama a função de importação que está em importers.js
             game.gum.importFromGCS();
         });
 
-        // ✅ A CORREÇÃO REAL ESTÁ AQUI:
-        // Usamos $(html) em vez de $(html[0]).
-        // Isso lida corretamente com o parâmetro 'html'
-        // e permite o uso da função .find().
-        $(html).find(".directory-header .header-actions").append(button);
+        headerActions.append(row);
     });
 
 });
