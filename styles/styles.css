@@ -10137,3 +10137,85 @@ background-color: var(--gum-accent-gold);
 .dialog.gum.gum-compendium-import-dialog .dialog-buttons button:hover {
   filter: brightness(1.1);
 }
+
+/* Equipment containers and equipment drag-and-drop */
+.gum.sheet.actor .sheet-tabs .item i { font-size: 19px; }
+
+.gum.sheet.actor .container-section {
+  margin-top: 12px;
+  padding: 8px;
+  border: 1px solid rgba(197, 160, 91, 0.24);
+  border-radius: 9px;
+  background: rgba(9, 12, 16, 0.22);
+}
+
+.gum.sheet.actor .container-section-header {
+  gap: 10px;
+  margin-bottom: 7px;
+  padding: 9px 10px;
+  border-color: rgba(197, 160, 91, 0.22);
+  border-radius: 7px;
+  background: linear-gradient(135deg, rgba(197,160,91,0.09), rgba(255,255,255,0.025));
+  cursor: grab;
+}
+
+.gum.sheet.actor .container-section-header-main {
+  flex: 1;
+  min-width: 0;
+  gap: 4px;
+}
+
+.gum.sheet.actor .container-kind-icon {
+  flex: 0 0 auto;
+  margin-right: 5px;
+  color: var(--gum-accent-gold);
+  font-size: 19px;
+}
+
+.gum.sheet.actor .container-heading-copy { flex: 1; min-width: 0; }
+.gum.sheet.actor .container-heading-line,
+.gum.sheet.actor .container-capacity-line { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.gum.sheet.actor .container-title { color: var(--gum-text-claro); }
+.gum.sheet.actor .container-kind-label,
+.gum.sheet.actor .container-item-count {
+  padding: 1px 6px;
+  border: 1px solid rgba(197,160,91,0.3);
+  border-radius: 999px;
+  color: var(--gum-text-subtitulo);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.gum.sheet.actor .container-item-count { border-color: rgba(255,255,255,.13); text-transform: none; }
+.gum.sheet.actor .container-capacity-line {
+  justify-content: space-between;
+  margin-top: 4px;
+  color: var(--gum-text-medio);
+  font-size: 10px;
+  font-weight: 500;
+}
+.gum.sheet.actor .container-load-value.is-overweight { color: #e58b8b; font-weight: 700; }
+.gum.sheet.actor .container-capacity-meter {
+  height: 3px;
+  margin-top: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255,255,255,.1);
+}
+.gum.sheet.actor .container-capacity-meter span { display: block; height: 100%; background: var(--gum-accent-gold); }
+.gum.sheet.actor .container-capacity-meter.is-overweight span { background: #c75b62; }
+.gum.sheet.actor .container-empty-state {
+  width: 100%;
+  padding: 13px 8px;
+  color: var(--gum-text-medio);
+  border: 1px dashed rgba(197,160,91,.3);
+  border-radius: 6px;
+  font-size: 10px;
+  text-align: center;
+}
+.gum.sheet.actor .equipment-drop-zone { min-height: 38px; }
+.gum.sheet.actor .equipment-drop-zone.is-organizer-drop-target {
+  background: rgba(197,160,91,.1) !important;
+  box-shadow: inset 0 0 0 1px rgba(197,160,91,.55) !important;
+}

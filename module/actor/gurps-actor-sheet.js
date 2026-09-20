@@ -15,6 +15,7 @@ import { resolveAttackDamageDisplay } from "../utils/attack-damage-display.mjs";
 import { canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
 import { contentSourceService } from "../services/content-source-service.mjs";
 import { attachSheetItemOrganizer } from "../services/sheet-item-organizer.mjs";
+import { resolveEquipmentDrop } from "../utils/equipment-drop.mjs";
 import { UNGROUPED_ORGANIZER_ID, addItemOrganizationGroup, buildItemCategoryGroupPlan, createGroupsFromItemCategories, moveOrganizedItem, normalizeItemOrganization, removeItemOrganizationGroup, renameItemOrganizationGroup } from "../utils/item-organization.mjs";
 
 const WOUND_NATURE_ICONS = Object.freeze({
@@ -835,6 +836,7 @@ async getData(options) {
                 s.container_current_weight = currentWeight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
                 s.container_overweight = overweight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
                 s.container_is_overweight = maxWeight > 0 && overweight > 0;
+                s.container_fill_percent = maxWeight > 0 ? Math.min(100, (currentWeight / maxWeight) * 100) : 0;
                 s.is_container_collapsed = collapsedContainers[item.id] === true;
             }
 
@@ -891,7 +893,8 @@ async getData(options) {
             const looseItems = list.filter(i => !i.system?.is_container);
             const containers = list.filter(i => i.system?.is_container).map(container => ({
                 container,
-                children: container.system?.container_children || []
+                children: container.system?.container_children || [],
+                childCount: (container.system?.container_children || []).length
             }));
             return { looseItems, containers };
         };
@@ -2915,6 +2918,49 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
             const { characteristics, organization } = this._getCharacteristicOrganizationState();
             const updated = moveOrganizedItem(organization, { itemId, targetGroupId, targetIndex }, characteristics.map(item => item.id));
             await this._saveCharacteristicOrganization(updated);
+        }
+    });
+
+    this._equipmentOrganizerCleanup?.();
+    this._equipmentOrganizerCleanup = attachSheetItemOrganizer(html[0], {
+        actorUuid: this.actor.uuid,
+        namespace: 'equipment',
+        acceptedItemTypes: ['equipment', 'melee_weapon', 'ranged_weapon'],
+        itemSelector: '[data-tab="equipment"] [data-organizer-item-id]',
+        zoneSelector: '[data-tab="equipment"] [data-organizer-zone]',
+        onMove: async ({ itemId, targetGroupId }) => {
+            const item = this.actor.items.get(itemId);
+            if (!item) return;
+
+            const containerId = targetGroupId.startsWith('container:')
+                ? targetGroupId.slice('container:'.length)
+                : '';
+            const container = containerId ? this.actor.items.get(containerId) : null;
+            const update = resolveEquipmentDrop(item, targetGroupId, { container });
+            if (!update) {
+                ui.notifications.warn(item.system?.is_container
+                    ? 'Containers não podem ser colocados dentro de outros containers.'
+                    : 'Este não é um destino válido para o equipamento.');
+                return;
+            }
+
+            const updates = [update];
+            if (item.system?.is_container && !container) {
+                const descendants = this._getContainerDescendants(item.id);
+                updates.push(...descendants.map(descendant => ({
+                    _id: descendant.id,
+                    'system.location': targetGroupId,
+                    'system.equipped': targetGroupId === 'equipped',
+                    'system.stored': targetGroupId === 'stored'
+                })));
+            }
+            await this.actor.updateEmbeddedDocuments('Item', updates);
+            const destination = container?.name || ({
+                equipped: 'Em Uso',
+                carried: 'Carregando',
+                stored: 'Armazenado'
+            })[targetGroupId];
+            ui.notifications.info(`${item.name} movido para ${destination}.`);
         }
     });
 
