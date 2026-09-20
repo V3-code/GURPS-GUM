@@ -2969,12 +2969,6 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
                 }
             }
             await this.actor.updateEmbeddedDocuments('Item', [...updatesById.values()]);
-            const destination = container?.name || ({
-                equipped: 'Em Uso',
-                carried: 'Carregando',
-                stored: 'Armazenado'
-            })[targetGroupId];
-            ui.notifications.info(`${item.name} movido para ${destination}.`);
         }
     });
 
