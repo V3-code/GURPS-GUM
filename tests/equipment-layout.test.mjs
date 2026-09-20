@@ -24,6 +24,8 @@ test("equipment containers expose weight, capacity and drop zones", () => {
   assert.match(template, /aria-valuenow="\{\{this\.container\.system\.container_current_weight_value\}\}"/);
   assert.match(template, /aria-valuemax="\{\{this\.container\.system\.container_max_weight_value\}\}"/);
   assert.doesNotMatch(template, /aria-valuenow="\{\{this\.container\.system\.container_current_weight\}\}"/);
+  assert.equal((template.match(/\{\{#if \(gt this\.container\.system\.container_max_weight_value 0\)\}\}\r?\n\s*<div class="container-capacity-meter/g) || []).length, 3);
+  assert.equal((template.match(/sem limite definido/g) || []).length, 3);
   assert.match(actorSheet, /s\.container_current_weight_value = currentWeight/);
   assert.match(actorSheet, /s\.container_max_weight_value = maxWeight/);
   assert.match(template, /Container vazio — arraste itens para cá/);
