@@ -9935,3 +9935,14 @@ background-color: var(--gum-accent-gold);
     .gum.sheet.actor .characteristics-search-wrapper { max-width: none; }
     .gum.sheet.actor .tab[data-tab="characteristics"] .characteristic-group-content { grid-template-columns: 1fr; }
 }
+.gum-directory-import-actions {
+  display: flex;
+  flex: 0 0 100%;
+  width: 100%;
+  margin: 0.25rem 0;
+}
+
+.gum-directory-import-actions > button {
+  width: 100%;
+  margin: 0;
+}

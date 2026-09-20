@@ -3,11 +3,40 @@ import { getBodyLocationDefinition, getBodyProfile } from "../config/body-profil
 import { buildGCSActorReconciliation } from "../utils/gcs-actor-reconciliation.mjs";
 import { canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
 import { contentSourceService } from "../services/content-source-service.mjs";
+import { prepareGCSActorItemChanges } from "../utils/gcs-container-reconciliation.mjs";
+
+const GCS_LIBRARY_TYPES_BY_EXTENSION = {
+    skl: "skill", spl: "spell", eqp: "equipment", adq: "advantage",
+    adm: "modifier", eqm: "eqp_modifier"
+};
+
+function inferGCSLibraryItemType(extension, importEntries, pack = null) {
+    const packType = {
+        skills: "skill", advantages: "advantage", disadvantages: "disadvantage",
+        spells: "spell", powers: "power", equipment: "equipment",
+        modifiers: "modifier", eqp_modifiers: "eqp_modifier"
+    }[pack?.metadata?.name];
+    return packType || GCS_LIBRARY_TYPES_BY_EXTENSION[extension] || importEntries[0]?.itemData?.type || null;
+}
+
+function slugifyCompendiumName(label) {
+    const nativeSlug = typeof label.slugify === "function" ? label.slugify() : String(label)
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    return nativeSlug || `biblioteca-${Date.now()}`;
+}
+
+async function createWorldItemCompendium(label) {
+    let name = slugifyCompendiumName(label);
+    let suffix = 2;
+    while (game.packs.get(`world.${name}`)) name = `${slugifyCompendiumName(label)}-${suffix++}`;
+    return CompendiumCollection.createCompendium({ label, name, type: "Item", package: "world" });
+}
 /**
  * Lida com a importação de um arquivo JSON (formato customizado) OU
  * um arquivo de Biblioteca GCS (.skl, .spl, .eqp, .adq, .adm, .eqm) para um compêndio.
  */
-export async function importFromJson() {
+export async function importFromJson({ pack: fixedPack = null } = {}) {
     // 1. Cria um elemento <input> de arquivo, escondido
     const input = document.createElement('input');
     input.type = 'file';
@@ -91,26 +120,48 @@ let importEntries = [];
 
         // 6. Pergunta ao usuário para qual compêndio importar
         const allItemPacks = game.packs.filter(p => p.metadata.type === "Item");
-        if (allItemPacks.length === 0) {
-            return ui.notifications.error("Nenhum compêndio de Itens encontrado no mundo.");
-        }
 
         const packOptions = allItemPacks.map(pack => {
             return `<option value="${pack.collection}">${pack.title}</option>`;
         }).join('');
+
+        const inferredType = inferGCSLibraryItemType(extension, importEntries, fixedPack);
+        const typeField = GCS_LIBRARY_TYPES_BY_EXTENSION[extension] ? `
+            <div class="form-group">
+                <label>Tipo da biblioteca:</label>
+                <select name="library-item-type">
+                    ${[
+                        ["skill", "Perícias"], ["spell", "Magias"], ["equipment", "Equipamentos"],
+                        ["advantage", "Vantagens"], ["disadvantage", "Desvantagens"],
+                        ["modifier", "Modificadores"], ["eqp_modifier", "Modificadores de equipamento"]
+                    ].map(([value, label]) => `<option value="${value}" ${value === inferredType ? "selected" : ""}>${label}</option>`).join("")}
+                </select>
+            </div>` : "";
+        const canCreatePack = Boolean(game.user?.isGM && !fixedPack);
+        const destinationFields = fixedPack ? `
+            <p>Destino: <strong>${escapeImportHTML(fixedPack.title)}</strong></p>
+        ` : `
+            <div class="form-group">
+                <label>Destino:</label>
+                <select name="destination-mode">
+                    ${allItemPacks.length ? '<option value="existing">Compêndio existente</option>' : ''}
+                    ${canCreatePack ? '<option value="new">Criar novo compêndio</option>' : ''}
+                </select>
+            </div>
+            ${allItemPacks.length ? `<div class="form-group" data-destination="existing">
+                <label>Compêndio:</label><select name="compendium-target">${packOptions}</select>
+            </div>` : ""}
+            ${canCreatePack ? `<div class="form-group" data-destination="new" ${allItemPacks.length ? 'style="display:none"' : ''}>
+                <label>Nome do novo compêndio:</label><input type="text" name="new-compendium-name" value="${escapeImportHTML(file.name.replace(/\.[^.]+$/, ""))}">
+            </div>` : ""}`;
 
         new Dialog({
             title: "Selecionar Destino da Importação",
             content: `
                 <div style="padding: 10px 0;">
                     <p>Encontrados <strong>${importEntries.length}</strong> itens no arquivo JSON.</p>
-                    <p>Por favor, escolha o compêndio de destino:</p>
-                    <div class="form-group" style="margin-top: 10px;">
-                        <label style="font-weight: bold;">Compêndio:</label>
-                        <select name="compendium-target" style="width: 100%;">
-                            ${packOptions}
-                    </select>
-                    </div>
+                    ${typeField}
+                    ${destinationFields}
                     ${isCompendiumJson ? `
                     <div class="form-group" style="margin-top: 10px;">
                         <label>
@@ -125,19 +176,24 @@ let importEntries = [];
                     icon: '<i class="fas fa-file-import"></i>',
                     label: "Importar",
                     callback: async (html) => {
-                        const packName = html.find('select[name="compendium-target"]').val();
-                        if (!packName) return;
-
-                        const pack = game.packs.get(packName);
+                        const mode = fixedPack ? "fixed" : html.find('[name="destination-mode"]').val();
+                        let pack = fixedPack;
+                        if (mode === "existing") pack = game.packs.get(html.find('[name="compendium-target"]').val());
+                        if (mode === "new") {
+                            const label = String(html.find('[name="new-compendium-name"]').val() || "").trim();
+                            if (!label) return ui.notifications.error("Informe um nome para o novo compêndio.");
+                            pack = await createWorldItemCompendium(label);
+                        }
                         if (!pack) {
-                            return ui.notifications.error(`Erro: Compêndio "${packName}" não pôde ser encontrado.`);
+                            return ui.notifications.error("O compêndio de destino não pôde ser encontrado.");
                         }
                         
                         if (isCompendiumJson) {
                            const removeMissing = Boolean(html.find('input[name="remove-missing"]').prop('checked'));
                            await synchronizeCompendiumJson(pack, importEntries, { removeMissing });
                        } else {
-                           await importToCompendium(pack, importEntries);
+                           const selectedType = html.find('[name="library-item-type"]').val() || inferredType;
+                           await importToCompendium(pack, importEntries, { itemType: selectedType });
                        }
                     }
                 },
@@ -146,7 +202,12 @@ let importEntries = [];
                     label: "Cancelar"
                 }
             },
-            default: "import"
+            default: "import",
+            render: html => html.find('[name="destination-mode"]').on("change", event => {
+                const mode = event.currentTarget.value;
+                html.find('[data-destination]').hide();
+                html.find(`[data-destination="${mode}"]`).show();
+            })
         }).render(true);
     };
 
@@ -158,7 +219,7 @@ let importEntries = [];
  * Função auxiliar que TRADUZ e importa os dados para um compêndio.
  * (VERSÃO 3 - CORRIGIDA)
  */
-async function importToCompendium(pack, importEntries) {
+async function importToCompendium(pack, importEntries, { itemType: requestedItemType = null } = {}) {
     if (!pack || !importEntries) return;
     
     ui.notifications.info(`Traduzindo ${importEntries.length} itens do GCS/JSON...`);
@@ -177,7 +238,7 @@ async function importToCompendium(pack, importEntries) {
         "eqp_modifiers": "eqp_modifier"
     };
 
-    let itemType = packNameToType[packName];
+    let itemType = requestedItemType || packNameToType[packName];
     let isGenericJson = false;
     
     if (!itemType) {
@@ -363,21 +424,11 @@ async function updateActorFromGCS(actor, actorData, fileName) {
         }
     });
 
-    const additions = plan.additions
-        .filter((entry, index) => selection.additions.has(index))
-        .map(entry => {
-            const data = foundry.utils.deepClone(entry);
-            delete data._id;
-            return data;
-        });
-    const updates = plan.updates
-        .filter((entry, index) => selection.updates.has(index))
-        .map(({ existing, incoming }) => ({ ...foundry.utils.deepClone(incoming), _id: existing.id || existing._id }));
-    const removals = plan.removals
-        .filter((entry, index) => selection.removals.has(index))
-        .map(entry => entry.id || entry._id);
+    const { additions, updates, removals } = prepareGCSActorItemChanges(plan, selection, {
+        randomID: () => foundry.utils.randomID()
+    });
 
-    if (additions.length) await actor.createEmbeddedDocuments("Item", additions);
+    if (additions.length) await actor.createEmbeddedDocuments("Item", additions, { keepId: true });
     if (updates.length) await actor.updateEmbeddedDocuments("Item", updates);
     if (removals.length) await actor.deleteEmbeddedDocuments("Item", removals);
     return true;
@@ -3765,9 +3816,23 @@ async function exportSelectedCompendium(pack) {
 }
 
 Hooks.on("getCompendiumDirectoryEntryContext", (_html, options) => {
-    if (options.some(option => option.name === "Exportar Compêndio")) return;
+    if (!options.some(option => option.name === "Importar biblioteca neste compêndio")) {
+        options.push({
+            name: "Importar biblioteca neste compêndio",
+            icon: '<i class="fas fa-file-import"></i>',
+            condition: entry => {
+                const pack = game.packs.get(getContextCompendiumCollection(entry));
+                return Boolean(game.user?.isGM && pack?.metadata.type === "Item");
+            },
+            callback: entry => {
+                const pack = game.packs.get(getContextCompendiumCollection(entry));
+                if (!pack) return ui.notifications.error("Não foi possível identificar o compêndio selecionado.");
+                return importFromJson({ pack });
+            }
+        });
+    }
 
-    options.push({
+    if (!options.some(option => option.name === "Exportar Compêndio")) options.push({
         name: "Exportar Compêndio",
         icon: '<i class="fas fa-file-export"></i>',
         condition: entry => {
@@ -3781,6 +3846,21 @@ Hooks.on("getCompendiumDirectoryEntryContext", (_html, options) => {
             return exportSelectedCompendium(pack);
         }
     });
+});
+
+Hooks.on("renderCompendiumDirectory", (_app, html) => {
+    if (!game.user?.isGM) return;
+    const root = html?.querySelector ? html : html?.[0];
+    const headerActions = root?.querySelector?.(".directory-header .header-actions");
+    if (!headerActions || root.querySelector(".gum-compendium-import-button")) return;
+
+    const row = document.createElement("div");
+    row.className = "gum-directory-import-actions";
+    row.innerHTML = `<button class="gum-compendium-import-button" type="button">
+        <i class="fas fa-file-import"></i> Importar biblioteca
+    </button>`;
+    row.querySelector("button").addEventListener("click", () => importFromJson());
+    headerActions.insertAdjacentElement("afterend", row);
 });
 
 function getContextCompendiumCollection(entry) {
