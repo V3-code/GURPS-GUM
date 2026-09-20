@@ -15,6 +15,7 @@ import { resolveAttackDamageDisplay } from "../utils/attack-damage-display.mjs";
 import { canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
 import { contentSourceService } from "../services/content-source-service.mjs";
 import { attachSheetItemOrganizer } from "../services/sheet-item-organizer.mjs";
+import { buildEquipmentSortUpdates, resolveEquipmentDrop } from "../utils/equipment-drop.mjs";
 import { UNGROUPED_ORGANIZER_ID, addItemOrganizationGroup, buildItemCategoryGroupPlan, createGroupsFromItemCategories, moveOrganizedItem, normalizeItemOrganization, removeItemOrganizationGroup, renameItemOrganizationGroup } from "../utils/item-organization.mjs";
 
 const WOUND_NATURE_ICONS = Object.freeze({
@@ -832,9 +833,17 @@ async getData(options) {
                 const currentWeight = getContainerContentsWeight(item.id);
                 const maxWeight = Number(s.container?.max_weight || 0);
                 const overweight = Math.max(0, currentWeight - maxWeight);
+                s.container_current_weight_value = currentWeight;
+                s.container_max_weight_value = maxWeight;
                 s.container_current_weight = currentWeight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+                s.container_max_weight = maxWeight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
                 s.container_overweight = overweight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
                 s.container_is_overweight = maxWeight > 0 && overweight > 0;
+                s.container_progress_value = maxWeight > 0 ? Math.min(currentWeight, maxWeight) : 0;
+                s.container_aria_value_text = maxWeight > 0
+                    ? `${s.container_current_weight} kg de ${s.container_max_weight} kg${s.container_is_overweight ? ", acima da capacidade" : ""}`
+                    : "Capacidade não definida";
+                s.container_fill_percent = maxWeight > 0 ? Math.min(100, (currentWeight / maxWeight) * 100) : 0;
                 s.is_container_collapsed = collapsedContainers[item.id] === true;
             }
 
@@ -891,7 +900,8 @@ async getData(options) {
             const looseItems = list.filter(i => !i.system?.is_container);
             const containers = list.filter(i => i.system?.is_container).map(container => ({
                 container,
-                children: container.system?.container_children || []
+                children: container.system?.container_children || [],
+                childCount: (container.system?.container_children || []).length
             }));
             return { looseItems, containers };
         };
@@ -2915,6 +2925,60 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
             const { characteristics, organization } = this._getCharacteristicOrganizationState();
             const updated = moveOrganizedItem(organization, { itemId, targetGroupId, targetIndex }, characteristics.map(item => item.id));
             await this._saveCharacteristicOrganization(updated);
+        }
+    });
+
+    this._equipmentOrganizerCleanup?.();
+    this._equipmentOrganizerCleanup = attachSheetItemOrganizer(html[0], {
+        actorUuid: this.actor.uuid,
+        namespace: 'equipment',
+        acceptedItemTypes: ['equipment', 'melee_weapon', 'ranged_weapon'],
+        itemSelector: '[data-tab="equipment"] [data-organizer-item-id]',
+        zoneSelector: '[data-tab="equipment"] [data-organizer-zone]',
+        onMove: async ({ itemId, targetGroupId, targetIndex }) => {
+            const item = this.actor.items.get(itemId);
+            if (!item) return;
+
+            const containerId = targetGroupId.startsWith('container:')
+                ? targetGroupId.slice('container:'.length)
+                : '';
+            const container = containerId ? this.actor.items.get(containerId) : null;
+            const update = resolveEquipmentDrop(item, targetGroupId, { container });
+            if (!update) {
+                ui.notifications.warn(item.system?.is_container
+                    ? 'Containers não podem ser colocados dentro de outros containers.'
+                    : 'Este não é um destino válido para o equipamento.');
+                return;
+            }
+
+            const updatesById = new Map([[item.id, update]]);
+            const sortUpdates = buildEquipmentSortUpdates(this.actor.items, {
+                itemId,
+                targetZone: targetGroupId,
+                targetIndex
+            });
+            for (const sortUpdate of sortUpdates) {
+                updatesById.set(sortUpdate._id, {
+                    ...(updatesById.get(sortUpdate._id) || {}),
+                    ...sortUpdate
+                });
+            }
+            if (item.system?.is_container && !container) {
+                const destinationLocation = targetGroupId.startsWith('containers:')
+                    ? targetGroupId.slice('containers:'.length)
+                    : targetGroupId;
+                const descendants = this._getContainerDescendants(item.id);
+                for (const descendant of descendants) {
+                    updatesById.set(descendant.id, {
+                        ...(updatesById.get(descendant.id) || {}),
+                        _id: descendant.id,
+                        'system.location': destinationLocation,
+                        'system.equipped': destinationLocation === 'equipped',
+                        'system.stored': destinationLocation === 'stored'
+                    });
+                }
+            }
+            await this.actor.updateEmbeddedDocuments('Item', [...updatesById.values()]);
         }
     });
 

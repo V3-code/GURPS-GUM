@@ -366,20 +366,20 @@
           <a class="item" data-tab="skills" title="Perícias">
             <i class="fas fa-book-reader"></i>
           </a>
-          <a class="item" data-tab="spells" title="Conjurações">
-            <i class="fas fa-magic"></i>
-          </a>
-          <a class="item" data-tab="powers" title="Poderes">
-            <i class="fas fa-bolt"></i>
-          </a>
-          <a class="item" data-tab="equipment" title="Equipamento">
-            <i class="fas fa-suitcase"></i>
-          </a>
           <a class="item" data-tab="characteristics" title="Características">
             <i class="fas fa-star"></i>
           </a>
           <a class="item" data-tab="social" title="Aspectos Sociais">
             <i class="fas fa-users"></i>
+          </a>
+          <a class="item" data-tab="spells" title="Magias">
+            <i class="fas fa-magic"></i>
+          </a>
+          <a class="item" data-tab="powers" title="Poderes">
+            <i class="fas fa-bolt"></i>
+          </a>
+          <a class="item" data-tab="equipment" title="Equipamentos">
+            <i class="fas fa-suitcase"></i>
           </a>
           <a class="item" data-tab="biography" title="Biografia">
             <i class="fas fa-scroll"></i>
@@ -1153,9 +1153,9 @@
     </summary>
     
     <div class="list-content">
-        <ol class="item-list flex-wrap-container">
+        <ol class="item-list flex-wrap-container equipment-drop-zone" data-organizer-zone data-organizer-group-id="equipped">
             {{#each equipmentInUseLoose}}
-              <li class="item equipment-card" data-item-id="{{this._id}}" draggable="true">
+              <li class="item equipment-card" data-item-id="{{this._id}}" data-organizer-item-id="{{this._id}}" data-organizer-item-type="{{this.type}}" draggable="true">
                   <img src="{{this.img}}" class="item-icon" title="{{this.name}}"/>
                   <div class="card-info">
                       <span class="item-name"><a class="item-quick-view">{{this.name}}</a></span>
@@ -1178,13 +1178,28 @@
             {{/each}}
         </ol>
 
+        <div class="container-sections-list equipment-drop-zone" data-organizer-zone data-organizer-group-id="containers:equipped">
         {{#each equipmentInUseContainerSections}}
         <div class="container-section">
-            <div class="container-section-header item" data-item-id="{{this.container._id}}">
+            <div class="container-section-header item" data-item-id="{{this.container._id}}" data-organizer-item-id="{{this.container._id}}" data-organizer-item-type="{{this.container.type}}" draggable="true">
                 <div class="container-section-header-main">
-                    <a class="item-quick-view container-title">{{this.container.name}}</a>
-                    <span class="equip-stat-tag" style="margin-left:6px; background:#0a224b;">C</span>
-                    <span class="equip-stat-tag" style="margin-left:5px; {{#if this.container.system.container_is_overweight}}background:#34161b; color:#dacdca;{{/if}}">Carga: {{this.container.system.container_current_weight}} kg / {{this.container.system.container.max_weight}} kg</span>
+                    <i class="fas fa-box-open container-kind-icon" aria-hidden="true"></i>
+                    <div class="container-heading-copy">
+                        <div class="container-heading-line">
+                            <a class="item-quick-view container-title">{{this.container.name}}</a>
+                            <span class="container-kind-label">Container</span>
+                            <span class="container-item-count">{{this.childCount}} {{#if (eq this.childCount 1)}}item{{else}}itens{{/if}}</span>
+                        </div>
+                        <div class="container-capacity-line">
+                            <span title="Peso do próprio container"><i class="fas fa-weight-hanging"></i> Peso: {{this.container.system.total_weight}} kg</span>
+                            <span class="container-load-value {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}">Carga: {{this.container.system.container_current_weight}} kg{{#if (gt this.container.system.container_max_weight_value 0)}} / {{this.container.system.container_max_weight}} kg{{else}} · sem limite definido{{/if}}</span>
+                        </div>
+                        {{#if (gt this.container.system.container_max_weight_value 0)}}
+                        <div class="container-capacity-meter {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}" role="progressbar" aria-label="Carga do container" aria-valuenow="{{this.container.system.container_progress_value}}" aria-valuemax="{{this.container.system.container_max_weight_value}}" aria-valuetext="{{this.container.system.container_aria_value_text}}">
+                            <span style="width: {{this.container.system.container_fill_percent}}%;"></span>
+                        </div>
+                        {{/if}}
+                    </div>
                 </div>
                 <div class="item-controls">
                     <a class="item-control active" title="Em Uso"><i class="fas fa-tshirt" style="color:#389c68;"></i></a>
@@ -1195,10 +1210,10 @@
                     <a class="item-control item-delete" title="Excluir"><i class="fas fa-trash"></i></a>
                 </div>
             </div>
-            <ol class="item-list flex-wrap-container container-children-list">
+            <ol class="item-list flex-wrap-container container-children-list equipment-drop-zone" data-organizer-zone data-organizer-group-id="container:{{this.container._id}}">
                 {{#unless this.container.system.is_container_collapsed}}
                 {{#each this.children}}
-                <li class="item equipment-card is-inside-container" data-item-id="{{this._id}}" draggable="true">
+                <li class="item equipment-card is-inside-container" data-item-id="{{this._id}}" data-organizer-item-id="{{this._id}}" data-organizer-item-type="{{this.type}}" draggable="true">
                     <img src="{{this.img}}" class="item-icon"/>
                     <div class="card-info">
                         <span class="item-name"><a class="item-quick-view">{{this.name}}</a></span>
@@ -1215,10 +1230,14 @@
                     </div>
                 </li>
                 {{/each}}
+                {{#unless this.children.length}}
+                <li class="container-empty-state"><i class="fas fa-arrow-down"></i> Container vazio — arraste itens para cá</li>
+                {{/unless}}
                 {{/unless}}
             </ol>
         </div>
         {{/each}}
+        </div>
     </div>
 </details>
 
@@ -1230,9 +1249,9 @@
     </summary>
 
     <div class="list-content">
-        <ol class="item-list flex-wrap-container">
+        <ol class="item-list flex-wrap-container equipment-drop-zone" data-organizer-zone data-organizer-group-id="carried">
             {{#each equipmentCarriedLoose}}
-            <li class="item equipment-card" data-item-id="{{this._id}}" draggable="true">
+            <li class="item equipment-card" data-item-id="{{this._id}}" data-organizer-item-id="{{this._id}}" data-organizer-item-type="{{this.type}}" draggable="true">
                 <img src="{{this.img}}" class="item-icon"/>
                 <div class="card-info">
                     <span class="item-name">
@@ -1256,13 +1275,28 @@
             {{/each}}
         </ol>
 
+        <div class="container-sections-list equipment-drop-zone" data-organizer-zone data-organizer-group-id="containers:carried">
         {{#each equipmentCarriedContainerSections}}
         <div class="container-section">
-            <div class="container-section-header item" data-item-id="{{this.container._id}}">
+            <div class="container-section-header item" data-item-id="{{this.container._id}}" data-organizer-item-id="{{this.container._id}}" data-organizer-item-type="{{this.container.type}}" draggable="true">
                 <div class="container-section-header-main">
-                    <a class="item-quick-view container-title">{{this.container.name}}</a>
-                    <span class="equip-stat-tag" style="margin-left:6px; background:#0a224b;">C</span>
-                    <span class="equip-stat-tag" style="margin-left:5px; {{#if this.container.system.container_is_overweight}}background:#34161b; color:#dacdca;{{/if}}">Carga: {{this.container.system.container_current_weight}} kg / {{this.container.system.container.max_weight}} kg</span>
+                    <i class="fas fa-box-open container-kind-icon" aria-hidden="true"></i>
+                    <div class="container-heading-copy">
+                        <div class="container-heading-line">
+                            <a class="item-quick-view container-title">{{this.container.name}}</a>
+                            <span class="container-kind-label">Container</span>
+                            <span class="container-item-count">{{this.childCount}} {{#if (eq this.childCount 1)}}item{{else}}itens{{/if}}</span>
+                        </div>
+                        <div class="container-capacity-line">
+                            <span title="Peso do próprio container"><i class="fas fa-weight-hanging"></i> Peso: {{this.container.system.total_weight}} kg</span>
+                            <span class="container-load-value {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}">Carga: {{this.container.system.container_current_weight}} kg{{#if (gt this.container.system.container_max_weight_value 0)}} / {{this.container.system.container_max_weight}} kg{{else}} · sem limite definido{{/if}}</span>
+                        </div>
+                        {{#if (gt this.container.system.container_max_weight_value 0)}}
+                        <div class="container-capacity-meter {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}" role="progressbar" aria-label="Carga do container" aria-valuenow="{{this.container.system.container_progress_value}}" aria-valuemax="{{this.container.system.container_max_weight_value}}" aria-valuetext="{{this.container.system.container_aria_value_text}}">
+                            <span style="width: {{this.container.system.container_fill_percent}}%;"></span>
+                        </div>
+                        {{/if}}
+                    </div>
                 </div>
                 <div class="item-controls">
                     <a class="item-control item-toggle-equip" title="Equipar / Vestir"><i class="fas fa-tshirt" style="opacity:0.3;"></i></a>
@@ -1273,10 +1307,10 @@
                     <a class="item-control item-delete" title="Excluir"><i class="fas fa-trash"></i></a>
                 </div>
             </div>
-            <ol class="item-list flex-wrap-container container-children-list">
+            <ol class="item-list flex-wrap-container container-children-list equipment-drop-zone" data-organizer-zone data-organizer-group-id="container:{{this.container._id}}">
                 {{#unless this.container.system.is_container_collapsed}}
                 {{#each this.children}}
-                <li class="item equipment-card is-inside-container" data-item-id="{{this._id}}" draggable="true">
+                <li class="item equipment-card is-inside-container" data-item-id="{{this._id}}" data-organizer-item-id="{{this._id}}" data-organizer-item-type="{{this.type}}" draggable="true">
                     <img src="{{this.img}}" class="item-icon"/>
                     <div class="card-info">
                         <span class="item-name"><a class="item-quick-view">{{this.name}}</a></span>
@@ -1293,10 +1327,14 @@
                     </div>
                 </li>
                 {{/each}}
+                {{#unless this.children.length}}
+                <li class="container-empty-state"><i class="fas fa-arrow-down"></i> Container vazio — arraste itens para cá</li>
+                {{/unless}}
                 {{/unless}}
             </ol>
         </div>
         {{/each}}
+        </div>
     </div>
 </details>
 
@@ -1308,9 +1346,9 @@
     </summary>
 
     <div class="list-content">
-        <ol class="item-list flex-wrap-container">
+        <ol class="item-list flex-wrap-container equipment-drop-zone" data-organizer-zone data-organizer-group-id="stored">
             {{#each equipmentStoredLoose}}
-            <li class="item equipment-card" data-item-id="{{this._id}}" draggable="true">
+            <li class="item equipment-card" data-item-id="{{this._id}}" data-organizer-item-id="{{this._id}}" data-organizer-item-type="{{this.type}}" draggable="true">
                 <img src="{{this.img}}" class="item-icon"/>
                 <div class="card-info">
                     <span class="item-name"><a class="item-quick-view">{{this.name}}</a></span>
@@ -1332,13 +1370,28 @@
             {{/each}}
         </ol>
 
+        <div class="container-sections-list equipment-drop-zone" data-organizer-zone data-organizer-group-id="containers:stored">
         {{#each equipmentStoredContainerSections}}
         <div class="container-section">
-            <div class="container-section-header item" data-item-id="{{this.container._id}}">
+            <div class="container-section-header item" data-item-id="{{this.container._id}}" data-organizer-item-id="{{this.container._id}}" data-organizer-item-type="{{this.container.type}}" draggable="true">
                 <div class="container-section-header-main">
-                    <a class="item-quick-view container-title">{{this.container.name}}</a>
-                    <span class="equip-stat-tag" style="margin-left:6px; background:#0a224b;">C</span>
-                    <span class="equip-stat-tag" style="margin-left:5px; {{#if this.container.system.container_is_overweight}} background:#34161b; color:#dacdca;{{/if}}">Carga: {{this.container.system.container_current_weight}} kg / {{this.container.system.container.max_weight}} kg</span>
+                    <i class="fas fa-box-open container-kind-icon" aria-hidden="true"></i>
+                    <div class="container-heading-copy">
+                        <div class="container-heading-line">
+                            <a class="item-quick-view container-title">{{this.container.name}}</a>
+                            <span class="container-kind-label">Container</span>
+                            <span class="container-item-count">{{this.childCount}} {{#if (eq this.childCount 1)}}item{{else}}itens{{/if}}</span>
+                        </div>
+                        <div class="container-capacity-line">
+                            <span title="Peso do próprio container"><i class="fas fa-weight-hanging"></i> Peso: {{this.container.system.total_weight}} kg</span>
+                            <span class="container-load-value {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}">Carga: {{this.container.system.container_current_weight}} kg{{#if (gt this.container.system.container_max_weight_value 0)}} / {{this.container.system.container_max_weight}} kg{{else}} · sem limite definido{{/if}}</span>
+                        </div>
+                        {{#if (gt this.container.system.container_max_weight_value 0)}}
+                        <div class="container-capacity-meter {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}" role="progressbar" aria-label="Carga do container" aria-valuenow="{{this.container.system.container_progress_value}}" aria-valuemax="{{this.container.system.container_max_weight_value}}" aria-valuetext="{{this.container.system.container_aria_value_text}}">
+                            <span style="width: {{this.container.system.container_fill_percent}}%;"></span>
+                        </div>
+                        {{/if}}
+                    </div>
                 </div>
                 <div class="item-controls">
                     <a class="item-control item-toggle-equip" title="Equipar direto do Baú"><i class="fas fa-tshirt" style="opacity:0.3;"></i></a>
@@ -1349,10 +1402,10 @@
                     <a class="item-control item-delete" title="Excluir"><i class="fas fa-trash"></i></a>
                 </div>
             </div>
-            <ol class="item-list flex-wrap-container container-children-list">
+            <ol class="item-list flex-wrap-container container-children-list equipment-drop-zone" data-organizer-zone data-organizer-group-id="container:{{this.container._id}}">
                 {{#unless this.container.system.is_container_collapsed}}
                 {{#each this.children}}
-                <li class="item equipment-card is-inside-container" data-item-id="{{this._id}}" draggable="true">
+                <li class="item equipment-card is-inside-container" data-item-id="{{this._id}}" data-organizer-item-id="{{this._id}}" data-organizer-item-type="{{this.type}}" draggable="true">
                     <img src="{{this.img}}" class="item-icon"/>
                     <div class="card-info">
                         <span class="item-name"><a class="item-quick-view">{{this.name}}</a></span>
@@ -1369,10 +1422,14 @@
                     </div>
                 </li>
                 {{/each}}
+                {{#unless this.children.length}}
+                <li class="container-empty-state"><i class="fas fa-arrow-down"></i> Container vazio — arraste itens para cá</li>
+                {{/unless}}
                 {{/unless}}
             </ol>
         </div>
         {{/each}}
+        </div>
     </div>
 </details>
     </div>
