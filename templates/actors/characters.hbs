@@ -1192,10 +1192,10 @@
                         </div>
                         <div class="container-capacity-line">
                             <span title="Peso do próprio container"><i class="fas fa-weight-hanging"></i> Peso: {{this.container.system.total_weight}} kg</span>
-                            <span class="container-load-value {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}">Carga: {{this.container.system.container_current_weight}} kg{{#if (gt this.container.system.container_max_weight_value 0)}} / {{this.container.system.container.max_weight}} kg{{else}} · sem limite definido{{/if}}</span>
+                            <span class="container-load-value {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}">Carga: {{this.container.system.container_current_weight}} kg{{#if (gt this.container.system.container_max_weight_value 0)}} / {{this.container.system.container_max_weight}} kg{{else}} · sem limite definido{{/if}}</span>
                         </div>
                         {{#if (gt this.container.system.container_max_weight_value 0)}}
-                        <div class="container-capacity-meter {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}" role="progressbar" aria-label="Carga do container" aria-valuenow="{{this.container.system.container_current_weight_value}}" aria-valuemax="{{this.container.system.container_max_weight_value}}">
+                        <div class="container-capacity-meter {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}" role="progressbar" aria-label="Carga do container" aria-valuenow="{{this.container.system.container_progress_value}}" aria-valuemax="{{this.container.system.container_max_weight_value}}" aria-valuetext="{{this.container.system.container_aria_value_text}}">
                             <span style="width: {{this.container.system.container_fill_percent}}%;"></span>
                         </div>
                         {{/if}}
@@ -1289,10 +1289,10 @@
                         </div>
                         <div class="container-capacity-line">
                             <span title="Peso do próprio container"><i class="fas fa-weight-hanging"></i> Peso: {{this.container.system.total_weight}} kg</span>
-                            <span class="container-load-value {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}">Carga: {{this.container.system.container_current_weight}} kg{{#if (gt this.container.system.container_max_weight_value 0)}} / {{this.container.system.container.max_weight}} kg{{else}} · sem limite definido{{/if}}</span>
+                            <span class="container-load-value {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}">Carga: {{this.container.system.container_current_weight}} kg{{#if (gt this.container.system.container_max_weight_value 0)}} / {{this.container.system.container_max_weight}} kg{{else}} · sem limite definido{{/if}}</span>
                         </div>
                         {{#if (gt this.container.system.container_max_weight_value 0)}}
-                        <div class="container-capacity-meter {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}" role="progressbar" aria-label="Carga do container" aria-valuenow="{{this.container.system.container_current_weight_value}}" aria-valuemax="{{this.container.system.container_max_weight_value}}">
+                        <div class="container-capacity-meter {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}" role="progressbar" aria-label="Carga do container" aria-valuenow="{{this.container.system.container_progress_value}}" aria-valuemax="{{this.container.system.container_max_weight_value}}" aria-valuetext="{{this.container.system.container_aria_value_text}}">
                             <span style="width: {{this.container.system.container_fill_percent}}%;"></span>
                         </div>
                         {{/if}}
@@ -1384,10 +1384,10 @@
                         </div>
                         <div class="container-capacity-line">
                             <span title="Peso do próprio container"><i class="fas fa-weight-hanging"></i> Peso: {{this.container.system.total_weight}} kg</span>
-                            <span class="container-load-value {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}">Carga: {{this.container.system.container_current_weight}} kg{{#if (gt this.container.system.container_max_weight_value 0)}} / {{this.container.system.container.max_weight}} kg{{else}} · sem limite definido{{/if}}</span>
+                            <span class="container-load-value {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}">Carga: {{this.container.system.container_current_weight}} kg{{#if (gt this.container.system.container_max_weight_value 0)}} / {{this.container.system.container_max_weight}} kg{{else}} · sem limite definido{{/if}}</span>
                         </div>
                         {{#if (gt this.container.system.container_max_weight_value 0)}}
-                        <div class="container-capacity-meter {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}" role="progressbar" aria-label="Carga do container" aria-valuenow="{{this.container.system.container_current_weight_value}}" aria-valuemax="{{this.container.system.container_max_weight_value}}">
+                        <div class="container-capacity-meter {{#if this.container.system.container_is_overweight}}is-overweight{{/if}}" role="progressbar" aria-label="Carga do container" aria-valuenow="{{this.container.system.container_progress_value}}" aria-valuemax="{{this.container.system.container_max_weight_value}}" aria-valuetext="{{this.container.system.container_aria_value_text}}">
                             <span style="width: {{this.container.system.container_fill_percent}}%;"></span>
                         </div>
                         {{/if}}

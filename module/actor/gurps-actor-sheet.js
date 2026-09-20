@@ -836,8 +836,13 @@ async getData(options) {
                 s.container_current_weight_value = currentWeight;
                 s.container_max_weight_value = maxWeight;
                 s.container_current_weight = currentWeight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+                s.container_max_weight = maxWeight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
                 s.container_overweight = overweight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
                 s.container_is_overweight = maxWeight > 0 && overweight > 0;
+                s.container_progress_value = maxWeight > 0 ? Math.min(currentWeight, maxWeight) : 0;
+                s.container_aria_value_text = maxWeight > 0
+                    ? `${s.container_current_weight} kg de ${s.container_max_weight} kg${s.container_is_overweight ? ", acima da capacidade" : ""}`
+                    : "Capacidade não definida";
                 s.container_fill_percent = maxWeight > 0 ? Math.min(100, (currentWeight / maxWeight) * 100) : 0;
                 s.is_container_collapsed = collapsedContainers[item.id] === true;
             }
