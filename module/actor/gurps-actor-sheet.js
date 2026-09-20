@@ -15,7 +15,7 @@ import { resolveAttackDamageDisplay } from "../utils/attack-damage-display.mjs";
 import { canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
 import { contentSourceService } from "../services/content-source-service.mjs";
 import { attachSheetItemOrganizer } from "../services/sheet-item-organizer.mjs";
-import { resolveEquipmentDrop } from "../utils/equipment-drop.mjs";
+import { buildEquipmentSortUpdates, resolveEquipmentDrop } from "../utils/equipment-drop.mjs";
 import { UNGROUPED_ORGANIZER_ID, addItemOrganizationGroup, buildItemCategoryGroupPlan, createGroupsFromItemCategories, moveOrganizedItem, normalizeItemOrganization, removeItemOrganizationGroup, renameItemOrganizationGroup } from "../utils/item-organization.mjs";
 
 const WOUND_NATURE_ICONS = Object.freeze({
@@ -2928,7 +2928,7 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
         acceptedItemTypes: ['equipment', 'melee_weapon', 'ranged_weapon'],
         itemSelector: '[data-tab="equipment"] [data-organizer-item-id]',
         zoneSelector: '[data-tab="equipment"] [data-organizer-zone]',
-        onMove: async ({ itemId, targetGroupId }) => {
+        onMove: async ({ itemId, targetGroupId, targetIndex }) => {
             const item = this.actor.items.get(itemId);
             if (!item) return;
 
@@ -2944,17 +2944,31 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
                 return;
             }
 
-            const updates = [update];
+            const updatesById = new Map([[item.id, update]]);
+            const sortUpdates = buildEquipmentSortUpdates(this.actor.items, {
+                itemId,
+                targetZone: targetGroupId,
+                targetIndex
+            });
+            for (const sortUpdate of sortUpdates) {
+                updatesById.set(sortUpdate._id, {
+                    ...(updatesById.get(sortUpdate._id) || {}),
+                    ...sortUpdate
+                });
+            }
             if (item.system?.is_container && !container) {
                 const descendants = this._getContainerDescendants(item.id);
-                updates.push(...descendants.map(descendant => ({
-                    _id: descendant.id,
-                    'system.location': targetGroupId,
-                    'system.equipped': targetGroupId === 'equipped',
-                    'system.stored': targetGroupId === 'stored'
-                })));
+                for (const descendant of descendants) {
+                    updatesById.set(descendant.id, {
+                        ...(updatesById.get(descendant.id) || {}),
+                        _id: descendant.id,
+                        'system.location': targetGroupId,
+                        'system.equipped': targetGroupId === 'equipped',
+                        'system.stored': targetGroupId === 'stored'
+                    });
+                }
             }
-            await this.actor.updateEmbeddedDocuments('Item', updates);
+            await this.actor.updateEmbeddedDocuments('Item', [...updatesById.values()]);
             const destination = container?.name || ({
                 equipped: 'Em Uso',
                 carried: 'Carregando',

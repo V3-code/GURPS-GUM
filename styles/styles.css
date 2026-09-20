@@ -10139,7 +10139,7 @@ background-color: var(--gum-accent-gold);
 }
 
 /* Equipment containers and equipment drag-and-drop */
-.gum.sheet.actor .sheet-tabs .item i { font-size: 19px; }
+.gum.sheet.actor .sheet-tabs .item i { font-size: 18px; }
 
 .gum.sheet.actor .container-section {
   margin-top: 12px;
@@ -10150,7 +10150,7 @@ background-color: var(--gum-accent-gold);
 }
 
 .gum.sheet.actor .container-section-header {
-  gap: 10px;
+  gap: 20px;
   margin-bottom: 7px;
   padding: 9px 10px;
   border-color: rgba(197, 160, 91, 0.22);

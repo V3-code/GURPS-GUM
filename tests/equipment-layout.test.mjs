@@ -12,7 +12,8 @@ test("character tabs follow the requested workflow", () => {
     "combat", "skills", "characteristics", "social", "spells",
     "powers", "equipment", "biography", "conditions", "modifiers"
   ]);
-  assert.match(styles, /\.sheet-tabs \.item i \{ font-size: 19px; \}/);
+  assert.match(styles, /\.sheet-tabs \.item i \{ font-size: 18px; \}/);
+  assert.match(styles, /\.container-section-header \{\s+gap: 20px;/);
 });
 
 test("equipment containers expose weight, capacity and drop zones", () => {
