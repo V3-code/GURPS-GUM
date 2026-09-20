@@ -5,6 +5,8 @@ import { readFileSync } from "node:fs";
 const template = readFileSync("templates/actors/characters.hbs", "utf8");
 const styles = readFileSync("styles/styles.css", "utf8");
 const actorSheet = readFileSync("module/actor/gurps-actor-sheet.js", "utf8");
+const itemSheet = readFileSync("module/item/gurps-item-sheet.js", "utf8");
+const itemTemplate = readFileSync("templates/items/item-sheet.hbs", "utf8");
 const schema = JSON.parse(readFileSync("template.json", "utf8"));
 const characteristicTab = template.slice(
   template.indexOf('class="tab characteristics-tab"'),
@@ -60,11 +62,21 @@ test("characteristic search filters rich card text and restores expansion", () =
   assert.match(actorSheet, /characteristics-search-empty/);
 });
 
-test("legacy characteristic blocks are offered as optional group suggestions", () => {
-  assert.match(actorSheet, /block1: "Raciais"/);
-  assert.match(actorSheet, /block2: "Vantagens"/);
-  assert.match(actorSheet, /block3: "Desvantagens"/);
-  assert.match(actorSheet, /block4: "Especiais"/);
+test("item organization names are offered as optional group suggestions", () => {
+  assert.match(actorSheet, /system: \{ group: String\(item\.system\?\.group \?\? ""\)\.trim\(\) \}/);
   assert.match(actorSheet, /buildItemCategoryGroupPlan\(organization, suggestionItems\)/);
   assert.match(actorSheet, /createGroupsFromItemCategories\(organization, suggestionItems, createId, selectedCategories\)/);
+});
+
+test("advantage and disadvantage sheets use a free-text organization field", () => {
+  const details = itemTemplate.slice(
+    itemTemplate.indexOf("ABA DETALHES: ITEM VANTAGENS E DESVANTAGENS"),
+    itemTemplate.indexOf("C\u00e1lculo de Custo")
+  );
+  assert.match(details, /input type="text" name="system\.group"/);
+  assert.match(details, /placeholder="Ex: Racial: Elfo, Poderes Ps\u00edquicos\.\.\."/);
+  assert.doesNotMatch(details, /select name="system\.block_id"|characteristic_blocks/);
+  assert.doesNotMatch(itemSheet, /context\.characteristic_blocks/);
+  assert.equal(schema.Item.advantage.group, "");
+  assert.equal(schema.Item.disadvantage.group, "");
 });

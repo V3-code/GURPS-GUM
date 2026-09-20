@@ -1032,7 +1032,8 @@ async getData(options) {
             entries.forEach(item => {
                 item.characteristicOrganizationCanRemove = bucketId !== UNGROUPED_ORGANIZER_ID;
                 item.characteristicKindLabel = item.type === 'disadvantage' ? 'Desvantagem' : 'Vantagem';
-                item.characteristicIsRacial = item.system?.block_id === 'block1';
+                const organizationName = String(item.system?.group ?? "").trim().toLocaleLowerCase();
+                item.characteristicIsRacial = organizationName.startsWith('racial') || item.system?.block_id === 'block1';
             });
             return charSortPref === 'manual' ? entries : entries.sort(charSortFn);
         };
@@ -1051,8 +1052,8 @@ async getData(options) {
         }))];
         context.hasCharacteristics = characteristics.length > 0;
         context.hasCharacteristicGroupSuggestions = characteristics.some(item => {
-            const blockId = item.system?.block_id || (item.type === 'disadvantage' ? 'block3' : 'block2');
-            return ['block1', 'block2', 'block3', 'block4'].includes(blockId);
+            const organizationName = String(item.system?.group ?? "").trim().toLocaleLowerCase();
+            return organizationName && organizationName !== 'geral';
         });
 
         // ================================================================== //
@@ -1801,17 +1802,11 @@ _promptCharacteristicGroupName({ title, initial = "" }) {
 }
 
 _characteristicSuggestionItems(characteristics) {
-    const labels = {
-        block1: "Raciais",
-        block2: "Vantagens",
-        block3: "Desvantagens",
-        block4: "Especiais"
-    };
-    return characteristics.map(item => {
-        const fallback = item.type === 'disadvantage' ? 'block3' : 'block2';
-        const blockId = item.system?.block_id || fallback;
-        return { id: item.id, name: item.name, system: { group: labels[blockId] || labels[fallback] } };
-    });
+    return characteristics.map(item => ({
+        id: item.id,
+        name: item.name,
+        system: { group: String(item.system?.group ?? "").trim() }
+    }));
 }
 
 _promptCharacteristicGroupPlan(plan) {
@@ -1829,7 +1824,7 @@ _promptCharacteristicGroupPlan(plan) {
         }).join("");
         new Dialog({
             title: "Organizar vantagens e desvantagens",
-            content: `<form class="skill-category-preview characteristic-category-preview"><div class="skill-category-preview__intro"><i class="fas fa-layer-group"></i><span><strong>Organizar características</strong><small>Selecione as classificações antigas que deseja transformar em grupos visuais.</small></span></div><div class="skill-category-preview__list">${rows}</div></form>`,
+            content: `<form class="skill-category-preview characteristic-category-preview"><div class="skill-category-preview__intro"><i class="fas fa-layer-group"></i><span><strong>Organizar características</strong><small>Selecione as organizações dos itens que deseja transformar em grupos visuais.</small></span></div><div class="skill-category-preview__list">${rows}</div></form>`,
             buttons: {
                 apply: {
                     icon: '<i class="fas fa-layer-group"></i>',
