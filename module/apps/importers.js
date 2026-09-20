@@ -139,27 +139,32 @@ let importEntries = [];
             </div>` : "";
         const canCreatePack = Boolean(game.user?.isGM && !fixedPack);
         const destinationFields = fixedPack ? `
-            <p>Destino: <strong>${escapeImportHTML(fixedPack.title)}</strong></p>
+            <div class="gum-import-destination-summary">
+                <i class="fas fa-book"></i>
+                <span><small>Destino selecionado</small><strong>${escapeImportHTML(fixedPack.title)}</strong></span>
+            </div>
         ` : `
-            <div class="form-group">
-                <label>Destino:</label>
-                <select name="destination-mode">
-                    ${allItemPacks.length ? '<option value="existing">Compêndio existente</option>' : ''}
-                    ${canCreatePack ? '<option value="new">Criar novo compêndio</option>' : ''}
-                </select>
+            <div class="gum-import-mode-picker">
+                ${allItemPacks.length ? `<label><input type="radio" name="destination-mode" value="existing" checked>
+                    <span><i class="fas fa-book"></i> Usar existente</span></label>` : ''}
+                ${canCreatePack ? `<label><input type="radio" name="destination-mode" value="new" ${allItemPacks.length ? '' : 'checked'}>
+                    <span><i class="fas fa-folder-plus"></i> Criar novo</span></label>` : ''}
             </div>
             ${allItemPacks.length ? `<div class="form-group" data-destination="existing">
-                <label>Compêndio:</label><select name="compendium-target">${packOptions}</select>
+                <label>Compêndio de destino</label><select name="compendium-target">${packOptions}</select>
             </div>` : ""}
             ${canCreatePack ? `<div class="form-group" data-destination="new" ${allItemPacks.length ? 'style="display:none"' : ''}>
-                <label>Nome do novo compêndio:</label><input type="text" name="new-compendium-name" value="${escapeImportHTML(file.name.replace(/\.[^.]+$/, ""))}">
+                <label>Nome do novo compêndio</label><input type="text" name="new-compendium-name" value="${escapeImportHTML(file.name.replace(/\.[^.]+$/, ""))}">
             </div>` : ""}`;
 
         new Dialog({
             title: "Selecionar Destino da Importação",
             content: `
-                <div style="padding: 10px 0;">
-                    <p>Encontrados <strong>${importEntries.length}</strong> itens no arquivo JSON.</p>
+                <form class="gum-compendium-import-form">
+                    <div class="gum-import-file-summary">
+                        <i class="fas fa-file-import"></i>
+                        <span><strong>${importEntries.length} itens encontrados</strong><small>${escapeImportHTML(file.name)}</small></span>
+                    </div>
                     ${typeField}
                     ${destinationFields}
                     ${isCompendiumJson ? `
@@ -169,14 +174,14 @@ let importEntries = [];
                             Remover do compêndio os itens ausentes deste JSON
                         </label>
                     </div>` : ""}
-                </div>
+                </form>
             `,
             buttons: {
                 import: {
                     icon: '<i class="fas fa-file-import"></i>',
                     label: "Importar",
                     callback: async (html) => {
-                        const mode = fixedPack ? "fixed" : html.find('[name="destination-mode"]').val();
+                        const mode = fixedPack ? "fixed" : html.find('[name="destination-mode"]:checked').val();
                         let pack = fixedPack;
                         if (mode === "existing") pack = game.packs.get(html.find('[name="compendium-target"]').val());
                         if (mode === "new") {
@@ -208,6 +213,9 @@ let importEntries = [];
                 html.find('[data-destination]').hide();
                 html.find(`[data-destination="${mode}"]`).show();
             })
+        }, {
+            classes: ["gum", "gum-compendium-import-dialog"],
+            width: 520
         }).render(true);
     };
 
@@ -3816,36 +3824,44 @@ async function exportSelectedCompendium(pack) {
 }
 
 Hooks.on("getCompendiumDirectoryEntryContext", (_html, options) => {
-    if (!options.some(option => option.name === "Importar biblioteca neste compêndio")) {
+    if (!options.some(option => (option.name || option.label) === "Importar biblioteca neste compêndio")) {
+        const visible = entry => {
+            const pack = getContextCompendium(entry);
+            return Boolean(game.user?.isGM && pack?.metadata.type === "Item");
+        };
+        const onClick = entry => {
+            const pack = getContextCompendium(entry);
+            if (!pack) return ui.notifications.error("Não foi possível identificar o compêndio selecionado.");
+            return importFromJson({ pack });
+        };
         options.push({
             name: "Importar biblioteca neste compêndio",
+            label: "Importar biblioteca neste compêndio",
             icon: '<i class="fas fa-file-import"></i>',
-            condition: entry => {
-                const pack = game.packs.get(getContextCompendiumCollection(entry));
-                return Boolean(game.user?.isGM && pack?.metadata.type === "Item");
-            },
-            callback: entry => {
-                const pack = game.packs.get(getContextCompendiumCollection(entry));
-                if (!pack) return ui.notifications.error("Não foi possível identificar o compêndio selecionado.");
-                return importFromJson({ pack });
-            }
+            condition: visible,
+            visible,
+            callback: onClick,
+            onClick
         });
     }
 
-    if (!options.some(option => option.name === "Exportar Compêndio")) options.push({
-        name: "Exportar Compêndio",
-        icon: '<i class="fas fa-file-export"></i>',
-        condition: entry => {
-            const collection = getContextCompendiumCollection(entry);
-            return game.packs.get(collection)?.metadata.type === "Item";
-        },
-        callback: entry => {
-            const collection = getContextCompendiumCollection(entry);
-            const pack = game.packs.get(collection);
+    if (!options.some(option => (option.name || option.label) === "Exportar Compêndio")) {
+        const visible = entry => getContextCompendium(entry)?.metadata.type === "Item";
+        const onClick = entry => {
+            const pack = getContextCompendium(entry);
             if (!pack) return ui.notifications.error("Não foi possível identificar o compêndio selecionado.");
             return exportSelectedCompendium(pack);
-        }
-    });
+        };
+        options.push({
+            name: "Exportar Compêndio",
+            label: "Exportar Compêndio",
+            icon: '<i class="fas fa-file-export"></i>',
+            condition: visible,
+            visible,
+            callback: onClick,
+            onClick
+        });
+    }
 });
 
 Hooks.on("renderCompendiumDirectory", (_app, html) => {
@@ -3860,13 +3876,23 @@ Hooks.on("renderCompendiumDirectory", (_app, html) => {
         <i class="fas fa-file-import"></i> Importar biblioteca
     </button>`;
     row.querySelector("button").addEventListener("click", () => importFromJson());
-    headerActions.insertAdjacentElement("afterend", row);
+    headerActions.append(row);
 });
+
+function getContextCompendium(entry) {
+    if (entry?.metadata?.type && entry?.collection) return entry;
+    return game.packs.get(getContextCompendiumCollection(entry));
+}
 
 function getContextCompendiumCollection(entry) {
     const element = entry?.[0] || entry;
     const directoryEntry = element?.closest?.("[data-pack], [data-entry-id]") || element;
-    return directoryEntry?.dataset?.pack || directoryEntry?.dataset?.entryId;
+    const directCollection = typeof entry?.collection === "string" ? entry.collection : entry?.collection?.collection;
+    return directoryEntry?.dataset?.pack
+        || directoryEntry?.dataset?.entryId
+        || entry?.pack
+        || directCollection
+        || entry?.document?.collection?.collection;
 }
 
 /** Sincroniza uma exportação do Foundry sem alterar IDs ou criar duplicatas. */

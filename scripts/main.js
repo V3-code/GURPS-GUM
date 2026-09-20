@@ -2904,7 +2904,7 @@ Hooks.on("renderActorDirectory", (app, html, data) => {
             game.gum.importFromGCS();
         });
 
-        headerActions.insertAdjacentElement("afterend", row);
+        headerActions.append(row);
     });
 
 });

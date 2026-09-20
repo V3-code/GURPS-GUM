@@ -9937,12 +9937,92 @@ background-color: var(--gum-accent-gold);
 }
 .gum-directory-import-actions {
   display: flex;
-  flex: 0 0 100%;
+  grid-column: 1 / -1;
+  flex: 1 0 100%;
   width: 100%;
-  margin: 0.25rem 0;
+  margin: 0;
 }
 
 .gum-directory-import-actions > button {
   width: 100%;
   margin: 0;
+}
+
+.gum-compendium-import-dialog .window-content {
+  padding: 0.9rem;
+}
+
+.gum-compendium-import-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.gum-import-file-summary,
+.gum-import-destination-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border-light-2, #777);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.gum-import-file-summary > i,
+.gum-import-destination-summary > i {
+  font-size: 1.4rem;
+}
+
+.gum-import-file-summary span,
+.gum-import-destination-summary span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.gum-import-file-summary small,
+.gum-import-destination-summary small {
+  opacity: 0.75;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gum-import-mode-picker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.gum-import-mode-picker input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gum-import-mode-picker span {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--color-border-light-2, #777);
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.gum-import-mode-picker input:checked + span {
+  border-color: var(--color-warm-1, #c9a36a);
+  box-shadow: 0 0 0 1px var(--color-warm-1, #c9a36a) inset;
+  background: rgba(201, 163, 106, 0.12);
+}
+
+.gum-compendium-import-dialog .form-group {
+  margin: 0;
+}
+
+.gum-compendium-import-dialog .dialog-buttons {
+  margin-top: 0.9rem;
 }
