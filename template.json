@@ -335,6 +335,12 @@
         "assignments": {},
         "itemOrder": {}
       },
+      "characteristic_organization": {
+        "groups": {},
+        "groupOrder": [],
+        "assignments": {},
+        "itemOrder": {}
+      },
       "social_status_entries": {},
       "organization_entries": {},
       "culture_entries": {},
@@ -516,6 +522,7 @@
       ],
       "points": 10,
       "block_id": "block2",
+      "group": "",
       "self_control_roll": "",
       "level": "",
       "specialization": "",
@@ -534,6 +541,7 @@
       ],
       "points": -10,
       "block_id": "block3",
+      "group": "",
       "self_control_roll": "",
       "level": "",
       "specialization": "",

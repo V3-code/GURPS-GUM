@@ -7316,13 +7316,11 @@ background-color: var(--gum-accent-gold);
     background: linear-gradient(180deg, #66232d 0%, #4f1a23 100%);
 }
 
-.gum.sheet.actor .conditions-tab .gum-unified-header,
-.gum.sheet.actor .tab[data-tab="characteristics"] .gum-unified-header {
+.gum.sheet.actor .conditions-tab .gum-unified-header {
     background: linear-gradient(180deg, var(--gum-bg-cabecalho) 0%, #4f1a23 100%);
 }
 
-.gum.sheet.actor .conditions-tab .gum-unified-header:hover,
-.gum.sheet.actor .tab[data-tab="characteristics"] .gum-unified-header:hover {
+.gum.sheet.actor .conditions-tab .gum-unified-header:hover {
     background: linear-gradient(180deg, var(--gum-bg-cabecalho) 0%, #4f1a23 100%);
 }
 
@@ -9780,4 +9778,160 @@ background-color: var(--gum-accent-gold);
 .dialog.gum.skill-category-preview-dialog .dialog-buttons button:hover {
     filter: brightness(1.1);
     box-shadow: none;
+}
+
+/* Organização híbrida de vantagens e desvantagens. */
+.gum.sheet.actor .characteristics-header-tools {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 8px 5px;
+    border-bottom: 2px solid var(--gum-border-gold);
+    background: linear-gradient(to bottom, rgba(0,0,0,0.02), transparent);
+}
+
+.gum.sheet.actor .characteristics-search-wrapper {
+    position: relative;
+    flex: 1;
+    max-width: 320px;
+}
+
+.gum.sheet.actor .characteristics-search-wrapper > i {
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    color: var(--gum-text-medio);
+    pointer-events: none;
+}
+
+.gum.sheet.actor .characteristics-search-wrapper input {
+    width: 100%;
+    padding: 6px 10px 6px 30px;
+    border: 1px solid var(--gum-border-light);
+    border-radius: 20px;
+    background: rgba(255,255,255,0.3);
+    color: var(--gum-text-escuro);
+    font-family: var(--gum-font-primary);
+}
+
+.gum.sheet.actor .characteristics-search-wrapper input:focus {
+    border-color: var(--gum-accent-gold);
+    background: #fff;
+    box-shadow: 0 0 8px rgba(197,160,91,0.25);
+    outline: none;
+}
+
+.gum.sheet.actor .characteristics-header-buttons,
+.gum.sheet.actor .characteristic-group-header-tools,
+.gum.sheet.actor .characteristic-group-actions,
+.gum.sheet.actor .characteristic-control-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.gum.sheet.actor .characteristics-header-buttons a {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--gum-text-subtitulo);
+    font-family: var(--gum-font-condensed);
+    font-size: 0.82em;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.gum.sheet.actor .characteristics-header-buttons a:hover,
+.gum.sheet.actor .characteristics-header-buttons a:hover i { color: var(--gum-accent-red); }
+
+.gum.sheet.actor .characteristics-main-content.characteristics-sections { margin-top: 8px; }
+.gum.sheet.actor .characteristic-group.is-manual-organization {
+    margin: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.gum.sheet.actor .characteristic-group > .characteristic-group-summary {
+    min-height: 28px;
+    padding: 4px 7px;
+    border-bottom: 1px solid rgba(197,160,91,0.2);
+    background: transparent !important;
+}
+
+.gum.sheet.actor .characteristic-group > .characteristic-group-summary:hover,
+.gum.sheet.actor .characteristic-group[open] > .characteristic-group-summary { background: rgba(255,255,255,0.025) !important; }
+.gum.sheet.actor .characteristic-group .block-title {
+    color: rgba(247,233,215,0.76);
+    font-family: var(--gum-font-primary);
+    font-size: 10px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+.gum.sheet.actor .characteristic-group-header-tools { margin-left: auto; }
+.gum.sheet.actor .characteristic-group-actions a { color: rgba(247,233,215,0.46); font-size: 9px; }
+.gum.sheet.actor .characteristic-group-actions a:hover { color: var(--gum-accent-gold); }
+.gum.sheet.actor .characteristic-group-actions .delete-characteristic-group:hover { color: #e07a7a; }
+.gum.sheet.actor .characteristic-group-count {
+    min-width: 20px;
+    padding: 1px 6px;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    color: rgba(247,233,215,0.5);
+    font-size: 9px;
+    text-align: center;
+}
+
+.gum.sheet.actor .tab[data-tab="characteristics"] .characteristic-group-content {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.gum.sheet.actor .tab[data-tab="characteristics"] .characteristic-group-content .characteristic-card {
+    min-width: 0;
+    width: auto;
+}
+
+.gum.sheet.actor .characteristic-kind {
+    padding: 1px 4px;
+    border: 1px solid rgba(126,220,176,0.2);
+    border-radius: 3px;
+    color: rgba(190,235,211,0.78);
+    font-size: 8px;
+    text-transform: uppercase;
+}
+.gum.sheet.actor .characteristic-kind.disadvantage { border-color: rgba(224,122,122,0.24); color: rgba(241,184,184,0.8); }
+.gum.sheet.actor .characteristic-kind.racial { border-color: rgba(116,192,252,0.24); color: rgba(208,235,255,0.78); }
+.gum.sheet.actor .remove-characteristic-from-group { margin-right: auto; }
+.gum.sheet.actor .characteristics-search-empty {
+    padding: 22px 10px;
+    color: var(--gum-text-medio);
+    font-size: 11px;
+    font-style: italic;
+    text-align: center;
+}
+.gum.sheet.actor .characteristics-search-empty[hidden],
+.gum.sheet.actor .characteristic-group[hidden],
+.gum.sheet.actor .characteristic-card[hidden] { display: none; }
+
+.dialog.gum.characteristic-group-dialog .window-content {
+    padding: 0;
+    background: #1b1d22;
+    color: #ded8ce;
+}
+.dialog.gum.characteristic-group-dialog .dialog-content { padding: 14px 16px 10px; }
+.dialog.gum.characteristic-group-dialog .characteristic-group-name-dialog { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.dialog.gum.characteristic-group-dialog .characteristic-group-name-field { display: grid; gap: 5px; }
+.dialog.gum.characteristic-group-dialog .characteristic-group-name-field label { color: #bdb7ae; font-size: 11px; font-weight: 700; }
+.dialog.gum.characteristic-group-dialog .characteristic-group-name-field input { height: 32px; border: 1px solid rgba(181,151,83,0.3); background: #111319; color: #ece8e1; }
+.dialog.gum.characteristic-group-dialog .dialog-buttons { padding: 10px 16px 12px; border-top: 1px solid rgba(181,151,83,0.16); }
+
+@media (max-width: 680px) {
+    .gum.sheet.actor .characteristics-header-tools { align-items: stretch; flex-direction: column; }
+    .gum.sheet.actor .characteristics-search-wrapper { max-width: none; }
+    .gum.sheet.actor .tab[data-tab="characteristics"] .characteristic-group-content { grid-template-columns: 1fr; }
 }

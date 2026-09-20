@@ -418,14 +418,7 @@ _promptMultipleReferences(parsedList) {
             context.treeParentSkillFilter = parentConfig.filter;
         } 
  
-        const defaultBlockId = this.item.type === 'disadvantage' ? 'block3' : 'block2'; 
-        context.characteristic_blocks = { 
-            [defaultBlockId]: "Nenhuma", 
-            "block1": "Traços Raciais", 
-            "block4": "Especiais" 
-        }; 
- 
-        // ======================================================= 
+        // =======================================================
         // 2. LÓGICA DE EQUIPAMENTOS 
         // ======================================================= 
             if (['equipment', 'melee_weapon', 'ranged_weapon'].includes(this.item.type)) {
