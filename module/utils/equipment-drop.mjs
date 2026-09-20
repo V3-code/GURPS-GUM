@@ -1,4 +1,5 @@
 export const EQUIPMENT_LOCATION_ZONES = Object.freeze(["equipped", "carried", "stored"]);
+export const EQUIPMENT_ITEM_TYPES = Object.freeze(["equipment", "melee_weapon", "ranged_weapon"]);
 
 export function resolveEquipmentDrop(item, targetZone, { container = null } = {}) {
   if (!item || !targetZone) return null;
@@ -35,7 +36,7 @@ export function buildEquipmentSortUpdates(items, {
   targetZone,
   targetIndex = 0
 } = {}) {
-  const equipment = Array.from(items || []);
+  const equipment = Array.from(items || []).filter(item => EQUIPMENT_ITEM_TYPES.includes(item.type));
   const movedItem = equipment.find(item => item.id === itemId);
   if (!movedItem || movedItem.system?.is_container) return [];
 

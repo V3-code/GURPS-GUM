@@ -19,3 +19,8 @@ test("captures organizer drops before Foundry's generic sheet drop handler", () 
   assert.match(source, /addEventListener\("drop", onDrop, true\)/);
   assert.match(source, /removeEventListener\("drop", onDrop, true\)/);
 });
+
+test("treats dropping an organizer item on itself as a no-op", () => {
+  assert.match(source, /organizerItemId === draggedItemId\) return null/);
+  assert.match(source, /if \(targetIndex === null\) return/);
+});

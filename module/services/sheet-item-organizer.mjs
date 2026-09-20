@@ -18,7 +18,8 @@ export function readOrganizerDragData(dataTransfer) {
 
 function getTargetIndex(zone, event, itemSelector, draggedItemId) {
   const item = event.target.closest(itemSelector);
-  if (!item || !zone.contains(item) || item.dataset.organizerItemId === draggedItemId) {
+  if (item?.dataset.organizerItemId === draggedItemId) return null;
+  if (!item || !zone.contains(item)) {
     return zone.querySelectorAll(itemSelector).length;
   }
   const items = [...zone.querySelectorAll(itemSelector)].filter(entry => entry.dataset.organizerItemId !== draggedItemId);
@@ -93,6 +94,7 @@ export function attachSheetItemOrganizer(root, {
     const targetGroupId = zone.dataset.organizerGroupId || "";
     const targetIndex = getTargetIndex(zone, event, itemSelector, data.itemId);
     clearTarget();
+    if (targetIndex === null) return;
     await onMove({ ...data, targetGroupId, targetIndex });
   };
 

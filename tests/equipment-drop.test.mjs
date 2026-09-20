@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { buildEquipmentSortUpdates, resolveEquipmentDrop } from "../module/utils/equipment-drop.mjs";
 
-const item = { id: "item", system: { is_container: false } };
+const item = { id: "item", type: "equipment", system: { is_container: false } };
 
 test("moves equipment into a container and inherits its location", () => {
   const container = { id: "pack", system: { equipped: false, stored: false } };
@@ -34,9 +34,10 @@ test("does not nest containers or accept unknown zones", () => {
 
 test("reorders loose equipment at the requested drop position", () => {
   const items = [
-    { id: "a", sort: 100000, system: { equipped: false, stored: false } },
-    { id: "b", sort: 200000, system: { equipped: false, stored: false } },
-    { id: "c", sort: 300000, system: { equipped: false, stored: false } }
+    { id: "a", type: "equipment", sort: 100000, system: { equipped: false, stored: false } },
+    { id: "b", type: "melee_weapon", sort: 200000, system: { equipped: false, stored: false } },
+    { id: "c", type: "ranged_weapon", sort: 300000, system: { equipped: false, stored: false } },
+    { id: "skill", type: "skill", sort: 150000, system: {} }
   ];
   assert.deepEqual(buildEquipmentSortUpdates(items, {
     itemId: "c",
@@ -51,10 +52,11 @@ test("reorders loose equipment at the requested drop position", () => {
 
 test("reorders equipment inside its destination container", () => {
   const items = [
-    { id: "outside", sort: 100000, system: { parent_container_id: "" } },
-    { id: "first", sort: 100000, system: { parent_container_id: "pack" } },
-    { id: "moved", sort: 200000, system: { parent_container_id: "other" } },
-    { id: "last", sort: 300000, system: { parent_container_id: "pack" } }
+    { id: "outside", type: "equipment", sort: 100000, system: { parent_container_id: "" } },
+    { id: "first", type: "equipment", sort: 100000, system: { parent_container_id: "pack" } },
+    { id: "moved", type: "equipment", sort: 200000, system: { parent_container_id: "other" } },
+    { id: "last", type: "equipment", sort: 300000, system: { parent_container_id: "pack" } },
+    { id: "spell", type: "spell", sort: 150000, system: { parent_container_id: "pack" } }
   ];
   assert.deepEqual(buildEquipmentSortUpdates(items, {
     itemId: "moved",
