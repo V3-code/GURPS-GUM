@@ -2959,14 +2959,17 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
                 });
             }
             if (item.system?.is_container && !container) {
+                const destinationLocation = targetGroupId.startsWith('containers:')
+                    ? targetGroupId.slice('containers:'.length)
+                    : targetGroupId;
                 const descendants = this._getContainerDescendants(item.id);
                 for (const descendant of descendants) {
                     updatesById.set(descendant.id, {
                         ...(updatesById.get(descendant.id) || {}),
                         _id: descendant.id,
-                        'system.location': targetGroupId,
-                        'system.equipped': targetGroupId === 'equipped',
-                        'system.stored': targetGroupId === 'stored'
+                        'system.location': destinationLocation,
+                        'system.equipped': destinationLocation === 'equipped',
+                        'system.stored': destinationLocation === 'stored'
                     });
                 }
             }

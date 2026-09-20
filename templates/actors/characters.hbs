@@ -1178,6 +1178,7 @@
             {{/each}}
         </ol>
 
+        <div class="container-sections-list equipment-drop-zone" data-organizer-zone data-organizer-group-id="containers:equipped">
         {{#each equipmentInUseContainerSections}}
         <div class="container-section">
             <div class="container-section-header item" data-item-id="{{this.container._id}}" data-organizer-item-id="{{this.container._id}}" data-organizer-item-type="{{this.container.type}}" draggable="true">
@@ -1236,6 +1237,7 @@
             </ol>
         </div>
         {{/each}}
+        </div>
     </div>
 </details>
 
@@ -1273,6 +1275,7 @@
             {{/each}}
         </ol>
 
+        <div class="container-sections-list equipment-drop-zone" data-organizer-zone data-organizer-group-id="containers:carried">
         {{#each equipmentCarriedContainerSections}}
         <div class="container-section">
             <div class="container-section-header item" data-item-id="{{this.container._id}}" data-organizer-item-id="{{this.container._id}}" data-organizer-item-type="{{this.container.type}}" draggable="true">
@@ -1331,6 +1334,7 @@
             </ol>
         </div>
         {{/each}}
+        </div>
     </div>
 </details>
 
@@ -1366,6 +1370,7 @@
             {{/each}}
         </ol>
 
+        <div class="container-sections-list equipment-drop-zone" data-organizer-zone data-organizer-group-id="containers:stored">
         {{#each equipmentStoredContainerSections}}
         <div class="container-section">
             <div class="container-section-header item" data-item-id="{{this.container._id}}" data-organizer-item-id="{{this.container._id}}" data-organizer-item-type="{{this.container.type}}" draggable="true">
@@ -1424,6 +1429,7 @@
             </ol>
         </div>
         {{/each}}
+        </div>
     </div>
 </details>
     </div>

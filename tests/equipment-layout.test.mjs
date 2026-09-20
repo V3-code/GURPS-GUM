@@ -31,6 +31,7 @@ test("equipment containers expose weight, capacity and drop zones", () => {
   assert.match(template, /Container vazio — arraste itens para cá/);
   assert.match(template, /data-organizer-group-id="container:\{\{this\.container\._id\}\}"/);
   assert.match(template, /data-organizer-group-id="carried"/);
+  assert.equal((template.match(/data-organizer-group-id="containers:(?:equipped|carried|stored)"/g) || []).length, 3);
 });
 
 test("equipment drag and drop stays silent after a successful move", () => {

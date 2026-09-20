@@ -68,3 +68,28 @@ test("reorders equipment inside its destination container", () => {
     { _id: "last", sort: 300000 }
   ]);
 });
+
+test("reorders top-level containers in their destination location", () => {
+  const items = [
+    { id: "first", type: "equipment", sort: 100000, system: { is_container: true, stored: false, equipped: false } },
+    { id: "moved", type: "equipment", sort: 300000, system: { is_container: true, stored: true, equipped: false } },
+    { id: "last", type: "equipment", sort: 200000, system: { is_container: true, stored: false, equipped: false } },
+    { id: "loose", type: "equipment", sort: 150000, system: { is_container: false, stored: false, equipped: false } }
+  ];
+  assert.deepEqual(resolveEquipmentDrop(items[1], "containers:carried"), {
+    _id: "moved",
+    "system.parent_container_id": "",
+    "system.location": "carried",
+    "system.equipped": false,
+    "system.stored": false
+  });
+  assert.deepEqual(buildEquipmentSortUpdates(items, {
+    itemId: "moved",
+    targetZone: "containers:carried",
+    targetIndex: 1
+  }), [
+    { _id: "first", sort: 100000 },
+    { _id: "moved", sort: 200000 },
+    { _id: "last", sort: 300000 }
+  ]);
+});

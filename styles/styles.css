@@ -10214,6 +10214,9 @@ background-color: var(--gum-accent-gold);
   text-align: center;
 }
 .gum.sheet.actor .equipment-drop-zone { min-height: 38px; }
+.gum.sheet.actor .container-sections-list:empty {
+  min-height: 14px;
+}
 .gum.sheet.actor .equipment-drop-zone.is-organizer-drop-target {
   background: rgba(197,160,91,.1) !important;
   box-shadow: inset 0 0 0 1px rgba(197,160,91,.55) !important;

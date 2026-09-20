@@ -16,13 +16,15 @@ export function readOrganizerDragData(dataTransfer) {
   return null;
 }
 
-function getTargetIndex(zone, event, itemSelector, draggedItemId) {
+function getTargetIndex(zone, event, itemSelector, zoneSelector, draggedItemId) {
   const item = event.target.closest(itemSelector);
   if (item?.dataset.organizerItemId === draggedItemId) return null;
   if (!item || !zone.contains(item)) {
-    return zone.querySelectorAll(itemSelector).length;
+    return [...zone.querySelectorAll(itemSelector)]
+      .filter(entry => entry.closest(zoneSelector) === zone).length;
   }
-  const items = [...zone.querySelectorAll(itemSelector)].filter(entry => entry.dataset.organizerItemId !== draggedItemId);
+  const items = [...zone.querySelectorAll(itemSelector)]
+    .filter(entry => entry.closest(zoneSelector) === zone && entry.dataset.organizerItemId !== draggedItemId);
   const itemIndex = items.indexOf(item);
   if (itemIndex < 0) return items.length;
   const bounds = item.getBoundingClientRect();
@@ -92,7 +94,7 @@ export function attachSheetItemOrganizer(root, {
     event.stopPropagation();
     event.stopImmediatePropagation();
     const targetGroupId = zone.dataset.organizerGroupId || "";
-    const targetIndex = getTargetIndex(zone, event, itemSelector, data.itemId);
+    const targetIndex = getTargetIndex(zone, event, itemSelector, zoneSelector, data.itemId);
     clearTarget();
     if (targetIndex === null) return;
     await onMove({ ...data, targetGroupId, targetIndex });

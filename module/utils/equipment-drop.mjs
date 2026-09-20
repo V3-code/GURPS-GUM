@@ -21,13 +21,17 @@ export function resolveEquipmentDrop(item, targetZone, { container = null } = {}
     };
   }
 
-  if (!EQUIPMENT_LOCATION_ZONES.includes(targetZone)) return null;
+  const locationZone = targetZone.startsWith("containers:")
+    ? targetZone.slice("containers:".length)
+    : targetZone;
+  if (!EQUIPMENT_LOCATION_ZONES.includes(locationZone)) return null;
+  if (targetZone.startsWith("containers:") && !item.system?.is_container) return null;
   return {
     _id: item.id,
     "system.parent_container_id": "",
-    "system.location": targetZone,
-    "system.equipped": targetZone === "equipped",
-    "system.stored": targetZone === "stored"
+    "system.location": locationZone,
+    "system.equipped": locationZone === "equipped",
+    "system.stored": locationZone === "stored"
   };
 }
 
@@ -38,12 +42,23 @@ export function buildEquipmentSortUpdates(items, {
 } = {}) {
   const equipment = Array.from(items || []).filter(item => EQUIPMENT_ITEM_TYPES.includes(item.type));
   const movedItem = equipment.find(item => item.id === itemId);
-  if (!movedItem || movedItem.system?.is_container) return [];
+  if (!movedItem) return [];
 
   const containerId = String(targetZone || "").startsWith("container:")
     ? String(targetZone).slice("container:".length)
     : "";
+  const targetLocation = String(targetZone || "").startsWith("containers:")
+    ? String(targetZone).slice("containers:".length)
+    : targetZone;
   const inTargetBucket = item => {
+    if (movedItem.system?.is_container) {
+      if (!item.system?.is_container || item.system?.parent_container_id) return false;
+      return (
+        (targetLocation === "equipped" && item.system?.equipped) ||
+        (targetLocation === "stored" && item.system?.stored) ||
+        (targetLocation === "carried" && !item.system?.equipped && !item.system?.stored)
+      );
+    }
     if (item.system?.is_container) return false;
     if (containerId) return (item.system?.parent_container_id || "") === containerId;
     return !item.system?.parent_container_id && (
