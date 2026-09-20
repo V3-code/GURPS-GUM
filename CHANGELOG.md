@@ -6,11 +6,15 @@ O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com
 
 ## [Não publicado]
 
+## [1.3.0-beta] - 2026-09-20
+
 ### Added
 
 - Serviço central e janela de configuração para escolher, ordenar e validar múltiplas fontes de conteúdo por função do sistema.
 - Suporte a fontes configuráveis nos navegadores, solicitações de teste, modificadores de rolagem, condições passivas, vínculos de status e importação híbrida de personagens.
 - Migração automática da configuração legada de Vínculos de Status.
+- Organização híbrida de perícias e características, com grupos personalizados, ordenação manual e controles integrados à ficha.
+- Importação de bibliotecas do GCS com reconstrução da hierarquia de contêineres de equipamentos.
 
 ### Changed
 
@@ -18,6 +22,10 @@ O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com
 - Importação híbrida passou a priorizar Itens do mundo, fontes configuradas e, opcionalmente, outros compêndios.
 - Compêndios funcionais do GUM passaram a ser organizados em uma única pasta raiz `GUM`.
 - Janela de Fontes de Conteúdo recebeu apresentação visual mais sóbria, compacta e objetiva.
+- Cartões e diálogos de perícias, cabeçalhos de características e abas de equipamentos foram reorganizados para melhorar leitura e navegação.
+- Importador de compêndios ganhou seleção mais clara, ações revisadas e melhor tratamento de bibliotecas e contêineres do GCS.
+- Resultado dos testes de barreira de resistência passou a apresentar as margens de forma mais clara.
+- Contêineres de equipamentos passaram a oferecer melhor feedback de carga, ordenação por arraste e movimentação automática de itens.
 
 ### Removed
 
@@ -29,6 +37,9 @@ O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com
 - Inicialização prematura do serviço de fontes antes da disponibilidade de `game`, `game.settings` e `game.packs`.
 - Seleção ambígua de perícias com mesmo nome e especializações diferentes durante importações e solicitações.
 - Sincronização de Condições Passivas voltou a adicionar regras novas aos personagens existentes, além de atualizar as cópias já vinculadas.
+- Cálculo, visibilidade e valores ARIA do progresso de carga dos contêineres de equipamentos.
+- Escopo de operações de arrastar e soltar, preservando a ordem de contêineres e evitando movimentações indevidas.
+- Contraste dos seletores e disponibilidade das ações na janela de importação de compêndios.
 
 ## [1.0.0] - 2026-08-01
 
@@ -54,12 +65,3 @@ Primeira versão pública do GURPS GUM para Foundry VTT.
 - Abas de magias e poderes aprimoradas, incluindo habilidade de conjuração e reservas de energia.
 - Apresentação de condições, efeitos e ícones de status aprimorada.
 - `system.json` preparado para instalação e atualização por Manifest URL.
-- Endereços do projeto normalizados para `V3-code/GURPS-GUM`.
-- Compatibilidade definida para Foundry VTT 13 ou superior, verificada na versão 14.
-
-### Fixed
-
-- Importação de compêndios corrigida para atualizar entradas pelo `_id`, criar apenas registros novos e evitar duplicatas.
-- Preservação dos IDs usados pelas ligações entre Condições e Efeitos.
-- Restauração segura do estado de bloqueio do compêndio após a importação.
-- Diversos ajustes visuais e de fluxo nas fichas, itens, efeitos, combate e aplicação de dano.

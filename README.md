@@ -6,7 +6,7 @@
 
 Um ambiente completo para criar personagens, conduzir combates e administrar campanhas de GURPS no Foundry VTT.
 
-![Versão](https://img.shields.io/badge/versão-1.2.3-beta-8a7d5f)
+![Versão](https://img.shields.io/badge/versão-1.3.0-beta-8a7d5f)
 ![Foundry VTT](https://img.shields.io/badge/Foundry_VTT-12–14-8a7d5f)
 ![Status](https://img.shields.io/badge/status-beta_funcional-4f6b58)
 ![Idiomas](https://img.shields.io/badge/idiomas-PT--BR_%7C_EN-596878)
@@ -35,7 +35,7 @@ As novas versões serão detectadas pelo próprio Foundry. Se preferir, você ta
 
 | Informação | Estado atual |
 | --- | --- |
-| Versão do GUM | 1.2.3-beta |
+| Versão do GUM | 1.3.0-beta |
 | Foundry VTT mínimo | 12 |
 | Foundry VTT verificado | 14 |
 | Idiomas da interface | Português (Brasil)  |
