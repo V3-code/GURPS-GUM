@@ -9378,7 +9378,19 @@ background-color: var(--gum-accent-gold);
   border: 0;
   box-shadow: none;
   color: var(--source-text);
+  color-scheme: dark;
   flex: 1;
+}
+
+.content-source-config .content-source-add select option,
+.content-source-config .content-source-add select optgroup {
+  background-color: #181b20;
+  color: #f0ede7;
+}
+
+.content-source-config .content-source-add select option:checked {
+  background-color: #315f9f;
+  color: #fff;
 }
 
 .content-source-config .content-source-add select:focus {
@@ -10076,6 +10088,21 @@ background-color: var(--gum-accent-gold);
   background: #2c313a;
   color: #eee8df;
   box-shadow: none;
+}
+
+.dialog.gum.gum-compendium-import-dialog select {
+  color-scheme: dark;
+}
+
+.dialog.gum.gum-compendium-import-dialog select option,
+.dialog.gum.gum-compendium-import-dialog select optgroup {
+  background-color: #181b20;
+  color: #f0ede7;
+}
+
+.dialog.gum.gum-compendium-import-dialog select option:checked {
+  background-color: #315f9f;
+  color: #fff;
 }
 
 .dialog.gum.gum-compendium-import-dialog .dialog-buttons {

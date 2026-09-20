@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 
 const importer = readFileSync(new URL("../module/apps/importers.js", import.meta.url), "utf8");
 const main = readFileSync(new URL("../scripts/main.js", import.meta.url), "utf8");
+const styles = readFileSync(new URL("../styles/styles.css", import.meta.url), "utf8");
 
 test("o diretório de compêndios oferece importação global e contextual", () => {
   assert.match(importer, /renderCompendiumDirectory/);
@@ -36,4 +37,10 @@ test("a janela de destino usa formulário e seletor visual de modo", () => {
 test("o diretório de atores usa o nome de ação orientado ao personagem", () => {
   assert.match(main, /Importar Personagem/);
   assert.doesNotMatch(main, /> Importar do GCS/);
+});
+
+test("os menus de compêndio usam opções com fundo escuro e texto legível", () => {
+  assert.match(styles, /gum-compendium-import-dialog select option,[\s\S]*background-color: #181b20;[\s\S]*color: #f0ede7;/);
+  assert.match(styles, /content-source-add select option,[\s\S]*background-color: #181b20;[\s\S]*color: #f0ede7;/);
+  assert.match(styles, /color-scheme: dark;/);
 });
