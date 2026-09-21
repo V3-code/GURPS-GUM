@@ -34,7 +34,13 @@ export function getCompendiumFolderParentId(folder) {
 
 /** Sort parents before children, while safely handling malformed cyclic references. */
 export function sortCompendiumFoldersParentFirst(folders) {
-  const pending = new Map((folders ?? []).filter(folder => folder?._id).map(folder => [folder._id, folder]));
+  const normalizedFolders = folders ?? [];
+  const invalidFolderIndex = normalizedFolders.findIndex(folder => !folder?._id);
+  if (invalidFolderIndex >= 0) {
+    throw new Error(`Invalid GUM compendium library: folder at index ${invalidFolderIndex} is missing "_id".`);
+  }
+
+  const pending = new Map(normalizedFolders.map(folder => [folder._id, folder]));
   const sorted = [];
   const completed = new Set();
 

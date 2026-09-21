@@ -9238,19 +9238,20 @@ background-color: var(--gum-accent-gold);
 /* Configuração central das bibliotecas usadas pelas funções do GUM. */
 .content-source-config .gum-content-source-form {
   --source-bg: rgba(24, 27, 30, 0.96);
-  --source-surface: rgba(255, 255, 255, 0.035);
-  --source-surface-alt: rgba(255, 255, 255, 0.055);
+  --source-surface: rgba(255, 255, 255, 0.045);
+  --source-surface-alt: rgba(255, 255, 255, 0.065);
   --source-text: rgba(244, 244, 242, 0.92);
   --source-muted: rgba(224, 226, 228, 0.58);
-  --source-accent: #aeb8c2;
+  --source-accent: #93abc1;
   background: var(--source-bg);
   color: var(--source-text);
-  padding: 1rem;
+  padding: 1rem 1.15rem 1.15rem;
 }
 
 .content-source-config .content-source-intro {
-  margin: 0 0 1rem;
-  padding: 0.25rem 0.25rem 0.75rem;
+  border-bottom: 1px solid rgba(147, 171, 193, 0.2);
+  margin: 0 0 0.85rem;
+  padding: 0.25rem 0.25rem 0.85rem;
 }
 
 .content-source-config .content-source-intro h1 {
@@ -9267,14 +9268,24 @@ background-color: var(--gum-accent-gold);
 }
 
 .content-source-config .content-source-purpose {
+  --source-purpose-accent: var(--source-accent);
   background: var(--source-surface);
-  border: 0;
-  border-radius: 4px;
-  margin: 0.5rem 0;
-  padding: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-left: 3px solid color-mix(in srgb, var(--source-purpose-accent) 72%, transparent);
+  border-radius: 6px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  margin: 0.7rem 0;
+  padding: 0.85rem 0.9rem;
 }
 
-.content-source-config .content-source-purpose > header,
+.content-source-config .content-source-purpose:nth-of-type(3n + 2) {
+  --source-purpose-accent: #b49b78;
+}
+
+.content-source-config .content-source-purpose:nth-of-type(3n) {
+  --source-purpose-accent: #8cae9b;
+}
+
 .content-source-config .content-source-add,
 .content-source-config .content-source-list li {
   align-items: center;
@@ -9283,14 +9294,21 @@ background-color: var(--gum-accent-gold);
 }
 
 .content-source-config .content-source-purpose > header {
-  justify-content: space-between;
+  align-items: start;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr) minmax(7.5rem, 0.25fr);
+}
+
+.content-source-config .content-source-purpose-copy {
+  min-width: 0;
 }
 
 .content-source-config .content-source-purpose h2 {
   border: 0;
   color: var(--source-text);
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 650;
   letter-spacing: 0.01em;
   margin: 0 0 0.25rem;
 }
@@ -9308,8 +9326,8 @@ background-color: var(--gum-accent-gold);
 
 .content-source-config .content-source-list li {
   background: var(--source-surface-alt);
-  border: 0;
-  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
   margin-top: 0.3rem;
   min-height: 2.5rem;
   padding: 0.35rem 0.5rem;
@@ -9369,7 +9387,8 @@ background-color: var(--gum-accent-gold);
 
 .content-source-config .content-source-add {
   background: rgba(0, 0, 0, 0.12);
-  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.035);
+  border-radius: 4px;
   padding: 0.35rem;
 }
 
@@ -9406,6 +9425,17 @@ background-color: var(--gum-accent-gold);
   color: var(--source-text);
 }
 
+.content-source-config .content-source-restore {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.35rem;
+  justify-content: center;
+  margin: 0;
+  min-height: 2rem;
+  padding: 0.3rem 0.65rem;
+  width: 100%;
+}
+
 .content-source-config .content-source-restore:hover,
 .content-source-config .content-source-add-button:hover,
 .content-source-config .sheet-footer button:hover {
@@ -9421,6 +9451,21 @@ background-color: var(--gum-accent-gold);
   color: var(--source-muted);
   font-style: italic;
   opacity: 1;
+}
+
+@media (max-width: 560px) {
+  .content-source-config .content-source-purpose > header {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .content-source-config .content-source-restore span {
+    display: none;
+  }
+
+  .content-source-config .content-source-restore {
+    min-width: 2rem;
+    padding-inline: 0.5rem;
+  }
 }
 /* Skill cards: full-width groups with a compact, responsive card grid. */
 .gum.sheet.actor .skills-scroll-area.group {

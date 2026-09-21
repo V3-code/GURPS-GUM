@@ -37,3 +37,10 @@ test("orders child folders after their parents", () => {
 test("does not claim legacy array exports", () => {
   assert.equal(parseCompendiumLibraryExport([{ _id: "item" }]), null);
 });
+
+test("rejects folders without ids instead of silently omitting them", () => {
+  assert.throws(
+    () => sortCompendiumFoldersParentFirst([{ _id: "valid", folder: null }, { name: "Broken" }]),
+    /folder at index 1 is missing "_id"/
+  );
+});

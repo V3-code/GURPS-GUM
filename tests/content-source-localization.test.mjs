@@ -8,6 +8,8 @@ const catalogs = Object.fromEntries(languages.map(language => [
   language,
   JSON.parse(fs.readFileSync(`lang/${language}.json`, "utf8"))
 ]));
+const contentSourceTemplate = fs.readFileSync("templates/apps/content-source-config.hbs", "utf8");
+const styles = fs.readFileSync("styles/styles.css", "utf8");
 
 test("content source names and descriptions are available in every supported language", () => {
   for (const definition of Object.values(CONTENT_SOURCE_PURPOSES)) {
@@ -46,4 +48,12 @@ test("library and character import actions are available in every supported lang
   }
   assert.equal(catalogs.en["GUM.LibraryImport.ImportLibrary"], "Import Library");
   assert.equal(catalogs.en["GUM.LibraryImport.ImportCharacter"], "Import Character");
+});
+
+test("content source groups use a compact header grid and distinct card styling", () => {
+  assert.match(contentSourceTemplate, /class="content-source-purpose-copy"/);
+  assert.match(contentSourceTemplate, /class="content-source-restore"/);
+  assert.match(styles, /grid-template-columns:\s*minmax\(0, 1fr\) minmax\(7\.5rem, 0\.25fr\)/);
+  assert.match(styles, /border-left:\s*3px solid/);
+  assert.match(styles, /content-source-purpose:nth-of-type\(3n \+ 2\)/);
 });

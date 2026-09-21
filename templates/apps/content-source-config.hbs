@@ -7,12 +7,12 @@
   {{#each purposes as |purpose|}}
   <section class="content-source-purpose" data-purpose="{{purpose.id}}">
     <header class="content-source-purpose-header">
-      <div>
+      <div class="content-source-purpose-copy">
         <h2>{{purpose.label}}</h2>
         <p class="notes">{{purpose.description}}</p>
       </div>
       <button class="content-source-restore" type="button" data-action="restore-defaults" title="{{localize "GUM.ContentSources.Actions.RestoreDefaultsHint"}}">
-        <i class="fas fa-undo"></i> {{localize "GUM.ContentSources.Actions.RestoreDefaults"}}
+        <i class="fas fa-undo" aria-hidden="true"></i><span>{{localize "GUM.ContentSources.Actions.RestoreDefaults"}}</span>
       </button>
     </header>
 
