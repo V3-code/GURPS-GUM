@@ -4,6 +4,7 @@ import { buildGCSActorReconciliation } from "../utils/gcs-actor-reconciliation.m
 import { canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
 import { contentSourceService } from "../services/content-source-service.mjs";
 import { prepareGCSActorItemChanges } from "../utils/gcs-container-reconciliation.mjs";
+import { buildCompendiumLibraryExport, parseCompendiumLibraryExport, sortCompendiumFoldersParentFirst } from "../utils/compendium-library-json.mjs";
 
 const GCS_LIBRARY_TYPES_BY_EXTENSION = {
     skl: "skill", spl: "spell", eqp: "equipment", adq: "advantage",
@@ -62,8 +63,22 @@ export async function importFromJson({ pack: fixedPack = null } = {}) {
         const extension = (file.name?.split('.')?.pop() || '').toLowerCase();
 
         // 5. Determina o que importar
-let importEntries = [];
-        if (Array.isArray(data)) {
+        let importEntries = [];
+        let compendiumFolders = [];
+        let portableLibrary = null;
+        try {
+            portableLibrary = parseCompendiumLibraryExport(data);
+        } catch (err) {
+            return ui.notifications.error(err.message);
+        }
+
+        if (portableLibrary) {
+            if (portableLibrary.documentType !== "Item") {
+                return ui.notifications.error(`O arquivo contém documentos do tipo "${portableLibrary.documentType}", mas este importador aceita apenas Itens.`);
+            }
+            importEntries = portableLibrary.documents.map(item => ({ itemData: item, folderPath: [] }));
+            compendiumFolders = portableLibrary.folders;
+        } else if (Array.isArray(data)) {
             const looksLikeGCSRows = data.some(entry =>
                 entry && typeof entry === "object" && (
                     Array.isArray(entry.children) ||
@@ -92,13 +107,15 @@ let importEntries = [];
             return ui.notifications.error("O formato do JSON não foi reconhecido. Esperando uma lista de itens ou um objeto GCS com uma propriedade 'rows'.");
         }
 
-        if (importEntries.length === 0) {
+        if (importEntries.length === 0 && !portableLibrary) {
             return ui.notifications.error("Nenhum item encontrado no arquivo.");
         }
 
-        const isCompendiumJson = Array.isArray(data) && importEntries.some(entry =>
-            entry?.itemData && typeof entry.itemData === "object" &&
-            (entry.itemData._id || entry.itemData.system)
+        const isCompendiumJson = Boolean(portableLibrary) || (
+            Array.isArray(data) && importEntries.some(entry =>
+                entry?.itemData && typeof entry.itemData === "object" &&
+                (entry.itemData._id || entry.itemData.system)
+            )
         );
 
         if (isCompendiumJson) {
@@ -195,7 +212,10 @@ let importEntries = [];
                         
                         if (isCompendiumJson) {
                            const removeMissing = Boolean(html.find('input[name="remove-missing"]').prop('checked'));
-                           await synchronizeCompendiumJson(pack, importEntries, { removeMissing });
+                           await synchronizeCompendiumJson(pack, importEntries, {
+                               removeMissing,
+                               folders: portableLibrary ? compendiumFolders : null
+                           });
                        } else {
                            const selectedType = html.find('[name="library-item-type"]').val() || inferredType;
                            await importToCompendium(pack, importEntries, { itemType: selectedType });
@@ -3809,14 +3829,14 @@ function sanitizeFileName(name = "export") {
 async function exportSelectedCompendium(pack) {
     try {
         const documents = await pack.getDocuments();
-        if (!documents.length) {
+        if (!documents.length && !(pack.folders?.size || pack.folders?.length)) {
             return ui.notifications.warn(`O compêndio "${pack.title}" está vazio.`);
         }
 
-        const data = documents.map(document => document.toObject());
+        const data = buildCompendiumLibraryExport(pack, documents);
         const safeName = sanitizeFileName(pack.metadata.label || pack.metadata.name);
         downloadJsonFile(data, `gum_${safeName}.json`);
-        ui.notifications.info(`Exportação concluída! ${data.length} registros de "${pack.title}" foram exportados.`);
+        ui.notifications.info(`Exportação concluída! ${data.documents.length} registros e ${data.folders.length} pastas de "${pack.title}" foram exportados.`);
     } catch (err) {
         console.error(`GUM | Falha ao exportar ${pack?.collection}:`, err);
         ui.notifications.error(`Falha ao exportar "${pack?.title || "compêndio"}": ${err.message}`);
@@ -3824,7 +3844,8 @@ async function exportSelectedCompendium(pack) {
 }
 
 Hooks.on("getCompendiumDirectoryEntryContext", (_html, options) => {
-    if (!options.some(option => (option.name || option.label) === "Importar biblioteca neste compêndio")) {
+    const importLabel = game.i18n.localize("GUM.LibraryImport.ImportIntoCompendium");
+    if (!options.some(option => (option.name || option.label) === importLabel)) {
         const visible = entry => {
             const pack = getContextCompendium(entry);
             return Boolean(game.user?.isGM && pack?.metadata.type === "Item");
@@ -3835,8 +3856,8 @@ Hooks.on("getCompendiumDirectoryEntryContext", (_html, options) => {
             return importFromJson({ pack });
         };
         options.push({
-            name: "Importar biblioteca neste compêndio",
-            label: "Importar biblioteca neste compêndio",
+            name: importLabel,
+            label: importLabel,
             icon: '<i class="fas fa-file-import"></i>',
             condition: visible,
             visible,
@@ -3873,7 +3894,7 @@ Hooks.on("renderCompendiumDirectory", (_app, html) => {
     const row = document.createElement("div");
     row.className = "gum-directory-import-actions";
     row.innerHTML = `<button class="gum-compendium-import-button" type="button">
-        <i class="fas fa-file-import"></i> Importar biblioteca
+        <i class="fas fa-file-import"></i> ${game.i18n.localize("GUM.LibraryImport.ImportLibrary")}
     </button>`;
     row.querySelector("button").addEventListener("click", () => importFromJson());
     headerActions.append(row);
@@ -3896,7 +3917,7 @@ function getContextCompendiumCollection(entry) {
 }
 
 /** Sincroniza uma exportação do Foundry sem alterar IDs ou criar duplicatas. */
-async function synchronizeCompendiumJson(pack, importEntries, { removeMissing = false } = {}) {
+async function synchronizeCompendiumJson(pack, importEntries, { removeMissing = false, folders = null } = {}) {
     const originalLocked = Boolean(pack.locked);
     const incoming = importEntries.map(entry => entry.itemData);
     const incomingIds = new Set(incoming.map(document => document._id));
@@ -3920,15 +3941,17 @@ async function synchronizeCompendiumJson(pack, importEntries, { removeMissing = 
         const allowedTypes = expectedMappedType ? new Set([expectedMappedType]) : existingTypes;
         const incomingTypes = new Set(incoming.map(document => document.type).filter(Boolean));
 
-        if (incomingTypes.size !== 1) {
+        if (incoming.length && incomingTypes.size !== 1) {
             throw new Error("O JSON de compêndio deve conter um único tipo de Item.");
         }
         const [incomingType] = incomingTypes;
-        if (allowedTypes.size && !allowedTypes.has(incomingType)) {
+        if (incoming.length && allowedTypes.size && !allowedTypes.has(incomingType)) {
             throw new Error(`Tipo incompatível: o JSON contém "${incomingType}", mas o compêndio "${pack.title}" contém/espera ${[...allowedTypes].map(type => `"${type}"`).join(", ")}.`);
         }
 
         if (originalLocked) await pack.configure({ locked: false });
+
+        if (folders) await synchronizeCompendiumFolders(pack, folders);
 
         const existingIds = new Set(existingDocuments.map(document => document.id));
         const toUpdate = incoming.filter(document => existingIds.has(document._id));
@@ -3949,6 +3972,7 @@ async function synchronizeCompendiumJson(pack, importEntries, { removeMissing = 
             await Item.deleteDocuments(toRemove, { pack: pack.collection });
             removed = toRemove.length;
         }
+        if (removeMissing && folders) await removeMissingCompendiumFolders(pack, folders);
 
         ui.notifications.info(`Importação concluída em "${pack.title}": ${updated} atualizado(s), ${created} criado(s), ${removed} removido(s) e ${ignored} ignorado(s).`);
     } catch (err) {
@@ -3964,4 +3988,34 @@ async function synchronizeCompendiumJson(pack, importEntries, { removeMissing = 
             }
         }
     }
+}
+
+async function synchronizeCompendiumFolders(pack, folders) {
+    if (!folders.length) return;
+
+    const existingFolders = Array.from(pack.folders ?? []);
+    const existingIds = new Set(existingFolders.map(folder => folder.id));
+    const orderedFolders = sortCompendiumFoldersParentFirst(folders);
+
+    for (const folder of orderedFolders) {
+        if (!folder?._id) throw new Error("Uma pasta exportada não possui o campo \"_id\".");
+        const folderData = foundry.utils.deepClone(folder);
+        folderData.type = "Item";
+        if (existingIds.has(folderData._id)) {
+            await Folder.updateDocuments([folderData], { pack: pack.collection });
+        } else {
+            await Folder.createDocuments([folderData], { pack: pack.collection, keepId: true });
+            existingIds.add(folderData._id);
+        }
+    }
+
+}
+
+async function removeMissingCompendiumFolders(pack, folders) {
+    const incomingIds = new Set(folders.map(folder => folder._id));
+    const idsToRemove = Array.from(pack.folders ?? [])
+        .filter(folder => !incomingIds.has(folder.id))
+        .sort((a, b) => (b.depth ?? 0) - (a.depth ?? 0))
+        .map(folder => folder.id);
+    if (idsToRemove.length) await Folder.deleteDocuments(idsToRemove, { pack: pack.collection });
 }

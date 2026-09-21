@@ -2894,7 +2894,7 @@ Hooks.on("renderActorDirectory", (app, html, data) => {
         row.className = "gum-directory-import-actions";
         row.innerHTML = `
             <button class="gcs-import-button" type="button">
-                <i class="fas fa-file-import"></i> Importar Personagem
+                <i class="fas fa-file-import"></i> ${game.i18n.localize("GUM.LibraryImport.ImportCharacter")}
             </button>
         `;
         const button = row.querySelector("button");

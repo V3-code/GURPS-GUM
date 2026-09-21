@@ -34,3 +34,16 @@ test("status automation is the localized public name while stable binding IDs re
   assert.ok(CONTENT_SOURCE_PURPOSES.statusBindings);
   assert.equal(CONTENT_SOURCE_PURPOSES.statusBindings.defaults[0], "gum.status_bindings");
 });
+
+test("library and character import actions are available in every supported language", () => {
+  const keys = [
+    "GUM.LibraryImport.ImportLibrary",
+    "GUM.LibraryImport.ImportCharacter",
+    "GUM.LibraryImport.ImportIntoCompendium"
+  ];
+  for (const key of keys) {
+    for (const language of languages) assert.ok(catalogs[language][key], `${key} is missing from ${language}`);
+  }
+  assert.equal(catalogs.en["GUM.LibraryImport.ImportLibrary"], "Import Library");
+  assert.equal(catalogs.en["GUM.LibraryImport.ImportCharacter"], "Import Character");
+});
