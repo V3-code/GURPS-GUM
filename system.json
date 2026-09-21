@@ -2,7 +2,7 @@
   "title": "GURPS GUM (Não Oficial)",
   "id": "gum",
   "version": "1.3.0-beta",
-  "description": "Adaptação não oficial do sistema GURPS para uso no Foundry VTT. Criado por fã, sem fins lucrativos.",
+  "description": "Ferramenta não oficial e gratuita para uso de GURPS no Foundry VTT. Criada por fã, sem fins lucrativos e sem conteúdo de publicações de GURPS.",
   "authors": [
     {
       "name": "Victor Valentim",
