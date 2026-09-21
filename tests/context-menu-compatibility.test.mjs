@@ -7,11 +7,23 @@ import {
 
 test("converte entradas legadas do menu de contexto para a API do Foundry 14", () => {
   const condition = () => true;
-  const callback = () => "ok";
+  let received;
+  const callback = (target, event) => { received = { target, event }; };
   const entries = [{ name: "Tokenizer", condition, callback, icon: "tokenizer" }];
 
   assert.equal(normalizeContextMenuEntries(entries), entries);
-  assert.deepEqual(entries, [{ label: "Tokenizer", visible: condition, onClick: callback, icon: "tokenizer" }]);
+  assert.equal(entries[0].label, "Tokenizer");
+  assert.equal(entries[0].visible, condition);
+  assert.equal(entries[0].icon, "tokenizer");
+  assert.equal(typeof entries[0].onClick, "function");
+  assert.equal("name" in entries[0], false);
+  assert.equal("condition" in entries[0], false);
+  assert.equal("callback" in entries[0], false);
+
+  const event = { type: "click" };
+  const target = { dataset: { entryId: "gum.conditions" } };
+  entries[0].onClick(event, target);
+  assert.deepEqual(received, { target, event });
 });
 
 test("preserva campos modernos quando uma integração também fornece aliases legados", () => {
@@ -40,7 +52,7 @@ test("registra o adaptador apenas nas versões que oferecem a API moderna", () =
 
   registerContextMenuCompatibilityHooks({ Hooks, generation: 14 });
   assert.deepEqual(registrations.map(entry => entry.hook), [
-    "getActorDirectoryEntryContext",
-    "getCompendiumDirectoryEntryContext"
+    "getActorContextOptions",
+    "getCompendiumContextOptions"
   ]);
 });

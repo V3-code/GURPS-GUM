@@ -8,6 +8,8 @@ const styles = readFileSync(new URL("../styles/styles.css", import.meta.url), "u
 
 test("o diretório de compêndios oferece importação global e contextual", () => {
   assert.match(importer, /renderCompendiumDirectory/);
+  assert.match(importer, /getCompendiumContextOptions/);
+  assert.match(importer, /getCompendiumDirectoryEntryContext/);
   assert.match(importer, /GUM\.LibraryImport\.ImportIntoCompendium/);
   assert.match(importer, /importFromJson\(\{ pack \}\)/);
 });
@@ -24,7 +26,7 @@ test("os botões de importação dos diretórios ocupam uma linha independente",
 
 test("o menu contextual oferece campos legados e modernos do Foundry", () => {
   assert.match(importer, /label: importLabel/);
-  assert.match(importer, /condition: visible,[\s\S]*visible,[\s\S]*callback: onClick,[\s\S]*onClick/);
+  assert.match(importer, /condition: visible,[\s\S]*visible,[\s\S]*callback: entry => activate\(entry\),[\s\S]*onClick: \(_event, entry\) => activate\(entry\)/);
 });
 
 test("o menu contextual permite exportar e limpar compêndios de Item para o mestre", () => {

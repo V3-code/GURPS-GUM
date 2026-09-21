@@ -3843,14 +3843,18 @@ async function exportSelectedCompendium(pack) {
     }
 }
 
-Hooks.on("getCompendiumDirectoryEntryContext", (_html, options) => {
+const COMPENDIUM_CONTEXT_HOOK = Number(globalThis.game?.release?.generation ?? 12) >= 14
+    ? "getCompendiumContextOptions"
+    : "getCompendiumDirectoryEntryContext";
+
+Hooks.on(COMPENDIUM_CONTEXT_HOOK, (_app, options) => {
     const importLabel = game.i18n.localize("GUM.LibraryImport.ImportIntoCompendium");
     if (!options.some(option => (option.name || option.label) === importLabel)) {
         const visible = entry => {
             const pack = getContextCompendium(entry);
             return Boolean(game.user?.isGM && pack?.metadata.type === "Item");
         };
-        const onClick = entry => {
+        const activate = entry => {
             const pack = getContextCompendium(entry);
             if (!pack) return ui.notifications.error("Não foi possível identificar o compêndio selecionado.");
             return importFromJson({ pack });
@@ -3861,15 +3865,15 @@ Hooks.on("getCompendiumDirectoryEntryContext", (_html, options) => {
             icon: '<i class="fas fa-file-import"></i>',
             condition: visible,
             visible,
-            callback: onClick,
-            onClick
+            callback: entry => activate(entry),
+            onClick: (_event, entry) => activate(entry)
         });
     }
 
     const exportLabel = game.i18n.localize("GUM.LibraryImport.ExportCompendium");
     if (!options.some(option => (option.name || option.label) === exportLabel)) {
         const visible = entry => Boolean(game.user?.isGM && getContextCompendium(entry)?.metadata.type === "Item");
-        const onClick = entry => {
+        const activate = entry => {
             const pack = getContextCompendium(entry);
             if (!pack) return ui.notifications.error("Não foi possível identificar o compêndio selecionado.");
             return exportSelectedCompendium(pack);
@@ -3880,15 +3884,15 @@ Hooks.on("getCompendiumDirectoryEntryContext", (_html, options) => {
             icon: '<i class="fas fa-file-export"></i>',
             condition: visible,
             visible,
-            callback: onClick,
-            onClick
+            callback: entry => activate(entry),
+            onClick: (_event, entry) => activate(entry)
         });
     }
 
     const clearLabel = game.i18n.localize("GUM.LibraryImport.ClearCompendium");
     if (!options.some(option => (option.name || option.label) === clearLabel)) {
         const visible = entry => Boolean(game.user?.isGM && getContextCompendium(entry)?.metadata.type === "Item");
-        const onClick = entry => {
+        const activate = entry => {
             const pack = getContextCompendium(entry);
             if (!pack) return ui.notifications.error(game.i18n.localize("GUM.LibraryImport.Errors.CompendiumNotFound"));
             return confirmAndClearCompendium(pack);
@@ -3899,8 +3903,8 @@ Hooks.on("getCompendiumDirectoryEntryContext", (_html, options) => {
             icon: '<i class="fas fa-trash-alt"></i>',
             condition: visible,
             visible,
-            callback: onClick,
-            onClick
+            callback: entry => activate(entry),
+            onClick: (_event, entry) => activate(entry)
         });
     }
 });

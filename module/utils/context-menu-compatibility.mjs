@@ -4,7 +4,10 @@ export function normalizeContextMenuEntries(entries = []) {
 
     if (entry.label === undefined && entry.name !== undefined) entry.label = entry.name;
     if (entry.visible === undefined && entry.condition !== undefined) entry.visible = entry.condition;
-    if (entry.onClick === undefined && entry.callback !== undefined) entry.onClick = entry.callback;
+    if (entry.onClick === undefined && entry.callback !== undefined) {
+      const legacyCallback = entry.callback;
+      entry.onClick = (event, target) => legacyCallback(target, event);
+    }
 
     delete entry.name;
     delete entry.condition;
@@ -18,6 +21,6 @@ export function registerContextMenuCompatibilityHooks({ Hooks, generation }) {
   if (Number(generation) < 14) return;
 
   const normalize = (_html, entries) => normalizeContextMenuEntries(entries);
-  Hooks.on("getActorDirectoryEntryContext", normalize);
-  Hooks.on("getCompendiumDirectoryEntryContext", normalize);
+  Hooks.on("getActorContextOptions", normalize);
+  Hooks.on("getCompendiumContextOptions", normalize);
 }
