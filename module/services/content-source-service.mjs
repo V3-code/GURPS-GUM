@@ -3,89 +3,89 @@ export const CONTENT_SOURCE_SETTING = "contentSources";
 export const CONTENT_SOURCE_PURPOSES = Object.freeze({
   conditions: Object.freeze({
     id: "conditions",
-    label: "Condições",
-    description: "Bibliotecas usadas pelo navegador e pelos seletores de condições.",
+    label: "GUM.ContentSources.Purposes.Conditions.Name",
+    description: "GUM.ContentSources.Purposes.Conditions.Description",
     defaults: Object.freeze(["gum.conditions"]),
     documentName: "Item",
     itemTypes: Object.freeze(["condition"])
   }),
   modifiers: Object.freeze({
     id: "modifiers",
-    label: "Ampliações e Limitações",
-    description: "Bibliotecas usadas na edição de vantagens, desvantagens e poderes.",
-    defaults: Object.freeze(["gum.modifiers"]),
+    label: "GUM.ContentSources.Purposes.Modifiers.Name",
+    description: "GUM.ContentSources.Purposes.Modifiers.Description",
+    defaults: Object.freeze([]),
     documentName: "Item",
     itemTypes: Object.freeze(["modifier"])
   }),
   templates: Object.freeze({
     id: "templates",
-    label: "Modelos",
-    description: "Bibliotecas usadas para aplicar modelos aos personagens.",
-    defaults: Object.freeze(["gum.templates"]),
+    label: "GUM.ContentSources.Purposes.Templates.Name",
+    description: "GUM.ContentSources.Purposes.Templates.Description",
+    defaults: Object.freeze([]),
     documentName: "Item",
     itemTypes: Object.freeze(["template"])
   }),
   equipmentModifiers: Object.freeze({
     id: "equipmentModifiers",
-    label: "Modificadores de Equipamento",
-    description: "Bibliotecas usadas na edição de equipamentos.",
-    defaults: Object.freeze(["gum.eqp_modifiers"]),
+    label: "GUM.ContentSources.Purposes.EquipmentModifiers.Name",
+    description: "GUM.ContentSources.Purposes.EquipmentModifiers.Description",
+    defaults: Object.freeze([]),
     documentName: "Item",
     itemTypes: Object.freeze(["eqp_modifier"])
   }),
   rollModifiers: Object.freeze({
     id: "rollModifiers",
-    label: "Modificadores de Rolagem",
-    description: "Bibliotecas usadas pela ficha, pelo prompt de rolagem e pelo Escudo do Mestre.",
-    defaults: Object.freeze(["gum.gm_modifiers"]),
+    label: "GUM.ContentSources.Purposes.RollModifiers.Name",
+    description: "GUM.ContentSources.Purposes.RollModifiers.Description",
+    defaults: Object.freeze([]),
     documentName: "Item",
     itemTypes: Object.freeze(["gm_modifier"])
   }),
   skills: Object.freeze({
     id: "skills",
-    label: "Perícias",
-    description: "Bibliotecas usadas nas solicitações e na resolução canônica de testes de perícia.",
-    defaults: Object.freeze(["gum.skills"]),
+    label: "GUM.ContentSources.Purposes.Skills.Name",
+    description: "GUM.ContentSources.Purposes.Skills.Description",
+    defaults: Object.freeze([]),
     documentName: "Item",
     itemTypes: Object.freeze(["skill"])
   }),
   passiveConditions: Object.freeze({
     id: "passiveConditions",
-    label: "Condições Passivas",
-    description: "Bibliotecas copiadas para novos personagens e usadas na sincronização das condições passivas.",
+    label: "GUM.ContentSources.Purposes.PassiveConditions.Name",
+    description: "GUM.ContentSources.Purposes.PassiveConditions.Description",
     defaults: Object.freeze(["gum.regras"]),
     documentName: "Item",
     itemTypes: Object.freeze(["condition"])
   }),
   statusBindings: Object.freeze({
     id: "statusBindings",
-    label: "Vínculos de Status",
-    description: "Bibliotecas que vinculam os status nativos do Foundry aos efeitos do GUM.",
+    label: "GUM.ContentSources.Purposes.StatusAutomations.Name",
+    description: "GUM.ContentSources.Purposes.StatusAutomations.Description",
     defaults: Object.freeze(["gum.status_bindings"]),
     documentName: "Item",
     itemTypes: Object.freeze(["condition"])
   }),
   characterImport: Object.freeze({
     id: "characterImport",
-    label: "Importação Híbrida de Personagens",
-    description: "Bibliotecas adicionais consultadas ao substituir itens importados do GCS por conteúdo do GUM.",
+    label: "GUM.ContentSources.Purposes.CharacterImport.Name",
+    description: "GUM.ContentSources.Purposes.CharacterImport.Description",
     defaults: Object.freeze([]),
     documentName: "Item",
     itemTypes: Object.freeze(["skill", "spell", "power", "advantage", "disadvantage", "equipment"])
   }),
   effects: Object.freeze({
     id: "effects",
-    label: "Efeitos",
-    description: "Bibliotecas usadas pelo navegador e pelos seletores de efeitos.",
+    label: "GUM.ContentSources.Purposes.Effects.Name",
+    description: "GUM.ContentSources.Purposes.Effects.Description",
     defaults: Object.freeze(["gum.efeitos"]),
     documentName: "Item",
     itemTypes: Object.freeze(["effect"])
   }),
   triggers: Object.freeze({
     id: "triggers",
-    label: "Gatilhos",
-    description: "Bibliotecas usadas pelos editores de condições e efeitos.",
-    defaults: Object.freeze(["gum.gatilhos"]),
+    label: "GUM.ContentSources.Purposes.Triggers.Name",
+    description: "GUM.ContentSources.Purposes.Triggers.Description",
+    defaults: Object.freeze([]),
     documentName: "Item",
     itemTypes: Object.freeze(["trigger"])
   })

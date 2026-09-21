@@ -12,7 +12,7 @@ export class ContentSourceConfig extends FormApplication {
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
       id: "gum-content-source-config",
-      title: "Fontes de Conteúdo do GUM",
+      title: "GUM.ContentSources.Title",
       template: "systems/gum/templates/apps/content-source-config.hbs",
       classes: ["gum", "content-source-config"],
       width: 650,
@@ -26,7 +26,7 @@ export class ContentSourceConfig extends FormApplication {
     const itemPacks = game.packs
       .filter(pack => (pack.documentName || pack.metadata?.type) === "Item")
       .map(pack => ({ id: pack.collection, label: pack.title || pack.metadata?.label || pack.collection }))
-      .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+      .sort((a, b) => a.label.localeCompare(b.label, game.i18n.lang));
 
     context.purposes = Object.values(CONTENT_SOURCE_PURPOSES).map(definition => {
       if (!this.selectedByPurpose.has(definition.id)) {
@@ -43,6 +43,8 @@ export class ContentSourceConfig extends FormApplication {
     const selectedIds = this.selectedByPurpose.get(definition.id) || [];
     return {
       ...definition,
+      label: game.i18n.localize(definition.label),
+      description: game.i18n.localize(definition.description),
       sourceIdsJson: JSON.stringify(selectedIds),
       sources: selectedIds.map((id, index) => ({
         id,
@@ -105,10 +107,12 @@ export class ContentSourceConfig extends FormApplication {
       try {
         ids = JSON.parse(raw);
       } catch (_error) {
-        return ui.notifications.error(`Não foi possível salvar as fontes de ${CONTENT_SOURCE_PURPOSES[purpose].label}.`);
+        return ui.notifications.error(game.i18n.format("GUM.ContentSources.Errors.SavePurpose", {
+          purpose: game.i18n.localize(CONTENT_SOURCE_PURPOSES[purpose].label)
+        }));
       }
       await contentSourceService.setSourceIds(purpose, ids);
     }
-    ui.notifications.info("Fontes de conteúdo atualizadas.");
+    ui.notifications.info(game.i18n.localize("GUM.ContentSources.Notifications.Saved"));
   }
 }

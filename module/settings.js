@@ -46,6 +46,34 @@ import { CONTENT_SOURCE_SETTING, contentSourceService } from "./services/content
 import { buildPassiveConditionSyncOperations } from "./utils/passive-condition-sync.mjs";
 
 const STATUS_BINDINGS_MIGRATION_SETTING = "contentSourcesStatusBindingsMigrationV1";
+const RETIRED_BUNDLED_SOURCES_MIGRATION_SETTING = "contentSourcesRetiredBundledSourcesMigrationV1";
+const RETIRED_BUNDLED_SOURCES = Object.freeze({
+    modifiers: "gum.modifiers",
+    templates: "gum.templates",
+    equipmentModifiers: "gum.eqp_modifiers",
+    rollModifiers: "gum.gm_modifiers",
+    skills: "gum.skills",
+    triggers: "gum.gatilhos"
+});
+
+export async function migrateRetiredBundledSources() {
+    if (!game.user?.isGM) return false;
+    if (game.settings.get("gum", RETIRED_BUNDLED_SOURCES_MIGRATION_SETTING)) return false;
+
+    const configuredSources = contentSourceService.getSettings();
+    let changed = false;
+    for (const [purpose, retiredId] of Object.entries(RETIRED_BUNDLED_SOURCES)) {
+        if (!Object.hasOwn(configuredSources, purpose)) continue;
+        const filtered = configuredSources[purpose].filter(id => id !== retiredId);
+        if (filtered.length === configuredSources[purpose].length) continue;
+        configuredSources[purpose] = filtered;
+        changed = true;
+    }
+
+    if (changed) await game.settings.set("gum", CONTENT_SOURCE_SETTING, configuredSources);
+    await game.settings.set("gum", RETIRED_BUNDLED_SOURCES_MIGRATION_SETTING, true);
+    return changed;
+}
 
 export async function migrateLegacyStatusBindingSource() {
     if (!game.user?.isGM) return false;
@@ -67,7 +95,7 @@ export async function migrateLegacyStatusBindingSource() {
 export const registerSystemSettings = function() {
 
     game.settings.register("gum", CONTENT_SOURCE_SETTING, {
-        name: "Fontes de Conteúdo do GUM",
+        name: "GUM.ContentSources.Title",
         hint: "Configuração interna das bibliotecas utilizadas pelas funções do sistema.",
         scope: "world",
         config: false,
@@ -76,7 +104,15 @@ export const registerSystemSettings = function() {
     });
 
     game.settings.register("gum", STATUS_BINDINGS_MIGRATION_SETTING, {
-        name: "Migração interna: fontes dos Vínculos de Status",
+        name: "Migração interna: fontes das Automações de Status",
+        scope: "world",
+        config: false,
+        type: Boolean,
+        default: false
+    });
+
+    game.settings.register("gum", RETIRED_BUNDLED_SOURCES_MIGRATION_SETTING, {
+        name: "Migração interna: fontes internas descontinuadas",
         scope: "world",
         config: false,
         type: Boolean,
@@ -84,9 +120,9 @@ export const registerSystemSettings = function() {
     });
 
     game.settings.registerMenu("gum", "contentSourceConfig", {
-        name: "Fontes de Conteúdo do GUM",
-        label: "Configurar fontes",
-        hint: "Escolha os compêndios usados pelos navegadores e automações do GUM.",
+        name: "GUM.ContentSources.Title",
+        label: "GUM.ContentSources.Menu.Label",
+        hint: "GUM.ContentSources.Menu.Hint",
         icon: "fas fa-books",
         type: ContentSourceConfig,
         restricted: true
@@ -179,8 +215,8 @@ export const registerSystemSettings = function() {
     });
 
     game.settings.register("gum", "statusBindingsCompendium", {
-        name: "Compêndio de Vínculos de Status",
-        hint: "ID do compêndio que contém Itens Condição no modo 'Vínculo de Status' (ex.: gum.status_bindings). Se vazio, usa gum.conditions.",
+        name: "GUM.StatusAutomations.LegacySetting.Name",
+        hint: "GUM.StatusAutomations.LegacySetting.Hint",
         scope: "world",
         config: false,
         type: String,

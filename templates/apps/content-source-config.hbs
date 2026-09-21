@@ -1,7 +1,7 @@
 <form class="gum-content-source-form">
   <div class="content-source-intro">
-    <h1>Fontes de conteúdo</h1>
-    <p>Escolha e ordene as bibliotecas usadas por cada função. A primeira fonte tem maior prioridade.</p>
+    <h1>{{localize "GUM.ContentSources.Heading"}}</h1>
+    <p>{{localize "GUM.ContentSources.Introduction"}}</p>
   </div>
 
   {{#each purposes as |purpose|}}
@@ -11,8 +11,8 @@
         <h2>{{purpose.label}}</h2>
         <p class="notes">{{purpose.description}}</p>
       </div>
-      <button class="content-source-restore" type="button" data-action="restore-defaults" title="Restaurar a fonte padrão do GUM">
-        <i class="fas fa-undo"></i> Padrão
+      <button class="content-source-restore" type="button" data-action="restore-defaults" title="{{localize "GUM.ContentSources.Actions.RestoreDefaultsHint"}}">
+        <i class="fas fa-undo"></i> {{localize "GUM.ContentSources.Actions.RestoreDefaults"}}
       </button>
     </header>
 
@@ -26,16 +26,16 @@
           <small>{{source.id}}</small>
         </span>
         <span class="source-status">
-          {{#if source.missing}}<i class="fas fa-exclamation-triangle"></i> Ausente{{else}}<i class="fas fa-check-circle"></i> Disponível{{/if}}
+          {{#if source.missing}}<i class="fas fa-exclamation-triangle"></i> {{localize "GUM.ContentSources.Status.Missing"}}{{else}}<i class="fas fa-check-circle"></i> {{localize "GUM.ContentSources.Status.Available"}}{{/if}}
         </span>
         <span class="source-actions">
-          <button type="button" data-action="move-source-up" title="Mover para cima" {{#unless source.canMoveUp}}disabled{{/unless}}><i class="fas fa-arrow-up"></i></button>
-          <button type="button" data-action="move-source-down" title="Mover para baixo" {{#unless source.canMoveDown}}disabled{{/unless}}><i class="fas fa-arrow-down"></i></button>
-          <button type="button" data-action="remove-source" title="Remover fonte"><i class="fas fa-trash"></i></button>
+          <button type="button" data-action="move-source-up" title="{{localize "GUM.ContentSources.Actions.MoveUp"}}" {{#unless source.canMoveUp}}disabled{{/unless}}><i class="fas fa-arrow-up"></i></button>
+          <button type="button" data-action="move-source-down" title="{{localize "GUM.ContentSources.Actions.MoveDown"}}" {{#unless source.canMoveDown}}disabled{{/unless}}><i class="fas fa-arrow-down"></i></button>
+          <button type="button" data-action="remove-source" title="{{localize "GUM.ContentSources.Actions.Remove"}}"><i class="fas fa-trash"></i></button>
         </span>
       </li>
       {{else}}
-      <li class="empty-source-list">Nenhuma fonte selecionada.</li>
+      <li class="empty-source-list">{{localize "GUM.ContentSources.Empty"}}</li>
       {{/each}}
     </ol>
 
@@ -43,12 +43,12 @@
       <select name="available-source">
         {{#each ../itemPacks as |pack|}}<option value="{{pack.id}}">{{pack.label}} — {{pack.id}}</option>{{/each}}
       </select>
-      <button class="content-source-add-button" type="button" data-action="add-source"><i class="fas fa-plus"></i> Adicionar</button>
+      <button class="content-source-add-button" type="button" data-action="add-source"><i class="fas fa-plus"></i> {{localize "GUM.ContentSources.Actions.Add"}}</button>
     </div>
   </section>
   {{/each}}
 
   <footer class="sheet-footer flexrow">
-    <button type="submit"><i class="fas fa-save"></i> Salvar fontes</button>
+    <button type="submit"><i class="fas fa-save"></i> {{localize "GUM.ContentSources.Actions.Save"}}</button>
   </footer>
 </form>
