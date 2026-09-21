@@ -7,16 +7,17 @@ import {
   normalizeContentSourceSettings
 } from "../module/services/content-source-service.mjs";
 
-test("uses the GUM source by default but preserves an explicitly empty selection", () => {
+test("uses only the mechanical GUM sources by default and preserves empty selections", () => {
   assert.deepEqual(getConfiguredSourceIds({}, "effects"), ["gum.efeitos"]);
   assert.deepEqual(getConfiguredSourceIds({}, "conditions"), ["gum.conditions"]);
-  assert.deepEqual(getConfiguredSourceIds({}, "modifiers"), ["gum.modifiers"]);
-  assert.deepEqual(getConfiguredSourceIds({}, "templates"), ["gum.templates"]);
-  assert.deepEqual(getConfiguredSourceIds({}, "equipmentModifiers"), ["gum.eqp_modifiers"]);
-  assert.deepEqual(getConfiguredSourceIds({}, "rollModifiers"), ["gum.gm_modifiers"]);
-  assert.deepEqual(getConfiguredSourceIds({}, "skills"), ["gum.skills"]);
   assert.deepEqual(getConfiguredSourceIds({}, "passiveConditions"), ["gum.regras"]);
-  assert.deepEqual(getConfiguredSourceIds({}, "triggers"), ["gum.gatilhos"]);
+  assert.deepEqual(getConfiguredSourceIds({}, "statusBindings"), ["gum.status_bindings"]);
+  assert.deepEqual(getConfiguredSourceIds({}, "modifiers"), []);
+  assert.deepEqual(getConfiguredSourceIds({}, "templates"), []);
+  assert.deepEqual(getConfiguredSourceIds({}, "equipmentModifiers"), []);
+  assert.deepEqual(getConfiguredSourceIds({}, "rollModifiers"), []);
+  assert.deepEqual(getConfiguredSourceIds({}, "skills"), []);
+  assert.deepEqual(getConfiguredSourceIds({}, "triggers"), []);
   assert.deepEqual(getConfiguredSourceIds({ effects: [] }, "effects"), []);
 });
 

@@ -10,7 +10,7 @@ import { GurpsActorSheet } from "../module/actor/gurps-actor-sheet.js";
 import "../scripts/journal-pdf.js";
 import { GurpsItemSheet } from "../module/item/gurps-item-sheet.js";
 import { TemplateItemSheet } from "../module/item/template-item-sheet.js";
-import { migrateLegacyStatusBindingSource, registerSystemSettings } from "../module/settings.js";
+import { migrateLegacyStatusBindingSource, migrateRetiredBundledSources, registerSystemSettings } from "../module/settings.js";
 import { GumPreviewDialog } from "../module/apps/preview-dialog.js";
 import DamageApplicationWindow from './apps/damage-application.js';
 import { ConditionSheet } from "./apps/condition-sheet.js";
@@ -3530,7 +3530,7 @@ const loadStatusBindingRules = async () => {
 
     const { documents, invalidSources } = await contentSourceService.getDocuments("statusBindings");
     if (invalidSources.length) {
-        console.warn("GUM | Fontes inválidas de Vínculos de Status:", invalidSources);
+        console.warn("GUM | Fontes inválidas de Automações de Status:", invalidSources);
     }
     const statusRules = documents.filter((doc) => doc.system?.bindingMode === "status-link");
     statusBindingsCache.sourceKey = sourceKey;
@@ -4467,9 +4467,14 @@ Hooks.on("canvasReady", refreshGMScreen); // Quando muda de mapa
 
 Hooks.once("ready", async () => {
     try {
+        await migrateRetiredBundledSources();
+    } catch (error) {
+        console.error("GUM | Falha ao remover fontes internas descontinuadas.", error);
+    }
+    try {
         await migrateLegacyStatusBindingSource();
     } catch (error) {
-        console.error("GUM | Falha ao migrar a fonte legada de Vínculos de Status.", error);
+        console.error("GUM | Falha ao migrar a fonte legada de Automações de Status.", error);
     }
     try {
         await reconcileAllStateEffects();

@@ -71,40 +71,16 @@
   ],
   "packs": [
     {
-      "name": "templates",
-      "label": "[GUM] Modelos",
-      "system": "gum",
-      "path": "./packs/templates",
-      "type": "Item",
-      "private": false
-    },
-    {
-      "name": "modifiers",
-      "label": "[GUM] Ampliações e Limitações",
-      "system": "gum",
-      "path": "./packs/modifiers",
-      "type": "Item",
-      "private": false
-    },
-    {
-      "name": "gatilhos",
-      "label": "[GUM] Gatilhos",
-      "system": "gum",
-      "path": "./packs/gatilhos",
-      "type": "Item",
-      "private": false
-    },
-    {
       "name": "efeitos",
-      "label": "[GUM] Efeitos",
+      "label": "GUM.Packs.Effects",
       "system": "gum",
       "path": "./packs/efeitos",
       "type": "Item",
       "private": false
     },
- {
+    {
       "name": "conditions",
-      "label": "[GUM] Condições",
+      "label": "GUM.Packs.Conditions",
       "system": "gum",
       "path": "./packs/conditions",
       "type": "Item",
@@ -112,7 +88,7 @@
     },
     {
       "name": "status_bindings",
-      "label": "[GUM] Vínculos de Status",
+      "label": "GUM.Packs.StatusAutomations",
       "system": "gum",
       "path": "./packs/status_bindings",
       "type": "Item",
@@ -120,41 +96,9 @@
     },
     {
       "name": "regras",
-      "label": "[GUM] Condições Passivas",
+      "label": "GUM.Packs.PassiveConditions",
       "system": "gum",
       "path": "./packs/regras",
-      "type": "Item",
-      "private": false
-    },
-    {
-      "name": "skills",
-      "label": "[GUM] Perícias",
-      "system": "gum",
-      "path": "./packs/skills",
-      "type": "Item",
-      "private": false
-    },
-    {
-      "name": "macros",
-      "label": "[GUM] Macros",
-      "system": "gum",
-      "path": "./packs/macros",
-      "type": "Macro",
-      "private": false
-    },
-    {
-      "name": "eqp_modifiers",
-      "label": "[GUM] Modificadores de Equipamento",
-      "system": "gum",
-      "path": "./packs/eqp_modifiers",
-      "type": "Item",
-      "private": false
-    },
-    {
-      "name": "gm_modifiers",
-      "label": "[GUM] Modificadores de Rolagem",
-      "system": "gum",
-      "path": "./packs/gm_modifiers",
       "type": "Item",
       "private": false
     }
