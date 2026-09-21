@@ -3843,11 +3843,7 @@ async function exportSelectedCompendium(pack) {
     }
 }
 
-const COMPENDIUM_CONTEXT_HOOK = Number(globalThis.game?.release?.generation ?? 12) >= 14
-    ? "getCompendiumContextOptions"
-    : "getCompendiumDirectoryEntryContext";
-
-Hooks.on(COMPENDIUM_CONTEXT_HOOK, (_app, options) => {
+const registerCompendiumContextOptions = (_app, options) => {
     const importLabel = game.i18n.localize("GUM.LibraryImport.ImportIntoCompendium");
     if (!options.some(option => (option.name || option.label) === importLabel)) {
         const visible = entry => {
@@ -3907,7 +3903,12 @@ Hooks.on(COMPENDIUM_CONTEXT_HOOK, (_app, options) => {
             onClick: (_event, entry) => activate(entry)
         });
     }
-});
+};
+
+// System scripts can be evaluated before `game.release` is available. Register both
+// generations explicitly; Foundry only fires the hook used by its active directory API.
+Hooks.on("getCompendiumDirectoryEntryContext", registerCompendiumContextOptions);
+Hooks.on("getCompendiumContextOptions", registerCompendiumContextOptions);
 
 Hooks.on("renderCompendiumDirectory", (_app, html) => {
     if (!game.user?.isGM) return;

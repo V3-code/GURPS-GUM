@@ -38,6 +38,20 @@ test("does not claim legacy array exports", () => {
   assert.equal(parseCompendiumLibraryExport([{ _id: "item" }]), null);
 });
 
+test("rejects null and primitive portable documents with a useful validation error", () => {
+  for (const invalidDocument of [null, "item", 42, []]) {
+    assert.throws(
+      () => parseCompendiumLibraryExport({
+        format: "gum-compendium-library",
+        version: 1,
+        folders: [],
+        documents: [{ _id: "valid" }, invalidDocument]
+      }),
+      /document at index 1 must be an object/
+    );
+  }
+});
+
 test("rejects folders without ids instead of silently omitting them", () => {
   assert.throws(
     () => sortCompendiumFoldersParentFirst([{ _id: "valid", folder: null }, { name: "Broken" }]),

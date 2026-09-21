@@ -21,6 +21,12 @@ export function parseCompendiumLibraryExport(data) {
   if (!Array.isArray(data.documents) || !Array.isArray(data.folders)) {
     throw new Error("Invalid GUM compendium library: folders and documents must be arrays.");
   }
+  const invalidDocumentIndex = data.documents.findIndex(document =>
+    !document || typeof document !== "object" || Array.isArray(document)
+  );
+  if (invalidDocumentIndex >= 0) {
+    throw new Error(`Invalid GUM compendium library: document at index ${invalidDocumentIndex} must be an object.`);
+  }
   return {
     documentType: data.documentType || "Item",
     folders: data.folders,

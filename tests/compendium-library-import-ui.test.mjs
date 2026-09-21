@@ -10,6 +10,8 @@ test("o diretório de compêndios oferece importação global e contextual", () 
   assert.match(importer, /renderCompendiumDirectory/);
   assert.match(importer, /getCompendiumContextOptions/);
   assert.match(importer, /getCompendiumDirectoryEntryContext/);
+  assert.match(importer, /Hooks\.on\("getCompendiumDirectoryEntryContext", registerCompendiumContextOptions\)/);
+  assert.match(importer, /Hooks\.on\("getCompendiumContextOptions", registerCompendiumContextOptions\)/);
   assert.match(importer, /GUM\.LibraryImport\.ImportIntoCompendium/);
   assert.match(importer, /importFromJson\(\{ pack \}\)/);
 });
