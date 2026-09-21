@@ -27,6 +27,14 @@ test("o menu contextual oferece campos legados e modernos do Foundry", () => {
   assert.match(importer, /condition: visible,[\s\S]*visible,[\s\S]*callback: onClick,[\s\S]*onClick/);
 });
 
+test("o menu contextual permite exportar e limpar compêndios de Item para o mestre", () => {
+  assert.match(importer, /GUM\.LibraryImport\.ExportCompendium/);
+  assert.match(importer, /GUM\.LibraryImport\.ClearCompendium/);
+  assert.match(importer, /confirmAndClearCompendium/);
+  assert.match(importer, /Item\.deleteDocuments/);
+  assert.match(importer, /Folder\.deleteDocuments/);
+});
+
 test("a janela de destino usa formulário e seletor visual de modo", () => {
   assert.match(importer, /gum-compendium-import-form/);
   assert.match(importer, /gum-import-mode-picker/);

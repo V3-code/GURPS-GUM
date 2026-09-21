@@ -3866,17 +3866,37 @@ Hooks.on("getCompendiumDirectoryEntryContext", (_html, options) => {
         });
     }
 
-    if (!options.some(option => (option.name || option.label) === "Exportar Compêndio")) {
-        const visible = entry => getContextCompendium(entry)?.metadata.type === "Item";
+    const exportLabel = game.i18n.localize("GUM.LibraryImport.ExportCompendium");
+    if (!options.some(option => (option.name || option.label) === exportLabel)) {
+        const visible = entry => Boolean(game.user?.isGM && getContextCompendium(entry)?.metadata.type === "Item");
         const onClick = entry => {
             const pack = getContextCompendium(entry);
             if (!pack) return ui.notifications.error("Não foi possível identificar o compêndio selecionado.");
             return exportSelectedCompendium(pack);
         };
         options.push({
-            name: "Exportar Compêndio",
-            label: "Exportar Compêndio",
+            name: exportLabel,
+            label: exportLabel,
             icon: '<i class="fas fa-file-export"></i>',
+            condition: visible,
+            visible,
+            callback: onClick,
+            onClick
+        });
+    }
+
+    const clearLabel = game.i18n.localize("GUM.LibraryImport.ClearCompendium");
+    if (!options.some(option => (option.name || option.label) === clearLabel)) {
+        const visible = entry => Boolean(game.user?.isGM && getContextCompendium(entry)?.metadata.type === "Item");
+        const onClick = entry => {
+            const pack = getContextCompendium(entry);
+            if (!pack) return ui.notifications.error(game.i18n.localize("GUM.LibraryImport.Errors.CompendiumNotFound"));
+            return confirmAndClearCompendium(pack);
+        };
+        options.push({
+            name: clearLabel,
+            label: clearLabel,
+            icon: '<i class="fas fa-trash-alt"></i>',
             condition: visible,
             visible,
             callback: onClick,
@@ -3914,6 +3934,54 @@ function getContextCompendiumCollection(entry) {
         || entry?.pack
         || directCollection
         || entry?.document?.collection?.collection;
+}
+
+async function confirmAndClearCompendium(pack) {
+    const confirmed = await new Promise(resolve => {
+        new Dialog({
+            title: game.i18n.localize("GUM.LibraryImport.ClearConfirmTitle"),
+            content: `<p>${game.i18n.format("GUM.LibraryImport.ClearConfirmContent", {
+                name: escapeImportHTML(pack.title)
+            })}</p>`,
+            buttons: {
+                clear: {
+                    icon: '<i class="fas fa-trash-alt"></i>',
+                    label: game.i18n.localize("GUM.LibraryImport.ClearConfirm"),
+                    callback: () => resolve(true)
+                },
+                cancel: {
+                    icon: '<i class="fas fa-times"></i>',
+                    label: game.i18n.localize("GUM.LibraryImport.ClearCancel"),
+                    callback: () => resolve(false)
+                }
+            },
+            default: "cancel",
+            close: () => resolve(false)
+        }).render(true);
+    });
+    if (!confirmed) return;
+
+    const originalLocked = Boolean(pack.locked);
+    try {
+        if (originalLocked) await pack.configure({ locked: false });
+        const documents = await pack.getDocuments();
+        if (documents.length) {
+            await Item.deleteDocuments(documents.map(document => document.id), { pack: pack.collection });
+        }
+        const folderIds = Array.from(pack.folders ?? [])
+            .sort((a, b) => (b.depth ?? 0) - (a.depth ?? 0))
+            .map(folder => folder.id);
+        if (folderIds.length) await Folder.deleteDocuments(folderIds, { pack: pack.collection });
+        ui.notifications.info(game.i18n.format("GUM.LibraryImport.ClearSuccess", { name: pack.title }));
+    } catch (err) {
+        console.error(`GUM | Falha ao limpar ${pack?.collection}:`, err);
+        ui.notifications.error(game.i18n.format("GUM.LibraryImport.ClearFailure", {
+            name: pack?.title || game.i18n.localize("GUM.LibraryImport.CompendiumFallback"),
+            error: err.message
+        }));
+    } finally {
+        if (pack.locked !== originalLocked) await pack.configure({ locked: originalLocked });
+    }
 }
 
 /** Sincroniza uma exportação do Foundry sem alterar IDs ou criar duplicatas. */

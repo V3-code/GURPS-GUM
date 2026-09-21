@@ -40,6 +40,16 @@ export function sortCompendiumFoldersParentFirst(folders) {
     throw new Error(`Invalid GUM compendium library: folder at index ${invalidFolderIndex} is missing "_id".`);
   }
 
+  const seenIds = new Set();
+  const duplicateId = normalizedFolders.find(folder => {
+    if (seenIds.has(folder._id)) return true;
+    seenIds.add(folder._id);
+    return false;
+  })?._id;
+  if (duplicateId) {
+    throw new Error(`Invalid GUM compendium library: duplicate folder ID "${duplicateId}".`);
+  }
+
   const pending = new Map(normalizedFolders.map(folder => [folder._id, folder]));
   const sorted = [];
   const completed = new Set();

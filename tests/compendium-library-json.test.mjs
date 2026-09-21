@@ -44,3 +44,13 @@ test("rejects folders without ids instead of silently omitting them", () => {
     /folder at index 1 is missing "_id"/
   );
 });
+
+test("rejects duplicate folder ids instead of silently keeping the final record", () => {
+  assert.throws(
+    () => sortCompendiumFoldersParentFirst([
+      { _id: "duplicate", name: "First" },
+      { _id: "duplicate", name: "Second" }
+    ]),
+    /duplicate folder ID "duplicate"/
+  );
+});
