@@ -160,8 +160,8 @@ export const registerSystemSettings = function() {
     
     // --- FÓRMULA DE INICIATIVA CORRIGIDA ---
     game.settings.register("gum", "initiativeFormula", {
-        name: "Fórmula de Iniciativa (GUM)",
-        hint: "Fórmula padrão do GURPS: Velocidade Básica, com DX como desempate e 1d6 como segundo desempate.",
+        name: "GUM.Settings.InitiativeFormula.Name",
+        hint: "GUM.Settings.InitiativeFormula.Hint",
         scope: "world",
         config: true,
         type: String,
@@ -170,11 +170,11 @@ export const registerSystemSettings = function() {
         
         onChange: value => {
              new Dialog({
-                title: "Recarregar Necessário",
-                content: "<p>A fórmula de iniciativa foi alterada. Para que a mudança tenha efeito, o Foundry precisa ser recarregado.</p>",
+                title: game.i18n.localize("GUM.Settings.InitiativeFormula.ReloadTitle"),
+                content: `<p>${game.i18n.localize("GUM.Settings.InitiativeFormula.ReloadContent")}</p>`,
                 buttons: {
-                    reload: { icon: '<i class="fas fa-redo"></i>', label: "Recarregar Agora", callback: () => window.location.reload() },
-                    later: { icon: '<i class="fas fa-times"></i>', label: "Lembrar-me Depois" }
+                    reload: { icon: '<i class="fas fa-redo"></i>', label: game.i18n.localize("GUM.Settings.InitiativeFormula.ReloadNow"), callback: () => window.location.reload() },
+                    later: { icon: '<i class="fas fa-times"></i>', label: game.i18n.localize("GUM.Settings.InitiativeFormula.ReloadLater") }
                 },
                 default: "reload"
             }).render(true);
@@ -183,8 +183,8 @@ export const registerSystemSettings = function() {
 
     // --- CONFIGURAÇÃO DE ADIÇÃO DE REGRAS PADRÃO ---
     game.settings.register("gum", "addDefaultRules", {
-        name: "Condições Passivas em Personagens",
-        hint: "Se marcado, adiciona automaticamente aos novos personagens todas as condições das fontes configuradas em 'Condições Passivas'.",
+        name: "GUM.Settings.AddDefaultRules.Name",
+        hint: "GUM.Settings.AddDefaultRules.Hint",
         scope: "world",
         config: true,
         type: Boolean,
@@ -193,8 +193,8 @@ export const registerSystemSettings = function() {
 
         // --- "BOTÃO" DE ATUALIZAÇÃO ---
     game.settings.register("gum", "syncCompendiumRulesBtn", {
-        name: "Sincronizar Condições Passivas",
-        hint: "MARQUE e SALVE para atualizar as Condições Passivas dos personagens a partir das fontes configuradas. A caixa desmarcará automaticamente após o uso.",
+        name: "GUM.Settings.SyncPassiveConditions.Name",
+        hint: "GUM.Settings.SyncPassiveConditions.Hint",
         scope: "world",
         config: true,
         type: Boolean,
@@ -224,8 +224,8 @@ export const registerSystemSettings = function() {
     });
 
     game.settings.register("gum", "hybridImportSearchAllCompendia", {
-        name: "Importação híbrida: pesquisar outros compêndios",
-        hint: "Se ativado, a importação de personagens também procura correspondências em todos os compêndios de Itens, depois dos itens do mundo e das fontes configuradas. Pode selecionar conteúdo inesperado de módulos.",
+        name: "GUM.Settings.HybridImportSearchAll.Name",
+        hint: "GUM.Settings.HybridImportSearchAll.Hint",
         scope: "world",
         config: true,
         type: Boolean,
@@ -235,8 +235,8 @@ export const registerSystemSettings = function() {
 
 
     game.settings.register("gum", "defaultSkillRollFormula", {
-        name: "Dados de Rolgem padrão",
-        hint: "Defina os dados que serão usados em rolagens de testes habilidades (ex.: 3d6, 2d10, 1d20).",
+        name: "GUM.Settings.DefaultSkillRollFormula.Name",
+        hint: "GUM.Settings.DefaultSkillRollFormula.Hint",
         scope: "world",
         config: true,
         type: String,
@@ -244,8 +244,8 @@ export const registerSystemSettings = function() {
     });
 
     game.settings.register("gum", "autoDistanceModifierEnabled", {
-        name: "Modificador de Distância",
-        hint: "Calcula automaticamente o modificador de distância no Prompt de Rolagem quando houver um atacante ativo e um alvo único selecionado.",
+        name: "GUM.Settings.AutoDistanceModifier.Name",
+        hint: "GUM.Settings.AutoDistanceModifier.Hint",
         scope: "world",
         config: true,
         type: Boolean,
@@ -253,36 +253,36 @@ export const registerSystemSettings = function() {
     });
 
     game.settings.register("gum", "autoDistanceModifierTable", {
-        name: "Tabela de distância",
-        hint: "Define qual tabela usar para o cálculo automático de distância se a opção de 'Modificador de Distância' estiver ativada.",
+        name: "GUM.Settings.DistanceTable.Name",
+        hint: "GUM.Settings.DistanceTable.Hint",
         scope: "world",
         config: true,
         type: String,
         choices: {
-            standard: "Padrão (GURPS)",
-            monster_hunters: "Resumida (Monster Hunters)",
-            hybrid: "Híbrida (MH + Padrão)"
+            standard: "GUM.Settings.DistanceTable.Standard",
+            monster_hunters: "GUM.Settings.DistanceTable.MonsterHunters",
+            hybrid: "GUM.Settings.DistanceTable.Hybrid"
         },
         default: "standard"
     });
 
         game.settings.register("gum", "autoSizeModifierMode", {
-        name: "Modificador de Tamanho automático",
-        hint: "Em rolagens de ataque com um único alvo, aplica o MT final do alvo pela regra básica ou calcula o MT relativo (MT do alvo menos MT da origem).",
+        name: "GUM.Settings.AutoSizeModifier.Name",
+        hint: "GUM.Settings.AutoSizeModifier.Hint",
         scope: "world",
         config: true,
         type: String,
         choices: {
-            off: "Desativado",
-            target: "MT do alvo (regra básica)",
-            relative: "MT relativo (alvo menos origem)"
+            off: "GUM.Settings.AutoSizeModifier.Off",
+            target: "GUM.Settings.AutoSizeModifier.Target",
+            relative: "GUM.Settings.AutoSizeModifier.Relative"
         },
         default: "off"
     });
 
     game.settings.register("gum", "normalizeGurpsDamageDice", {
-        name: "Normalizar dados de dano",
-        hint: "(GURPS: Modifying Dice + Adds) Converte automaticamente fórmulas Xd6+Y/Xd6-Y com modificadores altos para mais/menos dados, sem reduzir abaixo de 1d6.",
+        name: "GUM.Settings.NormalizeDamageDice.Name",
+        hint: "GUM.Settings.NormalizeDamageDice.Hint",
         scope: "world",
         config: true,
         type: Boolean,
@@ -296,8 +296,8 @@ export const registerSystemSettings = function() {
     // =============================================================
 
     game.settings.register("gum", "importGCSButton", {
-        name: "Importar Personagem do GCS",
-        hint: "Importa uma ficha de personagem completa a partir de um arquivo .gcs (JSON). Isso criará um novo Ator.",
+        name: "GUM.Settings.ImportGCSCharacter.Name",
+        hint: "GUM.Settings.ImportGCSCharacter.Hint",
         scope: "world",
         config: true,
         type: Boolean, // Usamos Boolean como um "botão"
@@ -311,8 +311,8 @@ export const registerSystemSettings = function() {
     });
 
     game.settings.register("gum", "importGCSTemplateButton", {
-        name: "Importar Template do GCS",
-        hint: "Importa um arquivo .gct/.gcs de template do GCS e cria um Item do tipo Modelo com blocos para aplicação na ficha.",
+        name: "GUM.Settings.ImportGCSTemplate.Name",
+        hint: "GUM.Settings.ImportGCSTemplate.Hint",
         scope: "world",
         config: true,
         type: Boolean,
@@ -326,8 +326,8 @@ export const registerSystemSettings = function() {
     });
 
     game.settings.register("gum", "importJSONButton", {
-        name: "Importar Itens (JSON)",
-        hint: "Ferramenta do Mestre. Importa um arquivo .json de itens (Perícias, Vantagens, etc.) diretamente para o compêndio do sistema correspondente.",
+        name: "GUM.Settings.ImportItemsJson.Name",
+        hint: "GUM.Settings.ImportItemsJson.Hint",
         scope: "world",
         config: true,
         type: Boolean,
@@ -341,8 +341,8 @@ export const registerSystemSettings = function() {
  });
 
     game.settings.register("gum", "exportJSONCompendiumButton", {
-        name: "Exportar Compêndio (JSON)",
-        hint: "Ferramenta do Mestre. Exporta o conteúdo de um compêndio de Itens para um arquivo .json.",
+        name: "GUM.Settings.ExportCompendiumJson.Name",
+        hint: "GUM.Settings.ExportCompendiumJson.Hint",
         scope: "world",
         config: true,
         type: Boolean,
@@ -356,8 +356,8 @@ export const registerSystemSettings = function() {
     });
 
     game.settings.register("gum", "exportCharacterJSONButton", {
-        name: "Exportar Ficha de Personagem (JSON)",
-        hint: "Exporta uma ficha de personagem para um arquivo .json para backup e reutilização.",
+        name: "GUM.Settings.ExportCharacterJson.Name",
+        hint: "GUM.Settings.ExportCharacterJson.Hint",
         scope: "world",
         config: true,
         type: Boolean,

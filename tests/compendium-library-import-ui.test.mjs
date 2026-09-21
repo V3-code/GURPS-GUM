@@ -8,7 +8,11 @@ const styles = readFileSync(new URL("../styles/styles.css", import.meta.url), "u
 
 test("o diretório de compêndios oferece importação global e contextual", () => {
   assert.match(importer, /renderCompendiumDirectory/);
-  assert.match(importer, /Importar biblioteca neste compêndio/);
+  assert.match(importer, /getCompendiumContextOptions/);
+  assert.match(importer, /getCompendiumDirectoryEntryContext/);
+  assert.match(importer, /Hooks\.on\("getCompendiumDirectoryEntryContext", registerCompendiumContextOptions\)/);
+  assert.match(importer, /Hooks\.on\("getCompendiumContextOptions", registerCompendiumContextOptions\)/);
+  assert.match(importer, /GUM\.LibraryImport\.ImportIntoCompendium/);
   assert.match(importer, /importFromJson\(\{ pack \}\)/);
 });
 
@@ -23,8 +27,16 @@ test("os botões de importação dos diretórios ocupam uma linha independente",
 });
 
 test("o menu contextual oferece campos legados e modernos do Foundry", () => {
-  assert.match(importer, /label: "Importar biblioteca neste compêndio"/);
-  assert.match(importer, /condition: visible,[\s\S]*visible,[\s\S]*callback: onClick,[\s\S]*onClick/);
+  assert.match(importer, /label: importLabel/);
+  assert.match(importer, /condition: visible,[\s\S]*visible,[\s\S]*callback: entry => activate\(entry\),[\s\S]*onClick: \(_event, entry\) => activate\(entry\)/);
+});
+
+test("o menu contextual permite exportar e limpar compêndios de Item para o mestre", () => {
+  assert.match(importer, /GUM\.LibraryImport\.ExportCompendium/);
+  assert.match(importer, /GUM\.LibraryImport\.ClearCompendium/);
+  assert.match(importer, /confirmAndClearCompendium/);
+  assert.match(importer, /Item\.deleteDocuments/);
+  assert.match(importer, /Folder\.deleteDocuments/);
 });
 
 test("a janela de destino usa formulário e seletor visual de modo", () => {
@@ -35,7 +47,7 @@ test("a janela de destino usa formulário e seletor visual de modo", () => {
 });
 
 test("o diretório de atores usa o nome de ação orientado ao personagem", () => {
-  assert.match(main, /Importar Personagem/);
+  assert.match(main, /GUM\.LibraryImport\.ImportCharacter/);
   assert.doesNotMatch(main, /> Importar do GCS/);
 });
 

@@ -8,6 +8,10 @@ const catalogs = Object.fromEntries(languages.map(language => [
   language,
   JSON.parse(fs.readFileSync(`lang/${language}.json`, "utf8"))
 ]));
+const contentSourceTemplate = fs.readFileSync("templates/apps/content-source-config.hbs", "utf8");
+const styles = fs.readFileSync("styles/styles.css", "utf8");
+const settingsSource = fs.readFileSync("module/settings.js", "utf8");
+const importerSource = fs.readFileSync("module/apps/importers.js", "utf8");
 
 test("content source names and descriptions are available in every supported language", () => {
   for (const definition of Object.values(CONTENT_SOURCE_PURPOSES)) {
@@ -33,4 +37,36 @@ test("status automation is the localized public name while stable binding IDs re
   assert.equal(catalogs["pt-BR"]["GUM.ContentSources.Purposes.StatusAutomations.Name"], "Automações de Status");
   assert.ok(CONTENT_SOURCE_PURPOSES.statusBindings);
   assert.equal(CONTENT_SOURCE_PURPOSES.statusBindings.defaults[0], "gum.status_bindings");
+});
+
+test("library and character import actions are available in every supported language", () => {
+  const keys = [
+    "GUM.LibraryImport.ImportLibrary",
+    "GUM.LibraryImport.ImportCharacter",
+    "GUM.LibraryImport.ImportIntoCompendium"
+  ];
+  for (const key of keys) {
+    for (const language of languages) assert.ok(catalogs[language][key], `${key} is missing from ${language}`);
+  }
+  assert.equal(catalogs.en["GUM.LibraryImport.ImportLibrary"], "Import Library");
+  assert.equal(catalogs.en["GUM.LibraryImport.ImportCharacter"], "Import Character");
+});
+
+test("content source groups use a compact header grid and distinct card styling", () => {
+  assert.match(contentSourceTemplate, /class="content-source-purpose-copy"/);
+  assert.match(contentSourceTemplate, /class="content-source-restore"/);
+  assert.match(styles, /grid-template-columns:\s*minmax\(0, 1fr\) minmax\(7\.5rem, 0\.25fr\)/);
+  assert.match(styles, /border-left:\s*3px solid/);
+  assert.match(styles, /content-source-purpose:nth-of-type\(3n \+ 2\)/);
+});
+
+test("system settings and compendium context actions have translations in every language", () => {
+  const keys = new Set([
+    ...settingsSource.matchAll(/"(GUM\.Settings\.[^"]+)"/g),
+    ...importerSource.matchAll(/"(GUM\.LibraryImport\.[^"]+)"/g)
+  ].map(match => match[1]));
+  assert.ok(keys.size > 30);
+  for (const key of keys) {
+    for (const language of languages) assert.ok(catalogs[language][key], `${key} is missing from ${language}`);
+  }
 });
