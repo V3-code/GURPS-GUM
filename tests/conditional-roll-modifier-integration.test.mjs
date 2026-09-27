@@ -4,6 +4,7 @@ import test from "node:test";
 
 const prompt = fs.readFileSync(new URL("../module/apps/roll-prompt.js", import.meta.url), "utf8");
 const main = fs.readFileSync(new URL("../scripts/main.js", import.meta.url), "utf8");
+const engine = fs.readFileSync(new URL("../scripts/effects-engine.js", import.meta.url), "utf8");
 
 test("prompt resolve modificadores condicionais antes de ignorar os globais", () => {
     assert.match(prompt, /import \{ resolveConditionalValue \} from "\.\.\/utils\/effect-value-expression\.mjs"/);
@@ -26,4 +27,15 @@ test("execução direta resolve candidatos condicionais antes de agrupá-los", (
     assert.match(collector, /const value = _evaluateModifierEntryValue\(targetToken\.actor, candidate\.entry, rollData\)/);
     assert.match(collector, /Number\(value\) < Number\(current\.value\)/);
     assert.doesNotMatch(collector, /value = candidate\.entry\?\.value/);
+});
+
+test("override de dano básico resolve a condição sem rolar a fórmula selecionada", () => {
+    assert.match(engine, /selectedFormula = resolveConditionalValue\(action\.value, \{ actor: targetActor \}\)/);
+    assert.match(engine, /resolveBasicDamageOverride\(selectedFormula\)/);
+});
+
+test("alteração de recurso compartilha rolagens comuns e resolve condicionais por alvo", () => {
+    assert.match(engine, /const targetDependentValue = hasConditionalValueExpression\(valueToChange\)/);
+    assert.match(engine, /const sharedEvaluation = targetDependentValue[\s\S]*?await evaluateEffectValue\(valueToChange, targets\[0\]\?\.actor \?\? context\.actor\)/);
+    assert.match(engine, /sharedEvaluation \?\? await evaluateEffectValue\(valueToChange, targetActor\)/);
 });

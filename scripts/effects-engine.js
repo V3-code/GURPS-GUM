@@ -472,9 +472,19 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                         if (!action.path) throw new Error("Ação de atributo sem caminho.");
                         const isDamageFormulaOverride = action.operation === "OVERRIDE"
                             && isBasicDamageOverridePath(action.path);
-                        const evaluated = isDamageFormulaOverride
-                            ? { value: resolveBasicDamageOverride(action.value), roll: null, formula: null }
-                            : await evaluateEffectValue(action.value, targetActor);
+                        let evaluated;
+                        if (isDamageFormulaOverride) {
+                            let selectedFormula = action.value;
+                            try {
+                                selectedFormula = resolveConditionalValue(action.value, { actor: targetActor });
+                            } catch (error) {
+                                console.warn(`GUM | Não foi possível avaliar a condição do dano básico em "${effectItem.name}":`, error);
+                                selectedFormula = "0";
+                            }
+                            evaluated = { value: resolveBasicDamageOverride(selectedFormula), roll: null, formula: null };
+                        } else {
+                            evaluated = await evaluateEffectValue(action.value, targetActor);
+                        }
                         // Damage overrides describe the future damage roll. They must neither
                         // roll on effect application nor be numerically scaled by origin level.
                         const resolvedValue = resolveEffectValueMetadata(
@@ -614,9 +624,14 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     valueToChange = newAmount;
                 }
 
+                const targetDependentValue = hasConditionalValueExpression(valueToChange);
+                const sharedEvaluation = targetDependentValue
+                    ? null
+                    : await evaluateEffectValue(valueToChange, targets[0]?.actor ?? context.actor);
+
                 for (const targetToken of targets) {
                     const targetActor = targetToken.actor;
-                    const { value: evaluatedValue } = await evaluateEffectValue(valueToChange, targetActor);
+                    const { value: evaluatedValue } = sharedEvaluation ?? await evaluateEffectValue(valueToChange, targetActor);
                     const finalValue = Number(evaluatedValue) || 0;
                     let updatePath = "";
                     let updateObject = null;

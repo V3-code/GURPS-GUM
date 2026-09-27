@@ -294,7 +294,7 @@
                                                                 id="effect-attribute-value-help-{{action.index}}"
                                                                 class="effect-premium-field-hint"
                                                             >
-                                                                Avaliado ao aplicar. Aceita valor fixo, fórmula, dados ou <code>se(possui("Item"), 2, 1)</code>.
+                                                                Avaliado ao aplicar. Aceita fórmula, dados e condições como <code>se(possui("Item"), 2, 1)</code>, <code>nivel("Item")</code>, <code>quantidade("Item")</code>, <code>equipado("Item")</code> e <code>status("id")</code>.
                                                             </p>
                                                         </div>
                                                     </div>
@@ -637,7 +637,7 @@
                                                                             placeholder='Ex: -2, 1d6 ou se(possui("Treinado por um Mestre"), -2, -4)'
                                                                             title="Aceita valor fixo, fórmula, rolagem de dados ou expressão condicional."
                                                                         />
-                                                                        <p class="effect-premium-field-hint">Avaliado a cada rolagem. Ex.: <code>se(possui("Treinado por um Mestre"), -2, -4)</code>.</p>
+                                                                        <p class="effect-premium-field-hint">Avaliado a cada rolagem. Use <code>possui</code>, <code>naopossui</code>, <code>possuiAlgum</code>, <code>possuiTodos</code>, <code>equipado</code>, <code>condicaoAtiva</code> ou <code>status</code>. Comparações aceitam <code>nivel</code>, <code>quantidade</code> e <code>atributo</code>.</p>
                                                                     </div>
                                                                 </div>
                                                                  </div>

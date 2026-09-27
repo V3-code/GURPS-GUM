@@ -18,6 +18,9 @@ test("valor do modificador de rolagem ocupa uma linha própria", () => {
     assert.ok(capIndex > descriptionIndex);
     assert.ok(valueIndex > capIndex);
     assert.match(primaryGrid, /effect-roll-modifier-value-input/);
+    for (const helper of ["naopossui", "possuiAlgum", "possuiTodos", "equipado", "condicaoAtiva", "status", "nivel", "quantidade", "atributo"]) {
+        assert.match(primaryGrid, new RegExp(`<code>${helper}</code>`));
+    }
 });
 
 test("campo de valor atravessa a grade e recebe mais espaço horizontal", () => {

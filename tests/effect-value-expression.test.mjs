@@ -9,9 +9,14 @@ import {
 
 const actor = {
     items: [
-        { id: "trained", uuid: "Actor.hero.Item.trained", name: "Treinado por um Mestre" },
-        { id: "reflexes", name: "Reflexos em Combate", flags: { core: { sourceId: "Compendium.gum.Item.reflexes" } } }
-    ]
+        { id: "trained", uuid: "Actor.hero.Item.trained", name: "Treinado por um Mestre", system: { level: 2 } },
+        { id: "reflexes", name: "Reflexos em Combate", flags: { core: { sourceId: "Compendium.gum.Item.reflexes" } } },
+        { id: "arrows", name: "Flecha", type: "equipment", system: { quantity: 12, equipped: false, location: "carried" } },
+        { id: "sword", name: "Espada", type: "equipment", system: { quantity: 1, equipped: true, location: "equipped" } },
+        { id: "focused", name: "Concentrado", type: "condition", flags: { gum: { wasActive: true, manual_override: false } } }
+    ],
+    effects: [{ name: "Atordoado", statuses: new Set(["stunned"]), disabled: false }],
+    system: { attributes: { dx: { final: 14 } } }
 };
 
 test("reconhece item por nome sem diferenciar caixa ou acentos", () => {
@@ -34,6 +39,29 @@ test("todos(), algum() e nao() compõem condições", () => {
     assert.equal(resolveConditionalValue('se(todos(possui("Treinado por um Mestre"), possui("Reflexos em Combate")), -1, -4)', { actor }), "-1");
     assert.equal(resolveConditionalValue('se(algum(possui("Inexistente"), possui("Reflexos em Combate")), -2, -4)', { actor }), "-2");
     assert.equal(resolveConditionalValue('se(nao(possui("Inexistente")), 3, 0)', { actor }), "3");
+});
+
+test("atalhos de presença e ausência aceitam listas de itens", () => {
+    assert.equal(resolveConditionalValue('se(naopossui("Mestre de Armas"), 1, 0)', { actor }), "1");
+    assert.equal(resolveConditionalValue('se(nãopossui("Treinado por um Mestre"), 1, 0)', { actor }), "0");
+    assert.equal(resolveConditionalValue('se(possuiAlgum("Inexistente", "Reflexos em Combate"), 1, 0)', { actor }), "1");
+    assert.equal(resolveConditionalValue('se(possuiTodos("Treinado por um Mestre", "Reflexos em Combate"), 1, 0)', { actor }), "1");
+});
+
+test("consulta nível, quantidade e atributo com comparações seguras", () => {
+    assert.equal(resolveConditionalValue('se(nivel("Treinado por um Mestre") >= 2, 1, 0)', { actor }), "1");
+    assert.equal(resolveConditionalValue('se(quantidade("Flecha") > 10, 1, 0)', { actor }), "1");
+    assert.equal(resolveConditionalValue('se(atributo("DX") == 14, 1, 0)', { actor }), "1");
+    assert.equal(resolveConditionalValue('se(atributo("DX") = 14, 1, 0)', { actor }), "1");
+    assert.equal(resolveConditionalValue('se(quantidade("Inexistente") != 0, 1, 0)', { actor }), "0");
+});
+
+test("consulta equipamento, condição ativa e status", () => {
+    assert.equal(resolveConditionalValue('se(equipado("Espada"), 1, 0)', { actor }), "1");
+    assert.equal(resolveConditionalValue('se(equipado("Flecha"), 1, 0)', { actor }), "0");
+    assert.equal(resolveConditionalValue('se(condicaoAtiva("Concentrado"), 1, 0)', { actor }), "1");
+    assert.equal(resolveConditionalValue('se(status("stunned"), 1, 0)', { actor }), "1");
+    assert.equal(resolveConditionalValue('se(status("Atordoado"), 1, 0)', { actor }), "1");
 });
 
 test("preserva a fórmula do ramo escolhido para o avaliador da fase", () => {
