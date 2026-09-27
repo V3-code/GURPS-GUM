@@ -4,7 +4,11 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
-## [Não publicado]
+## [1.3.1-beta] - 2026-09-27
+
+### Added
+
+- Acrescentado expressões condicionais para valores de itens efeito
 
 ## [1.3.0-beta] - 2026-09-20
 
