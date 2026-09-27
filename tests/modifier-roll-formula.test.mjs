@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { evaluateModifierRollFormulaSync } from "../module/utils/modifier-roll-formula.mjs";
+import { evaluateModifierRollFormulaSync, hasModifierRollFormula } from "../module/utils/modifier-roll-formula.mjs";
 
 test("avalia fórmula de dados pelo caminho síncrono moderno", () => {
     class FakeRoll {
@@ -26,6 +26,17 @@ test("mantém compatibilidade com evaluate async:false", () => {
         }
     }
     assert.equal(evaluateModifierRollFormulaSync("1d6", {}, LegacyRoll), 4);
+});
+
+test("reconhece dados percentuais sem depender de limite de palavra", () => {
+    assert.equal(hasModifierRollFormula("1d%"), true);
+    class PercentileRoll {
+        evaluateSync() {
+            this.total = 73;
+            return this;
+        }
+    }
+    assert.equal(evaluateModifierRollFormulaSync("1d%", {}, PercentileRoll), 73);
 });
 
 test("não captura números, referências ou avaliadores realmente assíncronos", () => {

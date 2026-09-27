@@ -1,8 +1,12 @@
-const DICE_TERM_PATTERN = /(?:^|[^A-Za-z0-9_])\d*d(?:\d+|%|f)\b/i;
+const DICE_TERM_PATTERN = /(?:^|[^A-Za-z0-9_])\d*d(?:\d+\b|%|f\b)/i;
+
+export function hasModifierRollFormula(formula) {
+    return DICE_TERM_PATTERN.test(String(formula ?? "").trim());
+}
 
 export function evaluateModifierRollFormulaSync(formula, rollData = {}, RollClass = globalThis.Roll) {
     const source = String(formula ?? "").trim();
-    if (!source || !DICE_TERM_PATTERN.test(source) || typeof RollClass !== "function") return null;
+    if (!source || !hasModifierRollFormula(source) || typeof RollClass !== "function") return null;
 
     try {
         const roll = new RollClass(source, rollData ?? {});

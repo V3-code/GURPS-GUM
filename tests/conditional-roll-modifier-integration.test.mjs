@@ -31,6 +31,12 @@ test("execução direta resolve candidatos condicionais antes de agrupá-los", (
     assert.doesNotMatch(collector, /value = candidate\.entry\?\.value/);
 });
 
+test("preparação de NH permanente desabilita fórmulas aleatórias", () => {
+    const preparation = main.slice(main.indexOf("const collectNhBonusesForItem"), main.indexOf("const skillResolutionPasses"));
+    assert.equal((preparation.match(/\{ allowDice: false \}/g) || []).length, 3);
+    assert.match(main, /if \(!allowDice && hasModifierRollFormula\(source\)\) return 0/);
+});
+
 test("override de dano básico resolve a condição sem rolar a fórmula selecionada", () => {
     assert.match(engine, /selectedFormula = resolveConditionalValue\(action\.value, \{ actor: targetActor \}\)/);
     assert.match(engine, /resolveBasicDamageOverride\(selectedFormula\)/);

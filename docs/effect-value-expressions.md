@@ -131,6 +131,8 @@ se(possui("Sorte"), {1d6,2d6}kh, {1d6,2d6}kl)
 
 No modo **Por nível do item de origem**, o sistema primeiro escolhe o ramo condicional e depois multiplica o valor resultante pelo nível.
 
+Entradas configuradas para serem incorporadas permanentemente ao NH devem ser determinísticas. Fórmulas de dados são ignoradas nesse modo para impedir que a simples preparação ou reabertura da ficha altere o NH. Use dados somente em modificadores avaliados no momento da rolagem.
+
 ## Boas práticas
 
 - Prefira nomes claros quando a mesa controla os nomes dos itens.

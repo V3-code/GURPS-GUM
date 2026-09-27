@@ -39,7 +39,7 @@ import { getResistanceChatPrivacy } from "../module/utils/effect-chat-visibility
 import { showDiceForMessageLessRoll } from "../module/utils/dice-so-nice.mjs";
 import { BASIC_DAMAGE_KEYS, normalizeBasicDamageData, prepareBasicDamageAttributes } from "../module/utils/basic-damage.mjs";
 import { resolveConditionalValue } from "../module/utils/effect-value-expression.mjs";
-import { evaluateModifierRollFormulaSync } from "../module/utils/modifier-roll-formula.mjs";
+import { evaluateModifierRollFormulaSync, hasModifierRollFormula } from "../module/utils/modifier-roll-formula.mjs";
 import { resolveAttackDamageDisplay } from "../module/utils/attack-damage-display.mjs";
 import { canUserCreateActors } from "../module/utils/actor-creation-permission.mjs";
 import { resolveRollReference } from "../module/utils/roll-reference-resolver.mjs";
@@ -782,7 +782,7 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                     if (!shouldIncludeInPermanentNh(entry)) return;
                     if (!matchesEntryTargetForItem(entry, item)) return;
                     if (!matchesEntryContextForItem(entry, item)) return;
-                    const value = _evaluateModifierEntryValue(this, entry, { itemId: item.id, type: item.type, itemName: item.name });
+                    const value = _evaluateModifierEntryValue(this, entry, { itemId: item.id, type: item.type, itemName: item.name }, { allowDice: false });
                     if (!Number.isFinite(value) || value === 0) return;
                     if (isPermanent) bonus.passive += value;
                     else bonus.temp += value;
@@ -810,9 +810,9 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                         itemId: item.id,
                         type: item.type,
                         itemName: item.name,
- attackId: attack?.id ?? null,
+                        attackId: attack?.id ?? null,
                         attackType
-                    });
+                    }, { allowDice: false });
                     if (!Number.isFinite(value) || value === 0) return;
                     if (isPermanent) bonus.passive += value;
                     else bonus.temp += value;
@@ -843,7 +843,7 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                         attackId: attack?.id ?? null,
                         attackType,
                         defenseType
-                    });
+                    }, { allowDice: false });
                     if (!Number.isFinite(value) || value === 0) return;
                     if (isPermanent) bonus.passive += value;
                     else bonus.temp += value;
@@ -1998,7 +1998,7 @@ function _resolveModifierReferenceValue(actor, rawReference, rollData = {}) {
     return modifier;
 }
 
-function _evaluateModifierValue(actor, rawValue, rollData = {}) {
+function _evaluateModifierValue(actor, rawValue, rollData = {}, { allowDice = true } = {}) {
     if (rawValue === null || rawValue === undefined || rawValue === "") return 0;
     if (typeof rawValue === "number") return Number.isFinite(rawValue) ? rawValue : 0;
 
@@ -2013,6 +2013,8 @@ function _evaluateModifierValue(actor, rawValue, rollData = {}) {
     const source = String(conditionalValue).trim();
     if (!source) return 0;
     if (/^[+-]?\d+(\.\d+)?$/.test(source)) return Number(source) || 0;
+
+    if (!allowDice && hasModifierRollFormula(source)) return 0;
 
     const diceResult = evaluateModifierRollFormulaSync(source, actor?.getRollData?.() || {});
     if (Number.isFinite(diceResult)) return diceResult;
@@ -2062,8 +2064,8 @@ function _evaluateModifierValue(actor, rawValue, rollData = {}) {
     return _resolveModifierReferenceValue(actor, source, rollData);
 }
 
-function _evaluateModifierEntryValue(actor, entry = {}, rollData = {}) {
-    const value = _evaluateModifierValue(actor, entry?.value, rollData);
+function _evaluateModifierEntryValue(actor, entry = {}, rollData = {}, options = {}) {
+    const value = _evaluateModifierValue(actor, entry?.value, rollData, options);
     if (!entry?.defer_value_evaluation || entry?.value_mode !== "per_origin_level") return value;
     const originLevel = Number(entry?.origin_level);
     return value * (Number.isFinite(originLevel) && originLevel > 0 ? originLevel : 1);
