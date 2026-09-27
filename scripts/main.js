@@ -2269,18 +2269,14 @@ function _collectTargetCounterRollModifiers(actor, rollContext, rollData = {}) {
     const grouped = new Map();
     for (const candidate of candidates) {
         const key = _buildCounterGroupKey(candidate.entry, candidate.effect, candidate.entryIndex);
-        const value = candidate.entry?.value ?? 0;
+        const value = _evaluateModifierEntryValue(targetToken.actor, candidate.entry, rollData);
         const cap = candidate.entry?.cap ?? candidate.entry?.nh_cap ?? "";
         const current = grouped.get(key);
         if (!current || Number(value) < Number(current.value)) {
             grouped.set(key, {
                 id: `counter::${targetToken.id}::${key}`,
                 value,
-                cap,
-                value_mode: candidate.entry?.value_mode,
-                origin_level: candidate.entry?.origin_level,
-                defer_value_evaluation: candidate.entry?.defer_value_evaluation,
-                evaluationActor: targetToken.actor
+                cap
             });
         }
     }
