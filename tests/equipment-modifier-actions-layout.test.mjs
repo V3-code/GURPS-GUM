@@ -16,6 +16,7 @@ test("equipment modifier sheet exposes its own action editor and functional requ
   assert.match(template, /system\.requirements\.all/);
   assert.match(template, /add-eqp-modifier-action/);
   assert.match(sheet, /system\.actions/);
+  assert.match(sheet, /delete-eqp-modifier-action[\s\S]*?await this\._onSubmit\(event\)[\s\S]*?deepClone\(this\.item\.system\.actions/);
 });
 
 test("equipment view presents the centralized calculation memory", () => {

@@ -120,6 +120,14 @@ function applyOperation(current, operation, operand, kind) {
   if (operation === "override") return kind === "number" ? Number(operand) : operand;
   if (operation === "append") return `${current ?? ""}${operand ?? ""}`;
   if (operation === "prepend") return `${operand ?? ""}${current ?? ""}`;
+  if (kind === "number-text") {
+    const match = String(current ?? "").trim().match(/^([+-]?\d+(?:[.,]\d+)?)(.*)$/);
+    if (!match) return current;
+    const left = Number(match[1].replace(",", "."));
+    const right = Number(operand) || 0;
+    const result = operation === "add" ? left + right : operation === "multiply" ? left * right : left;
+    return `${result}${match[2]}`;
+  }
   const left = Number(current) || 0;
   const right = Number(operand) || 0;
   if (operation === "add") return left + right;

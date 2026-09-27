@@ -588,6 +588,7 @@ _promptMultipleReferences(parsedList) {
         html.on("click", ".delete-eqp-modifier-action", async event => {
             event.preventDefault();
             const index = Number(event.currentTarget.dataset.index);
+            await this._onSubmit(event);
             const actions = foundry.utils.deepClone(this.item.system.actions || []);
             actions.splice(index, 1);
             await this.item.update({ "system.actions": actions });

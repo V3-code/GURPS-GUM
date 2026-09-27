@@ -71,6 +71,15 @@ test("attack selectors affect all, melee, ranged or stable ids", () => {
   assert.equal(equipment().melee_attacks.bash.skill_level_mod, 0, "base data is not mutated");
 });
 
+test("number-text arithmetic preserves combat and technology suffixes", () => {
+  const result = prepareEquipment(equipment({ tech_level: "8^", melee_attacks: { bash: { parry: "0U" } } }), [{ id: "suffixes", actions: [
+    { id: "tl", type: "equipment_property", property: "tech_level", operation: "add", value: 1 },
+    { id: "parry", type: "attack_property", selector: { mode: "melee" }, property: "parry", operation: "add", value: 1 }
+  ] }]);
+  assert.equal(result.system.tech_level, "9^");
+  assert.equal(result.system.melee_attacks.bash.parry, "1U");
+});
+
 test("created attack ids are deterministic and preparation is idempotent", () => {
   const modifier = { id: "spike", actions: [{ id: "new-mode", type: "attack_create", attack_type: "melee", attack: { mode: "Espinhos", damage_formula: "1d+1", damage_type: "perf" } }] };
   const first = prepareEquipment(equipment(), [modifier]);
