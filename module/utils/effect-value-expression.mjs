@@ -53,9 +53,10 @@ function parseCall(source) {
 function splitArguments(source) {
     const entries = [];
     let current = "";
-    let depth = 0;
+    const bracketStack = [];
     let quote = null;
     let escaped = false;
+    const closingBracket = { "(": ")", "[": "]", "{": "}" };
 
     for (const character of String(source ?? "")) {
         if (quote) {
@@ -70,9 +71,12 @@ function splitArguments(source) {
             current += character;
             continue;
         }
-        if (character === "(") depth += 1;
-        else if (character === ")") depth -= 1;
-        if (character === "," && depth === 0) {
+        if (character in closingBracket) {
+            bracketStack.push(closingBracket[character]);
+        } else if ([")", "]", "}"].includes(character)) {
+            if (bracketStack.at(-1) === character) bracketStack.pop();
+        }
+        if (character === "," && bracketStack.length === 0) {
             entries.push(current.trim());
             current = "";
         } else {

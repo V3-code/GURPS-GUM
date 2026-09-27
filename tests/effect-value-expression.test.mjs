@@ -40,6 +40,17 @@ test("preserva a fórmula do ramo escolhido para o avaliador da fase", () => {
     assert.equal(resolveConditionalValue('se(possui("Treinado por um Mestre"), 1d6+2, 2d6)', { actor }), "1d6+2");
 });
 
+test("preserva vírgulas internas em termos de rolagem agrupados", () => {
+    assert.equal(
+        resolveConditionalValue('se(possui("Treinado por um Mestre"), {1d6,2d6}kh, {1d6,2d6}kl)', { actor }),
+        "{1d6,2d6}kh"
+    );
+    assert.equal(
+        resolveConditionalValue('se(possui("Inexistente"), [1,2], maior(3, 4))', { actor }),
+        "maior(3, 4)"
+    );
+});
+
 test("aceita condicionais aninhadas", () => {
     const expression = 'se(possui("Inexistente"), 0, se(possui("Reflexos em Combate"), maior(DX, 12), 1))';
     assert.equal(resolveConditionalValue(expression, { actor }), "maior(DX, 12)");
