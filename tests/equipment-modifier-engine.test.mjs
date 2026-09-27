@@ -1,8 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  collectEquipmentModifierActionsFromForm,
   equipmentCapabilities,
   matchesEquipmentRequirements,
+  normalizeEquipmentModifierActions,
   parseEquipmentAdjustment,
   prepareEquipment,
   registerEquipmentModifierProperty
@@ -25,6 +27,31 @@ test("parses every supported legacy price and weight expression", () => {
   assert.equal(parseEquipmentAdjustment("x1.5").operation, "multiply");
   assert.equal(parseEquipmentAdjustment("+25").operation, "add");
   assert.equal(parseEquipmentAdjustment("n/a").valid, false);
+});
+
+test("normalizes Foundry form objects back into ordered action arrays", () => {
+  const actions = normalizeEquipmentModifierActions({
+    1: { id: "second", type: "pricing" },
+    0: { id: "first", type: "equipment_property" }
+  });
+  assert.deepEqual(actions.map(action => action.id), ["first", "second"]);
+  actions[0].id = "changed";
+  assert.equal(normalizeEquipmentModifierActions({ 0: { id: "first" } })[0].id, "first");
+});
+
+test("collects flattened Foundry action fields without losing nested selectors", () => {
+  const result = collectEquipmentModifierActionsFromForm({
+    "system.actions.1.id": "second",
+    "system.actions.1.type": "pricing",
+    "system.actions.0.id": "first",
+    "system.actions.0.type": "attack_property",
+    "system.actions.0.selector.mode": "melee",
+    unrelated: true
+  });
+  assert.deepEqual(result.actions.map(action => action.id), ["first", "second"]);
+  assert.equal(result.actions[0].selector.mode, "melee");
+  assert.equal(result.actions[1].property, "cost");
+  assert.equal(result.keys.length, 5);
 });
 
 test("central calculation combines CF, percentages, multipliers and fixed values in stages", () => {

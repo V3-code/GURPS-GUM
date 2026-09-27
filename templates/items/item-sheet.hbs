@@ -624,22 +624,8 @@
         {{!-- ===================================================================== --}}
         {{#if (eq item.type "eqp_modifier")}}
             
-            {{!-- Seção 1: Mecânica (Custo, Peso, TL) --}}
-            <div class="form-section"><h4 class="section-title">Mecânica</h4>
-                <div class="form-grid-4">
-                    <div class="form-group" title="Use +5/-5 (soma), -10% (percentual), x3 (multiplicação) ou -0.2 CF (fator de custo)">
-                        <label>Ajuste de Custo</label>
-                        <input type="text" name="system.cost_adjustment" value="{{system.cost_adjustment}}" placeholder="Ex: -10%, +50, x3, -0.2 CF"/>
-                    </div>
-                    <div class="form-group" title="Modificador de Peso (ex: x0.75, x1.5)">
-                        <label>Mod. Peso</label>
-                        <input type="text" name="system.weight_mod" value="{{system.weight_mod}}" placeholder="x1"/>
-                    </div>
-                    <div class="form-group" title="Nível Tecnológico do Modificador">
-                        <label>NT (TL)</label>
-                        <input type="text" name="system.tech_level" value="{{system.tech_level}}" placeholder="0"/>
-                    </div>
-                    {{!-- Campo REF com botão --}}
+            <div class="form-section"><h4 class="section-title">Identificação</h4>
+                <div class="form-grid-2">
                     <div class="form-group">
                         <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> - Ref.</label>
                         <div class="input-with-button">
@@ -648,18 +634,36 @@
                     </div>
                 </div>
                 
-                {{!-- Tags para busca --}}
-                <div class="form-group" style="margin-top: 8px;">
+                <div class="form-group">
                     <label>Tags / Palavras-Chave</label>
                     <input type="text" name="system.tags" value="{{system.tags}}" placeholder="Ex: Metal, Mágico, Élfico, Qualidade (Separar por vírgula)"/>
                 </div>
+                {{#if hasLegacyEquipmentModifierFields}}
+                <details class="eqp-modifier-legacy-fields">
+                    <summary>Compatibilidade com campos antigos</summary>
+                    <p class="form-hint">Estes valores continuam funcionando, mas novas alterações devem ser configuradas como ações.</p>
+                    <div class="form-grid-3">
+                        <div class="form-group"><label>Ajuste de custo antigo</label><input type="text" name="system.cost_adjustment" value="{{system.cost_adjustment}}" /></div>
+                        <div class="form-group"><label>Ajuste de peso antigo</label><input type="text" name="system.weight_mod" value="{{system.weight_mod}}" /></div>
+                        <div class="form-group"><label>Ajuste de NT antigo</label><input type="text" name="system.tech_level_mod" value="{{system.tech_level_mod}}" /></div>
+                    </div>
+                </details>
+                {{/if}}
             </div>
             <div class="form-section eqp-modifier-actions-section">
                 <div class="eqpmod-block-header">
                     <h4 class="section-title">Ações sobre o equipamento</h4>
-                    <button type="button" class="add-eqp-modifier-action" title="Adicionar ação"><i class="fas fa-plus"></i> Ação</button>
+                    <div class="eqp-modifier-action-add">
+                        <select data-eqp-action-type aria-label="Tipo da nova ação">
+                            <option value="equipment_property">Propriedade</option>
+                            <option value="pricing">Custo ou peso</option>
+                            <option value="attack_property">Alterar ataques</option>
+                            <option value="attack_create">Criar ataque</option>
+                        </select>
+                        <button type="button" class="add-eqp-modifier-action" title="Adicionar ação"><i class="fas fa-plus"></i> Adicionar</button>
+                    </div>
                 </div>
-                <p class="form-hint">As ações operam sobre “este equipamento”. Os campos legados acima continuam válidos quando nenhuma ação de custo ou peso for criada.</p>
+                <p class="form-hint">Escolha uma ação; todas as alterações mecânicas deste modificador operam sobre “este equipamento”.</p>
                 {{#each eqpModifierActions as |action|}}
                 <details class="eqp-modifier-action-card" open>
                     <summary>
@@ -2408,6 +2412,12 @@
       <a class="eqpmod-add-button add-eqp-modifier" title="Adicionar Modificador"><i class="fas fa-plus"></i></a>
     </div>
 
+    {{#if equipmentModifierWarnings.length}}
+      <div class="eqpmod-warning-list">
+        {{#each equipmentModifierWarnings as |warning|}}<p><i class="fas fa-triangle-exclamation"></i> {{warning}}</p>{{/each}}
+      </div>
+    {{/if}}
+
     {{!-- Lista em linhas --}}
     <ol class="eqpmod-line-list">
       {{#each eqpModifiersList as |mod|}}
@@ -2439,6 +2449,11 @@
               <div class="eqpmod-value">{{mod.weightDisplay}}</div>
             </div>
 
+            <div class="eqpmod-cell eqpmod-stat is-center">
+              <div class="eqpmod-label">Ações</div>
+              <div class="eqpmod-value">{{#if mod.actionCount}}{{mod.actionCount}}{{else}}Legado{{/if}}</div>
+            </div>
+
             {{!-- Ações --}}
             <div class="eqpmod-cell eqpmod-actions">
               <span class="eqpmod-controls">
@@ -2454,6 +2469,9 @@
           {{!-- Opcional: notas/efeitos em linha extra bem discreta --}}
           {{#if mod.features}}
             <div class="eqpmod-subline">{{mod.features}}</div>
+          {{/if}}
+          {{#if mod.actionSummary}}
+            <div class="eqpmod-subline"><strong>Resultado:</strong> {{mod.actionSummary}}</div>
           {{/if}}
         </li>
       {{else}}

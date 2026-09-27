@@ -2,6 +2,59 @@ const clone = value => value == null ? value : JSON.parse(JSON.stringify(value))
 
 export const EQUIPMENT_MODIFIER_SCHEMA_VERSION = 2;
 
+export function normalizeEquipmentModifierActions(actions) {
+  if (Array.isArray(actions)) return clone(actions).filter(action => action && typeof action === "object");
+  if (!actions || typeof actions !== "object") return [];
+  return Object.entries(actions)
+    .filter(([, action]) => action && typeof action === "object")
+    .sort(([left], [right]) => {
+      const leftNumber = Number(left);
+      const rightNumber = Number(right);
+      if (Number.isInteger(leftNumber) && Number.isInteger(rightNumber)) return leftNumber - rightNumber;
+      return left.localeCompare(right);
+    })
+    .map(([, action]) => clone(action));
+}
+
+export function normalizeEquipmentModifierActionShape(action = {}) {
+  const normalized = clone(action) || {};
+  const type = ["pricing", "equipment_property", "attack_property", "attack_create"].includes(normalized.type) ? normalized.type : "equipment_property";
+  normalized.type = type;
+  if (type === "pricing") {
+    if (!["cost", "weight"].includes(normalized.property)) normalized.property = "cost";
+    if (!["cost_factor", "percent", "multiply", "add", "override"].includes(normalized.operation)) normalized.operation = "cost_factor";
+  } else if (type === "equipment_property") {
+    normalized.property ||= "material";
+    normalized.operation ||= "override";
+  } else if (type === "attack_property") {
+    normalized.property ||= "damage_type";
+    normalized.operation ||= "override";
+    normalized.selector ||= { mode: "all", ids: "" };
+  } else {
+    normalized.attack_type = normalized.attack_type === "ranged" ? "ranged" : "melee";
+    normalized.attack ||= { mode: "Novo ataque", damage_formula: "", damage_type: "", skill_name: "", skill_level_mod: 0 };
+  }
+  return normalized;
+}
+
+export function collectEquipmentModifierActionsFromForm(formData = {}) {
+  const entries = new Map();
+  const keys = [];
+  for (const [key, value] of Object.entries(formData)) {
+    const match = key.match(/^system\.actions\.(\d+)\.(.+)$/);
+    if (!match) continue;
+    const index = Number(match[1]);
+    if (!entries.has(index)) entries.set(index, {});
+    setPath(entries.get(index), match[2], value);
+    keys.push(key);
+  }
+  if (!entries.size) return { actions: null, keys };
+  return {
+    actions: Array.from(entries.entries()).sort((left, right) => left[0] - right[0]).map(([, action]) => normalizeEquipmentModifierActionShape(action)),
+    keys
+  };
+}
+
 export function parseEquipmentAdjustment(rawValue, { allowCF = false } = {}) {
   const source = String(rawValue ?? "").trim();
   if (!source) return { operation: "none", value: 0, label: "", valid: true };
@@ -22,8 +75,9 @@ export function parseEquipmentAdjustment(rawValue, { allowCF = false } = {}) {
 }
 
 export function normalizeLegacyEquipmentModifier(modifier = {}) {
-  if (Array.isArray(modifier.actions) && modifier.actions.length) {
-    const explicit = clone(modifier.actions);
+  const normalizedActions = normalizeEquipmentModifierActions(modifier.actions);
+  if (normalizedActions.length) {
+    const explicit = normalizedActions;
     const legacy = normalizeLegacyEquipmentModifier({ ...modifier, actions: [] });
     return explicit.concat(legacy.filter(action => {
       if (action.type === "pricing") return !explicit.some(candidate => candidate.type === "pricing" && candidate.property === action.property);

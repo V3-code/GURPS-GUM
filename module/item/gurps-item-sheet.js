@@ -8,7 +8,7 @@ import { listBodyLocations } from "../config/body-profiles.js";
 import { SOCIAL_CATEGORIES } from "../config/social-aspects.mjs";
 import { normalizeContextCsv, openContextPicker } from "../apps/context-picker.mjs";
 import { getSkillDisplayName } from "../utils/skill-display-name.mjs";
-import { parseEquipmentAdjustment, prepareEquipment } from "../services/equipment-modifier-engine.mjs";
+import { collectEquipmentModifierActionsFromForm, normalizeEquipmentModifierActions, parseEquipmentAdjustment, prepareEquipment } from "../services/equipment-modifier-engine.mjs";
  
 const { ItemSheet } = foundry.appv1.sheets; 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor; 
@@ -225,8 +225,13 @@ _promptMultipleReferences(parsedList) {
         const context = await super.getData(options); 
         const itemData = context.item;  
  
-        // Garante acesso fácil ao system e flags 
-        context.system = itemData.system; 
+        // Garante acesso fácil ao system e flags
+        context.system = itemData.system;
+        if (this.item.type === "equipment" && this.item._source?.system) {
+            // A preparação do ator projeta modificadores em item.system. A ficha deve
+            // continuar editando a fonte para não gravar valores derivados como base.
+            context.system = foundry.utils.deepClone(this.item._source.system);
+        }
         context.flags = itemData.flags;
         context.attackMinStrength = this._normalizeAttackMinStrength(itemData.system?.attack_roll?.min_strength); 
 
@@ -400,14 +405,14 @@ _promptMultipleReferences(parsedList) {
         // 2. LÓGICA DE EQUIPAMENTOS 
         // ======================================================= 
             if (['equipment', 'melee_weapon', 'ranged_weapon'].includes(this.item.type)) {
-            const eqpModsObj = this.item.system.eqp_modifiers || {}; 
+            const eqpModsObj = context.system.eqp_modifiers || {};
             const modifiersArray = Object.entries(eqpModsObj).map(([id, data]) => ({ 
                 id, ...data 
             })).sort((a, b) => a.name.localeCompare(b.name)); 
-            context.eqpModifiersList = modifiersArray; 
+            context.eqpModifiersList = modifiersArray;
             context.eqpModifiersHasFeatures = modifiersArray.some(mod => mod.features); 
  
-            const preparedEquipment = prepareEquipment(this.item.system, eqpModsObj);
+            const preparedEquipment = prepareEquipment(context.system, eqpModsObj);
             for (const mod of modifiersArray) {
                 const parsedCost = this._parseAdjustmentExpression(this._normalizeCostExpression(mod), { allowCF: true }); 
                 const parsedWeight = this._parseAdjustmentExpression(mod.weight_mod); 
@@ -419,15 +424,25 @@ _promptMultipleReferences(parsedList) {
             context.calculatedFinalWeight = preparedEquipment.calculation.weight.finalValue;
             context.equipmentCalculation = preparedEquipment.calculation;
             context.equipmentModifierWarnings = preparedEquipment.warnings;
+            for (const mod of modifiersArray) {
+                const actionRecords = preparedEquipment.appliedActions.filter(record => record.modifierId === mod.id);
+                const pricingRecords = [
+                    ...preparedEquipment.calculation.cost.steps,
+                    ...preparedEquipment.calculation.weight.steps
+                ].filter(record => record.modifierId === mod.id);
+                mod.actionCount = normalizeEquipmentModifierActions(mod.actions).length;
+                mod.appliedActionCount = actionRecords.length + pricingRecords.length;
+                mod.actionSummary = [...pricingRecords, ...actionRecords].map(record => `${record.label}: ${record.before ?? "—"} → ${typeof record.after === "object" ? record.after?.mode || "novo ataque" : record.after}`).join("; ");
+            }
              
             context.finalCostString = context.calculatedFinalCost.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }); 
  context.finalWeightString = context.calculatedFinalWeight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }); 
-            context.hasCostChange = context.calculatedFinalCost !== Number(this.item.system.cost || 0);
-            context.hasWeightChange = context.calculatedFinalWeight !== Number(this.item.system.weight || 0);
+            context.hasCostChange = context.calculatedFinalCost !== Number(context.system.cost || 0);
+            context.hasWeightChange = context.calculatedFinalWeight !== Number(context.system.weight || 0);
         } 
  
         if (this.item.type === "equipment") { 
-            const drLocations = this.item.system.dr_locations || {}; 
+            const drLocations = context.system.dr_locations || {};
             const bodyLocationOptions = listBodyLocations(); 
             const locationLookup = new Map(bodyLocationOptions.map(option => [option.id, option])); 
  
@@ -452,7 +467,7 @@ _promptMultipleReferences(parsedList) {
         } 
 
         if (this.item.type === "eqp_modifier") {
-            const actions = Array.isArray(this.item.system.actions) ? this.item.system.actions : [];
+            const actions = normalizeEquipmentModifierActions(this.item.system.actions);
             context.eqpModifierActions = actions.map((action, index) => ({
                 ...action,
                 enabled: action.enabled !== false,
@@ -465,6 +480,11 @@ _promptMultipleReferences(parsedList) {
                 any: Array.isArray(requirements.any) ? requirements.any.join(", ") : requirements.any || "",
                 none: Array.isArray(requirements.none) ? requirements.none.join(", ") : requirements.none || ""
             };
+            const legacyCost = parseEquipmentAdjustment(this._normalizeCostExpression(this.item.system), { allowCF: true });
+            const legacyWeight = parseEquipmentAdjustment(this.item.system.weight_mod);
+            context.hasLegacyEquipmentModifierFields = (legacyCost.valid && legacyCost.value !== 0)
+                || (legacyWeight.valid && !(legacyWeight.operation === "multiply" && legacyWeight.value === 1) && legacyWeight.value !== 0)
+                || Boolean(String(this.item.system.tech_level_mod || "").trim());
         }
  
         // ======================================================= 
@@ -580,16 +600,23 @@ _promptMultipleReferences(parsedList) {
         html.on("change", ".item-social-type", this._onChangeItemSocialType.bind(this));
         html.on("click", ".add-eqp-modifier-action", async event => {
             event.preventDefault();
+            const type = html.find("[data-eqp-action-type]").val() || "equipment_property";
             await this._onSubmit(event);
-            const actions = foundry.utils.deepClone(this.item.system.actions || []);
-            actions.push({ id: foundry.utils.randomID(), type: "equipment_property", label: "", property: "material", operation: "override", value: "", selector: { mode: "all", ids: "" }, enabled: true });
+            const actions = normalizeEquipmentModifierActions(this.item.system.actions);
+            const defaults = {
+                pricing: { property: "cost", operation: "cost_factor", value: 0 },
+                equipment_property: { property: "material", operation: "override", value: "" },
+                attack_property: { property: "damage_type", operation: "override", value: "", selector: { mode: "all", ids: "" } },
+                attack_create: { attack_type: "melee", attack: { mode: "Novo ataque", damage_formula: "", damage_type: "", skill_name: "", skill_level_mod: 0 } }
+            };
+            actions.push({ id: foundry.utils.randomID(), type, label: "", enabled: true, ...foundry.utils.deepClone(defaults[type] || defaults.equipment_property) });
             await this.item.update({ "system.schemaVersion": 2, "system.actions": actions });
         });
         html.on("click", ".delete-eqp-modifier-action", async event => {
             event.preventDefault();
             const index = Number(event.currentTarget.dataset.index);
             await this._onSubmit(event);
-            const actions = foundry.utils.deepClone(this.item.system.actions || []);
+            const actions = normalizeEquipmentModifierActions(this.item.system.actions);
             actions.splice(index, 1);
             await this.item.update({ "system.actions": actions });
         });
@@ -2119,6 +2146,13 @@ const rangedFields = `
         } 
 
         if (this.item?.type === "eqp_modifier") {
+            const collectedActions = collectEquipmentModifierActionsFromForm(formData);
+            for (const key of collectedActions.keys) delete formData[key];
+            if (collectedActions.actions) {
+                formData["system.actions"] = collectedActions.actions;
+            } else if (formData["system.actions"] !== undefined) {
+                formData["system.actions"] = normalizeEquipmentModifierActions(formData["system.actions"]);
+            }
             for (const bucket of ["all", "any", "none"]) {
                 const key = `system.requirements.${bucket}`;
                 if (formData[key] !== undefined) formData[key] = String(formData[key]).split(",").map(value => value.trim()).filter(Boolean);

@@ -7065,6 +7065,31 @@ color:#121114;
   gap: 0.75rem;
 }
 
+.eqp-modifier-action-add {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.eqp-modifier-action-add select { min-width: 9rem; }
+.eqp-modifier-action-add button { width: auto; white-space: nowrap; }
+
+.eqp-modifier-legacy-fields {
+  margin-top: 0.65rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px dashed rgba(255, 193, 7, 0.4);
+  border-radius: 5px;
+}
+
+.eqpmod-warning-list {
+  margin: 0.5rem 0;
+  padding: 0.45rem 0.65rem;
+  border-left: 3px solid #d99a32;
+  background: rgba(217, 154, 50, 0.1);
+}
+
+.eqpmod-warning-list p { margin: 0.2rem 0; }
+
 .eqp-modifier-action-card {
   margin: 0.55rem 0;
   padding: 0.55rem 0.7rem;
