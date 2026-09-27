@@ -127,16 +127,20 @@ export function actorHasItem(actor, reference) {
     return actorItems(actor).some((item) => itemReferences(item).includes(wanted));
 }
 
-function findActorItem(actor, reference) {
+function findActorItems(actor, reference) {
     const wanted = normalizeText(unquote(reference));
-    if (!wanted) return null;
-    return actorItems(actor).find((item) => itemReferences(item).includes(wanted)) ?? null;
+    if (!wanted) return [];
+    return actorItems(actor).filter((item) => itemReferences(item).includes(wanted));
+}
+
+function findActorItem(actor, reference) {
+    return findActorItems(actor, reference)[0] ?? null;
 }
 
 function actorHasStatus(actor, reference) {
     const wanted = normalizeText(unquote(reference));
     if (!wanted) return false;
-    return Array.from(actor?.effects ?? actor?.appliedEffects ?? []).some((effect) => {
+    return Array.from(actor?.appliedEffects ?? actor?.effects ?? []).some((effect) => {
         if (effect?.disabled || effect?.isSuppressed) return false;
         const statuses = Array.from(effect?.statuses ?? []).map(normalizeText);
         return statuses.includes(wanted) || normalizeText(effect?.name) === wanted;
@@ -226,8 +230,9 @@ function evaluateCondition(source, context) {
     }
     if (ITEM_EQUIPPED_NAMES.has(call.name)) {
         if (call.args.length !== 1) throw new Error("equipado() requer exatamente um item.");
-        const item = findActorItem(context.actor, call.args[0]);
-        return item?.system?.equipped === true || item?.system?.location === "equipped";
+        return findActorItems(context.actor, call.args[0]).some((item) =>
+            item?.system?.equipped === true || item?.system?.location === "equipped"
+        );
     }
     if (ACTIVE_CONDITION_NAMES.has(call.name)) {
         if (call.args.length !== 1) throw new Error("condicaoAtiva() requer exatamente uma condição.");

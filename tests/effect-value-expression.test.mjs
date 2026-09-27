@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import test from "node:test";
 
 import {
@@ -12,10 +13,15 @@ const actor = {
         { id: "trained", uuid: "Actor.hero.Item.trained", name: "Treinado por um Mestre", system: { level: 2 } },
         { id: "reflexes", name: "Reflexos em Combate", flags: { core: { sourceId: "Compendium.gum.Item.reflexes" } } },
         { id: "arrows", name: "Flecha", type: "equipment", system: { quantity: 12, equipped: false, location: "carried" } },
+        { id: "spare-sword", name: "Espada", type: "equipment", system: { quantity: 1, equipped: false, location: "carried" } },
         { id: "sword", name: "Espada", type: "equipment", system: { quantity: 1, equipped: true, location: "equipped" } },
         { id: "focused", name: "Concentrado", type: "condition", flags: { gum: { wasActive: true, manual_override: false } } }
     ],
-    effects: [{ name: "Atordoado", statuses: new Set(["stunned"]), disabled: false }],
+    effects: [],
+    appliedEffects: [
+        { name: "Atordoado", statuses: new Set(["stunned"]), disabled: false },
+        { name: "Transferido", statuses: new Set(["blessed"]), disabled: false }
+    ],
     system: { attributes: { dx: { final: 14 } } }
 };
 
@@ -62,6 +68,7 @@ test("consulta equipamento, condição ativa e status", () => {
     assert.equal(resolveConditionalValue('se(condicaoAtiva("Concentrado"), 1, 0)', { actor }), "1");
     assert.equal(resolveConditionalValue('se(status("stunned"), 1, 0)', { actor }), "1");
     assert.equal(resolveConditionalValue('se(status("Atordoado"), 1, 0)', { actor }), "1");
+    assert.equal(resolveConditionalValue('se(status("blessed"), 1, 0)', { actor }), "1");
 });
 
 test("preserva a fórmula do ramo escolhido para o avaliador da fase", () => {
@@ -93,4 +100,14 @@ test("não interfere em valores legados sem se()", () => {
 test("rejeita estruturas condicionais inválidas", () => {
     assert.throws(() => resolveConditionalValue('se(possui("Item"), 1)', { actor }), /requer condição/);
     assert.throws(() => resolveConditionalValue('se(desconhecida("Item"), 1, 0)', { actor }), /não reconhecida/);
+});
+
+test("manual documenta a linguagem pública e está vinculado no README", () => {
+    const manual = fs.readFileSync(new URL("../docs/effect-value-expressions.md", import.meta.url), "utf8");
+    const readme = fs.readFileSync(new URL("../README.md", import.meta.url), "utf8");
+    for (const expression of ["possui", "naopossui", "possuiAlgum", "possuiTodos", "nivel", "quantidade", "equipado", "condicaoAtiva", "status", "atributo", "todos", "algum", "nao"]) {
+        assert.match(manual, new RegExp(`\\b${expression}\\b`));
+    }
+    assert.match(manual, /Momento da avaliação/);
+    assert.match(readme, /docs\/effect-value-expressions\.md/);
 });
