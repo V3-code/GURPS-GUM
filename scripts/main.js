@@ -38,6 +38,7 @@ import { isUserAuthorizedForTarget } from "../module/utils/test-request-targets.
 import { getResistanceChatPrivacy } from "../module/utils/effect-chat-visibility.mjs";
 import { showDiceForMessageLessRoll } from "../module/utils/dice-so-nice.mjs";
 import { BASIC_DAMAGE_KEYS, normalizeBasicDamageData, prepareBasicDamageAttributes } from "../module/utils/basic-damage.mjs";
+import { resolveConditionalValue } from "../module/utils/effect-value-expression.mjs";
 import { resolveAttackDamageDisplay } from "../module/utils/attack-damage-display.mjs";
 import { canUserCreateActors } from "../module/utils/actor-creation-permission.mjs";
 import { resolveRollReference } from "../module/utils/roll-reference-resolver.mjs";
@@ -780,7 +781,7 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                     if (!shouldIncludeInPermanentNh(entry)) return;
                     if (!matchesEntryTargetForItem(entry, item)) return;
                     if (!matchesEntryContextForItem(entry, item)) return;
-                    const value = _evaluateModifierValue(this, entry?.value, { itemId: item.id, type: item.type, itemName: item.name });
+                    const value = _evaluateModifierEntryValue(this, entry, { itemId: item.id, type: item.type, itemName: item.name });
                     if (!Number.isFinite(value) || value === 0) return;
                     if (isPermanent) bonus.passive += value;
                     else bonus.temp += value;
@@ -804,7 +805,7 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                     if (!matchesEntryTargetForItem(entry, item)) return;
                     if (!_matchesRollModifierAttackFilter(entry, attack)) return;
                     if (!matchesEntryContextForAttack(entry, attackType)) return;
-                    const value = _evaluateModifierValue(this, entry?.value, {
+                    const value = _evaluateModifierEntryValue(this, entry, {
                         itemId: item.id,
                         type: item.type,
                         itemName: item.name,
@@ -834,7 +835,7 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                     if (!matchesEntryTargetForItem(entry, item)) return;
                     if (!_matchesRollModifierAttackFilter(entry, attack)) return;
                     if (!matchesEntryContextForDefense(entry, defenseType)) return;
-                    const value = _evaluateModifierValue(this, entry?.value, {
+                    const value = _evaluateModifierEntryValue(this, entry, {
                         itemId: item.id,
                         type: "defense",
                         itemName: item.name,
@@ -1161,7 +1162,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
             if (!matchesRollTags(m, rollMetadata.rollTags)) return;
 
             // Soma o valor
-            globalModValue += _evaluateModifierValue(actor, m.value, rollData);
+            globalModValue += _evaluateModifierEntryValue(actor, m, rollData);
             
             // Verifica o Teto (Cap)
             if (m.cap !== undefined && m.cap !== null && m.cap !== "") {
@@ -1175,7 +1176,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
 
         const effectMods = _collectEffectRollModifiers(actor, rollContext, { ...rollData, ...rollMetadata });
         effectMods.forEach(m => {
-            globalModValue += _evaluateModifierValue(actor, m.value, rollData);
+            globalModValue += _evaluateModifierEntryValue(m.evaluationActor || actor, m, rollData);
             if (m.cap !== undefined && m.cap !== null && m.cap !== "") {
                 const capVal = parseInt(m.cap);
                 if (!isNaN(capVal) && capVal < lowestCap) {
@@ -1186,7 +1187,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
 
         const counterEffectMods = _collectTargetCounterRollModifiers(actor, rollContext, { ...rollData, ...rollMetadata });
         counterEffectMods.forEach(m => {
-            globalModValue += _evaluateModifierValue(actor, m.value, rollData);
+            globalModValue += _evaluateModifierEntryValue(m.evaluationActor || actor, m, rollData);
             if (m.cap !== undefined && m.cap !== null && m.cap !== "") {
                 const capVal = parseInt(m.cap);
                 if (!isNaN(capVal) && capVal < lowestCap) {
@@ -2000,7 +2001,15 @@ function _evaluateModifierValue(actor, rawValue, rollData = {}) {
     if (rawValue === null || rawValue === undefined || rawValue === "") return 0;
     if (typeof rawValue === "number") return Number.isFinite(rawValue) ? rawValue : 0;
 
-    const source = String(rawValue).trim();
+    let conditionalValue = rawValue;
+    try {
+        conditionalValue = resolveConditionalValue(rawValue, { actor, rollData });
+    } catch (error) {
+        console.warn("GUM | Falha ao avaliar expressão condicional de modificador:", error);
+        return 0;
+    }
+
+    const source = String(conditionalValue).trim();
     if (!source) return 0;
     if (/^[+-]?\d+(\.\d+)?$/.test(source)) return Number(source) || 0;
 
@@ -2047,6 +2056,13 @@ function _evaluateModifierValue(actor, rawValue, rollData = {}) {
     if (Number.isFinite(arithmeticResult)) return arithmeticResult;
 
     return _resolveModifierReferenceValue(actor, source, rollData);
+}
+
+function _evaluateModifierEntryValue(actor, entry = {}, rollData = {}) {
+    const value = _evaluateModifierValue(actor, entry?.value, rollData);
+    if (!entry?.defer_value_evaluation || entry?.value_mode !== "per_origin_level") return value;
+    const originLevel = Number(entry?.origin_level);
+    return value * (Number.isFinite(originLevel) && originLevel > 0 ? originLevel : 1);
 }
 
 function _normalizeRollModifierFilterTokens(rawValue, { lower = false } = {}) {
@@ -2179,7 +2195,10 @@ function _collectEffectRollModifiers(actor, rollContext, rollData = {}) {
             mods.push({
                 id: `${effect.id}::${index}`,
                 value: entry?.value ?? data.value,
-                cap: entry?.cap ?? entry?.nh_cap ?? data.cap
+                cap: entry?.cap ?? entry?.nh_cap ?? data.cap,
+                value_mode: entry?.value_mode,
+                origin_level: entry?.origin_level,
+                defer_value_evaluation: entry?.defer_value_evaluation
             });
         });
     }
@@ -2257,7 +2276,11 @@ function _collectTargetCounterRollModifiers(actor, rollContext, rollData = {}) {
             grouped.set(key, {
                 id: `counter::${targetToken.id}::${key}`,
                 value,
-                cap
+                cap,
+                value_mode: candidate.entry?.value_mode,
+                origin_level: candidate.entry?.origin_level,
+                defer_value_evaluation: candidate.entry?.defer_value_evaluation,
+                evaluationActor: targetToken.actor
             });
         }
     }
