@@ -5242,7 +5242,16 @@ color:#121114;
 }
 
 .gum.sheet.item.effect-sheet .effect-premium-grid-entry-primary {
-    grid-template-columns: minmax(280px, 1.5fr) minmax(120px, 0.58fr) minmax(100px, 0.42fr);
+  grid-template-columns: minmax(280px, 1fr) minmax(110px, 0.28fr);
+}
+
+.gum.sheet.item.effect-sheet .effect-roll-modifier-value-field {
+  grid-column: 1 / -1;
+}
+
+.gum.sheet.item.effect-sheet .effect-roll-modifier-value-input {
+  min-height: 38px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 }
 
 .gum.sheet.item.effect-sheet .effect-premium-grid-entry-settings {

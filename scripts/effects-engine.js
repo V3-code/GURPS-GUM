@@ -21,6 +21,10 @@ import {
     isBasicDamageOverridePath,
     resolveBasicDamageOverride
 } from "../module/utils/basic-damage.mjs";
+import {
+    hasConditionalValueExpression,
+    resolveConditionalValue
+} from "../module/utils/effect-value-expression.mjs";
 
 const normalizeLookupKey = (value) => value
     ?.toString()
@@ -324,7 +328,19 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
             return { value, roll: null, formula: null };
         }
 
-        const trimmed = value.trim();
+        let resolvedValue = value;
+        try {
+            resolvedValue = resolveConditionalValue(value, { actor });
+        } catch (error) {
+            console.warn(`GUM | Não foi possível avaliar a condição do efeito "${effectItem.name}":`, error);
+            return { value: 0, roll: null, formula: null };
+        }
+
+        if (typeof resolvedValue !== "string") {
+            return { value: resolvedValue, roll: null, formula: null };
+        }
+
+        const trimmed = resolvedValue.trim();
         if (trimmed === "") {
             return { value: 0, roll: null, formula: null };
         }
@@ -456,9 +472,19 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                         if (!action.path) throw new Error("Ação de atributo sem caminho.");
                         const isDamageFormulaOverride = action.operation === "OVERRIDE"
                             && isBasicDamageOverridePath(action.path);
-                        const evaluated = isDamageFormulaOverride
-                            ? { value: resolveBasicDamageOverride(action.value), roll: null, formula: null }
-                            : await evaluateEffectValue(action.value, targetActor);
+                        let evaluated;
+                        if (isDamageFormulaOverride) {
+                            let selectedFormula = action.value;
+                            try {
+                                selectedFormula = resolveConditionalValue(action.value, { actor: targetActor });
+                            } catch (error) {
+                                console.warn(`GUM | Não foi possível avaliar a condição do dano básico em "${effectItem.name}":`, error);
+                                selectedFormula = "0";
+                            }
+                            evaluated = { value: resolveBasicDamageOverride(selectedFormula), roll: null, formula: null };
+                        } else {
+                            evaluated = await evaluateEffectValue(action.value, targetActor);
+                        }
                         // Damage overrides describe the future damage roll. They must neither
                         // roll on effect application nor be numerically scaled by origin level.
                         const resolvedValue = resolveEffectValueMetadata(
@@ -513,14 +539,16 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                             }];
                         const entries = canonicalEntries.map((entry) => {
                             const scaling = resolveEffectValueMetadata(entry.value, entry.value_mode, context.origin);
+                            const deferValueEvaluation = hasConditionalValueExpression(entry.value);
                             return {
                                 ...foundry.utils.deepClone(entry),
-                                value: scaling.effectiveValue,
+                                value: deferValueEvaluation ? entry.value : scaling.effectiveValue,
                                 value_mode: scaling.valueMode,
                                 base_value: scaling.baseValue,
                                 origin_level: scaling.originLevel,
                                 origin_item_id: scaling.originItemId,
-                                origin_item_uuid: scaling.originItemUuid
+                                origin_item_uuid: scaling.originItemUuid,
+                                defer_value_evaluation: deferValueEvaluation
                             };
                         });
                         activeEffectData.flags.gum.rollModifier = {
@@ -596,12 +624,15 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     valueToChange = newAmount;
                 }
 
-                const roll = new Roll(String(valueToChange));
-                await roll.evaluate();
-                const finalValue = roll.total;
+                const targetDependentValue = hasConditionalValueExpression(valueToChange);
+                const sharedEvaluation = targetDependentValue
+                    ? null
+                    : await evaluateEffectValue(valueToChange, targets[0]?.actor ?? context.actor);
 
                 for (const targetToken of targets) {
                     const targetActor = targetToken.actor;
+                    const { value: evaluatedValue } = sharedEvaluation ?? await evaluateEffectValue(valueToChange, targetActor);
+                    const finalValue = Number(evaluatedValue) || 0;
                     let updatePath = "";
                     let updateObject = null;
 

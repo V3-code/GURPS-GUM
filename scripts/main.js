@@ -38,6 +38,8 @@ import { isUserAuthorizedForTarget } from "../module/utils/test-request-targets.
 import { getResistanceChatPrivacy } from "../module/utils/effect-chat-visibility.mjs";
 import { showDiceForMessageLessRoll } from "../module/utils/dice-so-nice.mjs";
 import { BASIC_DAMAGE_KEYS, normalizeBasicDamageData, prepareBasicDamageAttributes } from "../module/utils/basic-damage.mjs";
+import { resolveConditionalValue } from "../module/utils/effect-value-expression.mjs";
+import { evaluateModifierRollFormulaSync, hasModifierRollFormula } from "../module/utils/modifier-roll-formula.mjs";
 import { resolveAttackDamageDisplay } from "../module/utils/attack-damage-display.mjs";
 import { canUserCreateActors } from "../module/utils/actor-creation-permission.mjs";
 import { resolveRollReference } from "../module/utils/roll-reference-resolver.mjs";
@@ -780,7 +782,7 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                     if (!shouldIncludeInPermanentNh(entry)) return;
                     if (!matchesEntryTargetForItem(entry, item)) return;
                     if (!matchesEntryContextForItem(entry, item)) return;
-                    const value = _evaluateModifierValue(this, entry?.value, { itemId: item.id, type: item.type, itemName: item.name });
+                    const value = _evaluateModifierEntryValue(this, entry, { itemId: item.id, type: item.type, itemName: item.name }, { allowDice: false });
                     if (!Number.isFinite(value) || value === 0) return;
                     if (isPermanent) bonus.passive += value;
                     else bonus.temp += value;
@@ -804,13 +806,13 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                     if (!matchesEntryTargetForItem(entry, item)) return;
                     if (!_matchesRollModifierAttackFilter(entry, attack)) return;
                     if (!matchesEntryContextForAttack(entry, attackType)) return;
-                    const value = _evaluateModifierValue(this, entry?.value, {
+                    const value = _evaluateModifierEntryValue(this, entry, {
                         itemId: item.id,
                         type: item.type,
                         itemName: item.name,
- attackId: attack?.id ?? null,
+                        attackId: attack?.id ?? null,
                         attackType
-                    });
+                    }, { allowDice: false });
                     if (!Number.isFinite(value) || value === 0) return;
                     if (isPermanent) bonus.passive += value;
                     else bonus.temp += value;
@@ -834,14 +836,14 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                     if (!matchesEntryTargetForItem(entry, item)) return;
                     if (!_matchesRollModifierAttackFilter(entry, attack)) return;
                     if (!matchesEntryContextForDefense(entry, defenseType)) return;
-                    const value = _evaluateModifierValue(this, entry?.value, {
+                    const value = _evaluateModifierEntryValue(this, entry, {
                         itemId: item.id,
                         type: "defense",
                         itemName: item.name,
                         attackId: attack?.id ?? null,
                         attackType,
                         defenseType
-                    });
+                    }, { allowDice: false });
                     if (!Number.isFinite(value) || value === 0) return;
                     if (isPermanent) bonus.passive += value;
                     else bonus.temp += value;
@@ -1161,7 +1163,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
             if (!matchesRollTags(m, rollMetadata.rollTags)) return;
 
             // Soma o valor
-            globalModValue += _evaluateModifierValue(actor, m.value, rollData);
+            globalModValue += _evaluateModifierEntryValue(actor, m, rollData);
             
             // Verifica o Teto (Cap)
             if (m.cap !== undefined && m.cap !== null && m.cap !== "") {
@@ -1175,7 +1177,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
 
         const effectMods = _collectEffectRollModifiers(actor, rollContext, { ...rollData, ...rollMetadata });
         effectMods.forEach(m => {
-            globalModValue += _evaluateModifierValue(actor, m.value, rollData);
+            globalModValue += _evaluateModifierEntryValue(m.evaluationActor || actor, m, rollData);
             if (m.cap !== undefined && m.cap !== null && m.cap !== "") {
                 const capVal = parseInt(m.cap);
                 if (!isNaN(capVal) && capVal < lowestCap) {
@@ -1186,7 +1188,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
 
         const counterEffectMods = _collectTargetCounterRollModifiers(actor, rollContext, { ...rollData, ...rollMetadata });
         counterEffectMods.forEach(m => {
-            globalModValue += _evaluateModifierValue(actor, m.value, rollData);
+            globalModValue += _evaluateModifierEntryValue(m.evaluationActor || actor, m, rollData);
             if (m.cap !== undefined && m.cap !== null && m.cap !== "") {
                 const capVal = parseInt(m.cap);
                 if (!isNaN(capVal) && capVal < lowestCap) {
@@ -1996,13 +1998,26 @@ function _resolveModifierReferenceValue(actor, rawReference, rollData = {}) {
     return modifier;
 }
 
-function _evaluateModifierValue(actor, rawValue, rollData = {}) {
+function _evaluateModifierValue(actor, rawValue, rollData = {}, { allowDice = true } = {}) {
     if (rawValue === null || rawValue === undefined || rawValue === "") return 0;
     if (typeof rawValue === "number") return Number.isFinite(rawValue) ? rawValue : 0;
 
-    const source = String(rawValue).trim();
+    let conditionalValue = rawValue;
+    try {
+        conditionalValue = resolveConditionalValue(rawValue, { actor, rollData });
+    } catch (error) {
+        console.warn("GUM | Falha ao avaliar expressão condicional de modificador:", error);
+        return 0;
+    }
+
+    const source = String(conditionalValue).trim();
     if (!source) return 0;
     if (/^[+-]?\d+(\.\d+)?$/.test(source)) return Number(source) || 0;
+
+    if (!allowDice && hasModifierRollFormula(source)) return 0;
+
+    const diceResult = evaluateModifierRollFormulaSync(source, actor?.getRollData?.() || {});
+    if (Number.isFinite(diceResult)) return diceResult;
 
     const evaluateArithmetic = (expression) => {
         const tokenRegex = /[A-Za-zÀ-ÿ_][A-Za-z0-9À-ÿ_]*(?:\.[A-Za-zÀ-ÿ_][A-Za-z0-9À-ÿ_]*)*/g;
@@ -2047,6 +2062,13 @@ function _evaluateModifierValue(actor, rawValue, rollData = {}) {
     if (Number.isFinite(arithmeticResult)) return arithmeticResult;
 
     return _resolveModifierReferenceValue(actor, source, rollData);
+}
+
+function _evaluateModifierEntryValue(actor, entry = {}, rollData = {}, options = {}) {
+    const value = _evaluateModifierValue(actor, entry?.value, rollData, options);
+    if (!entry?.defer_value_evaluation || entry?.value_mode !== "per_origin_level") return value;
+    const originLevel = Number(entry?.origin_level);
+    return value * (Number.isFinite(originLevel) && originLevel > 0 ? originLevel : 1);
 }
 
 function _normalizeRollModifierFilterTokens(rawValue, { lower = false } = {}) {
@@ -2179,7 +2201,10 @@ function _collectEffectRollModifiers(actor, rollContext, rollData = {}) {
             mods.push({
                 id: `${effect.id}::${index}`,
                 value: entry?.value ?? data.value,
-                cap: entry?.cap ?? entry?.nh_cap ?? data.cap
+                cap: entry?.cap ?? entry?.nh_cap ?? data.cap,
+                value_mode: entry?.value_mode,
+                origin_level: entry?.origin_level,
+                defer_value_evaluation: entry?.defer_value_evaluation
             });
         });
     }
@@ -2250,7 +2275,7 @@ function _collectTargetCounterRollModifiers(actor, rollContext, rollData = {}) {
     const grouped = new Map();
     for (const candidate of candidates) {
         const key = _buildCounterGroupKey(candidate.entry, candidate.effect, candidate.entryIndex);
-        const value = candidate.entry?.value ?? 0;
+        const value = _evaluateModifierEntryValue(targetToken.actor, candidate.entry, rollData);
         const cap = candidate.entry?.cap ?? candidate.entry?.nh_cap ?? "";
         const current = grouped.get(key);
         if (!current || Number(value) < Number(current.value)) {

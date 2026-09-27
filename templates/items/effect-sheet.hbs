@@ -294,7 +294,7 @@
                                                                 id="effect-attribute-value-help-{{action.index}}"
                                                                 class="effect-premium-field-hint"
                                                             >
-                                                                Aceita valor fixo, fórmula ou rolagem de dados.
+                                                                Avaliado ao aplicar. Aceita fórmula, dados e condições como <code>se(possui("Item"), 2, 1)</code>, <code>nivel("Item")</code>, <code>quantidade("Item")</code>, <code>equipado("Item")</code> e <code>status("id")</code>.
                                                             </p>
                                                         </div>
                                                     </div>
@@ -436,7 +436,9 @@
                                                                 class="effect-compact-value"
                                                                 name="system.actions.{{action.index}}.value"
                                                                 value="{{action.value}}"
+                                                                placeholder='Ex: -2 ou se(possui("Treinado por um Mestre"), -2, -4)'
                                                             />
+                                                            <p class="effect-premium-field-hint">Avaliado quando a alteração é executada.</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -498,7 +500,8 @@
                                                     <div class="effect-premium-field">
                                                         <label class="effect-premium-field-label"><i class="fas fa-hashtag" aria-hidden="true"></i>Valor inicial</label>
                                                         <div class="effect-premium-field-control">
-                                                            <input type="text" class="effect-compact-value" name="system.actions.{{action.index}}.value" value="{{action.value}}" />
+                                                            <input type="text" class="effect-compact-value" name="system.actions.{{action.index}}.value" value="{{action.value}}" placeholder='Ex: 10 ou se(possui("Item"), 15, 10)' />
+                                                            <p class="effect-premium-field-hint">Avaliado quando o recurso é criado.</p>
                                                         </div>
                                                     </div>
 
@@ -526,6 +529,7 @@
                                                         <label class="effect-premium-field-label"><i class="fas fa-gauge-high" aria-hidden="true"></i>Máximo</label>
                                                         <div class="effect-premium-field-control">
                                                             <input type="text" class="effect-compact-value" name="system.actions.{{action.index}}.max" value="{{action.max}}" />
+                                                            <p class="effect-premium-field-hint">Aceita a mesma expressão condicional do valor inicial.</p>
                                                         </div>
                                                     </div>
 
@@ -603,24 +607,6 @@
 
                                                                 <div class="effect-premium-field">
                                                                     <label class="effect-premium-field-label">
-                                                                        <i class="fas fa-plus" aria-hidden="true"></i>
-                                                                        {{#if entry.isPerOriginLevel}}Valor por nível{{else}}Valor{{/if}}
-                                                                    </label>
-
-                                                                    <div class="effect-premium-field-control">
-                                                                        <input
-                                                                            type="text"
-                                                                            class="effect-code-input"
-                                                                            name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.value"
-                                                                            value="{{entry.value}}"
-                                                                            placeholder="Ex: -2, 1d6 ou fórmula"
-                                                                            title="Aceita valor fixo, fórmula ou rolagem de dados, conforme o interpretador do sistema."
-                                                                        />
-                                                                    </div>
-                                                                </div>
-
-                                                                <div class="effect-premium-field">
-                                                                    <label class="effect-premium-field-label">
                                                                         <i class="fas fa-tachometer-alt" aria-hidden="true"></i>
                                                                         Cap NH
                                                                     </label>
@@ -633,6 +619,25 @@
                                                                             value="{{entry.cap}}"
                                                                             placeholder="Opcional"
                                                                         />
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="effect-premium-field effect-roll-modifier-value-field">
+                                                                    <label class="effect-premium-field-label">
+                                                                        <i class="fas fa-plus" aria-hidden="true"></i>
+                                                                        {{#if entry.isPerOriginLevel}}Valor por nível{{else}}Valor{{/if}}
+                                                                    </label>
+
+                                                                    <div class="effect-premium-field-control">
+                                                                        <input
+                                                                            type="text"
+                                                                            class="effect-code-input effect-roll-modifier-value-input"
+                                                                            name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.value"
+                                                                            value="{{entry.value}}"
+                                                                            placeholder='Ex: -2, 1d6 ou se(possui("Treinado por um Mestre"), -2, -4)'
+                                                                            title="Aceita valor fixo, fórmula, rolagem de dados ou expressão condicional."
+                                                                        />
+                                                                        <p class="effect-premium-field-hint">Avaliado a cada rolagem. Use <code>possui</code>, <code>naopossui</code>, <code>possuiAlgum</code>, <code>possuiTodos</code>, <code>equipado</code>, <code>condicaoAtiva</code> ou <code>status</code>. Comparações aceitam <code>nivel</code>, <code>quantidade</code> e <code>atributo</code>.</p>
                                                                     </div>
                                                                 </div>
                                                                  </div>

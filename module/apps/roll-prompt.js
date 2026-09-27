@@ -8,6 +8,8 @@ import { resolveRollPromptImage } from "../utils/roll-prompt-image.mjs";
 import { measureGridDistance } from "../utils/grid-distance.mjs";
 import { AUTO_SIZE_MODIFIER_MODES, calculateAttackSizeModifier } from "../utils/size-modifier.mjs";
 import { contentSourceService } from "../services/content-source-service.mjs";
+import { resolveConditionalValue } from "../utils/effect-value-expression.mjs";
+import { evaluateModifierRollFormulaSync } from "../utils/modifier-roll-formula.mjs";
 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
@@ -176,7 +178,7 @@ export class GurpsRollPrompt extends FormApplication {
                     sourceLabel: entry?.label?.toString().trim()
                         ? effect.name?.toString().trim() || ""
                         : "",
-                    value: this._evaluateModifierValue(entry?.value),
+                    value: this._evaluateModifierEntryValue(entry),
                     nh_cap: (entry?.cap !== undefined && entry?.cap !== "") ? parseInt(entry.cap) : null,
                     isGM: true,
                     isEffect: true
@@ -268,7 +270,7 @@ export class GurpsRollPrompt extends FormApplication {
 
         const grouped = new Map();
         for (const candidate of candidates) {
-            const value = this._evaluateModifierValue(candidate.entry?.value);
+            const value = this._evaluateModifierEntryValue(candidate.entry, { actor: candidate.targetActor });
             const key = this._buildCounterGroupKey(candidate);
             const current = grouped.get(key);
             const capRaw = candidate.entry?.cap ?? candidate.entry?.nh_cap ?? "";
@@ -591,13 +593,31 @@ export class GurpsRollPrompt extends FormApplication {
         return modifier;
     }
 
-    _evaluateModifierValue(rawValue) {
+    _evaluateModifierEntryValue(entry = {}, { actor = this.actor } = {}) {
+        const value = this._evaluateModifierValue(entry?.value, { actor });
+        if (!entry?.defer_value_evaluation || entry?.value_mode !== "per_origin_level") return value;
+        const originLevel = Number(entry?.origin_level);
+        return value * (Number.isFinite(originLevel) && originLevel > 0 ? originLevel : 1);
+    }
+
+    _evaluateModifierValue(rawValue, { actor = this.actor } = {}) {
         if (rawValue === null || rawValue === undefined || rawValue === "") return 0;
         if (typeof rawValue === "number") return Number.isFinite(rawValue) ? rawValue : 0;
 
-        const source = String(rawValue).trim();
+        let conditionalValue = rawValue;
+        try {
+            conditionalValue = resolveConditionalValue(rawValue, { actor, rollData: this.rollData });
+        } catch (error) {
+            console.warn("GUM | Falha ao avaliar expressão condicional no prompt de rolagem:", error);
+            return 0;
+        }
+
+        const source = String(conditionalValue).trim();
         if (!source) return 0;
         if (/^[+-]?\d+(\.\d+)?$/.test(source)) return Number(source) || 0;
+
+        const diceResult = evaluateModifierRollFormulaSync(source, actor?.getRollData?.() || {});
+        if (Number.isFinite(diceResult)) return diceResult;
 
         const evaluateArithmetic = (expression) => {
             const tokenRegex = /[A-Za-zÀ-ÿ_][A-Za-z0-9À-ÿ_]*(?:\.[A-Za-zÀ-ÿ_][A-Za-z0-9À-ÿ_]*)*/g;

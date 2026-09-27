@@ -45,6 +45,7 @@ As novas versões serão detectadas pelo próprio Foundry. Se preferir, você ta
 
 - [Histórico de alterações](CHANGELOG.md)
 - [Manual de solicitação de testes](docs/test-request-manual.md)
+- [Expressões de valor dos Itens Efeito](docs/effect-value-expressions.md)
 - [Versões publicadas](https://github.com/V3-code/GURPS-GUM/releases)
 - [Relatar um problema ou sugerir uma melhoria](https://github.com/V3-code/GURPS-GUM/issues)
 
