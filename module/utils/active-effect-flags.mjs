@@ -14,7 +14,7 @@ function getProperty(object, path) {
     return path.split(".").reduce((value, part) => value?.[part], object);
 }
 
-function isEffectAvailable(effect) {
+export function isEffectAvailable(effect) {
     if (!effect || effect.disabled === true || effect.active === false) return false;
     if (effect.suppressed === true || effect.isSuppressed === true) return false;
     if (effect.expired === true || effect.isExpired === true || effect.duration?.expired === true) return false;

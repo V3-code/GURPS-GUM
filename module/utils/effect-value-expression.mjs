@@ -1,3 +1,5 @@
+import { isEffectAvailable } from "./active-effect-flags.mjs";
+
 const CONDITIONAL_NAMES = new Set(["se", "if"]);
 const ALL_NAMES = new Set(["todos", "all"]);
 const ANY_NAMES = new Set(["algum", "any"]);
@@ -141,7 +143,7 @@ function actorHasStatus(actor, reference) {
     const wanted = normalizeText(unquote(reference));
     if (!wanted) return false;
     return Array.from(actor?.appliedEffects ?? actor?.effects ?? []).some((effect) => {
-        if (effect?.disabled || effect?.isSuppressed) return false;
+        if (!isEffectAvailable(effect)) return false;
         const statuses = Array.from(effect?.statuses ?? []).map(normalizeText);
         return statuses.includes(wanted) || normalizeText(effect?.name) === wanted;
     });

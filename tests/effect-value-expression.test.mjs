@@ -20,7 +20,8 @@ const actor = {
     effects: [],
     appliedEffects: [
         { name: "Atordoado", statuses: new Set(["stunned"]), disabled: false },
-        { name: "Transferido", statuses: new Set(["blessed"]), disabled: false }
+        { name: "Transferido", statuses: new Set(["blessed"]), disabled: false },
+        { name: "Suprimido", statuses: new Set(["suppressed-status"]), suppressed: true }
     ],
     system: { attributes: { dx: { final: 14 } } }
 };
@@ -69,6 +70,7 @@ test("consulta equipamento, condição ativa e status", () => {
     assert.equal(resolveConditionalValue('se(status("stunned"), 1, 0)', { actor }), "1");
     assert.equal(resolveConditionalValue('se(status("Atordoado"), 1, 0)', { actor }), "1");
     assert.equal(resolveConditionalValue('se(status("blessed"), 1, 0)', { actor }), "1");
+    assert.equal(resolveConditionalValue('se(status("suppressed-status"), 1, 0)', { actor }), "0");
 });
 
 test("preserva a fórmula do ramo escolhido para o avaliador da fase", () => {
