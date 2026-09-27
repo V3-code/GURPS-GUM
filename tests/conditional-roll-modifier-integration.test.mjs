@@ -12,6 +12,8 @@ test("prompt resolve modificadores condicionais antes de ignorar os globais", ()
     assert.match(prompt, /resolveConditionalValue\(rawValue, \{ actor, rollData: this\.rollData \}\)/);
     assert.match(prompt, /defer_value_evaluation[\s\S]*?value_mode !== "per_origin_level"/);
     assert.match(prompt, /ignoreGlobals: true/);
+    assert.match(prompt, /evaluateModifierRollFormulaSync\(source, actor\?\.getRollData\?\.\(\) \|\| \{\}\)/);
+    assert.match(main, /evaluateModifierRollFormulaSync\(source, actor\?\.getRollData\?\.\(\) \|\| \{\}\)/);
 });
 
 test("prompt avalia contramodificadores contra o ator que possui o efeito", () => {

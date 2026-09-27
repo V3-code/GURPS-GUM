@@ -9,6 +9,7 @@ import { measureGridDistance } from "../utils/grid-distance.mjs";
 import { AUTO_SIZE_MODIFIER_MODES, calculateAttackSizeModifier } from "../utils/size-modifier.mjs";
 import { contentSourceService } from "../services/content-source-service.mjs";
 import { resolveConditionalValue } from "../utils/effect-value-expression.mjs";
+import { evaluateModifierRollFormulaSync } from "../utils/modifier-roll-formula.mjs";
 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
@@ -614,6 +615,9 @@ export class GurpsRollPrompt extends FormApplication {
         const source = String(conditionalValue).trim();
         if (!source) return 0;
         if (/^[+-]?\d+(\.\d+)?$/.test(source)) return Number(source) || 0;
+
+        const diceResult = evaluateModifierRollFormulaSync(source, actor?.getRollData?.() || {});
+        if (Number.isFinite(diceResult)) return diceResult;
 
         const evaluateArithmetic = (expression) => {
             const tokenRegex = /[A-Za-zÀ-ÿ_][A-Za-z0-9À-ÿ_]*(?:\.[A-Za-zÀ-ÿ_][A-Za-z0-9À-ÿ_]*)*/g;

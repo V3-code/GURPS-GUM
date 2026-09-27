@@ -262,8 +262,8 @@ function evaluateCondition(source, context) {
 
 export function hasConditionalValueExpression(value) {
     if (typeof value !== "string") return false;
-    const call = parseCall(value);
-    return Boolean(call && CONDITIONAL_NAMES.has(call.name));
+    const prefix = value.trim().match(/^([A-Za-zÀ-ÿ_][A-Za-z0-9À-ÿ_]*)\s*\(/u);
+    return Boolean(prefix && CONDITIONAL_NAMES.has(normalizeText(prefix[1])));
 }
 
 /**
@@ -274,6 +274,7 @@ export function hasConditionalValueExpression(value) {
 export function resolveConditionalValue(value, context = {}) {
     if (!hasConditionalValueExpression(value)) return value;
     const call = parseCall(value);
+    if (!call) throw new Error("Expressão se() incompleta ou malformada.");
     if (call.args.length !== 3) throw new Error("se() requer condição, valor verdadeiro e valor falso.");
     const selected = evaluateCondition(call.args[0], context) ? call.args[1] : call.args[2];
     return hasConditionalValueExpression(selected)

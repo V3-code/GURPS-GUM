@@ -28,6 +28,8 @@ se(possui("A"), 2, se(possui("B"), 1, 0))
 
 Somente o ramo escolhido é encaminhado ao avaliador de fórmula ou rolagem.
 
+Em modificadores de rolagem, um ramo com dados — por exemplo `1d6` — é rolado quando o modificador é preparado para aquela rolagem. O total obtido é usado como modificador.
+
 ## Consultas de itens
 
 | Expressão | Resultado |

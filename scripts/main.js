@@ -39,6 +39,7 @@ import { getResistanceChatPrivacy } from "../module/utils/effect-chat-visibility
 import { showDiceForMessageLessRoll } from "../module/utils/dice-so-nice.mjs";
 import { BASIC_DAMAGE_KEYS, normalizeBasicDamageData, prepareBasicDamageAttributes } from "../module/utils/basic-damage.mjs";
 import { resolveConditionalValue } from "../module/utils/effect-value-expression.mjs";
+import { evaluateModifierRollFormulaSync } from "../module/utils/modifier-roll-formula.mjs";
 import { resolveAttackDamageDisplay } from "../module/utils/attack-damage-display.mjs";
 import { canUserCreateActors } from "../module/utils/actor-creation-permission.mjs";
 import { resolveRollReference } from "../module/utils/roll-reference-resolver.mjs";
@@ -2012,6 +2013,9 @@ function _evaluateModifierValue(actor, rawValue, rollData = {}) {
     const source = String(conditionalValue).trim();
     if (!source) return 0;
     if (/^[+-]?\d+(\.\d+)?$/.test(source)) return Number(source) || 0;
+
+    const diceResult = evaluateModifierRollFormulaSync(source, actor?.getRollData?.() || {});
+    if (Number.isFinite(diceResult)) return diceResult;
 
     const evaluateArithmetic = (expression) => {
         const tokenRegex = /[A-Za-zÀ-ÿ_][A-Za-z0-9À-ÿ_]*(?:\.[A-Za-zÀ-ÿ_][A-Za-z0-9À-ÿ_]*)*/g;

@@ -99,6 +99,7 @@ test("não interfere em valores legados sem se()", () => {
 
 test("rejeita estruturas condicionais inválidas", () => {
     assert.throws(() => resolveConditionalValue('se(possui("Item"), 1)', { actor }), /requer condição/);
+    assert.throws(() => resolveConditionalValue('se(possui("Item"), 1, 0', { actor }), /incompleta ou malformada/);
     assert.throws(() => resolveConditionalValue('se(desconhecida("Item"), 1, 0)', { actor }), /não reconhecida/);
 });
 
