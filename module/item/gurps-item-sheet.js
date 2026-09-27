@@ -8,6 +8,7 @@ import { listBodyLocations } from "../config/body-profiles.js";
 import { SOCIAL_CATEGORIES } from "../config/social-aspects.mjs";
 import { normalizeContextCsv, openContextPicker } from "../apps/context-picker.mjs";
 import { getSkillDisplayName } from "../utils/skill-display-name.mjs";
+import { parseEquipmentAdjustment, prepareEquipment } from "../services/equipment-modifier-engine.mjs";
  
 const { ItemSheet } = foundry.appv1.sheets; 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor; 
@@ -46,40 +47,17 @@ const ROLL_CONTEXT_OPTIONS = [
 //  CLASSE DA FICHA DO ITEM (GurpsItemSheet) - VERSÃO BLINDADA V12    // 
 // ================================================================== // 
 export class GurpsItemSheet extends ItemSheet { 
-    _parseAdjustmentExpression(rawValue, { allowCF = false } = {}) { 
-        const source = (rawValue ?? "").toString().trim(); 
-        if (!source) return { mode: "none", value: 0, label: "" }; 
- 
-        const normalized = source.replace(",", ".").trim(); 
- 
-        const cfMatch = allowCF ? normalized.match(/^([+-]?\d+(?:\.\d+)?)\s*cf$/i) : null; 
-        if (cfMatch) { 
-            return { mode: "cf", value: Number(cfMatch[1]), label: `${Number(cfMatch[1]) >= 0 ? "+" : ""}${Number(cfMatch[1])} CF` }; 
-        } 
- 
-        const percentMatch = normalized.match(/^([+-]?\d+(?:\.\d+)?)\s*%$/); 
-        if (percentMatch) { 
-            return { mode: "percent", value: Number(percentMatch[1]), label: `${Number(percentMatch[1]) >= 0 ? "+" : ""}${Number(percentMatch[1])}%` }; 
-        } 
- 
-        const multMatch = normalized.match(/^[x*]\s*(\d+(?:\.\d+)?)$/i); 
-        if (multMatch) { 
-            return { mode: "multiply", value: Number(multMatch[1]), label: `x${Number(multMatch[1])}` }; 
-        } 
- 
-        const sumMatch = normalized.match(/^([+-]?\d+(?:\.\d+)?)$/); 
-        if (sumMatch) { 
-            return { mode: "add", value: Number(sumMatch[1]), label: `${Number(sumMatch[1]) >= 0 ? "+" : ""}${Number(sumMatch[1])}` }; 
-        } 
- 
-        return { mode: "invalid", value: 0, label: source }; 
+    _parseAdjustmentExpression(rawValue, { allowCF = false } = {}) {
+        const parsed = parseEquipmentAdjustment(rawValue, { allowCF });
+        return { ...parsed, mode: parsed.operation === "cost_factor" ? "cf" : parsed.operation };
     } 
  
-    _normalizeCostExpression(mod = {}) { 
-        const costAdjustment = mod.cost_adjustment; 
-        if (costAdjustment !== undefined && `${costAdjustment}`.trim() !== "") { 
-            return `${costAdjustment}`.trim(); 
-        } 
+    _normalizeCostExpression(mod = {}) {
+        const costAdjustment = mod.cost_adjustment;
+        if (costAdjustment !== undefined && `${costAdjustment}`.trim() !== "") {
+            const parsed = parseEquipmentAdjustment(costAdjustment, { allowCF: true });
+            if (!(parsed.operation === "cost_factor" && parsed.value === 0 && Number(mod.cost_factor))) return `${costAdjustment}`.trim();
+        }
  
         const cf = Number(mod.cost_factor); 
         if (!Number.isNaN(cf) && cf !== 0) { 
@@ -429,60 +407,23 @@ _promptMultipleReferences(parsedList) {
             context.eqpModifiersList = modifiersArray; 
             context.eqpModifiersHasFeatures = modifiersArray.some(mod => mod.features); 
  
-            let baseCost = Number(this.item.system.cost) || 0; 
-            let baseWeight = Number(this.item.system.weight) || 0; 
-            let totalCF = 0; 
-            let costMultiplier = 1; 
-            let costFlat = 0; 
-            let weightMultiplier = 1; 
-            let weightFlat = 0; 
- 
-            for (const mod of modifiersArray) { 
+            const preparedEquipment = prepareEquipment(this.item.system, eqpModsObj);
+            for (const mod of modifiersArray) {
                 const parsedCost = this._parseAdjustmentExpression(this._normalizeCostExpression(mod), { allowCF: true }); 
-                switch (parsedCost.mode) { 
-                    case "cf": 
-                        totalCF += parsedCost.value; 
-                        break; 
-                    case "percent": 
-                        costMultiplier *= (1 + (parsedCost.value / 100)); 
-                        break; 
-                    case "multiply": 
-                        costMultiplier *= parsedCost.value; 
-                        break; 
-                    case "add": 
-                        costFlat += parsedCost.value; 
-                        break; 
-                    default: 
-                        break; 
-                } 
- 
                 const parsedWeight = this._parseAdjustmentExpression(mod.weight_mod); 
-                switch (parsedWeight.mode) { 
-                    case "percent": 
-                        weightMultiplier *= (1 + (parsedWeight.value / 100)); 
-                        break; 
-                    case "multiply": 
-                        weightMultiplier *= parsedWeight.value; 
-                        break; 
-                    case "add": 
-                        weightFlat += parsedWeight.value; 
-                        break; 
-                    default: 
-                        break; 
-                } 
- 
                 mod.costDisplay = parsedCost.label || this._normalizeCostExpression(mod); 
                 mod.weightDisplay = parsedWeight.label || (mod.weight_mod || "x1"); 
             } 
  
-            const finalCostMultiplier = Math.max(0, 1 + totalCF); 
-            context.calculatedFinalCost = Math.max(0, ((baseCost * finalCostMultiplier) * costMultiplier) + costFlat); 
-            context.calculatedFinalWeight = Math.max(0, (baseWeight * weightMultiplier) + weightFlat); 
+            context.calculatedFinalCost = preparedEquipment.calculation.cost.finalValue;
+            context.calculatedFinalWeight = preparedEquipment.calculation.weight.finalValue;
+            context.equipmentCalculation = preparedEquipment.calculation;
+            context.equipmentModifierWarnings = preparedEquipment.warnings;
              
             context.finalCostString = context.calculatedFinalCost.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }); 
  context.finalWeightString = context.calculatedFinalWeight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }); 
-            context.hasCostChange = finalCostMultiplier !== 1 || costMultiplier !== 1 || costFlat !== 0; 
-            context.hasWeightChange = weightMultiplier !== 1 || weightFlat !== 0; 
+            context.hasCostChange = context.calculatedFinalCost !== Number(this.item.system.cost || 0);
+            context.hasWeightChange = context.calculatedFinalWeight !== Number(this.item.system.weight || 0);
         } 
  
         if (this.item.type === "equipment") { 
@@ -509,6 +450,22 @@ _promptMultipleReferences(parsedList) {
         if (['advantage', 'disadvantage', 'power'].includes(this.item.type)) { 
             context.calculatedCost = calculateItemTraitCost(this.item);
         } 
+
+        if (this.item.type === "eqp_modifier") {
+            const actions = Array.isArray(this.item.system.actions) ? this.item.system.actions : [];
+            context.eqpModifierActions = actions.map((action, index) => ({
+                ...action,
+                enabled: action.enabled !== false,
+                index,
+                displayIndex: index + 1
+            }));
+            const requirements = this.item.system.requirements || {};
+            context.eqpModifierRequirements = {
+                all: Array.isArray(requirements.all) ? requirements.all.join(", ") : requirements.all || "",
+                any: Array.isArray(requirements.any) ? requirements.any.join(", ") : requirements.any || "",
+                none: Array.isArray(requirements.none) ? requirements.none.join(", ") : requirements.none || ""
+            };
+        }
  
         // ======================================================= 
         // 4. PREPARAÇÃO DE EFEITOS 
@@ -621,6 +578,24 @@ _promptMultipleReferences(parsedList) {
         html.on("click", ".add-item-social", this._onAddItemSocial.bind(this));
         html.on("click", ".delete-item-social", this._onDeleteItemSocial.bind(this));
         html.on("change", ".item-social-type", this._onChangeItemSocialType.bind(this));
+        html.on("click", ".add-eqp-modifier-action", async event => {
+            event.preventDefault();
+            await this._onSubmit(event);
+            const actions = foundry.utils.deepClone(this.item.system.actions || []);
+            actions.push({ id: foundry.utils.randomID(), type: "equipment_property", label: "", property: "material", operation: "override", value: "", selector: { mode: "all", ids: "" }, enabled: true });
+            await this.item.update({ "system.schemaVersion": 2, "system.actions": actions });
+        });
+        html.on("click", ".delete-eqp-modifier-action", async event => {
+            event.preventDefault();
+            const index = Number(event.currentTarget.dataset.index);
+            const actions = foundry.utils.deepClone(this.item.system.actions || []);
+            actions.splice(index, 1);
+            await this.item.update({ "system.actions": actions });
+        });
+        html.on("change", '.eqp-modifier-action-card select[name$=".type"]', async event => {
+            await this._onSubmit(event);
+            this.render(false);
+        });
         html.find(".item-social-contribution").on("toggle", event => {
             const contribution = event.currentTarget;
             this._socialContributionOpenState ??= new Map();
@@ -2141,6 +2116,13 @@ const rangedFields = `
                 } 
             } 
         } 
+
+        if (this.item?.type === "eqp_modifier") {
+            for (const bucket of ["all", "any", "none"]) {
+                const key = `system.requirements.${bucket}`;
+                if (formData[key] !== undefined) formData[key] = String(formData[key]).split(",").map(value => value.trim()).filter(Boolean);
+            }
+        }
  
         for (const [k, v] of Object.entries(formData)) { 
             const isDescriptionField = k.includes("description"); 

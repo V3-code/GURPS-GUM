@@ -25,11 +25,17 @@ test("equipment modifier browser preserves the configured source UUID", async ()
     selectionKey: "equipmentModifierSelection-0",
     uuid: "Compendium.world.eqp-modifiers.Item.same-id",
     name: "Teste",
-    system: { cost_adjustment: "+1 CF", cost_factor: 1, weight_mod: "x1" }
+    system: {
+      cost_adjustment: "+1 CF", cost_factor: 1, weight_mod: "x1",
+      actions: [{ id: "damage", type: "attack_property" }],
+      onDamageEffects: { fire: { uuid: "Item.fire", recipient: "target" } }
+    }
   }];
 
   await browser._updateObject(null, { "equipmentModifierSelection-0": true });
 
   assert.equal(update["system.eqp_modifiers.new"].name, "Teste");
   assert.equal(update["system.eqp_modifiers.new"].source_uuid, "Compendium.world.eqp-modifiers.Item.same-id");
+  assert.equal(update["system.eqp_modifiers.new"].actions[0].id, "damage");
+  assert.equal(update["system.eqp_modifiers.new"].onDamageEffects.fire.uuid, "Item.fire");
 });

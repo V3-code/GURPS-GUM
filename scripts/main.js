@@ -17,6 +17,7 @@ import { ConditionSheet } from "./apps/condition-sheet.js";
 import { EffectSheet } from './apps/effect-sheet.js';
 import { TriggerSheet } from './apps/trigger-sheet.js';
 import { applySingleEffect, getEffectActions } from './effects-engine.js';
+import { prepareEquipment } from '../module/services/equipment-modifier-engine.mjs';
 import { buildActorEffectTarget, buildActorEffectTargets, getActorEvaluationKey } from '../module/utils/condition-actor-context.mjs';
 import { reconcileAllStateEffects, removeAllStateEffectsForItem, setStateEffectGroupActive, syncItemStateEffects } from '../module/services/state-effect-service.js';
 import { GUM } from '../module/config.js';
@@ -413,31 +414,12 @@ const activeEffects = Array.isArray(this.effects) ? this.effects : Array.from(th
         
         // (Removido: combat.defense_bonus = 0)
 
-        // --- ETAPA 1: PRÉ-PROCESSAMENTO DE ITENS (MODIFICADORES DE EQUIPAMENTO) ---
+        // --- ETAPA 1: PREPARAÇÃO CENTRALIZADA DE EQUIPAMENTOS ---
         for (const item of this.items) {
             if (item.type === 'equipment') {
-                const baseWeight = Number(item.system.weight) || 0;
-                const baseCost = Number(item.system.cost) || 0;
-                
-                let totalCF = 0;
-                let weightMultiplier = 1;
-
-                const modifiers = item.system.eqp_modifiers || {};
-                for (const mod of Object.values(modifiers)) {
-                    totalCF += Number(mod.cost_factor) || 0;
-                    if (mod.weight_mod) {
-                        const wModStr = mod.weight_mod.toString().trim().toLowerCase();
-                        if (wModStr.startsWith('x')) {
-                            const mult = parseFloat(wModStr.substring(1));
-                            if (!isNaN(mult)) weightMultiplier *= mult;
-                        }
-                    }
-                }
-
-                item.system.effectiveWeight = baseWeight * weightMultiplier;
-                item.system.effectiveCost = baseCost * Math.max(0, 1 + totalCF);
-                
-                // (Removido: Lógica de somar DB ao combat.defense_bonus)
+                const sourceSystem = item._source?.system || item.system;
+                const prepared = prepareEquipment(sourceSystem, sourceSystem.eqp_modifiers || {});
+                foundry.utils.mergeObject(item.system, prepared.system, { inplace: true, overwrite: true });
             }
         }
 

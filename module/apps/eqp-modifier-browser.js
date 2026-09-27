@@ -305,6 +305,7 @@ el.style.display = isVisible ? "grid" : "none";
     if (selectedIds.length === 0) return ui.notifications.warn("Nenhum modificador selecionado.");
 
     const newModifiersData = {};
+    const copy = value => value == null ? value : JSON.parse(JSON.stringify(value));
     for (const id of selectedIds) {
       const sourceModifier = this.allModifiers.find(m => m.selectionKey === id);
       if (sourceModifier) {
@@ -318,7 +319,17 @@ el.style.display = isVisible ? "grid" : "none";
           tech_level_mod: sourceModifier.system.tech_level_mod,
           features: sourceModifier.system.features,
           ref: sourceModifier.system.ref,
-          source_uuid: sourceModifier.uuid
+          source_uuid: sourceModifier.uuid,
+          schemaVersion: sourceModifier.system.schemaVersion || 1,
+          actions: copy(sourceModifier.system.actions || []),
+          requirements: copy(sourceModifier.system.requirements || { all: [], any: [], none: [] }),
+          groups: sourceModifier.system.groups || "",
+          linkedEffects: copy(sourceModifier.system.linkedEffects || []),
+          activationEffects: copy(sourceModifier.system.activationEffects || { success: {}, failure: {} }),
+          onDamageEffects: copy(sourceModifier.system.onDamageEffects || {}),
+          passiveEffects: copy(sourceModifier.system.passiveEffects || {}),
+          useEventEffects: copy(sourceModifier.system.useEventEffects || {}),
+          generalConditions: copy(sourceModifier.system.generalConditions || {})
         };
       }
     }

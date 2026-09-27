@@ -800,6 +800,15 @@
         "base"
       ],
       "cost_adjustment": "0 CF",
+      "schemaVersion": 2,
+      "actions": [],
+      "requirements": {
+        "all": [],
+        "any": [],
+        "none": []
+      },
+      "groups": "",
+      "linkedEffects": [],
       "cost_factor": 0,
       "weight_mod": "x1",
       "tech_level_mod": "",

@@ -21,6 +21,12 @@
                         {{/if}}
                     </div>
                 </div>
+                {{#if hasCostChange}}
+                <details class="equipment-calculation-details">
+                    <summary>Memória do custo: {{equipmentCalculation.cost.baseValue}} → {{equipmentCalculation.cost.finalValue}}</summary>
+                    <ol>{{#each equipmentCalculation.cost.steps as |step|}}<li>{{step.modifierName}} — {{step.label}}: {{step.before}} → {{step.after}}</li>{{/each}}</ol>
+                </details>
+                {{/if}}
 
                 <div class="equipment-stat-card">
                     <label class="equipment-stat-heading"><i class="fas fa-weight-hanging"></i><span>Peso (kg)</span></label>
@@ -38,6 +44,12 @@
                         {{/if}}
                     </div>
                 </div>
+                {{#if hasWeightChange}}
+                <details class="equipment-calculation-details">
+                    <summary>Memória do peso: {{equipmentCalculation.weight.baseValue}} → {{equipmentCalculation.weight.finalValue}}</summary>
+                    <ol>{{#each equipmentCalculation.weight.steps as |step|}}<li>{{step.modifierName}} — {{step.label}}: {{step.before}} → {{step.after}}</li>{{/each}}</ol>
+                </details>
+                {{/if}}
 
                 <div class="equipment-stat-card">
                     <label class="equipment-stat-heading"><i class="fas fa-cubes"></i><span>Quantidade</span></label>
@@ -642,6 +654,59 @@
                     <input type="text" name="system.tags" value="{{system.tags}}" placeholder="Ex: Metal, Mágico, Élfico, Qualidade (Separar por vírgula)"/>
                 </div>
             </div>
+            <div class="form-section eqp-modifier-actions-section">
+                <div class="eqpmod-block-header">
+                    <h4 class="section-title">Ações sobre o equipamento</h4>
+                    <button type="button" class="add-eqp-modifier-action" title="Adicionar ação"><i class="fas fa-plus"></i> Ação</button>
+                </div>
+                <p class="form-hint">As ações operam sobre “este equipamento”. Os campos legados acima continuam válidos quando nenhuma ação de custo ou peso for criada.</p>
+                {{#each eqpModifierActions as |action|}}
+                <details class="eqp-modifier-action-card" open>
+                    <summary>
+                        <strong>Ação {{action.displayIndex}}{{#if action.label}} — {{action.label}}{{/if}}</strong>
+                        <button type="button" class="delete-eqp-modifier-action" data-index="{{action.index}}" title="Remover ação"><i class="fas fa-trash"></i></button>
+                    </summary>
+                    <input type="hidden" name="system.actions.{{action.index}}.id" value="{{action.id}}" />
+                    <div class="form-grid-3">
+                        <div class="form-group"><label>Nome</label><input type="text" name="system.actions.{{action.index}}.label" value="{{action.label}}" placeholder="Ex: Espinhos perfurantes" /></div>
+                        <div class="form-group"><label>Tipo</label><select name="system.actions.{{action.index}}.type">
+                            <option value="equipment_property" {{#if (eq action.type "equipment_property")}}selected{{/if}}>Propriedade do equipamento</option>
+                            <option value="pricing" {{#if (eq action.type "pricing")}}selected{{/if}}>Custo ou peso</option>
+                            <option value="attack_property" {{#if (eq action.type "attack_property")}}selected{{/if}}>Alterar ataques</option>
+                            <option value="attack_create" {{#if (eq action.type "attack_create")}}selected{{/if}}>Criar ataque</option>
+                        </select></div>
+                        <label class="custom-checkbox"><input type="checkbox" name="system.actions.{{action.index}}.enabled" {{checked action.enabled}} /><span>Ativa</span></label>
+                    </div>
+                    {{#if (eq action.type "pricing")}}
+                    <div class="form-grid-3">
+                        <div class="form-group"><label>Valor afetado</label><select name="system.actions.{{action.index}}.property"><option value="cost" {{#if (eq action.property "cost")}}selected{{/if}}>Custo</option><option value="weight" {{#if (eq action.property "weight")}}selected{{/if}}>Peso</option></select></div>
+                        <div class="form-group"><label>Operação</label><select name="system.actions.{{action.index}}.operation"><option value="cost_factor" {{#if (eq action.operation "cost_factor")}}selected{{/if}}>CF</option><option value="percent" {{#if (eq action.operation "percent")}}selected{{/if}}>Percentual</option><option value="multiply" {{#if (eq action.operation "multiply")}}selected{{/if}}>Multiplicar</option><option value="add" {{#if (eq action.operation "add")}}selected{{/if}}>Somar fixo</option><option value="override" {{#if (eq action.operation "override")}}selected{{/if}}>Substituir</option></select></div>
+                        <div class="form-group"><label>Valor</label><input type="number" step="any" name="system.actions.{{action.index}}.value" value="{{action.value}}" /></div>
+                    </div>
+                    {{/if}}
+                    {{#if (eq action.type "equipment_property")}}
+                    <div class="form-grid-3">
+                        <div class="form-group"><label>Propriedade</label><select name="system.actions.{{action.index}}.property"><option value="tech_level" {{#if (eq action.property "tech_level")}}selected{{/if}}>NT</option><option value="tech_sm" {{#if (eq action.property "tech_sm")}}selected{{/if}}>MT</option><option value="legality_class" {{#if (eq action.property "legality_class")}}selected{{/if}}>LC</option><option value="material" {{#if (eq action.property "material")}}selected{{/if}}>Material</option><option value="quality" {{#if (eq action.property "quality")}}selected{{/if}}>Qualidade</option><option value="item_hp" {{#if (eq action.property "item_hp")}}selected{{/if}}>PV do item</option><option value="item_ht" {{#if (eq action.property "item_ht")}}selected{{/if}}>HT do item</option><option value="item_dr" {{#if (eq action.property "item_dr")}}selected{{/if}}>RD do item</option><option value="holdout" {{#if (eq action.property "holdout")}}selected{{/if}}>Ocultabilidade</option><option value="defense_bonus" {{#if (eq action.property "defense_bonus")}}selected{{/if}}>Bônus de defesa</option><option value="equip_time" {{#if (eq action.property "equip_time")}}selected{{/if}}>Tempo para equipar</option></select></div>
+                        <div class="form-group"><label>Operação</label><select name="system.actions.{{action.index}}.operation"><option value="add" {{#if (eq action.operation "add")}}selected{{/if}}>Somar</option><option value="multiply" {{#if (eq action.operation "multiply")}}selected{{/if}}>Multiplicar</option><option value="override" {{#if (eq action.operation "override")}}selected{{/if}}>Substituir</option><option value="append" {{#if (eq action.operation "append")}}selected{{/if}}>Acrescentar</option><option value="prepend" {{#if (eq action.operation "prepend")}}selected{{/if}}>Prefixar</option></select></div>
+                        <div class="form-group"><label>Valor</label><input type="text" name="system.actions.{{action.index}}.value" value="{{action.value}}" /></div>
+                    </div>
+                    {{/if}}
+                    {{#if (eq action.type "attack_property")}}
+                    <div class="form-grid-3">
+                        <div class="form-group"><label>Ataques</label><select name="system.actions.{{action.index}}.selector.mode"><option value="all" {{#if (eq action.selector.mode "all")}}selected{{/if}}>Todos</option><option value="melee" {{#if (eq action.selector.mode "melee")}}selected{{/if}}>Corpo a corpo</option><option value="ranged" {{#if (eq action.selector.mode "ranged")}}selected{{/if}}>À distância</option><option value="ids" {{#if (eq action.selector.mode "ids")}}selected{{/if}}>IDs específicos</option></select></div>
+                        <div class="form-group"><label>IDs específicos</label><input type="text" name="system.actions.{{action.index}}.selector.ids" value="{{action.selector.ids}}" placeholder="id1, id2" /></div>
+                        <div class="form-group"><label>Propriedade</label><select name="system.actions.{{action.index}}.property"><option value="skill_level_mod" {{#if (eq action.property "skill_level_mod")}}selected{{/if}}>NH</option><option value="damage_formula" {{#if (eq action.property "damage_formula")}}selected{{/if}}>Dano</option><option value="damage_type" {{#if (eq action.property "damage_type")}}selected{{/if}}>Tipo de dano</option><option value="armor_divisor" {{#if (eq action.property "armor_divisor")}}selected{{/if}}>Divisor de armadura</option><option value="reach" {{#if (eq action.property "reach")}}selected{{/if}}>Alcance C.C.</option><option value="range" {{#if (eq action.property "range")}}selected{{/if}}>Alcance à distância</option><option value="parry" {{#if (eq action.property "parry")}}selected{{/if}}>Aparar</option><option value="block" {{#if (eq action.property "block")}}selected{{/if}}>Bloquear</option><option value="accuracy" {{#if (eq action.property "accuracy")}}selected{{/if}}>Precisão</option><option value="rof" {{#if (eq action.property "rof")}}selected{{/if}}>CdT</option><option value="shots" {{#if (eq action.property "shots")}}selected{{/if}}>Tiros</option><option value="rcl" {{#if (eq action.property "rcl")}}selected{{/if}}>RCO</option><option value="min_strength" {{#if (eq action.property "min_strength")}}selected{{/if}}>ST mínima</option></select></div>
+                    </div>
+                    <div class="form-grid-2"><div class="form-group"><label>Operação</label><select name="system.actions.{{action.index}}.operation"><option value="add" {{#if (eq action.operation "add")}}selected{{/if}}>Somar</option><option value="multiply" {{#if (eq action.operation "multiply")}}selected{{/if}}>Multiplicar</option><option value="override" {{#if (eq action.operation "override")}}selected{{/if}}>Substituir</option><option value="append" {{#if (eq action.operation "append")}}selected{{/if}}>Acrescentar</option></select></div><div class="form-group"><label>Valor</label><input type="text" name="system.actions.{{action.index}}.value" value="{{action.value}}" /></div></div>
+                    {{/if}}
+                    {{#if (eq action.type "attack_create")}}
+                    <div class="form-grid-3"><div class="form-group"><label>Tipo</label><select name="system.actions.{{action.index}}.attack_type"><option value="melee" {{#if (eq action.attack_type "melee")}}selected{{/if}}>Corpo a corpo</option><option value="ranged" {{#if (eq action.attack_type "ranged")}}selected{{/if}}>À distância</option></select></div><div class="form-group"><label>Nome do modo</label><input type="text" name="system.actions.{{action.index}}.attack.mode" value="{{action.attack.mode}}" /></div><div class="form-group"><label>Dano</label><input type="text" name="system.actions.{{action.index}}.attack.damage_formula" value="{{action.attack.damage_formula}}" /></div></div>
+                    <div class="form-grid-3"><div class="form-group"><label>Tipo de dano</label><input type="text" name="system.actions.{{action.index}}.attack.damage_type" value="{{action.attack.damage_type}}" /></div><div class="form-group"><label>Perícia</label><input type="text" name="system.actions.{{action.index}}.attack.skill_name" value="{{action.attack.skill_name}}" /></div><div class="form-group"><label>Mod. NH</label><input type="number" name="system.actions.{{action.index}}.attack.skill_level_mod" value="{{action.attack.skill_level_mod}}" /></div></div>
+                    {{/if}}
+                </details>
+                {{else}}<p class="eqpmod-empty">Nenhuma ação própria. Custo e peso usam os campos legados acima.</p>{{/each}}
+            </div>
+            <div class="form-section"><h4 class="section-title">Compatibilidade</h4><div class="form-group"><label>Grupos</label><input name="system.groups" value="{{system.groups}}" placeholder="Ex: material, escudo, acabamento" /><small class="form-hint">Classificação editorial livre, separada por vírgulas.</small></div><p class="form-hint">Requisitos funcionais disponíveis: has_attack, has_melee_attack, has_ranged_attack, has_defense_bonus, has_dr, is_container.</p><div class="form-grid-3"><div class="form-group"><label>Todos</label><input name="system.requirements.all" value="{{eqpModifierRequirements.all}}" /></div><div class="form-group"><label>Ao menos um</label><input name="system.requirements.any" value="{{eqpModifierRequirements.any}}" /></div><div class="form-group"><label>Nenhum</label><input name="system.requirements.none" value="{{eqpModifierRequirements.none}}" /></div></div></div>
             {{!-- Seção: Tipo de Aplicação (Filtros) --}}
             <div class="form-section"><h4 class="section-title">Aplica-se a:</h4>
                 <div class="form-grid-3 attack-flags-grid">

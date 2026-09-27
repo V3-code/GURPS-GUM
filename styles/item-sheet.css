@@ -7058,3 +7058,37 @@ color:#121114;
 .state-effects-block .effects-add-button { cursor: pointer; }
 .item-toggle-state-effect-group.active { color: #46c37b; }
 .item-toggle-state-effect-group.is-automatic { opacity: .75; }
+.eqp-modifier-actions-section .eqpmod-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.eqp-modifier-action-card {
+  margin: 0.55rem 0;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.eqp-modifier-action-card > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+}
+
+.eqp-modifier-action-card > summary::marker { color: var(--color-warm-1); }
+.eqp-modifier-action-card .delete-eqp-modifier-action { width: auto; flex: 0 0 auto; }
+
+.equipment-calculation-details {
+  grid-column: 1 / -1;
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.equipment-calculation-details ol { margin: 0.35rem 0 0; padding-left: 1.4rem; }
