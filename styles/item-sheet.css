@@ -7111,8 +7111,26 @@ color:#121114;
 .gum.sheet.item.effect-sheet .effect-combat-change-header {
   display: flex;
   align-items: center;
-  min-height: 28px;
-  color: rgba(235, 224, 204, 0.92);
+  justify-content: center;
+  min-height: 36px;
+  padding: 5px 12px;
+  border-radius: 7px;
+  background: linear-gradient(90deg, transparent, rgba(190, 142, 65, 0.18) 22%, rgba(190, 142, 65, 0.18) 78%, transparent);
+  color: #e8c783;
+  letter-spacing: 0.025em;
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-change-header .effect-premium-checkbox {
+  width: auto;
+  justify-content: center;
+  gap: 9px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-change-header input[type="checkbox"] {
+  margin: 0;
+  accent-color: #c8953f;
 }
 
 .gum.sheet.item.effect-sheet .effect-combat-change-block input {
@@ -7127,6 +7145,11 @@ color:#121114;
 .gum.sheet.item.effect-sheet .effect-combat-damage-card {
   margin-top: 2px;
   background: linear-gradient(90deg, rgba(160, 68, 58, 0.1), rgba(255, 255, 255, 0.018) 42%, transparent);
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-damage-card .effect-combat-change-header {
+  background: linear-gradient(90deg, transparent, rgba(172, 78, 66, 0.2) 22%, rgba(172, 78, 66, 0.2) 78%, transparent);
+  color: #e5a49b;
 }
 
 @media (max-width: 720px) {

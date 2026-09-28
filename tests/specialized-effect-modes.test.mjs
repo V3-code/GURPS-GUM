@@ -101,4 +101,22 @@ test("blocos de combate usam cabeçalhos minimalistas sem título Alterações",
 test("override condicional por nível mantém o escalonamento adiado", () => {
   assert.match(main, /defer_value_evaluation && entry\?\.damage_value_mode === "per_origin_level"/);
   assert.doesNotMatch(main, /damage_value_mode === "per_origin_level" && entry\?\.damage_operation !== "override"/);
+  assert.match(main, /\["extra_dice", "override"\]\.includes\(entry\.damage_operation\)/);
+});
+
+test("recálculo defensivo agrega bônus direcionados antes do arredondamento", () => {
+  assert.match(main, /const totalAttackBonus = applicable\.reduce/);
+  assert.match(main, /Math\.floor\(\(attackNh \+ totalAttackBonus\) \/ 2\)/);
+});
+
+test("filtro de perícia específica reconhece especialização e identificadores", () => {
+  const prompt = read("module/apps/roll-prompt.js");
+  assert.match(main, /item\.id, item\.uuid, item\.name, getSkillDisplayName\(item\)/);
+  assert.match(prompt, /item\.id, item\.uuid, item\.name, getSkillDisplayName\(item\)/);
+});
+
+test("cabeçalhos de combate ocupam e centralizam o espaço disponível", () => {
+  const css = read("styles/item-sheet.css");
+  assert.match(css, /effect-combat-change-header[\s\S]*?justify-content: center/);
+  assert.match(css, /effect-combat-change-header[\s\S]*?linear-gradient/);
 });

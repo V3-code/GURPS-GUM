@@ -103,7 +103,9 @@ function _resolveConditionalDamageValue(actor, entry, rollData) {
     if (entry?.defer_value_evaluation && entry?.damage_value_mode === "per_origin_level") {
         const level = Math.max(1, Number(entry.origin_level) || 1);
         if (/^[+-]?\d+(?:\.\d+)?$/.test(String(selected).trim())) return Number(selected) * level;
-        if (entry.damage_operation === "extra_dice") return Array.from({ length: level }, () => `(${selected})`).join("+");
+        if (["extra_dice", "override"].includes(entry.damage_operation)) {
+            return Array.from({ length: level }, () => `(${selected})`).join("+");
+        }
     }
     return selected;
 }
@@ -2246,8 +2248,10 @@ function _matchesRollModifierItemFilter(entry = {}, item = null) {
     if (!legacyNameFilters.length) return true;
     if (!item) return false;
 
-    const itemName = String(item?.name ?? "").trim().toLowerCase();
-    return itemName ? legacyNameFilters.includes(itemName) : false;
+    const itemCandidates = [item.id, item.uuid, item.name, getSkillDisplayName(item)]
+        .map((value) => String(value ?? "").trim().toLowerCase())
+        .filter(Boolean);
+    return legacyNameFilters.some((filter) => itemCandidates.includes(filter));
 }
 
 function _matchesRollModifierAttackFilter(entry = {}, attack = null, rollData = {}) {
@@ -2406,26 +2410,29 @@ export function resolveTargetCombatDefenseRecalculationModifiers(actor, rollCont
     const attackType = item?.system?.melee_attacks?.[rollData.attackId] ? "melee" : "ranged";
     if (!item || !attack) return [];
 
-    return _collectTargetCombatModifierEntries(actor, item, attack, attackType, rollData).flatMap(({ entry, evaluationActor }, index) => {
+    const applicable = _collectTargetCombatModifierEntries(actor, item, attack, attackType, rollData).filter(({ entry }) => {
         const enabled = rollContext === "defense_parry" ? entry.recalculate_parry : entry.recalculate_block;
-        if (!enabled) return [];
-        const attackBonus = _evaluateCombatAttackValue(evaluationActor, entry, rollData);
-        const attackNh = Number(attack.final_nh);
-        if (!Number.isFinite(attackNh) || !Number.isFinite(attackBonus)) return [];
-        const defenseDelta = Math.floor((attackNh + attackBonus) / 2) - Math.floor(attackNh / 2);
-        if (!defenseDelta) return [];
-        return [{
-            id: `counter::${targetToken.id}::combat-recalculation-${index}`,
-            label: `Alvo: recálculo de ${rollContext === "defense_parry" ? "Aparar" : "Bloqueio"}`,
-            value: defenseDelta,
-            cap: "",
-            nh_cap: null,
-            isGM: true,
-            isEffect: true,
-            isCounterEffect: true,
-            counterSource: `${targetToken.actor.name} • recálculo defensivo`
-        }];
+        return enabled;
     });
+    const attackNh = Number(attack.final_nh);
+    if (!Number.isFinite(attackNh)) return [];
+    const totalAttackBonus = applicable.reduce((total, { entry, evaluationActor }) => {
+        const value = _evaluateCombatAttackValue(evaluationActor, entry, rollData);
+        return Number.isFinite(value) ? total + value : total;
+    }, 0);
+    const defenseDelta = Math.floor((attackNh + totalAttackBonus) / 2) - Math.floor(attackNh / 2);
+    if (!defenseDelta) return [];
+    return [{
+        id: `counter::${targetToken.id}::combat-recalculation`,
+        label: `Alvo: recálculo de ${rollContext === "defense_parry" ? "Aparar" : "Bloqueio"}`,
+        value: defenseDelta,
+        cap: "",
+        nh_cap: null,
+        isGM: true,
+        isEffect: true,
+        isCounterEffect: true,
+        counterSource: `${targetToken.actor.name} • recálculo defensivo`
+    }];
 }
 
 function _collectTargetCounterRollModifiers(actor, rollContext, rollData = {}) {

@@ -10,6 +10,7 @@ import { AUTO_SIZE_MODIFIER_MODES, calculateAttackSizeModifier } from "../utils/
 import { contentSourceService } from "../services/content-source-service.mjs";
 import { resolveConditionalValue } from "../utils/effect-value-expression.mjs";
 import { evaluateModifierRollFormulaSync } from "../utils/modifier-roll-formula.mjs";
+import { getSkillDisplayName } from "../utils/skill-display-name.mjs";
 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
@@ -783,9 +784,11 @@ export class GurpsRollPrompt extends FormApplication {
 
         if (!item) return false;
 
-        const itemNames = [item.name].map((name) => String(name ?? "").trim().toLowerCase()).filter(Boolean);
-        // Se houver nomes preenchidos, aplica como lista de nomes exatos.
-        return targets.some((target) => itemNames.includes(target));
+        const itemCandidates = [item.id, item.uuid, item.name, getSkillDisplayName(item)]
+            .map((value) => String(value ?? "").trim().toLowerCase())
+            .filter(Boolean);
+        // IDs, nome-base e nome de exibição com especialização são aceitos.
+        return targets.some((target) => itemCandidates.includes(target));
     }
     
     _determineContext() {
