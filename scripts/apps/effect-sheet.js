@@ -472,8 +472,16 @@ activateListeners(html) {
             setSpecializedFieldAvailability(actionRoot, "combat_source_item_ids", combatScope === "specific");
             setSpecializedFieldAvailability(actionRoot, "combat_source_attack_ids", combatScope === "specific");
         }
+        const applicationSide = actionRoot.querySelector('[name$=".modifier_application_side"]')?.value;
+        const displayMode = actionRoot.querySelector('[name$=".modifier_nh_display_mode"]');
+        if (displayMode && applicationSide) {
+            if (applicationSide === "vs_targeter") displayMode.value = "roll_only";
+            displayMode.disabled = applicationSide === "vs_targeter";
+            displayMode.closest(".effect-premium-field")?.classList.toggle("is-disabled", applicationSide === "vs_targeter");
+        }
     };
-    html.on("change", '[name$=".skill_scope"], [name$=".combat_scope"]', (event) => refreshSpecializedFields(event.currentTarget.closest(".effect-premium-action")));
+    html.on("change", '[name$=".skill_scope"], [name$=".combat_scope"], [name$=".modifier_application_side"]', (event) => refreshSpecializedFields(event.currentTarget.closest(".effect-premium-action")));
+    html.find(".effect-premium-action").each((_index, element) => refreshSpecializedFields(element));
     if (!this.isEditable) return; // Adicionando uma verificação de segurança
 
     html.on('click', '.open-reference-link', this._onOpenReferenceLink.bind(this));

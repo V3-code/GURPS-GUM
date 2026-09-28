@@ -619,7 +619,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                             };
                         };
                         const application_side = action.modifier_application_side || "self";
-                        const nh_display_mode = action.modifier_nh_display_mode || "roll_only";
+                        const nh_display_mode = application_side === "vs_targeter" ? "roll_only" : action.modifier_nh_display_mode || "roll_only";
                         const entries = [];
 
                         if (action.type === "skill_modifier") {
@@ -634,6 +634,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                                 target_values: action.skill_scope === "specific" ? action.skill_targets || "" : "",
                                 source_item_ids: "",
                                 source_attack_ids: "",
+                                skill_roll_only: true,
                                 nh_display_mode
                             }));
                         } else {

@@ -69,3 +69,19 @@ test("recálculo defensivo alcança rolagens abertas pelo prompt", () => {
   assert.match(prompt, /resolveTargetCombatDefenseRecalculationModifiers/);
   assert.match(main, /attack_nh_display_mode === "include_in_nh"/);
 });
+
+test("modificadores direcionados permanecem somente na rolagem", () => {
+  assert.match(engine, /application_side === "vs_targeter" \? "roll_only"/);
+});
+
+test("modificador de todas as perícias não alcança testes diretos", () => {
+  const prompt = read("module/apps/roll-prompt.js");
+  assert.match(engine, /skill_roll_only: true/);
+  assert.match(prompt, /entry\?\.skill_roll_only === true && this\.rollData\?\.type !== "skill"/);
+  assert.match(main, /entry\?\.skill_roll_only === true && rollData\?\.type !== "skill"/);
+});
+
+test("override condicional por nível mantém o escalonamento adiado", () => {
+  assert.match(main, /defer_value_evaluation && entry\?\.damage_value_mode === "per_origin_level"/);
+  assert.doesNotMatch(main, /damage_value_mode === "per_origin_level" && entry\?\.damage_operation !== "override"/);
+});

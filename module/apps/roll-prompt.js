@@ -165,6 +165,7 @@ export class GurpsRollPrompt extends FormApplication {
 
             entries.forEach((entry, index) => {
                 const context = entry?.contexts ?? entry?.context ?? "all";
+                if (entry?.skill_roll_only === true && this.rollData?.type !== "skill") return;
                 if (!this._matchesEffectContext(context, this.context)) return;
                 if (!matchesRollTags(entry, this._getRollMetadata().rollTags)) return;
                 if (!this._matchesTargetFilter(entry)) return;
@@ -232,6 +233,7 @@ export class GurpsRollPrompt extends FormApplication {
 
             configuredEntries.forEach((entry, entryIndex) => {
                 const context = entry?.contexts ?? entry?.context ?? "all";
+                if (entry?.skill_roll_only === true && this.rollData?.type !== "skill") return;
                 if (!this._matchesEffectContext(context, this.context)) return;
                 if (!matchesRollTags(entry, this._getRollMetadata().rollTags)) return;
                 if (!this._matchesTargetFilter(entry)) return;

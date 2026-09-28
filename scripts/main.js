@@ -100,7 +100,7 @@ function _resolveConditionalDamageValue(actor, entry, rollData) {
         console.warn("GUM | Falha ao avaliar modificador condicional de dano:", error);
         return 0;
     }
-    if (entry?.defer_value_evaluation && entry?.damage_value_mode === "per_origin_level" && entry?.damage_operation !== "override") {
+    if (entry?.defer_value_evaluation && entry?.damage_value_mode === "per_origin_level") {
         const level = Math.max(1, Number(entry.origin_level) || 1);
         if (/^[+-]?\d+(?:\.\d+)?$/.test(String(selected).trim())) return Number(selected) * level;
         if (entry.damage_operation === "extra_dice") return Array.from({ length: level }, () => `(${selected})`).join("+");
@@ -2321,6 +2321,7 @@ function _collectEffectRollModifiers(actor, rollContext, rollData = {}) {
 
         entries.forEach((entry, index) => {
             const context = entry?.contexts ?? entry?.context ?? data.context ?? "all";
+            if (entry?.skill_roll_only === true && rollData?.type !== "skill") return;
             if (!_matchesRollContext(context, rollContext)) return;
             if (!matchesRollTags(entry, rollData.rollTags)) return;
             if (!_matchesRollTargetFilter(actor, rollData, entry)) return;
@@ -2379,6 +2380,7 @@ function _collectCounterCandidatesFromTarget(targetActor, rollContext, rollData 
 
         entries.forEach((entry, entryIndex) => {
             const context = entry?.contexts ?? entry?.context ?? data.context ?? "all";
+            if (entry?.skill_roll_only === true && rollData?.type !== "skill") return;
             if (!_matchesRollContext(context, rollContext)) return;
             if (!matchesRollTags(entry, rollData.rollTags)) return;
             if (!_matchesRollTargetFilter(rollingActor || targetActor, rollData, entry)) return;
