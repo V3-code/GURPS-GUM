@@ -1816,7 +1816,7 @@
                   </div>
 
                   <div class="attack-primary-stats">
-<a class="attack-pill-stat rollable" data-type="attack" data-attack-type="{{attack.attack_type}}" data-roll-value="{{attack.final_nh}}" data-label="{{group.name}} ({{attack.name}})" data-item-id="{{attack.itemId}}" title="Rolar ataque">
+<a class="attack-pill-stat rollable" data-type="attack" data-attack-type="{{attack.attack_type}}" data-roll-value="{{attack.final_nh}}" data-label="{{group.name}} ({{attack.name}})" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}" title="Rolar ataque">
                       <span class="attack-label">NH</span>
                       <span class="attack-value">{{attack.final_nh}}</span>
                     </a>
@@ -1842,7 +1842,7 @@
 
                     {{#if (eq attack.attack_type "melee")}}
                     {{#if attack.final_parry}}
-                    <a class="attack-pill-stat defense rollable" data-type="defense" data-roll-value="{{attack.final_parry}}" data-label="Teste de Aparar" data-defense-type="parry" title="Rolar aparar">
+                    <a class="attack-pill-stat defense rollable" data-type="defense" data-roll-value="{{attack.final_parry}}" data-label="Teste de Aparar" data-defense-type="parry" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}" data-attack-type="{{attack.attack_type}}" title="Rolar aparar">
                       <span class="attack-label">APR</span>
                       <span class="attack-value">{{attack.final_parry}}</span>
                     </a>
@@ -1853,7 +1853,7 @@
                     </div>
                     {{/if}}
                     {{#if attack.final_block}}
-                    <a class="attack-pill-stat defense rollable" data-type="defense" data-roll-value="{{attack.final_block}}" data-label="Teste de Bloqueio" data-defense-type="block" title="Rolar bloqueio">
+                    <a class="attack-pill-stat defense rollable" data-type="defense" data-roll-value="{{attack.final_block}}" data-label="Teste de Bloqueio" data-defense-type="block" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}" data-attack-type="{{attack.attack_type}}" title="Rolar bloqueio">
                       <span class="attack-label">BLQ</span>
                       <span class="attack-value">{{attack.final_block}}</span>
                     </a>

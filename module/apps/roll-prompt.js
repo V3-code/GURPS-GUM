@@ -266,7 +266,6 @@ export class GurpsRollPrompt extends FormApplication {
 
         const [targetToken] = targetTokens;
         const candidates = this._collectCounterCandidatesForTarget(targetToken.actor);
-        if (!candidates.length) return;
 
         const grouped = new Map();
         for (const candidate of candidates) {
@@ -292,7 +291,14 @@ export class GurpsRollPrompt extends FormApplication {
             }
         }
 
-   grouped.forEach((modifier) => this.selectedModifiers.push(modifier));
+        const recalculationModifiers = game.gum?.resolveTargetCombatDefenseRecalculationModifiers?.(
+            this.actor,
+            this.context,
+            this.rollData
+        ) || [];
+        for (const modifier of recalculationModifiers) grouped.set(modifier.id, modifier);
+
+        grouped.forEach((modifier) => this.selectedModifiers.push(modifier));
     }
 
     _buildCounterModifierLabel(candidate) {

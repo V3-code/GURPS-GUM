@@ -949,6 +949,7 @@
       "combat_damage_enabled": false,
       "combat_damage_operation": "fixed",
       "combat_damage_value": "0",
+      "combat_damage_cap": "",
       "combat_damage_value_mode": "fixed",
       "whisperMode": "public",
       "requestedPurposeIds": [],

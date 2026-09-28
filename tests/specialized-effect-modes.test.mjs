@@ -26,10 +26,10 @@ test("modificar perícia oferece escopos, NH e motor condicional", () => {
 });
 
 test("modo de combate separa ataque, defesas, recálculo e dano", () => {
-  for (const field of ["combat_attack_enabled", "combat_parry_enabled", "combat_block_enabled", "combat_recalculate_parry", "combat_recalculate_block", "combat_damage_enabled", "combat_damage_operation", "combat_damage_value"]) {
+  for (const field of ["combat_attack_enabled", "combat_parry_enabled", "combat_block_enabled", "combat_recalculate_parry", "combat_recalculate_block", "combat_damage_enabled", "combat_damage_operation", "combat_damage_value", "combat_damage_cap"]) {
     assert.match(sheet, new RegExp(`\\.${field}\\"`));
   }
-  assert.match(main, /shouldRecalculate \? attack\.final_nh : attackSkillNh/);
+  assert.match(main, /shouldRecalculate \? attack\.final_nh \+ rollOnlyAttackDelta : attackSkillNh/);
   assert.match(main, /damage_operation === "per_die"/);
   assert.match(main, /damage_operation === "extra_dice"/);
   assert.match(main, /damage_operation === "override"/);
@@ -47,5 +47,25 @@ test("metadados de combate respeitam o lado da aplicação", () => {
   assert.match(main, /_resolveRollModifierApplicationSide\(entry, data\) !== "vs_targeter"/);
   assert.match(main, /_collectTargetCombatModifierEntries/);
   assert.match(main, /includeTargeted: true/);
-  assert.match(main, /combatCandidates\.forEach/);
+  assert.match(main, /resolveTargetCombatDefenseRecalculationModifiers/);
+});
+
+test("NH, Aparar e Bloqueio preservam expressões condicionais", () => {
+  assert.match(engine, /const deferValueEvaluation = hasConditionalValueExpression\(entry\.value\)/);
+  assert.match(engine, /value: deferValueEvaluation \? entry\.value : scaling\.effectiveValue/);
+  assert.match(main, /_evaluateCombatAttackValue/);
+  assert.match(sheet, /valores de NH, Aparar e Bloqueio aceitam fórmulas e o motor de condições/i);
+});
+
+test("rolagens de modos específicos carregam item e attack id", () => {
+  const characters = read("templates/actors/characters.hbs");
+  assert.match(characters, /data-type="attack"[^>]*data-item-id="{{attack\.itemId}}"[^>]*data-attack-id="{{attack\.id}}"/);
+  assert.match(characters, /data-defense-type="parry"[^>]*data-item-id="{{attack\.itemId}}"[^>]*data-attack-id="{{attack\.id}}"/);
+  assert.match(characters, /data-defense-type="block"[^>]*data-item-id="{{attack\.itemId}}"[^>]*data-attack-id="{{attack\.id}}"/);
+});
+
+test("recálculo defensivo alcança rolagens abertas pelo prompt", () => {
+  const prompt = read("module/apps/roll-prompt.js");
+  assert.match(prompt, /resolveTargetCombatDefenseRecalculationModifiers/);
+  assert.match(main, /attack_nh_display_mode === "include_in_nh"/);
 });

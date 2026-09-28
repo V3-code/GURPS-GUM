@@ -7067,3 +7067,81 @@ color:#121114;
 .state-effects-block .effects-add-button { cursor: pointer; }
 .item-toggle-state-effect-group.active { color: #46c37b; }
 .item-toggle-state-effect-group.is-automatic { opacity: .75; }
+
+/* Specialized effect actions: skill and combat modifiers. */
+.gum.sheet.item.effect-sheet .effect-specialized-action {
+  display: grid;
+  gap: 12px;
+}
+
+.gum.sheet.item.effect-sheet .effect-specialized-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.gum.sheet.item.effect-sheet .effect-specialized-grid-two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gum.sheet.item.effect-sheet .effect-specialized-grid-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.gum.sheet.item.effect-sheet .effect-specialized-grid-value {
+  grid-template-columns: minmax(320px, 2fr) minmax(180px, 0.8fr);
+}
+
+.gum.sheet.item.effect-sheet .effect-specialized-action .effect-premium-field.is-disabled {
+  opacity: 0.48;
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-change-list {
+  display: grid;
+  gap: 8px;
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-change-row,
+.gum.sheet.item.effect-sheet .effect-combat-damage-main {
+  display: grid;
+  grid-template-columns: minmax(145px, 0.55fr) minmax(260px, 1.5fr) minmax(170px, 0.75fr);
+  gap: 10px;
+  align-items: end;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-change-toggle {
+  align-self: center;
+  min-height: 38px;
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-change-value input {
+  min-height: 38px;
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-recalculation-row,
+.gum.sheet.item.effect-sheet .effect-combat-damage-card {
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-damage-card {
+  display: grid;
+  gap: 10px;
+}
+
+.gum.sheet.item.effect-sheet .effect-conditional-value-hint {
+  margin-top: -2px;
+}
+
+@media (max-width: 720px) {
+  .gum.sheet.item.effect-sheet .effect-specialized-grid-two,
+  .gum.sheet.item.effect-sheet .effect-specialized-grid-three,
+  .gum.sheet.item.effect-sheet .effect-specialized-grid-value,
+  .gum.sheet.item.effect-sheet .effect-combat-change-row,
+  .gum.sheet.item.effect-sheet .effect-combat-damage-main {
+    grid-template-columns: 1fr;
+  }
+}

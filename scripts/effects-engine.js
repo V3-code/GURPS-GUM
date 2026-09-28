@@ -208,6 +208,7 @@ const DEFAULT_EFFECT_ACTION = {
     combat_damage_enabled: false,
     combat_damage_operation: "fixed",
     combat_damage_value: "0",
+    combat_damage_cap: "",
     combat_damage_value_mode: "fixed",
     whisperMode: "public",
     category: "hp",
@@ -300,6 +301,7 @@ const normalizeEffectAction = (action = {}) => {
     next.combat_scope = ["all", "melee", "ranged", "specific"].includes(next.combat_scope) ? next.combat_scope : "all";
     for (const key of ["combat_attack_enabled", "combat_parry_enabled", "combat_block_enabled", "combat_recalculate_parry", "combat_recalculate_block", "combat_damage_enabled"]) next[key] = next[key] === true;
     for (const key of ["combat_attack_value", "combat_parry_value", "combat_block_value", "combat_damage_value"]) next[key] = normalizeRollModifierEntryValue(next[key]);
+    next.combat_damage_cap = String(next.combat_damage_cap ?? "").trim();
     for (const key of ["combat_attack_value_mode", "combat_parry_value_mode", "combat_block_value_mode", "combat_damage_value_mode"]) next[key] = normalizeEffectValueMode(next[key]);
     next.combat_damage_operation = ["fixed", "per_die", "extra_dice", "override"].includes(next.combat_damage_operation) ? next.combat_damage_operation : "fixed";
     return next;
@@ -665,9 +667,11 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                                     attack_value_mode: entries.find((entry) => entry.contexts === attackContext)?.value_mode ?? "fixed",
                                     attack_origin_level: entries.find((entry) => entry.contexts === attackContext)?.origin_level ?? 1,
                                     attack_defer_value_evaluation: entries.find((entry) => entry.contexts === attackContext)?.defer_value_evaluation === true,
+                                    attack_nh_display_mode: entries.find((entry) => entry.contexts === attackContext)?.nh_display_mode ?? "roll_only",
                                     damage_enabled: action.combat_damage_enabled === true,
                                     damage_operation: action.combat_damage_operation || "fixed",
                                     damage_value: deferredDamage ? action.combat_damage_value : damageScaling.effectiveValue,
+                                    damage_cap: action.combat_damage_cap || "",
                                     damage_value_mode: damageScaling.valueMode,
                                     origin_level: damageScaling.originLevel,
                                     defer_value_evaluation: deferredDamage

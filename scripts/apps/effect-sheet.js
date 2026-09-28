@@ -164,6 +164,7 @@ const DEFAULT_EFFECT_ACTION = {
     combat_damage_enabled: false,
     combat_damage_operation: "fixed",
     combat_damage_value: "0",
+    combat_damage_cap: "",
     combat_damage_value_mode: "fixed",
     requestedPurposeIds: [],
     whisperMode: "public",
@@ -242,6 +243,7 @@ const normalizeAction = (action = {}) => {
     next.combat_source_attack_ids = String(next.combat_source_attack_ids || "").trim();
     for (const key of ["combat_attack_enabled", "combat_parry_enabled", "combat_block_enabled", "combat_recalculate_parry", "combat_recalculate_block", "combat_damage_enabled"]) next[key] = next[key] === true;
     for (const key of ["combat_attack_value", "combat_parry_value", "combat_block_value", "combat_damage_value"]) next[key] = normalizeRollModifierEntryValue(next[key]);
+    next.combat_damage_cap = String(next.combat_damage_cap ?? "").trim();
     for (const key of ["combat_attack_value_mode", "combat_parry_value_mode", "combat_block_value_mode", "combat_damage_value_mode"]) next[key] = next[key] === "per_origin_level" ? "per_origin_level" : "fixed";
     next.combat_damage_operation = ["fixed", "per_die", "extra_dice", "override"].includes(next.combat_damage_operation) ? next.combat_damage_operation : "fixed";
     next.id = String(next.id || "");
@@ -448,6 +450,30 @@ export class EffectSheet extends ItemSheet {
 
 activateListeners(html) {
     super.activateListeners(html);
+    const setSpecializedFieldAvailability = (root, fieldName, enabled) => {
+        const visible = root.querySelector(`[name$=".${fieldName}"]:not([type="hidden"])`);
+        const mirror = root.querySelector(`.effect-disabled-field-mirror[name$=".${fieldName}"]`);
+        if (visible) {
+            if (mirror) mirror.value = visible.value;
+            visible.disabled = !enabled;
+            visible.closest(".effect-premium-field")?.classList.toggle("is-disabled", !enabled);
+        }
+        if (mirror) mirror.disabled = enabled;
+    };
+    const refreshSpecializedFields = (actionRoot) => {
+        if (!actionRoot) return;
+        const skillScope = actionRoot.querySelector('[name$=".skill_scope"]')?.value;
+        if (skillScope) {
+            setSpecializedFieldAvailability(actionRoot, "skill_targets", skillScope === "specific");
+            setSpecializedFieldAvailability(actionRoot, "skill_attribute", skillScope === "attribute");
+        }
+        const combatScope = actionRoot.querySelector('[name$=".combat_scope"]')?.value;
+        if (combatScope) {
+            setSpecializedFieldAvailability(actionRoot, "combat_source_item_ids", combatScope === "specific");
+            setSpecializedFieldAvailability(actionRoot, "combat_source_attack_ids", combatScope === "specific");
+        }
+    };
+    html.on("change", '[name$=".skill_scope"], [name$=".combat_scope"]', (event) => refreshSpecializedFields(event.currentTarget.closest(".effect-premium-action")));
     if (!this.isEditable) return; // Adicionando uma verificação de segurança
 
     html.on('click', '.open-reference-link', this._onOpenReferenceLink.bind(this));
