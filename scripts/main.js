@@ -51,6 +51,67 @@ import { installGumChatCommandInterceptor, normalizeGumLookup, resolveGumCommand
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
 
+function _matchesCombatModifierEntry(entry, item, attack, attackType) {
+    if (!_matchesRollModifierItemFilter(entry, item)) return false;
+    if (!_matchesRollModifierAttackFilter(entry, attack)) return false;
+    const context = String(entry?.attack_context || "attack");
+    if (context === "attack_melee" && attackType !== "melee") return false;
+    if (context === "attack_ranged" && attackType !== "ranged") return false;
+    return true;
+}
+
+function _collectCombatModifierEntries(actor, item, attack, attackType) {
+    const entries = [];
+    for (const effect of Array.from(actor?.appliedEffects ?? actor?.effects ?? [])) {
+        if (effect?.disabled || effect?.isSuppressed) continue;
+        const data = foundry.utils.getProperty(effect, "flags.gum.combatModifier");
+        for (const entry of data?.entries || []) {
+            if (_matchesCombatModifierEntry(entry, item, attack, attackType)) entries.push(entry);
+        }
+    }
+    return entries;
+}
+
+function _resolveConditionalDamageValue(actor, entry, rollData) {
+    let selected = entry?.damage_value ?? 0;
+    try {
+        selected = resolveConditionalValue(selected, { actor, rollData });
+    } catch (error) {
+        console.warn("GUM | Falha ao avaliar modificador condicional de dano:", error);
+        return 0;
+    }
+    if (entry?.defer_value_evaluation && entry?.damage_value_mode === "per_origin_level" && entry?.damage_operation !== "override") {
+        const level = Math.max(1, Number(entry.origin_level) || 1);
+        if (/^[+-]?\d+(?:\.\d+)?$/.test(String(selected).trim())) return Number(selected) * level;
+        if (entry.damage_operation === "extra_dice") return Array.from({ length: level }, () => `(${selected})`).join("+");
+    }
+    return selected;
+}
+
+function _applyCombatDamageModifiers(actor, item, attack, attackType) {
+    let formula = resolveAttackDamageDisplay(attack?.damage_formula || "", actor?.system?.attributes || {});
+    const rollData = { itemId: item?.id, itemName: item?.name, attackId: attack?.id, attackType, type: "damage" };
+    for (const entry of _collectCombatModifierEntries(actor, item, attack, attackType)) {
+        if (!entry.damage_enabled) continue;
+        const rawValue = _resolveConditionalDamageValue(actor, entry, rollData);
+        if (entry.damage_operation === "override") {
+            formula = resolveAttackDamageDisplay(String(rawValue || "0"), actor?.system?.attributes || {});
+            continue;
+        }
+        if (entry.damage_operation === "extra_dice") {
+            if (String(rawValue).trim() && String(rawValue).trim() !== "0") formula = `(${formula})+(${rawValue})`;
+            continue;
+        }
+        const numeric = _evaluateModifierValue(actor, rawValue, rollData, { allowDice: false });
+        if (!Number.isFinite(numeric) || numeric === 0) continue;
+        const multiplier = entry.damage_operation === "per_die"
+            ? Math.max(1, Array.from(String(formula).matchAll(/(\d+)d(?:6)?/gi)).reduce((sum, match) => sum + Number(match[1] || 0), 0))
+            : 1;
+        formula = `(${formula})${numeric * multiplier >= 0 ? "+" : ""}${numeric * multiplier}`;
+    }
+    return formula;
+}
+
 async function renderSpecializedSkillNames(app, html) {
     const root = html?.[0] || html;
     if (!root?.querySelectorAll) return;
@@ -929,6 +990,8 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                         const attackNhBonuses = collectNhBonusesForAttack(i, attack, "melee");
                         attack.final_nh = attackSkillNh === null ? null : attackSkillNh + attackNhBonuses.passive + attackNhBonuses.temp;
                         attack.resolved_skill_name = resolvedAttackBase.label;
+                        attack.effective_damage_formula = _applyCombatDamageModifiers(this, i, attack, "melee");
+                        const combatModifierEntries = _collectCombatModifierEntries(this, i, attack, "melee");
 
 const splitDefenseValue = (value) => {
                             const raw = String(value ?? "").trim();
@@ -947,12 +1010,14 @@ const splitDefenseValue = (value) => {
 
                         const calculateFinalDefense = (rawDefense, defenseType, useDefault = false, importedFinalDefense = null) => {
                             const defenseNhBonuses = collectNhBonusesForDefense(i, attack, "melee", defenseType);
+                            const shouldRecalculate = combatModifierEntries.some((entry) => defenseType === "parry" ? entry.recalculate_parry : entry.recalculate_block);
                             const importedParsed = splitDefenseValue(importedFinalDefense);
-                            if (importedParsed) return addBonusesToDefenseValue(importedFinalDefense, defenseNhBonuses);
+                            if (importedParsed && !shouldRecalculate) return addBonusesToDefenseValue(importedFinalDefense, defenseNhBonuses);
 
                             if (!useDefault && (rawDefense === "0" || rawDefense === "No")) return null;
                             if (attackSkillNh === null) return null;
-                            const defenseBase = Math.floor(attackSkillNh / 2) + 3;
+                            const effectiveDefenseNh = shouldRecalculate ? attack.final_nh : attackSkillNh;
+                            const defenseBase = Math.floor(effectiveDefenseNh / 2) + 3;
                             const parsedDefense = splitDefenseValue(rawDefense);
                             const defenseMod = useDefault ? 0 : (parsedDefense?.number ?? (Number(rawDefense) || 0));
                             const baseValue = defenseMod > 5 ? defenseMod : defenseBase + defenseMod;
@@ -980,6 +1045,7 @@ const splitDefenseValue = (value) => {
                         const attackNhBonuses = collectNhBonusesForAttack(i, attack, "ranged");
                         attack.final_nh = attackSkillNh === null ? null : attackSkillNh + attackNhBonuses.passive + attackNhBonuses.temp;
                         attack.resolved_skill_name = resolvedAttackBase.label;
+                        attack.effective_damage_formula = _applyCombatDamageModifiers(this, i, attack, "ranged");
                     }
                 }
             } catch (e) { console.error(`GUM | Erro ao calcular NH de ataque para ${i.name}:`, e); }
@@ -1360,7 +1426,7 @@ function _buildDamageActionData(actor, sourceItem, rollData) {
         const attack =
             sourceItem.system?.melee_attacks?.[attackId] ||
             sourceItem.system?.ranged_attacks?.[attackId];
-        if (attack?.damage_formula) {
+        if (attack?.effective_damage_formula || attack?.damage_formula) {
             return {
                 actorId: actor.id,
                 actorUuid: actor.uuid,
@@ -1412,10 +1478,10 @@ async function _rollDamageFromChatAction(payload) {
 
     if (attackId && (item.system?.melee_attacks || item.system?.ranged_attacks)) {
         const attack = item.system.melee_attacks?.[attackId] || item.system.ranged_attacks?.[attackId];
-        if (attack?.damage_formula) {
+        if (attack?.effective_damage_formula || attack?.damage_formula) {
             normalizedAttack = {
                 name: payload.sourceLabel || `${item.name} (${attack.mode ?? attackId})`,
-                formula: attack.damage_formula,
+                formula: attack.effective_damage_formula || attack.damage_formula,
                 type: attack.damage_type,
                 nature: attack.damage_nature || "",
                 armor_divisor: attack.armor_divisor,

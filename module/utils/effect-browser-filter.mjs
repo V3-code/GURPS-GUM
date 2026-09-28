@@ -1,5 +1,5 @@
 export const EFFECT_ACTION_TYPES = Object.freeze([
-  "attribute", "status", "roll_modifier", "resource_change",
+  "attribute", "status", "roll_modifier", "skill_modifier", "combat_modifier", "resource_change",
   "resource_create", "chat", "macro", "flag"
 ]);
 

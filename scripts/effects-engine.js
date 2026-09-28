@@ -183,6 +183,32 @@ const DEFAULT_EFFECT_ACTION = {
     roll_modifier_source_item_ids: "",
     roll_modifier_source_attack_ids: "",
     roll_modifier_entries: [],
+    modifier_value: "0",
+    modifier_value_mode: "fixed",
+    modifier_cap: "",
+    modifier_application_side: "self",
+    modifier_nh_display_mode: "roll_only",
+    skill_scope: "all",
+    skill_targets: "",
+    skill_attribute: "dx",
+    combat_scope: "all",
+    combat_source_item_ids: "",
+    combat_source_attack_ids: "",
+    combat_attack_enabled: true,
+    combat_attack_value: "0",
+    combat_attack_value_mode: "fixed",
+    combat_parry_enabled: false,
+    combat_parry_value: "0",
+    combat_parry_value_mode: "fixed",
+    combat_block_enabled: false,
+    combat_block_value: "0",
+    combat_block_value_mode: "fixed",
+    combat_recalculate_parry: false,
+    combat_recalculate_block: false,
+    combat_damage_enabled: false,
+    combat_damage_operation: "fixed",
+    combat_damage_value: "0",
+    combat_damage_value_mode: "fixed",
     whisperMode: "public",
     category: "hp",
     name: "",
@@ -201,6 +227,8 @@ const DEFAULT_EFFECT_ACTION = {
 const CARRIER_ACTION_PRIORITY = {
     attribute: 1,
     roll_modifier: 2,
+    skill_modifier: 2,
+    combat_modifier: 2,
     flag: 3,
     status: 4
 };
@@ -265,6 +293,15 @@ const normalizeEffectAction = (action = {}) => {
     next.roll_modifier_source_item_ids = next.roll_modifier_entries[0]?.source_item_ids ?? "";
     next.roll_modifier_source_attack_ids = next.roll_modifier_entries[0]?.source_attack_ids ?? "";
     next.roll_modifier_application_side = next.roll_modifier_entries[0]?.application_side ?? "self";
+    next.modifier_value = normalizeRollModifierEntryValue(next.modifier_value);
+    next.modifier_value_mode = normalizeEffectValueMode(next.modifier_value_mode);
+    next.modifier_application_side = normalizeRollModifierApplicationSide(next.modifier_application_side);
+    next.skill_scope = ["all", "specific", "attribute"].includes(next.skill_scope) ? next.skill_scope : "all";
+    next.combat_scope = ["all", "melee", "ranged", "specific"].includes(next.combat_scope) ? next.combat_scope : "all";
+    for (const key of ["combat_attack_enabled", "combat_parry_enabled", "combat_block_enabled", "combat_recalculate_parry", "combat_recalculate_block", "combat_damage_enabled"]) next[key] = next[key] === true;
+    for (const key of ["combat_attack_value", "combat_parry_value", "combat_block_value", "combat_damage_value"]) next[key] = normalizeRollModifierEntryValue(next[key]);
+    for (const key of ["combat_attack_value_mode", "combat_parry_value_mode", "combat_block_value_mode", "combat_damage_value_mode"]) next[key] = normalizeEffectValueMode(next[key]);
+    next.combat_damage_operation = ["fixed", "per_die", "extra_dice", "override"].includes(next.combat_damage_operation) ? next.combat_damage_operation : "fixed";
     return next;
 };
 
@@ -274,6 +311,10 @@ const buildFallbackActionLabel = (action = {}) => {
             return "Modificador de Atributo";
         case "roll_modifier":
             return "Modificador de Rolagem";
+        case "skill_modifier":
+            return "Modificar Rolagem de Perícia";
+        case "combat_modifier":
+            return "Modificar Modo de Combate";
         case "status":
             return `Status: ${action.statusId || "indefinido"}`;
         case "resource_change":
@@ -299,7 +340,7 @@ export const getEffectActions = (effectSystem = {}) => {
 const selectCarrierActionIndex = (actions = []) => {
     const persistent = actions
         .map((action, index) => ({ action, index }))
-        .filter(({ action }) => ["attribute", "flag", "roll_modifier", "status"].includes(action.type));
+        .filter(({ action }) => ["attribute", "flag", "roll_modifier", "skill_modifier", "combat_modifier", "status"].includes(action.type));
     if (!persistent.length) return null;
 
     persistent.sort((a, b) => {
@@ -360,7 +401,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
             }
         }
     };
-    const persistentTypes = new Set(["attribute", "flag", "roll_modifier", "status"]);
+    const persistentTypes = new Set(["attribute", "flag", "roll_modifier", "skill_modifier", "combat_modifier", "status"]);
     const instantTypes = new Set(["resource_change", "resource_create", "macro", "chat"]);
 
     const buildCommonActiveEffectData = (targetActor, actionIndex = 0) => {
@@ -558,6 +599,78 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                             context: entries[0]?.contexts ?? "all",
                             applicationSide: entries[0]?.application_side ?? "self"
                         };
+                    }
+
+                    if (action.type === "skill_modifier" || action.type === "combat_modifier") {
+                        const scaleEntry = (entry) => {
+                            const scaling = resolveEffectValueMetadata(entry.value, entry.value_mode, context.origin);
+                            const deferValueEvaluation = hasConditionalValueExpression(entry.value);
+                            return {
+                                ...entry,
+                                value: deferValueEvaluation ? entry.value : scaling.effectiveValue,
+                                value_mode: scaling.valueMode,
+                                base_value: scaling.baseValue,
+                                origin_level: scaling.originLevel,
+                                origin_item_id: scaling.originItemId,
+                                origin_item_uuid: scaling.originItemUuid,
+                                defer_value_evaluation: deferValueEvaluation
+                            };
+                        };
+                        const application_side = action.modifier_application_side || "self";
+                        const nh_display_mode = action.modifier_nh_display_mode || "roll_only";
+                        const entries = [];
+
+                        if (action.type === "skill_modifier") {
+                            const contexts = action.skill_scope === "attribute" ? `skill_${action.skill_attribute || "dx"}` : "skill";
+                            entries.push(scaleEntry({
+                                label: action.label || "Modificador de perícia",
+                                value: action.modifier_value,
+                                value_mode: action.modifier_value_mode,
+                                cap: action.modifier_cap || "",
+                                contexts,
+                                application_side,
+                                target_values: action.skill_scope === "specific" ? action.skill_targets || "" : "",
+                                source_item_ids: "",
+                                source_attack_ids: "",
+                                nh_display_mode
+                            }));
+                        } else {
+                            const attackContext = action.combat_scope === "melee" ? "attack_melee" : action.combat_scope === "ranged" ? "attack_ranged" : "attack";
+                            const common = {
+                                label: action.label || "Modificador de modo de combate",
+                                cap: action.modifier_cap || "",
+                                application_side,
+                                source_item_ids: action.combat_source_item_ids || "",
+                                source_attack_ids: action.combat_source_attack_ids || "",
+                                nh_display_mode
+                            };
+                            if (action.combat_attack_enabled) entries.push(scaleEntry({ ...common, value: action.combat_attack_value, value_mode: action.combat_attack_value_mode, contexts: attackContext }));
+                            if (action.combat_parry_enabled) entries.push(scaleEntry({ ...common, value: action.combat_parry_value, value_mode: action.combat_parry_value_mode, contexts: "defense_parry" }));
+                            if (action.combat_block_enabled) entries.push(scaleEntry({ ...common, value: action.combat_block_value, value_mode: action.combat_block_value_mode, contexts: "defense_block" }));
+
+                            const combatEntries = [];
+                            if (action.combat_recalculate_parry || action.combat_recalculate_block || action.combat_damage_enabled) {
+                                const damageScaling = resolveEffectValueMetadata(action.combat_damage_value, action.combat_damage_value_mode, context.origin);
+                                const damageIsFormula = ["extra_dice", "override"].includes(action.combat_damage_operation)
+                                    && !/^[+-]?\d+(?:\.\d+)?$/.test(String(action.combat_damage_value ?? "").trim());
+                                const deferredDamage = hasConditionalValueExpression(action.combat_damage_value) || damageIsFormula;
+                                combatEntries.push({
+                                    source_item_ids: action.combat_source_item_ids || "",
+                                    source_attack_ids: action.combat_source_attack_ids || "",
+                                    attack_context: attackContext,
+                                    recalculate_parry: action.combat_recalculate_parry === true,
+                                    recalculate_block: action.combat_recalculate_block === true,
+                                    damage_enabled: action.combat_damage_enabled === true,
+                                    damage_operation: action.combat_damage_operation || "fixed",
+                                    damage_value: deferredDamage ? action.combat_damage_value : damageScaling.effectiveValue,
+                                    damage_value_mode: damageScaling.valueMode,
+                                    origin_level: damageScaling.originLevel,
+                                    defer_value_evaluation: deferredDamage
+                                });
+                            }
+                            if (combatEntries.length) activeEffectData.flags.gum.combatModifier = { entries: combatEntries };
+                        }
+                        if (entries.length) activeEffectData.flags.gum.rollModifier = { entries, value: entries[0].value, cap: entries[0].cap, context: entries[0].contexts, applicationSide: entries[0].application_side };
                     }
 
                     if (isIconCarrier && action.type !== "status") {

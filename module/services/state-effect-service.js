@@ -5,7 +5,7 @@ import {
   isStateEffectGroupDesired
 } from "../utils/state-effect-groups.mjs";
 
-const PERSISTENT_ACTION_TYPES = new Set(["attribute", "flag", "roll_modifier", "status"]);
+const PERSISTENT_ACTION_TYPES = new Set(["attribute", "flag", "roll_modifier", "skill_modifier", "combat_modifier", "status"]);
 const syncQueues = new Map();
 
 function forcedDeletionUpdates(...paths) {
