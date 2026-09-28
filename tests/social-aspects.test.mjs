@@ -4,6 +4,20 @@ import { readFileSync } from "node:fs";
 import { SOCIAL_CATEGORIES, SOCIAL_MANUAL_LAYOUTS, buildSocialSections, calculateManualSocialPoints } from "../module/config/social-aspects.mjs";
 
 const item = (id, contributions) => ({ id, type: "advantage", name: "Aliados", img: "ally.webp", system: { points: 10, social_contributions: contributions } });
+
+test("social interface translations are available in every supported language", () => {
+  const catalogs = ["en", "pt-BR"].map(language => JSON.parse(readFileSync(new URL(`../lang/${language}.json`, import.meta.url), "utf8")));
+  const socialKeys = Object.keys(catalogs[1]).filter(key => key.startsWith("GUM.Social."));
+
+  assert.ok(socialKeys.length > 50);
+  for (const key of socialKeys) {
+    for (const catalog of catalogs) assert.ok(catalog[key], `${key} is missing from a supported language`);
+  }
+
+  const actorTemplate = readFileSync(new URL("../templates/actors/characters.hbs", import.meta.url), "utf8");
+  assert.match(actorTemplate, /data-tab="social" title="\{\{localize 'GUM\.Social\.Tab'\}\}"/);
+});
+
 test("supports multiple contributions and combines legacy manual records", () => {
   const system = { language_entries: { old: { language_name: "Comum", points: 2 } } };
   const sections = buildSocialSections(system, [item("a", { one: { type: "language", language_name: "Élfico", points: 99 }, two: { type: "bond", name: "Guilda" } })]);
