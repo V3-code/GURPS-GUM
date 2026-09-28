@@ -71,7 +71,7 @@ test("recálculo defensivo alcança rolagens abertas pelo prompt", () => {
 });
 
 test("modificadores direcionados permanecem somente na rolagem", () => {
-  assert.match(engine, /application_side === "vs_targeter" \? "roll_only"/);
+  assert.match(engine, /application_side === "vs_targeter" \|\| containsDiceFormula\(value\)/);
 });
 
 test("modificador de todas as perícias não alcança testes diretos", () => {
@@ -106,7 +106,8 @@ test("override condicional por nível mantém o escalonamento adiado", () => {
 
 test("recálculo defensivo agrega bônus direcionados antes do arredondamento", () => {
   assert.match(main, /const totalAttackBonus = applicable\.reduce/);
-  assert.match(main, /Math\.floor\(\(attackNh \+ totalAttackBonus\) \/ 2\)/);
+  assert.match(main, /const selfRollOnlyAttackBonus = _collectCombatModifierEntries/);
+  assert.match(main, /Math\.floor\(\(recalculationBaseNh \+ totalAttackBonus\) \/ 2\)/);
 });
 
 test("filtro de perícia específica reconhece especialização e identificadores", () => {
@@ -118,5 +119,23 @@ test("filtro de perícia específica reconhece especialização e identificadore
 test("cabeçalhos de combate ocupam e centralizam o espaço disponível", () => {
   const css = read("styles/item-sheet.css");
   assert.match(css, /effect-combat-change-header[\s\S]*?justify-content: center/);
-  assert.match(css, /effect-combat-change-header[\s\S]*?linear-gradient/);
+  assert.match(css, /effect-combat-change-header::before/);
+  assert.match(css, /effect-combat-change-header \.effect-premium-checkbox[\s\S]*?border: 0/);
+});
+
+test("escopo geral ignora filtros específicos preservados", () => {
+  assert.match(engine, /const specificCombatScope = action\.combat_scope === "specific"/);
+  assert.match(engine, /source_item_ids: specificCombatScope \?/);
+  assert.match(engine, /source_attack_ids: specificCombatScope \?/);
+});
+
+test("fórmulas com dados permanecem somente na rolagem", () => {
+  assert.match(engine, /const containsDiceFormula/);
+  assert.match(engine, /application_side === "vs_targeter" \|\| containsDiceFormula\(value\)/);
+});
+
+test("ações especializadas sem rótulo não recebem fallback compartilhado", () => {
+  assert.match(engine, /label: action\.label \|\| ""/);
+  assert.doesNotMatch(engine, /label: action\.label \|\| "Modificador de perícia"/);
+  assert.doesNotMatch(engine, /label: action\.label \|\| "Modificador de modo de combate"/);
 });

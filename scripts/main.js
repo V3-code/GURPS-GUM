@@ -2416,11 +2416,21 @@ export function resolveTargetCombatDefenseRecalculationModifiers(actor, rollCont
     });
     const attackNh = Number(attack.final_nh);
     if (!Number.isFinite(attackNh)) return [];
+    const selfRollOnlyAttackBonus = _collectCombatModifierEntries(actor, item, attack, attackType)
+        .filter(({ entry }) => {
+            const enabled = rollContext === "defense_parry" ? entry.recalculate_parry : entry.recalculate_block;
+            return enabled && entry.attack_nh_display_mode !== "include_in_nh";
+        })
+        .reduce((total, { entry, evaluationActor }) => {
+            const value = _evaluateCombatAttackValue(evaluationActor, entry, rollData);
+            return Number.isFinite(value) ? total + value : total;
+        }, 0);
     const totalAttackBonus = applicable.reduce((total, { entry, evaluationActor }) => {
         const value = _evaluateCombatAttackValue(evaluationActor, entry, rollData);
         return Number.isFinite(value) ? total + value : total;
     }, 0);
-    const defenseDelta = Math.floor((attackNh + totalAttackBonus) / 2) - Math.floor(attackNh / 2);
+    const recalculationBaseNh = attackNh + selfRollOnlyAttackBonus;
+    const defenseDelta = Math.floor((recalculationBaseNh + totalAttackBonus) / 2) - Math.floor(recalculationBaseNh / 2);
     if (!defenseDelta) return [];
     return [{
         id: `counter::${targetToken.id}::combat-recalculation`,

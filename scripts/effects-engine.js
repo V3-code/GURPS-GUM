@@ -627,13 +627,17 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                             };
                         };
                         const application_side = action.modifier_application_side || "self";
-                        const nh_display_mode = application_side === "vs_targeter" ? "roll_only" : action.modifier_nh_display_mode || "roll_only";
+                        const requestedNhDisplayMode = action.modifier_nh_display_mode || "roll_only";
+                        const containsDiceFormula = (value) => /(?:^|[^\w])\d*d\d+(?:[^\w]|$)/i.test(String(value ?? ""));
+                        const resolveNhDisplayMode = (value) => application_side === "vs_targeter" || containsDiceFormula(value)
+                            ? "roll_only"
+                            : requestedNhDisplayMode;
                         const entries = [];
 
                         if (action.type === "skill_modifier") {
                             const contexts = action.skill_scope === "attribute" ? `skill_${action.skill_attribute || "dx"}` : "skill";
                             entries.push(scaleEntry({
-                                label: action.label || "Modificador de perícia",
+                                label: action.label || "",
                                 value: action.modifier_value,
                                 value_mode: action.modifier_value_mode,
                                 cap: action.modifier_cap || "",
@@ -643,21 +647,21 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                                 source_item_ids: "",
                                 source_attack_ids: "",
                                 skill_roll_only: true,
-                                nh_display_mode
+                                nh_display_mode: resolveNhDisplayMode(action.modifier_value)
                             }));
                         } else {
                             const attackContext = action.combat_scope === "melee" ? "attack_melee" : action.combat_scope === "ranged" ? "attack_ranged" : "attack";
+                            const specificCombatScope = action.combat_scope === "specific";
                             const common = {
-                                label: action.label || "Modificador de modo de combate",
+                                label: action.label || "",
                                 cap: action.modifier_cap || "",
                                 application_side,
-                                source_item_ids: action.combat_source_item_ids || "",
-                                source_attack_ids: action.combat_source_attack_ids || "",
-                                nh_display_mode
+                                source_item_ids: specificCombatScope ? action.combat_source_item_ids || "" : "",
+                                source_attack_ids: specificCombatScope ? action.combat_source_attack_ids || "" : ""
                             };
-                            if (action.combat_attack_enabled) entries.push(scaleEntry({ ...common, value: action.combat_attack_value, value_mode: action.combat_attack_value_mode, contexts: attackContext }));
-                            if (action.combat_parry_enabled) entries.push(scaleEntry({ ...common, value: action.combat_parry_value, value_mode: action.combat_parry_value_mode, contexts: "defense_parry" }));
-                            if (action.combat_block_enabled) entries.push(scaleEntry({ ...common, value: action.combat_block_value, value_mode: action.combat_block_value_mode, contexts: "defense_block" }));
+                            if (action.combat_attack_enabled) entries.push(scaleEntry({ ...common, value: action.combat_attack_value, value_mode: action.combat_attack_value_mode, contexts: attackContext, nh_display_mode: resolveNhDisplayMode(action.combat_attack_value) }));
+                            if (action.combat_parry_enabled) entries.push(scaleEntry({ ...common, value: action.combat_parry_value, value_mode: action.combat_parry_value_mode, contexts: "defense_parry", nh_display_mode: resolveNhDisplayMode(action.combat_parry_value) }));
+                            if (action.combat_block_enabled) entries.push(scaleEntry({ ...common, value: action.combat_block_value, value_mode: action.combat_block_value_mode, contexts: "defense_block", nh_display_mode: resolveNhDisplayMode(action.combat_block_value) }));
 
                             const combatEntries = [];
                             if (action.combat_recalculate_parry || action.combat_recalculate_block || action.combat_damage_enabled) {
@@ -666,8 +670,8 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                                     && !/^[+-]?\d+(?:\.\d+)?$/.test(String(action.combat_damage_value ?? "").trim());
                                 const deferredDamage = hasConditionalValueExpression(action.combat_damage_value) || damageIsFormula;
                                 combatEntries.push({
-                                    source_item_ids: action.combat_source_item_ids || "",
-                                    source_attack_ids: action.combat_source_attack_ids || "",
+                                    source_item_ids: specificCombatScope ? action.combat_source_item_ids || "" : "",
+                                    source_attack_ids: specificCombatScope ? action.combat_source_attack_ids || "" : "",
                                     attack_context: attackContext,
                                     application_side,
                                     recalculate_parry: action.combat_recalculate_parry === true,

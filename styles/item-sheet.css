@@ -7112,20 +7112,45 @@ color:#121114;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 36px;
-  padding: 5px 12px;
-  border-radius: 7px;
-  background: linear-gradient(90deg, transparent, rgba(190, 142, 65, 0.18) 22%, rgba(190, 142, 65, 0.18) 78%, transparent);
+  gap: 10px;
+  min-height: 30px;
+  padding: 2px 4px;
+  background: transparent;
   color: #e8c783;
   letter-spacing: 0.025em;
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-change-header::before,
+.gum.sheet.item.effect-sheet .effect-combat-change-header::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, currentColor);
+  opacity: 0.22;
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-change-header::after {
+  background: linear-gradient(90deg, currentColor, transparent);
 }
 
 .gum.sheet.item.effect-sheet .effect-combat-change-header .effect-premium-checkbox {
   width: auto;
   justify-content: center;
   gap: 9px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
   font-size: 0.82rem;
   font-weight: 700;
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-change-header .effect-premium-checkbox:hover {
+  border: 0;
+  background: transparent;
+  color: #f2d99f;
 }
 
 .gum.sheet.item.effect-sheet .effect-combat-change-header input[type="checkbox"] {
@@ -7148,7 +7173,7 @@ color:#121114;
 }
 
 .gum.sheet.item.effect-sheet .effect-combat-damage-card .effect-combat-change-header {
-  background: linear-gradient(90deg, transparent, rgba(172, 78, 66, 0.2) 22%, rgba(172, 78, 66, 0.2) 78%, transparent);
+  background: transparent;
   color: #e5a49b;
 }
 
