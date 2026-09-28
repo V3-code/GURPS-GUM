@@ -66,7 +66,27 @@ function _collectCombatModifierEntries(actor, item, attack, attackType) {
         if (effect?.disabled || effect?.isSuppressed) continue;
         const data = foundry.utils.getProperty(effect, "flags.gum.combatModifier");
         for (const entry of data?.entries || []) {
-            if (_matchesCombatModifierEntry(entry, item, attack, attackType)) entries.push(entry);
+            if (_resolveRollModifierApplicationSide(entry, data) !== "self") continue;
+            if (_matchesCombatModifierEntry(entry, item, attack, attackType)) entries.push({ entry, evaluationActor: actor });
+        }
+    }
+    return entries;
+}
+
+function _collectTargetCombatModifierEntries(actor, item, attack, attackType, rollData = {}) {
+    const entries = [];
+    const targets = _resolveCounterTargetsForRoll(rollData);
+    if (targets.length !== 1) return entries;
+    for (const targetToken of targets) {
+        const targetActor = targetToken?.actor;
+        if (!targetActor || targetActor === actor) continue;
+        for (const effect of Array.from(targetActor.appliedEffects ?? targetActor.effects ?? [])) {
+            if (effect?.disabled || effect?.isSuppressed) continue;
+            const data = foundry.utils.getProperty(effect, "flags.gum.combatModifier");
+            for (const entry of data?.entries || []) {
+                if (_resolveRollModifierApplicationSide(entry, data) !== "vs_targeter") continue;
+                if (_matchesCombatModifierEntry(entry, item, attack, attackType)) entries.push({ entry, evaluationActor: targetActor });
+            }
         }
     }
     return entries;
@@ -88,12 +108,14 @@ function _resolveConditionalDamageValue(actor, entry, rollData) {
     return selected;
 }
 
-function _applyCombatDamageModifiers(actor, item, attack, attackType) {
+function _applyCombatDamageModifiers(actor, item, attack, attackType, { includeTargeted = false, rollData = {} } = {}) {
     let formula = resolveAttackDamageDisplay(attack?.damage_formula || "", actor?.system?.attributes || {});
-    const rollData = { itemId: item?.id, itemName: item?.name, attackId: attack?.id, attackType, type: "damage" };
-    for (const entry of _collectCombatModifierEntries(actor, item, attack, attackType)) {
+    const damageRollData = { ...rollData, itemId: item?.id, itemName: item?.name, attackId: attack?.id, attackType, type: "damage" };
+    const candidates = _collectCombatModifierEntries(actor, item, attack, attackType);
+    if (includeTargeted) candidates.push(..._collectTargetCombatModifierEntries(actor, item, attack, attackType, damageRollData));
+    for (const { entry, evaluationActor } of candidates) {
         if (!entry.damage_enabled) continue;
-        const rawValue = _resolveConditionalDamageValue(actor, entry, rollData);
+        const rawValue = _resolveConditionalDamageValue(evaluationActor, entry, damageRollData);
         if (entry.damage_operation === "override") {
             formula = resolveAttackDamageDisplay(String(rawValue || "0"), actor?.system?.attributes || {});
             continue;
@@ -102,7 +124,7 @@ function _applyCombatDamageModifiers(actor, item, attack, attackType) {
             if (String(rawValue).trim() && String(rawValue).trim() !== "0") formula = `(${formula})+(${rawValue})`;
             continue;
         }
-        const numeric = _evaluateModifierValue(actor, rawValue, rollData, { allowDice: false });
+        const numeric = _evaluateModifierValue(evaluationActor, rawValue, damageRollData, { allowDice: false });
         if (!Number.isFinite(numeric) || numeric === 0) continue;
         const multiplier = entry.damage_operation === "per_die"
             ? Math.max(1, Array.from(String(formula).matchAll(/(\d+)d(?:6)?/gi)).reduce((sum, match) => sum + Number(match[1] || 0), 0))
@@ -110,6 +132,10 @@ function _applyCombatDamageModifiers(actor, item, attack, attackType) {
         formula = `(${formula})${numeric * multiplier >= 0 ? "+" : ""}${numeric * multiplier}`;
     }
     return formula;
+}
+
+export function resolveCombatDamageFormula(actor, item, attack, attackType, rollData = {}) {
+    return _applyCombatDamageModifiers(actor, item, attack, attackType, { includeTargeted: true, rollData });
 }
 
 async function renderSpecializedSkillNames(app, html) {
@@ -1010,7 +1036,7 @@ const splitDefenseValue = (value) => {
 
                         const calculateFinalDefense = (rawDefense, defenseType, useDefault = false, importedFinalDefense = null) => {
                             const defenseNhBonuses = collectNhBonusesForDefense(i, attack, "melee", defenseType);
-                            const shouldRecalculate = combatModifierEntries.some((entry) => defenseType === "parry" ? entry.recalculate_parry : entry.recalculate_block);
+                            const shouldRecalculate = combatModifierEntries.some(({ entry }) => defenseType === "parry" ? entry.recalculate_parry : entry.recalculate_block);
                             const importedParsed = splitDefenseValue(importedFinalDefense);
                             if (importedParsed && !shouldRecalculate) return addBonusesToDefenseValue(importedFinalDefense, defenseNhBonuses);
 
@@ -1481,7 +1507,13 @@ async function _rollDamageFromChatAction(payload) {
         if (attack?.effective_damage_formula || attack?.damage_formula) {
             normalizedAttack = {
                 name: payload.sourceLabel || `${item.name} (${attack.mode ?? attackId})`,
-                formula: attack.effective_damage_formula || attack.damage_formula,
+                formula: resolveCombatDamageFormula(
+                    actor,
+                    item,
+                    attack,
+                    item.system?.melee_attacks?.[attackId] ? "melee" : "ranged",
+                    payload
+                ),
                 type: attack.damage_type,
                 nature: attack.damage_nature || "",
                 armor_divisor: attack.armor_divisor,
@@ -2301,7 +2333,7 @@ function _resolveCounterTargetsForRoll(rollData = {}) {
     return Array.from(game.user.targets || []).filter((token) => token?.actor);
 }
 
-function _collectCounterCandidatesFromTarget(targetActor, rollContext, rollData = {}) {
+function _collectCounterCandidatesFromTarget(targetActor, rollContext, rollData = {}, rollingActor = null) {
     const candidates = [];
     if (!targetActor) return candidates;
     const activeEffects = Array.from(targetActor.appliedEffects ?? targetActor.effects ?? []);
@@ -2318,7 +2350,7 @@ function _collectCounterCandidatesFromTarget(targetActor, rollContext, rollData 
             const context = entry?.contexts ?? entry?.context ?? data.context ?? "all";
             if (!_matchesRollContext(context, rollContext)) return;
             if (!matchesRollTags(entry, rollData.rollTags)) return;
-            if (!_matchesRollTargetFilter(targetActor, rollData, entry)) return;
+            if (!_matchesRollTargetFilter(rollingActor || targetActor, rollData, entry)) return;
             if ((entry?.nh_display_mode || "roll_only") === "include_in_nh") return;
             if (_resolveRollModifierApplicationSide(entry, data) !== "vs_targeter") return;
             candidates.push({ effect, entry, entryIndex });
@@ -2335,9 +2367,7 @@ function _collectTargetCounterRollModifiers(actor, rollContext, rollData = {}) {
     if (targets.length !== 1) return [];
 
     const [targetToken] = targets;
-    const candidates = _collectCounterCandidatesFromTarget(targetToken.actor, rollContext, rollData);
-    if (!candidates.length) return [];
-
+    const candidates = _collectCounterCandidatesFromTarget(targetToken.actor, rollContext, rollData, actor);
     const grouped = new Map();
     for (const candidate of candidates) {
         const key = _buildCounterGroupKey(candidate.entry, candidate.effect, candidate.entryIndex);
@@ -2349,6 +2379,34 @@ function _collectTargetCounterRollModifiers(actor, rollContext, rollData = {}) {
                 id: `counter::${targetToken.id}::${key}`,
                 value,
                 cap
+            });
+        }
+    }
+    if (["defense_parry", "defense_block"].includes(rollContext)) {
+        const item = _getRollSourceItem(actor, rollData);
+        const attack = _getRollSourceAttack(item, rollData);
+        const attackType = item?.system?.melee_attacks?.[rollData.attackId] ? "melee" : "ranged";
+        if (item && attack) {
+            const combatCandidates = _collectTargetCombatModifierEntries(actor, item, attack, attackType, rollData);
+            combatCandidates.forEach(({ entry, evaluationActor }, index) => {
+                const enabled = rollContext === "defense_parry" ? entry.recalculate_parry : entry.recalculate_block;
+                if (!enabled) return;
+                const attackEntry = {
+                    value: entry.attack_value ?? 0,
+                    value_mode: entry.attack_value_mode,
+                    origin_level: entry.attack_origin_level,
+                    defer_value_evaluation: entry.attack_defer_value_evaluation
+                };
+                const attackBonus = _evaluateModifierEntryValue(evaluationActor, attackEntry, rollData, { allowDice: false });
+                const attackNh = Number(attack.final_nh);
+                if (!Number.isFinite(attackNh) || !Number.isFinite(attackBonus)) return;
+                const defenseDelta = Math.floor((attackNh + attackBonus) / 2) - Math.floor(attackNh / 2);
+                if (!defenseDelta) return;
+                grouped.set(`combat-recalculation-${index}`, {
+                    id: `counter::${targetToken.id}::combat-recalculation-${index}`,
+                    value: defenseDelta,
+                    cap: ""
+                });
             });
         }
     }
@@ -2583,6 +2641,7 @@ Hooks.once('init', async function() {
     game.gum.applyUseEventEffects = applyUseEventEffects;
     game.gum.applySingleEffect = applySingleEffect;
     game.gum.getEffectActions = getEffectActions;
+    game.gum.resolveCombatDamageFormula = resolveCombatDamageFormula;
     game.gum.setStateEffectGroupActive = setStateEffectGroupActive;
     game.gum.syncItemStateEffects = syncItemStateEffects;
 

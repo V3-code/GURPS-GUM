@@ -3200,7 +3200,12 @@ html.on("click", ".rollable-damage", async (ev) => {
 
     normalizedAttack = {
       name: `${item.name} (${attack.mode ?? attackId})`,
-      formula: attack.effective_damage_formula || attack.damage_formula,
+      formula: game.gum?.resolveCombatDamageFormula?.(
+        this.actor,
+        item,
+        attack,
+        item.system.melee_attacks?.[attackId] ? "melee" : "ranged"
+      ) || attack.effective_damage_formula || attack.damage_formula,
       type: attack.damage_type,
       nature: attack.damage_nature || "",
       armor_divisor: attack.armor_divisor,

@@ -37,6 +37,15 @@ test("modo de combate separa ataque, defesas, recálculo e dano", () => {
 
 test("o efeito persiste metadados de combate e usa a fórmula efetiva", () => {
   assert.match(engine, /flags\.gum\.combatModifier/);
+  assert.match(engine, /attack_context: attackContext,[\s\S]*?application_side/);
   assert.match(main, /attack\.effective_damage_formula = _applyCombatDamageModifiers/);
-  assert.match(main, /formula: attack\.effective_damage_formula \|\| attack\.damage_formula/);
+  assert.match(main, /formula: resolveCombatDamageFormula\(/);
+});
+
+test("metadados de combate respeitam o lado da aplicação", () => {
+  assert.match(main, /_resolveRollModifierApplicationSide\(entry, data\) !== "self"/);
+  assert.match(main, /_resolveRollModifierApplicationSide\(entry, data\) !== "vs_targeter"/);
+  assert.match(main, /_collectTargetCombatModifierEntries/);
+  assert.match(main, /includeTargeted: true/);
+  assert.match(main, /combatCandidates\.forEach/);
 });
