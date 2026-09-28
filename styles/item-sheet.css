@@ -7100,48 +7100,39 @@ color:#121114;
   gap: 8px;
 }
 
-.gum.sheet.item.effect-sheet .effect-combat-change-row,
-.gum.sheet.item.effect-sheet .effect-combat-damage-main {
+.gum.sheet.item.effect-sheet .effect-combat-change-block {
   display: grid;
-  grid-template-columns: minmax(145px, 0.55fr) minmax(260px, 1.5fr) minmax(170px, 0.75fr);
-  gap: 10px;
-  align-items: end;
-  padding: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 8px;
+  padding: 10px 12px 12px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.025);
+  background: linear-gradient(90deg, rgba(185, 137, 60, 0.08), rgba(255, 255, 255, 0.018) 42%, transparent);
 }
 
-.gum.sheet.item.effect-sheet .effect-combat-change-toggle {
-  align-self: center;
+.gum.sheet.item.effect-sheet .effect-combat-change-header {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  color: rgba(235, 224, 204, 0.92);
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-change-block input {
   min-height: 38px;
 }
 
-.gum.sheet.item.effect-sheet .effect-combat-change-value input {
-  min-height: 38px;
-}
-
-.gum.sheet.item.effect-sheet .effect-combat-recalculation-row,
-.gum.sheet.item.effect-sheet .effect-combat-damage-card {
+.gum.sheet.item.effect-sheet .effect-combat-recalculation-row {
   padding-top: 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .gum.sheet.item.effect-sheet .effect-combat-damage-card {
-  display: grid;
-  gap: 10px;
-}
-
-.gum.sheet.item.effect-sheet .effect-conditional-value-hint {
-  margin-top: -2px;
+  margin-top: 2px;
+  background: linear-gradient(90deg, rgba(160, 68, 58, 0.1), rgba(255, 255, 255, 0.018) 42%, transparent);
 }
 
 @media (max-width: 720px) {
   .gum.sheet.item.effect-sheet .effect-specialized-grid-two,
   .gum.sheet.item.effect-sheet .effect-specialized-grid-three,
-  .gum.sheet.item.effect-sheet .effect-specialized-grid-value,
-  .gum.sheet.item.effect-sheet .effect-combat-change-row,
-  .gum.sheet.item.effect-sheet .effect-combat-damage-main {
+  .gum.sheet.item.effect-sheet .effect-specialized-grid-value {
     grid-template-columns: 1fr;
   }
 }

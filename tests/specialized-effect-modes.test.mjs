@@ -54,7 +54,7 @@ test("NH, Aparar e Bloqueio preservam expressões condicionais", () => {
   assert.match(engine, /const deferValueEvaluation = hasConditionalValueExpression\(entry\.value\)/);
   assert.match(engine, /value: deferValueEvaluation \? entry\.value : scaling\.effectiveValue/);
   assert.match(main, /_evaluateCombatAttackValue/);
-  assert.match(sheet, /valores de NH, Aparar e Bloqueio aceitam fórmulas e o motor de condições/i);
+  assert.match(sheet, /title="Aceita número, fórmula, dados ou expressão do motor de condições de valor\."/i);
 });
 
 test("rolagens de modos específicos carregam item e attack id", () => {
@@ -77,8 +77,25 @@ test("modificadores direcionados permanecem somente na rolagem", () => {
 test("modificador de todas as perícias não alcança testes diretos", () => {
   const prompt = read("module/apps/roll-prompt.js");
   assert.match(engine, /skill_roll_only: true/);
-  assert.match(prompt, /entry\?\.skill_roll_only === true && this\.rollData\?\.type !== "skill"/);
-  assert.match(main, /entry\?\.skill_roll_only === true && rollData\?\.type !== "skill"/);
+  assert.match(prompt, /entry\?\.skill_roll_only === true && this\.actor\?\.items\?\.get\(this\.rollData\?\.itemId\)\?\.type !== "skill"/);
+  assert.match(main, /entry\?\.skill_roll_only === true && _getRollSourceItem/);
+});
+
+test("campos controlados não duplicam valores como arrays separados por vírgulas", () => {
+  assert.doesNotMatch(sheet, /effect-disabled-field-mirror/);
+  assert.match(sheetController, /normalizeControlledCsv/);
+  assert.match(sheetController, /previousActions\[index\]/);
+});
+
+test("NH em árvore usa o atributo base ativo para modificadores permanentes", () => {
+  assert.match(main, /collectNhBonusesForItem\(i, treeBaseAttribute\)/);
+  assert.match(main, /_matchesNhDisplayContextForItem\(entry, item, baseAttribute\)/);
+});
+
+test("blocos de combate usam cabeçalhos minimalistas sem título Alterações", () => {
+  assert.doesNotMatch(sheet, />\s*Alterações\s*</);
+  assert.match(sheet, /effect-combat-change-header/);
+  assert.match(sheet, /Bônus máximo/);
 });
 
 test("override condicional por nível mantém o escalonamento adiado", () => {

@@ -192,6 +192,11 @@ const normalizeRollModifierEntryValue = (value) => {
     return raw;
 };
 
+const normalizeControlledCsv = (value) => {
+    const values = Array.isArray(value) ? value : [value];
+    return [...new Set(values.flatMap(entry => String(entry ?? "").split(",")).map(entry => entry.trim()).filter(Boolean))].join(", ");
+};
+
 const normalizeAction = (action = {}) => {
     const next = foundry.utils.mergeObject(foundry.utils.deepClone(DEFAULT_EFFECT_ACTION), action || {}, { inplace: false, overwrite: true });
     next.attribute_chat_visibility = normalizeAttributeChatVisibility(next.attribute_chat_visibility);
@@ -236,11 +241,11 @@ const normalizeAction = (action = {}) => {
     next.modifier_value = normalizeRollModifierEntryValue(next.modifier_value);
     next.modifier_value_mode = next.modifier_value_mode === "per_origin_level" ? "per_origin_level" : "fixed";
     next.skill_scope = ["all", "specific", "attribute"].includes(next.skill_scope) ? next.skill_scope : "all";
-    next.skill_targets = String(next.skill_targets || "").trim();
+    next.skill_targets = normalizeControlledCsv(next.skill_targets);
     next.skill_attribute = String(next.skill_attribute || "dx").trim().toLowerCase();
     next.combat_scope = ["all", "melee", "ranged", "specific"].includes(next.combat_scope) ? next.combat_scope : "all";
-    next.combat_source_item_ids = String(next.combat_source_item_ids || "").trim();
-    next.combat_source_attack_ids = String(next.combat_source_attack_ids || "").trim();
+    next.combat_source_item_ids = normalizeControlledCsv(next.combat_source_item_ids);
+    next.combat_source_attack_ids = normalizeControlledCsv(next.combat_source_attack_ids);
     for (const key of ["combat_attack_enabled", "combat_parry_enabled", "combat_block_enabled", "combat_recalculate_parry", "combat_recalculate_block", "combat_damage_enabled"]) next[key] = next[key] === true;
     for (const key of ["combat_attack_value", "combat_parry_value", "combat_block_value", "combat_damage_value"]) next[key] = normalizeRollModifierEntryValue(next[key]);
     next.combat_damage_cap = String(next.combat_damage_cap ?? "").trim();
@@ -452,13 +457,10 @@ activateListeners(html) {
     super.activateListeners(html);
     const setSpecializedFieldAvailability = (root, fieldName, enabled) => {
         const visible = root.querySelector(`[name$=".${fieldName}"]:not([type="hidden"])`);
-        const mirror = root.querySelector(`.effect-disabled-field-mirror[name$=".${fieldName}"]`);
         if (visible) {
-            if (mirror) mirror.value = visible.value;
             visible.disabled = !enabled;
             visible.closest(".effect-premium-field")?.classList.toggle("is-disabled", !enabled);
         }
-        if (mirror) mirror.disabled = enabled;
     };
     const refreshSpecializedFields = (actionRoot) => {
         if (!actionRoot) return;
@@ -1123,9 +1125,10 @@ activateListeners(html) {
         }
 
         if (actionEntries.size || rollEntries.size) {
+            const previousActions = getEffectActionsFromSystem(this.item.system);
             const allIndexes = [...new Set([...actionEntries.keys(), ...rollEntries.keys()])].sort((a, b) => a - b);
             const actions = allIndexes.map((index) => {
-                const actionData = actionEntries.get(index) || {};
+                const actionData = { ...(previousActions[index] || {}), ...(actionEntries.get(index) || {}) };
                 const entryMap = rollEntries.get(index);
                 if (entryMap) {
                     actionData.roll_modifier_entries = Array.from(entryMap.entries())

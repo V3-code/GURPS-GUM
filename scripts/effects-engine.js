@@ -252,6 +252,11 @@ const normalizeRollModifierApplicationSide = (value) => {
     return "self";
 };
 
+const normalizeControlledCsv = (value) => {
+    const values = Array.isArray(value) ? value : [value];
+    return [...new Set(values.flatMap(entry => String(entry ?? "").split(",")).map(entry => entry.trim()).filter(Boolean))].join(", ");
+};
+
 const normalizeEffectAction = (action = {}) => {
     const next = foundry.utils.mergeObject(foundry.utils.deepClone(DEFAULT_EFFECT_ACTION), action || {}, { inplace: false, overwrite: true });
     next.attribute_chat_visibility = normalizeAttributeChatVisibility(next.attribute_chat_visibility);
@@ -298,7 +303,10 @@ const normalizeEffectAction = (action = {}) => {
     next.modifier_value_mode = normalizeEffectValueMode(next.modifier_value_mode);
     next.modifier_application_side = normalizeRollModifierApplicationSide(next.modifier_application_side);
     next.skill_scope = ["all", "specific", "attribute"].includes(next.skill_scope) ? next.skill_scope : "all";
+    next.skill_targets = normalizeControlledCsv(next.skill_targets);
     next.combat_scope = ["all", "melee", "ranged", "specific"].includes(next.combat_scope) ? next.combat_scope : "all";
+    next.combat_source_item_ids = normalizeControlledCsv(next.combat_source_item_ids);
+    next.combat_source_attack_ids = normalizeControlledCsv(next.combat_source_attack_ids);
     for (const key of ["combat_attack_enabled", "combat_parry_enabled", "combat_block_enabled", "combat_recalculate_parry", "combat_recalculate_block", "combat_damage_enabled"]) next[key] = next[key] === true;
     for (const key of ["combat_attack_value", "combat_parry_value", "combat_block_value", "combat_damage_value"]) next[key] = normalizeRollModifierEntryValue(next[key]);
     next.combat_damage_cap = String(next.combat_damage_cap ?? "").trim();

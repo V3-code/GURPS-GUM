@@ -860,8 +860,8 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
            return _matchesRollModifierItemFilter(entry, item);
         };
 
-        const matchesEntryContextForItem = (entry = {}, item) => {
-            return _matchesNhDisplayContextForItem(entry, item);
+        const matchesEntryContextForItem = (entry = {}, item, baseAttribute = null) => {
+            return _matchesNhDisplayContextForItem(entry, item, baseAttribute);
         };
 
         const matchesEntryContextForAttack = (entry = {}, attackType) => {
@@ -872,7 +872,7 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
             return _matchesNhDisplayContextForDefense(entry, defenseType);
         };
 
-        const collectNhBonusesForItem = (item) => {
+        const collectNhBonusesForItem = (item, baseAttribute = null) => {
             const bonus = { passive: 0, temp: 0 };
             for (const effect of actorActiveEffects) {
                 const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
@@ -885,7 +885,7 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                 entries.forEach((entry) => {
                     if (!shouldIncludeInPermanentNh(entry)) return;
                     if (!matchesEntryTargetForItem(entry, item)) return;
-                    if (!matchesEntryContextForItem(entry, item)) return;
+                    if (!matchesEntryContextForItem(entry, item, baseAttribute)) return;
                     const value = _evaluateModifierEntryValue(this, entry, { itemId: item.id, type: item.type, itemName: item.name }, { allowDice: false });
                     if (!Number.isFinite(value) || value === 0) return;
                     if (isPermanent) bonus.passive += value;
@@ -964,7 +964,7 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                     const nhBase = Number(attrVal) || 0;
                     const nhLevel = Number(i.system.skill_level) || 0;
                     const nhMod = Number(i.system.nh_mod) || 0;
-                    const nhBonuses = collectNhBonusesForItem(i);
+                    const nhBonuses = collectNhBonusesForItem(i, i.system.base_attribute);
                     const nhPassive = (Number(i.system.nh_passive) || 0) + nhBonuses.passive;
                     const nhTemp = (Number(i.system.nh_temp) || 0) + nhBonuses.temp;
                     const nhOverride = i.system.nh_override;
@@ -984,7 +984,10 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                         const treeNhLevel = Number(i.system.tree_skill_level ?? i.system.skill_level) || 0;
                         const treeNhMod = Number(i.system.tree_nh_mod ?? 0) || 0;
                         const treeDefaultMod = Number(i.system.tree_default_mod ?? 0) || 0;
-                        i.system.tree_final_nh = treeNhBase + treeDefaultMod + treeNhLevel + treeNhMod + nhPassive + nhTemp;
+                        const treeNhBonuses = collectNhBonusesForItem(i, treeBaseAttribute);
+                        const treeNhPassive = (Number(i.system.nh_passive) || 0) + treeNhBonuses.passive;
+                        const treeNhTemp = (Number(i.system.nh_temp) || 0) + treeNhBonuses.temp;
+                        i.system.tree_final_nh = treeNhBase + treeDefaultMod + treeNhLevel + treeNhMod + treeNhPassive + treeNhTemp;
                     }
                 } catch (e) { console.error(`GUM | Erro ao calcular NH para ${i.name}:`, e); }
             }
@@ -2261,11 +2264,11 @@ function _matchesRollModifierAttackFilter(entry = {}, attack = null, rollData = 
     return attackCandidates.length > 0 && attackFilters.some((filter) => attackCandidates.includes(filter));
 }
 
-function _matchesNhDisplayContextForItem(entry = {}, item = null) {
+function _matchesNhDisplayContextForItem(entry = {}, item = null, baseAttribute = null) {
     const context = (entry?.contexts ?? entry?.context ?? "all").toString().trim();
     if (!context || context === "all") return true;
     const contexts = context.includes(",") ? context.split(",").map(c => c.trim()) : [context];
-    const baseAttr = (item?.system?.base_attribute || "").toString().trim().toLowerCase();
+    const baseAttr = (baseAttribute ?? item?.system?.base_attribute ?? "").toString().trim().toLowerCase();
     return contexts.some((ctx) => {
         if (ctx === "skill") return item?.type === "skill";
         if (ctx === "spell") return item?.type === "spell";
@@ -2321,7 +2324,7 @@ function _collectEffectRollModifiers(actor, rollContext, rollData = {}) {
 
         entries.forEach((entry, index) => {
             const context = entry?.contexts ?? entry?.context ?? data.context ?? "all";
-            if (entry?.skill_roll_only === true && rollData?.type !== "skill") return;
+            if (entry?.skill_roll_only === true && _getRollSourceItem(actor, rollData)?.type !== "skill") return;
             if (!_matchesRollContext(context, rollContext)) return;
             if (!matchesRollTags(entry, rollData.rollTags)) return;
             if (!_matchesRollTargetFilter(actor, rollData, entry)) return;
@@ -2380,7 +2383,7 @@ function _collectCounterCandidatesFromTarget(targetActor, rollContext, rollData 
 
         entries.forEach((entry, entryIndex) => {
             const context = entry?.contexts ?? entry?.context ?? data.context ?? "all";
-            if (entry?.skill_roll_only === true && rollData?.type !== "skill") return;
+            if (entry?.skill_roll_only === true && _getRollSourceItem(rollingActor || targetActor, rollData)?.type !== "skill") return;
             if (!_matchesRollContext(context, rollContext)) return;
             if (!matchesRollTags(entry, rollData.rollTags)) return;
             if (!_matchesRollTargetFilter(rollingActor || targetActor, rollData, entry)) return;
