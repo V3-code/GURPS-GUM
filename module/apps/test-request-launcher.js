@@ -3,6 +3,7 @@ import { buildTestRequestTargets } from "../utils/test-request-targets.mjs";
 import { normalizeSkillText } from "../utils/skill-default-resolver.mjs";
 import { createTestRequestMessage } from "../services/test-request-service.js";
 import { contentSourceService } from "../services/content-source-service.mjs";
+import { REQUESTED_ATTRIBUTE_OPTIONS } from "../utils/requested-attributes.mjs";
 
 let launcher;
 export function openTestRequestLauncher() {
@@ -83,7 +84,8 @@ export class TestRequestLauncher extends FormApplication {
       purposes: getGroupedRollPurposes().filter(group => group.id !== "general"),
       purposeSectionOpen: Boolean(this.purposeSectionOpen),
       skills: deduped,
-      attributes: [{ key: "st", label: "ST" }, { key: "dx", label: "DX" }, { key: "iq", label: "IQ" }, { key: "ht", label: "HT" }, { key: "per", label: "PER" }, { key: "vont", label: "VONT" }]
+      attributes: REQUESTED_ATTRIBUTE_OPTIONS,
+      baseAttributes: REQUESTED_ATTRIBUTE_OPTIONS.filter(attribute => attribute.rollType === "attribute")
     };
   }
 

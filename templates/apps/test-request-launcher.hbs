@@ -51,7 +51,7 @@
           <p class="unregistered-skill-notice" hidden><i class="fas fa-triangle-exclamation"></i><span><strong>Perícia não registrada.</strong> Informe o pré-definido personalizado.</span></p>
           <div class="custom-skill-fields" hidden>
             <input name="customSkillName" type="hidden">
-            <label>Atributo base <select name="customAttributeKey">{{#each attributes}}<option value="{{key}}">{{label}}</option>{{/each}}</select></label>
+            <label>Atributo base <select name="customAttributeKey">{{#each baseAttributes}}<option value="{{key}}">{{label}}</option>{{/each}}</select></label>
             <label>Modificador <input type="number" name="customModifier" value="-5"></label>
           </div>
         </div>

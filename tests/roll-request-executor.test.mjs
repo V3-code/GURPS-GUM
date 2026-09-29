@@ -104,3 +104,18 @@ test("falha síncrona ao abrir o prompt não deixa o pedido travado", async () =
   await assert.rejects(execute(request(), "actor-1"), /render/);
   assert.equal((await execute(request(), "actor-1")).accepted, true);
 });
+
+test("encaminha o subtipo de defesa resolvido ao prompt", async () => {
+  let promptData;
+  const { execute } = harness({
+    resolveTest: async () => ({ available: true, type: "defense", defenseType: "dodge", attributeKey: "dodge", value: 9, label: "Esquiva" }),
+    createPrompt: (_actor, rollData) => {
+      promptData = rollData;
+      return { render: () => {}, close: async () => {} };
+    }
+  });
+  await execute(request(), "actor-1");
+  assert.equal(promptData.type, "defense");
+  assert.equal(promptData.defenseType, "dodge");
+  assert.equal(promptData.attributeKey, "dodge");
+});

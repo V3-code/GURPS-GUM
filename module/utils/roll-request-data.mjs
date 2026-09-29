@@ -1,4 +1,5 @@
 import { normalizePurposeIds } from "./roll-purposes.mjs";
+import { REQUESTED_ATTRIBUTE_KEYS } from "./requested-attributes.mjs";
 
 const numberOr = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -14,7 +15,7 @@ const optionalNonNegativeNumber = (value) => {
 export function normalizeRollTest(test = {}) {
   const legacyKey = String(test.attributeKey ?? test.attribute ?? test.roll_attribute ?? "ht").trim();
   const normalizedLegacyKey = legacyKey.toLowerCase();
-  const attributeKeys = new Set(["st", "dx", "iq", "ht", "per", "vont", "will", "vontade", "percepcao", "percepção"]);
+  const attributeKeys = new Set([...REQUESTED_ATTRIBUTE_KEYS, "will", "vontade", "percepcao", "percepção"]);
   let type = test.type ?? test.testType;
   if (!type) type = normalizedLegacyKey === "fixed" ? "fixed" : attributeKeys.has(normalizedLegacyKey) ? "attribute" : "skill";
   if (type === "custom-skill") type = "customSkill";

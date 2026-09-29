@@ -4,6 +4,7 @@ import { isUserAuthorizedForTarget } from "../utils/test-request-targets.mjs";
 import { executeRollRequest, resolveRequestedTest } from "./roll-request-service.js";
 import { runWithChatButtonDisabled } from "../utils/chat-button-state.mjs";
 import { formatTestRequestStatus, prepareModifierBreakdown, prepareResponseHistory } from "../utils/test-request-view.mjs";
+import { getRequestedAttributeOption, resolveRequestedAttribute } from "../utils/requested-attributes.mjs";
 
 const queues = new Map();
 const duplicate = value => foundry.utils.duplicate(value);
@@ -36,8 +37,8 @@ export async function renderTestRequestMessage(request) {
     let unavailableReason = null;
     if (!actor) unavailableReason = "O personagem não está mais disponível.";
     else if (request.test.type === "attribute") {
-      const value = Number(actor.system?.attributes?.[request.test.attributeKey]?.final ?? actor.system?.attributes?.[request.test.attributeKey]?.value);
-      if (!Number.isFinite(value)) unavailableReason = "O atributo solicitado não está disponível.";
+      const resolution = resolveRequestedAttribute(actor.system?.attributes, request.test.attributeKey);
+      if (!resolution.available) unavailableReason = resolution.reason;
     } else {
       const definition = canonicalSkill ? { ...request.test, predefined: canonicalSkill.system?.predefined } : request.test;
       const resolution = await resolveRequestedTest(actor, definition);
@@ -52,7 +53,7 @@ export async function renderTestRequestMessage(request) {
       responsePurposeLabels: getPurposeLabels(response?.purposeIds), modifierBreakdown: prepareModifierBreakdown(response, request.test.fixedModifier, request.test.fixedModifierLabel), ...history };
   }));
   return renderTemplate("systems/gum/templates/chat/test-request-card.hbs", { request, progress, progressPercent, purposes, targets,
-    testLabel: request.test.type === "attribute" ? request.test.attributeKey?.toUpperCase() : request.test.skillName });
+    testLabel: request.test.type === "attribute" ? (getRequestedAttributeOption(request.test.attributeKey)?.label ?? request.test.attributeKey?.toUpperCase()) : request.test.skillName });
 }
 
 export async function createTestRequestMessage(data) {
