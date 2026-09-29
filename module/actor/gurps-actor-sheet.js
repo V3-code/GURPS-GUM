@@ -939,13 +939,18 @@ async getData(options) {
         const equipmentAttackGroups = (context.equipmentInUseForCombat || []).map(item => {
             const prepareDamageDisplay = (damage = {}) => ({
                 ...damage,
-                display_formula: resolveAttackDamageDisplay(damage.formula, this.actor.system.attributes)
+                display_formula: resolveAttackDamageDisplay(damage.formula, this.actor.system.attributes),
+                nature_display: damage.nature ? formatDamageNature(damage.nature) : ""
             });
             const prepareAttackDamageDisplay = (attack) => ({
-                damage_formula: attack.effective_damage_formula || attack.damage_formula,
-                damage_display_formula: resolveAttackDamageDisplay(attack.effective_damage_formula || attack.damage_formula, this.actor.system.attributes),
-                follow_up_damage: prepareDamageDisplay(attack.follow_up_damage),
-                fragmentation_damage: prepareDamageDisplay(attack.fragmentation_damage)
+                damage_formula: attack.effective_damage?.main?.formula || attack.effective_damage_formula || attack.damage_formula,
+                damage_display_formula: resolveAttackDamageDisplay(attack.effective_damage?.main?.formula || attack.effective_damage_formula || attack.damage_formula, this.actor.system.attributes),
+                damage_type: attack.effective_damage?.main?.type ?? attack.damage_type,
+                damage_nature: attack.effective_damage?.main?.nature ?? attack.damage_nature,
+                damage_nature_display: (attack.effective_damage?.main?.nature ?? attack.damage_nature) ? formatDamageNature(attack.effective_damage?.main?.nature ?? attack.damage_nature) : "",
+                armor_divisor: attack.effective_damage?.main?.armor_divisor ?? attack.armor_divisor,
+                follow_up_damage: prepareDamageDisplay(attack.effective_damage?.follow_up || attack.follow_up_damage),
+                fragmentation_damage: prepareDamageDisplay(attack.effective_damage?.fragmentation || attack.fragmentation_damage)
             });
             
             // 2. Processa os Ataques Corpo a Corpo (Melee)
@@ -3198,19 +3203,25 @@ html.on("click", ".rollable-damage", async (ev) => {
       return;
     }
 
+    const effectiveDamage = game.gum?.resolveCombatDamageProfile?.(
+      this.actor,
+      item,
+      attack,
+      item.system.melee_attacks?.[attackId] ? "melee" : "ranged",
+      { includeTargeted: true }
+    ) || {
+      main: { formula: attack.effective_damage_formula || attack.damage_formula, type: attack.damage_type, nature: attack.damage_nature || "", armor_divisor: attack.armor_divisor },
+      follow_up: foundry.utils.duplicate(attack.follow_up_damage || {}),
+      fragmentation: foundry.utils.duplicate(attack.fragmentation_damage || {})
+    };
     normalizedAttack = {
       name: `${item.name} (${attack.mode ?? attackId})`,
-      formula: game.gum?.resolveCombatDamageFormula?.(
-        this.actor,
-        item,
-        attack,
-        item.system.melee_attacks?.[attackId] ? "melee" : "ranged"
-      ) || attack.effective_damage_formula || attack.damage_formula,
-      type: attack.damage_type,
-      nature: attack.damage_nature || "",
-      armor_divisor: attack.armor_divisor,
-      follow_up_damage: foundry.utils.duplicate(attack.follow_up_damage || {}),
-      fragmentation_damage: foundry.utils.duplicate(attack.fragmentation_damage || {}),
+      formula: effectiveDamage.main.formula,
+      type: effectiveDamage.main.type,
+      nature: effectiveDamage.main.nature || "",
+      armor_divisor: effectiveDamage.main.armor_divisor,
+      follow_up_damage: effectiveDamage.follow_up,
+      fragmentation_damage: effectiveDamage.fragmentation,
       onDamageEffects: attack.onDamageEffects || {},
             generalConditions: item.system.generalConditions || {},
       sourceItemId: item.id,
@@ -3305,19 +3316,22 @@ html.on("click", ".rollable-damage", async (ev) => {
       displayFormula: mainDisplayFormula,
       summaryFormula: summarySegments.join(" • "),
       type: normalizedAttack.type || "",
-      natureDisplay: normalizedAttack.nature || ""
+      natureDisplay: normalizedAttack.nature || "",
+      armorDivisor: normalizedAttack.armor_divisor || 1
     },
     followUp: {
       formula: normalizedAttack.follow_up_damage?.formula || "",
       displayFormula: normalizedAttack.follow_up_damage?.formula ? extractMathFormula(resolveBaseDamage(this.actor, normalizedAttack.follow_up_damage.formula)) : "",
       type: normalizedAttack.follow_up_damage?.type || "",
-      natureDisplay: normalizedAttack.follow_up_damage?.nature || ""
+      natureDisplay: normalizedAttack.follow_up_damage?.nature || "",
+      armorDivisor: normalizedAttack.follow_up_damage?.armor_divisor || 1
     },
     fragmentation: {
       formula: normalizedAttack.fragmentation_damage?.formula || "",
       displayFormula: normalizedAttack.fragmentation_damage?.formula ? extractMathFormula(resolveBaseDamage(this.actor, normalizedAttack.fragmentation_damage.formula)) : "",
       type: normalizedAttack.fragmentation_damage?.type || "",
-      natureDisplay: normalizedAttack.fragmentation_damage?.nature || ""
+      natureDisplay: normalizedAttack.fragmentation_damage?.nature || "",
+      armorDivisor: normalizedAttack.fragmentation_damage?.armor_divisor || 1
     }
   });
 

@@ -7177,6 +7177,27 @@ color:#121114;
   color: #e5a49b;
 }
 
+.gum.sheet.item.effect-sheet .effect-combat-damage-changes {
+  display: grid;
+  gap: 10px;
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-damage-change {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  padding: 10px 44px 10px 10px;
+  border: 1px solid rgba(229, 164, 155, 0.16);
+  border-radius: 8px;
+  background: rgba(14, 17, 22, 0.42);
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-damage-change > .remove-combat-damage-change {
+  position: absolute;
+  top: 10px;
+  right: 8px;
+}
+
 @media (max-width: 720px) {
   .gum.sheet.item.effect-sheet .effect-specialized-grid-two,
   .gum.sheet.item.effect-sheet .effect-specialized-grid-three,

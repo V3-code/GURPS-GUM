@@ -8,7 +8,7 @@
     {{#each visualCards as |card|}}
       <div class="damage-visual-card tone-{{card.tone}}">
         <div class="damage-card-formula">{{card.formula}}</div>
-        <div class="damage-card-meta">{{#if card.type}}{{card.type}}{{/if}}</div>
+	        <div class="damage-card-meta">{{card.meta}}</div>
       </div>
     {{/each}}
   </section>

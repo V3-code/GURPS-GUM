@@ -41,6 +41,7 @@ import { BASIC_DAMAGE_KEYS, normalizeBasicDamageData, prepareBasicDamageAttribut
 import { resolveConditionalValue } from "../module/utils/effect-value-expression.mjs";
 import { evaluateModifierRollFormulaSync, hasModifierRollFormula } from "../module/utils/modifier-roll-formula.mjs";
 import { resolveAttackDamageDisplay } from "../module/utils/attack-damage-display.mjs";
+import { resolveDamageNature } from "../module/utils/damage-nature.mjs";
 import { canUserCreateActors } from "../module/utils/actor-creation-permission.mjs";
 import { resolveRollReference } from "../module/utils/roll-reference-resolver.mjs";
 import { contentSourceService } from "../module/services/content-source-service.mjs";
@@ -119,42 +120,62 @@ function _evaluateCombatAttackValue(actor, entry, rollData = {}) {
     }, rollData, { allowDice: false });
 }
 
-function _applyCombatDamageModifiers(actor, item, attack, attackType, { includeTargeted = false, rollData = {} } = {}) {
-    let formula = resolveAttackDamageDisplay(attack?.damage_formula || "", actor?.system?.attributes || {});
+function _applyFormulaDamageChange(formula, actor, entry, change, rollData) {
+    const rawValue = _resolveConditionalDamageValue(actor, { ...entry, ...change, damage_value: change.value, damage_operation: change.operation, damage_value_mode: change.value_mode }, rollData);
+    const rawCap = _evaluateModifierValue(actor, change.cap, rollData, { allowDice: false });
+    const damageCap = Number.isFinite(rawCap) && rawCap > 0 ? Math.abs(rawCap) : null;
+    if (change.operation === "override") {
+        const replacement = resolveAttackDamageDisplay(String(rawValue || "0"), actor?.system?.attributes || {});
+        return damageCap ? `{(${replacement}),${damageCap}}kl` : replacement;
+    }
+    if (change.operation === "extra_dice") {
+        if (!String(rawValue).trim() || String(rawValue).trim() === "0") return formula;
+        const addition = damageCap ? `{(${rawValue}),${damageCap}}kl` : `(${rawValue})`;
+        return `(${formula})+${addition}`;
+    }
+    const numeric = _evaluateModifierValue(actor, rawValue, rollData, { allowDice: false });
+    if (!Number.isFinite(numeric) || numeric === 0) return formula;
+    const multiplier = change.operation === "per_die"
+        ? Math.max(1, Array.from(String(formula).matchAll(/(\d+)d(?:6)?/gi)).reduce((sum, match) => sum + Number(match[1] || 0), 0))
+        : 1;
+    const uncappedBonus = numeric * multiplier;
+    const bonus = damageCap ? Math.sign(uncappedBonus) * Math.min(Math.abs(uncappedBonus), damageCap) : uncappedBonus;
+    return `(${formula})${bonus >= 0 ? "+" : ""}${bonus}`;
+}
+
+export function resolveCombatDamageProfile(actor, item, attack, attackType, { includeTargeted = false, rollData = {} } = {}) {
+    const profile = {
+        main: { formula: attack?.damage_formula || "", type: attack?.damage_type || "", nature: attack?.damage_nature || "", armor_divisor: attack?.armor_divisor || 1 },
+        follow_up: foundry.utils.deepClone(attack?.follow_up_damage || {}),
+        fragmentation: foundry.utils.deepClone(attack?.fragmentation_damage || {})
+    };
+    profile.main.formula = resolveAttackDamageDisplay(profile.main.formula, actor?.system?.attributes || {});
     const damageRollData = { ...rollData, itemId: item?.id, itemName: item?.name, attackId: attack?.id, attackType, type: "damage" };
     const candidates = _collectCombatModifierEntries(actor, item, attack, attackType);
     if (includeTargeted) candidates.push(..._collectTargetCombatModifierEntries(actor, item, attack, attackType, damageRollData));
     for (const { entry, evaluationActor } of candidates) {
         if (!entry.damage_enabled) continue;
-        const rawValue = _resolveConditionalDamageValue(evaluationActor, entry, damageRollData);
-        const rawCap = _evaluateModifierValue(evaluationActor, entry.damage_cap, damageRollData, { allowDice: false });
-        const damageCap = Number.isFinite(rawCap) && rawCap > 0 ? Math.abs(rawCap) : null;
-        if (entry.damage_operation === "override") {
-            const replacement = resolveAttackDamageDisplay(String(rawValue || "0"), actor?.system?.attributes || {});
-            formula = damageCap ? `{(${replacement}),${damageCap}}kl` : replacement;
-            continue;
-        }
-        if (entry.damage_operation === "extra_dice") {
-            if (String(rawValue).trim() && String(rawValue).trim() !== "0") {
-                const addition = damageCap ? `{(${rawValue}),${damageCap}}kl` : `(${rawValue})`;
-                formula = `(${formula})+${addition}`;
+        const changes = entry.damage_changes?.length ? entry.damage_changes : [{ component: "main", property: "formula", operation: entry.damage_operation, value: entry.damage_value, value_mode: entry.damage_value_mode, cap: entry.damage_cap, origin_level: entry.origin_level, defer_value_evaluation: entry.defer_value_evaluation }];
+        for (const change of changes) {
+            const component = profile[change.component] || profile.main;
+            if (change.property === "formula") {
+                const baseFormula = resolveAttackDamageDisplay(component.formula || "0", actor?.system?.attributes || {});
+                component.formula = _applyFormulaDamageChange(baseFormula, evaluationActor, entry, change, damageRollData);
+                continue;
             }
-            continue;
+            const value = _resolveConditionalDamageValue(evaluationActor, { ...entry, ...change, damage_value: change.value, damage_value_mode: change.value_mode }, damageRollData);
+            if (change.property === "armor_divisor") {
+                const divisor = Number(value);
+                if (Number.isFinite(divisor) && divisor > 0) component.armor_divisor = divisor;
+            } else if (change.property === "type") component.type = String(value || "").trim();
+            else if (change.property === "nature") component.nature = resolveDamageNature(String(value || "").trim()) || String(value || "").trim();
         }
-        const numeric = _evaluateModifierValue(evaluationActor, rawValue, damageRollData, { allowDice: false });
-        if (!Number.isFinite(numeric) || numeric === 0) continue;
-        const multiplier = entry.damage_operation === "per_die"
-            ? Math.max(1, Array.from(String(formula).matchAll(/(\d+)d(?:6)?/gi)).reduce((sum, match) => sum + Number(match[1] || 0), 0))
-            : 1;
-        const uncappedBonus = numeric * multiplier;
-        const bonus = damageCap ? Math.sign(uncappedBonus) * Math.min(Math.abs(uncappedBonus), damageCap) : uncappedBonus;
-        formula = `(${formula})${bonus >= 0 ? "+" : ""}${bonus}`;
     }
-    return formula;
+    return profile;
 }
 
 export function resolveCombatDamageFormula(actor, item, attack, attackType, rollData = {}) {
-    return _applyCombatDamageModifiers(actor, item, attack, attackType, { includeTargeted: true, rollData });
+    return resolveCombatDamageProfile(actor, item, attack, attackType, { includeTargeted: true, rollData }).main.formula;
 }
 
 async function renderSpecializedSkillNames(app, html) {
@@ -1038,7 +1059,8 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                         const attackNhBonuses = collectNhBonusesForAttack(i, attack, "melee");
                         attack.final_nh = attackSkillNh === null ? null : attackSkillNh + attackNhBonuses.passive + attackNhBonuses.temp;
                         attack.resolved_skill_name = resolvedAttackBase.label;
-                        attack.effective_damage_formula = _applyCombatDamageModifiers(this, i, attack, "melee");
+                        attack.effective_damage = resolveCombatDamageProfile(this, i, attack, "melee");
+                        attack.effective_damage_formula = attack.effective_damage.main.formula;
                         const combatModifierEntries = _collectCombatModifierEntries(this, i, attack, "melee");
 
 const splitDefenseValue = (value) => {
@@ -1107,7 +1129,8 @@ const splitDefenseValue = (value) => {
                         const attackNhBonuses = collectNhBonusesForAttack(i, attack, "ranged");
                         attack.final_nh = attackSkillNh === null ? null : attackSkillNh + attackNhBonuses.passive + attackNhBonuses.temp;
                         attack.resolved_skill_name = resolvedAttackBase.label;
-                        attack.effective_damage_formula = _applyCombatDamageModifiers(this, i, attack, "ranged");
+                        attack.effective_damage = resolveCombatDamageProfile(this, i, attack, "ranged");
+                        attack.effective_damage_formula = attack.effective_damage.main.formula;
                     }
                 }
             } catch (e) { console.error(`GUM | Erro ao calcular NH de ataque para ${i.name}:`, e); }
@@ -1541,20 +1564,15 @@ async function _rollDamageFromChatAction(payload) {
     if (attackId && (item.system?.melee_attacks || item.system?.ranged_attacks)) {
         const attack = item.system.melee_attacks?.[attackId] || item.system.ranged_attacks?.[attackId];
         if (attack?.effective_damage_formula || attack?.damage_formula) {
+            const effectiveDamage = resolveCombatDamageProfile(actor, item, attack, item.system?.melee_attacks?.[attackId] ? "melee" : "ranged", { includeTargeted: true, rollData: payload });
             normalizedAttack = {
                 name: payload.sourceLabel || `${item.name} (${attack.mode ?? attackId})`,
-                formula: resolveCombatDamageFormula(
-                    actor,
-                    item,
-                    attack,
-                    item.system?.melee_attacks?.[attackId] ? "melee" : "ranged",
-                    payload
-                ),
-                type: attack.damage_type,
-                nature: attack.damage_nature || "",
-                armor_divisor: attack.armor_divisor,
-                follow_up_damage: foundry.utils.duplicate(attack.follow_up_damage || {}),
-                fragmentation_damage: foundry.utils.duplicate(attack.fragmentation_damage || {}),
+                formula: effectiveDamage.main.formula,
+                type: effectiveDamage.main.type,
+                nature: effectiveDamage.main.nature || "",
+                armor_divisor: effectiveDamage.main.armor_divisor,
+                follow_up_damage: effectiveDamage.follow_up,
+                fragmentation_damage: effectiveDamage.fragmentation,
                 onDamageEffects: attack.onDamageEffects || {},
                 generalConditions: item.system.generalConditions || {},
                 sourceItemId: item.id,
@@ -1639,17 +1657,20 @@ async function _rollDamageFromChatAction(payload) {
             displayFormula: mainDisplayFormula,
             summaryFormula: summarySegments.join(" • "),
                         type: normalizedAttack.type || "",
-            natureDisplay: normalizedAttack.nature || ""
+            natureDisplay: normalizedAttack.nature || "",
+            armorDivisor: normalizedAttack.armor_divisor || 1
         },
         followUp: {
             formula: normalizedAttack.follow_up_damage?.formula || "",
             type: normalizedAttack.follow_up_damage?.type || "",
-            natureDisplay: normalizedAttack.follow_up_damage?.nature || ""
+            natureDisplay: normalizedAttack.follow_up_damage?.nature || "",
+            armorDivisor: normalizedAttack.follow_up_damage?.armor_divisor || 1
         },
         fragmentation: {
             formula: normalizedAttack.fragmentation_damage?.formula || "",
             type: normalizedAttack.fragmentation_damage?.type || "",
-            natureDisplay: normalizedAttack.fragmentation_damage?.nature || ""
+            natureDisplay: normalizedAttack.fragmentation_damage?.nature || "",
+            armorDivisor: normalizedAttack.fragmentation_damage?.armor_divisor || 1
         }
     });
 
@@ -2700,6 +2721,7 @@ Hooks.once('init', async function() {
     game.gum.applySingleEffect = applySingleEffect;
     game.gum.getEffectActions = getEffectActions;
     game.gum.resolveCombatDamageFormula = resolveCombatDamageFormula;
+    game.gum.resolveCombatDamageProfile = resolveCombatDamageProfile;
     game.gum.resolveTargetCombatDefenseRecalculationModifiers = resolveTargetCombatDefenseRecalculationModifiers;
     game.gum.setStateEffectGroupActive = setStateEffectGroupActive;
     game.gum.syncItemStateEffects = syncItemStateEffects;
