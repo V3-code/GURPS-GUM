@@ -156,19 +156,38 @@ export function resolveCombatDamageProfile(actor, item, attack, attackType, { in
     for (const { entry, evaluationActor } of candidates) {
         if (!entry.damage_enabled) continue;
         const changes = entry.damage_changes?.length ? entry.damage_changes : [{ component: "main", property: "formula", operation: entry.damage_operation, value: entry.damage_value, value_mode: entry.damage_value_mode, cap: entry.damage_cap, origin_level: entry.origin_level, defer_value_evaluation: entry.defer_value_evaluation }];
-        for (const change of changes) {
+        for (const rawChange of changes) {
+            const legacyProperty = rawChange.property || "formula";
+            const change = legacyProperty === "formula" ? rawChange : {
+                ...rawChange,
+                operation: "fixed",
+                value: 0,
+                replace_armor_divisor: rawChange.replace_armor_divisor ?? (legacyProperty === "armor_divisor" ? rawChange.value : ""),
+                replace_type: rawChange.replace_type ?? (legacyProperty === "type" ? rawChange.value : ""),
+                replace_nature: rawChange.replace_nature ?? (legacyProperty === "nature" ? rawChange.value : "")
+            };
             const component = profile[change.component] || profile.main;
-            if (change.property === "formula") {
-                const baseFormula = resolveAttackDamageDisplay(component.formula || "0", actor?.system?.attributes || {});
-                component.formula = _applyFormulaDamageChange(baseFormula, evaluationActor, entry, change, damageRollData);
-                continue;
-            }
-            const value = _resolveConditionalDamageValue(evaluationActor, { ...entry, ...change, damage_value: change.value, damage_value_mode: change.value_mode }, damageRollData);
-            if (change.property === "armor_divisor") {
-                const divisor = Number(value);
+            const baseFormula = resolveAttackDamageDisplay(component.formula || "0", actor?.system?.attributes || {});
+            component.formula = _applyFormulaDamageChange(baseFormula, evaluationActor, entry, change, damageRollData);
+
+            const resolveReplacement = replacement => _resolveConditionalDamageValue(evaluationActor, {
+                ...entry,
+                damage_value: replacement,
+                damage_value_mode: "fixed",
+                defer_value_evaluation: false
+            }, damageRollData);
+            if (String(change.replace_armor_divisor ?? "").trim()) {
+                const divisor = Number(resolveReplacement(change.replace_armor_divisor));
                 if (Number.isFinite(divisor) && divisor > 0) component.armor_divisor = divisor;
-            } else if (change.property === "type") component.type = String(value || "").trim();
-            else if (change.property === "nature") component.nature = resolveDamageNature(String(value || "").trim()) || String(value || "").trim();
+            }
+            if (String(change.replace_type ?? "").trim()) {
+                const type = String(resolveReplacement(change.replace_type) ?? "").trim();
+                if (type && type !== "0") component.type = type;
+            }
+            if (String(change.replace_nature ?? "").trim()) {
+                const nature = String(resolveReplacement(change.replace_nature) ?? "").trim();
+                if (nature && nature !== "0") component.nature = resolveDamageNature(nature) || nature;
+            }
         }
     }
     return profile;

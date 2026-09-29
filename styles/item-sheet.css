@@ -7183,25 +7183,37 @@ color:#121114;
 }
 
 .gum.sheet.item.effect-sheet .effect-combat-damage-change {
-  position: relative;
   display: grid;
   gap: 8px;
-  padding: 10px 44px 10px 10px;
+  padding: 10px;
   border: 1px solid rgba(229, 164, 155, 0.16);
   border-radius: 8px;
   background: rgba(14, 17, 22, 0.42);
 }
 
-.gum.sheet.item.effect-sheet .effect-combat-damage-change > .remove-combat-damage-change {
-  position: absolute;
-  top: 10px;
-  right: 8px;
+.gum.sheet.item.effect-sheet .effect-combat-damage-change-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 34px;
+  gap: 8px;
+  align-items: end;
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-damage-formula-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) minmax(150px, 1fr) minmax(90px, 0.65fr);
+  gap: 8px;
+  align-items: end;
 }
 
 @media (max-width: 720px) {
   .gum.sheet.item.effect-sheet .effect-specialized-grid-two,
   .gum.sheet.item.effect-sheet .effect-specialized-grid-three,
   .gum.sheet.item.effect-sheet .effect-specialized-grid-value {
+    grid-template-columns: 1fr;
+  }
+
+  .gum.sheet.item.effect-sheet .effect-combat-damage-change-header,
+  .gum.sheet.item.effect-sheet .effect-combat-damage-formula-row {
     grid-template-columns: 1fr;
   }
 }

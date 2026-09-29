@@ -47,15 +47,6 @@ export class GurpsDamageRollPrompt extends FormApplication {
                 tone: "standard"
             },
             {
-                key: "fragmentation",
-                label: "Dano de Fragmentação",
-                type: fragmentation.type,
-                armorDivisor: fragmentation.armorDivisor,
-                nature: fragmentation.natureDisplay,
-                formula: this._simplifyFormula(this._cleanFormula(fragmentation.displayFormula || fragmentation.formula)),
-                tone: "fragmentation"
-            },
-            {
                 key: "followUp",
                 label: "Dano de Acompanhamento",
                 type: followUp.type,
@@ -63,6 +54,15 @@ export class GurpsDamageRollPrompt extends FormApplication {
                 nature: followUp.natureDisplay,
                 formula: this._simplifyFormula(this._cleanFormula(followUp.displayFormula || followUp.formula)),
                 tone: "followup"
+            },
+            {
+                key: "fragmentation",
+                label: "Dano de Fragmentação",
+                type: fragmentation.type,
+                armorDivisor: fragmentation.armorDivisor,
+                nature: fragmentation.natureDisplay,
+                formula: this._simplifyFormula(this._cleanFormula(fragmentation.displayFormula || fragmentation.formula)),
+                tone: "fragmentation"
             }
         ].filter((card) => card.formula).map(card => ({
             ...card,
@@ -182,8 +182,8 @@ export class GurpsDamageRollPrompt extends FormApplication {
 
         return [
             { key: "main", label: "Dano Padrão", tone: "standard", formula: this._applyOptionalDiceNormalization(mainFormula), type: mainType, armorDivisor: this.damageData.main?.armorDivisor, nature: this.damageData.main?.natureDisplay },
-            { key: "fragmentation", label: "Dano de Fragmentação", tone: "fragmentation", formula: this._applyOptionalDiceNormalization(fragFormula), type: fragType, armorDivisor: this.damageData.fragmentation?.armorDivisor, nature: this.damageData.fragmentation?.natureDisplay },
-            { key: "followUp", label: "Dano de Acompanhamento", tone: "followup", formula: this._applyOptionalDiceNormalization(fuFormula), type: fuType, armorDivisor: this.damageData.followUp?.armorDivisor, nature: this.damageData.followUp?.natureDisplay }
+            { key: "followUp", label: "Dano de Acompanhamento", tone: "followup", formula: this._applyOptionalDiceNormalization(fuFormula), type: fuType, armorDivisor: this.damageData.followUp?.armorDivisor, nature: this.damageData.followUp?.natureDisplay },
+            { key: "fragmentation", label: "Dano de Fragmentação", tone: "fragmentation", formula: this._applyOptionalDiceNormalization(fragFormula), type: fragType, armorDivisor: this.damageData.fragmentation?.armorDivisor, nature: this.damageData.fragmentation?.natureDisplay }
         ].filter((card) => card.formula);
     }
 

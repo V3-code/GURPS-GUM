@@ -257,14 +257,17 @@ const normalizeAction = (action = {}) => {
         component: "main", property: "formula", operation: next.combat_damage_operation,
         value: next.combat_damage_value, value_mode: next.combat_damage_value_mode, cap: next.combat_damage_cap
     }]).map(change => {
-        const property = ["formula", "type", "armor_divisor", "nature"].includes(change?.property) ? change.property : "formula";
+        const legacyProperty = ["formula", "type", "armor_divisor", "nature"].includes(change?.property) ? change.property : "formula";
+        const isFormulaChange = legacyProperty === "formula";
         return {
             component: ["main", "follow_up", "fragmentation"].includes(change?.component) ? change.component : "main",
-            property,
-            operation: property === "formula" && ["fixed", "per_die", "extra_dice", "override"].includes(change?.operation) ? change.operation : "override",
-            value: normalizeRollModifierEntryValue(change?.value),
-            value_mode: property === "formula" && change?.value_mode === "per_origin_level" ? "per_origin_level" : "fixed",
-            cap: property === "formula" ? String(change?.cap ?? "").trim() : ""
+            operation: isFormulaChange && ["fixed", "per_die", "extra_dice", "override"].includes(change?.operation) ? change.operation : "fixed",
+            value: isFormulaChange ? normalizeRollModifierEntryValue(change?.value) : 0,
+            value_mode: isFormulaChange && change?.value_mode === "per_origin_level" ? "per_origin_level" : "fixed",
+            cap: isFormulaChange ? String(change?.cap ?? "").trim() : "",
+            replace_armor_divisor: String(change?.replace_armor_divisor ?? (legacyProperty === "armor_divisor" ? change?.value : "")).trim(),
+            replace_type: String(change?.replace_type ?? (legacyProperty === "type" ? change?.value : "")).trim(),
+            replace_nature: String(change?.replace_nature ?? (legacyProperty === "nature" ? change?.value : "")).trim()
         };
     });
     next.id = String(next.id || "");
@@ -392,7 +395,7 @@ export class EffectSheet extends ItemSheet {
                     ...change,
                     index: changeIndex,
                     displayIndex: changeIndex + 1,
-                    isFormula: change.property === "formula"
+                    hasReplacements: Boolean(change.replace_armor_divisor || change.replace_type || change.replace_nature)
                 }))
             };
             decoratedAction.requestedPurposeIdsCsv = action.requestedPurposeIds.join(",");
@@ -858,7 +861,7 @@ activateListeners(html) {
         const actions = getEffectActionsFromSystem(this.item.system);
         if (Number.isNaN(actionIndex) || !actions[actionIndex]) return;
         const changes = foundry.utils.deepClone(actions[actionIndex].combat_damage_changes || []);
-        changes.push({ component: "main", property: "formula", operation: "fixed", value: "0", value_mode: "fixed", cap: "" });
+        changes.push({ component: "main", operation: "fixed", value: "0", value_mode: "fixed", cap: "", replace_armor_divisor: "", replace_type: "", replace_nature: "" });
         actions[actionIndex].combat_damage_changes = changes;
         await this.item.update({ "system.actions": actions });
     });
@@ -871,7 +874,7 @@ activateListeners(html) {
         if (Number.isNaN(actionIndex) || Number.isNaN(changeIndex) || !actions[actionIndex]) return;
         const changes = foundry.utils.deepClone(actions[actionIndex].combat_damage_changes || []);
         changes.splice(changeIndex, 1);
-        actions[actionIndex].combat_damage_changes = changes.length ? changes : [{ component: "main", property: "formula", operation: "fixed", value: "0", value_mode: "fixed", cap: "" }];
+        actions[actionIndex].combat_damage_changes = changes.length ? changes : [{ component: "main", operation: "fixed", value: "0", value_mode: "fixed", cap: "", replace_armor_divisor: "", replace_type: "", replace_nature: "" }];
         await this.item.update({ "system.actions": actions });
     });
 
@@ -1114,7 +1117,7 @@ activateListeners(html) {
                 continue;
             }
             const rollEntryMatch = key.match(/^system\.actions\.(\d+)\.roll_modifier_entries\.(\d+)\.(label|value|value_mode|cap|contexts|application_side|target_kind|target_mode|target_values|source_item_ids|source_attack_ids|roll_tags|roll_tag_match|nh_display_mode)$/); 
-            const damageChangeMatch = key.match(/^system\.actions\.(\d+)\.combat_damage_changes\.(\d+)\.(component|property|operation|value|value_mode|cap)$/);
+            const damageChangeMatch = key.match(/^system\.actions\.(\d+)\.combat_damage_changes\.(\d+)\.(component|operation|value|value_mode|cap|replace_armor_divisor|replace_type|replace_nature)$/);
             if (damageChangeMatch) {
                 const actionIndex = Number(damageChangeMatch[1]);
                 const changeIndex = Number(damageChangeMatch[2]);

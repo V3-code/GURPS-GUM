@@ -25,3 +25,12 @@ test("every damage modifier row contains label, formula, type, and nature", () =
     assert.match(row, /Nature"/);
   }
 });
+
+test("damage prompt orders standard, follow-up, and fragmentation damage", () => {
+  for (const source of [promptSource, promptTemplate]) {
+    const standard = source.indexOf("Dano Padrão");
+    const followUp = source.indexOf("Dano de Acompanhamento");
+    const fragmentation = source.indexOf("Dano de Fragmentação");
+    assert.ok(standard >= 0 && standard < followUp && followUp < fragmentation);
+  }
+});

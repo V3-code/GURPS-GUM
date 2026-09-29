@@ -29,7 +29,9 @@ test("modo de combate separa ataque, defesas, recálculo e dano", () => {
   for (const field of ["combat_attack_enabled", "combat_parry_enabled", "combat_block_enabled", "combat_recalculate_parry", "combat_recalculate_block", "combat_damage_enabled"]) {
     assert.match(sheet, new RegExp(`\\.${field}\\"`));
   }
-  for (const field of ["component", "property", "operation", "value", "cap"]) assert.match(sheet, new RegExp(`combat_damage_changes\\.\\{\\{change\\.index\\}\\}\\.${field}`));
+  for (const field of ["component", "operation", "value", "value_mode", "cap", "replace_armor_divisor", "replace_type", "replace_nature"]) assert.match(sheet, new RegExp(`combat_damage_changes\\.\\{\\{change\\.index\\}\\}\\.${field}`));
+  assert.doesNotMatch(sheet, /combat_damage_changes\.\{\{change\.index\}\}\.property/);
+  assert.match(sheet, />Acompanhamento</);
   assert.match(main, /shouldRecalculate \? attack\.final_nh \+ rollOnlyAttackDelta : attackSkillNh/);
   assert.match(main, /change\.operation === "per_die"/);
   assert.match(main, /change\.operation === "extra_dice"/);
@@ -48,9 +50,9 @@ test("perfil efetivo alcança componentes, metadados, ficha e janela de dano", (
   const characterTemplate = read("templates/actors/characters.hbs");
   const damagePrompt = read("module/apps/damage-roll-prompt.js");
   assert.match(main, /profile\[change\.component\]/);
-  assert.match(main, /change\.property === "armor_divisor"/);
-  assert.match(main, /change\.property === "type"/);
-  assert.match(main, /change\.property === "nature"/);
+  assert.match(main, /change\.replace_armor_divisor/);
+  assert.match(main, /change\.replace_type/);
+  assert.match(main, /change\.replace_nature/);
   assert.match(actorSheet, /attack\.effective_damage\?\.follow_up/);
   assert.match(characterTemplate, /attack\.damage_nature_display/);
   assert.match(damagePrompt, /armorDivisor/);
