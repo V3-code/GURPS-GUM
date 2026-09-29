@@ -3288,7 +3288,7 @@ html.on("click", ".rollable-damage", async (ev) => {
   const resolveBaseDamage = (actor, formula) => resolveAttackDamageDisplay(formula, actor.system.attributes);
 
   const extractMathFormula = (formula) => {
-    const match = String(formula).match(/^([0-9dDkK+\-/*\s()]+)/i);
+    const match = String(formula).match(/^([0-9dDkKlLhH+\-/*\s(){},.]+)/i);
     return match ? match[1].trim() : "0";
   };
 
@@ -3316,21 +3316,21 @@ html.on("click", ".rollable-damage", async (ev) => {
       displayFormula: mainDisplayFormula,
       summaryFormula: summarySegments.join(" • "),
       type: normalizedAttack.type || "",
-      natureDisplay: normalizedAttack.nature || "",
+      natureDisplay: normalizedAttack.nature ? formatDamageNature(normalizedAttack.nature) : "",
       armorDivisor: normalizedAttack.armor_divisor || 1
     },
     followUp: {
       formula: normalizedAttack.follow_up_damage?.formula || "",
       displayFormula: normalizedAttack.follow_up_damage?.formula ? extractMathFormula(resolveBaseDamage(this.actor, normalizedAttack.follow_up_damage.formula)) : "",
       type: normalizedAttack.follow_up_damage?.type || "",
-      natureDisplay: normalizedAttack.follow_up_damage?.nature || "",
+      natureDisplay: normalizedAttack.follow_up_damage?.nature ? formatDamageNature(normalizedAttack.follow_up_damage.nature) : "",
       armorDivisor: normalizedAttack.follow_up_damage?.armor_divisor || 1
     },
     fragmentation: {
       formula: normalizedAttack.fragmentation_damage?.formula || "",
       displayFormula: normalizedAttack.fragmentation_damage?.formula ? extractMathFormula(resolveBaseDamage(this.actor, normalizedAttack.fragmentation_damage.formula)) : "",
       type: normalizedAttack.fragmentation_damage?.type || "",
-      natureDisplay: normalizedAttack.fragmentation_damage?.nature || "",
+      natureDisplay: normalizedAttack.fragmentation_damage?.nature ? formatDamageNature(normalizedAttack.fragmentation_damage.nature) : "",
       armorDivisor: normalizedAttack.fragmentation_damage?.armor_divisor || 1
     }
   });
@@ -3573,7 +3573,7 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
   const resolveBaseDamage = (f) => resolveAttackDamageDisplay(f, actor.system.attributes);
 
   const extractMathFormula = (f) => {
-    const match = String(f).match(/^([0-9dDkK+\-/*\s()]+)/i);
+    const match = String(f).match(/^([0-9dDkKlLhH+\-/*\s(){},.]+)/i);
     return match ? match[1].trim() : "0";
   };
 

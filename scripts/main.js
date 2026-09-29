@@ -41,7 +41,7 @@ import { BASIC_DAMAGE_KEYS, normalizeBasicDamageData, prepareBasicDamageAttribut
 import { resolveConditionalValue } from "../module/utils/effect-value-expression.mjs";
 import { evaluateModifierRollFormulaSync, hasModifierRollFormula } from "../module/utils/modifier-roll-formula.mjs";
 import { resolveAttackDamageDisplay } from "../module/utils/attack-damage-display.mjs";
-import { resolveDamageNature } from "../module/utils/damage-nature.mjs";
+import { formatDamageNature, resolveDamageNature } from "../module/utils/damage-nature.mjs";
 import { canUserCreateActors } from "../module/utils/actor-creation-permission.mjs";
 import { resolveRollReference } from "../module/utils/roll-reference-resolver.mjs";
 import { contentSourceService } from "../module/services/content-source-service.mjs";
@@ -120,12 +120,12 @@ function _evaluateCombatAttackValue(actor, entry, rollData = {}) {
     }, rollData, { allowDice: false });
 }
 
-function _applyFormulaDamageChange(formula, actor, entry, change, rollData) {
-    const rawValue = _resolveConditionalDamageValue(actor, { ...entry, ...change, damage_value: change.value, damage_operation: change.operation, damage_value_mode: change.value_mode }, rollData);
-    const rawCap = _evaluateModifierValue(actor, change.cap, rollData, { allowDice: false });
+function _applyFormulaDamageChange(formula, evaluationActor, damageActor, entry, change, rollData) {
+    const rawValue = _resolveConditionalDamageValue(evaluationActor, { ...entry, ...change, damage_value: change.value, damage_operation: change.operation, damage_value_mode: change.value_mode }, rollData);
+    const rawCap = _evaluateModifierValue(evaluationActor, change.cap, rollData, { allowDice: false });
     const damageCap = Number.isFinite(rawCap) && rawCap > 0 ? Math.abs(rawCap) : null;
     if (change.operation === "override") {
-        const replacement = resolveAttackDamageDisplay(String(rawValue || "0"), actor?.system?.attributes || {});
+        const replacement = resolveAttackDamageDisplay(String(rawValue || "0"), damageActor?.system?.attributes || {});
         return damageCap ? `{(${replacement}),${damageCap}}kl` : replacement;
     }
     if (change.operation === "extra_dice") {
@@ -133,7 +133,7 @@ function _applyFormulaDamageChange(formula, actor, entry, change, rollData) {
         const addition = damageCap ? `{(${rawValue}),${damageCap}}kl` : `(${rawValue})`;
         return `(${formula})+${addition}`;
     }
-    const numeric = _evaluateModifierValue(actor, rawValue, rollData, { allowDice: false });
+    const numeric = _evaluateModifierValue(evaluationActor, rawValue, rollData, { allowDice: false });
     if (!Number.isFinite(numeric) || numeric === 0) return formula;
     const multiplier = change.operation === "per_die"
         ? Math.max(1, Array.from(String(formula).matchAll(/(\d+)d(?:6)?/gi)).reduce((sum, match) => sum + Number(match[1] || 0), 0))
@@ -168,7 +168,7 @@ export function resolveCombatDamageProfile(actor, item, attack, attackType, { in
             };
             const component = profile[change.component] || profile.main;
             const baseFormula = resolveAttackDamageDisplay(component.formula || "0", actor?.system?.attributes || {});
-            component.formula = _applyFormulaDamageChange(baseFormula, evaluationActor, entry, change, damageRollData);
+            component.formula = _applyFormulaDamageChange(baseFormula, evaluationActor, actor, entry, change, damageRollData);
 
             const resolveReplacement = replacement => _resolveConditionalDamageValue(evaluationActor, {
                 ...entry,
@@ -1653,7 +1653,7 @@ async function _rollDamageFromChatAction(payload) {
     const resolveBaseDamage = (rollActor, formula) => resolveAttackDamageDisplay(formula, rollActor.system.attributes);
 
     const extractMathFormula = (formula) => {
-        const match = String(formula).match(/^([0-9dDkK+\-/*\s()]+)/i);
+        const match = String(formula).match(/^([0-9dDkKlLhH+\-/*\s(){},.]+)/i);
         return match ? match[1].trim() : "0";
     };
 
@@ -1676,19 +1676,19 @@ async function _rollDamageFromChatAction(payload) {
             displayFormula: mainDisplayFormula,
             summaryFormula: summarySegments.join(" • "),
                         type: normalizedAttack.type || "",
-            natureDisplay: normalizedAttack.nature || "",
+            natureDisplay: normalizedAttack.nature ? formatDamageNature(normalizedAttack.nature) : "",
             armorDivisor: normalizedAttack.armor_divisor || 1
         },
         followUp: {
             formula: normalizedAttack.follow_up_damage?.formula || "",
             type: normalizedAttack.follow_up_damage?.type || "",
-            natureDisplay: normalizedAttack.follow_up_damage?.nature || "",
+            natureDisplay: normalizedAttack.follow_up_damage?.nature ? formatDamageNature(normalizedAttack.follow_up_damage.nature) : "",
             armorDivisor: normalizedAttack.follow_up_damage?.armor_divisor || 1
         },
         fragmentation: {
             formula: normalizedAttack.fragmentation_damage?.formula || "",
             type: normalizedAttack.fragmentation_damage?.type || "",
-            natureDisplay: normalizedAttack.fragmentation_damage?.nature || "",
+            natureDisplay: normalizedAttack.fragmentation_damage?.nature ? formatDamageNature(normalizedAttack.fragmentation_damage.nature) : "",
             armorDivisor: normalizedAttack.fragmentation_damage?.armor_divisor || 1
         }
     });

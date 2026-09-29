@@ -59,6 +59,26 @@ test("perfil efetivo alcança componentes, metadados, ficha e janela de dano", (
   assert.match(damagePrompt, /formatDamageNature/);
 });
 
+test("dano direcionado separa o ator da condição do ator da fórmula", () => {
+  assert.match(main, /_applyFormulaDamageChange\(formula, evaluationActor, damageActor/);
+  assert.match(main, /resolveAttackDamageDisplay\(String\(rawValue \|\| "0"\), damageActor\?\.system\?\.attributes/);
+  assert.match(main, /_applyFormulaDamageChange\(baseFormula, evaluationActor, actor,/);
+});
+
+test("natureza efetiva chega formatada aos campos de texto do prompt", () => {
+  const actorSheet = read("module/actor/gurps-actor-sheet.js");
+  assert.match(main, /natureDisplay: normalizedAttack\.nature \? formatDamageNature\(normalizedAttack\.nature\)/);
+  assert.match(actorSheet, /natureDisplay: normalizedAttack\.nature \? formatDamageNature\(normalizedAttack\.nature\)/);
+});
+
+test("fórmulas com limite preservam pools keep-lowest até a rolagem", () => {
+  const actorSheet = read("module/actor/gurps-actor-sheet.js");
+  assert.match(main, /0-9dDkKlLhH[+]/);
+  assert.match(main, /\{\},\./);
+  assert.match(actorSheet, /0-9dDkKlLhH[+]/);
+  assert.match(actorSheet, /\{\},\./);
+});
+
 test("metadados de combate respeitam o lado da aplicação", () => {
   assert.match(main, /_resolveRollModifierApplicationSide\(entry, data\) !== "self"/);
   assert.match(main, /_resolveRollModifierApplicationSide\(entry, data\) !== "vs_targeter"/);
