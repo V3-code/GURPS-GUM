@@ -8,6 +8,7 @@ import { appendResistanceRequestResult, renderPendingChatRollRequest } from "../
 import { evaluateGurpsRollResult } from "../utils/gurps-roll-result.mjs";
 import { createRollRequestExecutor } from "./roll-request-executor.mjs";
 import { contentSourceService } from "./content-source-service.mjs";
+import { resolveRequestedAttribute } from "../utils/requested-attributes.mjs";
 
 const resultQueues = new Map();
 
@@ -22,9 +23,7 @@ export async function resolveRequestedTest(actor, rawTest = {}) {
   const test = request.test;
   if (test.type === "fixed") return { available: true, value: test.fixedValue, label: `Valor fixo ${test.fixedValue}`, type: "attribute" };
   if (test.type === "attribute") {
-    const value = Number(actor?.system?.attributes?.[test.attributeKey]?.final ?? actor?.system?.attributes?.[test.attributeKey]?.value);
-    return Number.isFinite(value) ? { available: true, value, label: test.attributeKey.toUpperCase(), type: "attribute", attributeKey: test.attributeKey }
-      : { available: false, reason: "O atributo solicitado não está disponível." };
+    return resolveRequestedAttribute(actor?.system?.attributes, test.attributeKey);
   }
   let definition = test;
   const localResolution = resolveSkillDefault(actor, test);
