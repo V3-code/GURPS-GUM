@@ -26,20 +26,57 @@ test("modificar perícia oferece escopos, NH e motor condicional", () => {
 });
 
 test("modo de combate separa ataque, defesas, recálculo e dano", () => {
-  for (const field of ["combat_attack_enabled", "combat_parry_enabled", "combat_block_enabled", "combat_recalculate_parry", "combat_recalculate_block", "combat_damage_enabled", "combat_damage_operation", "combat_damage_value", "combat_damage_cap"]) {
+  for (const field of ["combat_attack_enabled", "combat_parry_enabled", "combat_block_enabled", "combat_recalculate_parry", "combat_recalculate_block", "combat_damage_enabled"]) {
     assert.match(sheet, new RegExp(`\\.${field}\\"`));
   }
+  for (const field of ["component", "operation", "value", "value_mode", "cap", "replace_armor_divisor", "replace_type", "replace_nature"]) assert.match(sheet, new RegExp(`combat_damage_changes\\.\\{\\{change\\.index\\}\\}\\.${field}`));
+  assert.doesNotMatch(sheet, /combat_damage_changes\.\{\{change\.index\}\}\.property/);
+  assert.match(sheet, />Acompanhamento</);
   assert.match(main, /shouldRecalculate \? attack\.final_nh \+ rollOnlyAttackDelta : attackSkillNh/);
-  assert.match(main, /damage_operation === "per_die"/);
-  assert.match(main, /damage_operation === "extra_dice"/);
-  assert.match(main, /damage_operation === "override"/);
+  assert.match(main, /change\.operation === "per_die"/);
+  assert.match(main, /change\.operation === "extra_dice"/);
+  assert.match(main, /change\.operation === "override"/);
 });
 
 test("o efeito persiste metadados de combate e usa a fórmula efetiva", () => {
   assert.match(engine, /flags\.gum\.combatModifier/);
   assert.match(engine, /attack_context: attackContext,[\s\S]*?application_side/);
-  assert.match(main, /attack\.effective_damage_formula = _applyCombatDamageModifiers/);
-  assert.match(main, /formula: resolveCombatDamageFormula\(/);
+  assert.match(main, /attack\.effective_damage = resolveCombatDamageProfile/);
+  assert.match(main, /const effectiveDamage = resolveCombatDamageProfile/);
+});
+
+test("perfil efetivo alcança componentes, metadados, ficha e janela de dano", () => {
+  const actorSheet = read("module/actor/gurps-actor-sheet.js");
+  const characterTemplate = read("templates/actors/characters.hbs");
+  const damagePrompt = read("module/apps/damage-roll-prompt.js");
+  assert.match(main, /profile\[change\.component\]/);
+  assert.match(main, /change\.replace_armor_divisor/);
+  assert.match(main, /change\.replace_type/);
+  assert.match(main, /change\.replace_nature/);
+  assert.match(actorSheet, /attack\.effective_damage\?\.follow_up/);
+  assert.match(characterTemplate, /attack\.damage_nature_display/);
+  assert.match(damagePrompt, /armorDivisor/);
+  assert.match(damagePrompt, /formatDamageNature/);
+});
+
+test("dano direcionado separa o ator da condição do ator da fórmula", () => {
+  assert.match(main, /_applyFormulaDamageChange\(formula, evaluationActor, damageActor/);
+  assert.match(main, /resolveAttackDamageDisplay\(String\(rawValue \|\| "0"\), damageActor\?\.system\?\.attributes/);
+  assert.match(main, /_applyFormulaDamageChange\(baseFormula, evaluationActor, actor,/);
+});
+
+test("natureza efetiva chega formatada aos campos de texto do prompt", () => {
+  const actorSheet = read("module/actor/gurps-actor-sheet.js");
+  assert.match(main, /natureDisplay: normalizedAttack\.nature \? formatDamageNature\(normalizedAttack\.nature\)/);
+  assert.match(actorSheet, /natureDisplay: normalizedAttack\.nature \? formatDamageNature\(normalizedAttack\.nature\)/);
+});
+
+test("fórmulas com limite preservam pools keep-lowest até a rolagem", () => {
+  const actorSheet = read("module/actor/gurps-actor-sheet.js");
+  assert.match(main, /0-9dDkKlLhH[+]/);
+  assert.match(main, /\{\},\./);
+  assert.match(actorSheet, /0-9dDkKlLhH[+]/);
+  assert.match(actorSheet, /\{\},\./);
 });
 
 test("metadados de combate respeitam o lado da aplicação", () => {

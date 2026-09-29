@@ -210,6 +210,7 @@ const DEFAULT_EFFECT_ACTION = {
     combat_damage_value: "0",
     combat_damage_cap: "",
     combat_damage_value_mode: "fixed",
+    combat_damage_changes: [],
     whisperMode: "public",
     category: "hp",
     name: "",
@@ -312,6 +313,24 @@ const normalizeEffectAction = (action = {}) => {
     next.combat_damage_cap = String(next.combat_damage_cap ?? "").trim();
     for (const key of ["combat_attack_value_mode", "combat_parry_value_mode", "combat_block_value_mode", "combat_damage_value_mode"]) next[key] = normalizeEffectValueMode(next[key]);
     next.combat_damage_operation = ["fixed", "per_die", "extra_dice", "override"].includes(next.combat_damage_operation) ? next.combat_damage_operation : "fixed";
+    const rawDamageChanges = Array.isArray(next.combat_damage_changes) ? next.combat_damage_changes : [];
+    next.combat_damage_changes = (rawDamageChanges.length ? rawDamageChanges : [{
+        component: "main", property: "formula", operation: next.combat_damage_operation,
+        value: next.combat_damage_value, value_mode: next.combat_damage_value_mode, cap: next.combat_damage_cap
+    }]).map(change => {
+        const legacyProperty = ["formula", "type", "armor_divisor", "nature"].includes(change?.property) ? change.property : "formula";
+        const isFormulaChange = legacyProperty === "formula";
+        return {
+            component: ["main", "follow_up", "fragmentation"].includes(change?.component) ? change.component : "main",
+            operation: isFormulaChange && ["fixed", "per_die", "extra_dice", "override"].includes(change?.operation) ? change.operation : "fixed",
+            value: isFormulaChange ? normalizeRollModifierEntryValue(change?.value) : 0,
+            value_mode: isFormulaChange ? normalizeEffectValueMode(change?.value_mode) : "fixed",
+            cap: isFormulaChange ? String(change?.cap ?? "").trim() : "",
+            replace_armor_divisor: String(change?.replace_armor_divisor ?? (legacyProperty === "armor_divisor" ? change?.value : "")).trim(),
+            replace_type: String(change?.replace_type ?? (legacyProperty === "type" ? change?.value : "")).trim(),
+            replace_nature: String(change?.replace_nature ?? (legacyProperty === "nature" ? change?.value : "")).trim()
+        };
+    });
     return next;
 };
 
@@ -669,6 +688,11 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                                 const damageIsFormula = ["extra_dice", "override"].includes(action.combat_damage_operation)
                                     && !/^[+-]?\d+(?:\.\d+)?$/.test(String(action.combat_damage_value ?? "").trim());
                                 const deferredDamage = hasConditionalValueExpression(action.combat_damage_value) || damageIsFormula;
+                                const damageChanges = action.combat_damage_changes.map(change => {
+                                    const scaling = resolveEffectValueMetadata(change.value, change.value_mode, context.origin);
+                                    const defer = hasConditionalValueExpression(change.value) || (["extra_dice", "override"].includes(change.operation) && !/^[+-]?\d+(?:\.\d+)?$/.test(String(change.value ?? "").trim()));
+                                    return { ...change, value: defer ? change.value : scaling.effectiveValue, value_mode: scaling.valueMode, origin_level: scaling.originLevel, defer_value_evaluation: defer };
+                                });
                                 combatEntries.push({
                                     source_item_ids: specificCombatScope ? action.combat_source_item_ids || "" : "",
                                     source_attack_ids: specificCombatScope ? action.combat_source_attack_ids || "" : "",
@@ -688,6 +712,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                                     damage_value_mode: damageScaling.valueMode,
                                     origin_level: damageScaling.originLevel,
                                     defer_value_evaluation: deferredDamage
+                                    ,damage_changes: damageChanges
                                 });
                             }
                             if (combatEntries.length) activeEffectData.flags.gum.combatModifier = { entries: combatEntries };

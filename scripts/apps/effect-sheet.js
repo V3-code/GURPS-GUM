@@ -166,6 +166,7 @@ const DEFAULT_EFFECT_ACTION = {
     combat_damage_value: "0",
     combat_damage_cap: "",
     combat_damage_value_mode: "fixed",
+    combat_damage_changes: [],
     requestedPurposeIds: [],
     whisperMode: "public",
     category: "hp",
@@ -251,6 +252,24 @@ const normalizeAction = (action = {}) => {
     next.combat_damage_cap = String(next.combat_damage_cap ?? "").trim();
     for (const key of ["combat_attack_value_mode", "combat_parry_value_mode", "combat_block_value_mode", "combat_damage_value_mode"]) next[key] = next[key] === "per_origin_level" ? "per_origin_level" : "fixed";
     next.combat_damage_operation = ["fixed", "per_die", "extra_dice", "override"].includes(next.combat_damage_operation) ? next.combat_damage_operation : "fixed";
+    const rawDamageChanges = Array.isArray(next.combat_damage_changes) ? next.combat_damage_changes : [];
+    next.combat_damage_changes = (rawDamageChanges.length ? rawDamageChanges : [{
+        component: "main", property: "formula", operation: next.combat_damage_operation,
+        value: next.combat_damage_value, value_mode: next.combat_damage_value_mode, cap: next.combat_damage_cap
+    }]).map(change => {
+        const legacyProperty = ["formula", "type", "armor_divisor", "nature"].includes(change?.property) ? change.property : "formula";
+        const isFormulaChange = legacyProperty === "formula";
+        return {
+            component: ["main", "follow_up", "fragmentation"].includes(change?.component) ? change.component : "main",
+            operation: isFormulaChange && ["fixed", "per_die", "extra_dice", "override"].includes(change?.operation) ? change.operation : "fixed",
+            value: isFormulaChange ? normalizeRollModifierEntryValue(change?.value) : 0,
+            value_mode: isFormulaChange && change?.value_mode === "per_origin_level" ? "per_origin_level" : "fixed",
+            cap: isFormulaChange ? String(change?.cap ?? "").trim() : "",
+            replace_armor_divisor: String(change?.replace_armor_divisor ?? (legacyProperty === "armor_divisor" ? change?.value : "")).trim(),
+            replace_type: String(change?.replace_type ?? (legacyProperty === "type" ? change?.value : "")).trim(),
+            replace_nature: String(change?.replace_nature ?? (legacyProperty === "nature" ? change?.value : "")).trim()
+        };
+    });
     next.id = String(next.id || "");
     next.requestedPurposeIds = normalizePurposeIds(next.requestedPurposeIds ?? next.roll_requested_purpose_ids);
     return next;
@@ -371,7 +390,13 @@ export class EffectSheet extends ItemSheet {
                 rollModifierPrimaryContext: contextLabels.get(firstContext) || firstContext,
                 rollModifierPrimarySide: getShortApplicationSideLabel(primaryEntry.application_side || "self"),
                 isExpanded: this._isActionExpanded(index),
-                rollModifierEntries: entries
+                rollModifierEntries: entries,
+                combatDamageChanges: (action.combat_damage_changes || []).map((change, changeIndex) => ({
+                    ...change,
+                    index: changeIndex,
+                    displayIndex: changeIndex + 1,
+                    hasReplacements: Boolean(change.replace_armor_divisor || change.replace_type || change.replace_nature)
+                }))
             };
             decoratedAction.requestedPurposeIdsCsv = action.requestedPurposeIds.join(",");
             decoratedAction.purposeSelectionSummary = formatPurposeSelection(action.requestedPurposeIds);
@@ -830,6 +855,29 @@ activateListeners(html) {
         await this.item.update({ "system.actions": actions });
     });
 
+    html.on("click", ".add-combat-damage-change", async (ev) => {
+        ev.preventDefault();
+        const actionIndex = Number(ev.currentTarget.dataset.actionIndex);
+        const actions = getEffectActionsFromSystem(this.item.system);
+        if (Number.isNaN(actionIndex) || !actions[actionIndex]) return;
+        const changes = foundry.utils.deepClone(actions[actionIndex].combat_damage_changes || []);
+        changes.push({ component: "main", operation: "fixed", value: "0", value_mode: "fixed", cap: "", replace_armor_divisor: "", replace_type: "", replace_nature: "" });
+        actions[actionIndex].combat_damage_changes = changes;
+        await this.item.update({ "system.actions": actions });
+    });
+
+    html.on("click", ".remove-combat-damage-change", async (ev) => {
+        ev.preventDefault();
+        const actionIndex = Number(ev.currentTarget.dataset.actionIndex);
+        const changeIndex = Number(ev.currentTarget.dataset.changeIndex);
+        const actions = getEffectActionsFromSystem(this.item.system);
+        if (Number.isNaN(actionIndex) || Number.isNaN(changeIndex) || !actions[actionIndex]) return;
+        const changes = foundry.utils.deepClone(actions[actionIndex].combat_damage_changes || []);
+        changes.splice(changeIndex, 1);
+        actions[actionIndex].combat_damage_changes = changes.length ? changes : [{ component: "main", operation: "fixed", value: "0", value_mode: "fixed", cap: "", replace_armor_divisor: "", replace_type: "", replace_nature: "" }];
+        await this.item.update({ "system.actions": actions });
+    });
+
     html.on("click", ".remove-roll-mod-entry", async (ev) => {
         ev.preventDefault();
         ev.stopPropagation();
@@ -1052,6 +1100,7 @@ activateListeners(html) {
     async _updateObject(event, formData) {
         const actionEntries = new Map();
         const rollEntries = new Map();
+        const damageChanges = new Map();
         const branchEntries = new Map();
         if (Object.hasOwn(formData, "system.resistanceRoll.requestedPurposeIds")) {
             formData["system.resistanceRoll.requestedPurposeIds"] = normalizePurposeIds(formData["system.resistanceRoll.requestedPurposeIds"]);
@@ -1068,6 +1117,17 @@ activateListeners(html) {
                 continue;
             }
             const rollEntryMatch = key.match(/^system\.actions\.(\d+)\.roll_modifier_entries\.(\d+)\.(label|value|value_mode|cap|contexts|application_side|target_kind|target_mode|target_values|source_item_ids|source_attack_ids|roll_tags|roll_tag_match|nh_display_mode)$/); 
+            const damageChangeMatch = key.match(/^system\.actions\.(\d+)\.combat_damage_changes\.(\d+)\.(component|operation|value|value_mode|cap|replace_armor_divisor|replace_type|replace_nature)$/);
+            if (damageChangeMatch) {
+                const actionIndex = Number(damageChangeMatch[1]);
+                const changeIndex = Number(damageChangeMatch[2]);
+                if (!damageChanges.has(actionIndex)) damageChanges.set(actionIndex, new Map());
+                const changeMap = damageChanges.get(actionIndex);
+                if (!changeMap.has(changeIndex)) changeMap.set(changeIndex, {});
+                changeMap.get(changeIndex)[damageChangeMatch[3]] = value;
+                delete formData[key];
+                continue;
+            }
             if (rollEntryMatch) {
                 const actionIndex = Number(rollEntryMatch[1]);
                 const entryIndex = Number(rollEntryMatch[2]);
@@ -1124,9 +1184,9 @@ activateListeners(html) {
             formData["system.resistanceRoll.branches"] = normalizeBarrierBranches(branches);
         }
 
-        if (actionEntries.size || rollEntries.size) {
+        if (actionEntries.size || rollEntries.size || damageChanges.size) {
             const previousActions = getEffectActionsFromSystem(this.item.system);
-            const allIndexes = [...new Set([...actionEntries.keys(), ...rollEntries.keys()])].sort((a, b) => a - b);
+            const allIndexes = [...new Set([...actionEntries.keys(), ...rollEntries.keys(), ...damageChanges.keys()])].sort((a, b) => a - b);
             const actions = allIndexes.map((index) => {
                 const actionData = { ...(previousActions[index] || {}), ...(actionEntries.get(index) || {}) };
                 const entryMap = rollEntries.get(index);
@@ -1149,6 +1209,12 @@ activateListeners(html) {
                             roll_tag_match: entry.roll_tag_match === "all" ? "all" : "any",
                             nh_display_mode: (entry.roll_tags || "").toString().trim() ? "roll_only" : (entry.nh_display_mode || "roll_only").toString().trim() || "roll_only"
                         }));
+                }
+                const damageChangeMap = damageChanges.get(index);
+                if (damageChangeMap) {
+                    actionData.combat_damage_changes = Array.from(damageChangeMap.entries())
+                        .sort((a, b) => a[0] - b[0])
+                        .map(([, change]) => change);
                 }
                 return normalizeAction(actionData);
             });

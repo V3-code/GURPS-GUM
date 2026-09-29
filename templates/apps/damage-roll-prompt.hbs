@@ -8,7 +8,7 @@
     {{#each visualCards as |card|}}
       <div class="damage-visual-card tone-{{card.tone}}">
         <div class="damage-card-formula">{{card.formula}}</div>
-        <div class="damage-card-meta">{{#if card.type}}{{card.type}}{{/if}}</div>
+	        <div class="damage-card-meta">{{card.meta}}</div>
       </div>
     {{/each}}
   </section>
@@ -26,17 +26,6 @@
     </div>
 
     <div class="damage-row">
-      <label>Dano de Fragmentação</label>
-      <input type="text" name="fragmentationAdditional" data-formula-input="true" placeholder="Ex: 1d6+1" />
-      {{#if fragmentationTypeLocked}}
-        <input type="text" value="{{fragmentation.type}}" disabled />
-      {{else}}
-        <input type="text" name="fragmentationType" data-type-input="true" placeholder="Tipo..." />
-            {{/if}}
-      <input type="text" name="fragmentationNature" value="{{fragmentation.natureDisplay}}" list="gum-damage-natures" placeholder="Natureza (opcional)" />
-    </div>
-
-    <div class="damage-row">
       <label>Dano de Acompanhamento</label>
       <input type="text" name="followUpAdditional" data-formula-input="true" placeholder="Ex: 1d6" />
       {{#if followUpTypeLocked}}
@@ -45,6 +34,17 @@
         <input type="text" name="followUpType" data-type-input="true" placeholder="Tipo..." />
             {{/if}}
       <input type="text" name="followUpNature" value="{{followUp.natureDisplay}}" list="gum-damage-natures" placeholder="Natureza (opcional)" />
+    </div>
+
+    <div class="damage-row">
+      <label>Dano de Fragmentação</label>
+      <input type="text" name="fragmentationAdditional" data-formula-input="true" placeholder="Ex: 1d6+1" />
+      {{#if fragmentationTypeLocked}}
+        <input type="text" value="{{fragmentation.type}}" disabled />
+      {{else}}
+        <input type="text" name="fragmentationType" data-type-input="true" placeholder="Tipo..." />
+            {{/if}}
+      <input type="text" name="fragmentationNature" value="{{fragmentation.natureDisplay}}" list="gum-damage-natures" placeholder="Natureza (opcional)" />
     </div>
   </section>
 

@@ -41,24 +41,33 @@ export class GurpsDamageRollPrompt extends FormApplication {
                 key: "main",
                 label: "Dano Padrão",
                 type: main.type,
+                armorDivisor: main.armorDivisor,
+                nature: main.natureDisplay,
                 formula: this._simplifyFormula(this._cleanFormula(main.displayFormula)),
                 tone: "standard"
-            },
-            {
-                key: "fragmentation",
-                label: "Dano de Fragmentação",
-                type: fragmentation.type,
-                formula: this._simplifyFormula(this._cleanFormula(fragmentation.displayFormula || fragmentation.formula)),
-                tone: "fragmentation"
             },
             {
                 key: "followUp",
                 label: "Dano de Acompanhamento",
                 type: followUp.type,
+                armorDivisor: followUp.armorDivisor,
+                nature: followUp.natureDisplay,
                 formula: this._simplifyFormula(this._cleanFormula(followUp.displayFormula || followUp.formula)),
                 tone: "followup"
+            },
+            {
+                key: "fragmentation",
+                label: "Dano de Fragmentação",
+                type: fragmentation.type,
+                armorDivisor: fragmentation.armorDivisor,
+                nature: fragmentation.natureDisplay,
+                formula: this._simplifyFormula(this._cleanFormula(fragmentation.displayFormula || fragmentation.formula)),
+                tone: "fragmentation"
             }
-        ].filter((card) => card.formula);
+        ].filter((card) => card.formula).map(card => ({
+            ...card,
+            meta: [card.type, card.armorDivisor && Number(card.armorDivisor) !== 1 ? `Div. ${card.armorDivisor}` : "", card.nature ? formatDamageNature(card.nature) : ""].filter(Boolean).join(" · ")
+        }));
 
         return {
             sourceName: this.damageData.sourceName || "Rolagem de Dano",
@@ -172,9 +181,9 @@ export class GurpsDamageRollPrompt extends FormApplication {
         const fuFormula = this._composeCardFormula(this.damageData.followUp?.displayFormula || this.damageData.followUp?.formula, fuAdd);
 
         return [
-            { key: "main", label: "Dano Padrão", tone: "standard", formula: this._applyOptionalDiceNormalization(mainFormula), type: mainType },
-            { key: "fragmentation", label: "Dano de Fragmentação", tone: "fragmentation", formula: this._applyOptionalDiceNormalization(fragFormula), type: fragType },
-            { key: "followUp", label: "Dano de Acompanhamento", tone: "followup", formula: this._applyOptionalDiceNormalization(fuFormula), type: fuType }
+            { key: "main", label: "Dano Padrão", tone: "standard", formula: this._applyOptionalDiceNormalization(mainFormula), type: mainType, armorDivisor: this.damageData.main?.armorDivisor, nature: this.damageData.main?.natureDisplay },
+            { key: "followUp", label: "Dano de Acompanhamento", tone: "followup", formula: this._applyOptionalDiceNormalization(fuFormula), type: fuType, armorDivisor: this.damageData.followUp?.armorDivisor, nature: this.damageData.followUp?.natureDisplay },
+            { key: "fragmentation", label: "Dano de Fragmentação", tone: "fragmentation", formula: this._applyOptionalDiceNormalization(fragFormula), type: fragType, armorDivisor: this.damageData.fragmentation?.armorDivisor, nature: this.damageData.fragmentation?.natureDisplay }
         ].filter((card) => card.formula);
     }
 
@@ -186,7 +195,7 @@ export class GurpsDamageRollPrompt extends FormApplication {
         const markup = cards.map((card) => `
             <div class="damage-visual-card tone-${card.tone}">
               <div class="damage-card-formula">${esc(card.formula)}</div>
-              <div class="damage-card-meta">${card.type ? `${esc(card.type)}` : ""}</div>
+              <div class="damage-card-meta">${esc([card.type, card.armorDivisor && Number(card.armorDivisor) !== 1 ? `Div. ${card.armorDivisor}` : "", card.nature ? formatDamageNature(card.nature) : ""].filter(Boolean).join(" · "))}</div>
             </div>
         `).join("");
         box.html(markup);
