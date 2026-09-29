@@ -7067,3 +7067,120 @@ color:#121114;
 .state-effects-block .effects-add-button { cursor: pointer; }
 .item-toggle-state-effect-group.active { color: #46c37b; }
 .item-toggle-state-effect-group.is-automatic { opacity: .75; }
+
+/* Specialized effect actions: skill and combat modifiers. */
+.gum.sheet.item.effect-sheet .effect-specialized-action {
+  display: grid;
+  gap: 12px;
+}
+
+.gum.sheet.item.effect-sheet .effect-specialized-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.gum.sheet.item.effect-sheet .effect-specialized-grid-two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gum.sheet.item.effect-sheet .effect-specialized-grid-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.gum.sheet.item.effect-sheet .effect-specialized-grid-value {
+  grid-template-columns: minmax(320px, 2fr) minmax(180px, 0.8fr);
+}
+
+.gum.sheet.item.effect-sheet .effect-specialized-action .effect-premium-field.is-disabled {
+  opacity: 0.48;
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-change-list {
+  display: grid;
+  gap: 8px;
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-change-block {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(185, 137, 60, 0.08), rgba(255, 255, 255, 0.018) 42%, transparent);
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-change-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 30px;
+  padding: 2px 4px;
+  background: transparent;
+  color: #e8c783;
+  letter-spacing: 0.025em;
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-change-header::before,
+.gum.sheet.item.effect-sheet .effect-combat-change-header::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, currentColor);
+  opacity: 0.22;
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-change-header::after {
+  background: linear-gradient(90deg, currentColor, transparent);
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-change-header .effect-premium-checkbox {
+  width: auto;
+  justify-content: center;
+  gap: 9px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-change-header .effect-premium-checkbox:hover {
+  border: 0;
+  background: transparent;
+  color: #f2d99f;
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-change-header input[type="checkbox"] {
+  margin: 0;
+  accent-color: #c8953f;
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-change-block input {
+  min-height: 38px;
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-recalculation-row {
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-damage-card {
+  margin-top: 2px;
+  background: linear-gradient(90deg, rgba(160, 68, 58, 0.1), rgba(255, 255, 255, 0.018) 42%, transparent);
+}
+
+.gum.sheet.item.effect-sheet .effect-combat-damage-card .effect-combat-change-header {
+  background: transparent;
+  color: #e5a49b;
+}
+
+@media (max-width: 720px) {
+  .gum.sheet.item.effect-sheet .effect-specialized-grid-two,
+  .gum.sheet.item.effect-sheet .effect-specialized-grid-three,
+  .gum.sheet.item.effect-sheet .effect-specialized-grid-value {
+    grid-template-columns: 1fr;
+  }
+}

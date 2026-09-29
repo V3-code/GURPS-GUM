@@ -10,6 +10,7 @@ import { AUTO_SIZE_MODIFIER_MODES, calculateAttackSizeModifier } from "../utils/
 import { contentSourceService } from "../services/content-source-service.mjs";
 import { resolveConditionalValue } from "../utils/effect-value-expression.mjs";
 import { evaluateModifierRollFormulaSync } from "../utils/modifier-roll-formula.mjs";
+import { getSkillDisplayName } from "../utils/skill-display-name.mjs";
 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
@@ -165,6 +166,7 @@ export class GurpsRollPrompt extends FormApplication {
 
             entries.forEach((entry, index) => {
                 const context = entry?.contexts ?? entry?.context ?? "all";
+                if (entry?.skill_roll_only === true && this.actor?.items?.get(this.rollData?.itemId)?.type !== "skill") return;
                 if (!this._matchesEffectContext(context, this.context)) return;
                 if (!matchesRollTags(entry, this._getRollMetadata().rollTags)) return;
                 if (!this._matchesTargetFilter(entry)) return;
@@ -232,6 +234,7 @@ export class GurpsRollPrompt extends FormApplication {
 
             configuredEntries.forEach((entry, entryIndex) => {
                 const context = entry?.contexts ?? entry?.context ?? "all";
+                if (entry?.skill_roll_only === true && this.actor?.items?.get(this.rollData?.itemId)?.type !== "skill") return;
                 if (!this._matchesEffectContext(context, this.context)) return;
                 if (!matchesRollTags(entry, this._getRollMetadata().rollTags)) return;
                 if (!this._matchesTargetFilter(entry)) return;
@@ -266,7 +269,6 @@ export class GurpsRollPrompt extends FormApplication {
 
         const [targetToken] = targetTokens;
         const candidates = this._collectCounterCandidatesForTarget(targetToken.actor);
-        if (!candidates.length) return;
 
         const grouped = new Map();
         for (const candidate of candidates) {
@@ -292,7 +294,14 @@ export class GurpsRollPrompt extends FormApplication {
             }
         }
 
-   grouped.forEach((modifier) => this.selectedModifiers.push(modifier));
+        const recalculationModifiers = game.gum?.resolveTargetCombatDefenseRecalculationModifiers?.(
+            this.actor,
+            this.context,
+            this.rollData
+        ) || [];
+        for (const modifier of recalculationModifiers) grouped.set(modifier.id, modifier);
+
+        grouped.forEach((modifier) => this.selectedModifiers.push(modifier));
     }
 
     _buildCounterModifierLabel(candidate) {
@@ -775,9 +784,11 @@ export class GurpsRollPrompt extends FormApplication {
 
         if (!item) return false;
 
-        const itemNames = [item.name].map((name) => String(name ?? "").trim().toLowerCase()).filter(Boolean);
-        // Se houver nomes preenchidos, aplica como lista de nomes exatos.
-        return targets.some((target) => itemNames.includes(target));
+        const itemCandidates = [item.id, item.uuid, item.name, getSkillDisplayName(item)]
+            .map((value) => String(value ?? "").trim().toLowerCase())
+            .filter(Boolean);
+        // IDs, nome-base e nome de exibição com especialização são aceitos.
+        return targets.some((target) => itemCandidates.includes(target));
     }
     
     _determineContext() {

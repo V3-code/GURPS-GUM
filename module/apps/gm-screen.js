@@ -874,7 +874,8 @@ activateListeners(html) {
             if (!attackGroups[item.id]) attackGroups[item.id] = { name: item.name, modes: [] };
             
             const nh = atk.final_nh !== undefined ? atk.final_nh : atk.level;
-            const rawDmg = atk.damage || atk.damage_formula || "";
+            const rawDmg = game.gum?.resolveCombatDamageFormula?.(actor, item, atk, attackType)
+                || atk.effective_damage_formula || atk.damage || atk.damage_formula || "";
             const resolvedDmg = this._resolveDamageFormula(actor, rawDmg);
             const defaultDefense = calculateDefaultDefense(nh);
             const fallbackParry = atk.parry_default && defaultDefense !== null ? defaultDefense : atk.parry;

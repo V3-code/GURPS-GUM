@@ -942,7 +942,8 @@ async getData(options) {
                 display_formula: resolveAttackDamageDisplay(damage.formula, this.actor.system.attributes)
             });
             const prepareAttackDamageDisplay = (attack) => ({
-                damage_display_formula: resolveAttackDamageDisplay(attack.damage_formula, this.actor.system.attributes),
+                damage_formula: attack.effective_damage_formula || attack.damage_formula,
+                damage_display_formula: resolveAttackDamageDisplay(attack.effective_damage_formula || attack.damage_formula, this.actor.system.attributes),
                 follow_up_damage: prepareDamageDisplay(attack.follow_up_damage),
                 fragmentation_damage: prepareDamageDisplay(attack.fragmentation_damage)
             });
@@ -3199,7 +3200,12 @@ html.on("click", ".rollable-damage", async (ev) => {
 
     normalizedAttack = {
       name: `${item.name} (${attack.mode ?? attackId})`,
-      formula: attack.damage_formula,
+      formula: game.gum?.resolveCombatDamageFormula?.(
+        this.actor,
+        item,
+        attack,
+        item.system.melee_attacks?.[attackId] ? "melee" : "ranged"
+      ) || attack.effective_damage_formula || attack.damage_formula,
       type: attack.damage_type,
       nature: attack.damage_nature || "",
       armor_divisor: attack.armor_divisor,
