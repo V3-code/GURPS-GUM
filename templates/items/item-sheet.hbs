@@ -56,7 +56,12 @@
                 <div class="equipment-stat-card">
                     <label class="equipment-stat-heading" title="Classe de Legalidade"><i class="fas fa-balance-scale"></i><span>Classe de Legalidade</span></label>
                     <div class="equipment-stat-control">
-                        <input type="text" name="system.legality_class" value="{{system.legality_class}}"/>
+                        <div class="equipment-calculated-value">
+                            <input type="text" name="system.legality_class" value="{{system.legality_class}}" title="Valor base"/>
+                            {{#if equipmentPropertyChanges.legality_class.changed}}
+                            <div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-down"></i><span>{{equipmentPropertyChanges.legality_class.final}}</span></div>
+                            {{/if}}
+                        </div>
                     </div>
                 </div>
                 <label class="equipment-stat-card custom-checkbox">
@@ -72,14 +77,24 @@
                 <div class="equipment-field-card">
                     <label class="equipment-stat-heading"><i class="fas fa-gem"></i><span>Qualidade</span></label>
                     <div class="equipment-stat-control">
-                        <input type="text" name="system.quality" value="{{system.quality}}" placeholder="Ex: Fina, Barata"/>
+                        <div class="equipment-calculated-value">
+                            <input type="text" name="system.quality" value="{{system.quality}}" placeholder="Ex: Fina, Barata" title="Valor base"/>
+                            {{#if equipmentPropertyChanges.quality.changed}}
+                            <div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-down"></i><span>{{equipmentPropertyChanges.quality.final}}</span></div>
+                            {{/if}}
+                        </div>
                     </div>
                 </div>
 
                 <div class="equipment-field-card">
                     <label class="equipment-stat-heading"><i class="fas fa-cubes"></i><span>Material</span></label>
                     <div class="equipment-stat-control">
-                        <input type="text" name="system.material" value="{{system.material}}" placeholder="Ex: Aço, Madeira"/>
+                        <div class="equipment-calculated-value">
+                            <input type="text" name="system.material" value="{{system.material}}" placeholder="Ex: Aço, Madeira" title="Valor base"/>
+                            {{#if equipmentPropertyChanges.material.changed}}
+                            <div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-down"></i><span>{{equipmentPropertyChanges.material.final}}</span></div>
+                            {{/if}}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -88,28 +103,36 @@
                 <div class="equipment-stat-card">
                     <label class="equipment-stat-heading" title="Modificador de Tamanho (SM)"><i class="fas fa-expand-arrows-alt"></i><span>MT do Item</span></label>
                     <div class="equipment-stat-control">
-                        <input type="number" name="system.tech_sm" value="{{system.tech_sm}}" placeholder="+0"/>
+                        <div class="equipment-calculated-value"><input type="number" name="system.tech_sm" value="{{system.tech_sm}}" placeholder="+0" title="Valor base"/>
+                            {{#if equipmentPropertyChanges.tech_sm.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-down"></i><span>{{equipmentPropertyChanges.tech_sm.final}}</span></div>{{/if}}
+                        </div>
                     </div>
                 </div>
 
                 <div class="equipment-stat-card">
                     <label class="equipment-stat-heading" title="Resistência a Dano do próprio Item"><i class="fas fa-shield-alt"></i><span>RD do Item</span></label>
                     <div class="equipment-stat-control">
-                        <input type="number" name="system.item_dr" value="{{system.item_dr}}"/>
+                        <div class="equipment-calculated-value"><input type="number" name="system.item_dr" value="{{system.item_dr}}" title="Valor base"/>
+                            {{#if equipmentPropertyChanges.item_dr.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-down"></i><span>{{equipmentPropertyChanges.item_dr.final}}</span></div>{{/if}}
+                        </div>
                     </div>
                 </div>
 
                 <div class="equipment-stat-card">
                     <label class="equipment-stat-heading" title="Pontos de Vida do Item"><i class="fas fa-heart"></i><span>PV do Item</span></label>
                     <div class="equipment-stat-control">
-                        <input type="number" name="system.item_hp" value="{{system.item_hp}}"/>
+                        <div class="equipment-calculated-value"><input type="number" name="system.item_hp" value="{{system.item_hp}}" title="Valor base"/>
+                            {{#if equipmentPropertyChanges.item_hp.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-down"></i><span>{{equipmentPropertyChanges.item_hp.final}}</span></div>{{/if}}
+                        </div>
                     </div>
                 </div>
 
                 <div class="equipment-stat-card">
                     <label class="equipment-stat-heading" title="Vitalidade (HT) do Item"><i class="fas fa-heartbeat"></i><span>HT do Item</span></label>
                     <div class="equipment-stat-control">
-                        <input type="number" name="system.item_ht" value="{{system.item_ht}}"/>
+                        <div class="equipment-calculated-value"><input type="number" name="system.item_ht" value="{{system.item_ht}}" title="Valor base"/>
+                            {{#if equipmentPropertyChanges.item_ht.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-down"></i><span>{{equipmentPropertyChanges.item_ht.final}}</span></div>{{/if}}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -121,7 +144,9 @@
                 <div class="equipment-stat-card">
                     <label class="equipment-stat-heading" title="Penalidade de Ocultamento (Holdout)"><i class="fas fa-user-secret"></i><span>Ocultação</span></label>
                     <div class="equipment-stat-control">
-                        <input type="number" name="system.holdout" value="{{system.holdout}}" placeholder="0"/>
+                        <div class="equipment-calculated-value"><input type="number" name="system.holdout" value="{{system.holdout}}" placeholder="0" title="Valor base"/>
+                            {{#if equipmentPropertyChanges.holdout.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-down"></i><span>{{equipmentPropertyChanges.holdout.final}}</span></div>{{/if}}
+                        </div>
                     </div>
                 </div>
 
@@ -2556,8 +2581,21 @@
         <div class="form-group"><label>Preço unitário</label><strong>{{finalCostString}}</strong><span class="notes">Base: {{system.cost}}</span></div>
         <div class="form-group"><label>Peso unitário</label><strong>{{finalWeightString}} kg</strong><span class="notes">Base: {{system.weight}} kg</span></div>
       </div>
-      {{#if equipmentResolution.steps.length}}
-      <div class="eqpmod-subline"><strong>Features aplicadas:</strong> {{equipmentResolution.steps.length}}</div>
+      {{#if equipmentFeatureSteps.length}}
+      <div class="equipment-feature-trace">
+        <strong>Memória das features</strong>
+        <ol>
+          {{#each equipmentFeatureSteps as |step|}}
+          <li>
+            <span>{{step.sourceName}} — {{step.label}}</span>
+            {{#if step.path}}<code>{{step.path}}</code>{{/if}}
+            {{#if step.attackId}}<span class="notes">({{step.attackType}}: {{step.attackId}})</span>{{/if}}
+            {{#if step.path}}<span class="notes">{{step.input}} → <strong>{{step.output}}</strong></span>{{/if}}
+            {{#if step.effectUuid}}<span class="notes">{{step.domain}} · {{step.effectUuid}}</span>{{/if}}
+          </li>
+          {{/each}}
+        </ol>
+      </div>
       {{/if}}
       {{#if equipmentResolution.warnings.length}}
       <p class="notes"><i class="fas fa-triangle-exclamation"></i> {{equipmentResolution.warnings.length}} ajuste(s) inválido(s) ou incompatível(is) foram ignorados.</p>

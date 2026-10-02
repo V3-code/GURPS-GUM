@@ -54,6 +54,24 @@ Os três domínios estão integrados:
 - `source_attack` — modificadores de rolagem e combate limitados aos ataques do equipamento;
 - `hit_target` — efeito encaminhado ao pipeline de dano e aplicado ao alvo quando suas condições forem satisfeitas.
 
+## Etapa implementada: apresentação e memória das features
+
+A ficha do equipamento mantém os campos editáveis como valores-base e mostra logo abaixo o valor efetivo de RD, PV, HT, MT, ocultação, classe de legalidade, qualidade e material quando alguma feature os altera. A aba de modificadores também apresenta a memória das features, com fonte, propriedade, entrada e saída. Assim, o valor derivado não é gravado sobre a fonte e não acumula em preparações sucessivas.
+
+## Validação funcional desta etapa
+
+Esta é a primeira etapa apropriada para testar, de ponta a ponta, as features que modificam diretamente o equipamento: o resolvedor, a preparação do ator e a visualização do resultado já estão conectados. O roteiro mínimo no Foundry é:
+
+1. criar um equipamento com RD 2, PV 10, HT 12 e MT 0;
+2. aplicar dois modificadores habilitados, um com `RD +2` e outro com `PV x2`, `MT -1` e qualidade definida como `Superior`;
+3. confirmar na aba Detalhes que os campos-base continuam em 2, 10, 0 e qualidade original, enquanto os indicadores mostram 4, 20, -1 e `Superior`;
+4. confirmar na aba Modificadores a memória de entrada e saída de cada feature;
+5. fechar e reabrir a ficha e preparar novamente o ator, confirmando que os bônus não acumulam;
+6. desabilitar cada modificador e confirmar que seus indicadores desaparecem e os valores efetivos retornam à base;
+7. alterar o nível de uma feature marcada “por nível” e confirmar que o resultado acompanha o nível.
+
+Ataques criados/alterados e os três domínios de efeitos já possuem cobertura automatizada. A aceitação manual completa deles deve ser feita na etapa seguinte, junto do navegador de Efeitos e dos editores especializados, pois essa interface permitirá montar os cenários sem digitar UUIDs e estruturas manualmente.
+
 ## Próxima etapa
 
-Aprimorar a autoria e a apresentação: navegador de itens Efeito no lugar do UUID manual, visualização da fonte vinculada, memória detalhada das features aplicadas e editores especializados para propriedades complexas.
+Aprimorar a autoria: navegador de itens Efeito no lugar do UUID manual, visualização/abertura da fonte vinculada e editores especializados para ataques e propriedades complexas. Ao final dela, executar a matriz manual completa de ataque alterado, ataque criado, efeito no portador, efeito no ataque e efeito no alvo atingido.

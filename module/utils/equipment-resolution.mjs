@@ -13,6 +13,27 @@ export const EQUIPMENT_FEATURE_TYPES = Object.freeze(["equipment_property", "att
 export const EQUIPMENT_PROPERTY_PATHS = Object.freeze([
   "tech_sm", "item_hp", "item_ht", "item_dr", "holdout", "legality_class", "material", "quality", "max_uses"
 ]);
+
+function propertyValuesEqual(base, final) {
+  if (base === final) return true;
+  if (base === null || base === undefined || final === null || final === undefined) return false;
+  const baseText = String(base).trim();
+  const finalText = String(final).trim();
+  if (baseText === finalText) return true;
+  if (baseText === "" || finalText === "") return false;
+  const baseNumber = Number(baseText.replace(",", "."));
+  const finalNumber = Number(finalText.replace(",", "."));
+  return Number.isFinite(baseNumber) && Number.isFinite(finalNumber) && baseNumber === finalNumber;
+}
+
+/** Build a sheet-friendly, non-mutating view of every resolved equipment property. */
+export function describeEquipmentPropertyChanges(equipment = {}, resolvedProperties = {}) {
+  return Object.fromEntries(EQUIPMENT_PROPERTY_PATHS.map(path => {
+    const base = clone(equipment[path]);
+    const final = clone(resolvedProperties[path]);
+    return [path, { base, final, changed: !propertyValuesEqual(base, final) }];
+  }));
+}
 export const ATTACK_PROPERTY_PATHS = Object.freeze([
   "skill_level_mod", "damage_formula", "damage_type", "damage_nature", "armor_divisor", "min_strength",
   "reach", "parry", "block", "accuracy", "range", "rof", "shots", "rcl", "mag", "groups"

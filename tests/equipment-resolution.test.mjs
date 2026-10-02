@@ -2,10 +2,22 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  describeEquipmentPropertyChanges,
   normalizeEquipmentModifier,
   parseEquipmentAdjustment,
   resolveEquipment
 } from "../module/utils/equipment-resolution.mjs";
+
+test("describes only effective equipment property changes for sheet presentation", () => {
+  const changes = describeEquipmentPropertyChanges(
+    { item_dr: 2, item_hp: "10", tech_sm: 0, quality: "Comum" },
+    { item_dr: 4, item_hp: 10, tech_sm: -1, quality: "Superior" }
+  );
+  assert.deepEqual(changes.item_dr, { base: 2, final: 4, changed: true });
+  assert.deepEqual(changes.item_hp, { base: "10", final: 10, changed: false });
+  assert.equal(changes.tech_sm.changed, true);
+  assert.equal(changes.quality.changed, true);
+});
 
 const modifier = ({ name, cost, costStage = "base", weight = "x1", weightStage = "base", level = 1, perLevel = false, perWeight = false } = {}) => ({
   name,

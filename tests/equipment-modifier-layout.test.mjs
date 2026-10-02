@@ -35,6 +35,17 @@ test("equipment modifier instances expose enabled, level and resolved totals", (
   assert.match(template, /equipmentResolution\.warnings\.length/);
 });
 
+test("equipment details distinguish base and feature-resolved property values", () => {
+  assert.match(itemSheet, /describeEquipmentPropertyChanges\(baseEquipmentSystem, resolution\.properties\)/);
+  for (const property of ["tech_sm", "item_dr", "item_hp", "item_ht", "holdout", "legality_class", "quality", "material"]) {
+    assert.match(template, new RegExp(`equipmentPropertyChanges\\.${property}\\.changed`));
+    assert.match(template, new RegExp(`equipmentPropertyChanges\\.${property}\\.final`));
+  }
+  assert.match(template, /Memória das features/);
+  assert.match(template, /step\.input/);
+  assert.match(template, /step\.output/);
+});
+
 test("equipment modifier sheet exposes typed feature authoring", () => {
   assert.match(template, /data-tab="equipment-features"/);
   assert.match(template, /add-eqp-feature/);
