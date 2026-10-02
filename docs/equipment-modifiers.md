@@ -29,7 +29,16 @@ Nas demais etapas de custo, adições e percentuais são agregados e os multipli
 
 Os campos legados `cost_adjustment`, `cost_factor` e `weight_mod` continuam sendo lidos. Ao salvar a nova ficha, `adjustment_schema: 1` identifica que os dados estruturados são a fonte canônica e as expressões legadas são sincronizadas para consumidores antigos.
 
+## Etapa implementada: features estruturadas
+
+`features_data` agora aceita três tipos iniciais:
+
+- `equipment_property` — soma, multiplica ou define uma propriedade permitida do equipamento;
+- `attack_property` — altera ataques corpo a corpo, à distância ou ambos, filtrados por grupo, modo ou perícia;
+- `create_attack` — cria um modo de ataque derivado com ID estável, sem gravá-lo sobre o equipamento-base.
+
+Criações são resolvidas antes das alterações. Substituições, multiplicações e somas possuem uma ordem determinística, e substituições concorrentes produzem avisos. Features por nível usam o nível da instância do modificador.
+
 ## Próxima etapa
 
-Implementar `features_data` como alterações tipadas, começando por propriedades do equipamento, alterações/criação de modos de ataque e, posteriormente, efeitos concedidos ao portador ou ao alvo.
-
+Adicionar features concedidas com domínio e ciclo de vida explícitos: efeitos sobre o portador, sobre rolagens originadas no equipamento e sobre alvos atingidos. Também será possível ampliar os filtros e fornecer editores especializados para propriedades complexas.

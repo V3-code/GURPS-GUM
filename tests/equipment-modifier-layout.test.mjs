@@ -20,8 +20,8 @@ test("equipment modifier sheet exposes structured cost and weight controls", () 
 });
 
 test("item sheet and actor preparation delegate to the central resolver", () => {
-  assert.match(itemSheet, /resolveEquipment\(this\.item\.system, eqpModsObj\)/);
-  assert.match(main, /const resolution = resolveEquipment\(item\.system\)/);
+  assert.match(itemSheet, /resolveEquipment\(baseEquipmentSystem, eqpModsObj\)/);
+  assert.match(main, /const resolution = resolveEquipment\(item\._source\?\.system \|\| item\.system\)/);
   assert.match(main, /effectiveWeight = resolution\.weight\.unitFinal/);
   assert.match(main, /effectiveCost = resolution\.cost\.unitFinal/);
 });
@@ -33,3 +33,13 @@ test("equipment modifier instances expose enabled, level and resolved totals", (
   assert.match(template, /equipmentResolution\.warnings\.length/);
 });
 
+test("equipment modifier sheet exposes typed feature authoring", () => {
+  assert.match(template, /data-tab="equipment-features"/);
+  assert.match(template, /add-eqp-feature/);
+  assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.type/);
+  assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.selector_field/);
+  assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.attack\.damage_formula/);
+  assert.match(itemSheet, /system\.features_data\.\$\{id\}/);
+  assert.match(main, /item\.system\.melee_attacks = resolution\.meleeAttacks/);
+  assert.match(main, /item\.system\.ranged_attacks = resolution\.rangedAttacks/);
+});

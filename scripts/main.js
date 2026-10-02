@@ -565,10 +565,15 @@ const activeEffects = Array.isArray(this.effects) ? this.effects : Array.from(th
         // --- ETAPA 1: PRÉ-PROCESSAMENTO DE ITENS (MODIFICADORES DE EQUIPAMENTO) ---
         for (const item of this.items) {
             if (item.type === 'equipment') {
-                const resolution = resolveEquipment(item.system);
+                const resolution = resolveEquipment(item._source?.system || item.system);
                 item.system.equipmentResolution = resolution;
                 item.system.effectiveWeight = resolution.weight.unitFinal;
                 item.system.effectiveCost = resolution.cost.unitFinal;
+                item.system.melee_attacks = resolution.meleeAttacks;
+                item.system.ranged_attacks = resolution.rangedAttacks;
+                for (const [path, value] of Object.entries(resolution.properties)) {
+                    if (value !== undefined) item.system[path] = value;
+                }
                 
                 // (Removido: Lógica de somar DB ao combat.defense_bonus)
             }

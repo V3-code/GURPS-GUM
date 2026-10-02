@@ -7,6 +7,16 @@ const number = (value, fallback = 0) => {
 };
 
 const roundForOutput = value => Math.round((value + Number.EPSILON) * 1e10) / 1e10;
+const clone = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
+
+export const EQUIPMENT_FEATURE_TYPES = Object.freeze(["equipment_property", "attack_property", "create_attack"]);
+export const EQUIPMENT_PROPERTY_PATHS = Object.freeze([
+  "tech_sm", "item_hp", "item_ht", "item_dr", "holdout", "legality_class", "material", "quality", "max_uses"
+]);
+export const ATTACK_PROPERTY_PATHS = Object.freeze([
+  "skill_level_mod", "damage_formula", "damage_type", "damage_nature", "armor_divisor", "min_strength",
+  "reach", "parry", "block", "accuracy", "range", "rof", "shots", "rcl", "mag", "groups"
+]);
 
 function parseFraction(value) {
   const source = String(value ?? "").trim().replace(",", ".");
@@ -114,7 +124,27 @@ export function normalizeEquipmentModifier(modifier = {}, index = 0) {
       stage: EQUIPMENT_ADJUSTMENT_STAGES.includes(weightData.stage) ? weightData.stage : "base",
       perLevel: weightData.per_level === true || weightData.perLevel === true
     },
-    features: Array.isArray(modifier.features_data) ? modifier.features_data : []
+    features: (Array.isArray(modifier.features_data) ? modifier.features_data : Object.values(modifier.features_data || {}))
+      .map((feature, featureIndex) => normalizeEquipmentFeature(feature, featureIndex))
+  };
+}
+
+export function normalizeEquipmentFeature(feature = {}, index = 0) {
+  const type = EQUIPMENT_FEATURE_TYPES.includes(feature.type) ? feature.type : "equipment_property";
+  return {
+    ...clone(feature),
+    id: feature.id || feature._id || `feature-${index}`,
+    label: String(feature.label || "Feature").trim(),
+    enabled: feature.enabled !== false,
+    type,
+    operation: ["add", "multiply", "set"].includes(feature.operation) ? feature.operation : "add",
+    value: feature.value ?? 0,
+    perLevel: feature.per_level === true || feature.perLevel === true,
+    path: String(feature.path || (type === "attack_property" ? "damage_formula" : "item_dr")),
+    attackType: ["melee", "ranged"].includes(feature.attack_type || feature.attackType) ? (feature.attack_type || feature.attackType) : "all",
+    selectorField: ["all", "mode", "skill_name", "group"].includes(feature.selector_field || feature.selectorField) ? (feature.selector_field || feature.selectorField) : "all",
+    selectorValue: String(feature.selector_value ?? feature.selectorValue ?? "").trim(),
+    attack: clone(feature.attack || {})
   };
 }
 
@@ -216,6 +246,141 @@ function resolveCost(baseCost, resolvedWeight, modifiers, warnings) {
   return { base: Math.max(0, number(baseCost)), unitFinal: roundForOutput(value), steps };
 }
 
+function numericValue(value) {
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  const parsed = Number(String(value ?? "").replace(",", ".").trim());
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function addFormulaModifier(formula, amount) {
+  const base = String(formula ?? "").trim();
+  if (!base || !Number.isFinite(amount) || amount === 0) return base;
+  return `${base}${amount > 0 ? "+" : ""}${amount}`;
+}
+
+function applyFeatureValue(current, feature, scale, { formula = false } = {}) {
+  if (feature.operation === "set") return feature.value;
+  const amount = numericValue(feature.value);
+  if (amount === null) return current;
+  const scaled = amount * scale;
+  if (formula && feature.operation === "add") return addFormulaModifier(current, scaled);
+  const base = numericValue(current) ?? 0;
+  if (feature.operation === "multiply") return base * scaled;
+  return base + scaled;
+}
+
+function attackMatches(attack, feature) {
+  if (feature.selectorField === "all") return true;
+  const needle = feature.selectorValue.toLocaleLowerCase();
+  if (!needle) return true;
+  if (feature.selectorField === "group") {
+    const groups = Array.isArray(attack.groups)
+      ? attack.groups
+      : String(attack.groups || attack.tags || "").split(",");
+    return groups.some(group => String(group).trim().toLocaleLowerCase() === needle);
+  }
+  return String(attack[feature.selectorField] ?? "").trim().toLocaleLowerCase() === needle;
+}
+
+function featureAttackKey(modifierId, featureId) {
+  const safe = value => String(value || "feature").replace(/[^a-zA-Z0-9_-]/g, "_");
+  return `eqpmod_${safe(modifierId)}_${safe(featureId)}`;
+}
+
+function defaultCreatedAttack(type, attack = {}) {
+  const common = {
+    mode: attack.mode || "Novo modo",
+    skill_name: attack.skill_name || "",
+    skill_level_mod: number(attack.skill_level_mod),
+    damage_formula: attack.damage_formula || (type === "melee" ? "GdB" : "GdP"),
+    damage_type: attack.damage_type || (type === "melee" ? "cort" : "perf"),
+    damage_nature: attack.damage_nature || "",
+    armor_divisor: number(attack.armor_divisor, 1),
+    min_strength: attack.min_strength ?? 0,
+    groups: attack.groups || "",
+    onDamageEffects: {},
+    follow_up_damage: { formula: "", type: "", scaling: "", armor_divisor: 1, nature: "" },
+    fragmentation_damage: { formula: "", type: "", scaling: "", armor_divisor: 1, nature: "" }
+  };
+  if (type === "melee") return { ...common, reach: attack.reach || "C", parry: attack.parry || "0", block: attack.block || "0", parry_default: attack.parry_default !== false, block_default: attack.block_default !== false, unbalanced: false, fencing: false };
+  return { ...common, accuracy: attack.accuracy || "0", range: attack.range || "100/1500", rof: attack.rof || "1", shots: attack.shots || "1", rcl: attack.rcl || "1", mag: attack.mag || "1", unbalanced: false, fencing: false };
+}
+
+function resolveFeatures(equipment, modifiers, warnings) {
+  const properties = Object.fromEntries(EQUIPMENT_PROPERTY_PATHS.map(path => [path, clone(equipment[path])]));
+  const meleeAttacks = clone(equipment.melee_attacks || {});
+  const rangedAttacks = clone(equipment.ranged_attacks || {});
+  const steps = [];
+  const overrides = new Map();
+  const operationOrder = { set: 1, multiply: 2, add: 3 };
+  const tasks = modifiers
+    .filter(modifier => modifier.enabled)
+    .flatMap(modifier => modifier.features
+      .filter(feature => feature.enabled)
+      .map(feature => ({ modifier, feature, scale: feature.perLevel ? modifier.level : 1 })))
+    .filter(task => task.scale !== 0)
+    .sort((a, b) => {
+      const aOrder = a.feature.type === "create_attack" ? 0 : (operationOrder[a.feature.operation] ?? 4);
+      const bOrder = b.feature.type === "create_attack" ? 0 : (operationOrder[b.feature.operation] ?? 4);
+      return aOrder - bOrder
+        || String(a.modifier.id).localeCompare(String(b.modifier.id))
+        || String(a.feature.id).localeCompare(String(b.feature.id));
+    });
+
+  for (const { modifier, feature, scale } of tasks) {
+
+      if (feature.type === "equipment_property") {
+        if (!EQUIPMENT_PROPERTY_PATHS.includes(feature.path)) {
+          warnings.push({ type: "unsupported_feature_path", domain: "equipment", sourceId: modifier.id, featureId: feature.id, path: feature.path });
+          continue;
+        }
+        const input = properties[feature.path];
+        const output = applyFeatureValue(input, feature, scale);
+        const overrideKey = `equipment:${feature.path}`;
+        if (feature.operation === "set" && overrides.has(overrideKey)) warnings.push({ type: "conflicting_feature_override", domain: "equipment", path: feature.path, sources: [overrides.get(overrideKey), modifier.id] });
+        if (feature.operation === "set") overrides.set(overrideKey, modifier.id);
+        properties[feature.path] = output;
+        steps.push({ type: feature.type, sourceId: modifier.id, sourceName: modifier.name, featureId: feature.id, label: feature.label, path: feature.path, input, output });
+        continue;
+      }
+
+      if (feature.type === "create_attack") {
+        const type = feature.attackType === "ranged" ? "ranged" : "melee";
+        const key = featureAttackKey(modifier.id, feature.id);
+        const collection = type === "ranged" ? rangedAttacks : meleeAttacks;
+        collection[key] = { ...defaultCreatedAttack(type, feature.attack), id: key, source_modifier_id: modifier.id, source_feature_id: feature.id };
+        steps.push({ type: feature.type, sourceId: modifier.id, sourceName: modifier.name, featureId: feature.id, label: feature.label, attackType: type, attackId: key });
+        continue;
+      }
+
+      if (feature.type === "attack_property") {
+        if (!ATTACK_PROPERTY_PATHS.includes(feature.path)) {
+          warnings.push({ type: "unsupported_feature_path", domain: "attack", sourceId: modifier.id, featureId: feature.id, path: feature.path });
+          continue;
+        }
+        const collections = feature.attackType === "melee" ? [["melee", meleeAttacks]]
+          : feature.attackType === "ranged" ? [["ranged", rangedAttacks]]
+            : [["melee", meleeAttacks], ["ranged", rangedAttacks]];
+        let matches = 0;
+        for (const [attackType, collection] of collections) {
+          for (const [attackId, attack] of Object.entries(collection)) {
+            if (!attackMatches(attack, feature)) continue;
+            matches += 1;
+            const input = attack[feature.path];
+            const output = applyFeatureValue(input, feature, scale, { formula: feature.path === "damage_formula" });
+            const overrideKey = `attack:${attackType}:${attackId}:${feature.path}`;
+            if (feature.operation === "set" && overrides.has(overrideKey)) warnings.push({ type: "conflicting_feature_override", domain: "attack", attackType, attackId, path: feature.path, sources: [overrides.get(overrideKey), modifier.id] });
+            if (feature.operation === "set") overrides.set(overrideKey, modifier.id);
+            attack[feature.path] = output;
+            steps.push({ type: feature.type, sourceId: modifier.id, sourceName: modifier.name, featureId: feature.id, label: feature.label, attackType, attackId, path: feature.path, input, output });
+          }
+        }
+        if (!matches) warnings.push({ type: "feature_no_match", domain: "attack", sourceId: modifier.id, featureId: feature.id, selectorField: feature.selectorField, selectorValue: feature.selectorValue });
+      }
+  }
+  return { properties, meleeAttacks, rangedAttacks, steps };
+}
+
 /**
  * Resolve the unit and extended cost/weight for one equipment record.
  * This is pure and never mutates the equipment or its modifiers.
@@ -227,6 +392,7 @@ export function resolveEquipment(equipment = {}, rawModifiers = equipment.eqp_mo
   const quantity = Math.max(0, number(equipment.quantity, 1));
   const weight = resolveWeight(equipment.weight, modifiers, warnings);
   const cost = resolveCost(equipment.cost, weight.unitFinal, modifiers, warnings);
+  const featureResolution = resolveFeatures(equipment, modifiers, warnings);
 
   weight.extendedFinal = roundForOutput(weight.unitFinal * quantity);
   cost.extendedFinal = roundForOutput(cost.unitFinal * quantity);
@@ -236,6 +402,7 @@ export function resolveEquipment(equipment = {}, rawModifiers = equipment.eqp_mo
     modifiers,
     cost,
     weight,
+    ...featureResolution,
     features: modifiers.filter(modifier => modifier.enabled).flatMap(modifier => modifier.features.map(feature => ({ ...feature, sourceModifierId: modifier.id, sourceModifierName: modifier.name }))),
     warnings
   };

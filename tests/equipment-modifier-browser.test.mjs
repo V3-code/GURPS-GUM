@@ -31,7 +31,8 @@ test("equipment modifier browser preserves the configured source UUID", async ()
       weight_mod: "x1",
       adjustment_schema: 1,
       cost_adjustment_data: { expression: "+1 CF", stage: "base" },
-      weight_adjustment_data: { expression: "x1", stage: "base" }
+      weight_adjustment_data: { expression: "x1", stage: "base" },
+      features_data: { dr: { id: "dr", type: "equipment_property", path: "item_dr", operation: "add", value: 1 } }
     }
   }];
 
@@ -41,4 +42,5 @@ test("equipment modifier browser preserves the configured source UUID", async ()
   assert.equal(update["system.eqp_modifiers.new"].source_uuid, "Compendium.world.eqp-modifiers.Item.same-id");
   assert.equal(update["system.eqp_modifiers.new"].adjustment_schema, 1);
   assert.equal(update["system.eqp_modifiers.new"].cost_adjustment_data.stage, "base");
+  assert.equal(update["system.eqp_modifiers.new"].features_data.dr.path, "item_dr");
 });

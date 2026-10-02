@@ -441,6 +441,8 @@
         "item_ht": 12,
         "item_dr": 0,
         "holdout": 0,
+        "max_uses": 0,
+        "current_uses": 0,
         "eqp_modifiers": {}
       }
     },
@@ -460,6 +462,7 @@
       "parry_default": true,
       "block_default": true,
       "min_strength": 0,
+      "groups": "",
       "onDamageEffects": {},
       "follow_up_damage": {
         "formula": "",
@@ -494,6 +497,7 @@
       "rcl": "1",
       "mag": "1",
       "min_strength": 0,
+      "groups": "",
       "onDamageEffects": {},
       "follow_up_damage": {
         "formula": "",
@@ -816,7 +820,7 @@
         "stage": "base",
         "per_level": false
       },
-      "features_data": [],
+      "features_data": {},
       "tech_level_mod": "",
       "tech_level": "",
       "tags": "",

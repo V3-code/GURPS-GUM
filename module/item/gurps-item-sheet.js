@@ -387,7 +387,8 @@ _promptMultipleReferences(parsedList) {
             context.eqpModifiersList = modifiersArray; 
             context.eqpModifiersHasFeatures = modifiersArray.some(mod => mod.features); 
  
-            const resolution = resolveEquipment(this.item.system, eqpModsObj);
+            const baseEquipmentSystem = this.item._source?.system || this.item.system;
+            const resolution = resolveEquipment(baseEquipmentSystem, eqpModsObj);
             const normalizedById = new Map(resolution.modifiers.map(modifier => [modifier.id, modifier]));
             for (const mod of modifiersArray) {
                 const normalized = normalizedById.get(mod.id) || normalizeEquipmentModifier(mod);
@@ -412,11 +413,45 @@ _promptMultipleReferences(parsedList) {
         if (this.item.type === "eqp_modifier") {
             const normalized = normalizeEquipmentModifier(this.item.system);
             context.eqpModifierAdjustment = normalized;
+            context.eqpModifierFeatures = normalized.features.map(feature => ({
+                ...feature,
+                per_level: feature.perLevel,
+                attack_type: feature.attackType,
+                selector_field: feature.selectorField,
+                selector_value: feature.selectorValue
+            }));
             context.equipmentAdjustmentStageOptions = [
                 { id: "original", label: "Valor original" },
                 { id: "base", label: "Valor base" },
                 { id: "final_base", label: "Valor base final" },
                 { id: "final", label: "Valor final" }
+            ];
+            context.equipmentFeatureTypeOptions = [
+                { id: "equipment_property", label: "Modificar propriedade do equipamento" },
+                { id: "attack_property", label: "Modificar modo de ataque" },
+                { id: "create_attack", label: "Criar modo de ataque" }
+            ];
+            context.equipmentFeatureOperationOptions = [
+                { id: "add", label: "Somar" },
+                { id: "multiply", label: "Multiplicar" },
+                { id: "set", label: "Definir" }
+            ];
+            context.equipmentPropertyOptions = [
+                { id: "item_dr", label: "RD do item" }, { id: "item_hp", label: "PV do item" },
+                { id: "item_ht", label: "HT do item" }, { id: "tech_sm", label: "MT técnico" },
+                { id: "holdout", label: "Ocultabilidade" }, { id: "max_uses", label: "Usos máximos" },
+                { id: "legality_class", label: "Classe de Legalidade" }, { id: "material", label: "Material" },
+                { id: "quality", label: "Qualidade" }
+            ];
+            context.attackPropertyOptions = [
+                { id: "damage_formula", label: "Dano" }, { id: "damage_type", label: "Tipo de dano" },
+                { id: "damage_nature", label: "Natureza do dano" }, { id: "armor_divisor", label: "Divisor de armadura" },
+                { id: "skill_level_mod", label: "Modificador de NH" }, { id: "min_strength", label: "ST mínima" },
+                { id: "reach", label: "Alcance C.C." }, { id: "parry", label: "Aparar" },
+                { id: "block", label: "Bloqueio" }, { id: "accuracy", label: "Precisão" },
+                { id: "range", label: "Distância" }, { id: "rof", label: "Cadência" },
+                { id: "shots", label: "Tiros" }, { id: "rcl", label: "Recuo" },
+                { id: "mag", label: "Magnitude" }, { id: "groups", label: "Grupos" }
             ];
         }
  
@@ -899,7 +934,22 @@ if (this.item?.type === "equipment") {
             if (!confirmed) return; 
             await this.item.update({ [`system.eqp_modifiers.-=${modId}`]: null }); 
         }); 
-        html.find('.view-eqp-modifier').click(this._onViewEqpModifier.bind(this)); 
+        html.find('.view-eqp-modifier').click(this._onViewEqpModifier.bind(this));
+        html.find('.add-eqp-feature').click(async ev => {
+            ev.preventDefault();
+            const id = foundry.utils.randomID();
+            await this.item.update({ [`system.features_data.${id}`]: {
+                id, label: "Nova feature", enabled: true, type: "equipment_property",
+                path: "item_dr", operation: "add", value: 0, per_level: false,
+                attack_type: "all", selector_field: "all", selector_value: "", attack: {}
+            }});
+        });
+        html.find('.delete-eqp-feature').click(async ev => {
+            ev.preventDefault();
+            const id = $(ev.currentTarget).closest('[data-feature-id]').data('feature-id');
+            if (!id) return;
+            await this.item.update({ [`system.features_data.-=${id}`]: null });
+        });
  
         // Modificadores (Vantagens) 
         html.find('.add-modifier').click(ev => { 
@@ -1915,8 +1965,14 @@ const rangedFields = `
             img: modData.img || "icons/svg/mystery-man.svg", 
                 system: { 
                 cost_adjustment: modData.cost_adjustment ?? `${modData.cost_factor ?? 0} CF`, 
-                cost_factor: modData.cost_factor ?? 0, 
-                weight_mod: modData.weight_mod ?? "x1", 
+                cost_factor: modData.cost_factor ?? 0,
+                weight_mod: modData.weight_mod ?? "x1",
+                enabled: modData.enabled !== false,
+                level: modData.level ?? 1,
+                adjustment_schema: modData.adjustment_schema ?? 0,
+                cost_adjustment_data: modData.cost_adjustment_data ?? {},
+                weight_adjustment_data: modData.weight_adjustment_data ?? {},
+                features_data: modData.features_data ?? {},
                 tech_level_mod: modData.tech_level_mod ?? "", 
                 target_type: modData.target_type ?? {}, 
                 features: modData.features ?? "", 

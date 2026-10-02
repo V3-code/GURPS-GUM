@@ -119,3 +119,56 @@ test("ignores disabled modifiers and reports invalid or unsupported expressions"
   assert.equal(result.cost.unitFinal, 100);
   assert.deepEqual(result.warnings.map(warning => warning.type).sort(), ["invalid_expression", "unsupported_operation"]);
 });
+
+test("applies typed equipment properties with per-level scaling without mutating the base", () => {
+  const equipment = { cost: 100, weight: 5, item_dr: 2 };
+  const result = resolveEquipment(equipment, [{
+    id: "reinforced", name: "Reforçado", level: 2,
+    features_data: {
+      dr: { id: "dr", label: "RD adicional", enabled: true, type: "equipment_property", path: "item_dr", operation: "add", value: 1, per_level: true }
+    }
+  }]);
+  assert.equal(result.properties.item_dr, 4);
+  assert.equal(equipment.item_dr, 2);
+  assert.equal(result.steps.length, 1);
+});
+
+test("modifies attacks by group and combines formula and type changes deterministically", () => {
+  const result = resolveEquipment({
+    cost: 60, weight: 7,
+    melee_attacks: { shield: { mode: "Golpe", groups: "golpe-com-escudo, escudo", damage_formula: "GdP", damage_type: "cont" } }
+  }, [{
+    id: "spike", name: "Espinho", features_data: {
+      type: { id: "type", label: "Perfurante", type: "attack_property", attack_type: "melee", selector_field: "group", selector_value: "golpe-com-escudo", path: "damage_type", operation: "set", value: "perf" },
+      damage: { id: "damage", label: "+1 dano", type: "attack_property", attack_type: "melee", selector_field: "group", selector_value: "golpe-com-escudo", path: "damage_formula", operation: "add", value: 1 }
+    }
+  }]);
+  assert.equal(result.meleeAttacks.shield.damage_formula, "GdP+1");
+  assert.equal(result.meleeAttacks.shield.damage_type, "perf");
+  assert.equal(result.warnings.length, 0);
+});
+
+test("creates stable attack modes before applying matching attack features", () => {
+  const modifierWithAttack = {
+    id: "spike", name: "Espinho", features_data: {
+      bonus: { id: "bonus", label: "Bônus", type: "attack_property", attack_type: "melee", selector_field: "group", selector_value: "espinho", path: "skill_level_mod", operation: "add", value: 1 },
+      create: { id: "create", label: "Golpe com espinho", type: "create_attack", attack_type: "melee", attack: { mode: "Golpe com Espinho", groups: "espinho", skill_name: "Escudo", damage_formula: "GdP+1", damage_type: "perf" } }
+    }
+  };
+  const result = resolveEquipment({ cost: 60, weight: 7 }, [modifierWithAttack]);
+  assert.equal(Object.keys(result.meleeAttacks).length, 1);
+  assert.equal(result.meleeAttacks.eqpmod_spike_create.mode, "Golpe com Espinho");
+  assert.equal(result.meleeAttacks.eqpmod_spike_create.skill_level_mod, 1);
+});
+
+test("warns about unmatched selectors and conflicting property overrides", () => {
+  const result = resolveEquipment({ cost: 1, weight: 1, quality: "comum" }, [
+    { id: "a", features_data: { quality: { id: "quality", type: "equipment_property", path: "quality", operation: "set", value: "boa" } } },
+    { id: "b", features_data: {
+      quality: { id: "quality", type: "equipment_property", path: "quality", operation: "set", value: "excelente" },
+      missing: { id: "missing", type: "attack_property", selector_field: "mode", selector_value: "Inexistente", path: "damage_type", operation: "set", value: "perf" }
+    } }
+  ]);
+  assert.equal(result.properties.quality, "excelente");
+  assert.deepEqual(result.warnings.map(warning => warning.type).sort(), ["conflicting_feature_override", "feature_no_match"]);
+});

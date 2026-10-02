@@ -515,6 +515,7 @@
         <a class="item" data-tab="details">Detalhes</a>
         {{#if (eq item.type "eqp_modifier")}}
         <a class="item" data-tab="adjustments">Ajustes</a>
+        <a class="item" data-tab="equipment-features">Features</a>
         {{/if}}
         {{#if (or (eq item.type "advantage") (eq item.type "disadvantage"))}}
         <a class="item" data-tab="social">{{localize "GUM.Social.Tab"}}</a>
@@ -1630,9 +1631,73 @@
         <p class="notes"><strong>Interpretação:</strong> {{eqpModifierAdjustment.weight.expression}} · {{eqpModifierAdjustment.weight.stage}}</p>
       </div>
 
+      {{/if}}
+    </div>
+
+    <div class="tab" data-tab="equipment-features">
+      {{#if (eq item.type "eqp_modifier")}}
       <div class="form-section">
-        <h4 class="section-title">Próxima etapa: features estruturadas</h4>
-        <p class="notes">Preço e peso já usam o novo resolvedor central. Alterações de ataques, propriedades e efeitos concedidos serão configuradas aqui na próxima etapa.</p>
+        <div class="eqpmod-block-header">
+          <div><h4 class="section-title">Features estruturadas</h4><p class="notes">Altere propriedades do equipamento ou de seus ataques sem modificar os dados-base.</p></div>
+          <button type="button" class="add-eqp-feature"><i class="fas fa-plus"></i> Adicionar feature</button>
+        </div>
+
+        <ol class="eqpmod-line-list">
+        {{#each eqpModifierFeatures as |feature|}}
+          <li class="eqpmod-line-item" data-feature-id="{{feature.id}}">
+            <div class="form-grid-3">
+              <label class="custom-checkbox"><input type="checkbox" name="system.features_data.{{feature.id}}.enabled" {{checked feature.enabled}}/><span>Ativa</span></label>
+              <div class="form-group"><label>Nome</label><input type="text" name="system.features_data.{{feature.id}}.label" value="{{feature.label}}"/></div>
+              <div class="form-group"><label>Tipo</label><select name="system.features_data.{{feature.id}}.type">{{selectOptions ../equipmentFeatureTypeOptions selected=feature.type valueAttr="id" labelAttr="label"}}</select></div>
+            </div>
+
+            {{#if (eq feature.type "equipment_property")}}
+            <div class="form-grid-3">
+              <div class="form-group"><label>Propriedade</label><select name="system.features_data.{{feature.id}}.path">{{selectOptions ../equipmentPropertyOptions selected=feature.path valueAttr="id" labelAttr="label"}}</select></div>
+              <div class="form-group"><label>Operação</label><select name="system.features_data.{{feature.id}}.operation">{{selectOptions ../equipmentFeatureOperationOptions selected=feature.operation valueAttr="id" labelAttr="label"}}</select></div>
+              <div class="form-group"><label>Valor</label><input type="text" name="system.features_data.{{feature.id}}.value" value="{{feature.value}}"/></div>
+            </div>
+            <label class="custom-checkbox"><input type="checkbox" name="system.features_data.{{feature.id}}.per_level" {{checked feature.per_level}}/><span>Por nível do modificador</span></label>
+            {{/if}}
+
+            {{#if (eq feature.type "attack_property")}}
+            <div class="form-grid-3">
+              <div class="form-group"><label>Ataques</label><select name="system.features_data.{{feature.id}}.attack_type"><option value="all" {{#if (eq feature.attack_type "all")}}selected{{/if}}>Todos</option><option value="melee" {{#if (eq feature.attack_type "melee")}}selected{{/if}}>Corpo a corpo</option><option value="ranged" {{#if (eq feature.attack_type "ranged")}}selected{{/if}}>À distância</option></select></div>
+              <div class="form-group"><label>Encontrar por</label><select name="system.features_data.{{feature.id}}.selector_field"><option value="all" {{#if (eq feature.selector_field "all")}}selected{{/if}}>Todos</option><option value="group" {{#if (eq feature.selector_field "group")}}selected{{/if}}>Grupo</option><option value="mode" {{#if (eq feature.selector_field "mode")}}selected{{/if}}>Nome do modo</option><option value="skill_name" {{#if (eq feature.selector_field "skill_name")}}selected{{/if}}>Perícia</option></select></div>
+              <div class="form-group"><label>Filtro</label><input type="text" name="system.features_data.{{feature.id}}.selector_value" value="{{feature.selector_value}}" placeholder="Ex.: golpe-com-escudo"/></div>
+            </div>
+            <div class="form-grid-3">
+              <div class="form-group"><label>Propriedade</label><select name="system.features_data.{{feature.id}}.path">{{selectOptions ../attackPropertyOptions selected=feature.path valueAttr="id" labelAttr="label"}}</select></div>
+              <div class="form-group"><label>Operação</label><select name="system.features_data.{{feature.id}}.operation">{{selectOptions ../equipmentFeatureOperationOptions selected=feature.operation valueAttr="id" labelAttr="label"}}</select></div>
+              <div class="form-group"><label>Valor</label><input type="text" name="system.features_data.{{feature.id}}.value" value="{{feature.value}}"/></div>
+            </div>
+            <label class="custom-checkbox"><input type="checkbox" name="system.features_data.{{feature.id}}.per_level" {{checked feature.per_level}}/><span>Por nível do modificador</span></label>
+            {{/if}}
+
+            {{#if (eq feature.type "create_attack")}}
+            <div class="form-grid-3">
+              <div class="form-group"><label>Tipo</label><select name="system.features_data.{{feature.id}}.attack_type"><option value="melee" {{#if (eq feature.attack_type "melee")}}selected{{/if}}>Corpo a corpo</option><option value="ranged" {{#if (eq feature.attack_type "ranged")}}selected{{/if}}>À distância</option></select></div>
+              <div class="form-group"><label>Nome do modo</label><input type="text" name="system.features_data.{{feature.id}}.attack.mode" value="{{feature.attack.mode}}"/></div>
+              <div class="form-group"><label>Perícia</label><input type="text" name="system.features_data.{{feature.id}}.attack.skill_name" value="{{feature.attack.skill_name}}"/></div>
+            </div>
+            <div class="form-grid-3">
+              <div class="form-group"><label>Dano</label><input type="text" name="system.features_data.{{feature.id}}.attack.damage_formula" value="{{feature.attack.damage_formula}}" placeholder="GdP+1"/></div>
+              <div class="form-group"><label>Tipo de dano</label><input type="text" name="system.features_data.{{feature.id}}.attack.damage_type" value="{{feature.attack.damage_type}}" placeholder="perf"/></div>
+              <div class="form-group"><label>Divisor</label><input type="number" step="0.1" name="system.features_data.{{feature.id}}.attack.armor_divisor" value="{{feature.attack.armor_divisor}}"/></div>
+            </div>
+            <div class="form-grid-3">
+              <div class="form-group"><label>Grupos</label><input type="text" name="system.features_data.{{feature.id}}.attack.groups" value="{{feature.attack.groups}}" placeholder="escudo, espinho"/></div>
+              <div class="form-group"><label>Alcance C.C.</label><input type="text" name="system.features_data.{{feature.id}}.attack.reach" value="{{feature.attack.reach}}"/></div>
+              <div class="form-group"><label>Distância</label><input type="text" name="system.features_data.{{feature.id}}.attack.range" value="{{feature.attack.range}}"/></div>
+            </div>
+            {{/if}}
+
+            <div class="eqpmod-actions"><button type="button" class="delete-eqp-feature" title="Remover feature"><i class="fas fa-trash"></i> Remover</button></div>
+          </li>
+        {{else}}
+          <li class="eqpmod-empty">Nenhuma feature estruturada. Preço e peso continuam sendo resolvidos normalmente.</li>
+        {{/each}}
+        </ol>
       </div>
       {{/if}}
     </div>
@@ -1884,6 +1949,7 @@
                          <div class="form-group input-narrow">
                              <label>ST Mín.</label>
                              <input type="text" data-name="system.melee_attacks.{{key}}.min_strength" value="{{attack.min_strength}}"/>
+                             <div class="form-group"><label>Grupos</label><input type="text" data-name="system.melee_attacks.{{key}}.groups" value="{{attack.groups}}" placeholder="Ex.: escudo, golpe-com-escudo"/></div>
                          </div>
                      </div>
 
@@ -2148,6 +2214,7 @@
                          <div class="form-group input-narrow">
                              <label>ST Mín.</label>
                             <input type="text" data-name="system.ranged_attacks.{{key}}.min_strength" value="{{attack.min_strength}}"/>
+                            <div class="form-group"><label>Grupos</label><input type="text" data-name="system.ranged_attacks.{{key}}.groups" value="{{attack.groups}}" placeholder="Ex.: arco, projétil"/></div>
                          </div>
                      </div>
 
@@ -2466,6 +2533,9 @@
         <div class="form-group"><label>Preço unitário</label><strong>{{finalCostString}}</strong><span class="notes">Base: {{system.cost}}</span></div>
         <div class="form-group"><label>Peso unitário</label><strong>{{finalWeightString}} kg</strong><span class="notes">Base: {{system.weight}} kg</span></div>
       </div>
+      {{#if equipmentResolution.steps.length}}
+      <div class="eqpmod-subline"><strong>Features aplicadas:</strong> {{equipmentResolution.steps.length}}</div>
+      {{/if}}
       {{#if equipmentResolution.warnings.length}}
       <p class="notes"><i class="fas fa-triangle-exclamation"></i> {{equipmentResolution.warnings.length}} ajuste(s) inválido(s) ou incompatível(is) foram ignorados.</p>
       {{/if}}
