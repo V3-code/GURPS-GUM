@@ -305,6 +305,7 @@ el.style.display = isVisible ? "grid" : "none";
     if (selectedIds.length === 0) return ui.notifications.warn("Nenhum modificador selecionado.");
 
     const newModifiersData = {};
+    const cloneData = value => foundry.utils.deepClone ? foundry.utils.deepClone(value) : JSON.parse(JSON.stringify(value));
     for (const id of selectedIds) {
       const sourceModifier = this.allModifiers.find(m => m.selectionKey === id);
       if (sourceModifier) {
@@ -315,6 +316,12 @@ el.style.display = isVisible ? "grid" : "none";
           cost_adjustment: sourceModifier.system.cost_adjustment,
           cost_factor: sourceModifier.system.cost_factor,
           weight_mod: sourceModifier.system.weight_mod,
+          enabled: sourceModifier.system.enabled !== false,
+          level: sourceModifier.system.level ?? 1,
+          adjustment_schema: sourceModifier.system.adjustment_schema ?? 0,
+          cost_adjustment_data: cloneData(sourceModifier.system.cost_adjustment_data || {}),
+          weight_adjustment_data: cloneData(sourceModifier.system.weight_adjustment_data || {}),
+          features_data: cloneData(sourceModifier.system.features_data || []),
           tech_level_mod: sourceModifier.system.tech_level_mod,
           features: sourceModifier.system.features,
           ref: sourceModifier.system.ref,

@@ -8,6 +8,7 @@ import { listBodyLocations } from "../config/body-profiles.js";
 import { SOCIAL_CATEGORIES } from "../config/social-aspects.mjs";
 import { normalizeContextCsv, openContextPicker } from "../apps/context-picker.mjs";
 import { getSkillDisplayName } from "../utils/skill-display-name.mjs";
+import { normalizeEquipmentModifier, resolveEquipment } from "../utils/equipment-resolution.mjs";
  
 const { ItemSheet } = foundry.appv1.sheets; 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor; 
@@ -45,51 +46,8 @@ const ROLL_CONTEXT_OPTIONS = [
 // ================================================================== // 
 //  CLASSE DA FICHA DO ITEM (GurpsItemSheet) - VERSÃO BLINDADA V12    // 
 // ================================================================== // 
-export class GurpsItemSheet extends ItemSheet { 
-    _parseAdjustmentExpression(rawValue, { allowCF = false } = {}) { 
-        const source = (rawValue ?? "").toString().trim(); 
-        if (!source) return { mode: "none", value: 0, label: "" }; 
- 
-        const normalized = source.replace(",", ".").trim(); 
- 
-        const cfMatch = allowCF ? normalized.match(/^([+-]?\d+(?:\.\d+)?)\s*cf$/i) : null; 
-        if (cfMatch) { 
-            return { mode: "cf", value: Number(cfMatch[1]), label: `${Number(cfMatch[1]) >= 0 ? "+" : ""}${Number(cfMatch[1])} CF` }; 
-        } 
- 
-        const percentMatch = normalized.match(/^([+-]?\d+(?:\.\d+)?)\s*%$/); 
-        if (percentMatch) { 
-            return { mode: "percent", value: Number(percentMatch[1]), label: `${Number(percentMatch[1]) >= 0 ? "+" : ""}${Number(percentMatch[1])}%` }; 
-        } 
- 
-        const multMatch = normalized.match(/^[x*]\s*(\d+(?:\.\d+)?)$/i); 
-        if (multMatch) { 
-            return { mode: "multiply", value: Number(multMatch[1]), label: `x${Number(multMatch[1])}` }; 
-        } 
- 
-        const sumMatch = normalized.match(/^([+-]?\d+(?:\.\d+)?)$/); 
-        if (sumMatch) { 
-            return { mode: "add", value: Number(sumMatch[1]), label: `${Number(sumMatch[1]) >= 0 ? "+" : ""}${Number(sumMatch[1])}` }; 
-        } 
- 
-        return { mode: "invalid", value: 0, label: source }; 
-    } 
- 
-    _normalizeCostExpression(mod = {}) { 
-        const costAdjustment = mod.cost_adjustment; 
-        if (costAdjustment !== undefined && `${costAdjustment}`.trim() !== "") { 
-            return `${costAdjustment}`.trim(); 
-        } 
- 
-        const cf = Number(mod.cost_factor); 
-        if (!Number.isNaN(cf) && cf !== 0) { 
-            return `${cf >= 0 ? "+" : ""}${cf} CF`; 
-        } 
- 
-        return "0 CF"; 
-    } 
- 
-    static get defaultOptions() { 
+export class GurpsItemSheet extends ItemSheet {
+    static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, { 
             classes: ["gum", "sheet", "item", "theme-dark"], 
             width: 635, 
@@ -429,61 +387,38 @@ _promptMultipleReferences(parsedList) {
             context.eqpModifiersList = modifiersArray; 
             context.eqpModifiersHasFeatures = modifiersArray.some(mod => mod.features); 
  
-            let baseCost = Number(this.item.system.cost) || 0; 
-            let baseWeight = Number(this.item.system.weight) || 0; 
-            let totalCF = 0; 
-            let costMultiplier = 1; 
-            let costFlat = 0; 
-            let weightMultiplier = 1; 
-            let weightFlat = 0; 
- 
-            for (const mod of modifiersArray) { 
-                const parsedCost = this._parseAdjustmentExpression(this._normalizeCostExpression(mod), { allowCF: true }); 
-                switch (parsedCost.mode) { 
-                    case "cf": 
-                        totalCF += parsedCost.value; 
-                        break; 
-                    case "percent": 
-                        costMultiplier *= (1 + (parsedCost.value / 100)); 
-                        break; 
-                    case "multiply": 
-                        costMultiplier *= parsedCost.value; 
-                        break; 
-                    case "add": 
-                        costFlat += parsedCost.value; 
-                        break; 
-                    default: 
-                        break; 
-                } 
- 
-                const parsedWeight = this._parseAdjustmentExpression(mod.weight_mod); 
-                switch (parsedWeight.mode) { 
-                    case "percent": 
-                        weightMultiplier *= (1 + (parsedWeight.value / 100)); 
-                        break; 
-                    case "multiply": 
-                        weightMultiplier *= parsedWeight.value; 
-                        break; 
-                    case "add": 
-                        weightFlat += parsedWeight.value; 
-                        break; 
-                    default: 
-                        break; 
-                } 
- 
-                mod.costDisplay = parsedCost.label || this._normalizeCostExpression(mod); 
-                mod.weightDisplay = parsedWeight.label || (mod.weight_mod || "x1"); 
-            } 
- 
-            const finalCostMultiplier = Math.max(0, 1 + totalCF); 
-            context.calculatedFinalCost = Math.max(0, ((baseCost * finalCostMultiplier) * costMultiplier) + costFlat); 
-            context.calculatedFinalWeight = Math.max(0, (baseWeight * weightMultiplier) + weightFlat); 
+            const resolution = resolveEquipment(this.item.system, eqpModsObj);
+            const normalizedById = new Map(resolution.modifiers.map(modifier => [modifier.id, modifier]));
+            for (const mod of modifiersArray) {
+                const normalized = normalizedById.get(mod.id) || normalizeEquipmentModifier(mod);
+                mod.enabled = normalized.enabled;
+                mod.level = normalized.level;
+                mod.costDisplay = normalized.cost.expression || "—";
+                mod.weightDisplay = normalized.weight.expression || "—";
+                mod.costStage = normalized.cost.stage;
+                mod.weightStage = normalized.weight.stage;
+            }
+
+            context.equipmentResolution = resolution;
+            context.calculatedFinalCost = resolution.cost.unitFinal;
+            context.calculatedFinalWeight = resolution.weight.unitFinal;
              
             context.finalCostString = context.calculatedFinalCost.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }); 
  context.finalWeightString = context.calculatedFinalWeight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }); 
-            context.hasCostChange = finalCostMultiplier !== 1 || costMultiplier !== 1 || costFlat !== 0; 
-            context.hasWeightChange = weightMultiplier !== 1 || weightFlat !== 0; 
-        } 
+            context.hasCostChange = resolution.cost.unitFinal !== resolution.cost.base;
+            context.hasWeightChange = resolution.weight.unitFinal !== resolution.weight.base;
+        }
+
+        if (this.item.type === "eqp_modifier") {
+            const normalized = normalizeEquipmentModifier(this.item.system);
+            context.eqpModifierAdjustment = normalized;
+            context.equipmentAdjustmentStageOptions = [
+                { id: "original", label: "Valor original" },
+                { id: "base", label: "Valor base" },
+                { id: "final_base", label: "Valor base final" },
+                { id: "final", label: "Valor final" }
+            ];
+        }
  
         if (this.item.type === "equipment") { 
             const drLocations = this.item.system.dr_locations || {}; 
@@ -2114,7 +2049,7 @@ const rangedFields = `
         }
     
 
-        if (this.item?.type === "gm_modifier") { 
+        if (this.item?.type === "gm_modifier") {
             const entriesByIndex = new Map(); 
             for (const [key, value] of Object.entries(formData)) { 
                 const match = key.match(/^system\.modifier_entries\.(\d+)\.(label|value|nh_cap|contexts)$/); 
@@ -2140,7 +2075,15 @@ const rangedFields = `
                     formData["system.nh_cap"] = entries[0].nh_cap; 
                 } 
             } 
-        } 
+        }
+
+        if (this.item?.type === "eqp_modifier") {
+            const costExpression = formData["system.cost_adjustment_data.expression"];
+            const weightExpression = formData["system.weight_adjustment_data.expression"];
+            formData["system.adjustment_schema"] = 1;
+            if (costExpression !== undefined) formData["system.cost_adjustment"] = costExpression;
+            if (weightExpression !== undefined) formData["system.weight_mod"] = weightExpression;
+        }
  
         for (const [k, v] of Object.entries(formData)) { 
             const isDescriptionField = k.includes("description"); 

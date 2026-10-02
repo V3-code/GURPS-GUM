@@ -802,6 +802,21 @@
       "cost_adjustment": "0 CF",
       "cost_factor": 0,
       "weight_mod": "x1",
+      "enabled": true,
+      "level": 1,
+      "cost_adjustment_data": {
+        "expression": "0 CF",
+        "stage": "base",
+        "per_level": false,
+        "per_weight": false,
+        "per_weight_unit": "kg"
+      },
+      "weight_adjustment_data": {
+        "expression": "x1",
+        "stage": "base",
+        "per_level": false
+      },
+      "features_data": [],
       "tech_level_mod": "",
       "tech_level": "",
       "tags": "",

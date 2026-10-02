@@ -29,6 +29,7 @@ As novas versões serão detectadas pelo próprio Foundry. Se preferir, você ta
 - **Integração com o GCS:** importação de personagens, templates e bibliotecas, além de ferramentas de importação e exportação em JSON.
 - **Estrutura de compêndios:** espaços vazios para condições, condições passivas, efeitos e automações de estado, que cada mesa pode criar ou importar conforme os livros que utiliza.
 - **Combate assistido:** aplicação de dano, ferimentos, condições, efeitos, modificadores e gerenciamento de estados.
+- **Modificadores de equipamento:** o cálculo centralizado de preço e peso, suas etapas e a evolução planejada estão documentados em [`docs/equipment-modifiers.md`](docs/equipment-modifiers.md).
 - **Ferramentas para o mestre:** Escudo do Mestre, solicitação de testes e navegadores de regras e conteúdos.
 
 ## Compatibilidade e desenvolvimento

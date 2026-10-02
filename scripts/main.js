@@ -49,6 +49,7 @@ import { organizeGumCompendia } from "../module/utils/compendium-folder-organize
 
 import { getSkillDisplayName, setDirectoryEntryLabel } from "../module/utils/skill-display-name.mjs";
 import { installGumChatCommandInterceptor, normalizeGumLookup, resolveGumCommandActor, splitSkillModifier } from "../module/utils/gum-chat-command.mjs";
+import { resolveEquipment } from "../module/utils/equipment-resolution.mjs";
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
 
@@ -564,26 +565,10 @@ const activeEffects = Array.isArray(this.effects) ? this.effects : Array.from(th
         // --- ETAPA 1: PRÉ-PROCESSAMENTO DE ITENS (MODIFICADORES DE EQUIPAMENTO) ---
         for (const item of this.items) {
             if (item.type === 'equipment') {
-                const baseWeight = Number(item.system.weight) || 0;
-                const baseCost = Number(item.system.cost) || 0;
-                
-                let totalCF = 0;
-                let weightMultiplier = 1;
-
-                const modifiers = item.system.eqp_modifiers || {};
-                for (const mod of Object.values(modifiers)) {
-                    totalCF += Number(mod.cost_factor) || 0;
-                    if (mod.weight_mod) {
-                        const wModStr = mod.weight_mod.toString().trim().toLowerCase();
-                        if (wModStr.startsWith('x')) {
-                            const mult = parseFloat(wModStr.substring(1));
-                            if (!isNaN(mult)) weightMultiplier *= mult;
-                        }
-                    }
-                }
-
-                item.system.effectiveWeight = baseWeight * weightMultiplier;
-                item.system.effectiveCost = baseCost * Math.max(0, 1 + totalCF);
+                const resolution = resolveEquipment(item.system);
+                item.system.equipmentResolution = resolution;
+                item.system.effectiveWeight = resolution.weight.unitFinal;
+                item.system.effectiveCost = resolution.cost.unitFinal;
                 
                 // (Removido: Lógica de somar DB ao combat.defense_bonus)
             }

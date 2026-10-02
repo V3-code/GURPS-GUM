@@ -2396,28 +2396,48 @@ function parseGCSLibraryEquipmentModifier(gcsMod) {
 
     const rawCost = gcsMod.cost || "";
     const rawCostType = gcsMod.cost_type || "";
+    const rawWeight = gcsMod.weight || "";
+    const rawWeightType = gcsMod.weight_type || "";
     const rawRef = gcsMod.reference || "";
     const rawNotes = getGCSItemNotes(gcsMod);
 
-    // Interpretação simples e explícita de custo para já mapear para expressão utilizável.
+    const stageFromGCS = (value, suffix) => ({
+        [`to_original_${suffix}`]: "original",
+        [`to_base_${suffix}`]: "base",
+        [`to_final_base_${suffix}`]: "final_base",
+        [`to_final_${suffix}`]: "final"
+    })[String(value || "").toLowerCase()] || "base";
+
+    // Preserva a expressão do GCS; o resolvedor central é a única camada que a interpreta.
     const rawCostStr = String(rawCost).trim();
-    if (/^[+-]?\d+(\.\d+)?$/.test(rawCostStr)) {
-        template.cost_factor = Number(rawCostStr);
-        template.cost_adjustment = `${Number(rawCostStr) >= 0 ? "+" : ""}${Number(rawCostStr)} CF`;
-    } else if (/^[+-]?\d+(\.\d+)?\s*%$/.test(rawCostStr)) {
-        template.cost_adjustment = rawCostStr;
-    } else if (/^[x*]\s*\d+(\.\d+)?$/i.test(rawCostStr)) {
-        template.cost_adjustment = rawCostStr.replace("*", "x");
-    } else {
-        template.cost_factor = 0;
-        template.cost_adjustment = rawCostStr || "0 CF";
-    }
+    const rawWeightStr = String(rawWeight).trim();
+    template.adjustment_schema = 1;
+    template.enabled = gcsMod.disabled !== true;
+    template.level = 1;
+    template.cost_factor = /cf$/i.test(rawCostStr) ? Number.parseFloat(rawCostStr) || 0 : 0;
+    template.cost_adjustment = rawCostStr.replace("*", "x") || "0 CF";
+    template.weight_mod = rawWeightStr.replace("*", "x") || "x1";
+    template.cost_adjustment_data = {
+        expression: template.cost_adjustment,
+        stage: stageFromGCS(rawCostType, "cost"),
+        per_level: gcsMod.cost_is_per_level === true,
+        per_weight: gcsMod.cost_is_per_pound === true,
+        per_weight_unit: gcsMod.cost_is_per_pound === true ? "lb" : "kg"
+    };
+    template.weight_adjustment_data = {
+        expression: template.weight_mod,
+        stage: stageFromGCS(rawWeightType, "weight"),
+        per_level: gcsMod.weight_is_per_level === true
+    };
 
     template.ref = rawRef;
 
     const featureLines = [];
     if (rawCostStr) {
         featureLines.push(`Custo GCS: ${rawCostStr}${rawCostType ? ` (${rawCostType})` : ""}`);
+    }
+    if (rawWeightStr) {
+        featureLines.push(`Peso GCS: ${rawWeightStr}${rawWeightType ? ` (${rawWeightType})` : ""}`);
     }
     if (rawNotes) {
         featureLines.push(rawNotes);

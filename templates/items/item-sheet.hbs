@@ -513,6 +513,9 @@
   <nav class="sheet-tabs tabs" data-group="primary">
         <a class="item" data-tab="description">Descrição</a>
         <a class="item" data-tab="details">Detalhes</a>
+        {{#if (eq item.type "eqp_modifier")}}
+        <a class="item" data-tab="adjustments">Ajustes</a>
+        {{/if}}
         {{#if (or (eq item.type "advantage") (eq item.type "disadvantage"))}}
         <a class="item" data-tab="social">{{localize "GUM.Social.Tab"}}</a>
         {{/if}}
@@ -612,16 +615,16 @@
         {{!-- ===================================================================== --}}
         {{#if (eq item.type "eqp_modifier")}}
             
-            {{!-- Seção 1: Mecânica (Custo, Peso, TL) --}}
-            <div class="form-section"><h4 class="section-title">Mecânica</h4>
+            {{!-- Seção 1: Identidade mecânica --}}
+            <div class="form-section"><h4 class="section-title">Identidade</h4>
                 <div class="form-grid-4">
-                    <div class="form-group" title="Use +5/-5 (soma), -10% (percentual), x3 (multiplicação) ou -0.2 CF (fator de custo)">
-                        <label>Ajuste de Custo</label>
-                        <input type="text" name="system.cost_adjustment" value="{{system.cost_adjustment}}" placeholder="Ex: -10%, +50, x3, -0.2 CF"/>
+                    <div class="form-group">
+                        <label>Habilitado por padrão</label>
+                        <input type="checkbox" name="system.enabled" {{checked system.enabled}}/>
                     </div>
-                    <div class="form-group" title="Modificador de Peso (ex: x0.75, x1.5)">
-                        <label>Mod. Peso</label>
-                        <input type="text" name="system.weight_mod" value="{{system.weight_mod}}" placeholder="x1"/>
+                    <div class="form-group">
+                        <label>Nível padrão</label>
+                        <input type="number" min="0" step="1" name="system.level" value="{{system.level}}"/>
                     </div>
                     <div class="form-group" title="Nível Tecnológico do Modificador">
                         <label>NT (TL)</label>
@@ -1575,6 +1578,65 @@
 {{! ========================================================= }}
     {{!  ABA "DESCRIÇÃO" (COM O EDITOR CORRETO)     }}
     {{! ========================================================= }}
+    {{!-- Aba de ajustes estruturados do modificador de equipamento --}}
+    <div class="tab" data-tab="adjustments">
+      {{#if (eq item.type "eqp_modifier")}}
+      <div class="form-section">
+        <h4 class="section-title">Ajuste de preço</h4>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Expressão</label>
+            <input type="text" name="system.cost_adjustment_data.expression" value="{{eqpModifierAdjustment.cost.expression}}" placeholder="Ex.: +0,2 CF, x4, +50, -10%"/>
+            <p class="notes">CF e multiplicadores estruturais pertencem normalmente ao valor base.</p>
+          </div>
+          <div class="form-group">
+            <label>Aplicar ao</label>
+            <select name="system.cost_adjustment_data.stage">
+              {{selectOptions equipmentAdjustmentStageOptions selected=eqpModifierAdjustment.cost.stage valueAttr="id" labelAttr="label"}}
+            </select>
+          </div>
+        </div>
+        <div class="form-grid-3 attack-flags-grid">
+          <label class="custom-checkbox"><input type="checkbox" name="system.cost_adjustment_data.per_level" {{checked eqpModifierAdjustment.cost.perLevel}}/><span>Por nível</span></label>
+          <label class="custom-checkbox"><input type="checkbox" name="system.cost_adjustment_data.per_weight" {{checked eqpModifierAdjustment.cost.perWeight}}/><span>Por peso</span></label>
+          <div class="form-group">
+            <label>Unidade do peso</label>
+            <select name="system.cost_adjustment_data.per_weight_unit">
+              <option value="kg" {{#if (eq eqpModifierAdjustment.cost.perWeightUnit "kg")}}selected{{/if}}>kg</option>
+              <option value="lb" {{#if (eq eqpModifierAdjustment.cost.perWeightUnit "lb")}}selected{{/if}}>lb</option>
+            </select>
+          </div>
+        </div>
+        <p class="notes"><strong>Interpretação:</strong> {{eqpModifierAdjustment.cost.expression}} · {{eqpModifierAdjustment.cost.stage}}</p>
+      </div>
+
+      <div class="form-section">
+        <h4 class="section-title">Ajuste de peso</h4>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Expressão</label>
+            <input type="text" name="system.weight_adjustment_data.expression" value="{{eqpModifierAdjustment.weight.expression}}" placeholder="Ex.: +0,5 kg, -10%, x0,75, x2/3"/>
+          </div>
+          <div class="form-group">
+            <label>Aplicar ao</label>
+            <select name="system.weight_adjustment_data.stage">
+              {{selectOptions equipmentAdjustmentStageOptions selected=eqpModifierAdjustment.weight.stage valueAttr="id" labelAttr="label"}}
+            </select>
+          </div>
+        </div>
+        <div class="form-grid-3 attack-flags-grid">
+          <label class="custom-checkbox"><input type="checkbox" name="system.weight_adjustment_data.per_level" {{checked eqpModifierAdjustment.weight.perLevel}}/><span>Por nível</span></label>
+        </div>
+        <p class="notes"><strong>Interpretação:</strong> {{eqpModifierAdjustment.weight.expression}} · {{eqpModifierAdjustment.weight.stage}}</p>
+      </div>
+
+      <div class="form-section">
+        <h4 class="section-title">Próxima etapa: features estruturadas</h4>
+        <p class="notes">Preço e peso já usam o novo resolvedor central. Alterações de ataques, propriedades e efeitos concedidos serão configuradas aqui na próxima etapa.</p>
+      </div>
+      {{/if}}
+    </div>
+
     <div class="tab" data-tab="description">
       <div class="description-tab">
         {{#if (or (eq item.type "skill") (eq item.type "spell") (eq item.type "power") (eq item.type "equipment") (eq item.type "advantage") (eq item.type "disadvantage"))}}
@@ -2351,6 +2413,7 @@
 
             {{!-- Identidade: ícone + nome --}}
             <div class="eqpmod-cell eqpmod-identity">
+              <input type="checkbox" name="system.eqp_modifiers.{{mod.id}}.enabled" {{checked mod.enabled}} title="Modificador habilitado" aria-label="Habilitar {{mod.name}}"/>
               {{#if mod.img}}
                 <img src="{{mod.img}}" class="eqpmod-icon" />
               {{else}}
@@ -2359,6 +2422,7 @@
 
               <div class="eqpmod-text">
                 <div class="eqpmod-name">{{mod.name}}{{#if (eq mod.source_type "effect")}} <span class="eqpmod-subline">Efeito</span>{{/if}}</div>
+                <div class="eqpmod-subline">Nível <input type="number" min="0" step="1" name="system.eqp_modifiers.{{mod.id}}.level" value="{{mod.level}}" style="width: 52px;"/></div>
               </div>
             </div>
 
@@ -2395,6 +2459,17 @@
         <li class="eqpmod-empty">Nenhum modificador de equipamento aplicado.</li>
       {{/each}}
     </ol>
+
+    <div class="form-section" style="margin-top: 10px;">
+      <h4 class="section-title">Resultado resolvido</h4>
+      <div class="form-grid-2">
+        <div class="form-group"><label>Preço unitário</label><strong>{{finalCostString}}</strong><span class="notes">Base: {{system.cost}}</span></div>
+        <div class="form-group"><label>Peso unitário</label><strong>{{finalWeightString}} kg</strong><span class="notes">Base: {{system.weight}} kg</span></div>
+      </div>
+      {{#if equipmentResolution.warnings.length}}
+      <p class="notes"><i class="fas fa-triangle-exclamation"></i> {{equipmentResolution.warnings.length}} ajuste(s) inválido(s) ou incompatível(is) foram ignorados.</p>
+      {{/if}}
+    </div>
 
   </div>
 </div>
