@@ -172,3 +172,17 @@ test("warns about unmatched selectors and conflicting property overrides", () =>
   assert.equal(result.properties.quality, "excelente");
   assert.deepEqual(result.warnings.map(warning => warning.type).sort(), ["conflicting_feature_override", "feature_no_match"]);
 });
+
+test("resolves granted effects as declarative records and reports missing UUIDs", () => {
+  const result = resolveEquipment({ cost: 1, weight: 1 }, [{
+    id: "enchanted", name: "Encantado", features_data: {
+      valid: { id: "valid", label: "Proteção", type: "granted_effect", effect_uuid: "Compendium.world.effects.Item.protection", effect_domain: "wearer", lifecycle: "while_equipped" },
+      invalid: { id: "invalid", label: "Sem vínculo", type: "granted_effect", effect_uuid: "", effect_domain: "wearer" }
+    }
+  }]);
+  assert.deepEqual(result.grantedEffects, [{
+    id: "enchanted:valid", sourceModifierId: "enchanted", sourceModifierName: "Encantado", featureId: "valid",
+    label: "Proteção", effectUuid: "Compendium.world.effects.Item.protection", domain: "wearer", lifecycle: "while_equipped"
+  }]);
+  assert.equal(result.warnings.some(warning => warning.type === "missing_effect_uuid"), true);
+});

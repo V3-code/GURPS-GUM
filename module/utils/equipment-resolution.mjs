@@ -9,7 +9,7 @@ const number = (value, fallback = 0) => {
 const roundForOutput = value => Math.round((value + Number.EPSILON) * 1e10) / 1e10;
 const clone = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 
-export const EQUIPMENT_FEATURE_TYPES = Object.freeze(["equipment_property", "attack_property", "create_attack"]);
+export const EQUIPMENT_FEATURE_TYPES = Object.freeze(["equipment_property", "attack_property", "create_attack", "granted_effect"]);
 export const EQUIPMENT_PROPERTY_PATHS = Object.freeze([
   "tech_sm", "item_hp", "item_ht", "item_dr", "holdout", "legality_class", "material", "quality", "max_uses"
 ]);
@@ -144,6 +144,9 @@ export function normalizeEquipmentFeature(feature = {}, index = 0) {
     attackType: ["melee", "ranged"].includes(feature.attack_type || feature.attackType) ? (feature.attack_type || feature.attackType) : "all",
     selectorField: ["all", "mode", "skill_name", "group"].includes(feature.selector_field || feature.selectorField) ? (feature.selector_field || feature.selectorField) : "all",
     selectorValue: String(feature.selector_value ?? feature.selectorValue ?? "").trim(),
+    effectUuid: String(feature.effect_uuid ?? feature.effectUuid ?? "").trim(),
+    effectDomain: ["wearer", "source_attack", "hit_target"].includes(feature.effect_domain || feature.effectDomain) ? (feature.effect_domain || feature.effectDomain) : "wearer",
+    lifecycle: ["while_possessed", "while_carried", "while_equipped", "while_active"].includes(feature.lifecycle) ? feature.lifecycle : "while_equipped",
     attack: clone(feature.attack || {})
   };
 }
@@ -311,6 +314,7 @@ function resolveFeatures(equipment, modifiers, warnings) {
   const meleeAttacks = clone(equipment.melee_attacks || {});
   const rangedAttacks = clone(equipment.ranged_attacks || {});
   const steps = [];
+  const grantedEffects = [];
   const overrides = new Map();
   const operationOrder = { set: 1, multiply: 2, add: 3 };
   const tasks = modifiers
@@ -328,6 +332,26 @@ function resolveFeatures(equipment, modifiers, warnings) {
     });
 
   for (const { modifier, feature, scale } of tasks) {
+
+      if (feature.type === "granted_effect") {
+        if (!feature.effectUuid) {
+          warnings.push({ type: "missing_effect_uuid", domain: feature.effectDomain, sourceId: modifier.id, featureId: feature.id });
+          continue;
+        }
+        const grant = {
+          id: `${modifier.id}:${feature.id}`,
+          sourceModifierId: modifier.id,
+          sourceModifierName: modifier.name,
+          featureId: feature.id,
+          label: feature.label,
+          effectUuid: feature.effectUuid,
+          domain: feature.effectDomain,
+          lifecycle: feature.lifecycle
+        };
+        grantedEffects.push(grant);
+        steps.push({ type: feature.type, sourceId: modifier.id, sourceName: modifier.name, featureId: feature.id, label: feature.label, effectUuid: feature.effectUuid, domain: feature.effectDomain, lifecycle: feature.lifecycle });
+        continue;
+      }
 
       if (feature.type === "equipment_property") {
         if (!EQUIPMENT_PROPERTY_PATHS.includes(feature.path)) {
@@ -378,7 +402,15 @@ function resolveFeatures(equipment, modifiers, warnings) {
         if (!matches) warnings.push({ type: "feature_no_match", domain: "attack", sourceId: modifier.id, featureId: feature.id, selectorField: feature.selectorField, selectorValue: feature.selectorValue });
       }
   }
-  return { properties, meleeAttacks, rangedAttacks, steps };
+  return { properties, meleeAttacks, rangedAttacks, grantedEffects, steps };
+}
+
+export function isGrantedEffectLifecycleActive(itemSystem = {}, grant = {}) {
+  const location = String(itemSystem.location || "").toLowerCase();
+  if (grant.lifecycle === "while_possessed") return true;
+  if (grant.lifecycle === "while_carried") return location === "carried" || location === "equipped";
+  if (grant.lifecycle === "while_active") return itemSystem.active === true || itemSystem.switched_on === true;
+  return location === "equipped" || itemSystem.equipped === true;
 }
 
 /**

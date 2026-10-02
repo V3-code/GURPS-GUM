@@ -31,14 +31,21 @@ Os campos legados `cost_adjustment`, `cost_factor` e `weight_mod` continuam send
 
 ## Etapa implementada: features estruturadas
 
-`features_data` agora aceita três tipos iniciais:
+`features_data` agora aceita quatro tipos:
 
 - `equipment_property` — soma, multiplica ou define uma propriedade permitida do equipamento;
 - `attack_property` — altera ataques corpo a corpo, à distância ou ambos, filtrados por grupo, modo ou perícia;
 - `create_attack` — cria um modo de ataque derivado com ID estável, sem gravá-lo sobre o equipamento-base.
+- `granted_effect` — vincula uma capacidade do equipamento a um item Efeito reutilizável.
 
 Criações são resolvidas antes das alterações. Substituições, multiplicações e somas possuem uma ordem determinística, e substituições concorrentes produzem avisos. Features por nível usam o nível da instância do modificador.
 
+## Etapa implementada: efeitos concedidos ao portador
+
+O tipo `granted_effect` vincula um item Efeito por UUID e registra seu domínio e ciclo de vida. Efeitos no domínio `wearer` são sincronizados de forma idempotente com o ator e podem permanecer ativos enquanto o equipamento estiver possuído, carregado, equipado ou ativado. Somente ações persistentes são aplicadas nessa sincronização; alterações instantâneas de recursos não são repetidas.
+
+Os domínios `source_attack` e `hit_target` já são preservados no modelo, mas ainda não são executados automaticamente.
+
 ## Próxima etapa
 
-Adicionar features concedidas com domínio e ciclo de vida explícitos: efeitos sobre o portador, sobre rolagens originadas no equipamento e sobre alvos atingidos. Também será possível ampliar os filtros e fornecer editores especializados para propriedades complexas.
+Integrar os efeitos reservados aos fluxos de ataque e aplicação de dano: efeitos limitados às rolagens originadas pelo equipamento e efeitos aplicados ao alvo atingido. Também será possível ampliar os filtros e fornecer editores especializados para propriedades complexas.

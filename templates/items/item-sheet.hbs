@@ -59,6 +59,10 @@
                         <input type="text" name="system.legality_class" value="{{system.legality_class}}"/>
                     </div>
                 </div>
+                <label class="equipment-stat-card custom-checkbox">
+                    <span class="equipment-stat-heading"><i class="fas fa-power-off"></i><span>Ativo</span></span>
+                    <input type="checkbox" name="system.active" {{checked system.active}}/>
+                </label>
             </div>
         </div>
 
@@ -1690,6 +1694,15 @@
               <div class="form-group"><label>Alcance C.C.</label><input type="text" name="system.features_data.{{feature.id}}.attack.reach" value="{{feature.attack.reach}}"/></div>
               <div class="form-group"><label>Distância</label><input type="text" name="system.features_data.{{feature.id}}.attack.range" value="{{feature.attack.range}}"/></div>
             </div>
+            {{/if}}
+
+            {{#if (eq feature.type "granted_effect")}}
+            <div class="form-grid-3">
+              <div class="form-group"><label>UUID do item Efeito</label><input type="text" name="system.features_data.{{feature.id}}.effect_uuid" value="{{feature.effect_uuid}}" placeholder="Compendium.mundo.efeitos.Item..."/></div>
+              <div class="form-group"><label>Domínio</label><select name="system.features_data.{{feature.id}}.effect_domain"><option value="wearer" {{#if (eq feature.effect_domain "wearer")}}selected{{/if}}>Portador</option><option value="source_attack" {{#if (eq feature.effect_domain "source_attack")}}selected{{/if}}>Ataque do equipamento (reservado)</option><option value="hit_target" {{#if (eq feature.effect_domain "hit_target")}}selected{{/if}}>Alvo atingido (reservado)</option></select></div>
+              <div class="form-group"><label>Ciclo de vida</label><select name="system.features_data.{{feature.id}}.lifecycle"><option value="while_possessed" {{#if (eq feature.lifecycle "while_possessed")}}selected{{/if}}>Enquanto possuído</option><option value="while_carried" {{#if (eq feature.lifecycle "while_carried")}}selected{{/if}}>Enquanto carregado</option><option value="while_equipped" {{#if (eq feature.lifecycle "while_equipped")}}selected{{/if}}>Enquanto equipado</option><option value="while_active" {{#if (eq feature.lifecycle "while_active")}}selected{{/if}}>Enquanto ativado</option></select></div>
+            </div>
+            <p class="notes">Nesta etapa, somente o domínio Portador é aplicado automaticamente. Os demais domínios ficam preservados para a integração de ataques e dano.</p>
             {{/if}}
 
             <div class="eqpmod-actions"><button type="button" class="delete-eqp-feature" title="Remover feature"><i class="fas fa-trash"></i> Remover</button></div>

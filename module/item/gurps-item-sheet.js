@@ -418,7 +418,9 @@ _promptMultipleReferences(parsedList) {
                 per_level: feature.perLevel,
                 attack_type: feature.attackType,
                 selector_field: feature.selectorField,
-                selector_value: feature.selectorValue
+                selector_value: feature.selectorValue,
+                effect_uuid: feature.effectUuid,
+                effect_domain: feature.effectDomain
             }));
             context.equipmentAdjustmentStageOptions = [
                 { id: "original", label: "Valor original" },
@@ -429,7 +431,8 @@ _promptMultipleReferences(parsedList) {
             context.equipmentFeatureTypeOptions = [
                 { id: "equipment_property", label: "Modificar propriedade do equipamento" },
                 { id: "attack_property", label: "Modificar modo de ataque" },
-                { id: "create_attack", label: "Criar modo de ataque" }
+                { id: "create_attack", label: "Criar modo de ataque" },
+                { id: "granted_effect", label: "Conceder efeito" }
             ];
             context.equipmentFeatureOperationOptions = [
                 { id: "add", label: "Somar" },
@@ -941,7 +944,8 @@ if (this.item?.type === "equipment") {
             await this.item.update({ [`system.features_data.${id}`]: {
                 id, label: "Nova feature", enabled: true, type: "equipment_property",
                 path: "item_dr", operation: "add", value: 0, per_level: false,
-                attack_type: "all", selector_field: "all", selector_value: "", attack: {}
+                attack_type: "all", selector_field: "all", selector_value: "", attack: {},
+                effect_uuid: "", effect_domain: "wearer", lifecycle: "while_equipped"
             }});
         });
         html.find('.delete-eqp-feature').click(async ev => {

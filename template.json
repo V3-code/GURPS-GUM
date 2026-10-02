@@ -422,6 +422,7 @@
         "cost": 0,
         "weight": 0,
         "location": "carried",
+        "active": false,
         "is_container": false,
         "container": {
           "max_weight": 0,

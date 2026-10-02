@@ -50,8 +50,61 @@ import { organizeGumCompendia } from "../module/utils/compendium-folder-organize
 import { getSkillDisplayName, setDirectoryEntryLabel } from "../module/utils/skill-display-name.mjs";
 import { installGumChatCommandInterceptor, normalizeGumLookup, resolveGumCommandActor, splitSkillModifier } from "../module/utils/gum-chat-command.mjs";
 import { resolveEquipment } from "../module/utils/equipment-resolution.mjs";
+import { collectActiveEquipmentGrantedEffects, EQUIPMENT_GRANTED_EFFECT_SOURCE, hasEquipmentGrantRelevantChange } from "../module/utils/equipment-granted-effects.mjs";
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
+
+async function syncEquipmentModifierGrantedEffects(item) {
+    const actor = item?.parent;
+    if (!actor || item.type !== "equipment") return;
+
+    const existing = Array.from(actor.effects || []).filter(effect =>
+        foundry.utils.getProperty(effect, "flags.gum.originItemId") === item.id
+        && foundry.utils.getProperty(effect, "flags.gum.source") === EQUIPMENT_GRANTED_EFFECT_SOURCE
+    );
+    if (existing.length) await actor.deleteEmbeddedDocuments("ActiveEffect", existing.map(effect => effect.id));
+
+    const sourceSystem = item._source?.system || item.system;
+    const resolution = resolveEquipment(sourceSystem);
+    const grants = collectActiveEquipmentGrantedEffects(sourceSystem, resolution);
+    if (!grants.length) return;
+
+    const targets = buildActorEffectTargets(actor);
+    for (const grant of grants) {
+        const effectItem = await fromUuid(grant.effectUuid).catch(() => null);
+        if (!effectItem) {
+            console.warn(`GUM | Efeito concedido não encontrado: ${grant.effectUuid}`);
+            continue;
+        }
+        try {
+            await applySingleEffect(effectItem, targets, {
+                actor,
+                origin: item,
+                source: EQUIPMENT_GRANTED_EFFECT_SOURCE,
+                originItemId: item.id,
+                skipInstantEffects: true
+            });
+        } catch (error) {
+            console.error(`GUM | Falha ao aplicar efeito concedido "${grant.label}":`, error);
+        }
+    }
+}
+
+async function reconcileEquipmentModifierGrantedEffects() {
+    if (!game.user?.isGM) return;
+    for (const actor of game.actors || []) {
+        for (const item of actor.items || []) {
+            if (item.type !== "equipment") continue;
+            const sourceSystem = item._source?.system || item.system;
+            const grants = collectActiveEquipmentGrantedEffects(sourceSystem);
+            const existing = Array.from(actor.effects || []).filter(effect =>
+                foundry.utils.getProperty(effect, "flags.gum.originItemId") === item.id
+                && foundry.utils.getProperty(effect, "flags.gum.source") === EQUIPMENT_GRANTED_EFFECT_SOURCE
+            );
+            if ((grants.length > 0) !== (existing.length > 0)) await syncEquipmentModifierGrantedEffects(item);
+        }
+    }
+}
 
 function _matchesCombatModifierEntry(entry, item, attack, attackType) {
     if (!_matchesRollModifierItemFilter(entry, item)) return false;
@@ -2905,6 +2958,7 @@ Hooks.on("createItem", async (item, options, userId) => {
             actor.sheet.render(false);
             actor.getActiveTokens().forEach(token => token.drawEffects());
         }
+        await syncEquipmentModifierGrantedEffects(item);
         await syncItemStateEffects(item, { assumeInactive: true });
     });
 
@@ -2970,6 +3024,9 @@ const targets = buildActorEffectTargets(actor);
                 }
             }
         } // Fim do if (item.system.passiveEffects)
+        if (item.type === "equipment" && hasEquipmentGrantRelevantChange(changes)) {
+            await syncEquipmentModifierGrantedEffects(item);
+        }
         if (!options.gumStateSync && !options.gumStateToggle) {
             const stateGroupsChanged = foundry.utils.hasProperty(changes, "system.stateEffectGroups")
                 || Object.keys(changes || {}).some(key => key.startsWith("system.stateEffectGroups"));
@@ -4720,5 +4777,10 @@ Hooks.once("ready", async () => {
         await reconcileAllStateEffects();
     } catch (error) {
         console.error("GUM | Falha ao reconciliar os Efeitos de Estado ao iniciar o mundo.", error);
+    }
+    try {
+        await reconcileEquipmentModifierGrantedEffects();
+    } catch (error) {
+        console.error("GUM | Falha ao reconciliar efeitos concedidos por equipamentos.", error);
     }
 });

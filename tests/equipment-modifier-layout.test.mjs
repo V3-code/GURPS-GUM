@@ -43,3 +43,15 @@ test("equipment modifier sheet exposes typed feature authoring", () => {
   assert.match(main, /item\.system\.melee_attacks = resolution\.meleeAttacks/);
   assert.match(main, /item\.system\.ranged_attacks = resolution\.rangedAttacks/);
 });
+
+test("granted effects expose UUID, domain and lifecycle and are synchronized by item hooks", () => {
+  assert.match(template, /eq feature\.type "granted_effect"/);
+  assert.match(itemSheet, /id: "granted_effect", label: "Conceder efeito"/);
+  assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.effect_uuid/);
+  assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.effect_domain/);
+  assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.lifecycle/);
+  assert.match(template, /name="system\.active"/);
+  assert.match(main, /syncEquipmentModifierGrantedEffects\(item\)/);
+  assert.match(main, /source: EQUIPMENT_GRANTED_EFFECT_SOURCE/);
+  assert.match(main, /skipInstantEffects: true/);
+});
