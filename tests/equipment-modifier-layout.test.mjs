@@ -44,6 +44,7 @@ test("equipment details distinguish base and feature-resolved property values", 
   assert.match(template, /Memória das features/);
   assert.match(template, /step\.input/);
   assert.match(template, /step\.output/);
+  assert.match(template, /fa-arrow-right/);
 });
 
 test("equipment modifier sheet exposes typed feature authoring", () => {
@@ -66,6 +67,12 @@ test("granted effects expose UUID, domain and lifecycle and are synchronized by 
   assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.min_injury/);
   assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.activation_chance/);
   assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.required_damage_type/);
+  assert.match(template, /select-eqp-feature-effect/);
+  assert.match(template, /view-eqp-feature-effect/);
+  assert.match(template, /feature\.effect_name/);
+  assert.match(itemSheet, /new EffectBrowser\(this\.item/);
+  assert.match(itemSheet, /system\.features_data\.\$\{id\}\.effect_uuid/);
+  assert.match(itemSheet, /fromUuid\(uuid\)/);
   assert.match(template, /name="system\.active"/);
   assert.match(main, /syncEquipmentModifierGrantedEffects\(item\)/);
   assert.match(main, /source: EQUIPMENT_GRANTED_EFFECT_SOURCE/);
@@ -73,4 +80,12 @@ test("granted effects expose UUID, domain and lifecycle and are synchronized by 
   assert.match(main, /matchesEquipmentGrantedEffectScope/);
   assert.match(effectsEngine, /\.\.\.\(context\.gumFlags \|\| \{\}\)/);
   assert.match(rollPrompt, /matchesEquipmentGrantedEffectScope/);
+});
+
+test("created attack editor exposes specialized melee and ranged statistics", () => {
+  for (const field of ["skill_level_mod", "min_strength", "parry", "block", "accuracy", "rof", "shots", "rcl"]) {
+    assert.match(template, new RegExp(`features_data\\.\\{\\{feature\\.id\\}\\}\\.attack\\.${field}`));
+  }
+  assert.match(itemSheet, /numeric_equipment_value/);
+  assert.match(itemSheet, /numeric_attack_value/);
 });

@@ -422,10 +422,14 @@ _promptMultipleReferences(parsedList) {
                 selector_field: feature.selectorField,
                 selector_value: feature.selectorValue,
                 effect_uuid: feature.effectUuid,
+                effect_name: feature.effect_name || feature.effectName || "",
+                effect_img: feature.effect_img || feature.effectImg || "",
                 effect_domain: feature.effectDomain,
                 min_injury: feature.minInjury,
                 activation_chance: feature.activationChance,
-                required_damage_type: feature.requiredDamageType
+                required_damage_type: feature.requiredDamageType,
+                numeric_equipment_value: ["item_dr", "item_hp", "item_ht", "tech_sm", "holdout", "max_uses"].includes(feature.path),
+                numeric_attack_value: ["skill_level_mod", "armor_divisor", "min_strength", "accuracy", "rcl", "mag"].includes(feature.path)
             }));
             context.equipmentAdjustmentStageOptions = [
                 { id: "original", label: "Valor original" },
@@ -958,6 +962,31 @@ if (this.item?.type === "equipment") {
             const id = $(ev.currentTarget).closest('[data-feature-id]').data('feature-id');
             if (!id) return;
             await this.item.update({ [`system.features_data.-=${id}`]: null });
+        });
+        html.find('.select-eqp-feature-effect').click(ev => {
+            ev.preventDefault();
+            const id = $(ev.currentTarget).closest('[data-feature-id]').data('feature-id');
+            if (!id) return;
+            new EffectBrowser(this.item, {
+                onSelect: async selectedEffects => {
+                    const effect = selectedEffects[0];
+                    if (!effect) return;
+                    await this.item.update({
+                        [`system.features_data.${id}.effect_uuid`]: effect.uuid,
+                        [`system.features_data.${id}.effect_name`]: effect.name,
+                        [`system.features_data.${id}.effect_img`]: effect.img
+                    });
+                    if (selectedEffects.length > 1) ui.notifications.info("Somente o primeiro efeito selecionado foi vinculado à feature.");
+                }
+            }).render(true);
+        });
+        html.find('.view-eqp-feature-effect').click(async ev => {
+            ev.preventDefault();
+            const uuid = $(ev.currentTarget).data('uuid');
+            if (!uuid) return ui.notifications.warn("Esta feature ainda não possui um Efeito vinculado.");
+            const effect = await fromUuid(uuid).catch(() => null);
+            if (!effect) return ui.notifications.warn("O Efeito vinculado não foi encontrado.");
+            effect.sheet?.render(true);
         });
  
         // Modificadores (Vantagens) 

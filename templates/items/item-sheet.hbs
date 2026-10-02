@@ -12,7 +12,7 @@
                             <div class="equipment-calculated-value">
                                 <input type="number" step="0.01" name="system.cost" value="{{system.cost}}" title="Custo Base"/>
                                 <div class="equipment-final-value" title="Custo Final">
-                                    <i class="fas fa-arrow-down"></i>
+                                    <i class="fas fa-arrow-right"></i>
                                     <span>{{finalCostString}}</span>
                                 </div>
                             </div>
@@ -29,7 +29,7 @@
                             <div class="equipment-calculated-value">
                                 <input type="number" step="0.01" name="system.weight" value="{{system.weight}}" title="Peso Base"/>
                                 <div class="equipment-final-value" title="Peso Final">
-                                    <i class="fas fa-arrow-down"></i>
+                                    <i class="fas fa-arrow-right"></i>
                                     <span>{{finalWeightString}}</span>
                                 </div>
                             </div>
@@ -59,7 +59,7 @@
                         <div class="equipment-calculated-value">
                             <input type="text" name="system.legality_class" value="{{system.legality_class}}" title="Valor base"/>
                             {{#if equipmentPropertyChanges.legality_class.changed}}
-                            <div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-down"></i><span>{{equipmentPropertyChanges.legality_class.final}}</span></div>
+                            <div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-right"></i><span>{{equipmentPropertyChanges.legality_class.final}}</span></div>
                             {{/if}}
                         </div>
                     </div>
@@ -80,7 +80,7 @@
                         <div class="equipment-calculated-value">
                             <input type="text" name="system.quality" value="{{system.quality}}" placeholder="Ex: Fina, Barata" title="Valor base"/>
                             {{#if equipmentPropertyChanges.quality.changed}}
-                            <div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-down"></i><span>{{equipmentPropertyChanges.quality.final}}</span></div>
+                            <div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-right"></i><span>{{equipmentPropertyChanges.quality.final}}</span></div>
                             {{/if}}
                         </div>
                     </div>
@@ -92,7 +92,7 @@
                         <div class="equipment-calculated-value">
                             <input type="text" name="system.material" value="{{system.material}}" placeholder="Ex: Aço, Madeira" title="Valor base"/>
                             {{#if equipmentPropertyChanges.material.changed}}
-                            <div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-down"></i><span>{{equipmentPropertyChanges.material.final}}</span></div>
+                            <div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-right"></i><span>{{equipmentPropertyChanges.material.final}}</span></div>
                             {{/if}}
                         </div>
                     </div>
@@ -104,7 +104,7 @@
                     <label class="equipment-stat-heading" title="Modificador de Tamanho (SM)"><i class="fas fa-expand-arrows-alt"></i><span>MT do Item</span></label>
                     <div class="equipment-stat-control">
                         <div class="equipment-calculated-value"><input type="number" name="system.tech_sm" value="{{system.tech_sm}}" placeholder="+0" title="Valor base"/>
-                            {{#if equipmentPropertyChanges.tech_sm.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-down"></i><span>{{equipmentPropertyChanges.tech_sm.final}}</span></div>{{/if}}
+                            {{#if equipmentPropertyChanges.tech_sm.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-right"></i><span>{{equipmentPropertyChanges.tech_sm.final}}</span></div>{{/if}}
                         </div>
                     </div>
                 </div>
@@ -113,7 +113,7 @@
                     <label class="equipment-stat-heading" title="Resistência a Dano do próprio Item"><i class="fas fa-shield-alt"></i><span>RD do Item</span></label>
                     <div class="equipment-stat-control">
                         <div class="equipment-calculated-value"><input type="number" name="system.item_dr" value="{{system.item_dr}}" title="Valor base"/>
-                            {{#if equipmentPropertyChanges.item_dr.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-down"></i><span>{{equipmentPropertyChanges.item_dr.final}}</span></div>{{/if}}
+                            {{#if equipmentPropertyChanges.item_dr.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-right"></i><span>{{equipmentPropertyChanges.item_dr.final}}</span></div>{{/if}}
                         </div>
                     </div>
                 </div>
@@ -122,7 +122,7 @@
                     <label class="equipment-stat-heading" title="Pontos de Vida do Item"><i class="fas fa-heart"></i><span>PV do Item</span></label>
                     <div class="equipment-stat-control">
                         <div class="equipment-calculated-value"><input type="number" name="system.item_hp" value="{{system.item_hp}}" title="Valor base"/>
-                            {{#if equipmentPropertyChanges.item_hp.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-down"></i><span>{{equipmentPropertyChanges.item_hp.final}}</span></div>{{/if}}
+                            {{#if equipmentPropertyChanges.item_hp.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-right"></i><span>{{equipmentPropertyChanges.item_hp.final}}</span></div>{{/if}}
                         </div>
                     </div>
                 </div>
@@ -131,7 +131,7 @@
                     <label class="equipment-stat-heading" title="Vitalidade (HT) do Item"><i class="fas fa-heartbeat"></i><span>HT do Item</span></label>
                     <div class="equipment-stat-control">
                         <div class="equipment-calculated-value"><input type="number" name="system.item_ht" value="{{system.item_ht}}" title="Valor base"/>
-                            {{#if equipmentPropertyChanges.item_ht.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-down"></i><span>{{equipmentPropertyChanges.item_ht.final}}</span></div>{{/if}}
+                            {{#if equipmentPropertyChanges.item_ht.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-right"></i><span>{{equipmentPropertyChanges.item_ht.final}}</span></div>{{/if}}
                         </div>
                     </div>
                 </div>
@@ -145,7 +145,7 @@
                     <label class="equipment-stat-heading" title="Penalidade de Ocultamento (Holdout)"><i class="fas fa-user-secret"></i><span>Ocultação</span></label>
                     <div class="equipment-stat-control">
                         <div class="equipment-calculated-value"><input type="number" name="system.holdout" value="{{system.holdout}}" placeholder="0" title="Valor base"/>
-                            {{#if equipmentPropertyChanges.holdout.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-down"></i><span>{{equipmentPropertyChanges.holdout.final}}</span></div>{{/if}}
+                            {{#if equipmentPropertyChanges.holdout.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-right"></i><span>{{equipmentPropertyChanges.holdout.final}}</span></div>{{/if}}
                         </div>
                     </div>
                 </div>
@@ -1684,7 +1684,7 @@
             <div class="form-grid-3">
               <div class="form-group"><label>Propriedade</label><select name="system.features_data.{{feature.id}}.path">{{selectOptions ../equipmentPropertyOptions selected=feature.path valueAttr="id" labelAttr="label"}}</select></div>
               <div class="form-group"><label>Operação</label><select name="system.features_data.{{feature.id}}.operation">{{selectOptions ../equipmentFeatureOperationOptions selected=feature.operation valueAttr="id" labelAttr="label"}}</select></div>
-              <div class="form-group"><label>Valor</label><input type="text" name="system.features_data.{{feature.id}}.value" value="{{feature.value}}"/></div>
+              <div class="form-group"><label>Valor</label><input type="{{#if feature.numeric_equipment_value}}number{{else}}text{{/if}}" step="any" name="system.features_data.{{feature.id}}.value" value="{{feature.value}}"/></div>
             </div>
             <label class="custom-checkbox"><input type="checkbox" name="system.features_data.{{feature.id}}.per_level" {{checked feature.per_level}}/><span>Por nível do modificador</span></label>
             {{/if}}
@@ -1698,7 +1698,7 @@
             <div class="form-grid-3">
               <div class="form-group"><label>Propriedade</label><select name="system.features_data.{{feature.id}}.path">{{selectOptions ../attackPropertyOptions selected=feature.path valueAttr="id" labelAttr="label"}}</select></div>
               <div class="form-group"><label>Operação</label><select name="system.features_data.{{feature.id}}.operation">{{selectOptions ../equipmentFeatureOperationOptions selected=feature.operation valueAttr="id" labelAttr="label"}}</select></div>
-              <div class="form-group"><label>Valor</label><input type="text" name="system.features_data.{{feature.id}}.value" value="{{feature.value}}"/></div>
+              <div class="form-group"><label>Valor</label><input type="{{#if feature.numeric_attack_value}}number{{else}}text{{/if}}" step="any" name="system.features_data.{{feature.id}}.value" value="{{feature.value}}"/></div>
             </div>
             <label class="custom-checkbox"><input type="checkbox" name="system.features_data.{{feature.id}}.per_level" {{checked feature.per_level}}/><span>Por nível do modificador</span></label>
             {{/if}}
@@ -1719,11 +1719,29 @@
               <div class="form-group"><label>Alcance C.C.</label><input type="text" name="system.features_data.{{feature.id}}.attack.reach" value="{{feature.attack.reach}}"/></div>
               <div class="form-group"><label>Distância</label><input type="text" name="system.features_data.{{feature.id}}.attack.range" value="{{feature.attack.range}}"/></div>
             </div>
+            <div class="form-grid-3">
+              <div class="form-group"><label>Modificador de NH</label><input type="number" step="any" name="system.features_data.{{feature.id}}.attack.skill_level_mod" value="{{feature.attack.skill_level_mod}}"/></div>
+              <div class="form-group"><label>ST mínima</label><input type="text" name="system.features_data.{{feature.id}}.attack.min_strength" value="{{feature.attack.min_strength}}"/></div>
+              {{#if (eq feature.attack_type "melee")}}<div class="form-group"><label>Aparar / Bloqueio</label><div class="equipment-feature-paired-input"><input type="text" aria-label="Aparar" name="system.features_data.{{feature.id}}.attack.parry" value="{{feature.attack.parry}}"/><input type="text" aria-label="Bloqueio" name="system.features_data.{{feature.id}}.attack.block" value="{{feature.attack.block}}"/></div></div>{{/if}}
+              {{#if (eq feature.attack_type "ranged")}}<div class="form-group"><label>Precisão</label><input type="text" name="system.features_data.{{feature.id}}.attack.accuracy" value="{{feature.attack.accuracy}}"/></div>{{/if}}
+            </div>
+            {{#if (eq feature.attack_type "ranged")}}
+            <div class="form-grid-3">
+              <div class="form-group"><label>Cadência</label><input type="text" name="system.features_data.{{feature.id}}.attack.rof" value="{{feature.attack.rof}}"/></div>
+              <div class="form-group"><label>Tiros</label><input type="text" name="system.features_data.{{feature.id}}.attack.shots" value="{{feature.attack.shots}}"/></div>
+              <div class="form-group"><label>Recuo</label><input type="text" name="system.features_data.{{feature.id}}.attack.rcl" value="{{feature.attack.rcl}}"/></div>
+            </div>
+            {{/if}}
             {{/if}}
 
             {{#if (eq feature.type "granted_effect")}}
-            <div class="form-grid-3">
-              <div class="form-group"><label>UUID do item Efeito</label><input type="text" name="system.features_data.{{feature.id}}.effect_uuid" value="{{feature.effect_uuid}}" placeholder="Compendium.mundo.efeitos.Item..."/></div>
+            <div class="equipment-feature-effect-link">
+              {{#if feature.effect_img}}<img src="{{feature.effect_img}}" alt=""/>{{/if}}
+              <div class="form-group"><label>Efeito vinculado</label><input type="text" name="system.features_data.{{feature.id}}.effect_uuid" value="{{feature.effect_uuid}}" placeholder="Selecione um item Efeito ou informe seu UUID"/><span class="notes">{{#if feature.effect_name}}{{feature.effect_name}}{{else}}Nenhum efeito selecionado{{/if}}</span></div>
+              <button type="button" class="select-eqp-feature-effect" title="Selecionar no navegador"><i class="fas fa-search"></i> Selecionar</button>
+              <button type="button" class="view-eqp-feature-effect" data-uuid="{{feature.effect_uuid}}" title="Abrir efeito vinculado" {{#unless feature.effect_uuid}}disabled{{/unless}}><i class="fas fa-external-link-alt"></i></button>
+            </div>
+            <div class="form-grid-2">
               <div class="form-group"><label>Domínio</label><select name="system.features_data.{{feature.id}}.effect_domain"><option value="wearer" {{#if (eq feature.effect_domain "wearer")}}selected{{/if}}>Portador</option><option value="source_attack" {{#if (eq feature.effect_domain "source_attack")}}selected{{/if}}>Ataque do equipamento</option><option value="hit_target" {{#if (eq feature.effect_domain "hit_target")}}selected{{/if}}>Alvo atingido</option></select></div>
               <div class="form-group"><label>Ciclo de vida</label><select name="system.features_data.{{feature.id}}.lifecycle"><option value="while_possessed" {{#if (eq feature.lifecycle "while_possessed")}}selected{{/if}}>Enquanto possuído</option><option value="while_carried" {{#if (eq feature.lifecycle "while_carried")}}selected{{/if}}>Enquanto carregado</option><option value="while_equipped" {{#if (eq feature.lifecycle "while_equipped")}}selected{{/if}}>Enquanto equipado</option><option value="while_active" {{#if (eq feature.lifecycle "while_active")}}selected{{/if}}>Enquanto ativado</option></select></div>
             </div>

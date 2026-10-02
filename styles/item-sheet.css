@@ -5267,6 +5267,48 @@ color:#121114;
   margin-left: 6px;
 }
 
+.gum.sheet.item .equipment-feature-effect-link {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  padding: 8px;
+  border: 1px solid var(--item-border);
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.gum.sheet.item .equipment-feature-effect-link > img {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--item-border);
+  border-radius: 5px;
+  object-fit: cover;
+}
+
+.gum.sheet.item .equipment-feature-effect-link button {
+  align-self: center;
+  width: auto;
+  white-space: nowrap;
+}
+
+.gum.sheet.item .equipment-feature-paired-input {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
+@media (max-width: 620px) {
+  .gum.sheet.item .equipment-feature-effect-link {
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+  }
+
+  .gum.sheet.item .equipment-feature-effect-link .form-group {
+    grid-column: 2 / -1;
+  }
+}
+
 .gum.sheet.item.effect-sheet .effect-roll-modifier-value-field {
   grid-column: 1 / -1;
 }

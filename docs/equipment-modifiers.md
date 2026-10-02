@@ -72,6 +72,21 @@ Esta é a primeira etapa apropriada para testar, de ponta a ponta, as features q
 
 Ataques criados/alterados e os três domínios de efeitos já possuem cobertura automatizada. A aceitação manual completa deles deve ser feita na etapa seguinte, junto do navegador de Efeitos e dos editores especializados, pois essa interface permitirá montar os cenários sem digitar UUIDs e estruturas manualmente.
 
+## Etapa implementada: autoria assistida
+
+Features de efeito agora podem selecionar uma fonte pelo navegador de Efeitos, preservam nome, imagem e UUID, e permitem abrir a ficha da fonte vinculada. O UUID continua editável para compatibilidade e referências externas. Os editores distinguem valores numéricos de textuais e a criação de ataques oferece os campos específicos de corpo a corpo e à distância. Os indicadores de valor resolvido usam uma seta horizontal apontada para o resultado.
+
+## Validação funcional desta etapa
+
+Além do roteiro anterior, validar no Foundry:
+
+1. criar uma feature `Conceder efeito`, selecionar um item no navegador e confirmar nome, imagem e UUID;
+2. usar o botão de abrir e confirmar que a ficha do Efeito selecionado é exibida;
+3. testar os domínios `Portador`, `Ataque do equipamento` e `Alvo atingido`, com o equipamento equipado, desequipado e desativado;
+4. criar um ataque corpo a corpo preenchendo dano, divisor, grupo, NH, ST, alcance, Aparar e Bloqueio;
+5. criar um ataque à distância preenchendo dano, divisor, grupo, NH, ST, distância, Precisão, Cadência, Tiros e Recuo;
+6. confirmar que alterações filtradas por grupo alcançam apenas os modos esperados e que fechar/reabrir a ficha não duplica ataques ou efeitos.
+
 ## Próxima etapa
 
-Aprimorar a autoria: navegador de itens Efeito no lugar do UUID manual, visualização/abertura da fonte vinculada e editores especializados para ataques e propriedades complexas. Ao final dela, executar a matriz manual completa de ataque alterado, ataque criado, efeito no portador, efeito no ataque e efeito no alvo atingido.
+Consolidar a validação manual completa no Foundry, corrigir incompatibilidades observadas em dados reais e então aprimorar propriedades complexas — por exemplo, RD por localização e modos de dano secundário — que não devem ser representadas por um único campo escalar.
