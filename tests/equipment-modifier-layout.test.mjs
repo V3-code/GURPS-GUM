@@ -5,6 +5,8 @@ import test from "node:test";
 const template = fs.readFileSync("templates/items/item-sheet.hbs", "utf8");
 const itemSheet = fs.readFileSync("module/item/gurps-item-sheet.js", "utf8");
 const main = fs.readFileSync("scripts/main.js", "utf8");
+const effectsEngine = fs.readFileSync("scripts/effects-engine.js", "utf8");
+const rollPrompt = fs.readFileSync("module/apps/roll-prompt.js", "utf8");
 
 test("equipment modifier sheet exposes structured cost and weight controls", () => {
   assert.match(template, /data-tab="adjustments"/);
@@ -50,8 +52,14 @@ test("granted effects expose UUID, domain and lifecycle and are synchronized by 
   assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.effect_uuid/);
   assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.effect_domain/);
   assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.lifecycle/);
+  assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.min_injury/);
+  assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.activation_chance/);
+  assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.required_damage_type/);
   assert.match(template, /name="system\.active"/);
   assert.match(main, /syncEquipmentModifierGrantedEffects\(item\)/);
   assert.match(main, /source: EQUIPMENT_GRANTED_EFFECT_SOURCE/);
   assert.match(main, /skipInstantEffects: true/);
+  assert.match(main, /matchesEquipmentGrantedEffectScope/);
+  assert.match(effectsEngine, /\.\.\.\(context\.gumFlags \|\| \{\}\)/);
+  assert.match(rollPrompt, /matchesEquipmentGrantedEffectScope/);
 });

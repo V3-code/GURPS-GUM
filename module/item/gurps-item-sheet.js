@@ -420,7 +420,10 @@ _promptMultipleReferences(parsedList) {
                 selector_field: feature.selectorField,
                 selector_value: feature.selectorValue,
                 effect_uuid: feature.effectUuid,
-                effect_domain: feature.effectDomain
+                effect_domain: feature.effectDomain,
+                min_injury: feature.minInjury,
+                activation_chance: feature.activationChance,
+                required_damage_type: feature.requiredDamageType
             }));
             context.equipmentAdjustmentStageOptions = [
                 { id: "original", label: "Valor original" },

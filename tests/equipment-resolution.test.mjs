@@ -182,7 +182,31 @@ test("resolves granted effects as declarative records and reports missing UUIDs"
   }]);
   assert.deepEqual(result.grantedEffects, [{
     id: "enchanted:valid", sourceModifierId: "enchanted", sourceModifierName: "Encantado", featureId: "valid",
-    label: "Proteção", effectUuid: "Compendium.world.effects.Item.protection", domain: "wearer", lifecycle: "while_equipped"
+    label: "Proteção", effectUuid: "Compendium.world.effects.Item.protection", domain: "wearer", lifecycle: "while_equipped",
+    attackType: "all", selectorField: "all", selectorValue: "", minInjury: 0, activationChance: 100, requiredDamageType: ""
   }]);
   assert.equal(result.warnings.some(warning => warning.type === "missing_effect_uuid"), true);
+});
+
+test("projects hit-target grants into matching attack on-damage effects", () => {
+  const result = resolveEquipment({
+    cost: 1, weight: 1, location: "equipped",
+    melee_attacks: {
+      shield: { mode: "Golpe", groups: "golpe-com-escudo", onDamageEffects: {} },
+      pommel: { mode: "Pomo", groups: "pomo", onDamageEffects: {} }
+    }
+  }, [{ id: "spike", name: "Espinho", features_data: {
+    bleed: {
+      id: "bleed", label: "Sangramento", type: "granted_effect", effect_uuid: "Item.bleed",
+      effect_domain: "hit_target", lifecycle: "while_equipped", attack_type: "melee",
+      selector_field: "group", selector_value: "golpe-com-escudo", min_injury: 1,
+      activation_chance: 75, required_damage_type: "perf"
+    }
+  }}]);
+  const link = result.meleeAttacks.shield.onDamageEffects.eqpmod_spike_bleed;
+  assert.equal(link.effectUuid, "Item.bleed");
+  assert.equal(link.minInjury, 1);
+  assert.equal(link.activationChance, 75);
+  assert.equal(link.requiredDamageType, "perf");
+  assert.deepEqual(result.meleeAttacks.pommel.onDamageEffects, {});
 });

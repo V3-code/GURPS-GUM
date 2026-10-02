@@ -1699,10 +1699,20 @@
             {{#if (eq feature.type "granted_effect")}}
             <div class="form-grid-3">
               <div class="form-group"><label>UUID do item Efeito</label><input type="text" name="system.features_data.{{feature.id}}.effect_uuid" value="{{feature.effect_uuid}}" placeholder="Compendium.mundo.efeitos.Item..."/></div>
-              <div class="form-group"><label>Domínio</label><select name="system.features_data.{{feature.id}}.effect_domain"><option value="wearer" {{#if (eq feature.effect_domain "wearer")}}selected{{/if}}>Portador</option><option value="source_attack" {{#if (eq feature.effect_domain "source_attack")}}selected{{/if}}>Ataque do equipamento (reservado)</option><option value="hit_target" {{#if (eq feature.effect_domain "hit_target")}}selected{{/if}}>Alvo atingido (reservado)</option></select></div>
+              <div class="form-group"><label>Domínio</label><select name="system.features_data.{{feature.id}}.effect_domain"><option value="wearer" {{#if (eq feature.effect_domain "wearer")}}selected{{/if}}>Portador</option><option value="source_attack" {{#if (eq feature.effect_domain "source_attack")}}selected{{/if}}>Ataque do equipamento</option><option value="hit_target" {{#if (eq feature.effect_domain "hit_target")}}selected{{/if}}>Alvo atingido</option></select></div>
               <div class="form-group"><label>Ciclo de vida</label><select name="system.features_data.{{feature.id}}.lifecycle"><option value="while_possessed" {{#if (eq feature.lifecycle "while_possessed")}}selected{{/if}}>Enquanto possuído</option><option value="while_carried" {{#if (eq feature.lifecycle "while_carried")}}selected{{/if}}>Enquanto carregado</option><option value="while_equipped" {{#if (eq feature.lifecycle "while_equipped")}}selected{{/if}}>Enquanto equipado</option><option value="while_active" {{#if (eq feature.lifecycle "while_active")}}selected{{/if}}>Enquanto ativado</option></select></div>
             </div>
-            <p class="notes">Nesta etapa, somente o domínio Portador é aplicado automaticamente. Os demais domínios ficam preservados para a integração de ataques e dano.</p>
+            <div class="form-grid-3">
+              <div class="form-group"><label>Ataques</label><select name="system.features_data.{{feature.id}}.attack_type"><option value="all" {{#if (eq feature.attack_type "all")}}selected{{/if}}>Todos</option><option value="melee" {{#if (eq feature.attack_type "melee")}}selected{{/if}}>Corpo a corpo</option><option value="ranged" {{#if (eq feature.attack_type "ranged")}}selected{{/if}}>À distância</option></select></div>
+              <div class="form-group"><label>Encontrar por</label><select name="system.features_data.{{feature.id}}.selector_field"><option value="all" {{#if (eq feature.selector_field "all")}}selected{{/if}}>Todos</option><option value="group" {{#if (eq feature.selector_field "group")}}selected{{/if}}>Grupo</option><option value="mode" {{#if (eq feature.selector_field "mode")}}selected{{/if}}>Nome do modo</option><option value="skill_name" {{#if (eq feature.selector_field "skill_name")}}selected{{/if}}>Perícia</option></select></div>
+              <div class="form-group"><label>Filtro</label><input type="text" name="system.features_data.{{feature.id}}.selector_value" value="{{feature.selector_value}}" placeholder="Ex.: golpe-com-escudo"/></div>
+            </div>
+            <div class="form-grid-3">
+              <div class="form-group"><label>Ferimento mínimo</label><input type="number" min="0" name="system.features_data.{{feature.id}}.min_injury" value="{{feature.min_injury}}"/></div>
+              <div class="form-group"><label>Chance de ativação (%)</label><input type="number" min="0" max="100" name="system.features_data.{{feature.id}}.activation_chance" value="{{feature.activation_chance}}"/></div>
+              <div class="form-group"><label>Tipo de dano exigido</label><input type="text" name="system.features_data.{{feature.id}}.required_damage_type" value="{{feature.required_damage_type}}" placeholder="Qualquer"/></div>
+            </div>
+            <p class="notes">Filtros de ataque valem para Ataque do equipamento e Alvo atingido. Condições de ferimento, chance e tipo de dano valem para Alvo atingido.</p>
             {{/if}}
 
             <div class="eqpmod-actions"><button type="button" class="delete-eqp-feature" title="Remover feature"><i class="fas fa-trash"></i> Remover</button></div>

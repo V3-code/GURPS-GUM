@@ -2,11 +2,27 @@ import { isGrantedEffectLifecycleActive, resolveEquipment } from "./equipment-re
 
 export const EQUIPMENT_GRANTED_EFFECT_SOURCE = "equipmentModifierFeature";
 
-export function collectActiveEquipmentGrantedEffects(itemSystem = {}, resolution = null) {
+export function collectActiveEquipmentGrantedEffects(itemSystem = {}, resolution = null, { domains = ["wearer", "source_attack"] } = {}) {
   const resolved = resolution || resolveEquipment(itemSystem);
   return (resolved.grantedEffects || []).filter(grant =>
-    grant.domain === "wearer" && isGrantedEffectLifecycleActive(itemSystem, grant)
+    domains.includes(grant.domain) && isGrantedEffectLifecycleActive(itemSystem, grant)
   );
+}
+
+export function matchesEquipmentGrantedEffectScope(effectOrFlags = {}, item = null, attack = null, attackType = "") {
+  const gum = effectOrFlags?.flags?.gum || effectOrFlags?.gum || effectOrFlags;
+  const scope = gum?.equipmentGrant;
+  if (!scope || scope.domain !== "source_attack") return true;
+  if (!item || String(scope.originItemId || "") !== String(item.id || item._id || "")) return false;
+  if (scope.attackType && scope.attackType !== "all" && scope.attackType !== attackType) return false;
+  if (!scope.selectorField || scope.selectorField === "all" || !scope.selectorValue) return Boolean(attack);
+  if (!attack) return false;
+  const expected = String(scope.selectorValue).trim().toLocaleLowerCase();
+  if (scope.selectorField === "group") {
+    const groups = Array.isArray(attack.groups) ? attack.groups : String(attack.groups || attack.tags || "").split(",");
+    return groups.some(group => String(group).trim().toLocaleLowerCase() === expected);
+  }
+  return String(attack[scope.selectorField] || "").trim().toLocaleLowerCase() === expected;
 }
 
 export function hasEquipmentGrantRelevantChange(changes = {}) {
@@ -26,4 +42,3 @@ export function hasEquipmentGrantRelevantChange(changes = {}) {
     || Object.prototype.hasOwnProperty.call(changes.system, "switched_on")
   ));
 }
-

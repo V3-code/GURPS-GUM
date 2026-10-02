@@ -147,6 +147,9 @@ export function normalizeEquipmentFeature(feature = {}, index = 0) {
     effectUuid: String(feature.effect_uuid ?? feature.effectUuid ?? "").trim(),
     effectDomain: ["wearer", "source_attack", "hit_target"].includes(feature.effect_domain || feature.effectDomain) ? (feature.effect_domain || feature.effectDomain) : "wearer",
     lifecycle: ["while_possessed", "while_carried", "while_equipped", "while_active"].includes(feature.lifecycle) ? feature.lifecycle : "while_equipped",
+    minInjury: Math.max(0, number(feature.min_injury ?? feature.minInjury)),
+    activationChance: Math.min(100, Math.max(0, number(feature.activation_chance ?? feature.activationChance, 100))),
+    requiredDamageType: String(feature.required_damage_type ?? feature.requiredDamageType ?? "").trim(),
     attack: clone(feature.attack || {})
   };
 }
@@ -346,9 +349,40 @@ function resolveFeatures(equipment, modifiers, warnings) {
           label: feature.label,
           effectUuid: feature.effectUuid,
           domain: feature.effectDomain,
-          lifecycle: feature.lifecycle
+          lifecycle: feature.lifecycle,
+          attackType: feature.attackType,
+          selectorField: feature.selectorField,
+          selectorValue: feature.selectorValue,
+          minInjury: feature.minInjury,
+          activationChance: feature.activationChance,
+          requiredDamageType: feature.requiredDamageType
         };
         grantedEffects.push(grant);
+        if (grant.domain === "hit_target" && isGrantedEffectLifecycleActive(equipment, grant)) {
+          const collections = grant.attackType === "melee" ? [meleeAttacks]
+            : grant.attackType === "ranged" ? [rangedAttacks]
+              : [meleeAttacks, rangedAttacks];
+          let matches = 0;
+          for (const collection of collections) {
+            for (const attack of Object.values(collection)) {
+              if (!attackMatches(attack, feature)) continue;
+              matches += 1;
+              attack.onDamageEffects ||= {};
+              const linkId = featureAttackKey(modifier.id, feature.id);
+              attack.onDamageEffects[linkId] = {
+                id: linkId,
+                effectUuid: grant.effectUuid,
+                name: grant.label,
+                minInjury: grant.minInjury,
+                activationChance: grant.activationChance,
+                requiredDamageType: grant.requiredDamageType,
+                sourceModifierId: modifier.id,
+                sourceFeatureId: feature.id
+              };
+            }
+          }
+          if (!matches) warnings.push({ type: "feature_no_match", domain: "hit_target", sourceId: modifier.id, featureId: feature.id, selectorField: feature.selectorField, selectorValue: feature.selectorValue });
+        }
         steps.push({ type: feature.type, sourceId: modifier.id, sourceName: modifier.name, featureId: feature.id, label: feature.label, effectUuid: feature.effectUuid, domain: feature.effectDomain, lifecycle: feature.lifecycle });
         continue;
       }

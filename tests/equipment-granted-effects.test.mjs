@@ -4,7 +4,8 @@ import test from "node:test";
 import {
   collectActiveEquipmentGrantedEffects,
   EQUIPMENT_GRANTED_EFFECT_SOURCE,
-  hasEquipmentGrantRelevantChange
+  hasEquipmentGrantRelevantChange,
+  matchesEquipmentGrantedEffectScope
 } from "../module/utils/equipment-granted-effects.mjs";
 
 const resolution = grants => ({ grantedEffects: grants });
@@ -32,3 +33,13 @@ test("uses a dedicated ActiveEffect source marker", () => {
   assert.equal(EQUIPMENT_GRANTED_EFFECT_SOURCE, "equipmentModifierFeature");
 });
 
+test("limits source-attack effects to their host item and attack selector", () => {
+  const effect = { flags: { gum: { equipmentGrant: {
+    domain: "source_attack", originItemId: "shield", attackType: "melee", selectorField: "group", selectorValue: "golpe-com-escudo"
+  } } } };
+  assert.equal(matchesEquipmentGrantedEffectScope(effect, { id: "shield" }, { groups: "escudo, golpe-com-escudo" }, "melee"), true);
+  assert.equal(matchesEquipmentGrantedEffectScope(effect, { id: "sword" }, { groups: "golpe-com-escudo" }, "melee"), false);
+  assert.equal(matchesEquipmentGrantedEffectScope(effect, { id: "shield" }, { groups: "golpe-com-escudo" }, "ranged"), false);
+  assert.equal(matchesEquipmentGrantedEffectScope(effect, { id: "shield" }, { groups: "outro" }, "melee"), false);
+  assert.equal(matchesEquipmentGrantedEffectScope({}, null, null, ""), true);
+});

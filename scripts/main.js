@@ -50,7 +50,7 @@ import { organizeGumCompendia } from "../module/utils/compendium-folder-organize
 import { getSkillDisplayName, setDirectoryEntryLabel } from "../module/utils/skill-display-name.mjs";
 import { installGumChatCommandInterceptor, normalizeGumLookup, resolveGumCommandActor, splitSkillModifier } from "../module/utils/gum-chat-command.mjs";
 import { resolveEquipment } from "../module/utils/equipment-resolution.mjs";
-import { collectActiveEquipmentGrantedEffects, EQUIPMENT_GRANTED_EFFECT_SOURCE, hasEquipmentGrantRelevantChange } from "../module/utils/equipment-granted-effects.mjs";
+import { collectActiveEquipmentGrantedEffects, EQUIPMENT_GRANTED_EFFECT_SOURCE, hasEquipmentGrantRelevantChange, matchesEquipmentGrantedEffectScope } from "../module/utils/equipment-granted-effects.mjs";
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
 
@@ -77,12 +77,31 @@ async function syncEquipmentModifierGrantedEffects(item) {
             continue;
         }
         try {
+            const actionIds = grant.domain === "source_attack"
+                ? getEffectActions(effectItem.system)
+                    .filter(action => ["roll_modifier", "skill_modifier", "combat_modifier"].includes(action.type))
+                    .map(action => action.id)
+                : null;
+            if (grant.domain === "source_attack" && !actionIds.length) {
+                console.warn(`GUM | Efeito de ataque "${grant.label}" não possui ações de rolagem ou combate compatíveis.`);
+                continue;
+            }
             await applySingleEffect(effectItem, targets, {
                 actor,
                 origin: item,
                 source: EQUIPMENT_GRANTED_EFFECT_SOURCE,
                 originItemId: item.id,
-                skipInstantEffects: true
+                skipInstantEffects: true,
+                actionIds,
+                gumFlags: grant.domain === "source_attack" ? { equipmentGrant: {
+                    domain: grant.domain,
+                    originItemId: item.id,
+                    attackType: grant.attackType,
+                    selectorField: grant.selectorField,
+                    selectorValue: grant.selectorValue,
+                    sourceModifierId: grant.sourceModifierId,
+                    sourceFeatureId: grant.featureId
+                }} : {}
             });
         } catch (error) {
             console.error(`GUM | Falha ao aplicar efeito concedido "${grant.label}":`, error);
@@ -119,6 +138,7 @@ function _collectCombatModifierEntries(actor, item, attack, attackType) {
     const entries = [];
     for (const effect of Array.from(actor?.appliedEffects ?? actor?.effects ?? [])) {
         if (effect?.disabled || effect?.isSuppressed) continue;
+        if (!matchesEquipmentGrantedEffectScope(effect, item, attack, attackType)) continue;
         const data = foundry.utils.getProperty(effect, "flags.gum.combatModifier");
         for (const entry of data?.entries || []) {
             if (_resolveRollModifierApplicationSide(entry, data) !== "self") continue;
@@ -137,6 +157,7 @@ function _collectTargetCombatModifierEntries(actor, item, attack, attackType, ro
         if (!targetActor || targetActor === actor) continue;
         for (const effect of Array.from(targetActor.appliedEffects ?? targetActor.effects ?? [])) {
             if (effect?.disabled || effect?.isSuppressed) continue;
+            if (!matchesEquipmentGrantedEffectScope(effect, item, attack, attackType)) continue;
             const data = foundry.utils.getProperty(effect, "flags.gum.combatModifier");
             for (const entry of data?.entries || []) {
                 if (_resolveRollModifierApplicationSide(entry, data) !== "vs_targeter") continue;
@@ -960,6 +981,7 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
         const collectNhBonusesForItem = (item, baseAttribute = null) => {
             const bonus = { passive: 0, temp: 0 };
             for (const effect of actorActiveEffects) {
+                if (!matchesEquipmentGrantedEffectScope(effect, item, null, "")) continue;
                 const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
                 if (!data) continue;
                 const entries = Array.isArray(data.entries) && data.entries.length
@@ -983,6 +1005,7 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
         const collectNhBonusesForAttack = (item, attack, attackType) => {
             const bonus = { passive: 0, temp: 0 };
             for (const effect of actorActiveEffects) {
+                if (!matchesEquipmentGrantedEffectScope(effect, item, attack, attackType)) continue;
                 const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
                 if (!data) continue;
                 const entries = Array.isArray(data.entries) && data.entries.length
@@ -1013,6 +1036,7 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
         const collectNhBonusesForDefense = (item, attack, attackType, defenseType) => {
             const bonus = { passive: 0, temp: 0 };
             for (const effect of actorActiveEffects) {
+                if (!matchesEquipmentGrantedEffectScope(effect, item, attack, attackType)) continue;
                 const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
                 if (!data) continue;
                 const entries = Array.isArray(data.entries) && data.entries.length
@@ -2402,7 +2426,12 @@ function _matchesRollTargetFilter(actor, rollData = {}, entry = {}) {
 function _collectEffectRollModifiers(actor, rollContext, rollData = {}) {
     const activeEffects = Array.from(actor?.appliedEffects ?? actor?.effects ?? []);
     const mods = [];
+    const sourceItem = _getRollSourceItem(actor, rollData);
+    const sourceAttack = _getRollSourceAttack(sourceItem, rollData);
+    const sourceAttackType = sourceItem?.system?.melee_attacks?.[rollData.attackId] ? "melee"
+        : sourceItem?.system?.ranged_attacks?.[rollData.attackId] ? "ranged" : "";
     for (const effect of activeEffects) {
+        if (!matchesEquipmentGrantedEffectScope(effect, sourceItem, sourceAttack, sourceAttackType)) continue;
         const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
         if (!data) continue;
         const entries = Array.isArray(data.entries) && data.entries.length
@@ -2459,8 +2488,13 @@ function _collectCounterCandidatesFromTarget(targetActor, rollContext, rollData 
     const candidates = [];
     if (!targetActor) return candidates;
     const activeEffects = Array.from(targetActor.appliedEffects ?? targetActor.effects ?? []);
+    const sourceItem = _getRollSourceItem(rollingActor || targetActor, rollData);
+    const sourceAttack = _getRollSourceAttack(sourceItem, rollData);
+    const sourceAttackType = sourceItem?.system?.melee_attacks?.[rollData.attackId] ? "melee"
+        : sourceItem?.system?.ranged_attacks?.[rollData.attackId] ? "ranged" : "";
 
     for (const effect of activeEffects) {
+        if (!matchesEquipmentGrantedEffectScope(effect, sourceItem, sourceAttack, sourceAttackType)) continue;
         const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
         if (!data) continue;
 

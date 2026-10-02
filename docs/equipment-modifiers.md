@@ -44,8 +44,16 @@ Criações são resolvidas antes das alterações. Substituições, multiplicaç
 
 O tipo `granted_effect` vincula um item Efeito por UUID e registra seu domínio e ciclo de vida. Efeitos no domínio `wearer` são sincronizados de forma idempotente com o ator e podem permanecer ativos enquanto o equipamento estiver possuído, carregado, equipado ou ativado. Somente ações persistentes são aplicadas nessa sincronização; alterações instantâneas de recursos não são repetidas.
 
-Os domínios `source_attack` e `hit_target` já são preservados no modelo, mas ainda não são executados automaticamente.
+O domínio `source_attack` instala somente ações compatíveis de rolagem/perícia/combate e as limita ao item hospedeiro e aos ataques correspondentes ao seletor. O domínio `hit_target` transforma o vínculo em um efeito de dano no modo de ataque correspondente, reutilizando as regras existentes de ferimento mínimo, chance de ativação e tipo de dano.
+
+## Etapa implementada: efeitos de ataque e de impacto
+
+Os três domínios estão integrados:
+
+- `wearer` — efeito persistente no portador conforme o ciclo de vida;
+- `source_attack` — modificadores de rolagem e combate limitados aos ataques do equipamento;
+- `hit_target` — efeito encaminhado ao pipeline de dano e aplicado ao alvo quando suas condições forem satisfeitas.
 
 ## Próxima etapa
 
-Integrar os efeitos reservados aos fluxos de ataque e aplicação de dano: efeitos limitados às rolagens originadas pelo equipamento e efeitos aplicados ao alvo atingido. Também será possível ampliar os filtros e fornecer editores especializados para propriedades complexas.
+Aprimorar a autoria e a apresentação: navegador de itens Efeito no lugar do UUID manual, visualização da fonte vinculada, memória detalhada das features aplicadas e editores especializados para propriedades complexas.

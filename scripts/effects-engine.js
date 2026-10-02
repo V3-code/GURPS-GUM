@@ -463,7 +463,8 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     statusBindingRuleUuid: context.statusBindingRuleUuid ?? null,
                     statusBindingStatusId: context.statusBindingStatusId ?? null,
                     duration: gumDuration,
-                    ...conditionFlags
+                    ...conditionFlags,
+                    ...(context.gumFlags || {})
                 }
             },
             disabled: pendingCombat || shouldDelayStart
