@@ -5245,6 +5245,26 @@ color:#121114;
   grid-template-columns: minmax(280px, 1fr) minmax(110px, 0.28fr);
 }
 
+.gum.sheet.item .equipment-operational-toggle {
+  display: flex;
+  justify-content: flex-end;
+  padding: 7px 10px;
+  border: 1px solid var(--item-border);
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.gum.sheet.item .equipment-operational-toggle .custom-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.gum.sheet.item .equipment-operational-toggle .notes {
+  margin-left: 4px;
+}
+
 .gum.sheet.item .equipment-feature-trace {
   margin-top: 10px;
   padding: 8px 10px;

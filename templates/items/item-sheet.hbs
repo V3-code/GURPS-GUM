@@ -2,6 +2,13 @@
 {{#*inline "itemDetailsGeneral"}}
     <div class="equipment-details-layout">
         {{!-- Este bloco contém os campos gerais para equipamentos. --}}
+        <div class="equipment-operational-toggle">
+            <label class="custom-checkbox" title="Indica que o equipamento está ligado ou em funcionamento. Controla somente features configuradas como Enquanto ativado; não substitui Carregado ou Equipado.">
+                <input type="checkbox" name="system.active" {{checked system.active}}/>
+                <span><i class="fas fa-power-off"></i> Ligado / Ativo</span>
+                <small class="notes">Estado operacional usado por efeitos “Enquanto ativado”.</small>
+            </label>
+        </div>
         <div class="form-section skill-details-compact equipment-details-form">
             <h4 class="section-title">Geral</h4>
             <div class="equipment-general-grid">
@@ -64,11 +71,6 @@
                         </div>
                     </div>
                 </div>
-                <label class="equipment-stat-card custom-checkbox" title="Indica que o equipamento está ligado ou em funcionamento. Controla somente features configuradas como Enquanto ativado; não substitui Carregado ou Equipado.">
-                    <span class="equipment-stat-heading"><i class="fas fa-power-off"></i><span>Ligado / Ativo</span></span>
-                    <input type="checkbox" name="system.active" {{checked system.active}}/>
-                    <small class="notes">Usado por efeitos “Enquanto ativado”.</small>
-                </label>
             </div>
         </div>
 
@@ -1716,6 +1718,25 @@
               <div class="form-group"><label>Valor</label><input type="{{#if feature.numeric_attack_value}}number{{else}}text{{/if}}" step="any" name="system.features_data.{{feature.id}}.value" value="{{feature.value}}"/></div>
             </div>
             <label class="custom-checkbox"><input type="checkbox" name="system.features_data.{{feature.id}}.per_level" {{checked feature.per_level}}/><span>Por nível do modificador</span></label>
+            {{/if}}
+
+            {{#if (eq feature.type "attack_damage")}}
+            <div class="form-grid-3">
+              <div class="form-group"><label>Ataques</label><select name="system.features_data.{{feature.id}}.attack_type"><option value="all" {{#if (eq feature.attack_type "all")}}selected{{/if}}>Todos</option><option value="melee" {{#if (eq feature.attack_type "melee")}}selected{{/if}}>Corpo a corpo</option><option value="ranged" {{#if (eq feature.attack_type "ranged")}}selected{{/if}}>À distância</option></select></div>
+              <div class="form-group"><label>Encontrar por</label><select name="system.features_data.{{feature.id}}.selector_field"><option value="all" {{#if (eq feature.selector_field "all")}}selected{{/if}}>Todos</option><option value="group" {{#if (eq feature.selector_field "group")}}selected{{/if}}>Grupo</option><option value="mode" {{#if (eq feature.selector_field "mode")}}selected{{/if}}>Nome do modo</option><option value="skill_name" {{#if (eq feature.selector_field "skill_name")}}selected{{/if}}>Perícia</option></select></div>
+              <div class="form-group"><label>Filtro</label><input type="text" name="system.features_data.{{feature.id}}.selector_value" value="{{feature.selector_value}}" placeholder="Ex.: golpe-com-escudo"/></div>
+            </div>
+            <div class="form-grid-3">
+              <div class="form-group"><label>Componente</label><select name="system.features_data.{{feature.id}}.damage_slot"><option value="follow_up_damage" {{#if (eq feature.damage_slot "follow_up_damage")}}selected{{/if}}>Dano de acompanhamento</option><option value="fragmentation_damage" {{#if (eq feature.damage_slot "fragmentation_damage")}}selected{{/if}}>Fragmentação</option></select></div>
+              <div class="form-group"><label>Fórmula</label><input type="text" name="system.features_data.{{feature.id}}.damage.formula" value="{{feature.damage.formula}}" placeholder="1d-1"/></div>
+              <div class="form-group"><label>Tipo</label><input type="text" name="system.features_data.{{feature.id}}.damage.type" value="{{feature.damage.type}}" placeholder="perf"/></div>
+            </div>
+            <div class="form-grid-3">
+              <div class="form-group"><label>Natureza</label><input type="text" name="system.features_data.{{feature.id}}.damage.nature" value="{{feature.damage.nature}}" placeholder="FOG"/></div>
+              <div class="form-group"><label>Divisor de armadura</label><input type="number" step="0.1" name="system.features_data.{{feature.id}}.damage.armor_divisor" value="{{feature.damage.armor_divisor}}"/></div>
+              <div class="form-group"><label>Progressão</label><input type="text" name="system.features_data.{{feature.id}}.damage.scaling" value="{{feature.damage.scaling}}" placeholder="+1d6/point"/></div>
+            </div>
+            <p class="notes">O componente é definido como uma estrutura completa no modo de ataque selecionado.</p>
             {{/if}}
 
             {{#if (eq feature.type "create_attack")}}

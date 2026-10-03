@@ -423,6 +423,7 @@ _promptMultipleReferences(parsedList) {
                 selector_value: feature.selectorValue,
                 location: feature.location,
                 damage_type: feature.damageType,
+                damage_slot: feature.damageSlot,
                 effect_uuid: feature.effectUuid,
                 effect_name: feature.effect_name || feature.effectName || "",
                 effect_img: feature.effect_img || feature.effectImg || "",
@@ -430,6 +431,7 @@ _promptMultipleReferences(parsedList) {
                 min_injury: feature.minInjury,
                 activation_chance: feature.activationChance,
                 required_damage_type: feature.requiredDamageType,
+                damage: feature.damage,
                 numeric_equipment_value: ["item_dr", "item_hp", "item_ht", "tech_sm", "holdout", "max_uses"].includes(feature.path),
                 numeric_attack_value: ["skill_level_mod", "armor_divisor", "min_strength", "accuracy", "rcl", "mag"].includes(feature.path)
             }));
@@ -443,6 +445,7 @@ _promptMultipleReferences(parsedList) {
                 { id: "equipment_property", label: "Modificar propriedade do equipamento" },
                 { id: "equipment_dr", label: "Modificar RD por localização" },
                 { id: "attack_property", label: "Modificar modo de ataque" },
+                { id: "attack_damage", label: "Definir dano secundário ou fragmentação" },
                 { id: "create_attack", label: "Criar modo de ataque" },
                 { id: "granted_effect", label: "Conceder efeito" }
             ];

@@ -9,7 +9,7 @@ const number = (value, fallback = 0) => {
 const roundForOutput = value => Math.round((value + Number.EPSILON) * 1e10) / 1e10;
 const clone = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 
-export const EQUIPMENT_FEATURE_TYPES = Object.freeze(["equipment_property", "equipment_dr", "attack_property", "create_attack", "granted_effect"]);
+export const EQUIPMENT_FEATURE_TYPES = Object.freeze(["equipment_property", "equipment_dr", "attack_property", "attack_damage", "create_attack", "granted_effect"]);
 export const EQUIPMENT_PROPERTY_PATHS = Object.freeze([
   "tech_sm", "item_hp", "item_ht", "item_dr", "holdout", "legality_class", "material", "quality", "max_uses"
 ]);
@@ -164,6 +164,7 @@ export function normalizeEquipmentFeature(feature = {}, index = 0) {
     path: String(feature.path || (type === "attack_property" ? "damage_formula" : "item_dr")),
     location: String(feature.location || "all").trim(),
     damageType: String(feature.damage_type ?? feature.damageType ?? "base").trim() || "base",
+    damageSlot: ["follow_up_damage", "fragmentation_damage"].includes(feature.damage_slot || feature.damageSlot) ? (feature.damage_slot || feature.damageSlot) : "follow_up_damage",
     attackType: ["melee", "ranged"].includes(feature.attack_type || feature.attackType) ? (feature.attack_type || feature.attackType) : "all",
     selectorField: ["all", "mode", "skill_name", "group"].includes(feature.selector_field || feature.selectorField) ? (feature.selector_field || feature.selectorField) : "all",
     selectorValue: String(feature.selector_value ?? feature.selectorValue ?? "").trim(),
@@ -173,7 +174,8 @@ export function normalizeEquipmentFeature(feature = {}, index = 0) {
     minInjury: Math.max(0, number(feature.min_injury ?? feature.minInjury)),
     activationChance: Math.min(100, Math.max(0, number(feature.activation_chance ?? feature.activationChance, 100))),
     requiredDamageType: String(feature.required_damage_type ?? feature.requiredDamageType ?? "").trim(),
-    attack: clone(feature.attack || {})
+    attack: clone(feature.attack || {}),
+    damage: clone(feature.damage || {})
   };
 }
 
@@ -451,6 +453,35 @@ function resolveFeatures(equipment, modifiers, warnings) {
         const collection = type === "ranged" ? rangedAttacks : meleeAttacks;
         collection[key] = { ...defaultCreatedAttack(type, feature.attack), id: key, source_modifier_id: modifier.id, source_feature_id: feature.id };
         steps.push({ type: feature.type, sourceId: modifier.id, sourceName: modifier.name, featureId: feature.id, label: feature.label, attackType: type, attackId: key });
+        continue;
+      }
+
+      if (feature.type === "attack_damage") {
+        const collections = feature.attackType === "melee" ? [["melee", meleeAttacks]]
+          : feature.attackType === "ranged" ? [["ranged", rangedAttacks]]
+            : [["melee", meleeAttacks], ["ranged", rangedAttacks]];
+        let matches = 0;
+        for (const [attackType, collection] of collections) {
+          for (const [attackId, attack] of Object.entries(collection)) {
+            if (!attackMatches(attack, feature)) continue;
+            matches += 1;
+            const input = clone(attack[feature.damageSlot] || {});
+            const damage = feature.damage || {};
+            const output = {
+              formula: String(damage.formula || ""),
+              type: String(damage.type || ""),
+              nature: String(damage.nature || ""),
+              armor_divisor: number(damage.armor_divisor, 1),
+              scaling: String(damage.scaling || "")
+            };
+            const overrideKey = `attack_damage:${attackType}:${attackId}:${feature.damageSlot}`;
+            if (overrides.has(overrideKey)) warnings.push({ type: "conflicting_feature_override", domain: "attack_damage", attackType, attackId, damageSlot: feature.damageSlot, sources: [overrides.get(overrideKey), modifier.id] });
+            overrides.set(overrideKey, modifier.id);
+            attack[feature.damageSlot] = output;
+            steps.push({ type: feature.type, sourceId: modifier.id, sourceName: modifier.name, featureId: feature.id, label: feature.label, attackType, attackId, path: feature.damageSlot, input: input.formula || "—", output: output.formula || "—" });
+          }
+        }
+        if (!matches) warnings.push({ type: "feature_no_match", domain: "attack_damage", sourceId: modifier.id, featureId: feature.id, selectorField: feature.selectorField, selectorValue: feature.selectorValue });
         continue;
       }
 

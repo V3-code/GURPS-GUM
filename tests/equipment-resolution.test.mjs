@@ -191,6 +191,19 @@ test("creates stable attack modes before applying matching attack features", () 
   assert.equal(result.meleeAttacks.eqpmod_spike_create.skill_level_mod, 1);
 });
 
+test("defines follow-up and fragmentation damage on selected attacks", () => {
+  const result = resolveEquipment({ cost: 10, weight: 1, melee_attacks: {
+    spike: { mode: "Espinho", groups: "escudo", follow_up_damage: {}, fragmentation_damage: {} },
+    pommel: { mode: "Pomo", groups: "pomo", follow_up_damage: {}, fragmentation_damage: {} }
+  } }, [{ id: "enchanted", features_data: {
+    follow: { id: "follow", type: "attack_damage", attack_type: "melee", selector_field: "group", selector_value: "escudo", damage_slot: "follow_up_damage", damage: { formula: "1d-1", type: "queim", nature: "FOG", armor_divisor: 2, scaling: "+1/nível" } },
+    frag: { id: "frag", type: "attack_damage", attack_type: "melee", selector_field: "mode", selector_value: "Espinho", damage_slot: "fragmentation_damage", damage: { formula: "1d", type: "cort" } }
+  }}]);
+  assert.deepEqual(result.meleeAttacks.spike.follow_up_damage, { formula: "1d-1", type: "queim", nature: "FOG", armor_divisor: 2, scaling: "+1/nível" });
+  assert.deepEqual(result.meleeAttacks.spike.fragmentation_damage, { formula: "1d", type: "cort", nature: "", armor_divisor: 1, scaling: "" });
+  assert.deepEqual(result.meleeAttacks.pommel.follow_up_damage, {});
+});
+
 test("warns about unmatched selectors and conflicting property overrides", () => {
   const result = resolveEquipment({ cost: 1, weight: 1, quality: "comum" }, [
     { id: "a", features_data: { quality: { id: "quality", type: "equipment_property", path: "quality", operation: "set", value: "boa" } } },

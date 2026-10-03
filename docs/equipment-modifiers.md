@@ -95,6 +95,12 @@ Esse campo representa o estado operacional do equipamento: uma lanterna acesa, u
 
 O tipo de feature `Modificar RD por localização` pode somar, multiplicar ou definir a RD geral (`base`) ou o ajuste relativo de um tipo de dano em uma localização específica. Também pode alcançar todas as localizações já existentes no equipamento. A resolução preserva a RD-base, fornece os valores efetivos à preparação do ator e apresenta o resultado ao lado da entrada original na aba Proteção.
 
+## Etapa implementada: dano secundário e fragmentação
+
+A feature `Definir dano secundário ou fragmentação` seleciona ataques por grupo, modo ou perícia e define um componente completo de dano de acompanhamento ou fragmentação: fórmula, tipo, natureza, divisor de armadura e progressão. Essa estrutura é aplicada ao ataque resolvido, inclusive a ataques criados por outra feature, sem gravar sobre o ataque-base.
+
+O controle `Ligado / Ativo` também foi retirado do grupo Geral. Ele agora aparece como opção operacional independente acima desse grupo, mantendo explícito que não é uma propriedade descritiva nem substitui o estado equipado/carregado.
+
 ## Próxima etapa
 
-Validar a RD por localização no Foundry com armaduras reais e então modelar modos de dano secundário/fragmentação como estruturas próprias, evitando tentar representá-los como campos escalares.
+Executar no Foundry a matriz manual com RD por localização, dano secundário e fragmentação em equipamentos reais. Depois disso, tratar os problemas encontrados e avaliar features complexas restantes, como consumo/usos e alterações de defesa específicas do equipamento.

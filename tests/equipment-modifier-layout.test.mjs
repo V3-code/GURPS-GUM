@@ -65,7 +65,8 @@ test("equipment modifier sheet exposes typed feature authoring", () => {
 
 test("equipment active toggle explains its limited lifecycle purpose", () => {
   assert.match(template, /Ligado \/ Ativo/);
-  assert.match(template, /Usado por efeitos “Enquanto ativado”/);
+  assert.match(template, /equipment-operational-toggle/);
+  assert.match(template, /Estado operacional usado por efeitos “Enquanto ativado”/);
   assert.match(template, /não substitui Carregado ou Equipado/);
 });
 
@@ -99,4 +100,13 @@ test("created attack editor exposes specialized melee and ranged statistics", ()
   }
   assert.match(itemSheet, /numeric_equipment_value/);
   assert.match(itemSheet, /numeric_attack_value/);
+});
+
+test("equipment modifiers author structured follow-up and fragmentation damage", () => {
+  assert.match(template, /eq feature\.type "attack_damage"/);
+  assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.damage_slot/);
+  for (const field of ["formula", "type", "nature", "armor_divisor", "scaling"]) {
+    assert.match(template, new RegExp(`features_data\\.\\{\\{feature\\.id\\}\\}\\.damage\\.${field}`));
+  }
+  assert.match(itemSheet, /id: "attack_damage", label: "Definir dano secundário ou fragmentação"/);
 });
