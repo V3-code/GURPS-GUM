@@ -16,6 +16,7 @@ import { canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
 import { contentSourceService } from "../services/content-source-service.mjs";
 import { attachSheetItemOrganizer } from "../services/sheet-item-organizer.mjs";
 import { buildEquipmentSortUpdates, resolveEquipmentDrop } from "../utils/equipment-drop.mjs";
+import { buildEquipmentConsumptionUpdate, resolveEquipment } from "../utils/equipment-resolution.mjs";
 import { UNGROUPED_ORGANIZER_ID, addItemOrganizationGroup, buildItemCategoryGroupPlan, createGroupsFromItemCategories, moveOrganizedItem, normalizeItemOrganization, removeItemOrganizationGroup, renameItemOrganizationGroup } from "../utils/item-organization.mjs";
 
 const WOUND_NATURE_ICONS = Object.freeze({
@@ -2559,14 +2560,16 @@ html.on('click', '.dr-group-toggle', (ev) => {
         const item = this.actor.items.get(itemId);
         if (!item) return;
 
-        const currentQty = Number(item.system?.quantity ?? 0);
-        if (currentQty <= 0) {
-            ui.notifications.warn(`"${item.name}" não possui quantidade suficiente para consumir.`);
+        const resolution = item.system?.equipmentResolution || resolveEquipment(item._source?.system || item.system);
+        const consumption = buildEquipmentConsumptionUpdate(item.system, resolution);
+        if (!consumption.consumed) {
+            const message = consumption.reason === "empty_charges"
+                ? `"${item.name}" não possui cargas restantes.`
+                : `"${item.name}" não possui quantidade suficiente para consumir.`;
+            ui.notifications.warn(message);
             return;
         }
-
-        const updates = { "system.quantity": Math.max(0, currentQty - 1) };
-        await item.update(updates);
+        await item.update(consumption.updates);
 
         try {
             if (game?.gum?.applyUseEventEffects) {
@@ -2576,7 +2579,12 @@ html.on('click', '.dr-group-toggle', (ev) => {
             console.error("GUM | Falha ao aplicar Evento de Uso (consume):", err);
         }
 
-        ui.notifications.info(`${item.name} consumido. Quantidade restante: ${Math.max(0, currentQty - 1)}.`);
+        const nextQuantity = consumption.updates["system.quantity"] ?? item.system.quantity;
+        const nextSpent = consumption.updates["system.current_uses"] ?? consumption.uses.spent;
+        const message = consumption.mode === "charges"
+            ? `${item.name} usado. Cargas restantes: ${Math.max(0, consumption.uses.max - nextSpent)}${consumption.exhausted ? " (esgotado)" : ""}.`
+            : `${item.name} consumido. Quantidade restante: ${nextQuantity}.`;
+        ui.notifications.info(message);
     });
 
 

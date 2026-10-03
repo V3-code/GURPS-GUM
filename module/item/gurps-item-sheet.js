@@ -8,6 +8,7 @@ import { listBodyLocations } from "../config/body-profiles.js";
 import { SOCIAL_CATEGORIES } from "../config/social-aspects.mjs";
 import { normalizeContextCsv, openContextPicker } from "../apps/context-picker.mjs";
 import { getSkillDisplayName } from "../utils/skill-display-name.mjs";
+import { describeEquipmentAttackChanges, describeEquipmentPropertyChanges, describeEquipmentResolutionWarnings, normalizeEquipmentModifier, resolveEquipment } from "../utils/equipment-resolution.mjs";
  
 const { ItemSheet } = foundry.appv1.sheets; 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor; 
@@ -45,51 +46,8 @@ const ROLL_CONTEXT_OPTIONS = [
 // ================================================================== // 
 //  CLASSE DA FICHA DO ITEM (GurpsItemSheet) - VERSÃO BLINDADA V12    // 
 // ================================================================== // 
-export class GurpsItemSheet extends ItemSheet { 
-    _parseAdjustmentExpression(rawValue, { allowCF = false } = {}) { 
-        const source = (rawValue ?? "").toString().trim(); 
-        if (!source) return { mode: "none", value: 0, label: "" }; 
- 
-        const normalized = source.replace(",", ".").trim(); 
- 
-        const cfMatch = allowCF ? normalized.match(/^([+-]?\d+(?:\.\d+)?)\s*cf$/i) : null; 
-        if (cfMatch) { 
-            return { mode: "cf", value: Number(cfMatch[1]), label: `${Number(cfMatch[1]) >= 0 ? "+" : ""}${Number(cfMatch[1])} CF` }; 
-        } 
- 
-        const percentMatch = normalized.match(/^([+-]?\d+(?:\.\d+)?)\s*%$/); 
-        if (percentMatch) { 
-            return { mode: "percent", value: Number(percentMatch[1]), label: `${Number(percentMatch[1]) >= 0 ? "+" : ""}${Number(percentMatch[1])}%` }; 
-        } 
- 
-        const multMatch = normalized.match(/^[x*]\s*(\d+(?:\.\d+)?)$/i); 
-        if (multMatch) { 
-            return { mode: "multiply", value: Number(multMatch[1]), label: `x${Number(multMatch[1])}` }; 
-        } 
- 
-        const sumMatch = normalized.match(/^([+-]?\d+(?:\.\d+)?)$/); 
-        if (sumMatch) { 
-            return { mode: "add", value: Number(sumMatch[1]), label: `${Number(sumMatch[1]) >= 0 ? "+" : ""}${Number(sumMatch[1])}` }; 
-        } 
- 
-        return { mode: "invalid", value: 0, label: source }; 
-    } 
- 
-    _normalizeCostExpression(mod = {}) { 
-        const costAdjustment = mod.cost_adjustment; 
-        if (costAdjustment !== undefined && `${costAdjustment}`.trim() !== "") { 
-            return `${costAdjustment}`.trim(); 
-        } 
- 
-        const cf = Number(mod.cost_factor); 
-        if (!Number.isNaN(cf) && cf !== 0) { 
-            return `${cf >= 0 ? "+" : ""}${cf} CF`; 
-        } 
- 
-        return "0 CF"; 
-    } 
- 
-    static get defaultOptions() { 
+export class GurpsItemSheet extends ItemSheet {
+    static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, { 
             classes: ["gum", "sheet", "item", "theme-dark"], 
             width: 635, 
@@ -429,76 +387,127 @@ _promptMultipleReferences(parsedList) {
             context.eqpModifiersList = modifiersArray; 
             context.eqpModifiersHasFeatures = modifiersArray.some(mod => mod.features); 
  
-            let baseCost = Number(this.item.system.cost) || 0; 
-            let baseWeight = Number(this.item.system.weight) || 0; 
-            let totalCF = 0; 
-            let costMultiplier = 1; 
-            let costFlat = 0; 
-            let weightMultiplier = 1; 
-            let weightFlat = 0; 
- 
-            for (const mod of modifiersArray) { 
-                const parsedCost = this._parseAdjustmentExpression(this._normalizeCostExpression(mod), { allowCF: true }); 
-                switch (parsedCost.mode) { 
-                    case "cf": 
-                        totalCF += parsedCost.value; 
-                        break; 
-                    case "percent": 
-                        costMultiplier *= (1 + (parsedCost.value / 100)); 
-                        break; 
-                    case "multiply": 
-                        costMultiplier *= parsedCost.value; 
-                        break; 
-                    case "add": 
-                        costFlat += parsedCost.value; 
-                        break; 
-                    default: 
-                        break; 
-                } 
- 
-                const parsedWeight = this._parseAdjustmentExpression(mod.weight_mod); 
-                switch (parsedWeight.mode) { 
-                    case "percent": 
-                        weightMultiplier *= (1 + (parsedWeight.value / 100)); 
-                        break; 
-                    case "multiply": 
-                        weightMultiplier *= parsedWeight.value; 
-                        break; 
-                    case "add": 
-                        weightFlat += parsedWeight.value; 
-                        break; 
-                    default: 
-                        break; 
-                } 
- 
-                mod.costDisplay = parsedCost.label || this._normalizeCostExpression(mod); 
-                mod.weightDisplay = parsedWeight.label || (mod.weight_mod || "x1"); 
-            } 
- 
-            const finalCostMultiplier = Math.max(0, 1 + totalCF); 
-            context.calculatedFinalCost = Math.max(0, ((baseCost * finalCostMultiplier) * costMultiplier) + costFlat); 
-            context.calculatedFinalWeight = Math.max(0, (baseWeight * weightMultiplier) + weightFlat); 
+            const baseEquipmentSystem = this.item._source?.system || this.item.system;
+            const resolution = resolveEquipment(baseEquipmentSystem, eqpModsObj);
+            const normalizedById = new Map(resolution.modifiers.map(modifier => [modifier.id, modifier]));
+            for (const mod of modifiersArray) {
+                const normalized = normalizedById.get(mod.id) || normalizeEquipmentModifier(mod);
+                mod.enabled = normalized.enabled;
+                mod.level = normalized.level;
+                mod.costDisplay = normalized.cost.expression || "—";
+                mod.weightDisplay = normalized.weight.expression || "—";
+                mod.costStage = normalized.cost.stage;
+                mod.weightStage = normalized.weight.stage;
+            }
+
+            context.equipmentResolution = resolution;
+            context.equipmentUses = resolution.uses;
+            context.equipmentPropertyChanges = describeEquipmentPropertyChanges(baseEquipmentSystem, resolution.properties);
+            context.equipmentMeleeAttackChanges = describeEquipmentAttackChanges(baseEquipmentSystem.melee_attacks, resolution.meleeAttacks, resolution.steps, "melee");
+            context.equipmentRangedAttackChanges = describeEquipmentAttackChanges(baseEquipmentSystem.ranged_attacks, resolution.rangedAttacks, resolution.steps, "ranged");
+            context.equipmentFeatureSteps = resolution.steps;
+            const stageLabels = { original: "Original", base: "Base", final_base: "Base final", final: "Final" };
+            const describeCalculationSteps = steps => steps.map(step => ({ ...step, stageLabel: stageLabels[step.stage] || step.stage }));
+            context.equipmentCostSteps = describeCalculationSteps(resolution.cost.steps);
+            context.equipmentWeightSteps = describeCalculationSteps(resolution.weight.steps);
+            context.equipmentResolutionWarnings = describeEquipmentResolutionWarnings(resolution.warnings);
+            context.calculatedFinalCost = resolution.cost.unitFinal;
+            context.calculatedFinalWeight = resolution.weight.unitFinal;
              
             context.finalCostString = context.calculatedFinalCost.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }); 
  context.finalWeightString = context.calculatedFinalWeight.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }); 
-            context.hasCostChange = finalCostMultiplier !== 1 || costMultiplier !== 1 || costFlat !== 0; 
-            context.hasWeightChange = weightMultiplier !== 1 || weightFlat !== 0; 
-        } 
+            context.hasCostChange = resolution.cost.unitFinal !== resolution.cost.base;
+            context.hasWeightChange = resolution.weight.unitFinal !== resolution.weight.base;
+        }
+
+        if (this.item.type === "eqp_modifier") {
+            const normalized = normalizeEquipmentModifier(this.item.system);
+            context.eqpModifierAdjustment = normalized;
+            context.eqpModifierFeatures = normalized.features.map(feature => ({
+                ...feature,
+                per_level: feature.perLevel,
+                attack_type: feature.attackType,
+                selector_field: feature.selectorField,
+                selector_value: feature.selectorValue,
+                location: feature.location,
+                damage_type: feature.damageType,
+                damage_slot: feature.damageSlot,
+                descriptor_kind: feature.descriptorKind,
+                effect_uuid: feature.effectUuid,
+                effect_name: feature.effect_name || feature.effectName || "",
+                effect_img: feature.effect_img || feature.effectImg || "",
+                effect_domain: feature.effectDomain,
+                min_injury: feature.minInjury,
+                activation_chance: feature.activationChance,
+                required_damage_type: feature.requiredDamageType,
+                damage: feature.damage,
+                numeric_equipment_value: ["item_dr", "item_hp", "item_ht", "tech_sm", "holdout", "defense_bonus", "equip_time", "max_uses"].includes(feature.path),
+                numeric_attack_value: ["skill_level_mod", "armor_divisor", "min_strength", "accuracy", "rcl", "mag"].includes(feature.path)
+            }));
+            context.equipmentAdjustmentStageOptions = [
+                { id: "original", label: "Valor original" },
+                { id: "base", label: "Valor base" },
+                { id: "final_base", label: "Valor base final" },
+                { id: "final", label: "Valor final" }
+            ];
+            context.equipmentFeatureTypeOptions = [
+                { id: "equipment_property", label: "Modificar propriedade do equipamento" },
+                { id: "equipment_descriptor", label: "Acrescentar descritor ou decoração" },
+                { id: "equipment_dr", label: "Modificar RD por localização" },
+                { id: "attack_property", label: "Modificar modo de ataque" },
+                { id: "attack_damage", label: "Definir dano secundário ou fragmentação" },
+                { id: "create_attack", label: "Criar modo de ataque" },
+                { id: "granted_effect", label: "Conceder efeito" }
+            ];
+            context.equipmentFeatureOperationOptions = [
+                { id: "add", label: "Somar" },
+                { id: "multiply", label: "Multiplicar" },
+                { id: "set", label: "Definir" }
+            ];
+            context.equipmentPropertyOptions = [
+                { id: "item_dr", label: "RD do item" }, { id: "item_hp", label: "PV do item" },
+                { id: "item_ht", label: "HT do item" }, { id: "tech_sm", label: "MT técnico" },
+                { id: "holdout", label: "Ocultabilidade" }, { id: "defense_bonus", label: "Bônus de Defesa" },
+                { id: "equip_time", label: "Tempo para vestir/equipar" }, { id: "max_uses", label: "Usos máximos" },
+                { id: "legality_class", label: "Classe de Legalidade" }, { id: "material", label: "Material" },
+                { id: "quality", label: "Qualidade" }
+            ];
+            context.attackPropertyOptions = [
+                { id: "damage_formula", label: "Dano" }, { id: "damage_type", label: "Tipo de dano" },
+                { id: "damage_nature", label: "Natureza do dano" }, { id: "armor_divisor", label: "Divisor de armadura" },
+                { id: "skill_level_mod", label: "Modificador de NH" }, { id: "min_strength", label: "ST mínima" },
+                { id: "reach", label: "Alcance C.C." }, { id: "parry", label: "Aparar" },
+                { id: "block", label: "Bloqueio" }, { id: "accuracy", label: "Precisão" },
+                { id: "range", label: "Distância" }, { id: "rof", label: "Cadência" },
+                { id: "shots", label: "Tiros" }, { id: "rcl", label: "Recuo" }, { id: "bulk", label: "Bulk" },
+                { id: "mag", label: "Magnitude" }, { id: "groups", label: "Grupos" }
+            ];
+            context.equipmentBodyLocationOptions = listBodyLocations();
+            context.equipmentDescriptorKindOptions = [
+                { id: "appearance", label: "Aparência / decoração" }, { id: "craftsmanship", label: "Acabamento" },
+                { id: "material", label: "Detalhe de material" }, { id: "origin", label: "Origem / fabricante" },
+                { id: "tag", label: "Tag" }, { id: "note", label: "Observação" }
+            ];
+        }
  
         if (this.item.type === "equipment") { 
-            const drLocations = this.item.system.dr_locations || {}; 
+            const drLocations = this.item._source?.system?.dr_locations || this.item.system.dr_locations || {};
+            const resolvedDrLocations = context.equipmentResolution?.drLocations || drLocations;
             const bodyLocationOptions = listBodyLocations(); 
             const locationLookup = new Map(bodyLocationOptions.map(option => [option.id, option])); 
  
             context.bodyLocationOptions = bodyLocationOptions; 
-            context.drLocationRows = Object.entries(drLocations) 
-                .filter(([, drObject]) => this._hasVisibleDR(drObject)) 
+            const drLocationKeys = new Set([...Object.keys(drLocations), ...Object.keys(resolvedDrLocations)]);
+            context.drLocationRows = [...drLocationKeys].map(key => [key, drLocations[key] || {}])
+                .filter(([key, drObject]) => this._hasVisibleDR(drObject) || this._hasVisibleDR(resolvedDrLocations[key]))
                 .map(([key, drObject]) => { 
                     const option = locationLookup.get(key); 
                     return { 
                         key, 
                         label: option?.name ?? key, 
-                        dr: this._formatDRObjectToString(drObject) 
+                        dr: this._formatDRObjectToString(drObject),
+                        finalDr: this._formatDRObjectToString(resolvedDrLocations[key] || {}),
+                        changed: JSON.stringify(drObject) !== JSON.stringify(resolvedDrLocations[key] || {})
                     }; 
                 }); 
         } 
@@ -964,7 +973,48 @@ if (this.item?.type === "equipment") {
             if (!confirmed) return; 
             await this.item.update({ [`system.eqp_modifiers.-=${modId}`]: null }); 
         }); 
-        html.find('.view-eqp-modifier').click(this._onViewEqpModifier.bind(this)); 
+        html.find('.view-eqp-modifier').click(this._onViewEqpModifier.bind(this));
+        html.find('.add-eqp-feature').click(async ev => {
+            ev.preventDefault();
+            const id = foundry.utils.randomID();
+            await this.item.update({ [`system.features_data.${id}`]: {
+                id, label: "Nova feature", enabled: true, type: "equipment_property",
+                path: "item_dr", operation: "add", value: 0, per_level: false,
+                attack_type: "all", selector_field: "all", selector_value: "", attack: {},
+                effect_uuid: "", effect_domain: "wearer", lifecycle: "while_equipped"
+            }});
+        });
+        html.find('.delete-eqp-feature').click(async ev => {
+            ev.preventDefault();
+            const id = $(ev.currentTarget).closest('[data-feature-id]').data('feature-id');
+            if (!id) return;
+            await this.item.update({ [`system.features_data.-=${id}`]: null });
+        });
+        html.find('.select-eqp-feature-effect').click(ev => {
+            ev.preventDefault();
+            const id = $(ev.currentTarget).closest('[data-feature-id]').data('feature-id');
+            if (!id) return;
+            new EffectBrowser(this.item, {
+                onSelect: async selectedEffects => {
+                    const effect = selectedEffects[0];
+                    if (!effect) return;
+                    await this.item.update({
+                        [`system.features_data.${id}.effect_uuid`]: effect.uuid,
+                        [`system.features_data.${id}.effect_name`]: effect.name,
+                        [`system.features_data.${id}.effect_img`]: effect.img
+                    });
+                    if (selectedEffects.length > 1) ui.notifications.info("Somente o primeiro efeito selecionado foi vinculado à feature.");
+                }
+            }).render(true);
+        });
+        html.find('.view-eqp-feature-effect').click(async ev => {
+            ev.preventDefault();
+            const uuid = $(ev.currentTarget).data('uuid');
+            if (!uuid) return ui.notifications.warn("Esta feature ainda não possui um Efeito vinculado.");
+            const effect = await fromUuid(uuid).catch(() => null);
+            if (!effect) return ui.notifications.warn("O Efeito vinculado não foi encontrado.");
+            effect.sheet?.render(true);
+        });
  
         // Modificadores (Vantagens) 
         html.find('.add-modifier').click(ev => { 
@@ -1980,8 +2030,14 @@ const rangedFields = `
             img: modData.img || "icons/svg/mystery-man.svg", 
                 system: { 
                 cost_adjustment: modData.cost_adjustment ?? `${modData.cost_factor ?? 0} CF`, 
-                cost_factor: modData.cost_factor ?? 0, 
-                weight_mod: modData.weight_mod ?? "x1", 
+                cost_factor: modData.cost_factor ?? 0,
+                weight_mod: modData.weight_mod ?? "x1",
+                enabled: modData.enabled !== false,
+                level: modData.level ?? 1,
+                adjustment_schema: modData.adjustment_schema ?? 0,
+                cost_adjustment_data: modData.cost_adjustment_data ?? {},
+                weight_adjustment_data: modData.weight_adjustment_data ?? {},
+                features_data: modData.features_data ?? {},
                 tech_level_mod: modData.tech_level_mod ?? "", 
                 target_type: modData.target_type ?? {}, 
                 features: modData.features ?? "", 
@@ -2114,7 +2170,7 @@ const rangedFields = `
         }
     
 
-        if (this.item?.type === "gm_modifier") { 
+        if (this.item?.type === "gm_modifier") {
             const entriesByIndex = new Map(); 
             for (const [key, value] of Object.entries(formData)) { 
                 const match = key.match(/^system\.modifier_entries\.(\d+)\.(label|value|nh_cap|contexts)$/); 
@@ -2140,7 +2196,15 @@ const rangedFields = `
                     formData["system.nh_cap"] = entries[0].nh_cap; 
                 } 
             } 
-        } 
+        }
+
+        if (this.item?.type === "eqp_modifier") {
+            const costExpression = formData["system.cost_adjustment_data.expression"];
+            const weightExpression = formData["system.weight_adjustment_data.expression"];
+            formData["system.adjustment_schema"] = 1;
+            if (costExpression !== undefined) formData["system.cost_adjustment"] = costExpression;
+            if (weightExpression !== undefined) formData["system.weight_mod"] = weightExpression;
+        }
  
         for (const [k, v] of Object.entries(formData)) { 
             const isDescriptionField = k.includes("description"); 

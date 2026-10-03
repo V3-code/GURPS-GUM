@@ -422,6 +422,7 @@
         "cost": 0,
         "weight": 0,
         "location": "carried",
+        "active": false,
         "is_container": false,
         "container": {
           "max_weight": 0,
@@ -441,6 +442,11 @@
         "item_ht": 12,
         "item_dr": 0,
         "holdout": 0,
+        "max_uses": 0,
+        "current_uses": 0,
+        "uses_mode": "quantity",
+        "consume_quantity_when_empty": false,
+        "descriptors": [],
         "eqp_modifiers": {}
       }
     },
@@ -460,6 +466,7 @@
       "parry_default": true,
       "block_default": true,
       "min_strength": 0,
+      "groups": "",
       "onDamageEffects": {},
       "follow_up_damage": {
         "formula": "",
@@ -494,6 +501,7 @@
       "rcl": "1",
       "mag": "1",
       "min_strength": 0,
+      "groups": "",
       "onDamageEffects": {},
       "follow_up_damage": {
         "formula": "",
@@ -802,6 +810,22 @@
       "cost_adjustment": "0 CF",
       "cost_factor": 0,
       "weight_mod": "x1",
+      "enabled": true,
+      "level": 1,
+      "cost_adjustment_data": {
+        "expression": "0 CF",
+        "stage": "base",
+        "per_level": false,
+        "per_weight": false,
+        "per_weight_unit": "kg"
+      },
+      "weight_adjustment_data": {
+        "expression": "x1",
+        "stage": "base",
+        "per_level": false
+      },
+      "features_data": {},
+      "gcs_features_unmapped": [],
       "tech_level_mod": "",
       "tech_level": "",
       "tags": "",

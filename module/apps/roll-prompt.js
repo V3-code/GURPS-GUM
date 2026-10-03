@@ -11,6 +11,7 @@ import { contentSourceService } from "../services/content-source-service.mjs";
 import { resolveConditionalValue } from "../utils/effect-value-expression.mjs";
 import { evaluateModifierRollFormulaSync } from "../utils/modifier-roll-formula.mjs";
 import { getSkillDisplayName } from "../utils/skill-display-name.mjs";
+import { matchesEquipmentGrantedEffectScope } from "../utils/equipment-granted-effects.mjs";
 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
@@ -80,6 +81,7 @@ export class GurpsRollPrompt extends FormApplication {
         };
         for (const effect of Array.from(this.actor?.appliedEffects ?? this.actor?.effects ?? [])) {
             if (effect?.disabled || effect?.suppressed || effect?.isSuppressed) continue;
+            if (!this._matchesEquipmentEffectScope(effect)) continue;
             const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
             if (!data) continue;
             const entries = Array.isArray(data.entries) && data.entries.length ? data.entries : [data];
@@ -147,6 +149,7 @@ export class GurpsRollPrompt extends FormApplication {
         const activeEffects = Array.from(this.actor.appliedEffects ?? this.actor.effects ?? []);
 
         activeEffects.forEach(effect => {
+            if (!this._matchesEquipmentEffectScope(effect)) return;
             const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
             if (!data) return;
 
@@ -216,6 +219,7 @@ export class GurpsRollPrompt extends FormApplication {
         if (!targetActor) return entries;
         const activeEffects = Array.from(targetActor.appliedEffects ?? targetActor.effects ?? []);
         for (const effect of activeEffects) {
+            if (!this._matchesEquipmentEffectScope(effect)) continue;
             const data = foundry.utils.getProperty(effect, "flags.gum.rollModifier");
             if (!data) continue;
         const configuredEntries = Array.isArray(data.entries) && data.entries.length
@@ -607,6 +611,15 @@ export class GurpsRollPrompt extends FormApplication {
         if (!entry?.defer_value_evaluation || entry?.value_mode !== "per_origin_level") return value;
         const originLevel = Number(entry?.origin_level);
         return value * (Number.isFinite(originLevel) && originLevel > 0 ? originLevel : 1);
+    }
+
+    _matchesEquipmentEffectScope(effect) {
+        const item = this.actor?.items?.get?.(this.rollData?.itemId) || null;
+        const attackId = this.rollData?.attackId;
+        const attack = item?.system?.melee_attacks?.[attackId] || item?.system?.ranged_attacks?.[attackId] || null;
+        const attackType = item?.system?.melee_attacks?.[attackId] ? "melee"
+            : item?.system?.ranged_attacks?.[attackId] ? "ranged" : "";
+        return matchesEquipmentGrantedEffectScope(effect, item, attack, attackType);
     }
 
     _evaluateModifierValue(rawValue, { actor = this.actor } = {}) {
