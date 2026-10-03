@@ -145,6 +145,24 @@ test("applies typed equipment properties with per-level scaling without mutating
   assert.equal(result.steps.length, 1);
 });
 
+test("resolves location-specific DR features without mutating base armor", () => {
+  const equipment = { cost: 100, weight: 5, dr_locations: { torso: { base: 3 }, skull: { base: 2, perf: 1 } } };
+  const result = resolveEquipment(equipment, [{ id: "reinforced", level: 2, features_data: {
+    all: { id: "all", type: "equipment_dr", location: "all", damage_type: "base", operation: "add", value: 1, per_level: true },
+    skull: { id: "skull", type: "equipment_dr", location: "skull", damage_type: "perf", operation: "add", value: 2 }
+  }}]);
+  assert.deepEqual(result.drLocations, { torso: { base: 5 }, skull: { base: 4, perf: 3 } });
+  assert.deepEqual(equipment.dr_locations, { torso: { base: 3 }, skull: { base: 2, perf: 1 } });
+  assert.equal(result.steps.filter(step => step.type === "equipment_dr").length, 3);
+});
+
+test("a location-specific DR feature may create a missing armor location", () => {
+  const result = resolveEquipment({ cost: 1, weight: 1, dr_locations: {} }, [{ id: "visor", features_data: {
+    eyes: { id: "eyes", type: "equipment_dr", location: "eyes", damage_type: "base", operation: "set", value: 4 }
+  }}]);
+  assert.deepEqual(result.drLocations, { eyes: { base: 4 } });
+});
+
 test("modifies attacks by group and combines formula and type changes deterministically", () => {
   const result = resolveEquipment({
     cost: 60, weight: 7,

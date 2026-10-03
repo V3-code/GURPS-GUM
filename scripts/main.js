@@ -645,6 +645,7 @@ const activeEffects = Array.isArray(this.effects) ? this.effects : Array.from(th
                 item.system.effectiveCost = resolution.cost.unitFinal;
                 item.system.melee_attacks = resolution.meleeAttacks;
                 item.system.ranged_attacks = resolution.rangedAttacks;
+                item.system.dr_locations = resolution.drLocations;
                 for (const [path, value] of Object.entries(resolution.properties)) {
                     if (value !== undefined) item.system[path] = value;
                 }

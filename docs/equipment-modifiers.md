@@ -87,6 +87,14 @@ Além do roteiro anterior, validar no Foundry:
 5. criar um ataque à distância preenchendo dano, divisor, grupo, NH, ST, distância, Precisão, Cadência, Tiros e Recuo;
 6. confirmar que alterações filtradas por grupo alcançam apenas os modos esperados e que fechar/reabrir a ficha não duplica ataques ou efeitos.
 
+## O que significa “Ligado / Ativo”
+
+Esse campo representa o estado operacional do equipamento: uma lanterna acesa, um comunicador ligado, uma arma energizada ou um encantamento ativado. Ele **não** significa que o item está carregado ou equipado. Atualmente sua função mecânica deliberada é controlar efeitos cujo ciclo de vida seja `Enquanto ativado`; os demais ciclos continuam dependendo da posse, carga ou equipamento. Desmarcar o campo interrompe apenas esses efeitos dependentes de ativação.
+
+## Etapa implementada: RD por localização
+
+O tipo de feature `Modificar RD por localização` pode somar, multiplicar ou definir a RD geral (`base`) ou o ajuste relativo de um tipo de dano em uma localização específica. Também pode alcançar todas as localizações já existentes no equipamento. A resolução preserva a RD-base, fornece os valores efetivos à preparação do ator e apresenta o resultado ao lado da entrada original na aba Proteção.
+
 ## Próxima etapa
 
-Consolidar a validação manual completa no Foundry, corrigir incompatibilidades observadas em dados reais e então aprimorar propriedades complexas — por exemplo, RD por localização e modos de dano secundário — que não devem ser representadas por um único campo escalar.
+Validar a RD por localização no Foundry com armaduras reais e então modelar modos de dano secundário/fragmentação como estruturas próprias, evitando tentar representá-los como campos escalares.

@@ -421,6 +421,8 @@ _promptMultipleReferences(parsedList) {
                 attack_type: feature.attackType,
                 selector_field: feature.selectorField,
                 selector_value: feature.selectorValue,
+                location: feature.location,
+                damage_type: feature.damageType,
                 effect_uuid: feature.effectUuid,
                 effect_name: feature.effect_name || feature.effectName || "",
                 effect_img: feature.effect_img || feature.effectImg || "",
@@ -439,6 +441,7 @@ _promptMultipleReferences(parsedList) {
             ];
             context.equipmentFeatureTypeOptions = [
                 { id: "equipment_property", label: "Modificar propriedade do equipamento" },
+                { id: "equipment_dr", label: "Modificar RD por localização" },
                 { id: "attack_property", label: "Modificar modo de ataque" },
                 { id: "create_attack", label: "Criar modo de ataque" },
                 { id: "granted_effect", label: "Conceder efeito" }
@@ -465,22 +468,27 @@ _promptMultipleReferences(parsedList) {
                 { id: "shots", label: "Tiros" }, { id: "rcl", label: "Recuo" },
                 { id: "mag", label: "Magnitude" }, { id: "groups", label: "Grupos" }
             ];
+            context.equipmentBodyLocationOptions = listBodyLocations();
         }
  
         if (this.item.type === "equipment") { 
-            const drLocations = this.item.system.dr_locations || {}; 
+            const drLocations = this.item._source?.system?.dr_locations || this.item.system.dr_locations || {};
+            const resolvedDrLocations = context.equipmentResolution?.drLocations || drLocations;
             const bodyLocationOptions = listBodyLocations(); 
             const locationLookup = new Map(bodyLocationOptions.map(option => [option.id, option])); 
  
             context.bodyLocationOptions = bodyLocationOptions; 
-            context.drLocationRows = Object.entries(drLocations) 
-                .filter(([, drObject]) => this._hasVisibleDR(drObject)) 
+            const drLocationKeys = new Set([...Object.keys(drLocations), ...Object.keys(resolvedDrLocations)]);
+            context.drLocationRows = [...drLocationKeys].map(key => [key, drLocations[key] || {}])
+                .filter(([key, drObject]) => this._hasVisibleDR(drObject) || this._hasVisibleDR(resolvedDrLocations[key]))
                 .map(([key, drObject]) => { 
                     const option = locationLookup.get(key); 
                     return { 
                         key, 
                         label: option?.name ?? key, 
-                        dr: this._formatDRObjectToString(drObject) 
+                        dr: this._formatDRObjectToString(drObject),
+                        finalDr: this._formatDRObjectToString(resolvedDrLocations[key] || {}),
+                        changed: JSON.stringify(drObject) !== JSON.stringify(resolvedDrLocations[key] || {})
                     }; 
                 }); 
         } 

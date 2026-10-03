@@ -64,9 +64,10 @@
                         </div>
                     </div>
                 </div>
-                <label class="equipment-stat-card custom-checkbox">
-                    <span class="equipment-stat-heading"><i class="fas fa-power-off"></i><span>Ativo</span></span>
+                <label class="equipment-stat-card custom-checkbox" title="Indica que o equipamento está ligado ou em funcionamento. Controla somente features configuradas como Enquanto ativado; não substitui Carregado ou Equipado.">
+                    <span class="equipment-stat-heading"><i class="fas fa-power-off"></i><span>Ligado / Ativo</span></span>
                     <input type="checkbox" name="system.active" {{checked system.active}}/>
+                    <small class="notes">Usado por efeitos “Enquanto ativado”.</small>
                 </label>
             </div>
         </div>
@@ -1409,6 +1410,7 @@
                                 </div>
                                 <div class="attack-cell">
                                     <input class="dr-location-value" type="text" value="{{row.dr}}" placeholder="0"/>
+                                    {{#if row.changed}}<div class="equipment-final-value" title="RD final após modificadores"><i class="fas fa-arrow-right"></i><span>{{row.finalDr}}</span></div>{{/if}}
                                 </div>
                                 <div class="attack-cell">
                                     <button class="dr-location-delete" type="button" title="Remover"><i class="fas fa-trash"></i></button>
@@ -1687,6 +1689,19 @@
               <div class="form-group"><label>Valor</label><input type="{{#if feature.numeric_equipment_value}}number{{else}}text{{/if}}" step="any" name="system.features_data.{{feature.id}}.value" value="{{feature.value}}"/></div>
             </div>
             <label class="custom-checkbox"><input type="checkbox" name="system.features_data.{{feature.id}}.per_level" {{checked feature.per_level}}/><span>Por nível do modificador</span></label>
+            {{/if}}
+
+            {{#if (eq feature.type "equipment_dr")}}
+            <div class="form-grid-3">
+              <div class="form-group"><label>Localização</label><select name="system.features_data.{{feature.id}}.location"><option value="all" {{#if (eq feature.location "all")}}selected{{/if}}>Todas as localizações do item</option>{{selectOptions ../equipmentBodyLocationOptions selected=feature.location valueAttr="id" labelAttr="name"}}</select></div>
+              <div class="form-group"><label>Tipo de RD</label><input type="text" name="system.features_data.{{feature.id}}.damage_type" value="{{feature.damage_type}}" placeholder="base, cort, perf..."/></div>
+              <div class="form-group"><label>Operação</label><select name="system.features_data.{{feature.id}}.operation">{{selectOptions ../equipmentFeatureOperationOptions selected=feature.operation valueAttr="id" labelAttr="label"}}</select></div>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-group"><label>Valor</label><input type="number" step="any" name="system.features_data.{{feature.id}}.value" value="{{feature.value}}"/></div>
+              <label class="custom-checkbox"><input type="checkbox" name="system.features_data.{{feature.id}}.per_level" {{checked feature.per_level}}/><span>Por nível do modificador</span></label>
+            </div>
+            <p class="notes">“base” altera a RD geral. Outros tipos representam o ajuste relativo à RD base para aquele tipo de dano.</p>
             {{/if}}
 
             {{#if (eq feature.type "attack_property")}}

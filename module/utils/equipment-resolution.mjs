@@ -9,7 +9,7 @@ const number = (value, fallback = 0) => {
 const roundForOutput = value => Math.round((value + Number.EPSILON) * 1e10) / 1e10;
 const clone = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 
-export const EQUIPMENT_FEATURE_TYPES = Object.freeze(["equipment_property", "attack_property", "create_attack", "granted_effect"]);
+export const EQUIPMENT_FEATURE_TYPES = Object.freeze(["equipment_property", "equipment_dr", "attack_property", "create_attack", "granted_effect"]);
 export const EQUIPMENT_PROPERTY_PATHS = Object.freeze([
   "tech_sm", "item_hp", "item_ht", "item_dr", "holdout", "legality_class", "material", "quality", "max_uses"
 ]);
@@ -162,6 +162,8 @@ export function normalizeEquipmentFeature(feature = {}, index = 0) {
     value: feature.value ?? 0,
     perLevel: feature.per_level === true || feature.perLevel === true,
     path: String(feature.path || (type === "attack_property" ? "damage_formula" : "item_dr")),
+    location: String(feature.location || "all").trim(),
+    damageType: String(feature.damage_type ?? feature.damageType ?? "base").trim() || "base",
     attackType: ["melee", "ranged"].includes(feature.attack_type || feature.attackType) ? (feature.attack_type || feature.attackType) : "all",
     selectorField: ["all", "mode", "skill_name", "group"].includes(feature.selector_field || feature.selectorField) ? (feature.selector_field || feature.selectorField) : "all",
     selectorValue: String(feature.selector_value ?? feature.selectorValue ?? "").trim(),
@@ -335,6 +337,7 @@ function defaultCreatedAttack(type, attack = {}) {
 
 function resolveFeatures(equipment, modifiers, warnings) {
   const properties = Object.fromEntries(EQUIPMENT_PROPERTY_PATHS.map(path => [path, clone(equipment[path])]));
+  const drLocations = clone(equipment.dr_locations || {});
   const meleeAttacks = clone(equipment.melee_attacks || {});
   const rangedAttacks = clone(equipment.ranged_attacks || {});
   const steps = [];
@@ -423,6 +426,25 @@ function resolveFeatures(equipment, modifiers, warnings) {
         continue;
       }
 
+      if (feature.type === "equipment_dr") {
+        const locations = feature.location === "all" ? Object.keys(drLocations) : [feature.location];
+        if (!locations.length || locations.some(location => !location)) {
+          warnings.push({ type: "feature_no_match", domain: "equipment_dr", sourceId: modifier.id, featureId: feature.id, location: feature.location });
+          continue;
+        }
+        for (const location of locations) {
+          drLocations[location] ||= {};
+          const input = drLocations[location][feature.damageType] ?? 0;
+          const output = applyFeatureValue(input, feature, scale);
+          const overrideKey = `equipment_dr:${location}:${feature.damageType}`;
+          if (feature.operation === "set" && overrides.has(overrideKey)) warnings.push({ type: "conflicting_feature_override", domain: "equipment_dr", location, damageType: feature.damageType, sources: [overrides.get(overrideKey), modifier.id] });
+          if (feature.operation === "set") overrides.set(overrideKey, modifier.id);
+          drLocations[location][feature.damageType] = output;
+          steps.push({ type: feature.type, sourceId: modifier.id, sourceName: modifier.name, featureId: feature.id, label: feature.label, path: `dr_locations.${location}.${feature.damageType}`, input, output });
+        }
+        continue;
+      }
+
       if (feature.type === "create_attack") {
         const type = feature.attackType === "ranged" ? "ranged" : "melee";
         const key = featureAttackKey(modifier.id, feature.id);
@@ -457,7 +479,7 @@ function resolveFeatures(equipment, modifiers, warnings) {
         if (!matches) warnings.push({ type: "feature_no_match", domain: "attack", sourceId: modifier.id, featureId: feature.id, selectorField: feature.selectorField, selectorValue: feature.selectorValue });
       }
   }
-  return { properties, meleeAttacks, rangedAttacks, grantedEffects, steps };
+  return { properties, drLocations, meleeAttacks, rangedAttacks, grantedEffects, steps };
 }
 
 export function isGrantedEffectLifecycleActive(itemSystem = {}, grant = {}) {

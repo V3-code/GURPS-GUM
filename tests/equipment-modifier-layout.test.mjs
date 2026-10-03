@@ -56,6 +56,17 @@ test("equipment modifier sheet exposes typed feature authoring", () => {
   assert.match(itemSheet, /system\.features_data\.\$\{id\}/);
   assert.match(main, /item\.system\.melee_attacks = resolution\.meleeAttacks/);
   assert.match(main, /item\.system\.ranged_attacks = resolution\.rangedAttacks/);
+  assert.match(main, /item\.system\.dr_locations = resolution\.drLocations/);
+  assert.match(template, /eq feature\.type "equipment_dr"/);
+  assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.location/);
+  assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.damage_type/);
+  assert.match(template, /row\.finalDr/);
+});
+
+test("equipment active toggle explains its limited lifecycle purpose", () => {
+  assert.match(template, /Ligado \/ Ativo/);
+  assert.match(template, /Usado por efeitos “Enquanto ativado”/);
+  assert.match(template, /não substitui Carregado ou Equipado/);
 });
 
 test("granted effects expose UUID, domain and lifecycle and are synchronized by item hooks", () => {
