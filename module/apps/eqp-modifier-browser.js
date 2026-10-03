@@ -322,6 +322,7 @@ el.style.display = isVisible ? "grid" : "none";
           cost_adjustment_data: cloneData(sourceModifier.system.cost_adjustment_data || {}),
           weight_adjustment_data: cloneData(sourceModifier.system.weight_adjustment_data || {}),
           features_data: cloneData(sourceModifier.system.features_data || []),
+          gcs_features_unmapped: cloneData(sourceModifier.system.gcs_features_unmapped || []),
           tech_level_mod: sourceModifier.system.tech_level_mod,
           features: sourceModifier.system.features,
           ref: sourceModifier.system.ref,

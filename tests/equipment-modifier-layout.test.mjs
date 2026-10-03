@@ -92,6 +92,7 @@ test("equipment modifier sheet exposes typed feature authoring", () => {
   assert.match(main, /item\.system\.melee_attacks = resolution\.meleeAttacks/);
   assert.match(main, /item\.system\.ranged_attacks = resolution\.rangedAttacks/);
   assert.match(main, /item\.system\.dr_locations = resolution\.drLocations/);
+  assert.match(itemSheet, /id: "bulk", label: "Bulk"/);
   assert.match(template, /eq feature\.type "equipment_dr"/);
   assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.location/);
   assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.damage_type/);

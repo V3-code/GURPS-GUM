@@ -479,7 +479,7 @@ _promptMultipleReferences(parsedList) {
                 { id: "reach", label: "Alcance C.C." }, { id: "parry", label: "Aparar" },
                 { id: "block", label: "Bloqueio" }, { id: "accuracy", label: "Precisão" },
                 { id: "range", label: "Distância" }, { id: "rof", label: "Cadência" },
-                { id: "shots", label: "Tiros" }, { id: "rcl", label: "Recuo" },
+                { id: "shots", label: "Tiros" }, { id: "rcl", label: "Recuo" }, { id: "bulk", label: "Bulk" },
                 { id: "mag", label: "Magnitude" }, { id: "groups", label: "Grupos" }
             ];
             context.equipmentBodyLocationOptions = listBodyLocations();

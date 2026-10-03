@@ -825,6 +825,7 @@
         "per_level": false
       },
       "features_data": {},
+      "gcs_features_unmapped": [],
       "tech_level_mod": "",
       "tech_level": "",
       "tags": "",

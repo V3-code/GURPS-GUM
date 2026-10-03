@@ -83,7 +83,7 @@ export function describeEquipmentResolutionWarnings(warnings = []) {
 }
 export const ATTACK_PROPERTY_PATHS = Object.freeze([
   "skill_level_mod", "damage_formula", "damage_type", "damage_nature", "armor_divisor", "min_strength",
-  "reach", "parry", "block", "accuracy", "range", "rof", "shots", "rcl", "mag", "groups"
+  "reach", "parry", "block", "accuracy", "range", "rof", "shots", "rcl", "bulk", "mag", "groups"
 ]);
 
 function parseFraction(value) {

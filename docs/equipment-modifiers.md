@@ -123,6 +123,10 @@ A feature `Acrescentar descritor ou decoração` registra aparência, acabamento
 
 A aba de modificadores do equipamento agora apresenta as etapas efetivamente executadas para preço e peso, com subtotal de entrada, resultado, expressão, fonte e escala. Avisos deixaram de ser apenas uma contagem: cada ocorrência identifica o modificador responsável e explica expressão inválida, operação incompatível, filtro sem alvo, conflito de definição, propriedade não suportada ou vínculo ausente.
 
+## Etapa implementada: importação de features GCS
+
+O importador converte automaticamente um subconjunto seguro das features do GCS: bônus de RD por localização, ajustes não percentuais de usos máximos e bônus numéricos compatíveis de dano, precisão, divisor de armadura, ST mínima, recuo e Bulk. Seletores por perícia obrigatória ou nome são preservados quando aplicáveis. Features percentuais, com dados ou sem equivalente seguro não são descartadas: permanecem integralmente em `gcs_features_unmapped` e geram uma observação no modificador importado.
+
 ## Próxima etapa
 
-Executar no Foundry a matriz manual completa, usando a nova memória para conferir descritores combinados, preço/peso em múltiplos estágios, consumo por quantidade, cargas e ataques derivados. Depois disso, corrigir incompatibilidades encontradas e avaliar propriedades especiais restantes.
+Validar a importação contra bibliotecas GCS reais e ampliar a tabela somente quando a semântica local for equivalente — especialmente Aparar/Bloqueio, alcances compostos, cadência e tiros. Em paralelo, usar a memória de cálculo para conferir os demais fluxos já implementados no Foundry.

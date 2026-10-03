@@ -2432,6 +2432,58 @@ function parseGCSLibraryEquipmentModifier(gcsMod) {
 
     template.ref = rawRef;
 
+    const qualifier = criterion => String(criterion?.qualifier ?? criterion ?? "").trim();
+    const selectorForWeaponFeature = feature => {
+        if (feature.selection_type === "weapons_with_required_skill") return { selector_field: "skill_name", selector_value: qualifier(feature.name) };
+        if (feature.selection_type === "weapons_with_name") return { selector_field: "mode", selector_value: qualifier(feature.name) };
+        return { selector_field: "all", selector_value: "" };
+    };
+    const weaponPaths = {
+        weapon_bonus: "damage_formula", weapon_acc_bonus: "accuracy", weapon_scope_acc_bonus: "accuracy",
+        weapon_dr_divisor_bonus: "armor_divisor", weapon_min_st_bonus: "min_strength", weapon_recoil_bonus: "rcl",
+        weapon_bulk_bonus: "bulk"
+    };
+    const structuredFeatures = {};
+    const unmappedFeatures = [];
+    for (const [index, feature] of (gcsMod.features || []).entries()) {
+        const id = `gcs-${index}`;
+        if (feature?.type === "dr_bonus") {
+            const locations = Array.isArray(feature.locations) && feature.locations.length ? feature.locations : ["all"];
+            locations.forEach((location, locationIndex) => {
+                const featureId = `${id}-dr-${locationIndex}`;
+                structuredFeatures[featureId] = {
+                    id: featureId, label: `RD importada (${location})`, enabled: true, type: "equipment_dr",
+                    location: String(location).toLowerCase() === "all" ? "all" : String(location),
+                    damage_type: !feature.specialization || String(feature.specialization).toLowerCase() === "all" ? "base" : feature.specialization,
+                    operation: "add", value: Number(feature.amount) || 0, per_level: feature.per_level === true
+                };
+            });
+            continue;
+        }
+        if (feature?.type === "equipment_max_uses_bonus" && !String(feature.amount || "").includes("%")) {
+            const expression = String(feature.amount ?? "+0").trim();
+            const multiply = /^[x×*]/i.test(expression) || /[x×]$/i.test(expression);
+            structuredFeatures[id] = {
+                id, label: "Usos máximos importados", enabled: true, type: "equipment_property", path: "max_uses",
+                operation: multiply ? "multiply" : "add", value: Number(expression.replace(/[x×*]/gi, "")) || 0,
+                per_level: feature.per_level === true
+            };
+            continue;
+        }
+        const weaponPath = weaponPaths[feature?.type];
+        if (weaponPath && feature.percent !== true && !feature.dice) {
+            structuredFeatures[id] = {
+                id, label: `Feature GCS: ${feature.type}`, enabled: true, type: "attack_property", attack_type: "all",
+                ...selectorForWeaponFeature(feature), path: weaponPath, operation: "add", value: Number(feature.amount) || 0,
+                per_level: feature.per_level === true || feature.leveled === true
+            };
+            continue;
+        }
+        unmappedFeatures.push(feature);
+    }
+    template.features_data = { ...(template.features_data || {}), ...structuredFeatures };
+    template.gcs_features_unmapped = unmappedFeatures;
+
     const featureLines = [];
     if (rawCostStr) {
         featureLines.push(`Custo GCS: ${rawCostStr}${rawCostType ? ` (${rawCostType})` : ""}`);
@@ -2442,6 +2494,7 @@ function parseGCSLibraryEquipmentModifier(gcsMod) {
     if (rawNotes) {
         featureLines.push(rawNotes);
     }
+    if (unmappedFeatures.length) featureLines.push(`${unmappedFeatures.length} feature(s) GCS preservada(s), mas ainda não convertida(s).`);
 
     template.features = featureLines.join("\n");
     template.tags = [rawCostType].filter(Boolean).join(", ");
@@ -3885,7 +3938,6 @@ const registerCompendiumContextOptions = (_app, options) => {
             onClick: (_event, entry) => activate(entry)
         });
     }
-
     const exportLabel = game.i18n.localize("GUM.LibraryImport.ExportCompendium");
     if (!options.some(option => (option.name || option.label) === exportLabel)) {
         const visible = entry => Boolean(game.user?.isGM && getContextCompendium(entry)?.metadata.type === "Item");
