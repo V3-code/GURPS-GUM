@@ -2,11 +2,26 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  describeEquipmentAttackChanges,
   describeEquipmentPropertyChanges,
   normalizeEquipmentModifier,
   parseEquipmentAdjustment,
   resolveEquipment
 } from "../module/utils/equipment-resolution.mjs";
+
+test("describes changed attack fields without replacing base sheet data", () => {
+  const base = { shield: { mode: "Golpe", damage_formula: "GdP", follow_up_damage: {} } };
+  const resolved = { shield: { mode: "Golpe", damage_formula: "GdP+1", follow_up_damage: { formula: "1d", type: "queim" } } };
+  const changes = describeEquipmentAttackChanges(base, resolved, [
+    { type: "attack_property", sourceName: "Espinho", attackType: "melee", attackId: "shield", path: "damage_formula" },
+    { type: "attack_damage", sourceName: "Espinho", attackType: "melee", attackId: "shield", path: "follow_up_damage" }
+  ], "melee");
+  assert.equal(changes.shield.changed, true);
+  assert.equal(changes.shield.created, false);
+  assert.equal(changes.shield.summary, "dano, dano de acompanhamento");
+  assert.equal(changes.shield.title, "Modificado por Espinho: dano, dano de acompanhamento");
+  assert.equal(base.shield.damage_formula, "GdP");
+});
 
 test("describes only effective equipment property changes for sheet presentation", () => {
   const changes = describeEquipmentPropertyChanges(

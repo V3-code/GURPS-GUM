@@ -34,6 +34,36 @@ export function describeEquipmentPropertyChanges(equipment = {}, resolvedPropert
     return [path, { base, final, changed: !propertyValuesEqual(base, final) }];
   }));
 }
+
+const ATTACK_CHANGE_LABELS = Object.freeze({
+  damage_formula: "dano", damage_type: "tipo de dano", damage_nature: "natureza", armor_divisor: "divisor de armadura",
+  skill_level_mod: "NH", min_strength: "ST mínima", reach: "alcance", parry: "Aparar", block: "Bloqueio",
+  accuracy: "Precisão", range: "distância", rof: "cadência", shots: "tiros", rcl: "recuo", mag: "magnitude",
+  follow_up_damage: "dano de acompanhamento", fragmentation_damage: "fragmentação", groups: "grupos"
+});
+
+/** Summarize resolver steps per attack without replacing editable base attack data. */
+export function describeEquipmentAttackChanges(baseAttacks = {}, resolvedAttacks = {}, steps = [], attackType = "melee") {
+  return Object.fromEntries(Object.entries(resolvedAttacks || {}).map(([attackId, resolved]) => {
+    const base = baseAttacks?.[attackId];
+    const matchingSteps = steps.filter(step => step.attackType === attackType && step.attackId === attackId);
+    const labels = matchingSteps
+      .map(step => step.type === "create_attack" ? "modo criado" : (ATTACK_CHANGE_LABELS[step.path] || step.path || "alteração"));
+    const changed = base === undefined || JSON.stringify(base) !== JSON.stringify(resolved);
+    if (changed && labels.length === 0) labels.push("alterado por modificador");
+    const uniqueLabels = [...new Set(labels)];
+    const sources = [...new Set(matchingSteps.map(step => step.sourceName).filter(Boolean))];
+    const sourcePrefix = sources.length ? `Modificado por ${sources.join(", ")}: ` : "Modificado: ";
+    return [attackId, {
+      changed,
+      created: base === undefined,
+      labels: uniqueLabels,
+      sources,
+      summary: uniqueLabels.join(", "),
+      title: uniqueLabels.length ? `${sourcePrefix}${uniqueLabels.join(", ")}` : ""
+    }];
+  }));
+}
 export const ATTACK_PROPERTY_PATHS = Object.freeze([
   "skill_level_mod", "damage_formula", "damage_type", "damage_nature", "armor_divisor", "min_strength",
   "reach", "parry", "block", "accuracy", "range", "rof", "shots", "rcl", "mag", "groups"

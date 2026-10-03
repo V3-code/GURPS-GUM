@@ -8,7 +8,7 @@ import { listBodyLocations } from "../config/body-profiles.js";
 import { SOCIAL_CATEGORIES } from "../config/social-aspects.mjs";
 import { normalizeContextCsv, openContextPicker } from "../apps/context-picker.mjs";
 import { getSkillDisplayName } from "../utils/skill-display-name.mjs";
-import { describeEquipmentPropertyChanges, normalizeEquipmentModifier, resolveEquipment } from "../utils/equipment-resolution.mjs";
+import { describeEquipmentAttackChanges, describeEquipmentPropertyChanges, normalizeEquipmentModifier, resolveEquipment } from "../utils/equipment-resolution.mjs";
  
 const { ItemSheet } = foundry.appv1.sheets; 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor; 
@@ -402,6 +402,8 @@ _promptMultipleReferences(parsedList) {
 
             context.equipmentResolution = resolution;
             context.equipmentPropertyChanges = describeEquipmentPropertyChanges(baseEquipmentSystem, resolution.properties);
+            context.equipmentMeleeAttackChanges = describeEquipmentAttackChanges(baseEquipmentSystem.melee_attacks, resolution.meleeAttacks, resolution.steps, "melee");
+            context.equipmentRangedAttackChanges = describeEquipmentAttackChanges(baseEquipmentSystem.ranged_attacks, resolution.rangedAttacks, resolution.steps, "ranged");
             context.equipmentFeatureSteps = resolution.steps;
             context.calculatedFinalCost = resolution.cost.unitFinal;
             context.calculatedFinalWeight = resolution.weight.unitFinal;

@@ -110,3 +110,12 @@ test("equipment modifiers author structured follow-up and fragmentation damage",
   }
   assert.match(itemSheet, /id: "attack_damage", label: "Definir dano secundário ou fragmentação"/);
 });
+
+test("equipment attack cards identify modes changed by resolved features", () => {
+  assert.match(itemSheet, /describeEquipmentAttackChanges\(baseEquipmentSystem\.melee_attacks, resolution\.meleeAttacks/);
+  assert.match(itemSheet, /describeEquipmentAttackChanges\(baseEquipmentSystem\.ranged_attacks, resolution\.rangedAttacks/);
+  assert.match(template, /equipmentMeleeAttackChanges/);
+  assert.match(template, /equipmentRangedAttackChanges/);
+  assert.match(template, /equipment-modifier-indicator/);
+  assert.match(template, /fa-wrench/);
+});

@@ -5245,6 +5245,17 @@ color:#121114;
   grid-template-columns: minmax(280px, 1fr) minmax(110px, 0.28fr);
 }
 
+.gum.sheet.item .attack-item .attack-flags .equipment-modifier-indicator {
+  max-width: 180px;
+  padding-inline: 6px;
+  overflow: hidden;
+  color: #f3d08a;
+  border-color: rgba(201, 161, 94, 0.65);
+  background: rgba(112, 76, 20, 0.34);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .gum.sheet.item .equipment-operational-toggle {
   display: flex;
   justify-content: flex-end;

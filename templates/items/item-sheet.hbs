@@ -1907,6 +1907,9 @@
     </span>
 
     <span class="attack-flags">
+      {{#with (lookup @root.equipmentMeleeAttackChanges key) as |change|}}
+        {{#if change.changed}}<span class="pill-stat equipment-modifier-indicator" title="{{change.title}}"><i class="fas fa-wrench"></i> {{change.summary}}</span>{{/if}}
+      {{/with}}
       {{#if (objectValues attack.onDamageEffects)}}
         <span class="pill-stat effect-indicator" title="Este ataque aplica um ou mais efeitos."><i class="fas fa-magic"></i></span>
       {{/if}}
@@ -2147,6 +2150,9 @@
           </span>
 
           <span class="attack-flags">
+            {{#with (lookup @root.equipmentRangedAttackChanges key) as |change|}}
+              {{#if change.changed}}<span class="pill-stat equipment-modifier-indicator" title="{{change.title}}"><i class="fas fa-wrench"></i> {{change.summary}}</span>{{/if}}
+            {{/with}}
             {{#if (objectValues attack.onDamageEffects)}}
               <span class="pill-stat effect-indicator" title="Este ataque aplica um ou mais efeitos."><i class="fas fa-magic"></i></span>
             {{/if}}

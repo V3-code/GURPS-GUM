@@ -101,6 +101,10 @@ A feature `Definir dano secundário ou fragmentação` seleciona ataques por gru
 
 O controle `Ligado / Ativo` também foi retirado do grupo Geral. Ele agora aparece como opção operacional independente acima desse grupo, mantendo explícito que não é uma propriedade descritiva nem substitui o estado equipado/carregado.
 
+## Etapa implementada: identificação visual dos ataques alterados
+
+Os modos de ataque da ficha do equipamento continuam exibindo e editando exclusivamente seus dados-base, evitando que valores derivados sejam gravados de volta e acumulem. Quando o resolvedor altera um modo, o cartão recebe uma tag com chave inglesa e um resumo — por exemplo, `dano`, `dano de acompanhamento` ou `fragmentação`. O título da tag contém a mesma memória para consulta. A ficha do ator continua consumindo os valores finais resolvidos.
+
 ## Próxima etapa
 
-Executar no Foundry a matriz manual com RD por localização, dano secundário e fragmentação em equipamentos reais. Depois disso, tratar os problemas encontrados e avaliar features complexas restantes, como consumo/usos e alterações de defesa específicas do equipamento.
+Executar no Foundry a matriz manual com RD por localização, tags de ataques, dano secundário e fragmentação em equipamentos reais. Depois disso, tratar os problemas encontrados e avaliar features complexas restantes, como consumo/usos e alterações de defesa específicas do equipamento.
