@@ -401,6 +401,7 @@ _promptMultipleReferences(parsedList) {
             }
 
             context.equipmentResolution = resolution;
+            context.equipmentUses = resolution.uses;
             context.equipmentPropertyChanges = describeEquipmentPropertyChanges(baseEquipmentSystem, resolution.properties);
             context.equipmentMeleeAttackChanges = describeEquipmentAttackChanges(baseEquipmentSystem.melee_attacks, resolution.meleeAttacks, resolution.steps, "melee");
             context.equipmentRangedAttackChanges = describeEquipmentAttackChanges(baseEquipmentSystem.ranged_attacks, resolution.rangedAttacks, resolution.steps, "ranged");

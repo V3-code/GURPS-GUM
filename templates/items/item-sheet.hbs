@@ -142,6 +142,32 @@
         </div>
 
         <div class="form-section skill-details-compact equipment-details-form">
+            <h4 class="section-title">Usos e Consumo</h4>
+            <div class="equipment-defense-grid">
+                <div class="equipment-stat-card">
+                    <label class="equipment-stat-heading"><i class="fas fa-flask"></i><span>Modo de consumo</span></label>
+                    <div class="equipment-stat-control"><select name="system.uses_mode"><option value="quantity" {{#if (eq system.uses_mode "quantity")}}selected{{/if}}>Consumir quantidade</option><option value="charges" {{#if (eq system.uses_mode "charges")}}selected{{/if}}>Usar cargas</option></select></div>
+                </div>
+                <div class="equipment-stat-card">
+                    <label class="equipment-stat-heading"><i class="fas fa-battery-full"></i><span>Cargas máximas</span></label>
+                    <div class="equipment-stat-control"><div class="equipment-calculated-value"><input type="number" min="0" name="system.max_uses" value="{{system.max_uses}}" title="Valor base"/>
+                        {{#if equipmentPropertyChanges.max_uses.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-right"></i><span>{{equipmentPropertyChanges.max_uses.final}}</span></div>{{/if}}
+                    </div></div>
+                </div>
+                <div class="equipment-stat-card">
+                    <label class="equipment-stat-heading"><i class="fas fa-battery-half"></i><span>Cargas gastas</span></label>
+                    <div class="equipment-stat-control"><input type="number" min="0" name="system.current_uses" value="{{system.current_uses}}"/></div>
+                    {{#if (eq equipmentUses.mode "charges")}}<small class="notes">Restantes: {{equipmentUses.remaining}} / {{equipmentUses.max}}</small>{{/if}}
+                </div>
+                <label class="equipment-stat-card custom-checkbox" title="Ao gastar a última carga, reduz a quantidade em um e recarrega a próxima unidade.">
+                    <span class="equipment-stat-heading"><i class="fas fa-box-open"></i><span>Consumir unidade ao esgotar</span></span>
+                    <input type="checkbox" name="system.consume_quantity_when_empty" {{checked system.consume_quantity_when_empty}}/>
+                </label>
+            </div>
+            <p class="notes">No modo Quantidade, “Consumir / Usar” mantém o comportamento legado e reduz uma unidade. No modo Cargas, o campo acima registra cargas gastas.</p>
+        </div>
+
+        <div class="form-section skill-details-compact equipment-details-form">
             <h4 class="section-title">Uso & Defesa</h4>
             <div class="equipment-defense-grid">
                 <div class="equipment-stat-card">

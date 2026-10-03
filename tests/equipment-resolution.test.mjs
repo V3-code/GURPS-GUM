@@ -2,12 +2,35 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildEquipmentConsumptionUpdate,
   describeEquipmentAttackChanges,
   describeEquipmentPropertyChanges,
   normalizeEquipmentModifier,
   parseEquipmentAdjustment,
   resolveEquipment
 } from "../module/utils/equipment-resolution.mjs";
+
+test("keeps legacy quantity consumption unless charge mode is explicit", () => {
+  assert.deepEqual(buildEquipmentConsumptionUpdate({ quantity: 3, uses_mode: "quantity" }).updates, { "system.quantity": 2 });
+  const result = resolveEquipment({ quantity: 3, max_uses: 5, current_uses: 1, uses_mode: "charges", cost: 0, weight: 0 });
+  assert.deepEqual(result.uses, { mode: "charges", baseMax: 5, max: 5, spent: 1, remaining: 4, consumeQuantityWhenEmpty: false });
+  assert.deepEqual(buildEquipmentConsumptionUpdate({ quantity: 3, max_uses: 5, current_uses: 1, uses_mode: "charges" }, result).updates, { "system.current_uses": 2 });
+});
+
+test("charge exhaustion can consume one unit and reset the next unit", () => {
+  const equipment = { quantity: 2, max_uses: 3, current_uses: 2, uses_mode: "charges", consume_quantity_when_empty: true, cost: 0, weight: 0 };
+  const consumption = buildEquipmentConsumptionUpdate(equipment, resolveEquipment(equipment));
+  assert.equal(consumption.exhausted, true);
+  assert.deepEqual(consumption.updates, { "system.quantity": 1, "system.current_uses": 0 });
+});
+
+test("max-use modifiers increase remaining charges while preserving spent charges", () => {
+  const result = resolveEquipment({ quantity: 1, max_uses: 3, current_uses: 1, uses_mode: "charges", cost: 0, weight: 0 }, [{ id: "battery", features_data: {
+    capacity: { id: "capacity", type: "equipment_property", path: "max_uses", operation: "add", value: 2 }
+  }}]);
+  assert.equal(result.uses.max, 5);
+  assert.equal(result.uses.remaining, 4);
+});
 
 test("describes changed attack fields without replacing base sheet data", () => {
   const base = { shield: { mode: "Golpe", damage_formula: "GdP", follow_up_damage: {} } };

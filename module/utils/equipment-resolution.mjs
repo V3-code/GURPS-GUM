@@ -543,6 +543,39 @@ function resolveFeatures(equipment, modifiers, warnings) {
   return { properties, drLocations, meleeAttacks, rangedAttacks, grantedEffects, steps };
 }
 
+export function resolveEquipmentUses(equipment = {}, resolvedProperties = {}) {
+  const mode = equipment.uses_mode === "charges" ? "charges" : "quantity";
+  const baseMax = Math.max(0, Math.floor(number(equipment.max_uses)));
+  const finalMax = Math.max(0, Math.floor(number(resolvedProperties.max_uses, baseMax)));
+  const spent = Math.max(0, Math.floor(number(equipment.current_uses)));
+  return {
+    mode,
+    baseMax,
+    max: finalMax,
+    spent: Math.min(spent, finalMax),
+    remaining: Math.max(0, finalMax - spent),
+    consumeQuantityWhenEmpty: equipment.consume_quantity_when_empty === true
+  };
+}
+
+/** Return persistence updates for one successful use without mutating the item. */
+export function buildEquipmentConsumptionUpdate(equipment = {}, resolution = null) {
+  const quantity = Math.max(0, number(equipment.quantity));
+  const uses = resolution?.uses || resolveEquipmentUses(equipment, resolution?.properties || {});
+  if (quantity <= 0) return { consumed: false, reason: "empty_quantity", updates: {}, uses };
+  if (uses.mode !== "charges" || uses.max <= 0) {
+    return { consumed: true, mode: "quantity", updates: { "system.quantity": Math.max(0, quantity - 1) }, uses };
+  }
+  if (uses.remaining <= 0) return { consumed: false, reason: "empty_charges", updates: {}, uses };
+
+  const exhausted = uses.remaining === 1;
+  if (exhausted && uses.consumeQuantityWhenEmpty) {
+    const nextQuantity = Math.max(0, quantity - 1);
+    return { consumed: true, mode: "charges", exhausted: true, updates: { "system.quantity": nextQuantity, "system.current_uses": nextQuantity > 0 ? 0 : uses.max }, uses };
+  }
+  return { consumed: true, mode: "charges", exhausted, updates: { "system.current_uses": Math.min(uses.max, uses.spent + 1) }, uses };
+}
+
 export function isGrantedEffectLifecycleActive(itemSystem = {}, grant = {}) {
   const location = String(itemSystem.location || "").toLowerCase();
   if (grant.lifecycle === "while_possessed") return true;
@@ -563,6 +596,7 @@ export function resolveEquipment(equipment = {}, rawModifiers = equipment.eqp_mo
   const weight = resolveWeight(equipment.weight, modifiers, warnings);
   const cost = resolveCost(equipment.cost, weight.unitFinal, modifiers, warnings);
   const featureResolution = resolveFeatures(equipment, modifiers, warnings);
+  const uses = resolveEquipmentUses(equipment, featureResolution.properties);
 
   weight.extendedFinal = roundForOutput(weight.unitFinal * quantity);
   cost.extendedFinal = roundForOutput(cost.unitFinal * quantity);
@@ -572,6 +606,7 @@ export function resolveEquipment(equipment = {}, rawModifiers = equipment.eqp_mo
     modifiers,
     cost,
     weight,
+    uses,
     ...featureResolution,
     features: modifiers.filter(modifier => modifier.enabled).flatMap(modifier => modifier.features.map(feature => ({ ...feature, sourceModifierId: modifier.id, sourceModifierName: modifier.name }))),
     warnings

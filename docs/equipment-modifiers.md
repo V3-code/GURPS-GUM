@@ -109,6 +109,12 @@ Os modos de ataque da ficha do equipamento continuam exibindo e editando exclusi
 
 `Bônus de Defesa` e `Tempo para vestir/equipar` passaram a integrar as propriedades escalares suportadas pelo resolvedor. Podem ser somados, multiplicados ou definidos, inclusive por nível. A ficha preserva o valor-base e mostra o final ao lado; a preparação do ator recebe o valor resolvido, de modo que os consumidores existentes de DB usem a mesma fonte canônica.
 
+## Etapa implementada: quantidade e cargas
+
+O equipamento agora escolhe explicitamente entre `Consumir quantidade` e `Usar cargas`. O primeiro é o padrão retrocompatível e mantém a redução direta da quantidade. No modo de cargas, `max_uses` é a capacidade-base e `current_uses` registra cargas gastas; a capacidade pode receber modificadores, enquanto o número gasto permanece persistente. A ficha e o inventário mostram cargas restantes sobre a capacidade final.
+
+Opcionalmente, gastar a última carga consome uma unidade da quantidade e inicia a próxima unidade com todas as cargas. Se essa opção estiver desligada, o item permanece esgotado. Efeitos do evento de uso são disparados apenas quando o consumo é válido.
+
 ## Próxima etapa
 
-Executar no Foundry a matriz manual com DB, tempo de preparo, RD por localização, tags de ataques, dano secundário e fragmentação em equipamentos reais. Depois disso, tratar os problemas encontrados e implementar um modelo explícito de usos/cargas, pois os campos legados `max_uses` e `current_uses` ainda não possuem semântica consistente com a ação atual de consumir quantidade.
+Executar no Foundry a matriz manual completa, incluindo consumo por quantidade, cargas simples, esgotamento com troca de unidade e capacidade alterada por modificador. Depois disso, corrigir incompatibilidades encontradas e avaliar propriedades especiais restantes.

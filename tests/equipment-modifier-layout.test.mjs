@@ -7,6 +7,8 @@ const itemSheet = fs.readFileSync("module/item/gurps-item-sheet.js", "utf8");
 const main = fs.readFileSync("scripts/main.js", "utf8");
 const effectsEngine = fs.readFileSync("scripts/effects-engine.js", "utf8");
 const rollPrompt = fs.readFileSync("module/apps/roll-prompt.js", "utf8");
+const actorSheet = fs.readFileSync("module/actor/gurps-actor-sheet.js", "utf8");
+const actorTemplate = fs.readFileSync("templates/actors/characters.hbs", "utf8");
 
 test("equipment modifier sheet exposes structured cost and weight controls", () => {
   assert.match(template, /data-tab="adjustments"/);
@@ -53,6 +55,17 @@ test("resolved equipment defense values reach their existing runtime consumers",
   assert.match(main, /for \(const \[path, value\] of Object\.entries\(resolution\.properties\)\)/);
   assert.match(template, /equipmentPropertyChanges\.defense_bonus\.final/);
   assert.match(template, /equipmentPropertyChanges\.equip_time\.final/);
+});
+
+test("equipment uses distinguish legacy quantity consumption from explicit charges", () => {
+  assert.match(template, /name="system\.uses_mode"/);
+  assert.match(template, /name="system\.max_uses"/);
+  assert.match(template, /name="system\.current_uses"/);
+  assert.match(template, /name="system\.consume_quantity_when_empty"/);
+  assert.match(template, /equipmentUses\.remaining/);
+  assert.match(main, /effectiveUsesRemaining = resolution\.uses\.remaining/);
+  assert.match(actorSheet, /buildEquipmentConsumptionUpdate\(item\.system, resolution\)/);
+  assert.match(actorTemplate, /effectiveUsesRemaining/);
 });
 
 test("equipment modifier sheet exposes typed feature authoring", () => {

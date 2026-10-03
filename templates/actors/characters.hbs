@@ -1163,6 +1163,7 @@
                           <span class="equip-stat-tag">x{{this.system.quantity}}</span>
                           <span class="equip-stat-tag">{{this.system.total_weight}} kg</span>
                           {{#if this.system.dr}}<span class="equip-stat-tag shield-tag">RD {{this.system.dr}}</span>{{/if}}
+                          {{#if (eq this.system.uses_mode "charges")}}<span class="equip-stat-tag" title="Cargas restantes">{{this.system.effectiveUsesRemaining}}/{{this.system.effectiveUsesMax}} cargas</span>{{/if}}
                       </div>
                       <div class="item-controls">
                         <a class="item-control active" title="Em Uso"><i class="fas fa-tshirt" style="color: #389c68;"></i></a>
