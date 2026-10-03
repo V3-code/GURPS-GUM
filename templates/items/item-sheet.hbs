@@ -156,14 +156,18 @@
                 <div class="equipment-stat-card">
                     <label class="equipment-stat-heading" title="Tempo para equipar/vestir em segundos"><i class="fas fa-stopwatch"></i><span>Tempo para Vestir (s)</span></label>
                     <div class="equipment-stat-control">
-                        <input type="number" name="system.equip_time" value="{{system.equip_time}}"/>
+                        <div class="equipment-calculated-value"><input type="number" name="system.equip_time" value="{{system.equip_time}}" title="Valor base"/>
+                            {{#if equipmentPropertyChanges.equip_time.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-right"></i><span>{{equipmentPropertyChanges.equip_time.final}}</span></div>{{/if}}
+                        </div>
                     </div>
                 </div>
 
                 <div class="equipment-stat-card">
                     <label class="equipment-stat-heading" title="Bônus de Defesa (DB) para Escudos ou Capas"><i class="fas fa-shield-alt"></i><span>Bônus de Defesa</span></label>
                     <div class="equipment-stat-control">
-                        <input type="number" name="system.defense_bonus" value="{{system.defense_bonus}}"/>
+                        <div class="equipment-calculated-value"><input type="number" name="system.defense_bonus" value="{{system.defense_bonus}}" title="Valor base"/>
+                            {{#if equipmentPropertyChanges.defense_bonus.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-right"></i><span>{{equipmentPropertyChanges.defense_bonus.final}}</span></div>{{/if}}
+                        </div>
                     </div>
                 </div>
             </div>

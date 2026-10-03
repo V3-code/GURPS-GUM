@@ -160,6 +160,18 @@ test("applies typed equipment properties with per-level scaling without mutating
   assert.equal(result.steps.length, 1);
 });
 
+test("resolves equipment defense bonus and equip time for runtime consumers", () => {
+  const equipment = { cost: 150, weight: 7, defense_bonus: 2, equip_time: 3 };
+  const result = resolveEquipment(equipment, [{ id: "balanced", level: 2, features_data: {
+    db: { id: "db", type: "equipment_property", path: "defense_bonus", operation: "add", value: 1, per_level: true },
+    ready: { id: "ready", type: "equipment_property", path: "equip_time", operation: "set", value: 1 }
+  }}]);
+  assert.equal(result.properties.defense_bonus, 4);
+  assert.equal(result.properties.equip_time, 1);
+  assert.equal(equipment.defense_bonus, 2);
+  assert.equal(equipment.equip_time, 3);
+});
+
 test("resolves location-specific DR features without mutating base armor", () => {
   const equipment = { cost: 100, weight: 5, dr_locations: { torso: { base: 3 }, skull: { base: 2, perf: 1 } } };
   const result = resolveEquipment(equipment, [{ id: "reinforced", level: 2, features_data: {

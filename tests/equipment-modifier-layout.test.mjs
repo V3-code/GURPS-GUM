@@ -37,7 +37,7 @@ test("equipment modifier instances expose enabled, level and resolved totals", (
 
 test("equipment details distinguish base and feature-resolved property values", () => {
   assert.match(itemSheet, /describeEquipmentPropertyChanges\(baseEquipmentSystem, resolution\.properties\)/);
-  for (const property of ["tech_sm", "item_dr", "item_hp", "item_ht", "holdout", "legality_class", "quality", "material"]) {
+  for (const property of ["tech_sm", "item_dr", "item_hp", "item_ht", "holdout", "defense_bonus", "equip_time", "legality_class", "quality", "material"]) {
     assert.match(template, new RegExp(`equipmentPropertyChanges\\.${property}\\.changed`));
     assert.match(template, new RegExp(`equipmentPropertyChanges\\.${property}\\.final`));
   }
@@ -45,6 +45,14 @@ test("equipment details distinguish base and feature-resolved property values", 
   assert.match(template, /step\.input/);
   assert.match(template, /step\.output/);
   assert.match(template, /fa-arrow-right/);
+});
+
+test("resolved equipment defense values reach their existing runtime consumers", () => {
+  assert.match(itemSheet, /id: "defense_bonus", label: "Bônus de Defesa"/);
+  assert.match(itemSheet, /id: "equip_time", label: "Tempo para vestir\/equipar"/);
+  assert.match(main, /for \(const \[path, value\] of Object\.entries\(resolution\.properties\)\)/);
+  assert.match(template, /equipmentPropertyChanges\.defense_bonus\.final/);
+  assert.match(template, /equipmentPropertyChanges\.equip_time\.final/);
 });
 
 test("equipment modifier sheet exposes typed feature authoring", () => {

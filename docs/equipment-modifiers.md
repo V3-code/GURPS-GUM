@@ -105,6 +105,10 @@ O controle `Ligado / Ativo` também foi retirado do grupo Geral. Ele agora apare
 
 Os modos de ataque da ficha do equipamento continuam exibindo e editando exclusivamente seus dados-base, evitando que valores derivados sejam gravados de volta e acumulem. Quando o resolvedor altera um modo, o cartão recebe uma tag com chave inglesa e um resumo — por exemplo, `dano`, `dano de acompanhamento` ou `fragmentação`. O título da tag contém a mesma memória para consulta. A ficha do ator continua consumindo os valores finais resolvidos.
 
+## Etapa implementada: defesa e tempo de preparo
+
+`Bônus de Defesa` e `Tempo para vestir/equipar` passaram a integrar as propriedades escalares suportadas pelo resolvedor. Podem ser somados, multiplicados ou definidos, inclusive por nível. A ficha preserva o valor-base e mostra o final ao lado; a preparação do ator recebe o valor resolvido, de modo que os consumidores existentes de DB usem a mesma fonte canônica.
+
 ## Próxima etapa
 
-Executar no Foundry a matriz manual com RD por localização, tags de ataques, dano secundário e fragmentação em equipamentos reais. Depois disso, tratar os problemas encontrados e avaliar features complexas restantes, como consumo/usos e alterações de defesa específicas do equipamento.
+Executar no Foundry a matriz manual com DB, tempo de preparo, RD por localização, tags de ataques, dano secundário e fragmentação em equipamentos reais. Depois disso, tratar os problemas encontrados e implementar um modelo explícito de usos/cargas, pois os campos legados `max_uses` e `current_uses` ainda não possuem semântica consistente com a ação atual de consumir quantidade.

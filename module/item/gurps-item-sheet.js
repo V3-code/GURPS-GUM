@@ -434,7 +434,7 @@ _promptMultipleReferences(parsedList) {
                 activation_chance: feature.activationChance,
                 required_damage_type: feature.requiredDamageType,
                 damage: feature.damage,
-                numeric_equipment_value: ["item_dr", "item_hp", "item_ht", "tech_sm", "holdout", "max_uses"].includes(feature.path),
+                numeric_equipment_value: ["item_dr", "item_hp", "item_ht", "tech_sm", "holdout", "defense_bonus", "equip_time", "max_uses"].includes(feature.path),
                 numeric_attack_value: ["skill_level_mod", "armor_divisor", "min_strength", "accuracy", "rcl", "mag"].includes(feature.path)
             }));
             context.equipmentAdjustmentStageOptions = [
@@ -459,7 +459,8 @@ _promptMultipleReferences(parsedList) {
             context.equipmentPropertyOptions = [
                 { id: "item_dr", label: "RD do item" }, { id: "item_hp", label: "PV do item" },
                 { id: "item_ht", label: "HT do item" }, { id: "tech_sm", label: "MT técnico" },
-                { id: "holdout", label: "Ocultabilidade" }, { id: "max_uses", label: "Usos máximos" },
+                { id: "holdout", label: "Ocultabilidade" }, { id: "defense_bonus", label: "Bônus de Defesa" },
+                { id: "equip_time", label: "Tempo para vestir/equipar" }, { id: "max_uses", label: "Usos máximos" },
                 { id: "legality_class", label: "Classe de Legalidade" }, { id: "material", label: "Material" },
                 { id: "quality", label: "Qualidade" }
             ];

@@ -11,7 +11,7 @@ const clone = value => value === undefined ? undefined : JSON.parse(JSON.stringi
 
 export const EQUIPMENT_FEATURE_TYPES = Object.freeze(["equipment_property", "equipment_dr", "attack_property", "attack_damage", "create_attack", "granted_effect"]);
 export const EQUIPMENT_PROPERTY_PATHS = Object.freeze([
-  "tech_sm", "item_hp", "item_ht", "item_dr", "holdout", "legality_class", "material", "quality", "max_uses"
+  "tech_sm", "item_hp", "item_ht", "item_dr", "holdout", "defense_bonus", "equip_time", "legality_class", "material", "quality", "max_uses"
 ]);
 
 function propertyValuesEqual(base, final) {
