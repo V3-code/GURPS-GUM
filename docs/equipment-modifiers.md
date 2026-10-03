@@ -119,6 +119,10 @@ Opcionalmente, gastar a última carga consome uma unidade da quantidade e inicia
 
 A feature `Acrescentar descritor ou decoração` registra aparência, acabamento, detalhe de material, origem/fabricante, tag ou observação. Ao contrário de uma substituição escalar de qualidade/material, esses registros se acumulam entre modificadores e preservam a fonte responsável. A ficha apresenta os descritores finais como tags, sem gravá-los sobre os dados-base.
 
+## Etapa implementada: memória e diagnósticos
+
+A aba de modificadores do equipamento agora apresenta as etapas efetivamente executadas para preço e peso, com subtotal de entrada, resultado, expressão, fonte e escala. Avisos deixaram de ser apenas uma contagem: cada ocorrência identifica o modificador responsável e explica expressão inválida, operação incompatível, filtro sem alvo, conflito de definição, propriedade não suportada ou vínculo ausente.
+
 ## Próxima etapa
 
-Executar no Foundry a matriz manual completa, incluindo descritores combinados, consumo por quantidade, cargas simples, esgotamento com troca de unidade e capacidade alterada por modificador. Depois disso, corrigir incompatibilidades encontradas e avaliar propriedades especiais restantes.
+Executar no Foundry a matriz manual completa, usando a nova memória para conferir descritores combinados, preço/peso em múltiplos estágios, consumo por quantidade, cargas e ataques derivados. Depois disso, corrigir incompatibilidades encontradas e avaliar propriedades especiais restantes.

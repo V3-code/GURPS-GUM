@@ -3,12 +3,24 @@ import test from "node:test";
 
 import {
   buildEquipmentConsumptionUpdate,
+  describeEquipmentResolutionWarnings,
   describeEquipmentAttackChanges,
   describeEquipmentPropertyChanges,
   normalizeEquipmentModifier,
   parseEquipmentAdjustment,
   resolveEquipment
 } from "../module/utils/equipment-resolution.mjs";
+
+test("turns resolver warnings into source-aware diagnostics", () => {
+  const diagnostics = describeEquipmentResolutionWarnings([
+    { type: "invalid_expression", sourceName: "Leve", expression: "talvez" },
+    { type: "feature_no_match", sourceId: "spike", selectorValue: "escudo" }
+  ]);
+  assert.equal(diagnostics[0].source, "Leve");
+  assert.equal(diagnostics[0].message, "Expressão inválida: talvez.");
+  assert.equal(diagnostics[1].source, "spike");
+  assert.match(diagnostics[1].message, /escudo/);
+});
 
 test("keeps legacy quantity consumption unless charge mode is explicit", () => {
   assert.deepEqual(buildEquipmentConsumptionUpdate({ quantity: 3, uses_mode: "quantity" }).updates, { "system.quantity": 2 });

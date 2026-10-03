@@ -64,6 +64,23 @@ export function describeEquipmentAttackChanges(baseAttacks = {}, resolvedAttacks
     }];
   }));
 }
+
+/** Convert machine-readable resolver warnings into sheet-ready diagnostics. */
+export function describeEquipmentResolutionWarnings(warnings = []) {
+  return warnings.map((warning, index) => {
+    const source = warning.sourceName || warning.sourceId || "Modificador desconhecido";
+    const messages = {
+      invalid_expression: `Expressão inválida: ${warning.expression || "vazia"}.`,
+      unsupported_operation: `A operação “${warning.expression || warning.operation || "?"}” não é aceita nesta etapa.`,
+      unsupported_feature_path: `A propriedade “${warning.path || "?"}” não é suportada.`,
+      feature_no_match: `Nenhum alvo corresponde ao filtro informado${warning.selectorValue ? ` (“${warning.selectorValue}”)` : ""}.`,
+      conflicting_feature_override: `Mais de uma feature define o mesmo valor${warning.path ? ` (${warning.path})` : ""}; prevalece a última na ordem determinística.`,
+      missing_effect_uuid: "A feature de efeito não possui um UUID vinculado.",
+      missing_descriptor_value: "O descritor está vazio."
+    };
+    return { ...warning, id: `${warning.type || "warning"}-${index}`, type: warning.type || "warning", source, message: messages[warning.type] || "O ajuste não pôde ser aplicado." };
+  });
+}
 export const ATTACK_PROPERTY_PATHS = Object.freeze([
   "skill_level_mod", "damage_formula", "damage_type", "damage_nature", "armor_divisor", "min_strength",
   "reach", "parry", "block", "accuracy", "range", "rof", "shots", "rcl", "mag", "groups"

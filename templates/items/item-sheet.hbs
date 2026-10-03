@@ -2690,6 +2690,18 @@
         <div class="form-group"><label>Preço unitário</label><strong>{{finalCostString}}</strong><span class="notes">Base: {{system.cost}}</span></div>
         <div class="form-group"><label>Peso unitário</label><strong>{{finalWeightString}} kg</strong><span class="notes">Base: {{system.weight}} kg</span></div>
       </div>
+      {{#if equipmentCostSteps.length}}
+      <div class="equipment-feature-trace equipment-calculation-trace">
+        <strong>Memória do preço</strong>
+        <ol>{{#each equipmentCostSteps as |step|}}<li><span>{{step.stageLabel}}: {{step.input}} → <strong>{{step.output}}</strong></span>{{#each step.entries as |entry|}}<span class="notes">{{entry.sourceName}}: {{entry.expression}} (escala {{entry.scale}})</span>{{/each}}</li>{{/each}}</ol>
+      </div>
+      {{/if}}
+      {{#if equipmentWeightSteps.length}}
+      <div class="equipment-feature-trace equipment-calculation-trace">
+        <strong>Memória do peso</strong>
+        <ol>{{#each equipmentWeightSteps as |step|}}<li><span>{{step.stageLabel}}: {{step.input}} → <strong>{{step.output}}</strong></span>{{#each step.entries as |entry|}}<span class="notes">{{entry.sourceName}}: {{entry.expression}} (escala {{entry.scale}})</span>{{/each}}</li>{{/each}}</ol>
+      </div>
+      {{/if}}
       {{#if equipmentFeatureSteps.length}}
       <div class="equipment-feature-trace">
         <strong>Memória das features</strong>
@@ -2706,8 +2718,11 @@
         </ol>
       </div>
       {{/if}}
-      {{#if equipmentResolution.warnings.length}}
-      <p class="notes"><i class="fas fa-triangle-exclamation"></i> {{equipmentResolution.warnings.length}} ajuste(s) inválido(s) ou incompatível(is) foram ignorados.</p>
+      {{#if equipmentResolutionWarnings.length}}
+      <div class="equipment-resolution-warnings">
+        <strong><i class="fas fa-triangle-exclamation"></i> Avisos da resolução</strong>
+        <ul>{{#each equipmentResolutionWarnings as |warning|}}<li><strong>{{warning.source}}:</strong> {{warning.message}}</li>{{/each}}</ul>
+      </div>
       {{/if}}
     </div>
 

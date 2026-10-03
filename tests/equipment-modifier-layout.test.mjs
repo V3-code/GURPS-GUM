@@ -34,7 +34,11 @@ test("equipment modifier instances expose enabled, level and resolved totals", (
   assert.match(template, /system\.eqp_modifiers\.\{\{mod\.id\}\}\.enabled/);
   assert.match(template, /system\.eqp_modifiers\.\{\{mod\.id\}\}\.level/);
   assert.match(template, /Resultado resolvido/);
-  assert.match(template, /equipmentResolution\.warnings\.length/);
+  assert.match(template, /equipmentResolutionWarnings\.length/);
+  assert.match(template, /Memória do preço/);
+  assert.match(template, /Memória do peso/);
+  assert.match(template, /Avisos da resolução/);
+  assert.match(itemSheet, /describeEquipmentResolutionWarnings\(resolution\.warnings\)/);
 });
 
 test("equipment details distinguish base and feature-resolved property values", () => {

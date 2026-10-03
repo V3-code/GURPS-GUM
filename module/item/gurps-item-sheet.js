@@ -8,7 +8,7 @@ import { listBodyLocations } from "../config/body-profiles.js";
 import { SOCIAL_CATEGORIES } from "../config/social-aspects.mjs";
 import { normalizeContextCsv, openContextPicker } from "../apps/context-picker.mjs";
 import { getSkillDisplayName } from "../utils/skill-display-name.mjs";
-import { describeEquipmentAttackChanges, describeEquipmentPropertyChanges, normalizeEquipmentModifier, resolveEquipment } from "../utils/equipment-resolution.mjs";
+import { describeEquipmentAttackChanges, describeEquipmentPropertyChanges, describeEquipmentResolutionWarnings, normalizeEquipmentModifier, resolveEquipment } from "../utils/equipment-resolution.mjs";
  
 const { ItemSheet } = foundry.appv1.sheets; 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor; 
@@ -406,6 +406,11 @@ _promptMultipleReferences(parsedList) {
             context.equipmentMeleeAttackChanges = describeEquipmentAttackChanges(baseEquipmentSystem.melee_attacks, resolution.meleeAttacks, resolution.steps, "melee");
             context.equipmentRangedAttackChanges = describeEquipmentAttackChanges(baseEquipmentSystem.ranged_attacks, resolution.rangedAttacks, resolution.steps, "ranged");
             context.equipmentFeatureSteps = resolution.steps;
+            const stageLabels = { original: "Original", base: "Base", final_base: "Base final", final: "Final" };
+            const describeCalculationSteps = steps => steps.map(step => ({ ...step, stageLabel: stageLabels[step.stage] || step.stage }));
+            context.equipmentCostSteps = describeCalculationSteps(resolution.cost.steps);
+            context.equipmentWeightSteps = describeCalculationSteps(resolution.weight.steps);
+            context.equipmentResolutionWarnings = describeEquipmentResolutionWarnings(resolution.warnings);
             context.calculatedFinalCost = resolution.cost.unitFinal;
             context.calculatedFinalWeight = resolution.weight.unitFinal;
              
