@@ -427,6 +427,7 @@ _promptMultipleReferences(parsedList) {
                 location: feature.location,
                 damage_type: feature.damageType,
                 damage_slot: feature.damageSlot,
+                descriptor_kind: feature.descriptorKind,
                 effect_uuid: feature.effectUuid,
                 effect_name: feature.effect_name || feature.effectName || "",
                 effect_img: feature.effect_img || feature.effectImg || "",
@@ -446,6 +447,7 @@ _promptMultipleReferences(parsedList) {
             ];
             context.equipmentFeatureTypeOptions = [
                 { id: "equipment_property", label: "Modificar propriedade do equipamento" },
+                { id: "equipment_descriptor", label: "Acrescentar descritor ou decoração" },
                 { id: "equipment_dr", label: "Modificar RD por localização" },
                 { id: "attack_property", label: "Modificar modo de ataque" },
                 { id: "attack_damage", label: "Definir dano secundário ou fragmentação" },
@@ -476,6 +478,11 @@ _promptMultipleReferences(parsedList) {
                 { id: "mag", label: "Magnitude" }, { id: "groups", label: "Grupos" }
             ];
             context.equipmentBodyLocationOptions = listBodyLocations();
+            context.equipmentDescriptorKindOptions = [
+                { id: "appearance", label: "Aparência / decoração" }, { id: "craftsmanship", label: "Acabamento" },
+                { id: "material", label: "Detalhe de material" }, { id: "origin", label: "Origem / fabricante" },
+                { id: "tag", label: "Tag" }, { id: "note", label: "Observação" }
+            ];
         }
  
         if (this.item.type === "equipment") { 

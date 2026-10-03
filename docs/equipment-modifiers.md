@@ -115,6 +115,10 @@ O equipamento agora escolhe explicitamente entre `Consumir quantidade` e `Usar c
 
 Opcionalmente, gastar a última carga consome uma unidade da quantidade e inicia a próxima unidade com todas as cargas. Se essa opção estiver desligada, o item permanece esgotado. Efeitos do evento de uso são disparados apenas quando o consumo é válido.
 
+## Etapa implementada: descritores e decoração
+
+A feature `Acrescentar descritor ou decoração` registra aparência, acabamento, detalhe de material, origem/fabricante, tag ou observação. Ao contrário de uma substituição escalar de qualidade/material, esses registros se acumulam entre modificadores e preservam a fonte responsável. A ficha apresenta os descritores finais como tags, sem gravá-los sobre os dados-base.
+
 ## Próxima etapa
 
-Executar no Foundry a matriz manual completa, incluindo consumo por quantidade, cargas simples, esgotamento com troca de unidade e capacidade alterada por modificador. Depois disso, corrigir incompatibilidades encontradas e avaliar propriedades especiais restantes.
+Executar no Foundry a matriz manual completa, incluindo descritores combinados, consumo por quantidade, cargas simples, esgotamento com troca de unidade e capacidade alterada por modificador. Depois disso, corrigir incompatibilidades encontradas e avaliar propriedades especiais restantes.

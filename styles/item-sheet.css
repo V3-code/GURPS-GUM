@@ -5276,6 +5276,29 @@ color:#121114;
   margin-left: 4px;
 }
 
+.gum.sheet.item .equipment-descriptor-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.gum.sheet.item .equipment-descriptor-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  color: var(--item-text);
+  border: 1px solid rgba(201, 161, 94, 0.48);
+  border-radius: 999px;
+  background: rgba(201, 161, 94, 0.12);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.gum.sheet.item .equipment-descriptor-tag i {
+  color: var(--item-accent);
+}
+
 .gum.sheet.item .equipment-feature-trace {
   margin-top: 10px;
   padding: 8px 10px;

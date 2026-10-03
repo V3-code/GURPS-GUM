@@ -68,6 +68,16 @@ test("equipment uses distinguish legacy quantity consumption from explicit charg
   assert.match(actorTemplate, /effectiveUsesRemaining/);
 });
 
+test("equipment modifiers author and display cumulative decoration descriptors", () => {
+  assert.match(itemSheet, /id: "equipment_descriptor", label: "Acrescentar descritor ou decoração"/);
+  assert.match(itemSheet, /equipmentDescriptorKindOptions/);
+  assert.match(template, /eq feature\.type "equipment_descriptor"/);
+  assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.descriptor_kind/);
+  assert.match(template, /equipmentResolution\.descriptors/);
+  assert.match(template, /equipment-descriptor-tag/);
+  assert.match(main, /resolvedDescriptors = resolution\.descriptors/);
+});
+
 test("equipment modifier sheet exposes typed feature authoring", () => {
   assert.match(template, /data-tab="equipment-features"/);
   assert.match(template, /add-eqp-feature/);

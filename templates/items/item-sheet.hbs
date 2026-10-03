@@ -141,6 +141,17 @@
             </div>
         </div>
 
+        {{#if equipmentResolution.descriptors.length}}
+        <div class="form-section skill-details-compact equipment-details-form equipment-descriptors-section">
+            <h4 class="section-title">Descritores e Decoração</h4>
+            <div class="equipment-descriptor-list">
+                {{#each equipmentResolution.descriptors as |descriptor|}}
+                <span class="equipment-descriptor-tag" title="Origem: {{descriptor.sourceName}}"><i class="fas fa-tag"></i> {{descriptor.value}}</span>
+                {{/each}}
+            </div>
+        </div>
+        {{/if}}
+
         <div class="form-section skill-details-compact equipment-details-form">
             <h4 class="section-title">Usos e Consumo</h4>
             <div class="equipment-defense-grid">
@@ -1734,6 +1745,14 @@
               <label class="custom-checkbox"><input type="checkbox" name="system.features_data.{{feature.id}}.per_level" {{checked feature.per_level}}/><span>Por nível do modificador</span></label>
             </div>
             <p class="notes">“base” altera a RD geral. Outros tipos representam o ajuste relativo à RD base para aquele tipo de dano.</p>
+            {{/if}}
+
+            {{#if (eq feature.type "equipment_descriptor")}}
+            <div class="form-grid-2">
+              <div class="form-group"><label>Categoria</label><select name="system.features_data.{{feature.id}}.descriptor_kind">{{selectOptions ../equipmentDescriptorKindOptions selected=feature.descriptor_kind valueAttr="id" labelAttr="label"}}</select></div>
+              <div class="form-group"><label>Descrição acrescentada</label><input type="text" name="system.features_data.{{feature.id}}.value" value="{{feature.value}}" placeholder="Ex.: cravejado de prata, acabamento élfico"/></div>
+            </div>
+            <p class="notes">Descritores se acumulam entre modificadores e não substituem qualidade ou material do equipamento-base.</p>
             {{/if}}
 
             {{#if (eq feature.type "attack_property")}}

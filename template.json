@@ -446,6 +446,7 @@
         "current_uses": 0,
         "uses_mode": "quantity",
         "consume_quantity_when_empty": false,
+        "descriptors": [],
         "eqp_modifiers": {}
       }
     },

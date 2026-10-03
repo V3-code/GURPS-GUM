@@ -645,6 +645,7 @@ const activeEffects = Array.isArray(this.effects) ? this.effects : Array.from(th
                 item.system.effectiveCost = resolution.cost.unitFinal;
                 item.system.effectiveUsesMax = resolution.uses.max;
                 item.system.effectiveUsesRemaining = resolution.uses.remaining;
+                item.system.resolvedDescriptors = resolution.descriptors;
                 item.system.melee_attacks = resolution.meleeAttacks;
                 item.system.ranged_attacks = resolution.rangedAttacks;
                 item.system.dr_locations = resolution.drLocations;

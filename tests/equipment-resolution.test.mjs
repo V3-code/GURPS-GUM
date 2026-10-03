@@ -195,6 +195,18 @@ test("resolves equipment defense bonus and equip time for runtime consumers", ()
   assert.equal(equipment.equip_time, 3);
 });
 
+test("accumulates decoration descriptors from multiple modifiers with their sources", () => {
+  const result = resolveEquipment({ cost: 20, weight: 1, descriptors: ["Antigo"] }, [
+    { id: "silver", name: "Prateado", features_data: { decoration: { id: "decoration", type: "equipment_descriptor", descriptor_kind: "appearance", value: "Cravejado de prata" } } },
+    { id: "elf", name: "Élfico", features_data: { origin: { id: "origin", type: "equipment_descriptor", descriptor_kind: "origin", value: "Fabricação élfica" } } }
+  ]);
+  assert.deepEqual(result.descriptors.map(({ kind, value, sourceName }) => ({ kind, value, sourceName })), [
+    { kind: "tag", value: "Antigo", sourceName: "Equipamento-base" },
+    { kind: "origin", value: "Fabricação élfica", sourceName: "Élfico" },
+    { kind: "appearance", value: "Cravejado de prata", sourceName: "Prateado" }
+  ]);
+});
+
 test("resolves location-specific DR features without mutating base armor", () => {
   const equipment = { cost: 100, weight: 5, dr_locations: { torso: { base: 3 }, skull: { base: 2, perf: 1 } } };
   const result = resolveEquipment(equipment, [{ id: "reinforced", level: 2, features_data: {

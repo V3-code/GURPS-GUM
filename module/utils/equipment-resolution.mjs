@@ -9,7 +9,7 @@ const number = (value, fallback = 0) => {
 const roundForOutput = value => Math.round((value + Number.EPSILON) * 1e10) / 1e10;
 const clone = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 
-export const EQUIPMENT_FEATURE_TYPES = Object.freeze(["equipment_property", "equipment_dr", "attack_property", "attack_damage", "create_attack", "granted_effect"]);
+export const EQUIPMENT_FEATURE_TYPES = Object.freeze(["equipment_property", "equipment_descriptor", "equipment_dr", "attack_property", "attack_damage", "create_attack", "granted_effect"]);
 export const EQUIPMENT_PROPERTY_PATHS = Object.freeze([
   "tech_sm", "item_hp", "item_ht", "item_dr", "holdout", "defense_bonus", "equip_time", "legality_class", "material", "quality", "max_uses"
 ]);
@@ -195,6 +195,7 @@ export function normalizeEquipmentFeature(feature = {}, index = 0) {
     location: String(feature.location || "all").trim(),
     damageType: String(feature.damage_type ?? feature.damageType ?? "base").trim() || "base",
     damageSlot: ["follow_up_damage", "fragmentation_damage"].includes(feature.damage_slot || feature.damageSlot) ? (feature.damage_slot || feature.damageSlot) : "follow_up_damage",
+    descriptorKind: ["appearance", "craftsmanship", "material", "origin", "tag", "note"].includes(feature.descriptor_kind || feature.descriptorKind) ? (feature.descriptor_kind || feature.descriptorKind) : "appearance",
     attackType: ["melee", "ranged"].includes(feature.attack_type || feature.attackType) ? (feature.attack_type || feature.attackType) : "all",
     selectorField: ["all", "mode", "skill_name", "group"].includes(feature.selector_field || feature.selectorField) ? (feature.selector_field || feature.selectorField) : "all",
     selectorValue: String(feature.selector_value ?? feature.selectorValue ?? "").trim(),
@@ -374,6 +375,8 @@ function resolveFeatures(equipment, modifiers, warnings) {
   const rangedAttacks = clone(equipment.ranged_attacks || {});
   const steps = [];
   const grantedEffects = [];
+  const descriptors = (Array.isArray(equipment.descriptors) ? clone(equipment.descriptors) : [])
+    .map((descriptor, index) => typeof descriptor === "string" ? { id: `base-${index}`, kind: "tag", value: descriptor, sourceName: "Equipamento-base" } : descriptor);
   const overrides = new Map();
   const operationOrder = { set: 1, multiply: 2, add: 3 };
   const tasks = modifiers
@@ -455,6 +458,18 @@ function resolveFeatures(equipment, modifiers, warnings) {
         if (feature.operation === "set") overrides.set(overrideKey, modifier.id);
         properties[feature.path] = output;
         steps.push({ type: feature.type, sourceId: modifier.id, sourceName: modifier.name, featureId: feature.id, label: feature.label, path: feature.path, input, output });
+        continue;
+      }
+
+      if (feature.type === "equipment_descriptor") {
+        const value = String(feature.value ?? "").trim();
+        if (!value) {
+          warnings.push({ type: "missing_descriptor_value", domain: "equipment", sourceId: modifier.id, featureId: feature.id });
+          continue;
+        }
+        const descriptor = { id: `${modifier.id}:${feature.id}`, kind: feature.descriptorKind, value, sourceId: modifier.id, sourceName: modifier.name, featureId: feature.id };
+        descriptors.push(descriptor);
+        steps.push({ type: feature.type, sourceId: modifier.id, sourceName: modifier.name, featureId: feature.id, label: feature.label, path: `descriptor.${feature.descriptorKind}`, input: "—", output: value });
         continue;
       }
 
@@ -540,7 +555,7 @@ function resolveFeatures(equipment, modifiers, warnings) {
         if (!matches) warnings.push({ type: "feature_no_match", domain: "attack", sourceId: modifier.id, featureId: feature.id, selectorField: feature.selectorField, selectorValue: feature.selectorValue });
       }
   }
-  return { properties, drLocations, meleeAttacks, rangedAttacks, grantedEffects, steps };
+  return { properties, descriptors, drLocations, meleeAttacks, rangedAttacks, grantedEffects, steps };
 }
 
 export function resolveEquipmentUses(equipment = {}, resolvedProperties = {}) {
