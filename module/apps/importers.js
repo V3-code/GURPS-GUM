@@ -2489,20 +2489,9 @@ function parseGCSLibraryEquipmentModifier(gcsMod) {
     template.features_data = { ...(template.features_data || {}), ...structuredFeatures };
     template.gcs_features_unmapped = unmappedFeatures;
 
-    const featureLines = [];
-    if (rawCostStr) {
-        featureLines.push(`Custo GCS: ${rawCostStr}${rawCostType ? ` (${rawCostType})` : ""}`);
-    }
-    if (rawWeightStr) {
-        featureLines.push(`Peso GCS: ${rawWeightStr}${rawWeightType ? ` (${rawWeightType})` : ""}`);
-    }
-    if (rawNotes) {
-        featureLines.push(rawNotes);
-    }
-    if (unmappedFeatures.length) featureLines.push(`${unmappedFeatures.length} feature(s) GCS preservada(s), mas ainda não convertida(s).`);
-
-    template.features = featureLines.join("\n");
-    template.tags = [rawCostType].filter(Boolean).join(", ");
+    // Notas narrativas pertencem à descrição; dados mecânicos ficam nas features estruturadas.
+    template.description = rawNotes;
+    template.group = String(gcsMod.group || gcsMod.category || "").trim();
 
     return {
         name: gcsMod.name || "Modificador de Equipamento",
