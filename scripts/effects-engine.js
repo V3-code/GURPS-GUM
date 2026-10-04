@@ -434,7 +434,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
     const instantTypes = new Set(["resource_change", "resource_create", "macro", "chat"]);
 
     const buildCommonActiveEffectData = (targetActor, actionIndex = 0) => {
-        const gumDuration = normalizeEffectDurationFlags(effectSystem.duration || {});
+        const gumDuration = normalizeEffectDurationFlags(context.durationOverride || effectSystem.duration || {});
         const startMode = gumDuration.startMode || "apply";
         const endMode = gumDuration.endMode || "turnEnd";
         const shouldDelayStart = gumDuration.inCombat && startMode === "nextTurnStart";
@@ -463,7 +463,8 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     statusBindingRuleUuid: context.statusBindingRuleUuid ?? null,
                     statusBindingStatusId: context.statusBindingStatusId ?? null,
                     duration: gumDuration,
-                    ...conditionFlags
+                    ...conditionFlags,
+                    ...(context.gumFlags || {})
                 }
             },
             disabled: pendingCombat || shouldDelayStart

@@ -212,7 +212,7 @@ _onFilterResults(event) {
       // ✅ LÓGICA CORRIGIDA: Se um callback onSelect existir, execute-o.
       if (this.onSelect) {
           // Isso executa a lógica que está dentro da ficha do item (GurpsItemSheet)
-          this.onSelect(selectedEffects);
+          await this.onSelect(selectedEffects);
       } else {
           // Lógica antiga para a ficha de Condição
           const existingEffects = this.targetItem.system.effects || [];
