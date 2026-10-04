@@ -23,6 +23,24 @@ test("equipment modifier sheet exposes structured cost and weight controls", () 
   ]) assert.match(template, new RegExp(field.replaceAll(".", "\\.")));
 });
 
+test("equipment modifier editor uses the modern card workspaces", () => {
+  for (const className of [
+    "eqp-modifier-workspace",
+    "eqp-modifier-hero",
+    "eqp-adjustment-card",
+    "eqp-adjustment-preview",
+    "eqp-feature-list",
+    "eqp-feature-card",
+    "eqp-feature-card-header",
+    "eqp-feature-actions"
+  ]) assert.match(template, new RegExp(className));
+
+  const styles = fs.readFileSync("styles/item-sheet.css", "utf8");
+  assert.match(styles, /\.eqp-modifier-hero/);
+  assert.match(styles, /\.eqp-feature-card\.is-disabled/);
+  assert.match(styles, /@media \(max-width: 620px\)/);
+});
+
 test("item sheet and actor preparation delegate to the central resolver", () => {
   assert.match(itemSheet, /resolveEquipment\(baseEquipmentSystem, eqpModsObj\)/);
   assert.match(main, /const resolution = resolveEquipment\(item\._source\?\.system \|\| item\.system\)/);

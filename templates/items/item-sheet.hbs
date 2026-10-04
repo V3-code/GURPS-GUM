@@ -1655,8 +1655,13 @@
     {{!-- Aba de ajustes estruturados do modificador de equipamento --}}
     <div class="tab" data-tab="adjustments">
       {{#if (eq item.type "eqp_modifier")}}
-      <div class="form-section">
-        <h4 class="section-title">Ajuste de preço</h4>
+      <div class="eqp-modifier-workspace eqp-adjustments-workspace">
+        <header class="eqp-modifier-hero">
+          <span class="eqp-modifier-hero-icon"><i class="fas fa-sliders-h" aria-hidden="true"></i></span>
+          <div><h3>Ajustes do modificador</h3><p>Defina como preço e peso são recalculados, sem alterar os valores originais do equipamento.</p></div>
+        </header>
+      <div class="form-section eqp-adjustment-card eqp-adjustment-cost-card">
+        <div class="eqp-adjustment-card-header"><span class="eqp-adjustment-card-icon"><i class="fas fa-coins" aria-hidden="true"></i></span><div><h4>Ajuste de preço</h4><p>Configure o custo e a etapa em que o ajuste entra no cálculo.</p></div></div>
         <div class="form-grid-2">
           <div class="form-group">
             <label>Expressão</label>
@@ -1681,11 +1686,11 @@
             </select>
           </div>
         </div>
-        <p class="notes"><strong>Interpretação:</strong> {{eqpModifierAdjustment.cost.expression}} · {{eqpModifierAdjustment.cost.stage}}</p>
+        <p class="notes eqp-adjustment-preview"><i class="fas fa-calculator" aria-hidden="true"></i><span><strong>Interpretação</strong>{{eqpModifierAdjustment.cost.expression}} · {{eqpModifierAdjustment.cost.stage}}</span></p>
       </div>
 
-      <div class="form-section">
-        <h4 class="section-title">Ajuste de peso</h4>
+      <div class="form-section eqp-adjustment-card eqp-adjustment-weight-card">
+        <div class="eqp-adjustment-card-header"><span class="eqp-adjustment-card-icon"><i class="fas fa-weight-hanging" aria-hidden="true"></i></span><div><h4>Ajuste de peso</h4><p>Controle a massa final e sua ordem na resolução.</p></div></div>
         <div class="form-grid-2">
           <div class="form-group">
             <label>Expressão</label>
@@ -1701,7 +1706,8 @@
         <div class="form-grid-3 attack-flags-grid">
           <label class="custom-checkbox"><input type="checkbox" name="system.weight_adjustment_data.per_level" {{checked eqpModifierAdjustment.weight.perLevel}}/><span>Por nível</span></label>
         </div>
-        <p class="notes"><strong>Interpretação:</strong> {{eqpModifierAdjustment.weight.expression}} · {{eqpModifierAdjustment.weight.stage}}</p>
+        <p class="notes eqp-adjustment-preview"><i class="fas fa-calculator" aria-hidden="true"></i><span><strong>Interpretação</strong>{{eqpModifierAdjustment.weight.expression}} · {{eqpModifierAdjustment.weight.stage}}</span></p>
+      </div>
       </div>
 
       {{/if}}
@@ -1709,17 +1715,18 @@
 
     <div class="tab" data-tab="equipment-features">
       {{#if (eq item.type "eqp_modifier")}}
-      <div class="form-section">
-        <div class="eqpmod-block-header">
-          <div><h4 class="section-title">Features estruturadas</h4><p class="notes">Altere propriedades do equipamento ou de seus ataques sem modificar os dados-base.</p></div>
-          <button type="button" class="add-eqp-feature"><i class="fas fa-plus"></i> Adicionar feature</button>
+      <div class="eqp-modifier-workspace eqp-features-workspace">
+        <div class="eqp-modifier-hero eqp-features-hero">
+          <span class="eqp-modifier-hero-icon"><i class="fas fa-puzzle-piece" aria-hidden="true"></i></span>
+          <div><h3>Features do modificador</h3><p>Combine comportamentos independentes para transformar propriedades, ataques, proteção e efeitos.</p></div>
+          <button type="button" class="add-eqp-feature"><i class="fas fa-plus"></i><span>Adicionar feature</span></button>
         </div>
 
-        <ol class="eqpmod-line-list">
+        <ol class="eqpmod-line-list eqp-feature-list">
         {{#each eqpModifierFeatures as |feature|}}
-          <li class="eqpmod-line-item" data-feature-id="{{feature.id}}">
-            <div class="form-grid-3">
-              <label class="custom-checkbox"><input type="checkbox" name="system.features_data.{{feature.id}}.enabled" {{checked feature.enabled}}/><span>Ativa</span></label>
+          <li class="eqpmod-line-item eqp-feature-card {{#unless feature.enabled}}is-disabled{{/unless}}" data-feature-id="{{feature.id}}">
+            <div class="form-grid-3 eqp-feature-card-header">
+              <label class="custom-checkbox eqp-feature-enabled"><input type="checkbox" name="system.features_data.{{feature.id}}.enabled" {{checked feature.enabled}}/><span>Ativa</span></label>
               <div class="form-group"><label>Nome</label><input type="text" name="system.features_data.{{feature.id}}.label" value="{{feature.label}}"/></div>
               <div class="form-group"><label>Tipo</label><select class="eqp-feature-shape-select" name="system.features_data.{{feature.id}}.type">{{selectOptions ../equipmentFeatureTypeOptions selected=feature.type valueAttr="id" labelAttr="label"}}</select></div>
             </div>
@@ -1843,7 +1850,7 @@
             <p class="notes">Filtros de ataque valem para Ataque do equipamento e Alvo atingido. Condições de ferimento, chance e tipo de dano valem para Alvo atingido.</p>
             {{/if}}
 
-            <div class="eqpmod-actions"><button type="button" class="delete-eqp-feature" title="Remover feature"><i class="fas fa-trash"></i> Remover</button></div>
+            <div class="eqpmod-actions eqp-feature-actions"><span class="eqp-feature-id"><i class="fas fa-cube" aria-hidden="true"></i> Bloco de feature</span><button type="button" class="delete-eqp-feature" title="Remover feature"><i class="fas fa-trash"></i> Remover</button></div>
           </li>
         {{else}}
           <li class="eqpmod-empty">Nenhuma feature estruturada. Preço e peso continuam sendo resolvidos normalmente.</li>
