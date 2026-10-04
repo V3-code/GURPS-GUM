@@ -79,7 +79,7 @@ async function syncEquipmentModifierGrantedEffects(item) {
         try {
             const actionIds = grant.domain === "source_attack"
                 ? getEffectActions(effectItem.system)
-                    .filter(action => ["roll_modifier", "skill_modifier", "combat_modifier"].includes(action.type))
+                    .filter(action => ["roll_modifier", "combat_modifier"].includes(action.type))
                     .map(action => action.id)
                 : null;
             if (grant.domain === "source_attack" && !actionIds.length) {
@@ -92,8 +92,9 @@ async function syncEquipmentModifierGrantedEffects(item) {
                 source: EQUIPMENT_GRANTED_EFFECT_SOURCE,
                 originItemId: item.id,
                 skipInstantEffects: true,
+                durationOverride: { isPermanent: true, inCombat: false, _uiMode: "permanent" },
                 actionIds,
-                gumFlags: grant.domain === "source_attack" ? { equipmentGrant: {
+                gumFlags: { equipmentGrant: {
                     domain: grant.domain,
                     originItemId: item.id,
                     attackType: grant.attackType,
@@ -101,7 +102,7 @@ async function syncEquipmentModifierGrantedEffects(item) {
                     selectorValue: grant.selectorValue,
                     sourceModifierId: grant.sourceModifierId,
                     sourceFeatureId: grant.featureId
-                }} : {}
+                }}
             });
         } catch (error) {
             console.error(`GUM | Falha ao aplicar efeito concedido "${grant.label}":`, error);
@@ -120,7 +121,12 @@ async function reconcileEquipmentModifierGrantedEffects() {
                 foundry.utils.getProperty(effect, "flags.gum.originItemId") === item.id
                 && foundry.utils.getProperty(effect, "flags.gum.source") === EQUIPMENT_GRANTED_EFFECT_SOURCE
             );
-            if ((grants.length > 0) !== (existing.length > 0)) await syncEquipmentModifierGrantedEffects(item);
+            const expectedIds = new Set(grants.map(grant => String(grant.featureId)));
+            const existingIds = new Set(existing.map(effect => String(foundry.utils.getProperty(effect, "flags.gum.equipmentGrant.sourceFeatureId") || "")));
+            const setsMatch = expectedIds.size === existingIds.size
+                && [...expectedIds].every(id => existingIds.has(id))
+                && !existingIds.has("");
+            if (!setsMatch) await syncEquipmentModifierGrantedEffects(item);
         }
     }
 }

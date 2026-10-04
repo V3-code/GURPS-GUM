@@ -8,7 +8,7 @@ import { listBodyLocations } from "../config/body-profiles.js";
 import { SOCIAL_CATEGORIES } from "../config/social-aspects.mjs";
 import { normalizeContextCsv, openContextPicker } from "../apps/context-picker.mjs";
 import { getSkillDisplayName } from "../utils/skill-display-name.mjs";
-import { describeEquipmentAttackChanges, describeEquipmentPropertyChanges, describeEquipmentResolutionWarnings, normalizeEquipmentModifier, resolveEquipment } from "../utils/equipment-resolution.mjs";
+import { describeEquipmentAttackChanges, describeEquipmentPropertyChanges, describeEquipmentResolutionWarnings, normalizeEquipmentModifier, parseEquipmentAdjustment, resolveEquipment } from "../utils/equipment-resolution.mjs";
  
 const { ItemSheet } = foundry.appv1.sheets; 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor; 
@@ -206,7 +206,9 @@ _promptMultipleReferences(parsedList) {
         const itemData = context.item;  
  
         // Garante acesso fácil ao system e flags 
-        context.system = itemData.system; 
+        context.system = this.item.type === "equipment"
+            ? foundry.utils.deepClone(this.item._source?.system || itemData.system)
+            : itemData.system;
         context.flags = itemData.flags;
         context.attackMinStrength = this._normalizeAttackMinStrength(itemData.system?.attack_roll?.min_strength); 
 
@@ -380,14 +382,14 @@ _promptMultipleReferences(parsedList) {
         // 2. LÓGICA DE EQUIPAMENTOS 
         // ======================================================= 
             if (['equipment', 'melee_weapon', 'ranged_weapon'].includes(this.item.type)) {
-            const eqpModsObj = this.item.system.eqp_modifiers || {}; 
+            const baseEquipmentSystem = this.item._source?.system || this.item.system;
+            const eqpModsObj = baseEquipmentSystem.eqp_modifiers || {};
             const modifiersArray = Object.entries(eqpModsObj).map(([id, data]) => ({ 
                 id, ...data 
             })).sort((a, b) => a.name.localeCompare(b.name)); 
             context.eqpModifiersList = modifiersArray; 
             context.eqpModifiersHasFeatures = modifiersArray.some(mod => mod.features); 
  
-            const baseEquipmentSystem = this.item._source?.system || this.item.system;
             const resolution = resolveEquipment(baseEquipmentSystem, eqpModsObj);
             const normalizedById = new Map(resolution.modifiers.map(modifier => [modifier.id, modifier]));
             for (const mod of modifiersArray) {
@@ -442,6 +444,8 @@ _promptMultipleReferences(parsedList) {
                 required_damage_type: feature.requiredDamageType,
                 damage: feature.damage,
                 cumulative_text_equipment_value: ["material", "quality"].includes(feature.path),
+                formula_attack_value: feature.path === "damage_formula",
+                textual_attack_value: ["damage_type", "damage_nature", "reach", "range", "rof", "shots", "groups"].includes(feature.path),
                 numeric_equipment_value: ["item_dr", "item_hp", "item_ht", "tech_sm", "holdout", "defense_bonus", "equip_time", "max_uses"].includes(feature.path),
                 numeric_attack_value: ["skill_level_mod", "armor_divisor", "min_strength", "accuracy", "rcl", "mag"].includes(feature.path)
             }));
@@ -480,7 +484,7 @@ _promptMultipleReferences(parsedList) {
                 { id: "reach", label: "Alcance C.C." }, { id: "parry", label: "Aparar" },
                 { id: "block", label: "Bloqueio" }, { id: "accuracy", label: "Precisão" },
                 { id: "range", label: "Distância" }, { id: "rof", label: "Cadência" },
-                { id: "shots", label: "Tiros" }, { id: "rcl", label: "Recuo" }, { id: "bulk", label: "Bulk" },
+                { id: "shots", label: "Tiros" }, { id: "rcl", label: "Recuo" },
                 { id: "mag", label: "Magnitude" }, { id: "groups", label: "Grupos" }
             ];
             context.equipmentBodyLocationOptions = listBodyLocations();
@@ -498,10 +502,9 @@ _promptMultipleReferences(parsedList) {
             const locationLookup = new Map(bodyLocationOptions.map(option => [option.id, option])); 
  
             context.bodyLocationOptions = bodyLocationOptions; 
-            const drLocationKeys = new Set([...Object.keys(drLocations), ...Object.keys(resolvedDrLocations)]);
-            context.drLocationRows = [...drLocationKeys].map(key => [key, drLocations[key] || {}])
-                .filter(([key, drObject]) => this._hasVisibleDR(drObject) || this._hasVisibleDR(resolvedDrLocations[key]))
-                .map(([key, drObject]) => { 
+            context.drLocationRows = Object.entries(drLocations)
+                .filter(([, drObject]) => this._hasVisibleDR(drObject))
+                .map(([key, drObject]) => {
                     const option = locationLookup.get(key); 
                     return { 
                         key, 
@@ -509,8 +512,11 @@ _promptMultipleReferences(parsedList) {
                         dr: this._formatDRObjectToString(drObject),
                         finalDr: this._formatDRObjectToString(resolvedDrLocations[key] || {}),
                         changed: JSON.stringify(drObject) !== JSON.stringify(resolvedDrLocations[key] || {})
-                    }; 
-                }); 
+                    };
+                });
+            context.derivedDrLocationRows = Object.keys(resolvedDrLocations)
+                .filter(key => !Object.prototype.hasOwnProperty.call(drLocations, key) && this._hasVisibleDR(resolvedDrLocations[key]))
+                .map(key => ({ key, label: locationLookup.get(key)?.name ?? key, finalDr: this._formatDRObjectToString(resolvedDrLocations[key]) }));
         } 
  
         // ======================================================= 
@@ -991,10 +997,14 @@ if (this.item?.type === "equipment") {
             if (!id) return;
             await this.item.update({ [`system.features_data.-=${id}`]: null });
         });
-        html.find('.select-eqp-feature-effect').click(ev => {
+        html.find('.eqp-feature-shape-select').on('change', async () => {
+            await this.submit({ preventClose: true });
+        });
+        html.find('.select-eqp-feature-effect').click(async ev => {
             ev.preventDefault();
             const id = $(ev.currentTarget).closest('[data-feature-id]').data('feature-id');
             if (!id) return;
+            await this.submit({ preventClose: true, preventRender: true });
             new EffectBrowser(this.item, {
                 onSelect: async selectedEffects => {
                     const effect = selectedEffects[0];
@@ -2203,7 +2213,11 @@ const rangedFields = `
             const costExpression = formData["system.cost_adjustment_data.expression"];
             const weightExpression = formData["system.weight_adjustment_data.expression"];
             formData["system.adjustment_schema"] = 1;
-            if (costExpression !== undefined) formData["system.cost_adjustment"] = costExpression;
+            if (costExpression !== undefined) {
+                formData["system.cost_adjustment"] = costExpression;
+                const parsedCost = parseEquipmentAdjustment(costExpression, { target: "cost", stage: formData["system.cost_adjustment_data.stage"] || "base" });
+                formData["system.cost_factor"] = parsedCost.valid && parsedCost.operation === "cost_factor" ? parsedCost.value : 0;
+            }
             if (weightExpression !== undefined) formData["system.weight_mod"] = weightExpression;
         }
  

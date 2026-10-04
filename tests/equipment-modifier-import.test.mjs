@@ -39,6 +39,15 @@ test("GCS equipment modifier import preserves stages and scaling controls", () =
   assert.match(result.system.features, /Peso GCS: \+1 lb/);
 });
 
+test("GCS bare base costs become CF and Bulk targets the runtime magnitude field", () => {
+  const context = vm.createContext({ getSystemTemplate: () => ({ features_data: {} }), getGCSItemNotes: () => "" });
+  vm.runInContext(`${functionSource}\nthis.parseModifier = parseGCSLibraryEquipmentModifier;`, context);
+  const result = context.parseModifier({ cost: "1", cost_type: "to_base_cost", features: [{ type: "weapon_bulk_bonus", amount: -1 }] });
+  assert.equal(result.system.cost_adjustment_data.expression, "+1 CF");
+  assert.equal(result.system.cost_factor, 1);
+  assert.equal(result.system.features_data["gcs-0"].path, "mag");
+});
+
 test("GCS equipment modifier import converts supported features and preserves the rest", () => {
   const context = vm.createContext({ getSystemTemplate: () => ({ features_data: {} }), getGCSItemNotes: () => "" });
   vm.runInContext(`${functionSource}\nthis.parseModifier = parseGCSLibraryEquipmentModifier;`, context);

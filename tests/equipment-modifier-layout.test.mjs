@@ -101,11 +101,16 @@ test("equipment modifier sheet exposes typed feature authoring", () => {
   assert.match(main, /item\.system\.melee_attacks = resolution\.meleeAttacks/);
   assert.match(main, /item\.system\.ranged_attacks = resolution\.rangedAttacks/);
   assert.match(main, /item\.system\.dr_locations = resolution\.drLocations/);
-  assert.match(itemSheet, /id: "bulk", label: "Bulk"/);
+  assert.doesNotMatch(itemSheet, /id: "bulk", label: "Bulk"/);
   assert.match(template, /eq feature\.type "equipment_dr"/);
   assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.location/);
   assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.damage_type/);
   assert.match(template, /row\.finalDr/);
+  assert.match(template, /derivedDrLocationRows/);
+  assert.match(itemSheet, /context\.system = this\.item\.type === "equipment"/);
+  assert.match(itemSheet, /this\.item\._source\?\.system/);
+  assert.match(template, /eqp-feature-shape-select/);
+  assert.match(itemSheet, /await this\.submit\(\{ preventClose: true \}\)/);
 });
 
 test("equipment active toggle explains its limited lifecycle purpose", () => {
@@ -134,6 +139,9 @@ test("granted effects expose UUID, domain and lifecycle and are synchronized by 
   assert.match(main, /syncEquipmentModifierGrantedEffects\(item\)/);
   assert.match(main, /source: EQUIPMENT_GRANTED_EFFECT_SOURCE/);
   assert.match(main, /skipInstantEffects: true/);
+  assert.match(main, /durationOverride: \{ isPermanent: true/);
+  assert.match(main, /expectedIds/);
+  assert.doesNotMatch(main, /\["roll_modifier", "skill_modifier", "combat_modifier"\]/);
   assert.match(main, /matchesEquipmentGrantedEffectScope/);
   assert.match(effectsEngine, /\.\.\.\(context\.gumFlags \|\| \{\}\)/);
   assert.match(rollPrompt, /matchesEquipmentGrantedEffectScope/);

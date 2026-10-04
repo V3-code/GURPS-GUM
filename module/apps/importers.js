@@ -2414,12 +2414,17 @@ function parseGCSLibraryEquipmentModifier(gcsMod) {
     template.adjustment_schema = 1;
     template.enabled = gcsMod.disabled !== true;
     template.level = 1;
-    template.cost_factor = /cf$/i.test(rawCostStr) ? Number.parseFloat(rawCostStr) || 0 : 0;
-    template.cost_adjustment = rawCostStr.replace("*", "x") || "0 CF";
+    const costStage = stageFromGCS(rawCostType, "cost");
+    const normalizedCost = rawCostStr.replace("*", "x");
+    const bareBaseCost = costStage === "base" && /^[+-]?\d+(?:[.,]\d+)?$/.test(normalizedCost);
+    template.cost_adjustment = bareBaseCost
+        ? `${Number(normalizedCost.replace(",", ".")) >= 0 ? "+" : ""}${normalizedCost} CF`
+        : (normalizedCost || "0 CF");
+    template.cost_factor = /cf$/i.test(template.cost_adjustment) ? Number.parseFloat(template.cost_adjustment.replace(",", ".")) || 0 : 0;
     template.weight_mod = rawWeightStr.replace("*", "x") || "x1";
     template.cost_adjustment_data = {
         expression: template.cost_adjustment,
-        stage: stageFromGCS(rawCostType, "cost"),
+        stage: costStage,
         per_level: gcsMod.cost_is_per_level === true,
         per_weight: gcsMod.cost_is_per_pound === true,
         per_weight_unit: gcsMod.cost_is_per_pound === true ? "lb" : "kg"
@@ -2441,7 +2446,7 @@ function parseGCSLibraryEquipmentModifier(gcsMod) {
     const weaponPaths = {
         weapon_bonus: "damage_formula", weapon_acc_bonus: "accuracy", weapon_scope_acc_bonus: "accuracy",
         weapon_dr_divisor_bonus: "armor_divisor", weapon_min_st_bonus: "min_strength", weapon_recoil_bonus: "rcl",
-        weapon_bulk_bonus: "bulk"
+        weapon_bulk_bonus: "mag"
     };
     const structuredFeatures = {};
     const unmappedFeatures = [];

@@ -134,3 +134,9 @@ O importador converte automaticamente um subconjunto seguro das features do GCS:
 ## Próxima etapa
 
 Validar a importação contra bibliotecas GCS reais e ampliar a tabela somente quando a semântica local for equivalente — especialmente Aparar/Bloqueio, alcances compostos, cadência e tiros. Em paralelo, usar a memória de cálculo para conferir os demais fluxos já implementados no Foundry.
+
+## Estabilização após revisão
+
+A compatibilidade legada agora infere uma etapa válida para percentuais e valores fixos, multiplicadores por nível escalam seu equivalente em CF, e custos-base numéricos do GCS são importados como CF. A ficha sempre edita os dados-base do equipamento, mantendo ataques, propriedades e localizações de RD derivadas apenas na apresentação e na preparação de runtime. Cargas sem capacidade não consomem quantidade, e operações numéricas incompatíveis com campos textuais são rejeitadas com diagnóstico.
+
+Efeitos concedidos pelo ciclo de vida do equipamento são persistentes enquanto a condição declarada estiver ativa. A reconciliação compara as identidades das features esperadas com os ActiveEffects existentes, recriando conjuntos parciais ou obsoletos. Alterações que mudam o formato do editor de features são salvas e redesenhadas imediatamente, e a seleção de um Efeito preserva antes os demais campos ainda não submetidos.

@@ -29,6 +29,13 @@ test("keeps legacy quantity consumption unless charge mode is explicit", () => {
   assert.deepEqual(buildEquipmentConsumptionUpdate({ quantity: 3, max_uses: 5, current_uses: 1, uses_mode: "charges" }, result).updates, { "system.current_uses": 2 });
 });
 
+test("does not consume quantity when explicit charge mode has zero capacity", () => {
+  const consumption = buildEquipmentConsumptionUpdate({ quantity: 3, max_uses: 0, uses_mode: "charges" });
+  assert.equal(consumption.consumed, false);
+  assert.equal(consumption.reason, "empty_charges");
+  assert.deepEqual(consumption.updates, {});
+});
+
 test("charge exhaustion can consume one unit and reset the next unit", () => {
   const equipment = { quantity: 2, max_uses: 3, current_uses: 2, uses_mode: "charges", consume_quantity_when_empty: true, cost: 0, weight: 0 };
   const consumption = buildEquipmentConsumptionUpdate(equipment, resolveEquipment(equipment));
@@ -72,6 +79,7 @@ test("describes only effective equipment property changes for sheet presentation
 const modifier = ({ name, cost, costStage = "base", weight = "x1", weightStage = "base", level = 1, perLevel = false, perWeight = false } = {}) => ({
   name,
   level,
+  adjustment_schema: 1,
   cost_adjustment_data: { expression: cost ?? "0 CF", stage: costStage, per_level: perLevel, per_weight: perWeight, per_weight_unit: "kg" },
   weight_adjustment_data: { expression: weight, stage: weightStage, per_level: perLevel }
 });
@@ -89,6 +97,15 @@ test("normalizes legacy cost and weight fields without losing existing worlds", 
   assert.equal(normalized.cost.expression, "+1 CF");
   assert.equal(normalized.cost.stage, "base");
   assert.equal(normalized.weight.expression, "x0.5");
+});
+
+test("infers operation-compatible stages for legacy percentages and fixed costs", () => {
+  assert.equal(normalizeEquipmentModifier({ cost_adjustment: "-10%" }).cost.stage, "original");
+  assert.equal(normalizeEquipmentModifier({ cost_adjustment: "+50" }).cost.stage, "original");
+  assert.equal(normalizeEquipmentModifier({ weight_mod: "-10%" }).weight.stage, "original");
+  const result = resolveEquipment({ cost: 100, weight: 10 }, [{ cost_adjustment: "-10%", weight_mod: "-10%" }]);
+  assert.equal(result.cost.unitFinal, 90);
+  assert.equal(result.weight.unitFinal, 9);
 });
 
 test("structured defaults do not hide non-default legacy values during transition", () => {
@@ -131,6 +148,11 @@ test("combines base multipliers and CF as cost factors", () => {
     modifier({ name: "Espinho", cost: "+0.2 CF" })
   ]);
   assert.equal(result.cost.unitFinal, 420);
+});
+
+test("scales a base multiplier by its CF delta", () => {
+  const result = resolveEquipment({ cost: 100, weight: 1 }, [modifier({ cost: "x2", level: 2, perLevel: true })]);
+  assert.equal(result.cost.unitFinal, 300);
 });
 
 test("resolves staged weight before cost-per-weight", () => {
@@ -228,6 +250,18 @@ test("accumulates material and quality text without allowing multiplication", ()
   assert.equal(result.properties.material, "Aço, Prata");
   assert.equal(result.properties.quality, "Comum, Fina");
   assert.equal(result.warnings.some(warning => warning.type === "unsupported_operation" && warning.path === "material"), true);
+});
+
+test("scales numeric set features per level and rejects numeric operations on textual attacks", () => {
+  const result = resolveEquipment({ cost: 1, weight: 1, item_dr: 1, melee_attacks: { hit: { mode: "Golpe", damage_type: "cont" } } }, [{
+    id: "scaled", level: 3, features_data: {
+      dr: { id: "dr", type: "equipment_property", path: "item_dr", operation: "set", value: 2, per_level: true },
+      invalid: { id: "invalid", type: "attack_property", attack_type: "melee", path: "damage_type", operation: "multiply", value: 2 }
+    }
+  }]);
+  assert.equal(result.properties.item_dr, 6);
+  assert.equal(result.meleeAttacks.hit.damage_type, "cont");
+  assert.equal(result.warnings.some(warning => warning.type === "unsupported_operation" && warning.path === "damage_type"), true);
 });
 
 test("resolves location-specific DR features without mutating base armor", () => {

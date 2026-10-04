@@ -294,6 +294,7 @@
                 <li class="effects-empty">Nenhum efeito.</li>
             {{/each}}
             </ol>
+
         </div>
 
         {{!-- ================================================== --}}
@@ -1453,6 +1454,15 @@
                 {{/each}}
             </ol>
 
+            {{#if derivedDrLocationRows.length}}
+            <div class="equipment-derived-dr-locations">
+                <h5>Localizações acrescentadas por modificadores</h5>
+                {{#each derivedDrLocationRows as |row|}}
+                <div class="equipment-final-value" title="Localização derivada; edite o modificador responsável"><span>{{row.label}}</span><i class="fas fa-arrow-right"></i><span>{{row.finalDr}}</span></div>
+                {{/each}}
+            </div>
+            {{/if}}
+
             <datalist id="gum-body-location-options">
                 {{#each bodyLocationOptions as |loc|}}
                     <option value="{{loc.name}}" data-key="{{loc.id}}"></option>
@@ -1711,12 +1721,12 @@
             <div class="form-grid-3">
               <label class="custom-checkbox"><input type="checkbox" name="system.features_data.{{feature.id}}.enabled" {{checked feature.enabled}}/><span>Ativa</span></label>
               <div class="form-group"><label>Nome</label><input type="text" name="system.features_data.{{feature.id}}.label" value="{{feature.label}}"/></div>
-              <div class="form-group"><label>Tipo</label><select name="system.features_data.{{feature.id}}.type">{{selectOptions ../equipmentFeatureTypeOptions selected=feature.type valueAttr="id" labelAttr="label"}}</select></div>
+              <div class="form-group"><label>Tipo</label><select class="eqp-feature-shape-select" name="system.features_data.{{feature.id}}.type">{{selectOptions ../equipmentFeatureTypeOptions selected=feature.type valueAttr="id" labelAttr="label"}}</select></div>
             </div>
 
             {{#if (eq feature.type "equipment_property")}}
             <div class="form-grid-3">
-              <div class="form-group"><label>Propriedade</label><select name="system.features_data.{{feature.id}}.path">{{selectOptions ../equipmentPropertyOptions selected=feature.path valueAttr="id" labelAttr="label"}}</select></div>
+              <div class="form-group"><label>Propriedade</label><select class="eqp-feature-shape-select" name="system.features_data.{{feature.id}}.path">{{selectOptions ../equipmentPropertyOptions selected=feature.path valueAttr="id" labelAttr="label"}}</select></div>
               <div class="form-group"><label>Operação</label><select name="system.features_data.{{feature.id}}.operation">{{#if feature.cumulative_text_equipment_value}}<option value="add" {{#if (eq feature.operation "add")}}selected{{/if}}>Acrescentar</option><option value="set" {{#if (eq feature.operation "set")}}selected{{/if}}>Substituir</option>{{else}}{{selectOptions ../equipmentFeatureOperationOptions selected=feature.operation valueAttr="id" labelAttr="label"}}{{/if}}</select></div>
               <div class="form-group"><label>Valor</label><input type="{{#if feature.numeric_equipment_value}}number{{else}}text{{/if}}" step="any" name="system.features_data.{{feature.id}}.value" value="{{feature.value}}"/></div>
             </div>
@@ -1752,8 +1762,8 @@
               <div class="form-group"><label>Filtro</label><input type="text" name="system.features_data.{{feature.id}}.selector_value" value="{{feature.selector_value}}" placeholder="Ex.: golpe-com-escudo"/></div>
             </div>
             <div class="form-grid-3">
-              <div class="form-group"><label>Propriedade</label><select name="system.features_data.{{feature.id}}.path">{{selectOptions ../attackPropertyOptions selected=feature.path valueAttr="id" labelAttr="label"}}</select></div>
-              <div class="form-group"><label>Operação</label><select name="system.features_data.{{feature.id}}.operation">{{selectOptions ../equipmentFeatureOperationOptions selected=feature.operation valueAttr="id" labelAttr="label"}}</select></div>
+              <div class="form-group"><label>Propriedade</label><select class="eqp-feature-shape-select" name="system.features_data.{{feature.id}}.path">{{selectOptions ../attackPropertyOptions selected=feature.path valueAttr="id" labelAttr="label"}}</select></div>
+              <div class="form-group"><label>Operação</label><select name="system.features_data.{{feature.id}}.operation">{{#if feature.textual_attack_value}}<option value="set" selected>Definir</option>{{else if feature.formula_attack_value}}<option value="add" {{#if (eq feature.operation "add")}}selected{{/if}}>Somar à fórmula</option><option value="set" {{#if (eq feature.operation "set")}}selected{{/if}}>Definir</option>{{else}}{{selectOptions ../equipmentFeatureOperationOptions selected=feature.operation valueAttr="id" labelAttr="label"}}{{/if}}</select></div>
               <div class="form-group"><label>Valor</label><input type="{{#if feature.numeric_attack_value}}number{{else}}text{{/if}}" step="any" name="system.features_data.{{feature.id}}.value" value="{{feature.value}}"/></div>
             </div>
             <label class="custom-checkbox"><input type="checkbox" name="system.features_data.{{feature.id}}.per_level" {{checked feature.per_level}}/><span>Por nível do modificador</span></label>
@@ -1780,7 +1790,7 @@
 
             {{#if (eq feature.type "create_attack")}}
             <div class="form-grid-3">
-              <div class="form-group"><label>Tipo</label><select name="system.features_data.{{feature.id}}.attack_type"><option value="melee" {{#if (eq feature.attack_type "melee")}}selected{{/if}}>Corpo a corpo</option><option value="ranged" {{#if (eq feature.attack_type "ranged")}}selected{{/if}}>À distância</option></select></div>
+              <div class="form-group"><label>Tipo</label><select class="eqp-feature-shape-select" name="system.features_data.{{feature.id}}.attack_type"><option value="melee" {{#if (eq feature.attack_type "melee")}}selected{{/if}}>Corpo a corpo</option><option value="ranged" {{#if (eq feature.attack_type "ranged")}}selected{{/if}}>À distância</option></select></div>
               <div class="form-group"><label>Nome do modo</label><input type="text" name="system.features_data.{{feature.id}}.attack.mode" value="{{feature.attack.mode}}"/></div>
               <div class="form-group"><label>Perícia</label><input type="text" name="system.features_data.{{feature.id}}.attack.skill_name" value="{{feature.attack.skill_name}}"/></div>
             </div>

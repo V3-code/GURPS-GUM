@@ -83,7 +83,7 @@ export function describeEquipmentResolutionWarnings(warnings = []) {
 }
 export const ATTACK_PROPERTY_PATHS = Object.freeze([
   "skill_level_mod", "damage_formula", "damage_type", "damage_nature", "armor_divisor", "min_strength",
-  "reach", "parry", "block", "accuracy", "range", "rof", "shots", "rcl", "bulk", "mag", "groups"
+  "reach", "parry", "block", "accuracy", "range", "rof", "shots", "rcl", "mag", "groups"
 ]);
 
 function parseFraction(value) {
@@ -159,6 +159,13 @@ function legacyCostExpression(modifier) {
   return `${cf >= 0 ? "+" : ""}${cf} CF`;
 }
 
+function inferLegacyStage(expression, target) {
+  const parsed = parseEquipmentAdjustment(expression, { target });
+  if (!parsed.valid) return "base";
+  if (target === "cost") return ["cost_factor", "multiply"].includes(parsed.operation) ? "base" : "original";
+  return parsed.operation === "percent" ? "original" : "base";
+}
+
 /** Normalize current and legacy modifier records into one calculation contract. */
 export function normalizeEquipmentModifier(modifier = {}, index = 0) {
   const costData = modifier.cost_adjustment_data || {};
@@ -182,14 +189,14 @@ export function normalizeEquipmentModifier(modifier = {}, index = 0) {
     sourceUuid: modifier.source_uuid || modifier.sourceUuid || null,
     cost: {
       expression: costExpression,
-      stage: EQUIPMENT_ADJUSTMENT_STAGES.includes(costData.stage) ? costData.stage : "base",
+      stage: usesStructuredSchema && EQUIPMENT_ADJUSTMENT_STAGES.includes(costData.stage) ? costData.stage : inferLegacyStage(costExpression, "cost"),
       perLevel: costData.per_level === true || costData.perLevel === true,
       perWeight: costData.per_weight === true || costData.perWeight === true,
       perWeightUnit: costData.per_weight_unit || costData.perWeightUnit || "kg"
     },
     weight: {
       expression: weightExpression,
-      stage: EQUIPMENT_ADJUSTMENT_STAGES.includes(weightData.stage) ? weightData.stage : "base",
+      stage: usesStructuredSchema && EQUIPMENT_ADJUSTMENT_STAGES.includes(weightData.stage) ? weightData.stage : inferLegacyStage(weightExpression, "weight"),
       perLevel: weightData.per_level === true || weightData.perLevel === true
     },
     features: (Array.isArray(modifier.features_data) ? modifier.features_data : Object.values(modifier.features_data || {}))
@@ -278,7 +285,7 @@ function resolveCostBaseStage(input, entries, warnings, steps) {
       continue;
     }
     if (parsed.operation === "cost_factor") totalFactor += parsed.value * scale;
-    if (parsed.operation === "multiply") totalFactor += ((parsed.value * scale) - 1);
+    if (parsed.operation === "multiply") totalFactor += ((parsed.value - 1) * scale);
     applied.push({ sourceId: modifier.id, sourceName: modifier.name, expression: parsed.expression, operation: parsed.operation, scale });
   }
   const factor = 1 + Math.max(-0.8, totalFactor);
@@ -338,7 +345,10 @@ function addFormulaModifier(formula, amount) {
 }
 
 function applyFeatureValue(current, feature, scale, { formula = false } = {}) {
-  if (feature.operation === "set") return feature.value;
+  if (feature.operation === "set") {
+    const setValue = numericValue(feature.value);
+    return feature.perLevel && setValue !== null ? setValue * scale : feature.value;
+  }
   const amount = numericValue(feature.value);
   if (amount === null) return current;
   const scaled = amount * scale;
@@ -576,7 +586,16 @@ function resolveFeatures(equipment, modifiers, warnings) {
             if (!attackMatches(attack, feature)) continue;
             matches += 1;
             const input = attack[feature.path];
-            const output = applyFeatureValue(input, feature, scale, { formula: feature.path === "damage_formula" });
+            const formula = feature.path === "damage_formula";
+            if (formula && feature.operation === "multiply") {
+              warnings.push({ type: "unsupported_operation", domain: "attack", sourceId: modifier.id, featureId: feature.id, path: feature.path, operation: feature.operation });
+              continue;
+            }
+            if (!formula && feature.operation !== "set" && (numericValue(input) === null || numericValue(feature.value) === null)) {
+              warnings.push({ type: "unsupported_operation", domain: "attack", sourceId: modifier.id, featureId: feature.id, path: feature.path, operation: feature.operation });
+              continue;
+            }
+            const output = applyFeatureValue(input, feature, scale, { formula });
             const overrideKey = `attack:${attackType}:${attackId}:${feature.path}`;
             if (feature.operation === "set" && overrides.has(overrideKey)) warnings.push({ type: "conflicting_feature_override", domain: "attack", attackType, attackId, path: feature.path, sources: [overrides.get(overrideKey), modifier.id] });
             if (feature.operation === "set") overrides.set(overrideKey, modifier.id);
@@ -610,9 +629,10 @@ export function buildEquipmentConsumptionUpdate(equipment = {}, resolution = nul
   const quantity = Math.max(0, number(equipment.quantity));
   const uses = resolution?.uses || resolveEquipmentUses(equipment, resolution?.properties || {});
   if (quantity <= 0) return { consumed: false, reason: "empty_quantity", updates: {}, uses };
-  if (uses.mode !== "charges" || uses.max <= 0) {
+  if (uses.mode !== "charges") {
     return { consumed: true, mode: "quantity", updates: { "system.quantity": Math.max(0, quantity - 1) }, uses };
   }
+  if (uses.max <= 0) return { consumed: false, reason: "empty_charges", updates: {}, uses };
   if (uses.remaining <= 0) return { consumed: false, reason: "empty_charges", updates: {}, uses };
 
   const exhausted = uses.remaining === 1;
