@@ -348,6 +348,14 @@ function applyFeatureValue(current, feature, scale, { formula = false } = {}) {
   return base + scaled;
 }
 
+function appendEquipmentText(current, value) {
+  const entries = [current, value]
+    .flatMap(entry => String(entry ?? "").split(","))
+    .map(entry => entry.trim())
+    .filter(Boolean);
+  return [...new Set(entries)].join(", ");
+}
+
 function attackMatches(attack, feature) {
   if (feature.selectorField === "all") return true;
   const needle = feature.selectorValue.toLocaleLowerCase();
@@ -469,7 +477,14 @@ function resolveFeatures(equipment, modifiers, warnings) {
           continue;
         }
         const input = properties[feature.path];
-        const output = applyFeatureValue(input, feature, scale);
+        const isCumulativeText = ["material", "quality"].includes(feature.path);
+        if (isCumulativeText && feature.operation === "multiply") {
+          warnings.push({ type: "unsupported_operation", domain: "equipment", sourceId: modifier.id, featureId: feature.id, path: feature.path, operation: feature.operation });
+          continue;
+        }
+        const output = isCumulativeText && feature.operation === "add"
+          ? appendEquipmentText(input, feature.value)
+          : applyFeatureValue(input, feature, scale);
         const overrideKey = `equipment:${feature.path}`;
         if (feature.operation === "set" && overrides.has(overrideKey)) warnings.push({ type: "conflicting_feature_override", domain: "equipment", path: feature.path, sources: [overrides.get(overrideKey), modifier.id] });
         if (feature.operation === "set") overrides.set(overrideKey, modifier.id);

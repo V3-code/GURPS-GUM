@@ -219,6 +219,17 @@ test("accumulates decoration descriptors from multiple modifiers with their sour
   ]);
 });
 
+test("accumulates material and quality text without allowing multiplication", () => {
+  const result = resolveEquipment({ cost: 20, weight: 1, material: "Aço", quality: "Comum" }, [
+    { id: "silver", features_data: { material: { id: "material", type: "equipment_property", path: "material", operation: "add", value: "Prata" } } },
+    { id: "fine", features_data: { quality: { id: "quality", type: "equipment_property", path: "quality", operation: "add", value: "Fina" } } },
+    { id: "invalid", features_data: { material: { id: "material", type: "equipment_property", path: "material", operation: "multiply", value: 2 } } }
+  ]);
+  assert.equal(result.properties.material, "Aço, Prata");
+  assert.equal(result.properties.quality, "Comum, Fina");
+  assert.equal(result.warnings.some(warning => warning.type === "unsupported_operation" && warning.path === "material"), true);
+});
+
 test("resolves location-specific DR features without mutating base armor", () => {
   const equipment = { cost: 100, weight: 5, dr_locations: { torso: { base: 3 }, skull: { base: 2, perf: 1 } } };
   const result = resolveEquipment(equipment, [{ id: "reinforced", level: 2, features_data: {

@@ -141,17 +141,6 @@
             </div>
         </div>
 
-        {{#if equipmentResolution.descriptors.length}}
-        <div class="form-section skill-details-compact equipment-details-form equipment-descriptors-section">
-            <h4 class="section-title">Descritores e Decoração</h4>
-            <div class="equipment-descriptor-list">
-                {{#each equipmentResolution.descriptors as |descriptor|}}
-                <span class="equipment-descriptor-tag" title="Origem: {{descriptor.sourceName}}"><i class="fas fa-tag"></i> {{descriptor.value}}</span>
-                {{/each}}
-            </div>
-        </div>
-        {{/if}}
-
         <div class="form-section skill-details-compact equipment-details-form">
             <h4 class="section-title">Usos e Consumo</h4>
             <div class="equipment-defense-grid">
@@ -1728,9 +1717,10 @@
             {{#if (eq feature.type "equipment_property")}}
             <div class="form-grid-3">
               <div class="form-group"><label>Propriedade</label><select name="system.features_data.{{feature.id}}.path">{{selectOptions ../equipmentPropertyOptions selected=feature.path valueAttr="id" labelAttr="label"}}</select></div>
-              <div class="form-group"><label>Operação</label><select name="system.features_data.{{feature.id}}.operation">{{selectOptions ../equipmentFeatureOperationOptions selected=feature.operation valueAttr="id" labelAttr="label"}}</select></div>
+              <div class="form-group"><label>Operação</label><select name="system.features_data.{{feature.id}}.operation">{{#if feature.cumulative_text_equipment_value}}<option value="add" {{#if (eq feature.operation "add")}}selected{{/if}}>Acrescentar</option><option value="set" {{#if (eq feature.operation "set")}}selected{{/if}}>Substituir</option>{{else}}{{selectOptions ../equipmentFeatureOperationOptions selected=feature.operation valueAttr="id" labelAttr="label"}}{{/if}}</select></div>
               <div class="form-group"><label>Valor</label><input type="{{#if feature.numeric_equipment_value}}number{{else}}text{{/if}}" step="any" name="system.features_data.{{feature.id}}.value" value="{{feature.value}}"/></div>
             </div>
+            {{#if feature.cumulative_text_equipment_value}}<p class="notes">“Acrescentar” mantém os valores anteriores em uma lista; “Substituir” troca o valor final. Texto não pode ser multiplicado.</p>{{/if}}
             <label class="custom-checkbox"><input type="checkbox" name="system.features_data.{{feature.id}}.per_level" {{checked feature.per_level}}/><span>Por nível do modificador</span></label>
             {{/if}}
 
@@ -1860,6 +1850,16 @@
           <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> REF</label>
           <div class="item-description-reference-control">
             <input type="text" name="system.ref" value="{{system.ref}}" placeholder="Ex: B174, M123, PU4:12"/>
+          </div>
+        </div>
+        {{/if}}
+        {{#if (and (eq item.type "equipment") equipmentResolution.descriptors.length)}}
+        <div class="form-section skill-details-compact equipment-details-form equipment-descriptors-section">
+          <h4 class="section-title">Descritores e Decoração</h4>
+          <div class="equipment-descriptor-list">
+            {{#each equipmentResolution.descriptors as |descriptor|}}
+            <span class="equipment-descriptor-tag" title="Origem: {{descriptor.sourceName}}"><i class="fas fa-tag"></i> {{descriptor.value}}</span>
+            {{/each}}
           </div>
         </div>
         {{/if}}

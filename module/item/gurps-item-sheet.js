@@ -441,6 +441,7 @@ _promptMultipleReferences(parsedList) {
                 activation_chance: feature.activationChance,
                 required_damage_type: feature.requiredDamageType,
                 damage: feature.damage,
+                cumulative_text_equipment_value: ["material", "quality"].includes(feature.path),
                 numeric_equipment_value: ["item_dr", "item_hp", "item_ht", "tech_sm", "holdout", "defense_bonus", "equip_time", "max_uses"].includes(feature.path),
                 numeric_attack_value: ["skill_level_mod", "armor_divisor", "min_strength", "accuracy", "rcl", "mag"].includes(feature.path)
             }));

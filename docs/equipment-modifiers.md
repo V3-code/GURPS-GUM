@@ -113,11 +113,15 @@ Os modos de ataque da ficha do equipamento continuam exibindo e editando exclusi
 
 O equipamento agora escolhe explicitamente entre `Consumir quantidade` e `Usar cargas`. O primeiro é o padrão retrocompatível e mantém a redução direta da quantidade. No modo de cargas, `max_uses` é a capacidade-base e `current_uses` registra cargas gastas; a capacidade pode receber modificadores, enquanto o número gasto permanece persistente. A ficha e o inventário mostram cargas restantes sobre a capacidade final.
 
+Essa escolha define qual contador a ação `Consumir / Usar` movimenta: quantidade representa unidades descartáveis independentes; cargas representam vários usos da mesma unidade. Ela não ativa o equipamento nem altera, por si só, suas demais propriedades.
+
 Opcionalmente, gastar a última carga consome uma unidade da quantidade e inicia a próxima unidade com todas as cargas. Se essa opção estiver desligada, o item permanece esgotado. Efeitos do evento de uso são disparados apenas quando o consumo é válido.
 
 ## Etapa implementada: descritores e decoração
 
 A feature `Acrescentar descritor ou decoração` registra aparência, acabamento, detalhe de material, origem/fabricante, tag ou observação. Ao contrário de uma substituição escalar de qualidade/material, esses registros se acumulam entre modificadores e preservam a fonte responsável. A ficha apresenta os descritores finais como tags, sem gravá-los sobre os dados-base.
+
+Material e qualidade também aceitam composição textual explícita: `Acrescentar` reúne valores distintos em uma lista, enquanto `Substituir` troca o resultado final. Multiplicação não é oferecida para esses campos e dados legados que tentem usá-la geram diagnóstico. Os descritores e decorações resolvidos são apresentados na aba Descrição, logo abaixo de REF.
 
 ## Etapa implementada: memória e diagnósticos
 

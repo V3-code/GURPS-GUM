@@ -82,6 +82,15 @@ test("equipment modifiers author and display cumulative decoration descriptors",
   assert.match(main, /resolvedDescriptors = resolution\.descriptors/);
 });
 
+test("text properties use cumulative semantics and descriptors appear in description", () => {
+  assert.match(itemSheet, /cumulative_text_equipment_value: \["material", "quality"\]/);
+  assert.match(template, /“Acrescentar” mantém os valores anteriores em uma lista/);
+  const descriptionStart = template.indexOf('data-tab="description"');
+  const descriptorStart = template.indexOf("equipment-descriptors-section");
+  assert.ok(descriptorStart > descriptionStart);
+  assert.match(template.slice(descriptionStart, descriptorStart), /item-description-reference/);
+});
+
 test("equipment modifier sheet exposes typed feature authoring", () => {
   assert.match(template, /data-tab="equipment-features"/);
   assert.match(template, /add-eqp-feature/);
