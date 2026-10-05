@@ -4,6 +4,26 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.3.2-beta] - 2026-10-05
+
+### Added
+
+- Modificadores de equipamento com features estruturadas para propriedades, RD localizada, modos de ataque, descritores e efeitos concedidos.
+- Reservas de uso/carga de equipamentos, com suporte a registros de combate, poder ou magia e à visibilidade configurável conforme a localização do item.
+- Bônus de Defesa (BD) ativável por equipamento: aplica-se a Esquiva, Aparar e Bloqueio, com indicação opcional no chat quando determina um sucesso ou falha.
+
+### Changed
+
+- Fichas de equipamento e modificador de equipamento reorganizadas com campos em cards, tooltips e layout mais compacto.
+- Modos de ataque concedidos ou modificados passaram a exibir seus valores e alterações resolvidos na ficha de equipamento.
+- Controles de efeitos acionáveis por evento de uso foram separados dos demais controles nos cards de itens.
+- Textos das fichas de equipamento e modificador receberam cobertura ampliada em português e inglês.
+
+### Fixed
+
+- Operações de substituição em propriedades de carga agora sobrescrevem corretamente o valor local do equipamento.
+- Valores finais de BD preservam outros modificadores de efeito ao atualizar as defesas ativas e as rolagens.
+
 ## [1.3.1-beta] - 2026-09-27
 
 ### Added
