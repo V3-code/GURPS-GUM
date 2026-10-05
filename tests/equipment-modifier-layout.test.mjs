@@ -122,6 +122,7 @@ test("equipment uses distinguish legacy quantity consumption from explicit charg
   assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.reserve_type/);
   assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.reserve_scope/);
   assert.match(template, /GUM\.Equipment\.Reserve\.Visibility/);
+  assert.ok(template.indexOf('name="system.charge_reserve_scope"') < template.indexOf('name="system.consume_quantity_when_empty"'));
   assert.match(template, /equipmentUses\.remaining/);
   assert.match(template, /equipmentPropertyChanges\.max_uses\.final/);
   for (const field of ["mode", "reserveType", "reserveName", "reserveScope"]) {
