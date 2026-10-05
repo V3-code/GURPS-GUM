@@ -8,7 +8,7 @@ import { listBodyLocations } from "../config/body-profiles.js";
 import { SOCIAL_CATEGORIES } from "../config/social-aspects.mjs";
 import { normalizeContextCsv, openContextPicker } from "../apps/context-picker.mjs";
 import { getSkillDisplayName } from "../utils/skill-display-name.mjs";
-import { describeEquipmentAttackChanges, describeEquipmentPropertyChanges, describeEquipmentResolutionWarnings, normalizeEquipmentModifier, parseEquipmentAdjustment, resolveEquipment } from "../utils/equipment-resolution.mjs";
+import { describeEquipmentAttackChanges, describeEquipmentPropertyChanges, describeEquipmentResolutionWarnings, describeEquipmentUseChanges, normalizeEquipmentModifier, parseEquipmentAdjustment, resolveEquipment } from "../utils/equipment-resolution.mjs";
  
 const { ItemSheet } = foundry.appv1.sheets; 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -418,6 +418,16 @@ _promptMultipleReferences(parsedList) {
             context.equipmentResolution = resolution;
             context.equipmentUses = resolution.uses;
             context.equipmentPropertyChanges = describeEquipmentPropertyChanges(baseEquipmentSystem, resolution.properties);
+            const useChanges = describeEquipmentUseChanges(baseEquipmentSystem, resolution.uses);
+            const useLabels = {
+                mode: { quantity: "GUM.Equipment.Label.ConsumeQuantity", charges: "GUM.Equipment.Label.UseCharges" },
+                reserveType: { "": "GUM.Equipment.Reserve.None", combat: "GUM.Equipment.Reserve.Combat", power: "GUM.Equipment.Reserve.Power", spell: "GUM.Equipment.Reserve.Spell" },
+                reserveScope: { any: "GUM.Equipment.Reserve.Any", carried: "GUM.Equipment.Reserve.Carried", equipped: "GUM.Equipment.Reserve.Equipped", stored: "GUM.Equipment.Reserve.Stored", active: "GUM.Equipment.Reserve.Active" }
+            };
+            context.equipmentUseChanges = Object.fromEntries(Object.entries(useChanges).map(([key, change]) => [key, {
+                ...change,
+                finalLabel: useLabels[key]?.[change.final] ? game.i18n.localize(useLabels[key][change.final]) : change.final
+            }]));
             const attackFieldKeys = {
                 damage_formula: "GUM.Equipment.Attacks.Damage", damage_type: "GUM.EquipmentModifier.Properties.DamageType",
                 damage_nature: "GUM.EquipmentModifier.Properties.DamageNature", armor_divisor: "GUM.Equipment.Attacks.ArmorDivisor",

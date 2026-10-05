@@ -35,6 +35,17 @@ export function describeEquipmentPropertyChanges(equipment = {}, resolvedPropert
   }));
 }
 
+/** Identify charge settings changed by modifiers without rewriting the editable base fields. */
+export function describeEquipmentUseChanges(equipment = {}, resolvedUses = {}) {
+  const values = {
+    mode: [equipment.uses_mode === "charges" ? "charges" : "quantity", resolvedUses.mode],
+    reserveType: [equipment.charge_reserve_type || "", resolvedUses.reserveType],
+    reserveName: [String(equipment.charge_reserve_name ?? "").trim(), resolvedUses.reserveName],
+    reserveScope: [equipment.charge_reserve_scope || "any", resolvedUses.reserveScope]
+  };
+  return Object.fromEntries(Object.entries(values).map(([key, [base, final]]) => [key, { base, final, changed: !propertyValuesEqual(base, final) }]));
+}
+
 const ATTACK_CHANGE_LABELS = Object.freeze({
   damage_formula: "dano", damage_type: "tipo de dano", damage_nature: "natureza", armor_divisor: "divisor de armadura",
   skill_level_mod: "NH", min_strength: "ST mínima", reach: "alcance", parry: "Aparar", block: "Bloqueio",
@@ -439,6 +450,9 @@ function resolveFeatures(equipment, modifiers, warnings) {
   let chargeReserveScope = ["any", "carried", "equipped", "stored", "active"].includes(equipment.charge_reserve_scope) ? equipment.charge_reserve_scope : "any";
   let chargeModeFromModifier = false;
   const operationOrder = { set: 1, multiply: 2, add: 3 };
+  const featureOrder = feature => feature.type === "create_attack" ? 0
+    : feature.type === "equipment_property" && feature.path === "max_uses" && feature.operation === "set" ? 4
+      : (operationOrder[feature.operation] ?? 5);
   const tasks = modifiers
     .filter(modifier => modifier.enabled)
     .flatMap(modifier => modifier.features
@@ -446,8 +460,8 @@ function resolveFeatures(equipment, modifiers, warnings) {
       .map(feature => ({ modifier, feature, scale: feature.perLevel ? modifier.level : 1 })))
     .filter(task => task.scale !== 0)
     .sort((a, b) => {
-      const aOrder = a.feature.type === "create_attack" ? 0 : (operationOrder[a.feature.operation] ?? 4);
-      const bOrder = b.feature.type === "create_attack" ? 0 : (operationOrder[b.feature.operation] ?? 4);
+      const aOrder = featureOrder(a.feature);
+      const bOrder = featureOrder(b.feature);
       return aOrder - bOrder
         || String(a.modifier.id).localeCompare(String(b.modifier.id))
         || String(a.feature.id).localeCompare(String(b.feature.id));

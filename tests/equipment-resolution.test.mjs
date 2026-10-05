@@ -6,6 +6,7 @@ import {
   describeEquipmentResolutionWarnings,
   describeEquipmentAttackChanges,
   describeEquipmentPropertyChanges,
+  describeEquipmentUseChanges,
   equipmentLinkedReserve,
   equipmentReserveBalanceUpdate,
   normalizeEquipmentModifier,
@@ -51,6 +52,20 @@ test("max-use modifiers increase remaining charges while preserving spent charge
   }}]);
   assert.equal(result.uses.max, 5);
   assert.equal(result.uses.remaining, 4);
+});
+
+test("set charge capacity replaces the local value even alongside additive modifiers", () => {
+  const system = { quantity: 1, max_uses: 3, current_uses: 1, uses_mode: "charges", cost: 0, weight: 0 };
+  const modifiers = [
+    { id: "extra", features_data: { extra: { id: "extra", type: "equipment_property", path: "max_uses", operation: "add", value: 4 } } },
+    { id: "fixed", features_data: { fixed: { id: "fixed", type: "equipment_property", path: "max_uses", operation: "set", value: 8 } } }
+  ];
+  const resolution = resolveEquipment(system, modifiers);
+  assert.equal(resolution.properties.max_uses, 8);
+  assert.equal(resolution.uses.max, 8);
+  assert.equal(resolution.uses.remaining, 7);
+  assert.equal(system.max_uses, 3);
+  assert.deepEqual(describeEquipmentPropertyChanges(system, resolution.properties).max_uses, { base: 3, final: 8, changed: true });
 });
 
 test("charge capacity modifier activates one equipment-backed reserve", () => {
@@ -120,6 +135,8 @@ test("setting charge capacity inherits resource settings unless explicitly overr
   assert.equal(overridden.uses.reserveName, "New energy");
   assert.equal(overridden.uses.reserveScope, "carried");
   assert.equal(equipmentLinkedReserve(item, overridden).current, 7);
+  assert.equal(describeEquipmentUseChanges(system, overridden.uses).reserveType.final, "spell");
+  assert.equal(describeEquipmentUseChanges(system, overridden.uses).reserveScope.changed, true);
 
   feature.reserve_type = "none";
   const disabled = resolveEquipment(system, modifiers);

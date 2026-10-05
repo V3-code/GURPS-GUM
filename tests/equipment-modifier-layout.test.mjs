@@ -123,6 +123,10 @@ test("equipment uses distinguish legacy quantity consumption from explicit charg
   assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.reserve_scope/);
   assert.match(template, /GUM\.Equipment\.Reserve\.Visibility/);
   assert.match(template, /equipmentUses\.remaining/);
+  assert.match(template, /equipmentPropertyChanges\.max_uses\.final/);
+  for (const field of ["mode", "reserveType", "reserveName", "reserveScope"]) {
+    assert.match(template, new RegExp(`equipmentUseChanges\\.${field}\\.finalLabel`));
+  }
   assert.match(main, /effectiveUsesRemaining = resolution\.uses\.remaining/);
   assert.match(actorSheet, /buildEquipmentConsumptionUpdate\(item\.system, resolution\)/);
   assert.match(actorTemplate, /effectiveUsesRemaining/);
