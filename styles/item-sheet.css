@@ -5311,6 +5311,10 @@ color:#121114;
   background: rgba(12, 11, 15, 0.48);
 }
 
+.gum.sheet.item .equipment-created-attack-card-melee {
+  grid-template-columns: minmax(130px, 1.5fr) repeat(4, minmax(60px, 0.58fr)) auto;
+}
+
 .gum.sheet.item .equipment-created-attack-identity,
 .gum.sheet.item .equipment-created-attack-stat {
   display: flex;
@@ -5342,7 +5346,7 @@ color:#121114;
   .gum.sheet.item .equipment-created-attack-card {
     grid-template-columns: minmax(130px, 1fr) repeat(2, minmax(64px, 0.55fr));
   }
-  .gum.sheet.item .equipment-created-attack-card > .equipment-created-attack-stat:nth-of-type(4) { display: none; }
+  .gum.sheet.item .equipment-created-attack-card > .equipment-created-attack-stat:nth-of-type(n + 4) { display: none; }
   .gum.sheet.item .equipment-created-attack-card > .equipment-attack-resolution-tag { grid-column: 1 / -1; justify-self: start; }
 }
 
@@ -5443,18 +5447,20 @@ color:#121114;
 .gum.sheet.item .equipment-descriptor-tag {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 8px;
-  color: var(--item-text);
-  border: 1px solid rgba(201, 161, 94, 0.48);
-  border-radius: 999px;
-  background: rgba(201, 161, 94, 0.12);
-  font-size: 0.72rem;
-  font-weight: 700;
+  gap: 4px;
+  padding: 3px 6px;
+  color: rgba(240, 235, 227, 0.76);
+  border: 1px solid rgba(201, 161, 94, 0.2);
+  border-radius: 4px;
+  background: rgba(201, 161, 94, 0.045);
+  font-size: 0.68rem;
+  font-weight: 650;
+  line-height: 1.2;
 }
 
 .gum.sheet.item .equipment-descriptor-tag i {
-  color: var(--item-accent);
+  color: rgba(210, 168, 95, 0.72);
+  font-size: 0.85em;
 }
 
 .gum.sheet.item .equipment-feature-trace {
@@ -5563,9 +5569,11 @@ color:#121114;
 
 .gum.sheet.item .equipment-resolution-value {
   grid-area: value;
+  justify-self: center;
   color: var(--item-text);
   font-size: 1rem;
   line-height: 1.1;
+  text-align: center;
 }
 
 .gum.sheet.item .equipment-resolution-base {
@@ -5619,6 +5627,19 @@ color:#121114;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 5px;
+}
+
+.gum.sheet.item .equipment-feature-defense-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.gum.sheet.item .equipment-feature-defense-input .equipment-toggle-pill {
+  font-size: 0.59rem;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 /* =================================================================== */

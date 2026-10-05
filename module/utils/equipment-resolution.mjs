@@ -206,6 +206,7 @@ export function normalizeEquipmentModifier(modifier = {}, index = 0) {
 
 export function normalizeEquipmentFeature(feature = {}, index = 0) {
   const type = EQUIPMENT_FEATURE_TYPES.includes(feature.type) ? feature.type : "equipment_property";
+  const attack = clone(feature.attack || {});
   return {
     ...clone(feature),
     id: feature.id || feature._id || `feature-${index}`,
@@ -229,7 +230,11 @@ export function normalizeEquipmentFeature(feature = {}, index = 0) {
     minInjury: Math.max(0, number(feature.min_injury ?? feature.minInjury)),
     activationChance: Math.min(100, Math.max(0, number(feature.activation_chance ?? feature.activationChance, 100))),
     requiredDamageType: String(feature.required_damage_type ?? feature.requiredDamageType ?? "").trim(),
-    attack: clone(feature.attack || {}),
+    attack: {
+      ...attack,
+      parry_default: attack.parry_default !== false,
+      block_default: attack.block_default !== false
+    },
     damage: clone(feature.damage || {})
   };
 }

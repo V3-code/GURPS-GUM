@@ -308,6 +308,22 @@ test("creates stable attack modes before applying matching attack features", () 
   assert.equal(Object.keys(result.meleeAttacks).length, 1);
   assert.equal(result.meleeAttacks.eqpmod_spike_create.mode, "Golpe com Espinho");
   assert.equal(result.meleeAttacks.eqpmod_spike_create.skill_level_mod, 1);
+  assert.equal(result.meleeAttacks.eqpmod_spike_create.parry_default, true);
+  assert.equal(result.meleeAttacks.eqpmod_spike_create.block_default, true);
+});
+
+test("preserves fixed defenses on created attack modes", () => {
+  const result = resolveEquipment({ cost: 1, weight: 1 }, [{ id: "shield", features_data: {
+    create: {
+      id: "create", type: "create_attack", attack_type: "melee",
+      attack: { mode: "Investida", parry: "11", block: "10", parry_default: false, block_default: false }
+    }
+  }}]);
+  const attack = result.meleeAttacks.eqpmod_shield_create;
+  assert.equal(attack.parry, "11");
+  assert.equal(attack.block, "10");
+  assert.equal(attack.parry_default, false);
+  assert.equal(attack.block_default, false);
 });
 
 test("defines follow-up and fragmentation damage on selected attacks", () => {

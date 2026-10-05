@@ -205,6 +205,9 @@ test("created attack editor exposes specialized melee and ranged statistics", ()
   for (const field of ["skill_level_mod", "min_strength", "parry", "block", "accuracy", "rof", "shots", "rcl"]) {
     assert.match(template, new RegExp(`features_data\\.\\{\\{feature\\.id\\}\\}\\.attack\\.${field}`));
   }
+  assert.match(template, /attack\.parry_default/);
+  assert.match(template, /attack\.block_default/);
+  assert.match(template, /Calcular pelo NH/);
   assert.match(itemSheet, /numeric_equipment_value/);
   assert.match(itemSheet, /numeric_attack_value/);
 });
@@ -227,6 +230,8 @@ test("equipment attack cards identify modes changed by resolved features", () =>
   assert.match(template, /equipmentRangedAttackChanges/);
   assert.match(template, /equipment-attack-resolution-tag/);
   assert.match(template, /equipment-created-attack-card/);
+  assert.match(template, /Bloqueio/);
+  assert.match(template, /Pelo NH/);
   assert.match(template, /Modos concedidos por modificadores/);
   assert.match(template, /fa-wrench/);
 });
@@ -237,4 +242,5 @@ test("resolved equipment summary uses its own modern panel", () => {
   assert.match(template, /equipment-resolution-card/);
   assert.doesNotMatch(template, /<div class="form-section" style="margin-top: 10px;">/);
   assert.match(styles, /\.equipment-resolution-header/);
+  assert.match(styles, /\.equipment-resolution-value\s*\{[^}]*justify-self:\s*center/s);
 });

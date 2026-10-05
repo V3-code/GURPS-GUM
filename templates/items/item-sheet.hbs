@@ -1687,9 +1687,14 @@
             <div class="form-grid-3">
               <div class="form-group"><label>Modificador de NH</label><input type="number" step="any" name="system.features_data.{{feature.id}}.attack.skill_level_mod" value="{{feature.attack.skill_level_mod}}"/></div>
               <div class="form-group"><label>ST mínima</label><input type="text" name="system.features_data.{{feature.id}}.attack.min_strength" value="{{feature.attack.min_strength}}"/></div>
-              {{#if (eq feature.attack_type "melee")}}<div class="form-group"><label>Aparar / Bloqueio</label><div class="equipment-feature-paired-input"><input type="text" aria-label="Aparar" name="system.features_data.{{feature.id}}.attack.parry" value="{{feature.attack.parry}}"/><input type="text" aria-label="Bloqueio" name="system.features_data.{{feature.id}}.attack.block" value="{{feature.attack.block}}"/></div></div>{{/if}}
               {{#if (eq feature.attack_type "ranged")}}<div class="form-group"><label>Precisão</label><input type="text" name="system.features_data.{{feature.id}}.attack.accuracy" value="{{feature.attack.accuracy}}"/></div>{{/if}}
             </div>
+            {{#if (eq feature.attack_type "melee")}}
+            <div class="form-grid-2">
+              <div class="form-group"><label>Aparar <i class="fas fa-circle-info" title="Com “Calcular pelo NH” ativo, usa a defesa padrão do sistema a partir do NH final do personagem. Desative para usar o valor fixo informado." aria-label="Ajuda sobre aparar"></i></label><div class="equipment-feature-defense-input"><input type="text" aria-label="Valor fixo de aparar" name="system.features_data.{{feature.id}}.attack.parry" value="{{feature.attack.parry}}" placeholder="Valor fixo"/><label class="equipment-toggle-pill"><input type="checkbox" name="system.features_data.{{feature.id}}.attack.parry_default" {{checked feature.attack.parry_default}}/><span>Calcular pelo NH</span></label></div></div>
+              <div class="form-group"><label>Bloqueio <i class="fas fa-circle-info" title="Com “Calcular pelo NH” ativo, usa a defesa padrão do sistema a partir do NH final do personagem. Desative para usar o valor fixo informado." aria-label="Ajuda sobre bloqueio"></i></label><div class="equipment-feature-defense-input"><input type="text" aria-label="Valor fixo de bloqueio" name="system.features_data.{{feature.id}}.attack.block" value="{{feature.attack.block}}" placeholder="Valor fixo"/><label class="equipment-toggle-pill"><input type="checkbox" name="system.features_data.{{feature.id}}.attack.block_default" {{checked feature.attack.block_default}}/><span>Calcular pelo NH</span></label></div></div>
+            </div>
+            {{/if}}
             {{#if (eq feature.attack_type "ranged")}}
             <div class="form-grid-3">
               <div class="form-group"><label>Cadência</label><input type="text" name="system.features_data.{{feature.id}}.attack.rof" value="{{feature.attack.rof}}"/></div>
@@ -2072,10 +2077,11 @@
              <div class="equipment-created-attacks" aria-label="Modos corpo a corpo criados por modificadores">
                <div class="equipment-created-attacks-heading"><i class="fas fa-wand-magic-sparkles"></i> Modos concedidos por modificadores</div>
                {{#each equipmentCreatedMeleeAttacks as |attack|}}
-               <article class="equipment-created-attack-card" title="{{attack.change.title}}">
+               <article class="equipment-created-attack-card equipment-created-attack-card-melee" title="{{attack.change.title}}">
                  <div class="equipment-created-attack-identity"><strong>{{attack.mode}}</strong><span>{{#if attack.skill_name}}{{attack.skill_name}}{{else}}Sem perícia{{/if}}</span></div>
                  <div class="equipment-created-attack-stat"><span>Dano</span><strong>{{attack.damage_formula}} {{attack.damage_type}}</strong></div>
-                 <div class="equipment-created-attack-stat"><span>Aparar</span><strong>{{attack.parry}}</strong></div>
+                 <div class="equipment-created-attack-stat"><span>Aparar</span><strong>{{#if attack.parry_default}}Pelo NH{{else}}{{attack.parry}}{{/if}}</strong></div>
+                 <div class="equipment-created-attack-stat"><span>Bloqueio</span><strong>{{#if attack.block_default}}Pelo NH{{else}}{{attack.block}}{{/if}}</strong></div>
                  <div class="equipment-created-attack-stat"><span>Alcance</span><strong>{{attack.reach}}</strong></div>
                  <span class="equipment-attack-resolution-tag"><i class="fas fa-plus"></i> Modo criado</span>
                </article>
