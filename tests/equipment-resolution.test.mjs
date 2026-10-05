@@ -6,6 +6,8 @@ import {
   describeEquipmentResolutionWarnings,
   describeEquipmentAttackChanges,
   describeEquipmentPropertyChanges,
+  equipmentLinkedReserve,
+  equipmentReserveBalanceUpdate,
   normalizeEquipmentModifier,
   parseEquipmentAdjustment,
   resolveEquipment
@@ -25,7 +27,7 @@ test("turns resolver warnings into source-aware diagnostics", () => {
 test("keeps legacy quantity consumption unless charge mode is explicit", () => {
   assert.deepEqual(buildEquipmentConsumptionUpdate({ quantity: 3, uses_mode: "quantity" }).updates, { "system.quantity": 2 });
   const result = resolveEquipment({ quantity: 3, max_uses: 5, current_uses: 1, uses_mode: "charges", cost: 0, weight: 0 });
-  assert.deepEqual(result.uses, { mode: "charges", baseMax: 5, max: 5, spent: 1, remaining: 4, consumeQuantityWhenEmpty: false });
+  assert.deepEqual(result.uses, { mode: "charges", baseMax: 5, max: 5, spent: 1, remaining: 4, consumeQuantityWhenEmpty: false, reserveType: "", reserveName: "", reserveScope: "any", modeFromModifier: false });
   assert.deepEqual(buildEquipmentConsumptionUpdate({ quantity: 3, max_uses: 5, current_uses: 1, uses_mode: "charges" }, result).updates, { "system.current_uses": 2 });
 });
 
@@ -49,6 +51,81 @@ test("max-use modifiers increase remaining charges while preserving spent charge
   }}]);
   assert.equal(result.uses.max, 5);
   assert.equal(result.uses.remaining, 4);
+});
+
+test("charge capacity modifier activates one equipment-backed reserve", () => {
+  const system = { quantity: 1, uses_mode: "quantity", max_uses: 3, current_uses: 1, cost: 500, weight: 1 };
+  const modifiers = [{ id: "power-item", features_data: {
+    reserve: { id: "reserve", type: "equipment_property", path: "max_uses", operation: "add", value: 2, reserve_type: "power", reserve_name: "Gem energy" }
+  }}];
+  const resolution = resolveEquipment(system, modifiers);
+  assert.equal(resolution.uses.mode, "charges");
+  assert.equal(resolution.uses.modeFromModifier, true);
+  assert.deepEqual(equipmentLinkedReserve({ id: "sword", name: "Sword", type: "equipment", _source: { system } }, resolution), {
+    equipmentId: "sword", type: "power", name: "Gem energy", source: "Sword", current: 4, max: 5, value: 4, dr: 0
+  });
+  assert.equal(equipmentLinkedReserve({ id: "sword", name: "Sword", type: "equipment", _source: { system: { ...system, quantity: 0 } } }, resolution), null);
+  assert.equal(equipmentLinkedReserve({ id: "sword", name: "Sword", type: "equipment", _source: { system } }), null);
+});
+
+test("equipment-backed resource follows spending and restoration without actor copies", () => {
+  const system = { quantity: 1, uses_mode: "charges", charge_reserve_type: "spell", max_uses: 4, current_uses: 0, cost: 0, weight: 0 };
+  const item = { id: "wand", name: "Wand", type: "equipment", _source: { system } };
+  assert.equal(equipmentLinkedReserve(item).current, 4);
+  assert.deepEqual(equipmentReserveBalanceUpdate(item, 3), { "system.current_uses": 1 });
+  assert.deepEqual(equipmentReserveBalanceUpdate(item, 99), { "system.current_uses": 0 });
+  const spent = buildEquipmentConsumptionUpdate(system, resolveEquipment(system));
+  system.current_uses = spent.updates["system.current_uses"];
+  assert.equal(equipmentLinkedReserve(item).current, 3);
+  system.current_uses = 0;
+  assert.equal(equipmentLinkedReserve(item).current, 4);
+});
+
+test("linked reserve follows equipment location and on/off visibility settings", () => {
+  const system = { quantity: 1, location: "carried", active: false, uses_mode: "charges", charge_reserve_type: "power", max_uses: 5, current_uses: 1, cost: 0, weight: 0 };
+  const item = { id: "amulet", name: "Amulet", type: "equipment", _source: { system } };
+  for (const [scope, location, active, expected] of [
+    ["any", "stored", false, true],
+    ["carried", "carried", false, true],
+    ["carried", "equipped", false, true],
+    ["carried", "stored", false, false],
+    ["equipped", "equipped", false, true],
+    ["equipped", "carried", false, false],
+    ["stored", "stored", false, true],
+    ["stored", "equipped", false, false],
+    ["active", "carried", true, true],
+    ["active", "equipped", false, false]
+  ]) {
+    Object.assign(system, { charge_reserve_scope: scope, location, active });
+    assert.equal(Boolean(equipmentLinkedReserve(item)), expected, `${scope} / ${location} / active=${active}`);
+  }
+});
+
+test("setting charge capacity inherits resource settings unless explicitly overridden", () => {
+  const system = { quantity: 1, location: "carried", uses_mode: "charges", charge_reserve_type: "power", charge_reserve_name: "Base energy", charge_reserve_scope: "equipped", max_uses: 3, current_uses: 1, cost: 0, weight: 0 };
+  const item = { id: "gem", name: "Gem", type: "equipment", _source: { system } };
+  const feature = { id: "capacity", type: "equipment_property", path: "max_uses", operation: "set", value: 8 };
+  const modifiers = [{ id: "enchantment", features_data: { capacity: feature } }];
+  const inherited = resolveEquipment(system, modifiers);
+  assert.equal(inherited.uses.max, 8);
+  assert.equal(inherited.uses.remaining, 7);
+  assert.equal(inherited.uses.reserveType, "power");
+  assert.equal(inherited.uses.reserveName, "Base energy");
+  assert.equal(inherited.uses.reserveScope, "equipped");
+  assert.equal(equipmentLinkedReserve(item, inherited), null);
+
+  Object.assign(feature, { reserve_type: "spell", reserve_name: "New energy", reserve_scope: "carried" });
+  const overridden = resolveEquipment(system, modifiers);
+  assert.equal(overridden.uses.reserveType, "spell");
+  assert.equal(overridden.uses.reserveName, "New energy");
+  assert.equal(overridden.uses.reserveScope, "carried");
+  assert.equal(equipmentLinkedReserve(item, overridden).current, 7);
+
+  feature.reserve_type = "none";
+  const disabled = resolveEquipment(system, modifiers);
+  assert.equal(disabled.uses.max, 8);
+  assert.equal(disabled.uses.reserveType, "");
+  assert.equal(equipmentLinkedReserve(item, disabled), null);
 });
 
 test("describes changed attack fields without replacing base sheet data", () => {

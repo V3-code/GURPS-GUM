@@ -445,6 +445,9 @@
         "max_uses": 0,
         "current_uses": 0,
         "uses_mode": "quantity",
+        "charge_reserve_type": "",
+        "charge_reserve_name": "",
+        "charge_reserve_scope": "any",
         "consume_quantity_when_empty": false,
         "descriptors": [],
         "eqp_modifiers": {}

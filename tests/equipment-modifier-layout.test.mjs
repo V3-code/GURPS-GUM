@@ -54,7 +54,7 @@ test("equipment modifier organization is consolidated in adjustments", () => {
   assert.match(adjustmentTab, /name="system\.level"/);
   assert.match(adjustmentTab, /name="system\.tech_level"/);
   assert.match(adjustmentTab, /name="system\.points"/);
-  assert.match(adjustmentTab, /Unidade por peso/);
+  assert.match(adjustmentTab, /GUM\.EquipmentModifier\.Fields\.WeightUnit/);
   assert.doesNotMatch(styles, /\.eqp-field-card/);
   assert.doesNotMatch(adjustmentTab, /eqp-adjustment-summary/);
   assert.match(adjustmentTab, /GUM\.EquipmentModifier\.Fields\.PrimaryMaterial/);
@@ -86,9 +86,9 @@ test("equipment modifier instances expose enabled, level and resolved totals", (
   assert.match(template, /system\.eqp_modifiers\.\{\{mod\.id\}\}\.level/);
   assert.match(template, /GUM\.Equipment\.Modifiers\.Result/);
   assert.match(template, /equipmentResolutionWarnings\.length/);
-  assert.match(template, /Memória do preço/);
-  assert.match(template, /Memória do peso/);
-  assert.match(template, /Avisos da resolução/);
+  assert.match(template, /GUM\.Equipment\.Modifiers\.PriceTrace/);
+  assert.match(template, /GUM\.Equipment\.Modifiers\.WeightTrace/);
+  assert.match(template, /GUM\.Equipment\.Modifiers\.Warnings/);
   assert.match(itemSheet, /describeEquipmentResolutionWarnings\(resolution\.warnings\)/);
 });
 
@@ -98,15 +98,15 @@ test("equipment details distinguish base and feature-resolved property values", 
     assert.match(template, new RegExp(`equipmentPropertyChanges\\.${property}\\.changed`));
     assert.match(template, new RegExp(`equipmentPropertyChanges\\.${property}\\.final`));
   }
-  assert.match(template, /Memória das features/);
+  assert.match(template, /GUM\.Equipment\.Modifiers\.FeatureTrace/);
   assert.match(template, /step\.input/);
   assert.match(template, /step\.output/);
   assert.match(template, /fa-arrow-right/);
 });
 
 test("resolved equipment defense values reach their existing runtime consumers", () => {
-  assert.match(itemSheet, /id: "defense_bonus", label: "Bônus de Defesa"/);
-  assert.match(itemSheet, /id: "equip_time", label: "Tempo para vestir\/equipar"/);
+  assert.match(itemSheet, /id: "defense_bonus", label: game\.i18n\.localize\("GUM\.Equipment\.Label\.DefenseBonus"\)/);
+  assert.match(itemSheet, /id: "equip_time", label: game\.i18n\.localize\("GUM\.EquipmentModifier\.Properties\.EquipTime"\)/);
   assert.match(main, /for \(const \[path, value\] of Object\.entries\(resolution\.properties\)\)/);
   assert.match(template, /equipmentPropertyChanges\.defense_bonus\.final/);
   assert.match(template, /equipmentPropertyChanges\.equip_time\.final/);
@@ -117,6 +117,11 @@ test("equipment uses distinguish legacy quantity consumption from explicit charg
   assert.match(template, /name="system\.max_uses"/);
   assert.match(template, /name="system\.current_uses"/);
   assert.match(template, /name="system\.consume_quantity_when_empty"/);
+  assert.match(template, /name="system\.charge_reserve_type"/);
+  assert.match(template, /name="system\.charge_reserve_scope"/);
+  assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.reserve_type/);
+  assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.reserve_scope/);
+  assert.match(template, /GUM\.Equipment\.Reserve\.Visibility/);
   assert.match(template, /equipmentUses\.remaining/);
   assert.match(main, /effectiveUsesRemaining = resolution\.uses\.remaining/);
   assert.match(actorSheet, /buildEquipmentConsumptionUpdate\(item\.system, resolution\)/);
@@ -135,7 +140,7 @@ test("equipment modifiers author and display cumulative decoration descriptors",
 
 test("text properties use cumulative semantics and descriptors appear in description", () => {
   assert.match(itemSheet, /cumulative_text_equipment_value: \["material", "quality"\]/);
-  assert.match(template, /Descritores se acumulam/);
+  assert.match(template, /GUM\.EquipmentModifier\.Hint\.Descriptor/);
   const descriptionStart = template.indexOf('data-tab="description"');
   const descriptorStart = template.indexOf("equipment-descriptors-section");
   assert.ok(descriptorStart > descriptionStart);
@@ -168,8 +173,7 @@ test("equipment active toggle explains its limited lifecycle purpose", () => {
   assert.match(template, /GUM\.Equipment\.Label\.Active/);
   assert.match(template, /equipment-operational-toggle/);
   assert.match(template, /equipment-toggle-pill/);
-  assert.match(template, /efeitos com ciclo de vida Enquanto ativado/);
-  assert.match(template, /não substitui os estados Carregado ou Equipado/);
+  assert.match(template, /GUM\.Equipment\.Label\.ActiveHint/);
   assert.match(template, /equipment-consume-toggle/);
   assert.doesNotMatch(template, /No modo Quantidade, “Consumir \/ Usar”/);
 });

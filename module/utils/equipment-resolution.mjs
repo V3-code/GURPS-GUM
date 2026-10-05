@@ -59,9 +59,10 @@ export function describeEquipmentAttackChanges(baseAttacks = {}, resolvedAttacks
     const changed = base === undefined || JSON.stringify(base) !== JSON.stringify(resolved);
     if (changed && labels.length === 0) labels.push("alterado por modificador");
     const uniqueLabels = [...new Set(labels)];
-    const valueSummary = matchingSteps
+    const valueParts = matchingSteps
       .filter(step => step.path)
-      .map(step => `${ATTACK_CHANGE_LABELS[step.path] || step.path}: ${formatAttackChangeValue(step.output)}`);
+      .map(step => ({ path: step.path, value: formatAttackChangeValue(step.output) }));
+    const valueSummary = valueParts.map(part => `${ATTACK_CHANGE_LABELS[part.path] || part.path}: ${part.value}`);
     const sources = [...new Set(matchingSteps.map(step => step.sourceName).filter(Boolean))];
     const sourcePrefix = sources.length ? `Modificado por ${sources.join(", ")}: ` : "Modificado: ";
     return [attackId, {
@@ -69,6 +70,7 @@ export function describeEquipmentAttackChanges(baseAttacks = {}, resolvedAttacks
       created: base === undefined,
       labels: uniqueLabels,
       sources,
+      valueParts,
       summary: uniqueLabels.join(", "),
       displaySummary: valueSummary.join(" · ") || uniqueLabels.join(", "),
       title: uniqueLabels.length ? `${sourcePrefix}${uniqueLabels.join(", ")}` : ""
@@ -228,6 +230,9 @@ export function normalizeEquipmentFeature(feature = {}, index = 0) {
     value: feature.value ?? 0,
     perLevel: feature.per_level === true || feature.perLevel === true,
     path: String(feature.path || (type === "attack_property" ? "damage_formula" : "item_dr")),
+    reserveType: ["none", "combat", "power", "spell"].includes(feature.reserve_type ?? feature.reserveType) ? (feature.reserve_type ?? feature.reserveType) : "",
+    reserveName: String(feature.reserve_name ?? feature.reserveName ?? "").trim(),
+    reserveScope: ["any", "carried", "equipped", "stored", "active"].includes(feature.reserve_scope ?? feature.reserveScope) ? (feature.reserve_scope ?? feature.reserveScope) : "",
     location: String(feature.location || "all").trim(),
     damageType: String(feature.damage_type ?? feature.damageType ?? "base").trim() || "base",
     damageSlot: ["follow_up_damage", "fragmentation_damage"].includes(feature.damage_slot || feature.damageSlot) ? (feature.damage_slot || feature.damageSlot) : "follow_up_damage",
@@ -429,6 +434,10 @@ function resolveFeatures(equipment, modifiers, warnings) {
   const descriptors = (Array.isArray(equipment.descriptors) ? clone(equipment.descriptors) : [])
     .map((descriptor, index) => typeof descriptor === "string" ? { id: `base-${index}`, kind: "tag", value: descriptor, sourceName: "Equipamento-base" } : descriptor);
   const overrides = new Map();
+  let chargeReserveType = ["combat", "power", "spell"].includes(equipment.charge_reserve_type) ? equipment.charge_reserve_type : "";
+  let chargeReserveName = String(equipment.charge_reserve_name ?? "").trim();
+  let chargeReserveScope = ["any", "carried", "equipped", "stored", "active"].includes(equipment.charge_reserve_scope) ? equipment.charge_reserve_scope : "any";
+  let chargeModeFromModifier = false;
   const operationOrder = { set: 1, multiply: 2, add: 3 };
   const tasks = modifiers
     .filter(modifier => modifier.enabled)
@@ -515,6 +524,14 @@ function resolveFeatures(equipment, modifiers, warnings) {
         if (feature.operation === "set" && overrides.has(overrideKey)) warnings.push({ type: "conflicting_feature_override", domain: "equipment", path: feature.path, sources: [overrides.get(overrideKey), modifier.id] });
         if (feature.operation === "set") overrides.set(overrideKey, modifier.id);
         properties[feature.path] = output;
+        if (feature.path === "max_uses") {
+          if (feature.reserveType) {
+            chargeReserveType = feature.reserveType === "none" ? "" : feature.reserveType;
+            chargeModeFromModifier = feature.reserveType !== "none";
+          }
+          if (feature.reserveName) chargeReserveName = feature.reserveName;
+          if (feature.reserveScope) chargeReserveScope = feature.reserveScope;
+        }
         steps.push({ type: feature.type, sourceId: modifier.id, sourceName: modifier.name, featureId: feature.id, label: feature.label, path: feature.path, input, output });
         continue;
       }
@@ -622,7 +639,7 @@ function resolveFeatures(equipment, modifiers, warnings) {
         if (!matches) warnings.push({ type: "feature_no_match", domain: "attack", sourceId: modifier.id, featureId: feature.id, selectorField: feature.selectorField, selectorValue: feature.selectorValue });
       }
   }
-  return { properties, descriptors, drLocations, meleeAttacks, rangedAttacks, grantedEffects, steps };
+  return { properties, descriptors, drLocations, meleeAttacks, rangedAttacks, grantedEffects, steps, chargeReserveType, chargeReserveName, chargeReserveScope, chargeModeFromModifier };
 }
 
 export function resolveEquipmentUses(equipment = {}, resolvedProperties = {}) {
@@ -638,6 +655,43 @@ export function resolveEquipmentUses(equipment = {}, resolvedProperties = {}) {
     remaining: Math.max(0, finalMax - spent),
     consumeQuantityWhenEmpty: equipment.consume_quantity_when_empty === true
   };
+}
+
+/** Present an embedded equipment's charges as an actor resource without copying its state. */
+export function equipmentLinkedReserve(item, resolution = null) {
+  if (!item || item.type !== "equipment") return null;
+  const system = item._source?.system || item.system || {};
+  const resolved = resolution || resolveEquipment(system);
+  const uses = resolved.uses;
+  if (uses?.mode !== "charges" || uses.max <= 0 || !["combat", "power", "spell"].includes(uses.reserveType)) return null;
+  if (Math.max(0, number(system.quantity, 1)) <= 0) return null;
+  const location = String(system.location || "").toLowerCase();
+  const visible = {
+    any: true,
+    carried: location === "carried" || location === "equipped" || system.equipped === true,
+    equipped: location === "equipped" || system.equipped === true,
+    stored: location === "stored" || system.stored === true,
+    active: system.active === true || system.switched_on === true
+  };
+  if (!visible[uses.reserveScope] && uses.reserveScope !== "any") return null;
+  return {
+    equipmentId: item.id,
+    type: uses.reserveType,
+    name: uses.reserveName || item.name,
+    source: item.name,
+    current: uses.remaining,
+    max: uses.max,
+    value: uses.remaining,
+    dr: 0
+  };
+}
+
+/** Convert a linked resource's available balance back to the equipment's spent-charge field. */
+export function equipmentReserveBalanceUpdate(item, available, resolution = null) {
+  const reserve = equipmentLinkedReserve(item, resolution);
+  if (!reserve) return null;
+  const current = Math.max(0, Math.min(reserve.max, number(available)));
+  return { "system.current_uses": reserve.max - current };
 }
 
 /** Return persistence updates for one successful use without mutating the item. */
@@ -680,6 +734,11 @@ export function resolveEquipment(equipment = {}, rawModifiers = equipment.eqp_mo
   const cost = resolveCost(equipment.cost, weight.unitFinal, modifiers, warnings);
   const featureResolution = resolveFeatures(equipment, modifiers, warnings);
   const uses = resolveEquipmentUses(equipment, featureResolution.properties);
+  if (featureResolution.chargeModeFromModifier) uses.mode = "charges";
+  uses.reserveType = featureResolution.chargeReserveType;
+  uses.reserveName = featureResolution.chargeReserveName;
+  uses.reserveScope = featureResolution.chargeReserveScope;
+  uses.modeFromModifier = featureResolution.chargeModeFromModifier;
 
   weight.extendedFinal = roundForOutput(weight.unitFinal * quantity);
   cost.extendedFinal = roundForOutput(cost.unitFinal * quantity);

@@ -758,7 +758,7 @@
         {{/each}}
 
        {{#each spellReserves}}
-        <article class="support-card support-reserve-card support-card--category-start energy-reserve-card energy-reserve-card--spell{{#if @first}} is-first-reserve{{/if}}" data-reserve-id="{{@key}}" data-reserve-type="spell" title="{{this.name}} — {{this.current}} de {{this.max}}" aria-label="Reserva de magia {{this.name}}: valor atual {{this.current}}, máximo {{this.max}}">
+        <article class="support-card support-reserve-card support-card--category-start energy-reserve-card energy-reserve-card--spell{{#if @first}} is-first-reserve{{/if}}" data-reserve-id="{{@key}}" data-reserve-type="spell" {{#if this.equipmentId}}data-equipment-id="{{this.equipmentId}}"{{/if}} title="{{this.name}} — {{this.current}} de {{this.max}}" aria-label="Reserva de magia {{this.name}}: valor atual {{this.current}}, máximo {{this.max}}">
           <span class="support-card__icon support-card__icon--spell"><i class="fas fa-magic" aria-hidden="true"></i></span>
           <div class="support-card__body">
             <strong class="support-card__name energy-reserve-name">{{this.name}}</strong>
@@ -773,8 +773,8 @@
             <div class="gum-action-menu js-action-menu">
               <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da reserva" aria-label="Opções da reserva" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
               <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da reserva">
-                <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>Editar</span></a>
-                <a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>Excluir</span></a>
+                <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{#if this.equipmentId}}{{localize "GUM.Equipment.Reserve.OpenEquipment"}}{{else}}Editar{{/if}}</span></a>
+                {{#unless this.equipmentId}}<a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>Excluir</span></a>{{/unless}}
               </div>
             </div>
           </div>
@@ -937,7 +937,7 @@
         </article>
         {{/each}}
         {{#each powerReserves}}
-        <article class="support-card support-reserve-card support-card--category-start energy-reserve-card energy-reserve-card--power{{#if @first}} is-first-reserve{{/if}}" data-reserve-id="{{@key}}" data-reserve-type="power" title="{{this.name}} — {{this.current}} de {{this.max}}" aria-label="Reserva de poder {{this.name}}: valor atual {{this.current}}, máximo {{this.max}}">
+        <article class="support-card support-reserve-card support-card--category-start energy-reserve-card energy-reserve-card--power{{#if @first}} is-first-reserve{{/if}}" data-reserve-id="{{@key}}" data-reserve-type="power" {{#if this.equipmentId}}data-equipment-id="{{this.equipmentId}}"{{/if}} title="{{this.name}} — {{this.current}} de {{this.max}}" aria-label="Reserva de poder {{this.name}}: valor atual {{this.current}}, máximo {{this.max}}">
           <span class="support-card__icon support-card__icon--power"><i class="fas fa-bolt" aria-hidden="true"></i></span>
           <div class="support-card__body">
             <strong class="support-card__name energy-reserve-name">{{this.name}}</strong>
@@ -952,8 +952,8 @@
             <div class="gum-action-menu js-action-menu">
               <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da reserva" aria-label="Opções da reserva" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
               <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da reserva">
-                <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>Editar</span></a>
-                <a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>Excluir</span></a>
+                <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{#if this.equipmentId}}{{localize "GUM.Equipment.Reserve.OpenEquipment"}}{{else}}Editar{{/if}}</span></a>
+                {{#unless this.equipmentId}}<a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>Excluir</span></a>{{/unless}}
               </div>
             </div>
           </div>
@@ -1163,7 +1163,7 @@
                           <span class="equip-stat-tag">x{{this.system.quantity}}</span>
                           <span class="equip-stat-tag">{{this.system.total_weight}} kg</span>
                           {{#if this.system.dr}}<span class="equip-stat-tag shield-tag">RD {{this.system.dr}}</span>{{/if}}
-                          {{#if (eq this.system.uses_mode "charges")}}<span class="equip-stat-tag" title="Cargas restantes">{{this.system.effectiveUsesRemaining}}/{{this.system.effectiveUsesMax}} cargas</span>{{/if}}
+                          {{#if (eq this.system.equipmentResolution.uses.mode "charges")}}<span class="equip-stat-tag" title="{{localize 'GUM.Equipment.Label.Remaining'}}">{{this.system.effectiveUsesRemaining}}/{{this.system.effectiveUsesMax}} {{localize "GUM.Equipment.Label.Charges"}}</span>{{/if}}
                       </div>
                       <div class="item-controls">
                         <a class="item-control active" title="Em Uso"><i class="fas fa-tshirt" style="color: #389c68;"></i></a>
@@ -1563,7 +1563,7 @@
               <div class="group-content combat-meter-group-content">
                 <div class="combat-meter-grid">
                   {{#each preparedCombatMeters}}
-                    <article class="meter-card combat-meter-card" data-meter-id="{{this.id}}" title="{{this.meter.name}} — referência {{this.meter.max}}, RD {{this.meter.dr}}" aria-label="Registro {{this.meter.name}}: valor {{this.meter.current}}, referência {{this.meter.max}}, RD {{this.meter.dr}}">
+                    <article class="meter-card combat-meter-card" data-meter-id="{{this.id}}" {{#if this.meter.equipmentId}}data-equipment-id="{{this.meter.equipmentId}}"{{/if}} title="{{this.meter.name}} — referência {{this.meter.max}}" aria-label="Registro {{this.meter.name}}: valor {{this.meter.current}}, referência {{this.meter.max}}">
                       <header class="combat-meter-card-header">
                         <i class="fas fa-clipboard-list combat-meter-icon" aria-hidden="true"></i>
                         <strong class="combat-meter-name">{{this.meter.name}}</strong>
@@ -1571,8 +1571,8 @@
                           <div class="gum-action-menu js-action-menu">
                             <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções do registro" aria-label="Opções do registro" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
                             <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações do registro">
-                              <a class="item-control edit-combat-meter gum-action-menu__item" role="menuitem" title="Editar"><i class="fas fa-edit"></i><span>Editar</span></a>
-                              <a class="item-control delete-combat-meter gum-action-menu__item is-danger" role="menuitem" title="Excluir"><i class="fas fa-trash"></i><span>Excluir</span></a>
+                              <a class="item-control edit-combat-meter gum-action-menu__item" role="menuitem" title="{{#if this.meter.equipmentId}}{{localize 'GUM.Equipment.Reserve.OpenEquipment'}}{{else}}Editar{{/if}}"><i class="fas fa-edit"></i><span>{{#if this.meter.equipmentId}}{{localize "GUM.Equipment.Reserve.OpenEquipment"}}{{else}}Editar{{/if}}</span></a>
+                              {{#unless this.meter.equipmentId}}<a class="item-control delete-combat-meter gum-action-menu__item is-danger" role="menuitem" title="Excluir"><i class="fas fa-trash"></i><span>Excluir</span></a>{{/unless}}
                             </div>
                           </div>
                         </div>
@@ -1582,7 +1582,7 @@
                         <strong class="combat-meter-value" aria-label="Valor atual: {{this.meter.current}}">{{this.meter.current}}</strong>
                         <button type="button" class="adjust-combat-meter combat-meter-adjust" data-adjustment="1" title="Aumentar valor em uma unidade" aria-label="Aumentar {{this.meter.name}} em uma unidade"><i class="fas fa-plus" aria-hidden="true"></i></button>
                       </div>
-                      <div class="combat-meter-meta" aria-hidden="true"><span>ref. <strong>{{this.meter.max}}</strong></span><span class="combat-meter-meta-separator">·</span><span>RD <strong>{{this.meter.dr}}</strong></span></div>
+                      <div class="combat-meter-meta" aria-hidden="true"><span>ref. <strong>{{this.meter.max}}</strong></span>{{#if this.meter.equipmentId}}<span class="combat-meter-meta-separator">·</span><span>{{this.meter.source}}</span>{{else}}<span class="combat-meter-meta-separator">·</span><span>RD <strong>{{this.meter.dr}}</strong></span>{{/if}}</div>
                     </article>
                   {{else}}<div class="placeholder-text combat-meter-placeholder">Nenhum registro criado.</div>{{/each}}
                 </div>

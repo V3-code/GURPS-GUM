@@ -16,7 +16,7 @@ import { canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
 import { contentSourceService } from "../services/content-source-service.mjs";
 import { attachSheetItemOrganizer } from "../services/sheet-item-organizer.mjs";
 import { buildEquipmentSortUpdates, resolveEquipmentDrop } from "../utils/equipment-drop.mjs";
-import { buildEquipmentConsumptionUpdate, resolveEquipment } from "../utils/equipment-resolution.mjs";
+import { buildEquipmentConsumptionUpdate, equipmentLinkedReserve, equipmentReserveBalanceUpdate, resolveEquipment } from "../utils/equipment-resolution.mjs";
 import { UNGROUPED_ORGANIZER_ID, addItemOrganizationGroup, buildItemCategoryGroupPlan, createGroupsFromItemCategories, moveOrganizedItem, normalizeItemOrganization, removeItemOrganizationGroup, renameItemOrganizationGroup } from "../utils/item-organization.mjs";
 
 const WOUND_NATURE_ICONS = Object.freeze({
@@ -1093,6 +1093,13 @@ async getData(options) {
                         return { id, meter: normalized };
                     });
 
+                const linkedEquipmentReserves = this.actor.items
+                    .filter(item => item.type === "equipment")
+                    .map(item => equipmentLinkedReserve(item, item.system?.equipmentResolution))
+                    .filter(Boolean);
+                for (const reserve of linkedEquipmentReserves.filter(entry => entry.type === "combat")) {
+                    preparedCombatMeters.push({ id: `equipment-${reserve.equipmentId}`, meter: reserve });
+                }
                 preparedCombatMeters.sort((a, b) => a.meter.name.localeCompare(b.meter.name));
 
                 context.preparedCombatMeters = preparedCombatMeters;
@@ -1102,6 +1109,10 @@ async getData(options) {
  
                 context.spellReserves = this._normalizeResourceCollection(context.actor.system.spell_reserves || {}, { defaultName: "Reserva de Magia" });
                 context.powerReserves = this._normalizeResourceCollection(context.actor.system.power_reserves || {}, { defaultName: "Reserva de Poder" });
+                for (const reserve of linkedEquipmentReserves) {
+                    if (reserve.type === "spell") context.spellReserves[`equipment-${reserve.equipmentId}`] = reserve;
+                    if (reserve.type === "power") context.powerReserves[`equipment-${reserve.equipmentId}`] = reserve;
+                }
                 context.spellReserveCount = Object.keys(context.spellReserves).length;
                 context.powerReserveCount = Object.keys(context.powerReserves).length;
                 context.castingAbilities = this._prepareCastingAbilities();
@@ -4986,6 +4997,8 @@ async _onAddCombatMeter(ev) {
 
 async _onEditCombatMeter(ev) {
   ev.preventDefault();
+  const equipmentId = ev.currentTarget.closest(".meter-card")?.dataset?.equipmentId;
+  if (equipmentId) return this.actor.items.get(equipmentId)?.sheet?.render(true);
   const meterId = ev.currentTarget.closest(".meter-card")?.dataset?.meterId;
   if (!meterId) return;
 
@@ -5065,6 +5078,8 @@ async _onAdjustWound(ev) {
 async _onAdjustCombatMeter(ev) {
   ev.preventDefault();
   ev.stopPropagation();
+  const equipmentId = ev.currentTarget.closest(".meter-card")?.dataset?.equipmentId;
+  if (equipmentId) return this._adjustEquipmentReserve(equipmentId, Number(ev.currentTarget.dataset.adjustment) || 0);
   const meterId = ev.currentTarget.closest(".meter-card")?.dataset?.meterId;
   const meter = this.actor.system.combat.combat_meters?.[meterId];
   if (!meterId || !meter) return;
@@ -5171,6 +5186,8 @@ async _onAddEnergyReserve(ev) {
 async _onEditEnergyReserve(ev) {
   ev.preventDefault();
     ev.stopPropagation();
+  const equipmentId = ev.currentTarget.closest("[data-reserve-id][data-reserve-type]")?.dataset?.equipmentId;
+  if (equipmentId) return this.actor.items.get(equipmentId)?.sheet?.render(true);
   const card = ev.currentTarget.closest("[data-reserve-id][data-reserve-type]");
   const reserveId = card?.dataset?.reserveId;
   const reserveType = card?.dataset?.reserveType === "power" ? "power" : "spell";
@@ -5206,6 +5223,7 @@ async _onAdjustEnergyReserve(ev) {
   ev.preventDefault();
   ev.stopPropagation();
   const card = ev.currentTarget.closest("[data-reserve-id][data-reserve-type]");
+  if (card?.dataset?.equipmentId) return this._adjustEquipmentReserve(card.dataset.equipmentId, Number(ev.currentTarget.dataset.adjustment) || 0);
   const reserveId = card?.dataset?.reserveId;
   const reserveType = card?.dataset?.reserveType === "power" ? "power" : "spell";
   const adjustment = Number(ev.currentTarget.dataset.adjustment) || 0;
@@ -5222,6 +5240,16 @@ async _onAdjustEnergyReserve(ev) {
     [`${pathBase}.current`]: value,
     [`${pathBase}.value`]: value
   });
+}
+
+async _adjustEquipmentReserve(equipmentId, adjustment) {
+  const item = this.actor.items.get(equipmentId);
+  if (!item || !adjustment) return;
+  const reserve = equipmentLinkedReserve(item, item.system?.equipmentResolution);
+  if (!reserve) return;
+  const nextCurrent = Math.max(0, Math.min(reserve.max, reserve.current + adjustment));
+  if (nextCurrent === reserve.current) return;
+  await item.update(equipmentReserveBalanceUpdate(item, nextCurrent, item.system?.equipmentResolution));
 }
 
 async _promptEnergyReserveData(reserveType, initialData = {}, { isEdit = false } = {}) {

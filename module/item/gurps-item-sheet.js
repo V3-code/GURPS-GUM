@@ -11,7 +11,20 @@ import { getSkillDisplayName } from "../utils/skill-display-name.mjs";
 import { describeEquipmentAttackChanges, describeEquipmentPropertyChanges, describeEquipmentResolutionWarnings, normalizeEquipmentModifier, parseEquipmentAdjustment, resolveEquipment } from "../utils/equipment-resolution.mjs";
  
 const { ItemSheet } = foundry.appv1.sheets; 
-const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor; 
+const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
+
+function localizeEquipmentLocation(option) {
+    if (!String(game.i18n.lang || "").startsWith("en")) return option;
+    const match = String(option.name || "").match(/^(ex-)?(.+?)(?:\s+([ED])(\d+)|\s+(\d+))?$/);
+    if (!match) return option;
+    const key = `GUM.Equipment.Location.${match[2].normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "")}`;
+    const root = game.i18n.localize(key);
+    if (root === key) return option;
+    const side = match[3] === "E" ? " L" : match[3] === "D" ? " R" : "";
+    const number = match[4] || match[5] || "";
+    const name = `${match[1] ? "Extra " : ""}${root}${side}${number ? (side ? number : ` ${number}`) : ""}`;
+    return { ...option, name, label: name };
+}
  
 const ROLL_CONTEXT_OPTIONS = [ 
     { id: "all", label: "Qualquer rolagem" }, 
@@ -405,8 +418,28 @@ _promptMultipleReferences(parsedList) {
             context.equipmentResolution = resolution;
             context.equipmentUses = resolution.uses;
             context.equipmentPropertyChanges = describeEquipmentPropertyChanges(baseEquipmentSystem, resolution.properties);
-            const meleeAttackChanges = describeEquipmentAttackChanges(baseEquipmentSystem.melee_attacks, resolution.meleeAttacks, resolution.steps, "melee");
-            const rangedAttackChanges = describeEquipmentAttackChanges(baseEquipmentSystem.ranged_attacks, resolution.rangedAttacks, resolution.steps, "ranged");
+            const attackFieldKeys = {
+                damage_formula: "GUM.Equipment.Attacks.Damage", damage_type: "GUM.EquipmentModifier.Properties.DamageType",
+                damage_nature: "GUM.EquipmentModifier.Properties.DamageNature", armor_divisor: "GUM.Equipment.Attacks.ArmorDivisor",
+                skill_level_mod: "GUM.Equipment.Attacks.SkillModifier", min_strength: "GUM.Equipment.Attacks.MinimumStrength",
+                reach: "GUM.Equipment.Attacks.Reach", parry: "GUM.Equipment.Attacks.Parry", block: "GUM.Equipment.Attacks.Block",
+                accuracy: "GUM.Equipment.Attacks.Accuracy", range: "GUM.Equipment.Attacks.Distance",
+                rof: "GUM.EquipmentModifier.Properties.RateOfFire", shots: "GUM.EquipmentModifier.Properties.Shots",
+                rcl: "GUM.EquipmentModifier.Properties.Recoil", mag: "GUM.EquipmentModifier.Properties.Magnitude",
+                follow_up_damage: "GUM.Equipment.Attacks.FollowUp", fragmentation_damage: "GUM.Equipment.Attacks.Fragmentation",
+                groups: "GUM.Equipment.Attacks.Groups"
+            };
+            const localizeAttackChanges = changes => Object.fromEntries(Object.entries(changes).map(([id, change]) => {
+                const displaySummary = change.valueParts.length
+                    ? change.valueParts.map(part => `${game.i18n.localize(attackFieldKeys[part.path] || part.path)}: ${part.value}`).join(" · ")
+                    : game.i18n.localize("GUM.Equipment.Attacks.ModeCreated");
+                const title = change.sources.length
+                    ? game.i18n.format("GUM.Equipment.Attacks.ModifiedBy", { sources: change.sources.join(", ") })
+                    : game.i18n.localize("GUM.Equipment.Attacks.Modified");
+                return [id, { ...change, displaySummary, title }];
+            }));
+            const meleeAttackChanges = localizeAttackChanges(describeEquipmentAttackChanges(baseEquipmentSystem.melee_attacks, resolution.meleeAttacks, resolution.steps, "melee"));
+            const rangedAttackChanges = localizeAttackChanges(describeEquipmentAttackChanges(baseEquipmentSystem.ranged_attacks, resolution.rangedAttacks, resolution.steps, "ranged"));
             const createdAttackCards = (attacks, changes) => Object.entries(attacks || {})
                 .filter(([id]) => changes[id]?.created)
                 .map(([id, attack]) => ({ id, ...attack, change: changes[id] }));
@@ -415,11 +448,26 @@ _promptMultipleReferences(parsedList) {
             context.equipmentCreatedMeleeAttacks = createdAttackCards(resolution.meleeAttacks, meleeAttackChanges);
             context.equipmentCreatedRangedAttacks = createdAttackCards(resolution.rangedAttacks, rangedAttackChanges);
             context.equipmentFeatureSteps = resolution.steps;
-            const stageLabels = { original: "Original", base: "Base", final_base: "Base final", final: "Final" };
-            const describeCalculationSteps = steps => steps.map(step => ({ ...step, stageLabel: stageLabels[step.stage] || step.stage }));
+            const stageLabels = { original: "GUM.EquipmentModifier.Stages.Original", base: "GUM.EquipmentModifier.Stages.Base", final_base: "GUM.EquipmentModifier.Stages.FinalBase", final: "GUM.EquipmentModifier.Stages.Final" };
+            const describeCalculationSteps = steps => steps.map(step => ({ ...step, stageLabel: stageLabels[step.stage] ? game.i18n.localize(stageLabels[step.stage]) : step.stage }));
             context.equipmentCostSteps = describeCalculationSteps(resolution.cost.steps);
             context.equipmentWeightSteps = describeCalculationSteps(resolution.weight.steps);
-            context.equipmentResolutionWarnings = describeEquipmentResolutionWarnings(resolution.warnings);
+            context.equipmentResolutionWarnings = describeEquipmentResolutionWarnings(resolution.warnings).map(warning => {
+                const keys = {
+                    invalid_expression: "InvalidExpression", unsupported_operation: "UnsupportedOperation",
+                    unsupported_feature_path: "UnsupportedPath", feature_no_match: "NoMatch",
+                    conflicting_feature_override: "ConflictingOverride", missing_effect_uuid: "MissingEffect",
+                    missing_descriptor_value: "MissingDescriptor"
+                };
+                const key = `GUM.Equipment.Warning.${keys[warning.type] || "Generic"}`;
+                return {
+                    ...warning,
+                    source: warning.source === "Modificador desconhecido" ? game.i18n.localize("GUM.Equipment.Warning.UnknownSource") : warning.source,
+                    message: game.i18n.format(key, {
+                        value: warning.expression || warning.operation || warning.path || warning.selectorValue || "—"
+                    })
+                };
+            });
             context.calculatedFinalCost = resolution.cost.unitFinal;
             context.calculatedFinalWeight = resolution.weight.unitFinal;
              
@@ -454,6 +502,10 @@ _promptMultipleReferences(parsedList) {
                 formula_attack_value: feature.path === "damage_formula",
                 textual_attack_value: ["damage_type", "damage_nature", "reach", "range", "rof", "shots", "groups"].includes(feature.path),
                 numeric_equipment_value: ["item_dr", "item_hp", "item_ht", "tech_sm", "holdout", "defense_bonus", "equip_time", "max_uses"].includes(feature.path),
+                charge_capacity_feature: feature.path === "max_uses",
+                reserve_type: feature.reserveType,
+                reserve_name: feature.reserveName,
+                reserve_scope: feature.reserveScope,
                 numeric_attack_value: ["skill_level_mod", "armor_divisor", "min_strength", "accuracy", "rcl", "mag"].includes(feature.path)
             }));
             context.equipmentAdjustmentStageOptions = [
@@ -477,35 +529,35 @@ _promptMultipleReferences(parsedList) {
                 { id: "set", label: game.i18n.localize("GUM.EquipmentModifier.Operations.Set") }
             ];
             context.equipmentPropertyOptions = [
-                { id: "item_dr", label: "RD do item" }, { id: "item_hp", label: "PV do item" },
-                { id: "item_ht", label: "HT do item" }, { id: "tech_sm", label: "MT técnico" },
-                { id: "holdout", label: "Ocultabilidade" }, { id: "defense_bonus", label: "Bônus de Defesa" },
-                { id: "equip_time", label: "Tempo para vestir/equipar" }, { id: "max_uses", label: "Usos máximos" },
-                { id: "legality_class", label: "Classe de Legalidade" }, { id: "material", label: "Material" },
-                { id: "quality", label: "Qualidade" }
+                { id: "item_dr", label: game.i18n.localize("GUM.Equipment.Label.ItemDR") }, { id: "item_hp", label: game.i18n.localize("GUM.Equipment.Label.ItemHP") },
+                { id: "item_ht", label: game.i18n.localize("GUM.Equipment.Label.ItemHT") }, { id: "tech_sm", label: game.i18n.localize("GUM.Equipment.Label.SizeModifier") },
+                { id: "holdout", label: game.i18n.localize("GUM.Equipment.Label.Holdout") }, { id: "defense_bonus", label: game.i18n.localize("GUM.Equipment.Label.DefenseBonus") },
+                { id: "equip_time", label: game.i18n.localize("GUM.EquipmentModifier.Properties.EquipTime") }, { id: "max_uses", label: game.i18n.localize("GUM.EquipmentModifier.Properties.ChargeCapacity") },
+                { id: "legality_class", label: game.i18n.localize("GUM.Equipment.Label.Legality") }, { id: "material", label: game.i18n.localize("GUM.Equipment.Label.Material") },
+                { id: "quality", label: game.i18n.localize("GUM.Equipment.Label.Quality") }
             ];
             context.attackPropertyOptions = [
-                { id: "damage_formula", label: "Dano" }, { id: "damage_type", label: "Tipo de dano" },
-                { id: "damage_nature", label: "Natureza do dano" }, { id: "armor_divisor", label: "Divisor de armadura" },
-                { id: "skill_level_mod", label: "Modificador de NH" }, { id: "min_strength", label: "ST mínima" },
-                { id: "reach", label: "Alcance C.C." }, { id: "parry", label: "Aparar" },
-                { id: "block", label: "Bloqueio" }, { id: "accuracy", label: "Precisão" },
-                { id: "range", label: "Distância" }, { id: "rof", label: "Cadência" },
-                { id: "shots", label: "Tiros" }, { id: "rcl", label: "Recuo" },
-                { id: "mag", label: "Magnitude" }, { id: "groups", label: "Grupos" }
+                { id: "damage_formula", label: game.i18n.localize("GUM.EquipmentModifier.Properties.Damage") }, { id: "damage_type", label: game.i18n.localize("GUM.EquipmentModifier.Properties.DamageType") },
+                { id: "damage_nature", label: game.i18n.localize("GUM.EquipmentModifier.Properties.DamageNature") }, { id: "armor_divisor", label: game.i18n.localize("GUM.EquipmentModifier.Properties.ArmorDivisor") },
+                { id: "skill_level_mod", label: game.i18n.localize("GUM.EquipmentModifier.Properties.SkillModifier") }, { id: "min_strength", label: game.i18n.localize("GUM.EquipmentModifier.Properties.MinStrength") },
+                { id: "reach", label: game.i18n.localize("GUM.EquipmentModifier.Properties.Reach") }, { id: "parry", label: game.i18n.localize("GUM.Equipment.Attacks.Parry") },
+                { id: "block", label: game.i18n.localize("GUM.Equipment.Attacks.Block") }, { id: "accuracy", label: game.i18n.localize("GUM.Equipment.Attacks.Accuracy") },
+                { id: "range", label: game.i18n.localize("GUM.Equipment.Attacks.Distance") }, { id: "rof", label: game.i18n.localize("GUM.EquipmentModifier.Properties.RateOfFire") },
+                { id: "shots", label: game.i18n.localize("GUM.EquipmentModifier.Properties.Shots") }, { id: "rcl", label: game.i18n.localize("GUM.EquipmentModifier.Properties.Recoil") },
+                { id: "mag", label: game.i18n.localize("GUM.EquipmentModifier.Properties.Magnitude") }, { id: "groups", label: game.i18n.localize("GUM.EquipmentModifier.Properties.Groups") }
             ];
-            context.equipmentBodyLocationOptions = listBodyLocations();
+            context.equipmentBodyLocationOptions = listBodyLocations().map(localizeEquipmentLocation);
             context.equipmentDescriptorKindOptions = [
-                { id: "appearance", label: "Aparência / decoração" }, { id: "craftsmanship", label: "Acabamento" },
-                { id: "material", label: "Detalhe de material" }, { id: "origin", label: "Origem / fabricante" },
-                { id: "tag", label: "Tag" }, { id: "note", label: "Observação" }
+                { id: "appearance", label: game.i18n.localize("GUM.EquipmentModifier.Descriptor.Appearance") }, { id: "craftsmanship", label: game.i18n.localize("GUM.EquipmentModifier.Descriptor.Craftsmanship") },
+                { id: "material", label: game.i18n.localize("GUM.EquipmentModifier.Descriptor.Material") }, { id: "origin", label: game.i18n.localize("GUM.EquipmentModifier.Descriptor.Origin") },
+                { id: "tag", label: game.i18n.localize("GUM.EquipmentModifier.Descriptor.Tag") }, { id: "note", label: game.i18n.localize("GUM.EquipmentModifier.Descriptor.Note") }
             ];
         }
  
         if (this.item.type === "equipment") { 
             const drLocations = this.item._source?.system?.dr_locations || this.item.system.dr_locations || {};
             const resolvedDrLocations = context.equipmentResolution?.drLocations || drLocations;
-            const bodyLocationOptions = listBodyLocations(); 
+            const bodyLocationOptions = listBodyLocations().map(localizeEquipmentLocation);
             const locationLookup = new Map(bodyLocationOptions.map(option => [option.id, option])); 
  
             context.bodyLocationOptions = bodyLocationOptions; 

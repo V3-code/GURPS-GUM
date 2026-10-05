@@ -1,5 +1,6 @@
 import { createSingleRollRequestMessage } from "../module/services/roll-request-service.js";
 import { normalizeChatRoll } from "../module/utils/roll-request-data.mjs";
+import { equipmentLinkedReserve, equipmentReserveBalanceUpdate } from "../module/utils/equipment-resolution.mjs";
 import {
     getAttributeRollMessageOptions,
     normalizeAttributeChatVisibility
@@ -802,12 +803,30 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                         case "fp": updatePath = "system.attributes.fp.value"; break;
                         case "energy_reserve": {
                             const reserveKey = Object.keys(targetActor.system.spell_reserves || {}).find(k => targetActor.system.spell_reserves[k].name === action.name) || Object.keys(targetActor.system.power_reserves || {}).find(k => targetActor.system.power_reserves[k].name === action.name);
-                            if (reserveKey) updatePath = targetActor.system.spell_reserves[reserveKey] ? `system.spell_reserves.${reserveKey}.current` : `system.power_reserves.${reserveKey}.current`;
+                            if (reserveKey) updatePath = targetActor.system.spell_reserves?.[reserveKey] ? `system.spell_reserves.${reserveKey}.current` : `system.power_reserves.${reserveKey}.current`;
+                            if (!reserveKey) {
+                                const linked = targetActor.items.filter(item => item.type === "equipment")
+                                    .map(item => ({ item, reserve: equipmentLinkedReserve(item, item.system?.equipmentResolution) }))
+                                    .find(({ reserve }) => reserve && ["spell", "power"].includes(reserve.type) && reserve.name === action.name);
+                                if (linked) {
+                                    const next = Math.max(0, Math.min(linked.reserve.max, linked.reserve.current + finalValue));
+                                    updateObject = linked.item.update(equipmentReserveBalanceUpdate(linked.item, next, linked.item.system?.equipmentResolution));
+                                }
+                            }
                             break;
                         }
                         case "combat_tracker": {
                             const trackerKey = Object.keys(targetActor.system.combat.combat_meters || {}).find(k => targetActor.system.combat.combat_meters[k].name === action.name);
                             if (trackerKey) updatePath = `system.combat.combat_meters.${trackerKey}.current`;
+                            if (!trackerKey) {
+                                const linked = targetActor.items.filter(item => item.type === "equipment")
+                                    .map(item => ({ item, reserve: equipmentLinkedReserve(item, item.system?.equipmentResolution) }))
+                                    .find(({ reserve }) => reserve?.type === "combat" && reserve.name === action.name);
+                                if (linked) {
+                                    const next = Math.max(0, Math.min(linked.reserve.max, linked.reserve.current + finalValue));
+                                    updateObject = linked.item.update(equipmentReserveBalanceUpdate(linked.item, next, linked.item.system?.equipmentResolution));
+                                }
+                            }
                             break;
                         }
                         case "item_quantity": {

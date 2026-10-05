@@ -8,6 +8,7 @@ import { executeRollRequest } from "../../module/services/roll-request-service.j
 import { getPurposeLabels } from "../../module/utils/roll-purposes.mjs";
 import { renderPendingResistanceRequest } from "../../module/utils/roll-request-view.mjs";
 import { buildDamageNatureSearchOptions, formatDamageNature, resolveDamageNature } from "../../module/utils/damage-nature.mjs";
+import { equipmentLinkedReserve, equipmentReserveBalanceUpdate } from "../../module/utils/equipment-resolution.mjs";
 
 export default class DamageApplicationWindow extends Application {
     
@@ -505,6 +506,12 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
         for (const [key, reserve] of Object.entries(powerReserves)) {
             const reservePath = `system.power_reserves.${key}.${reserve.current !== undefined ? "current" : "value"}`;
             damageablePools.push({ path: reservePath, label: `RP:${reserve.name}` });
+        }
+        for (const item of this.targetActor.items.filter(entry => entry.type === "equipment")) {
+            const reserve = equipmentLinkedReserve(item, item.system?.equipmentResolution);
+            if (!reserve) continue;
+            const prefix = reserve.type === "spell" ? "RM" : reserve.type === "power" ? "RP" : "REG";
+            damageablePools.push({ path: `equipment:${item.id}`, label: `${prefix}:${reserve.name}`, type: reserve.type === "combat" ? "combat-meter" : "equipment-reserve", dr: 0 });
         }
         context.damageablePools = damageablePools;
         this.preparedOnDamageEffects = await this._resolveOnDamageEffects();
@@ -1182,7 +1189,15 @@ async _onNpcResistanceRoll(effectId) {
             const applyShock = !targetIgnoresShock && (form.querySelector('[name="special_apply_shock"]')?.checked ?? true);
             const selectedPoolPath = form.querySelector('[name="damage_target_pool"]').value;
             if (!selectedPoolPath) { this.isApplying = false; return ui.notifications.error("Nenhum alvo para o dano foi selecionado."); }
-            const currentPoolValue = foundry.utils.getProperty(this.targetActor, selectedPoolPath);
+            const linkedEquipment = selectedPoolPath.startsWith("equipment:")
+                ? this.targetActor.items.get(selectedPoolPath.slice("equipment:".length))
+                : null;
+            const linkedReserve = linkedEquipment ? equipmentLinkedReserve(linkedEquipment, linkedEquipment.system?.equipmentResolution) : null;
+            if (selectedPoolPath.startsWith("equipment:") && !linkedReserve) { this.isApplying = false; return ui.notifications.error("A reserva do equipamento não está mais disponível."); }
+            const currentPoolValue = linkedReserve?.current ?? foundry.utils.getProperty(this.targetActor, selectedPoolPath);
+            const updatePool = (value, options = {}) => linkedReserve
+                ? linkedEquipment.update(equipmentReserveBalanceUpdate(linkedEquipment, value, linkedEquipment.system?.equipmentResolution), options)
+                : this.targetActor.update({ [selectedPoolPath]: value }, options);
             const poolLabel = form.querySelector('[name="damage_target_pool"] option:checked').textContent;            
             const natureRaw = form.querySelector('[name="damage_nature"]')?.value || "";
             const damageNature = natureRaw ? resolveDamageNature(natureRaw) : null;
@@ -1215,11 +1230,11 @@ async _onNpcResistanceRoll(effectId) {
                     damageType: this.damageTypeAbrev
                 };
                 const newPoolValue = currentPoolValue - finalInjury;
-                await this.targetActor.update({ [selectedPoolPath]: newPoolValue }, { gumEventData: eventData });
+                await updatePool(newPoolValue, { gumEventData: eventData });
             } else {
                 const sign = applyAsHeal ? 1 : -1;
                 const newPoolValue = currentPoolValue + (sign * finalInjury);
-                await this.targetActor.update({ [selectedPoolPath]: newPoolValue });
+                await updatePool(newPoolValue);
             }
 
             if (form.querySelector('[name="register_wound"]')?.checked && !applyAsHeal && !effectsOnlyChecked && finalInjury > 0) {
