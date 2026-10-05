@@ -74,7 +74,8 @@ test("advantage and disadvantage sheets use a free-text organization field", () 
     itemTemplate.indexOf("C\u00e1lculo de Custo")
   );
   assert.match(details, /input type="text" name="system\.group"/);
-  assert.match(details, /placeholder="Ex: Racial: Elfo, Poderes Ps\u00edquicos\.\.\."/);
+  assert.match(details, /placeholder="\{\{localize 'GUM\.Traits\.GroupPlaceholder'\}\}"/);
+  assert.match(details, /GUM\.Traits\.GroupHint/);
   assert.doesNotMatch(details, /select name="system\.block_id"|characteristic_blocks/);
   assert.doesNotMatch(itemSheet, /context\.characteristic_blocks/);
   assert.equal(schema.Item.advantage.group, "");

@@ -50,6 +50,7 @@ import { organizeGumCompendia } from "../module/utils/compendium-folder-organize
 import { getSkillDisplayName, setDirectoryEntryLabel } from "../module/utils/skill-display-name.mjs";
 import { installGumChatCommandInterceptor, normalizeGumLookup, resolveGumCommandActor, splitSkillModifier } from "../module/utils/gum-chat-command.mjs";
 import { resolveEquipment } from "../module/utils/equipment-resolution.mjs";
+import { applyEquipmentDefenseBonus, collectActiveEquipmentDefenseBonuses, evaluateDecisiveDefenseBonus } from "../module/utils/equipment-defense-bonus.mjs";
 import { collectActiveEquipmentGrantedEffects, EQUIPMENT_GRANTED_EFFECT_SOURCE, hasEquipmentGrantRelevantChange, matchesEquipmentGrantedEffectScope } from "../module/utils/equipment-granted-effects.mjs";
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
@@ -662,6 +663,10 @@ const activeEffects = Array.isArray(this.effects) ? this.effects : Array.from(th
                 // (Removido: Lógica de somar DB ao combat.defense_bonus)
             }
         }
+        const activeEquipmentDefenseBonusSources = collectActiveEquipmentDefenseBonuses(this.items);
+        const activeEquipmentDefenseBonus = activeEquipmentDefenseBonusSources.reduce((total, source) => total + source.bonus, 0);
+        combat.active_equipment_defense_bonus = activeEquipmentDefenseBonus;
+        combat.active_equipment_defense_bonus_sources = activeEquipmentDefenseBonusSources;
 
         // --- ETAPA 2: MOTOR DE CONDIÇÕES ---
 const add_sub_modifiers = {};
@@ -889,6 +894,9 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                 attributes[attr].final = (override !== null && override !== undefined) ? override : attributes[attr].final_computed;
             }
         }
+        // Equipment DB is the last additive layer so item effects and overrides
+        // remain intact while the displayed/rolled Dodge includes the active DB.
+        attributes.dodge.final = applyEquipmentDefenseBonus(attributes.dodge.final, activeEquipmentDefenseBonus);
 
         // --- ETAPA 7: CÁLCULO DE RD ---
  
@@ -1178,7 +1186,10 @@ const splitDefenseValue = (value) => {
                             const defenseNhBonuses = collectNhBonusesForDefense(i, attack, "melee", defenseType);
                             const shouldRecalculate = combatModifierEntries.some(({ entry }) => defenseType === "parry" ? entry.recalculate_parry : entry.recalculate_block);
                             const importedParsed = splitDefenseValue(importedFinalDefense);
-                            if (importedParsed && !shouldRecalculate) return addBonusesToDefenseValue(importedFinalDefense, defenseNhBonuses);
+                            if (importedParsed && !shouldRecalculate) {
+                                const finalImportedDefense = addBonusesToDefenseValue(importedFinalDefense, defenseNhBonuses);
+                                return applyEquipmentDefenseBonus(finalImportedDefense, activeEquipmentDefenseBonus);
+                            }
 
                             if (!useDefault && (rawDefense === "0" || rawDefense === "No")) return null;
                             if (attackSkillNh === null) return null;
@@ -1202,7 +1213,7 @@ const splitDefenseValue = (value) => {
                             const defenseMod = useDefault ? 0 : (parsedDefense?.number ?? (Number(rawDefense) || 0));
                             const baseValue = defenseMod > 5 ? defenseMod : defenseBase + defenseMod;
                             const suffix = !useDefault && parsedDefense?.suffix ? parsedDefense.suffix : "";
-                            return `${baseValue + defenseNhBonuses.passive + defenseNhBonuses.temp}${suffix}`;
+                            return applyEquipmentDefenseBonus(`${baseValue + defenseNhBonuses.passive + defenseNhBonuses.temp}${suffix}`, activeEquipmentDefenseBonus);
                         };
 
                         // Aparar (Parry) - modificadores de rolagem podem afetar o grupo/modo também como defesa.
@@ -1394,6 +1405,8 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     // --- 2. LÓGICA DE MODIFICADORES GLOBAIS (ESCUDO / CONDIÇÕES) ---    
     
     let globalModValue = 0;
+    let activeDefenseBonus = 0;
+    let activeDefenseBonusSources = [];
     let lowestCap = extraOptions.effectiveCap !== undefined ? extraOptions.effectiveCap : Infinity; 
 
     // Só processa globais se NÃO tivermos instrução para ignorar
@@ -1443,6 +1456,12 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
                 }
             }
         });
+
+    }
+
+    if (rollData.type === "defense") {
+        activeDefenseBonusSources = collectActiveEquipmentDefenseBonuses(actor?.items);
+        activeDefenseBonus = activeDefenseBonusSources.reduce((total, source) => total + source.bonus, 0);
     }
 
     // --- 3. CÁLCULO FINAL (EVITA DUPLICAÇÃO) ---
@@ -1450,7 +1469,8 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     // Se o Prompt estiver enviando o valor total (base + globais + manual) no 'value',
     // nós devemos tomar cuidado. Mas assumindo que 'value' é base e 'modifier' é extra:
     
-    const totalModifier = promptMod + globalModValue;
+    const defenseBonusAppliedAtRoll = rollData.defenseBonusIncluded === true ? 0 : activeDefenseBonus;
+    const totalModifier = promptMod + globalModValue + defenseBonusAppliedAtRoll;
 
     // Soma matemática simples
     const mathLevel = baseValue + totalModifier;
@@ -1479,7 +1499,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
  const diceFaces = roll.dice[0].results.map((d) => `<span class="die-face">${d.result}</span>`).join('');
     const modText = totalModifier !== 0 ? `${totalModifier > 0 ? '+' : ''}${totalModifier}` : '±0';
 
-    const modBreakdown = `M ${promptMod >= 0 ? '+' : ''}${promptMod} | G ${globalModValue >= 0 ? '+' : ''}${globalModValue}`;
+    const modBreakdown = `M ${promptMod >= 0 ? '+' : ''}${promptMod} | G ${globalModValue >= 0 ? '+' : ''}${globalModValue}${activeDefenseBonus ? ` | BD ${activeDefenseBonus >= 0 ? '+' : ''}${activeDefenseBonus}` : ""}`;
     const targetPill = isCapped ? `Alvo ${effectiveLevel} (Cap ${lowestCap})` : `Alvo ${effectiveLevel}`;
 
     const damageActionData = _buildDamageActionData(actor, sourceItem, rollData);
@@ -1496,6 +1516,24 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
             </div>
         </details>
     ` : "";
+    const showDefenseBonusNotice = rollData.type === "defense" && game.settings.get("gum", "showDecisiveDefenseBonusNotice") === true;
+    const decisiveDefenseBonus = showDefenseBonusNotice
+        ? evaluateDecisiveDefenseBonus({ rollTotal: total, uncappedTarget: mathLevel, cap: lowestCap, defenseBonus: activeDefenseBonus })
+        : null;
+    const defenseBonusNoticeHtml = decisiveDefenseBonus ? (() => {
+        const key = decisiveDefenseBonus.outcome === "success"
+            ? "GUM.DefenseBonus.DecisiveSuccess"
+            : "GUM.DefenseBonus.DecisiveFailure";
+        const bonus = `${decisiveDefenseBonus.bonus >= 0 ? "+" : ""}${decisiveDefenseBonus.bonus}`;
+        const sources = activeDefenseBonusSources
+            .map(source => `${foundry.utils.escapeHTML(source.name)} ${source.bonus >= 0 ? "+" : ""}${source.bonus}`)
+            .filter(Boolean)
+            .join(", ");
+        const sourceHtml = sources
+            ? `<small>${game.i18n.format("GUM.DefenseBonus.Sources", { sources })}</small>`
+            : "";
+        return `<div class="defense-bonus-notice ${decisiveDefenseBonus.outcome}"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>${game.i18n.format(key, { bonus })}</span>${sourceHtml}</div>`;
+    })() : "";
 
     const content = `
         <div class="gurps-roll-card premium">
@@ -1532,6 +1570,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
                     <span class="result-label">${resultLabel}</span>
                     <span class="result-margin">Margem ${margin}</span>
                 </div>
+                ${defenseBonusNoticeHtml}
                 ${damageActionData ? `
                     <div class="roll-chat-actions">
                         <button type="button" class="chat-roll-damage-button" data-damage-action="${damageActionAttr}">
@@ -1590,7 +1629,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     }
 
     const structuredResult = { roll, rollJSON: roll.toJSON(), total, baseValue, promptModifier: promptMod,
-        globalModifier: globalModValue, totalModifier, mathLevel, effectiveLevel,
+        globalModifier: globalModValue, defenseBonus: activeDefenseBonus, defenseBonusSources: activeDefenseBonusSources, totalModifier, mathLevel, effectiveLevel,
         effectiveCap: lowestCap === Infinity ? null : lowestCap, isCapped, isSuccess,
         isCriticalSuccess: isCritSuccess, isCriticalFailure: isCritFailure, margin, outcome,
         resultLabel, statusClass, purposeIds: rollData.purposeIds ?? [], modifierBreakdown: [

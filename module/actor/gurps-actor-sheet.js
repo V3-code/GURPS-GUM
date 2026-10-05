@@ -1581,6 +1581,7 @@ _getRollDataFromElement(element) {
         isRanged: dataset.isRanged === "true",
         attributeKey,
         defenseType: dataset.defenseType || null,
+        defenseBonusIncluded: dataset.defenseBonusIncluded === "true",
         attackId
     };
 }
@@ -2872,6 +2873,15 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
 
         input.val(value);
         this.actor.update({ [`system.attributes.${attrKey}.value`]: value });
+    });
+
+    html.find('.item-toggle-defense-bonus').click(async ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const row = $(ev.currentTarget).closest('.item');
+        const item = this.actor.items.get(row.data('itemId'));
+        if (!item || item.type !== 'equipment') return;
+        await item.update({ "system.defense_bonus_active": item.system.defense_bonus_active !== true });
     });
 
     html.find('.characteristic-search-input').on('input', ev => {

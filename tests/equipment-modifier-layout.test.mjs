@@ -133,6 +133,14 @@ test("equipment uses distinguish legacy quantity consumption from explicit charg
   assert.match(actorTemplate, /effectiveUsesRemaining/);
 });
 
+test("equipment Defense Bonus can be activated without adding explanatory text below trait grouping", () => {
+  assert.match(template, /name="system\.defense_bonus_active"/);
+  assert.match(template, /equipment-defense-bonus-toggle/);
+  assert.match(template, /GUM\.Equipment\.Label\.DefenseBonusActiveHint/);
+  assert.match(template, /GUM\.Traits\.GroupHint/);
+  assert.doesNotMatch(template, /characteristic-card-hint/);
+});
+
 test("equipment modifiers author and display cumulative decoration descriptors", () => {
   assert.match(itemSheet, /id: "equipment_descriptor", label: game\.i18n\.localize\("GUM\.EquipmentModifier\.Types\.Descriptor"\)/);
   assert.match(itemSheet, /equipmentDescriptorKindOptions/);
