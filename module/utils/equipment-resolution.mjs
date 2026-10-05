@@ -220,7 +220,7 @@ export function normalizeEquipmentFeature(feature = {}, index = 0) {
     damageType: String(feature.damage_type ?? feature.damageType ?? "base").trim() || "base",
     damageSlot: ["follow_up_damage", "fragmentation_damage"].includes(feature.damage_slot || feature.damageSlot) ? (feature.damage_slot || feature.damageSlot) : "follow_up_damage",
     descriptorKind: ["appearance", "craftsmanship", "material", "origin", "tag", "note"].includes(feature.descriptor_kind || feature.descriptorKind) ? (feature.descriptor_kind || feature.descriptorKind) : "appearance",
-    attackType: ["melee", "ranged"].includes(feature.attack_type || feature.attackType) ? (feature.attack_type || feature.attackType) : "all",
+    attackType: ["none", "melee", "ranged"].includes(feature.attack_type || feature.attackType) ? (feature.attack_type || feature.attackType) : "all",
     selectorField: ["all", "mode", "skill_name", "group"].includes(feature.selector_field || feature.selectorField) ? (feature.selector_field || feature.selectorField) : "all",
     selectorValue: String(feature.selector_value ?? feature.selectorValue ?? "").trim(),
     effectUuid: String(feature.effect_uuid ?? feature.effectUuid ?? "").trim(),
@@ -452,7 +452,7 @@ function resolveFeatures(equipment, modifiers, warnings) {
           requiredDamageType: feature.requiredDamageType
         };
         grantedEffects.push(grant);
-        if (grant.domain === "hit_target" && isGrantedEffectLifecycleActive(equipment, grant)) {
+        if (grant.domain === "hit_target" && grant.attackType !== "none" && isGrantedEffectLifecycleActive(equipment, grant)) {
           const collections = grant.attackType === "melee" ? [meleeAttacks]
             : grant.attackType === "ranged" ? [rangedAttacks]
               : [meleeAttacks, rangedAttacks];

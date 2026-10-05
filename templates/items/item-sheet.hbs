@@ -1703,24 +1703,31 @@
 
             {{#if (eq feature.type "granted_effect")}}
             <div class="equipment-feature-effect-link">
-              <span class="equipment-feature-effect-icon">{{#if feature.effect_img}}<img src="{{feature.effect_img}}" alt=""/>{{else}}<i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i>{{/if}}</span>
-              <div class="form-group"><label>Efeito vinculado</label><input type="text" name="system.features_data.{{feature.id}}.effect_uuid" value="{{feature.effect_uuid}}" placeholder="Selecione um item Efeito ou informe seu UUID"/><span class="notes">{{#if feature.effect_name}}{{feature.effect_name}}{{else}}Nenhum efeito selecionado{{/if}}</span></div>
-              <div class="equipment-feature-effect-actions"><button type="button" class="select-eqp-feature-effect" title="Selecionar no navegador"><i class="fas fa-search"></i><span>Selecionar efeito</span></button><button type="button" class="view-eqp-feature-effect" data-uuid="{{feature.effect_uuid}}" title="Abrir efeito vinculado" {{#unless feature.effect_uuid}}disabled{{/unless}}><i class="fas fa-external-link-alt"></i></button></div>
+              <div class="form-group"><label>Efeito vinculado</label><input type="text" name="system.features_data.{{feature.id}}.effect_uuid" value="{{feature.effect_uuid}}" placeholder="Selecione um item Efeito ou informe seu UUID"/><span class="notes">{{#if feature.effect_name}}{{#if feature.effect_img}}<img src="{{feature.effect_img}}" alt=""/>{{/if}}{{feature.effect_name}}{{else}}Nenhum efeito selecionado{{/if}}</span></div>
+              <div class="equipment-feature-effect-actions"><button type="button" class="select-eqp-feature-effect" title="Selecionar efeito no navegador" aria-label="Selecionar efeito"><i class="fas fa-search"></i></button><button type="button" class="view-eqp-feature-effect" data-uuid="{{feature.effect_uuid}}" title="Abrir efeito vinculado" aria-label="Abrir efeito vinculado" {{#unless feature.effect_uuid}}disabled{{/unless}}><i class="fas fa-external-link-alt"></i></button></div>
             </div>
             <div class="form-grid-2">
-              <div class="form-group"><label>Domínio</label><select name="system.features_data.{{feature.id}}.effect_domain"><option value="wearer" {{#if (eq feature.effect_domain "wearer")}}selected{{/if}}>Portador</option><option value="source_attack" {{#if (eq feature.effect_domain "source_attack")}}selected{{/if}}>Ataque do equipamento</option><option value="hit_target" {{#if (eq feature.effect_domain "hit_target")}}selected{{/if}}>Alvo atingido</option></select></div>
+              <div class="form-group"><label>Domínio</label><select class="eqp-feature-conditional-select" name="system.features_data.{{feature.id}}.effect_domain"><option value="wearer" {{#if (eq feature.effect_domain "wearer")}}selected{{/if}}>Portador</option><option value="source_attack" {{#if (eq feature.effect_domain "source_attack")}}selected{{/if}}>Ataque do equipamento</option><option value="hit_target" {{#if (eq feature.effect_domain "hit_target")}}selected{{/if}}>Alvo atingido</option></select></div>
               <div class="form-group"><label>Ciclo de vida</label><select name="system.features_data.{{feature.id}}.lifecycle"><option value="while_possessed" {{#if (eq feature.lifecycle "while_possessed")}}selected{{/if}}>Enquanto possuído</option><option value="while_carried" {{#if (eq feature.lifecycle "while_carried")}}selected{{/if}}>Enquanto carregado</option><option value="while_equipped" {{#if (eq feature.lifecycle "while_equipped")}}selected{{/if}}>Enquanto equipado</option><option value="while_active" {{#if (eq feature.lifecycle "while_active")}}selected{{/if}}>Enquanto ativado</option></select></div>
             </div>
+            {{#unless (eq feature.effect_domain "wearer")}}
             <div class="form-grid-3">
-              <div class="form-group"><label>Ataques</label><select name="system.features_data.{{feature.id}}.attack_type"><option value="all" {{#if (eq feature.attack_type "all")}}selected{{/if}}>Todos</option><option value="melee" {{#if (eq feature.attack_type "melee")}}selected{{/if}}>Corpo a corpo</option><option value="ranged" {{#if (eq feature.attack_type "ranged")}}selected{{/if}}>À distância</option></select></div>
+              <div class="form-group"><label>Ataques</label><select class="eqp-feature-conditional-select" name="system.features_data.{{feature.id}}.attack_type"><option value="none" {{#if (eq feature.attack_type "none")}}selected{{/if}}>Nenhum</option><option value="all" {{#if (eq feature.attack_type "all")}}selected{{/if}}>Todos</option><option value="melee" {{#if (eq feature.attack_type "melee")}}selected{{/if}}>Corpo a corpo</option><option value="ranged" {{#if (eq feature.attack_type "ranged")}}selected{{/if}}>À distância</option></select></div>
+              {{#unless (eq feature.attack_type "none")}}
               <div class="form-group"><label>Encontrar por</label><select name="system.features_data.{{feature.id}}.selector_field"><option value="all" {{#if (eq feature.selector_field "all")}}selected{{/if}}>Todos</option><option value="group" {{#if (eq feature.selector_field "group")}}selected{{/if}}>Grupo</option><option value="mode" {{#if (eq feature.selector_field "mode")}}selected{{/if}}>Nome do modo</option><option value="skill_name" {{#if (eq feature.selector_field "skill_name")}}selected{{/if}}>Perícia</option></select></div>
               <div class="form-group"><label>Filtro</label><input type="text" name="system.features_data.{{feature.id}}.selector_value" value="{{feature.selector_value}}" placeholder="Ex.: golpe-com-escudo"/></div>
             </div>
+              {{#if (eq feature.effect_domain "hit_target")}}
             <div class="form-grid-3">
               <div class="form-group"><label>Ferimento mínimo</label><input type="number" min="0" name="system.features_data.{{feature.id}}.min_injury" value="{{feature.min_injury}}"/></div>
               <div class="form-group"><label>Chance de ativação (%)</label><input type="number" min="0" max="100" name="system.features_data.{{feature.id}}.activation_chance" value="{{feature.activation_chance}}"/></div>
               <div class="form-group"><label>Tipo de dano exigido</label><input type="text" name="system.features_data.{{feature.id}}.required_damage_type" value="{{feature.required_damage_type}}" placeholder="Qualquer"/></div>
             </div>
+              {{/if}}
+              {{else}}
+            </div>
+              {{/unless}}
+            {{/unless}}
             {{/if}}
 
             <div class="eqpmod-actions eqp-feature-actions"><div class="eqp-feature-toggles"><label class="custom-checkbox eqp-feature-enabled"><input type="checkbox" name="system.features_data.{{feature.id}}.enabled" {{checked feature.enabled}}/><span>Ativa</span></label>{{#if (or (eq feature.type "equipment_property") (eq feature.type "equipment_dr") (eq feature.type "attack_property"))}}<label class="custom-checkbox eqp-feature-enabled"><input type="checkbox" name="system.features_data.{{feature.id}}.per_level" {{checked feature.per_level}}/><span>Por nível do modificador</span></label>{{/if}}</div><button type="button" class="delete-eqp-feature" title="Remover feature"><i class="fas fa-trash"></i> Remover</button></div>

@@ -1000,6 +1000,9 @@ if (this.item?.type === "equipment") {
         html.find('.eqp-feature-shape-select').on('change', async () => {
             await this.submit({ preventClose: true });
         });
+        html.find('.eqp-feature-conditional-select').on('change', async () => {
+            await this.submit({ preventClose: true });
+        });
         html.find('.select-eqp-feature-effect').click(async ev => {
             ev.preventDefault();
             const id = $(ev.currentTarget).closest('[data-feature-id]').data('feature-id');

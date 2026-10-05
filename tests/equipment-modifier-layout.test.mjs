@@ -41,6 +41,7 @@ test("equipment modifier editor uses the minimal adjustment workspace", () => {
   assert.match(styles, /\.eqp-features-workspace \.eqp-feature-card \.form-group/);
   assert.match(template, /eqp-feature-details/);
   assert.match(template, /eqp-feature-toggles/);
+  assert.match(template, /eqp-feature-conditional-select/);
   assert.match(styles, /@media \(max-width: 620px\)/);
 });
 

@@ -372,3 +372,17 @@ test("projects hit-target grants into matching attack on-damage effects", () => 
   assert.equal(link.requiredDamageType, "perf");
   assert.deepEqual(result.meleeAttacks.pommel.onDamageEffects, {});
 });
+
+test("does not project a hit-target effect when its attack scope is none", () => {
+  const result = resolveEquipment({
+    cost: 1, weight: 1, location: "equipped",
+    melee_attacks: { shield: { mode: "Golpe", onDamageEffects: {} } }
+  }, [{ id: "spike", name: "Espinho", features_data: {
+    dormant: {
+      id: "dormant", label: "Inativo", type: "granted_effect", effect_uuid: "Item.dormant",
+      effect_domain: "hit_target", lifecycle: "while_equipped", attack_type: "none"
+    }
+  }}]);
+  assert.equal(result.grantedEffects[0].attackType, "none");
+  assert.deepEqual(result.meleeAttacks.shield.onDamageEffects, {});
+});
