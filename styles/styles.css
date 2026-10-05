@@ -7759,7 +7759,12 @@ background-color: var(--gum-accent-gold);
 }
 
 .gum.sheet.actor .gum-unified-section .equipment-card .item-control.item-toggle-defense-bonus {
+    margin-right: auto;
     color: rgba(201, 161, 94, 0.55);
+}
+
+.gum.sheet.actor .gum-unified-section .container-section-header .item-control.item-toggle-defense-bonus {
+    margin-right: auto;
 }
 
 .gum.sheet.actor .gum-unified-section .equipment-card .item-control.item-toggle-defense-bonus.active {

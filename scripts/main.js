@@ -727,7 +727,6 @@ const add_sub_modifiers = {};
                                                 + (Number(attributes[attr].temp) || 0);
             }
         }
-        attributes.dodge.final = applyEquipmentDefenseBonus(attributes.dodge.final, activeEquipmentDefenseBonus);
         for (const pool of ["hp", "fp"]) {
             if (attributes[pool]) {
                 attributes[pool].final_computed = (Number(attributes[pool].max) || 0) 
@@ -895,6 +894,9 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                 attributes[attr].final = (override !== null && override !== undefined) ? override : attributes[attr].final_computed;
             }
         }
+        // Equipment DB is the last additive layer so item effects and overrides
+        // remain intact while the displayed/rolled Dodge includes the active DB.
+        attributes.dodge.final = applyEquipmentDefenseBonus(attributes.dodge.final, activeEquipmentDefenseBonus);
 
         // --- ETAPA 7: CÁLCULO DE RD ---
  
@@ -1184,7 +1186,10 @@ const splitDefenseValue = (value) => {
                             const defenseNhBonuses = collectNhBonusesForDefense(i, attack, "melee", defenseType);
                             const shouldRecalculate = combatModifierEntries.some(({ entry }) => defenseType === "parry" ? entry.recalculate_parry : entry.recalculate_block);
                             const importedParsed = splitDefenseValue(importedFinalDefense);
-                            if (importedParsed && !shouldRecalculate) return addBonusesToDefenseValue(importedFinalDefense, defenseNhBonuses);
+                            if (importedParsed && !shouldRecalculate) {
+                                const finalImportedDefense = addBonusesToDefenseValue(importedFinalDefense, defenseNhBonuses);
+                                return applyEquipmentDefenseBonus(finalImportedDefense, activeEquipmentDefenseBonus);
+                            }
 
                             if (!useDefault && (rawDefense === "0" || rawDefense === "No")) return null;
                             if (attackSkillNh === null) return null;

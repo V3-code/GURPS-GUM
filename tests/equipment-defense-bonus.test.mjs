@@ -45,6 +45,15 @@ test("marks only ordinary defense outcomes crossed by an active Defense Bonus", 
   assert.equal(evaluateDecisiveDefenseBonus({ rollTotal: 12, uncappedTarget: 14, cap: 12, defenseBonus: 2 }), null);
 });
 
+test("raises Dodge 9 to 11 before evaluating which successes depend on DB +2", () => {
+  const finalDodge = applyEquipmentDefenseBonus(9, 2);
+  assert.equal(finalDodge, 11);
+  assert.equal(evaluateDecisiveDefenseBonus({ rollTotal: 9, uncappedTarget: finalDodge, defenseBonus: 2 }), null);
+  assert.equal(evaluateDecisiveDefenseBonus({ rollTotal: 10, uncappedTarget: finalDodge, defenseBonus: 2 })?.outcome, "success");
+  assert.equal(evaluateDecisiveDefenseBonus({ rollTotal: 11, uncappedTarget: finalDodge, defenseBonus: 2 })?.outcome, "success");
+  assert.equal(evaluateDecisiveDefenseBonus({ rollTotal: 12, uncappedTarget: finalDodge, defenseBonus: 2 }), null);
+});
+
 test("adds equipment Defense Bonus after existing defense values and preserves suffixes", () => {
   assert.equal(applyEquipmentDefenseBonus(10, 2), 12);
   assert.equal(applyEquipmentDefenseBonus("11F", 2), "13F");
@@ -54,6 +63,11 @@ test("adds equipment Defense Bonus after existing defense values and preserves s
 
 test("actor defense displays and inventory cards share the active equipment toggle", () => {
   assert.match(main, /attributes\.dodge\.final = applyEquipmentDefenseBonus/);
+  assert.ok(
+    main.lastIndexOf("attributes.dodge.final = applyEquipmentDefenseBonus") > main.lastIndexOf("for (const attr of allAttributes)"),
+    "Dodge DB must be applied after the final attribute pass so it is not overwritten"
+  );
+  assert.match(main, /return applyEquipmentDefenseBonus\(finalImportedDefense, activeEquipmentDefenseBonus\)/);
   assert.match(main, /return applyEquipmentDefenseBonus\(`\$\{baseValue \+ defenseNhBonuses\.passive \+ defenseNhBonuses\.temp\}/);
   assert.match(actorTemplate, /data-defense-bonus-included="true"/);
   assert.match(actorTemplate, /item-toggle-defense-bonus/);
