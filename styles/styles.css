@@ -5800,6 +5800,8 @@ background-color: var(--gum-accent-gold);
     display: inline-flex;
     align-items: center;
     flex: 0 0 auto;
+    /* Mantém apenas os efeitos acionáveis separados, à esquerda dos controles do card. */
+    margin-right: auto;
 }
 
 .gum.sheet.actor .state-effect-automation__switches {
