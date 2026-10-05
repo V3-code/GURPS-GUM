@@ -38,6 +38,7 @@ test("equipment modifier editor uses the minimal adjustment workspace", () => {
   assert.match(styles, /\.eqp-adjustment-primary-grid/);
   assert.match(styles, /\.eqp-modifier-catalog-field\.is-group/);
   assert.match(styles, /\.eqp-feature-card\.is-disabled/);
+  assert.match(styles, /\.eqp-features-workspace \.eqp-feature-card \.form-group/);
   assert.match(styles, /@media \(max-width: 620px\)/);
 });
 
@@ -56,6 +57,7 @@ test("equipment modifier organization is consolidated in adjustments", () => {
   assert.match(adjustmentTab, /Material predominante/);
   assert.ok(adjustmentTab.indexOf("Organização e cenário") < adjustmentTab.indexOf("Ajuste de preço"));
   assert.doesNotMatch(adjustmentTab, /Ajustes do modificador/);
+  assert.doesNotMatch(template, /Bloco de feature/);
   assert.doesNotMatch(template, /name="system\.tags"/);
   assert.doesNotMatch(template, /name="system\.features"/);
   assert.doesNotMatch(template, /name="system\.target_type/);

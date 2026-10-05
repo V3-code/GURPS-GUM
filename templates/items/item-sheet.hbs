@@ -1596,7 +1596,7 @@
 
     <div class="tab" data-tab="equipment-features">
       {{#if (eq item.type "eqp_modifier")}}
-      <div class="eqp-modifier-workspace eqp-features-workspace">
+      <div class="eqp-modifier-workspace eqp-features-workspace skill-details-dashboard">
         <div class="eqp-features-toolbar">
           <span class="eqp-features-label"><i class="fas fa-puzzle-piece" aria-hidden="true"></i> Features</span>
           <button type="button" class="add-eqp-feature"><i class="fas fa-plus"></i><span>Adicionar feature</span></button>
@@ -1605,8 +1605,7 @@
         <ol class="eqpmod-line-list eqp-feature-list">
         {{#each eqpModifierFeatures as |feature|}}
           <li class="eqpmod-line-item eqp-feature-card {{#unless feature.enabled}}is-disabled{{/unless}}" data-feature-id="{{feature.id}}">
-            <div class="form-grid-3 eqp-feature-card-header">
-              <label class="custom-checkbox eqp-feature-enabled"><input type="checkbox" name="system.features_data.{{feature.id}}.enabled" {{checked feature.enabled}}/><span>Ativa</span></label>
+            <div class="form-grid-2 eqp-feature-card-header">
               <div class="form-group"><label>Nome</label><input type="text" name="system.features_data.{{feature.id}}.label" value="{{feature.label}}"/></div>
               <div class="form-group"><label>Tipo</label><select class="eqp-feature-shape-select" name="system.features_data.{{feature.id}}.type">{{selectOptions ../equipmentFeatureTypeOptions selected=feature.type valueAttr="id" labelAttr="label"}}</select></div>
             </div>
@@ -1730,7 +1729,7 @@
             <p class="notes">Filtros de ataque valem para Ataque do equipamento e Alvo atingido. Condições de ferimento, chance e tipo de dano valem para Alvo atingido.</p>
             {{/if}}
 
-            <div class="eqpmod-actions eqp-feature-actions"><span class="eqp-feature-id"><i class="fas fa-cube" aria-hidden="true"></i> Bloco de feature</span><button type="button" class="delete-eqp-feature" title="Remover feature"><i class="fas fa-trash"></i> Remover</button></div>
+            <div class="eqpmod-actions eqp-feature-actions"><label class="custom-checkbox eqp-feature-enabled"><input type="checkbox" name="system.features_data.{{feature.id}}.enabled" {{checked feature.enabled}}/><span>Ativa</span></label><button type="button" class="delete-eqp-feature" title="Remover feature"><i class="fas fa-trash"></i> Remover</button></div>
           </li>
         {{else}}
           <li class="eqpmod-empty">Nenhuma feature estruturada. Preço e peso continuam sendo resolvidos normalmente.</li>
