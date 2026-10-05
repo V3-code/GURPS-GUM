@@ -50,7 +50,7 @@ import { organizeGumCompendia } from "../module/utils/compendium-folder-organize
 import { getSkillDisplayName, setDirectoryEntryLabel } from "../module/utils/skill-display-name.mjs";
 import { installGumChatCommandInterceptor, normalizeGumLookup, resolveGumCommandActor, splitSkillModifier } from "../module/utils/gum-chat-command.mjs";
 import { resolveEquipment } from "../module/utils/equipment-resolution.mjs";
-import { collectActiveEquipmentDefenseBonuses, evaluateDecisiveDefenseBonus } from "../module/utils/equipment-defense-bonus.mjs";
+import { applyEquipmentDefenseBonus, collectActiveEquipmentDefenseBonuses, evaluateDecisiveDefenseBonus } from "../module/utils/equipment-defense-bonus.mjs";
 import { collectActiveEquipmentGrantedEffects, EQUIPMENT_GRANTED_EFFECT_SOURCE, hasEquipmentGrantRelevantChange, matchesEquipmentGrantedEffectScope } from "../module/utils/equipment-granted-effects.mjs";
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
@@ -663,6 +663,10 @@ const activeEffects = Array.isArray(this.effects) ? this.effects : Array.from(th
                 // (Removido: Lógica de somar DB ao combat.defense_bonus)
             }
         }
+        const activeEquipmentDefenseBonusSources = collectActiveEquipmentDefenseBonuses(this.items);
+        const activeEquipmentDefenseBonus = activeEquipmentDefenseBonusSources.reduce((total, source) => total + source.bonus, 0);
+        combat.active_equipment_defense_bonus = activeEquipmentDefenseBonus;
+        combat.active_equipment_defense_bonus_sources = activeEquipmentDefenseBonusSources;
 
         // --- ETAPA 2: MOTOR DE CONDIÇÕES ---
 const add_sub_modifiers = {};
@@ -723,6 +727,7 @@ const add_sub_modifiers = {};
                                                 + (Number(attributes[attr].temp) || 0);
             }
         }
+        attributes.dodge.final = applyEquipmentDefenseBonus(attributes.dodge.final, activeEquipmentDefenseBonus);
         for (const pool of ["hp", "fp"]) {
             if (attributes[pool]) {
                 attributes[pool].final_computed = (Number(attributes[pool].max) || 0) 
@@ -1203,7 +1208,7 @@ const splitDefenseValue = (value) => {
                             const defenseMod = useDefault ? 0 : (parsedDefense?.number ?? (Number(rawDefense) || 0));
                             const baseValue = defenseMod > 5 ? defenseMod : defenseBase + defenseMod;
                             const suffix = !useDefault && parsedDefense?.suffix ? parsedDefense.suffix : "";
-                            return `${baseValue + defenseNhBonuses.passive + defenseNhBonuses.temp}${suffix}`;
+                            return applyEquipmentDefenseBonus(`${baseValue + defenseNhBonuses.passive + defenseNhBonuses.temp}${suffix}`, activeEquipmentDefenseBonus);
                         };
 
                         // Aparar (Parry) - modificadores de rolagem podem afetar o grupo/modo também como defesa.
@@ -1459,7 +1464,8 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     // Se o Prompt estiver enviando o valor total (base + globais + manual) no 'value',
     // nós devemos tomar cuidado. Mas assumindo que 'value' é base e 'modifier' é extra:
     
-    const totalModifier = promptMod + globalModValue + activeDefenseBonus;
+    const defenseBonusAppliedAtRoll = rollData.defenseBonusIncluded === true ? 0 : activeDefenseBonus;
+    const totalModifier = promptMod + globalModValue + defenseBonusAppliedAtRoll;
 
     // Soma matemática simples
     const mathLevel = baseValue + totalModifier;

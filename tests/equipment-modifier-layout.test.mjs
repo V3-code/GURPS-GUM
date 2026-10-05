@@ -135,6 +135,7 @@ test("equipment uses distinguish legacy quantity consumption from explicit charg
 
 test("equipment Defense Bonus can be activated without adding explanatory text below trait grouping", () => {
   assert.match(template, /name="system\.defense_bonus_active"/);
+  assert.match(template, /equipment-defense-bonus-toggle/);
   assert.match(template, /GUM\.Equipment\.Label\.DefenseBonusActiveHint/);
   assert.match(template, /GUM\.Traits\.GroupHint/);
   assert.doesNotMatch(template, /characteristic-card-hint/);

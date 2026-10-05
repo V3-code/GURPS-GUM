@@ -27,6 +27,17 @@ export function totalActiveEquipmentDefenseBonus(items = []) {
   return collectActiveEquipmentDefenseBonuses(items).reduce((total, entry) => total + entry.bonus, 0);
 }
 
+/** Adds a Defense Bonus while preserving suffixes used by Parry/Block values. */
+export function applyEquipmentDefenseBonus(value, defenseBonus = 0) {
+  const bonus = numeric(defenseBonus);
+  const raw = String(value ?? "").trim();
+  if (!bonus || !raw) return value;
+  const match = raw.match(/^([+-]?\d+)(.*)$/);
+  if (!match) return value;
+  const resolved = `${Number(match[1]) + bonus}${match[2] || ""}`;
+  return typeof value === "number" && !match[2] ? Number(resolved) : resolved;
+}
+
 /**
  * Identifies ordinary defense outcomes whose success/failure changes only due
  * to the active equipment Defense Bonus. Critical outcomes intentionally do

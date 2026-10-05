@@ -544,6 +544,7 @@
   "GUM.Equipment.Label.Charges": "cargas",
   "GUM.Equipment.Label.DefenseBonusActive": "Aplicar bônus de defesa",
   "GUM.Equipment.Label.DefenseBonusActiveHint": "Quando equipado, o bônus de defesa deste item se aplica a Esquiva, Aparar e Bloqueio.",
+  "GUM.Equipment.Label.DefenseBonusCardHint": "Ativar ou desativar o bônus de defesa deste item",
   "GUM.Settings.DefenseBonusNotice.Name": "Exibir avisos de BD decisiva",
   "GUM.Settings.DefenseBonusNotice.Hint": "Adiciona um aviso no chat quando a BD ativa de equipamento, sozinha, muda um sucesso ou falha comum de defesa ativa.",
   "GUM.DefenseBonus.DecisiveSuccess": "Sucesso devido à BD {bonus}",

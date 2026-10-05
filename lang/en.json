@@ -544,6 +544,7 @@
   "GUM.Equipment.Label.Charges": "charges",
   "GUM.Equipment.Label.DefenseBonusActive": "Apply defense bonus",
   "GUM.Equipment.Label.DefenseBonusActiveHint": "When equipped, this item's Defense Bonus applies to Dodge, Parry, and Block.",
+  "GUM.Equipment.Label.DefenseBonusCardHint": "Enable or disable this item's Defense Bonus",
   "GUM.Settings.DefenseBonusNotice.Name": "Show decisive Defense Bonus notices",
   "GUM.Settings.DefenseBonusNotice.Hint": "Adds a chat notice when an active equipment Defense Bonus alone changes an ordinary active-defense success or failure.",
   "GUM.DefenseBonus.DecisiveSuccess": "Success due to Defense Bonus {bonus}",

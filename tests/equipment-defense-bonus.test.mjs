@@ -1,13 +1,18 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import test from "node:test";
 
 import {
+  applyEquipmentDefenseBonus,
   collectActiveEquipmentDefenseBonuses,
   evaluateDecisiveDefenseBonus,
   totalActiveEquipmentDefenseBonus
 } from "../module/utils/equipment-defense-bonus.mjs";
 
 const equipment = (id, name, system) => ({ id, name, type: "equipment", _source: { system } });
+const main = fs.readFileSync("scripts/main.js", "utf8");
+const actorSheet = fs.readFileSync("module/actor/gurps-actor-sheet.js", "utf8");
+const actorTemplate = fs.readFileSync("templates/actors/characters.hbs", "utf8");
 
 test("collects only equipped equipment with an explicitly active Defense Bonus", () => {
   const items = [
@@ -38,4 +43,20 @@ test("marks only ordinary defense outcomes crossed by an active Defense Bonus", 
   assert.equal(evaluateDecisiveDefenseBonus({ rollTotal: 10, uncappedTarget: 12, defenseBonus: 2 }), null);
   assert.equal(evaluateDecisiveDefenseBonus({ rollTotal: 3, uncappedTarget: 12, defenseBonus: 2 }), null);
   assert.equal(evaluateDecisiveDefenseBonus({ rollTotal: 12, uncappedTarget: 14, cap: 12, defenseBonus: 2 }), null);
+});
+
+test("adds equipment Defense Bonus after existing defense values and preserves suffixes", () => {
+  assert.equal(applyEquipmentDefenseBonus(10, 2), 12);
+  assert.equal(applyEquipmentDefenseBonus("11F", 2), "13F");
+  assert.equal(applyEquipmentDefenseBonus("9U", -1), "8U");
+  assert.equal(applyEquipmentDefenseBonus("—", 2), "—");
+});
+
+test("actor defense displays and inventory cards share the active equipment toggle", () => {
+  assert.match(main, /attributes\.dodge\.final = applyEquipmentDefenseBonus/);
+  assert.match(main, /return applyEquipmentDefenseBonus\(`\$\{baseValue \+ defenseNhBonuses\.passive \+ defenseNhBonuses\.temp\}/);
+  assert.match(actorTemplate, /data-defense-bonus-included="true"/);
+  assert.match(actorTemplate, /item-toggle-defense-bonus/);
+  assert.match(actorSheet, /system\.defense_bonus_active/);
+  assert.match(actorSheet, /defenseBonusIncluded: dataset\.defenseBonusIncluded === "true"/);
 });

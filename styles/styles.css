@@ -7758,6 +7758,15 @@ background-color: var(--gum-accent-gold);
     color: #b3ffd8;
 }
 
+.gum.sheet.actor .gum-unified-section .equipment-card .item-control.item-toggle-defense-bonus {
+    color: rgba(201, 161, 94, 0.55);
+}
+
+.gum.sheet.actor .gum-unified-section .equipment-card .item-control.item-toggle-defense-bonus.active {
+    color: #f0c978;
+    filter: drop-shadow(0 0 4px rgba(201, 161, 94, 0.45));
+}
+
 .gum.sheet.actor .gum-unified-section .equipment-card .item-icon,
 .gum.sheet.actor .gum-unified-section .characteristic-card .item-icon {
     border-color: rgba(255,255,255,0.15);
