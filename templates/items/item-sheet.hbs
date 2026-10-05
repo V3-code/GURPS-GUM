@@ -1605,6 +1605,9 @@
         <ol class="eqpmod-line-list eqp-feature-list">
         {{#each eqpModifierFeatures as |feature|}}
           <li class="eqpmod-line-item eqp-feature-card {{#unless feature.enabled}}is-disabled{{/unless}}" data-feature-id="{{feature.id}}">
+            <details class="eqp-feature-details" open>
+            <summary class="eqp-feature-collapse-toggle"><span><i class="fas fa-sliders-h" aria-hidden="true"></i> Configuração</span><i class="fas fa-chevron-down" aria-hidden="true"></i></summary>
+            <div class="eqp-feature-content">
             <div class="form-grid-2 eqp-feature-card-header">
               <div class="form-group"><label>Nome</label><input type="text" name="system.features_data.{{feature.id}}.label" value="{{feature.label}}"/></div>
               <div class="form-group"><label>Tipo</label><select class="eqp-feature-shape-select" name="system.features_data.{{feature.id}}.type">{{selectOptions ../equipmentFeatureTypeOptions selected=feature.type valueAttr="id" labelAttr="label"}}</select></div>
@@ -1616,29 +1619,24 @@
               <div class="form-group"><label>Operação</label><select name="system.features_data.{{feature.id}}.operation">{{#if feature.cumulative_text_equipment_value}}<option value="add" {{#if (eq feature.operation "add")}}selected{{/if}}>Acrescentar</option><option value="set" {{#if (eq feature.operation "set")}}selected{{/if}}>Substituir</option>{{else}}{{selectOptions ../equipmentFeatureOperationOptions selected=feature.operation valueAttr="id" labelAttr="label"}}{{/if}}</select></div>
               <div class="form-group"><label>Valor</label><input type="{{#if feature.numeric_equipment_value}}number{{else}}text{{/if}}" step="any" name="system.features_data.{{feature.id}}.value" value="{{feature.value}}"/></div>
             </div>
-            {{#if feature.cumulative_text_equipment_value}}<p class="notes">“Acrescentar” mantém os valores anteriores em uma lista; “Substituir” troca o valor final. Texto não pode ser multiplicado.</p>{{/if}}
-            <label class="custom-checkbox"><input type="checkbox" name="system.features_data.{{feature.id}}.per_level" {{checked feature.per_level}}/><span>Por nível do modificador</span></label>
             {{/if}}
 
             {{#if (eq feature.type "equipment_dr")}}
-            <div class="form-grid-3">
+            <div class="form-grid-2">
               <div class="form-group"><label>Localização</label><select name="system.features_data.{{feature.id}}.location"><option value="all" {{#if (eq feature.location "all")}}selected{{/if}}>Todas as localizações do item</option>{{selectOptions ../equipmentBodyLocationOptions selected=feature.location valueAttr="id" labelAttr="name"}}</select></div>
-              <div class="form-group"><label>Tipo de RD</label><input type="text" name="system.features_data.{{feature.id}}.damage_type" value="{{feature.damage_type}}" placeholder="base, cort, perf..."/></div>
               <div class="form-group"><label>Operação</label><select name="system.features_data.{{feature.id}}.operation">{{selectOptions ../equipmentFeatureOperationOptions selected=feature.operation valueAttr="id" labelAttr="label"}}</select></div>
             </div>
             <div class="form-grid-2">
-              <div class="form-group"><label>Valor</label><input type="number" step="any" name="system.features_data.{{feature.id}}.value" value="{{feature.value}}"/></div>
-              <label class="custom-checkbox"><input type="checkbox" name="system.features_data.{{feature.id}}.per_level" {{checked feature.per_level}}/><span>Por nível do modificador</span></label>
+              <div class="form-group"><label>Valor do RD</label><input type="number" step="any" name="system.features_data.{{feature.id}}.value" value="{{feature.value}}"/></div>
+              <div class="form-group"><label>Tipo de RD <i class="fas fa-circle-info" title="Use “base” para alterar a RD geral. Outros tipos ajustam a RD relativa ao tipo de dano informado." aria-label="Ajuda sobre tipo de RD"></i></label><input type="text" name="system.features_data.{{feature.id}}.damage_type" value="{{feature.damage_type}}" placeholder="base, cort, perf..."/></div>
             </div>
-            <p class="notes">“base” altera a RD geral. Outros tipos representam o ajuste relativo à RD base para aquele tipo de dano.</p>
             {{/if}}
 
             {{#if (eq feature.type "equipment_descriptor")}}
-            <div class="form-grid-2">
-              <div class="form-group"><label>Categoria</label><select name="system.features_data.{{feature.id}}.descriptor_kind">{{selectOptions ../equipmentDescriptorKindOptions selected=feature.descriptor_kind valueAttr="id" labelAttr="label"}}</select></div>
+            <div class="form-grid-2 eqp-feature-descriptor-grid">
+              <div class="form-group"><label>Categoria <i class="fas fa-circle-info" title="Descritores se acumulam entre modificadores e não substituem a qualidade ou o material do equipamento-base." aria-label="Ajuda sobre descritores"></i></label><select name="system.features_data.{{feature.id}}.descriptor_kind">{{selectOptions ../equipmentDescriptorKindOptions selected=feature.descriptor_kind valueAttr="id" labelAttr="label"}}</select></div>
               <div class="form-group"><label>Descrição acrescentada</label><input type="text" name="system.features_data.{{feature.id}}.value" value="{{feature.value}}" placeholder="Ex.: cravejado de prata, acabamento élfico"/></div>
             </div>
-            <p class="notes">Descritores se acumulam entre modificadores e não substituem qualidade ou material do equipamento-base.</p>
             {{/if}}
 
             {{#if (eq feature.type "attack_property")}}
@@ -1652,7 +1650,6 @@
               <div class="form-group"><label>Operação</label><select name="system.features_data.{{feature.id}}.operation">{{#if feature.textual_attack_value}}<option value="set" selected>Definir</option>{{else if feature.formula_attack_value}}<option value="add" {{#if (eq feature.operation "add")}}selected{{/if}}>Somar à fórmula</option><option value="set" {{#if (eq feature.operation "set")}}selected{{/if}}>Definir</option>{{else}}{{selectOptions ../equipmentFeatureOperationOptions selected=feature.operation valueAttr="id" labelAttr="label"}}{{/if}}</select></div>
               <div class="form-group"><label>Valor</label><input type="{{#if feature.numeric_attack_value}}number{{else}}text{{/if}}" step="any" name="system.features_data.{{feature.id}}.value" value="{{feature.value}}"/></div>
             </div>
-            <label class="custom-checkbox"><input type="checkbox" name="system.features_data.{{feature.id}}.per_level" {{checked feature.per_level}}/><span>Por nível do modificador</span></label>
             {{/if}}
 
             {{#if (eq feature.type "attack_damage")}}
@@ -1671,13 +1668,12 @@
               <div class="form-group"><label>Divisor de armadura</label><input type="number" step="0.1" name="system.features_data.{{feature.id}}.damage.armor_divisor" value="{{feature.damage.armor_divisor}}"/></div>
               <div class="form-group"><label>Progressão</label><input type="text" name="system.features_data.{{feature.id}}.damage.scaling" value="{{feature.damage.scaling}}" placeholder="+1d6/point"/></div>
             </div>
-            <p class="notes">O componente é definido como uma estrutura completa no modo de ataque selecionado.</p>
             {{/if}}
 
             {{#if (eq feature.type "create_attack")}}
             <div class="form-grid-3">
               <div class="form-group"><label>Tipo</label><select class="eqp-feature-shape-select" name="system.features_data.{{feature.id}}.attack_type"><option value="melee" {{#if (eq feature.attack_type "melee")}}selected{{/if}}>Corpo a corpo</option><option value="ranged" {{#if (eq feature.attack_type "ranged")}}selected{{/if}}>À distância</option></select></div>
-              <div class="form-group"><label>Nome do modo</label><input type="text" name="system.features_data.{{feature.id}}.attack.mode" value="{{feature.attack.mode}}"/></div>
+              <div class="form-group"><label>Modo de uso</label><input type="text" name="system.features_data.{{feature.id}}.attack.mode" value="{{feature.attack.mode}}"/></div>
               <div class="form-group"><label>Perícia</label><input type="text" name="system.features_data.{{feature.id}}.attack.skill_name" value="{{feature.attack.skill_name}}"/></div>
             </div>
             <div class="form-grid-3">
@@ -1685,10 +1681,10 @@
               <div class="form-group"><label>Tipo de dano</label><input type="text" name="system.features_data.{{feature.id}}.attack.damage_type" value="{{feature.attack.damage_type}}" placeholder="perf"/></div>
               <div class="form-group"><label>Divisor</label><input type="number" step="0.1" name="system.features_data.{{feature.id}}.attack.armor_divisor" value="{{feature.attack.armor_divisor}}"/></div>
             </div>
-            <div class="form-grid-3">
-              <div class="form-group"><label>Grupos</label><input type="text" name="system.features_data.{{feature.id}}.attack.groups" value="{{feature.attack.groups}}" placeholder="escudo, espinho"/></div>
-              <div class="form-group"><label>Alcance C.C.</label><input type="text" name="system.features_data.{{feature.id}}.attack.reach" value="{{feature.attack.reach}}"/></div>
-              <div class="form-group"><label>Distância</label><input type="text" name="system.features_data.{{feature.id}}.attack.range" value="{{feature.attack.range}}"/></div>
+            <div class="form-grid-2">
+              <div class="form-group"><label>Grupos de ataque <i class="fas fa-circle-info" title="Grupos permitem que outras features encontrem este ataque pelo seletor “Grupo”. Use valores separados por vírgula." aria-label="Ajuda sobre grupos de ataque"></i></label><input type="text" name="system.features_data.{{feature.id}}.attack.groups" value="{{feature.attack.groups}}" placeholder="escudo, espinho"/></div>
+              {{#if (eq feature.attack_type "melee")}}<div class="form-group"><label>Alcance</label><input type="text" name="system.features_data.{{feature.id}}.attack.reach" value="{{feature.attack.reach}}"/></div>{{/if}}
+              {{#if (eq feature.attack_type "ranged")}}<div class="form-group"><label>Distância</label><input type="text" name="system.features_data.{{feature.id}}.attack.range" value="{{feature.attack.range}}"/></div>{{/if}}
             </div>
             <div class="form-grid-3">
               <div class="form-group"><label>Modificador de NH</label><input type="number" step="any" name="system.features_data.{{feature.id}}.attack.skill_level_mod" value="{{feature.attack.skill_level_mod}}"/></div>
@@ -1707,10 +1703,9 @@
 
             {{#if (eq feature.type "granted_effect")}}
             <div class="equipment-feature-effect-link">
-              {{#if feature.effect_img}}<img src="{{feature.effect_img}}" alt=""/>{{/if}}
+              <span class="equipment-feature-effect-icon">{{#if feature.effect_img}}<img src="{{feature.effect_img}}" alt=""/>{{else}}<i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i>{{/if}}</span>
               <div class="form-group"><label>Efeito vinculado</label><input type="text" name="system.features_data.{{feature.id}}.effect_uuid" value="{{feature.effect_uuid}}" placeholder="Selecione um item Efeito ou informe seu UUID"/><span class="notes">{{#if feature.effect_name}}{{feature.effect_name}}{{else}}Nenhum efeito selecionado{{/if}}</span></div>
-              <button type="button" class="select-eqp-feature-effect" title="Selecionar no navegador"><i class="fas fa-search"></i> Selecionar</button>
-              <button type="button" class="view-eqp-feature-effect" data-uuid="{{feature.effect_uuid}}" title="Abrir efeito vinculado" {{#unless feature.effect_uuid}}disabled{{/unless}}><i class="fas fa-external-link-alt"></i></button>
+              <div class="equipment-feature-effect-actions"><button type="button" class="select-eqp-feature-effect" title="Selecionar no navegador"><i class="fas fa-search"></i><span>Selecionar efeito</span></button><button type="button" class="view-eqp-feature-effect" data-uuid="{{feature.effect_uuid}}" title="Abrir efeito vinculado" {{#unless feature.effect_uuid}}disabled{{/unless}}><i class="fas fa-external-link-alt"></i></button></div>
             </div>
             <div class="form-grid-2">
               <div class="form-group"><label>Domínio</label><select name="system.features_data.{{feature.id}}.effect_domain"><option value="wearer" {{#if (eq feature.effect_domain "wearer")}}selected{{/if}}>Portador</option><option value="source_attack" {{#if (eq feature.effect_domain "source_attack")}}selected{{/if}}>Ataque do equipamento</option><option value="hit_target" {{#if (eq feature.effect_domain "hit_target")}}selected{{/if}}>Alvo atingido</option></select></div>
@@ -1726,10 +1721,11 @@
               <div class="form-group"><label>Chance de ativação (%)</label><input type="number" min="0" max="100" name="system.features_data.{{feature.id}}.activation_chance" value="{{feature.activation_chance}}"/></div>
               <div class="form-group"><label>Tipo de dano exigido</label><input type="text" name="system.features_data.{{feature.id}}.required_damage_type" value="{{feature.required_damage_type}}" placeholder="Qualquer"/></div>
             </div>
-            <p class="notes">Filtros de ataque valem para Ataque do equipamento e Alvo atingido. Condições de ferimento, chance e tipo de dano valem para Alvo atingido.</p>
             {{/if}}
 
-            <div class="eqpmod-actions eqp-feature-actions"><label class="custom-checkbox eqp-feature-enabled"><input type="checkbox" name="system.features_data.{{feature.id}}.enabled" {{checked feature.enabled}}/><span>Ativa</span></label><button type="button" class="delete-eqp-feature" title="Remover feature"><i class="fas fa-trash"></i> Remover</button></div>
+            <div class="eqpmod-actions eqp-feature-actions"><div class="eqp-feature-toggles"><label class="custom-checkbox eqp-feature-enabled"><input type="checkbox" name="system.features_data.{{feature.id}}.enabled" {{checked feature.enabled}}/><span>Ativa</span></label>{{#if (or (eq feature.type "equipment_property") (eq feature.type "equipment_dr") (eq feature.type "attack_property"))}}<label class="custom-checkbox eqp-feature-enabled"><input type="checkbox" name="system.features_data.{{feature.id}}.per_level" {{checked feature.per_level}}/><span>Por nível do modificador</span></label>{{/if}}</div><button type="button" class="delete-eqp-feature" title="Remover feature"><i class="fas fa-trash"></i> Remover</button></div>
+            </div>
+            </details>
           </li>
         {{else}}
           <li class="eqpmod-empty">Nenhuma feature estruturada. Preço e peso continuam sendo resolvidos normalmente.</li>

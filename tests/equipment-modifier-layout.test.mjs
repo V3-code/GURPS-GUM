@@ -39,6 +39,8 @@ test("equipment modifier editor uses the minimal adjustment workspace", () => {
   assert.match(styles, /\.eqp-modifier-catalog-field\.is-group/);
   assert.match(styles, /\.eqp-feature-card\.is-disabled/);
   assert.match(styles, /\.eqp-features-workspace \.eqp-feature-card \.form-group/);
+  assert.match(template, /eqp-feature-details/);
+  assert.match(template, /eqp-feature-toggles/);
   assert.match(styles, /@media \(max-width: 620px\)/);
 });
 
@@ -132,7 +134,7 @@ test("equipment modifiers author and display cumulative decoration descriptors",
 
 test("text properties use cumulative semantics and descriptors appear in description", () => {
   assert.match(itemSheet, /cumulative_text_equipment_value: \["material", "quality"\]/);
-  assert.match(template, /“Acrescentar” mantém os valores anteriores em uma lista/);
+  assert.match(template, /Descritores se acumulam/);
   const descriptionStart = template.indexOf('data-tab="description"');
   const descriptorStart = template.indexOf("equipment-descriptors-section");
   assert.ok(descriptorStart > descriptionStart);

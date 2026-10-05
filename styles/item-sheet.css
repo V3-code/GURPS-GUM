@@ -5343,26 +5343,41 @@ color:#121114;
 
 .gum.sheet.item .equipment-feature-effect-link {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) auto auto;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
   margin: 8px 0;
-  padding: 8px;
-  border: 1px solid var(--item-border);
-  border-radius: 7px;
-  background: rgba(0, 0, 0, 0.12);
+  padding: 0;
+  border: 0;
+  background: none;
 }
 
-.gum.sheet.item .equipment-feature-effect-link > img {
-  width: 36px;
-  height: 36px;
+.gum.sheet.item .equipment-feature-effect-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
   border: 1px solid var(--item-border);
-  border-radius: 5px;
+  border-radius: 8px;
+  background: rgba(201, 161, 94, 0.08);
+  color: var(--item-accent);
+}
+
+.gum.sheet.item .equipment-feature-effect-icon img {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
   object-fit: cover;
 }
 
+.gum.sheet.item .equipment-feature-effect-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .gum.sheet.item .equipment-feature-effect-link button {
-  align-self: center;
   width: auto;
   white-space: nowrap;
 }
@@ -5504,12 +5519,34 @@ color:#121114;
 .gum.sheet.item .eqp-feature-card.is-disabled { opacity: 0.62; }
 .gum.sheet.item .eqp-feature-card.is-disabled:hover { opacity: 0.82; }
 
+.gum.sheet.item .eqp-feature-details { margin: 0; }
+.gum.sheet.item .eqp-feature-details > summary { list-style: none; }
+.gum.sheet.item .eqp-feature-details > summary::-webkit-details-marker { display: none; }
+.gum.sheet.item .eqp-feature-collapse-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 34px;
+  padding: 7px 11px;
+  border-bottom: 1px solid rgba(201, 161, 94, 0.12);
+  color: var(--item-text-muted);
+  cursor: pointer;
+  font-family: var(--item-font-condensed);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.gum.sheet.item .eqp-feature-collapse-toggle span i { margin-right: 6px; color: var(--item-accent); }
+.gum.sheet.item .eqp-feature-collapse-toggle > i { transition: transform 0.18s ease; }
+.gum.sheet.item .eqp-feature-details:not([open]) .eqp-feature-collapse-toggle > i { transform: rotate(-90deg); }
+.gum.sheet.item .eqp-feature-content { padding: 11px 13px 0; }
 .gum.sheet.item .eqp-feature-card-header {
   align-items: stretch;
-  margin: 0 -13px 12px;
-  padding: 11px 13px;
-  border-bottom: 1px solid rgba(201, 161, 94, 0.14);
-  background: linear-gradient(90deg, rgba(201, 161, 94, 0.07), transparent 65%);
+  margin: 0 0 9px;
+  padding: 0;
+  border: 0;
+  background: none;
 }
 .gum.sheet.item .eqp-features-workspace .eqp-feature-card .form-group {
   display: flex;
@@ -5568,9 +5605,9 @@ color:#121114;
   border-radius: 7px;
   background: rgba(201, 161, 94, 0.06);
 }
-.gum.sheet.item .eqp-feature-card > .form-grid-2,
-.gum.sheet.item .eqp-feature-card > .form-grid-3 { margin-bottom: 9px; }
-.gum.sheet.item .eqp-feature-card > .notes {
+.gum.sheet.item .eqp-feature-content > .form-grid-2,
+.gum.sheet.item .eqp-feature-content > .form-grid-3 { margin-bottom: 9px; }
+.gum.sheet.item .eqp-feature-content > .notes {
   margin: 7px 0;
   padding: 7px 9px;
   border: 0;
@@ -5583,11 +5620,51 @@ color:#121114;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin: 11px -13px -11px;
+  margin: 11px -13px 0;
   padding: 8px 11px;
   border-top: 1px solid rgba(201, 161, 94, 0.12);
   background: rgba(0, 0, 0, 0.13);
 }
+.gum.sheet.item .eqp-feature-toggles { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.gum.sheet.item .eqp-feature-enabled {
+  gap: 7px;
+  min-height: 26px;
+  padding: 3px 7px;
+  border-color: rgba(201, 161, 94, 0.12);
+  background: rgba(255, 255, 255, 0.018);
+  color: var(--item-text-soft);
+  font-family: var(--item-font-condensed);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.gum.sheet.item .eqp-feature-enabled input[type="checkbox"] {
+  appearance: none;
+  position: relative;
+  width: 26px;
+  height: 15px;
+  margin: 0;
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.10);
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+.gum.sheet.item .eqp-feature-enabled input[type="checkbox"]::after {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(240, 235, 227, 0.72);
+  content: "";
+  transition: transform 0.16s ease, background 0.16s ease;
+}
+.gum.sheet.item .eqp-feature-enabled input[type="checkbox"]:checked { border-color: rgba(201, 161, 94, 0.68); background: rgba(201, 161, 94, 0.36); }
+.gum.sheet.item .eqp-feature-enabled input[type="checkbox"]:checked::after { transform: translateX(11px); background: #f5e3be; }
+.gum.sheet.item .eqp-feature-descriptor-grid .form-group:last-child { grid-column: 1 / -1; }
 .gum.sheet.item .eqp-feature-actions .delete-eqp-feature { width: auto; margin: 0; padding: 5px 9px; color: #d99b94; border-color: rgba(184, 89, 89, 0.35); background: rgba(90, 34, 38, 0.2); }
 
 @media (max-width: 620px) {
@@ -5601,16 +5678,20 @@ color:#121114;
   .gum.sheet.item .eqp-modifier-catalog-field.is-compact,
   .gum.sheet.item .eqp-modifier-catalog-field.is-half { grid-column: auto; }
   .gum.sheet.item .eqp-feature-card-header { grid-template-columns: minmax(0, 1fr); }
+  .gum.sheet.item .eqp-feature-actions { align-items: stretch; flex-direction: column; }
+  .gum.sheet.item .eqp-feature-actions .delete-eqp-feature { width: 100%; }
 }
 
 @media (max-width: 620px) {
   .gum.sheet.item .equipment-feature-effect-link {
-    grid-template-columns: 36px minmax(0, 1fr) auto;
+    grid-template-columns: 42px minmax(0, 1fr);
   }
 
   .gum.sheet.item .equipment-feature-effect-link .form-group {
-    grid-column: 2 / -1;
+    grid-column: 2;
   }
+  .gum.sheet.item .equipment-feature-effect-actions { grid-column: 1 / -1; justify-content: stretch; }
+  .gum.sheet.item .equipment-feature-effect-actions .select-eqp-feature-effect { flex: 1; }
 }
 
 .gum.sheet.item.effect-sheet .effect-roll-modifier-value-field {
