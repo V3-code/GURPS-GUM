@@ -11,14 +11,9 @@ export class EqpModifierBrowser extends FormApplication {
     this.allModifiers = [];
     this.availableFolders = [];
 
-    // Define os filtros iniciais com base no item
-    // Se for uma armadura, já começa com 'armor' marcado, etc.
-    const initialFilters = this._detectInitialFilters(targetItem);
-
     this.filters = {
         search: "",
         folderIds: [],
-        categories: initialFilters, // Objeto { melee: true, armor: false, ... }
         cfMin: null,
         cfMax: null
     };
@@ -34,43 +29,6 @@ export class EqpModifierBrowser extends FormApplication {
       resizable: true,
       scrollY: [".browser-results"]
     });
-  }
-
-  /**
-   * Detecta quais filtros ativar inicialmente.
-   */
-  _detectInitialFilters(item) {
-      const filters = {
-          all: false, // "Todos" começa desligado se houver filtro específico
-          general: false,
-          melee: false,
-          ranged: false,
-          armor: false,
-          shield: false,
-          ammo: false,
-          enchantment: false
-      };
-
-      let specificFilterFound = false;
-
-      if (item.type === 'equipment') {
-          const hasProtection = Object.keys(item.system.dr_locations || {}).length > 0;
-          if (hasProtection) { filters.armor = true; specificFilterFound = true; }
-          if (item.system.defense_bonus > 0) { filters.shield = true; specificFilterFound = true; }
-          if (Object.keys(item.system.melee_attacks || {}).length > 0) { filters.melee = true; specificFilterFound = true; }
-          if (Object.keys(item.system.ranged_attacks || {}).length > 0) { filters.ranged = true; specificFilterFound = true; }
-          // Você pode adicionar lógica para 'ammo' aqui se tiver uma flag no item
-      }
-
-      // Se não detectou nada específico, marca "Todos"
-      if (!specificFilterFound) {
-          filters.all = true;
-      } else {
-          // Se detectou algo, também marca "Geral" porque materiais servem pra tudo
-          filters.general = true;
-      }
-
-      return filters;
   }
 
   async getData() {
@@ -111,35 +69,6 @@ export class EqpModifierBrowser extends FormApplication {
       this._applyFilters(html);
     });
 
-    // 3. Filtro de Categoria (Checkboxes)
-    html.find('input.category-filter').on('change', event => {
-        const category = event.target.value;
-        const isChecked = event.target.checked;
-
-        if (category === 'all') {
-            // Se clicou em "Todos", desmarca/marca o resto visualmente?
-            // Não, vamos manter simples: "Todos" sobrepõe tudo.
-            this.filters.categories.all = isChecked;
-            // Opcional: Se marcou "Todos", desmarca os outros para limpar a UI
-            if (isChecked) {
-                for(let key in this.filters.categories) {
-                    if(key !== 'all') {
-                        this.filters.categories[key] = false;
-                        html.find(`input.category-filter[value="${key}"]`).prop('checked', false);
-                    }
-                }
-            }
-        } else {
-            // Se clicou em específico, desmarca "Todos"
-            this.filters.categories[category] = isChecked;
-            if (isChecked) {
-                this.filters.categories.all = false;
-                html.find('input.category-filter[value="all"]').prop('checked', false);
-            }
-        }
-        this._applyFilters(html);
-    });
-
     // 4. Filtro de CF
 html.find('input[name="cfMin"], input[name="cfMax"]').on('input', event => {
         const val = parseFloat(event.target.value);
@@ -178,11 +107,7 @@ html.find('input[name="cfMin"], input[name="cfMax"]').on('input', event => {
    */
   _applyFilters(html) {
     const items = html.find('.result-item');
-   const { search, folderIds, categories, cfMin, cfMax } = this.filters;
-
-    // Cria uma lista das categorias ativas (exceto 'all')
-    const activeCategories = Object.keys(categories).filter(k => k !== 'all' && categories[k]);
-    const showAll = categories.all || activeCategories.length === 0;
+   const { search, folderIds, cfMin, cfMax } = this.filters;
 
     items.each((i, el) => {
         const item = $(el);
@@ -191,35 +116,14 @@ html.find('input[name="cfMin"], input[name="cfMax"]').on('input', event => {
         // A. Texto
         if (search) {
             const name = item.find('.item-name').text().toLowerCase();
-            const tags = (item.data('tags') || "").toString().toLowerCase();
-            if (!name.includes(search) && !tags.includes(search)) isVisible = false;
+            const group = (item.data('group') || "").toString().toLowerCase();
+            if (!name.includes(search) && !group.includes(search)) isVisible = false;
         }
 
         // B. Pasta
         if (isVisible && folderIds.length > 0) {
             const selectionKey = item.attr("data-selection-key");
             if (!recordMatchesFolderFilter(this.allModifiers.find(mod => mod.selectionKey === selectionKey), new Set(folderIds))) isVisible = false;
-        }
-
-        // D. Categorias (Lógica "OU")
-        if (isVisible && !showAll) {
-            // O item deve pertencer a PELO MENOS UMA das categorias marcadas
-            let matchesCategory = false;
-
-            // Verifica se o modificador é "Geral" (aplica em tudo) E se "Geral" está marcado
-            if (item.data('cat-general') === true && categories.general) matchesCategory = true;
-
-            // Verifica as outras categorias
-            if (!matchesCategory) {
-                for (const cat of activeCategories) {
-                    if (item.data(`cat-${cat}`) === true) {
-                        matchesCategory = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!matchesCategory) isVisible = false;
         }
 
         // C. CF
@@ -240,48 +144,15 @@ el.style.display = isVisible ? "grid" : "none";
         title: modifier?.name || "Modificador",
         type: "Mod. Equipamento",
         img: modifier?.img || "icons/svg/upgrade.svg",
-        description: await GumPreviewDialog.enrichDescription(system.features || system.description || "<i>Sem descrição.</i>"),
+        description: await GumPreviewDialog.enrichDescription(system.description || "<i>Sem descrição.</i>"),
         tags: [
           { label: "Custo", value: this._getCostDisplay(system) },
           { label: "Peso", value: system.weight_mod },
-          { label: "TL", value: system.tech_level_mod },
-          { label: "Categorias", value: Object.keys(system.target_type || {}).filter(k => system.target_type[k]).join(", ") }
+          { label: "NT", value: system.tech_level },
+          { label: "Grupo", value: system.group }
         ],
         width: 500
       });
-      const createTag = (label, value) => value ? `<div class="property-tag"><label>${label}</label><span>${value}</span></div>` : "";
-      const tags = [
-        createTag("Custo", this._getCostDisplay(system)),
-        createTag("Peso", system.weight_mod),
-        createTag("TL", system.tech_level_mod),
-        createTag("Categorias", Object.keys(system.target_type || {}).filter(k => system.target_type[k]).join(", "))
-      ].join("");
-
-      const description = await TextEditor.enrichHTML(system.features || system.description || "<i>Sem descrição.</i>", { async: true });
-
-      const content = `
-        <div class="gurps-dialog-canvas">
-            <div class="gurps-item-preview-card">
-                <header class="preview-header">
-                    <h3>${modifier?.name || "Modificador"}</h3>
-                    <div class="header-controls"><span class="preview-item-type">Equipamento</span></div>
-                </header>
-                <div class="preview-content">
-                    <div class="preview-properties">${tags}</div>
-                    <hr class="preview-divider">
-                    <div class="preview-description">${description}</div>
-                </div>
-            </div>
-        </div>
-      `;
-
-      new Dialog({
-        title: `Detalhes: ${modifier?.name || "Modificador"}`,
-        content,
-        buttons: { close: { label: "Fechar" } },
-        default: "close",
-        options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 420 }
-      }).render(true);
   }
 
   _formatValue(val) {
@@ -323,8 +194,8 @@ el.style.display = isVisible ? "grid" : "none";
           weight_adjustment_data: cloneData(sourceModifier.system.weight_adjustment_data || {}),
           features_data: cloneData(sourceModifier.system.features_data || []),
           gcs_features_unmapped: cloneData(sourceModifier.system.gcs_features_unmapped || []),
-          tech_level_mod: sourceModifier.system.tech_level_mod,
-          features: sourceModifier.system.features,
+          tech_level: sourceModifier.system.tech_level,
+          group: sourceModifier.system.group,
           ref: sourceModifier.system.ref,
           source_uuid: sourceModifier.uuid
         };

@@ -23,22 +23,42 @@ test("equipment modifier sheet exposes structured cost and weight controls", () 
   ]) assert.match(template, new RegExp(field.replaceAll(".", "\\.")));
 });
 
-test("equipment modifier editor uses the modern card workspaces", () => {
+test("equipment modifier editor uses the minimal adjustment workspace", () => {
   for (const className of [
     "eqp-modifier-workspace",
-    "eqp-modifier-hero",
-    "eqp-adjustment-card",
-    "eqp-adjustment-preview",
+    "eqp-modifier-heading",
+    "eqp-adjustment-panel",
+    "eqp-adjustment-summary",
+    "eqp-modifier-catalog",
     "eqp-feature-list",
-    "eqp-feature-card",
-    "eqp-feature-card-header",
-    "eqp-feature-actions"
+    "eqp-feature-card"
   ]) assert.match(template, new RegExp(className));
 
   const styles = fs.readFileSync("styles/item-sheet.css", "utf8");
-  assert.match(styles, /\.eqp-modifier-hero/);
+  assert.match(styles, /\.eqp-adjustment-primary-grid/);
   assert.match(styles, /\.eqp-feature-card\.is-disabled/);
   assert.match(styles, /@media \(max-width: 620px\)/);
+});
+
+test("equipment modifier organization is consolidated in adjustments", () => {
+  const adjustmentStart = template.indexOf('<div class="tab" data-tab="adjustments"');
+  const featureStart = template.indexOf('<div class="tab" data-tab="equipment-features"', adjustmentStart);
+  const adjustmentTab = template.slice(adjustmentStart, featureStart);
+  assert.match(adjustmentTab, /name="system\.group"/);
+  assert.match(adjustmentTab, /name="system\.enabled"/);
+  assert.match(adjustmentTab, /name="system\.level"/);
+  assert.match(adjustmentTab, /name="system\.tech_level"/);
+  assert.doesNotMatch(template, /name="system\.tags"/);
+  assert.doesNotMatch(template, /name="system\.features"/);
+  assert.doesNotMatch(template, /name="system\.target_type/);
+});
+
+test("equipment modifier reference lives in description instead of details", () => {
+  const descriptionStart = template.indexOf('data-tab="description"');
+  const descriptionTab = template.slice(descriptionStart);
+  assert.match(descriptionTab, /eq item\.type "eqp_modifier"/);
+  assert.match(descriptionTab, /name="system\.ref"/);
+  assert.match(template, /unless \(eq item\.type "eqp_modifier"\).*data-tab="details"/);
 });
 
 test("item sheet and actor preparation delegate to the central resolver", () => {

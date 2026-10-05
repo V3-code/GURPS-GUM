@@ -36,7 +36,7 @@ test("GCS equipment modifier import preserves stages and scaling controls", () =
   assert.equal(result.system.weight_adjustment_data.expression, "+1 lb");
   assert.equal(result.system.weight_adjustment_data.stage, "original");
   assert.equal(result.system.weight_adjustment_data.per_level, true);
-  assert.match(result.system.features, /Peso GCS: \+1 lb/);
+  assert.equal(result.system.description, "Somente lâminas");
 });
 
 test("GCS bare base costs become CF and Bulk targets the runtime magnitude field", () => {
@@ -67,5 +67,5 @@ test("GCS equipment modifier import converts supported features and preserves th
   assert.equal(features["gcs-2"].selector_field, "skill_name");
   assert.equal(features["gcs-2"].selector_value, "Escudo");
   assert.equal(result.system.gcs_features_unmapped.length, 2);
-  assert.match(result.system.features, /2 feature\(s\) GCS preservada\(s\)/);
+  assert.equal(result.system.description, "");
 });

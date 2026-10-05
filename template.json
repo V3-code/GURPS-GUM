@@ -828,22 +828,12 @@
       "gcs_features_unmapped": [],
       "tech_level_mod": "",
       "tech_level": "",
-      "tags": "",
-      "features": "",
+      "group": "",
       "scenario": {
         "rarity": "",
         "location": "",
         "availability": "",
         "components": ""
-      },
-      "target_type": {
-        "melee": false,
-        "ranged": false,
-        "armor": false,
-        "shield": false,
-        "ammo": false,
-        "enchantment": false,
-        "general": true
       }
     },
     "gm_modifier": {

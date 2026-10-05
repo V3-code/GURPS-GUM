@@ -575,7 +575,7 @@
   {{!-- 1. Navegação das Abas (CORRIGIDA) --}}
   <nav class="sheet-tabs tabs" data-group="primary">
         <a class="item" data-tab="description">Descrição</a>
-        <a class="item" data-tab="details">Detalhes</a>
+        {{#unless (eq item.type "eqp_modifier")}}<a class="item" data-tab="details">Detalhes</a>{{/unless}}
         {{#if (eq item.type "eqp_modifier")}}
         <a class="item" data-tab="adjustments">Ajustes</a>
         <a class="item" data-tab="equipment-features">Features</a>
@@ -674,111 +674,6 @@
             {{> itemDetailsGeneral}}
         {{/if}}
         
-        {{!-- ===================================================================== --}}
-        {{!-- 		ABA DETALHES: ITEM MODIFICADOR DE EQUIPAMENTO (LAYOUT v2)	 --}}
-        {{!-- ===================================================================== --}}
-        {{#if (eq item.type "eqp_modifier")}}
-            
-            {{!-- Seção 1: Identidade mecânica --}}
-            <div class="form-section"><h4 class="section-title">Identidade</h4>
-                <div class="form-grid-4">
-                    <div class="form-group">
-                        <label>Habilitado por padrão</label>
-                        <input type="checkbox" name="system.enabled" {{checked system.enabled}}/>
-                    </div>
-                    <div class="form-group">
-                        <label>Nível padrão</label>
-                        <input type="number" min="0" step="1" name="system.level" value="{{system.level}}"/>
-                    </div>
-                    <div class="form-group" title="Nível Tecnológico do Modificador">
-                        <label>NT (TL)</label>
-                        <input type="text" name="system.tech_level" value="{{system.tech_level}}" placeholder="0"/>
-                    </div>
-                    {{!-- Campo REF com botão --}}
-                    <div class="form-group">
-                        <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> - Ref.</label>
-                        <div class="input-with-button">
-                            <input type="text" name="system.ref" value="{{system.ref}}"/>
-                        </div>
-                    </div>
-                </div>
-                
-                {{!-- Tags para busca --}}
-                <div class="form-group" style="margin-top: 8px;">
-                    <label>Tags / Palavras-Chave</label>
-                    <input type="text" name="system.tags" value="{{system.tags}}" placeholder="Ex: Metal, Mágico, Élfico, Qualidade (Separar por vírgula)"/>
-                </div>
-            </div>
-            {{!-- Seção: Tipo de Aplicação (Filtros) --}}
-            <div class="form-section"><h4 class="section-title">Aplica-se a:</h4>
-                <div class="form-grid-3 attack-flags-grid">
-                    <label class="custom-checkbox">
-                        <input type="checkbox" name="system.target_type.general" {{checked system.target_type.general}}/>
-                        <span>Geral (Todos)</span>
-                    </label>
-                    <label class="custom-checkbox">
-                        <input type="checkbox" name="system.target_type.melee" {{checked system.target_type.melee}}/>
-                        <span>Arma C.C.</span>
-                    </label>
-                    <label class="custom-checkbox">
-                        <input type="checkbox" name="system.target_type.ranged" {{checked system.target_type.ranged}}/>
-                        <span>Arma Dist.</span>
-                    </label>
-                    <label class="custom-checkbox">
-                        <input type="checkbox" name="system.target_type.armor" {{checked system.target_type.armor}}/>
-                        <span>Armadura</span>
-                    </label>
-                    <label class="custom-checkbox">
-                        <input type="checkbox" name="system.target_type.shield" {{checked system.target_type.shield}}/>
-                        <span>Escudo</span>
-                    </label>
-                    <label class="custom-checkbox">
-                        <input type="checkbox" name="system.target_type.ammo" {{checked system.target_type.ammo}}/>
-                        <span>Munição</span>
-                    </label>
-                    <label class="custom-checkbox">
-                        <input type="checkbox" name="system.target_type.enchantment" {{checked system.target_type.enchantment}}/>
-                        <span>Encantamento</span>
-                    </label>
-                </div>
-            </div>
-            {{!-- Seção 2: Dados de Cenário (Layout Ajustado) --}}
-            <div class="form-section"><h4 class="section-title">Dados de Cenário</h4>
-                
-                {{!-- Linha 1: Raridade e Disponibilidade (Lado a Lado) --}}
-                <div class="form-grid-2">
-                    <div class="form-group">
-                        <label>Raridade</label>
-                        <input type="text" name="system.scenario.rarity" value="{{system.scenario.rarity}}" placeholder="Ex: Comum, Único"/>
-                    </div>
-                    <div class="form-group">
-                        <label>Disponibilidade</label>
-                        <input type="text" name="system.scenario.availability" value="{{system.scenario.availability}}" placeholder="Ex: Mercado 12-, Apenas Conexão"/>
-                    </div>
-                </div>
-
-                {{!-- Linha 2: Região / Origem (Largura Total) --}}
-                <div class="form-group" style="margin-top: 8px;">
-                    <label>Região / Origem</label>
-                    <input type="text" name="system.scenario.location" value="{{system.scenario.location}}" placeholder="Ex: Montanhas do Norte, Forjas Reais de Khazad"/>
-                </div>
-                
-                {{!-- Linha 3: Materiais (Largura Total) --}}
-                <div class="form-group" style="margin-top: 8px;">
-                    <label>Materiais / Componentes Necessários</label>
-                    <input type="text" name="system.scenario.components" value="{{system.scenario.components}}" placeholder="Ex: 1kg de Oricalco Bruto, Forja Vulcânica"/>
-                </div>
-            </div>
-            
-            {{!-- Seção 3: Efeitos e Notas --}}
-            <div class="form-section"><h4 class="section-title">Efeitos e Notas</h4>
-                 <p class="hint">Descreva aqui os efeitos mecânicos (ex: +1 Dano, RD +1) ou narrativos.</p>
-                 <div class="form-group">
-                    <textarea name="system.features" rows="4" placeholder="Ex: +1 de dano no ataque. Trata a RD como se fosse 2 menor.">{{system.features}}</textarea>
-                 </div>
-            </div>
-        {{/if}}
-
 {{!-- ===================================================================== --}}
 {{!--       ABA DETALHES: MODIFICADOR DO MESTRE (FORMULÁRIO TÉCNICO)      --}}
 {{!-- ===================================================================== --}}
@@ -1652,72 +1547,63 @@
 {{! ========================================================= }}
     {{!  ABA "DESCRIÇÃO" (COM O EDITOR CORRETO)     }}
     {{! ========================================================= }}
-    {{!-- Aba de ajustes estruturados do modificador de equipamento --}}
+    {{!-- Ajustes e organização do modificador de equipamento --}}
     <div class="tab" data-tab="adjustments">
       {{#if (eq item.type "eqp_modifier")}}
       <div class="eqp-modifier-workspace eqp-adjustments-workspace">
-        <header class="eqp-modifier-hero">
-          <span class="eqp-modifier-hero-icon"><i class="fas fa-sliders-h" aria-hidden="true"></i></span>
-          <div><h3>Ajustes do modificador</h3><p>Defina como preço e peso são recalculados, sem alterar os valores originais do equipamento.</p></div>
+        <header class="eqp-modifier-heading">
+          <span class="eqp-modifier-heading-icon"><i class="fas fa-sliders-h" aria-hidden="true"></i></span>
+          <div><h3>Ajustes do modificador</h3><p>Defina como preço e peso são recalculados sem alterar os valores originais do equipamento.</p></div>
         </header>
-      <div class="form-section eqp-adjustment-card eqp-adjustment-cost-card">
-        <div class="eqp-adjustment-card-header"><span class="eqp-adjustment-card-icon"><i class="fas fa-coins" aria-hidden="true"></i></span><div><h4>Ajuste de preço</h4><p>Configure o custo e a etapa em que o ajuste entra no cálculo.</p></div></div>
-        <div class="form-grid-2">
-          <div class="form-group">
-            <label>Expressão</label>
-            <input type="text" name="system.cost_adjustment_data.expression" value="{{eqpModifierAdjustment.cost.expression}}" placeholder="Ex.: +0,2 CF, x4, +50, -10%"/>
-            <p class="notes">CF e multiplicadores estruturais pertencem normalmente ao valor base.</p>
-          </div>
-          <div class="form-group">
-            <label>Aplicar ao</label>
-            <select name="system.cost_adjustment_data.stage">
-              {{selectOptions equipmentAdjustmentStageOptions selected=eqpModifierAdjustment.cost.stage valueAttr="id" labelAttr="label"}}
-            </select>
-          </div>
-        </div>
-        <div class="form-grid-3 attack-flags-grid">
-          <label class="custom-checkbox"><input type="checkbox" name="system.cost_adjustment_data.per_level" {{checked eqpModifierAdjustment.cost.perLevel}}/><span>Por nível</span></label>
-          <label class="custom-checkbox"><input type="checkbox" name="system.cost_adjustment_data.per_weight" {{checked eqpModifierAdjustment.cost.perWeight}}/><span>Por peso</span></label>
-          <div class="form-group">
-            <label>Unidade do peso</label>
-            <select name="system.cost_adjustment_data.per_weight_unit">
-              <option value="kg" {{#if (eq eqpModifierAdjustment.cost.perWeightUnit "kg")}}selected{{/if}}>kg</option>
-              <option value="lb" {{#if (eq eqpModifierAdjustment.cost.perWeightUnit "lb")}}selected{{/if}}>lb</option>
-            </select>
-          </div>
-        </div>
-        <p class="notes eqp-adjustment-preview"><i class="fas fa-calculator" aria-hidden="true"></i><span><strong>Interpretação</strong>{{eqpModifierAdjustment.cost.expression}} · {{eqpModifierAdjustment.cost.stage}}</span></p>
-      </div>
 
-      <div class="form-section eqp-adjustment-card eqp-adjustment-weight-card">
-        <div class="eqp-adjustment-card-header"><span class="eqp-adjustment-card-icon"><i class="fas fa-weight-hanging" aria-hidden="true"></i></span><div><h4>Ajuste de peso</h4><p>Controle a massa final e sua ordem na resolução.</p></div></div>
-        <div class="form-grid-2">
-          <div class="form-group">
-            <label>Expressão</label>
-            <input type="text" name="system.weight_adjustment_data.expression" value="{{eqpModifierAdjustment.weight.expression}}" placeholder="Ex.: +0,5 kg, -10%, x0,75, x2/3"/>
+        <section class="eqp-adjustment-panel">
+          <div class="eqp-adjustment-panel-heading"><i class="fas fa-coins" aria-hidden="true"></i><div><h4>Ajuste de preço</h4><p>Configure o custo e a etapa em que o ajuste entra no cálculo.</p></div></div>
+          <div class="eqp-adjustment-primary-grid">
+            <label class="eqp-adjustment-field"><span>Expressão</span><input type="text" name="system.cost_adjustment_data.expression" value="{{eqpModifierAdjustment.cost.expression}}" placeholder="Ex.: +0,2 CF, x4, +50, -10%"/><small>CF e multiplicadores estruturais pertencem normalmente ao valor base.</small></label>
+            <label class="eqp-adjustment-field"><span>Aplicar ao</span><select name="system.cost_adjustment_data.stage">{{selectOptions equipmentAdjustmentStageOptions selected=eqpModifierAdjustment.cost.stage valueAttr="id" labelAttr="label"}}</select></label>
           </div>
-          <div class="form-group">
-            <label>Aplicar ao</label>
-            <select name="system.weight_adjustment_data.stage">
-              {{selectOptions equipmentAdjustmentStageOptions selected=eqpModifierAdjustment.weight.stage valueAttr="id" labelAttr="label"}}
-            </select>
+          <div class="eqp-adjustment-options-grid">
+            <label class="eqp-adjustment-option"><input type="checkbox" name="system.cost_adjustment_data.per_level" {{checked eqpModifierAdjustment.cost.perLevel}}/><span>Por nível</span></label>
+            <label class="eqp-adjustment-option"><input type="checkbox" name="system.cost_adjustment_data.per_weight" {{checked eqpModifierAdjustment.cost.perWeight}}/><span>Por peso</span></label>
+            <label class="eqp-adjustment-field is-compact"><span>Unidade do peso</span><select name="system.cost_adjustment_data.per_weight_unit"><option value="kg" {{#if (eq eqpModifierAdjustment.cost.perWeightUnit "kg")}}selected{{/if}}>kg</option><option value="lb" {{#if (eq eqpModifierAdjustment.cost.perWeightUnit "lb")}}selected{{/if}}>lb</option></select></label>
           </div>
-        </div>
-        <div class="form-grid-3 attack-flags-grid">
-          <label class="custom-checkbox"><input type="checkbox" name="system.weight_adjustment_data.per_level" {{checked eqpModifierAdjustment.weight.perLevel}}/><span>Por nível</span></label>
-        </div>
-        <p class="notes eqp-adjustment-preview"><i class="fas fa-calculator" aria-hidden="true"></i><span><strong>Interpretação</strong>{{eqpModifierAdjustment.weight.expression}} · {{eqpModifierAdjustment.weight.stage}}</span></p>
-      </div>
-      </div>
+          <div class="eqp-adjustment-summary"><i class="fas fa-calculator" aria-hidden="true"></i><strong>Interpretação</strong><span>{{eqpModifierAdjustment.cost.expression}} · {{eqpModifierAdjustment.cost.stage}}</span></div>
+        </section>
 
+        <section class="eqp-adjustment-panel">
+          <div class="eqp-adjustment-panel-heading"><i class="fas fa-weight-hanging" aria-hidden="true"></i><div><h4>Ajuste de peso</h4><p>Controle a massa final e sua ordem na resolução.</p></div></div>
+          <div class="eqp-adjustment-primary-grid">
+            <label class="eqp-adjustment-field"><span>Expressão</span><input type="text" name="system.weight_adjustment_data.expression" value="{{eqpModifierAdjustment.weight.expression}}" placeholder="Ex.: +0,5 kg, -10%, x0,75, x2/3"/></label>
+            <label class="eqp-adjustment-field"><span>Aplicar ao</span><select name="system.weight_adjustment_data.stage">{{selectOptions equipmentAdjustmentStageOptions selected=eqpModifierAdjustment.weight.stage valueAttr="id" labelAttr="label"}}</select></label>
+          </div>
+          <div class="eqp-adjustment-options-grid is-single">
+            <label class="eqp-adjustment-option"><input type="checkbox" name="system.weight_adjustment_data.per_level" {{checked eqpModifierAdjustment.weight.perLevel}}/><span>Por nível</span></label>
+          </div>
+          <div class="eqp-adjustment-summary"><i class="fas fa-calculator" aria-hidden="true"></i><strong>Interpretação</strong><span>{{eqpModifierAdjustment.weight.expression}} · {{eqpModifierAdjustment.weight.stage}}</span></div>
+        </section>
+
+        <section class="eqp-modifier-catalog">
+          <div class="eqp-modifier-section-heading"><i class="fas fa-folder-open" aria-hidden="true"></i><div><h4>Organização e cenário</h4><p>Informações de catálogo usadas para encontrar e contextualizar este modificador.</p></div></div>
+          <div class="eqp-modifier-catalog-grid">
+            <label class="eqp-modifier-catalog-field"><span>Grupo</span><input type="text" name="system.group" value="{{system.group}}" placeholder="Ex.: Materiais, Encantamentos, Qualidade"/></label>
+            <label class="eqp-modifier-catalog-field"><span>Nível padrão</span><input type="number" min="0" step="1" name="system.level" value="{{system.level}}"/></label>
+            <label class="eqp-modifier-catalog-field"><span>NT</span><input type="text" name="system.tech_level" value="{{system.tech_level}}" placeholder="Ex.: 3, 8^"/></label>
+            <label class="eqp-modifier-enabled"><span class="eqp-modifier-enabled-icon"><i class="fas fa-power-off" aria-hidden="true"></i></span><span><strong>Habilitado por padrão</strong><small>Novas aplicações começam ativas.</small></span><input type="checkbox" name="system.enabled" {{checked system.enabled}}/></label>
+            <label class="eqp-modifier-catalog-field"><span>Raridade</span><input type="text" name="system.scenario.rarity" value="{{system.scenario.rarity}}" placeholder="Ex.: Comum, Único"/></label>
+            <label class="eqp-modifier-catalog-field"><span>Disponibilidade</span><input type="text" name="system.scenario.availability" value="{{system.scenario.availability}}" placeholder="Ex.: Mercado 12-, Apenas Conexão"/></label>
+            <label class="eqp-modifier-catalog-field is-wide"><span>Região / Origem</span><input type="text" name="system.scenario.location" value="{{system.scenario.location}}" placeholder="Ex.: Forjas Reais de Khazad"/></label>
+            <label class="eqp-modifier-catalog-field is-wide"><span>Materiais / Componentes</span><input type="text" name="system.scenario.components" value="{{system.scenario.components}}" placeholder="Ex.: 1 kg de oricalco bruto, forja vulcânica"/></label>
+          </div>
+        </section>
+      </div>
       {{/if}}
     </div>
 
     <div class="tab" data-tab="equipment-features">
       {{#if (eq item.type "eqp_modifier")}}
       <div class="eqp-modifier-workspace eqp-features-workspace">
-        <div class="eqp-modifier-hero eqp-features-hero">
-          <span class="eqp-modifier-hero-icon"><i class="fas fa-puzzle-piece" aria-hidden="true"></i></span>
+        <div class="eqp-modifier-heading eqp-features-heading">
+          <span class="eqp-modifier-heading-icon"><i class="fas fa-puzzle-piece" aria-hidden="true"></i></span>
           <div><h3>Features do modificador</h3><p>Combine comportamentos independentes para transformar propriedades, ataques, proteção e efeitos.</p></div>
           <button type="button" class="add-eqp-feature"><i class="fas fa-plus"></i><span>Adicionar feature</span></button>
         </div>
@@ -1862,7 +1748,7 @@
 
     <div class="tab" data-tab="description">
       <div class="description-tab">
-        {{#if (or (eq item.type "skill") (eq item.type "spell") (eq item.type "power") (eq item.type "equipment") (eq item.type "advantage") (eq item.type "disadvantage"))}}
+        {{#if (or (eq item.type "skill") (eq item.type "spell") (eq item.type "power") (eq item.type "equipment") (eq item.type "advantage") (eq item.type "disadvantage") (eq item.type "eqp_modifier"))}}
         <div class="item-description-reference">
           <label><a class="open-reference-link" title="Abrir Referência"><i class="fas fa-book-open"></i></a> REF</label>
           <div class="item-description-reference-control">

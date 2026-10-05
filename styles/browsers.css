@@ -535,3 +535,19 @@
     color: var(--gum-text-label);
 }
 
+
+.gum.eqp-modifier-browser .result-item .item-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.gum.eqp-modifier-browser .result-item .item-group {
+  margin-top: 2px;
+  overflow: hidden;
+  color: rgba(240, 235, 227, 0.5);
+  font-size: 0.68rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
