@@ -1554,14 +1554,14 @@
         <section class="eqp-modifier-catalog">
           <div class="eqp-modifier-section-heading"><i class="fas fa-folder-open" aria-hidden="true"></i><div><h4>Organização e cenário</h4></div><i class="fas fa-circle-info eqp-heading-help" title="Informações de catálogo usadas para encontrar e contextualizar este modificador." aria-label="Informações sobre organização e cenário"></i></div>
           <div class="eqp-modifier-catalog-grid">
-            <label class="eqp-modifier-catalog-field is-group"><span>Grupo</span><input type="text" name="system.group" value="{{system.group}}" placeholder="Ex.: Materiais, Encantamentos, Qualidade"/></label>
-            <label class="eqp-modifier-catalog-field is-compact"><span>NT</span><input type="text" name="system.tech_level" value="{{system.tech_level}}" placeholder="Ex.: 3, 8^"/></label>
-            <label class="eqp-modifier-catalog-field is-compact"><span>Nível</span><input type="number" min="0" step="1" name="system.level" value="{{system.level}}"/></label>
-            <label class="eqp-modifier-catalog-field is-compact"><span>Pontos</span><input type="number" step="1" name="system.points" value="{{system.points}}" title="Valor de pontos de catálogo. Ainda não participa de nenhum cálculo automático."/></label>
-            <label class="eqp-modifier-catalog-field is-half"><span>Raridade</span><input type="text" name="system.scenario.rarity" value="{{system.scenario.rarity}}" placeholder="Ex.: Comum, Único"/></label>
-            <label class="eqp-modifier-catalog-field is-half"><span>Disponibilidade</span><input type="text" name="system.scenario.availability" value="{{system.scenario.availability}}" placeholder="Ex.: Mercado 12-, Apenas Conexão"/></label>
-            <label class="eqp-modifier-catalog-field is-half"><span>Região / Origem</span><input type="text" name="system.scenario.location" value="{{system.scenario.location}}" placeholder="Ex.: Forjas Reais de Khazad"/></label>
-            <label class="eqp-modifier-catalog-field is-half"><span>Material predominante</span><input type="text" name="system.scenario.components" value="{{system.scenario.components}}" placeholder="Ex.: Oricalco, aço meteórico"/></label>
+            <label class="eqp-modifier-catalog-field eqp-field-card is-group"><span>Grupo</span><input type="text" name="system.group" value="{{system.group}}" placeholder="Ex.: Materiais, Encantamentos, Qualidade"/></label>
+            <label class="eqp-modifier-catalog-field eqp-field-card is-compact"><span>NT</span><input type="text" name="system.tech_level" value="{{system.tech_level}}" placeholder="Ex.: 3, 8^"/></label>
+            <label class="eqp-modifier-catalog-field eqp-field-card is-compact"><span>Nível</span><input type="number" min="0" step="1" name="system.level" value="{{system.level}}"/></label>
+            <label class="eqp-modifier-catalog-field eqp-field-card is-compact"><span>Pontos</span><input type="number" step="1" name="system.points" value="{{system.points}}" title="Valor de pontos de catálogo. Ainda não participa de nenhum cálculo automático."/></label>
+            <label class="eqp-modifier-catalog-field eqp-field-card is-half"><span>Raridade</span><input type="text" name="system.scenario.rarity" value="{{system.scenario.rarity}}" placeholder="Ex.: Comum, Único"/></label>
+            <label class="eqp-modifier-catalog-field eqp-field-card is-half"><span>Disponibilidade</span><input type="text" name="system.scenario.availability" value="{{system.scenario.availability}}" placeholder="Ex.: Mercado 12-, Apenas Conexão"/></label>
+            <label class="eqp-modifier-catalog-field eqp-field-card is-half"><span>Região / Origem</span><input type="text" name="system.scenario.location" value="{{system.scenario.location}}" placeholder="Ex.: Forjas Reais de Khazad"/></label>
+            <label class="eqp-modifier-catalog-field eqp-field-card is-half"><span>Material predominante</span><input type="text" name="system.scenario.components" value="{{system.scenario.components}}" placeholder="Ex.: Oricalco, aço meteórico"/></label>
           </div>
           <label class="custom-checkbox eqp-modifier-enabled"><input type="checkbox" name="system.enabled" {{checked system.enabled}}/><span>Habilitado por padrão</span><i class="fas fa-circle-info" title="Define se este modificador será incluído como ativo quando for adicionado a um equipamento. A ativação pode ser alterada depois no próprio equipamento." aria-label="Informações sobre habilitação padrão"></i></label>
         </section>
@@ -1569,27 +1569,25 @@
         <section class="eqp-adjustment-panel">
           <div class="eqp-adjustment-panel-heading"><i class="fas fa-coins" aria-hidden="true"></i><div><h4>Ajuste de preço</h4></div><i class="fas fa-circle-info eqp-heading-help" title="Configure o custo e a etapa em que o ajuste entra no cálculo." aria-label="Informações sobre ajuste de preço"></i></div>
           <div class="eqp-adjustment-primary-grid">
-            <label class="eqp-adjustment-field"><span>Expressão <i class="fas fa-circle-info" title="CF e multiplicadores estruturais pertencem normalmente ao valor base." aria-label="Ajuda sobre a expressão de preço"></i></span><input type="text" name="system.cost_adjustment_data.expression" value="{{eqpModifierAdjustment.cost.expression}}" placeholder="Ex.: +0,2 CF, x4, +50, -10%"/></label>
-            <label class="eqp-adjustment-field"><span>Aplicar ao</span><select name="system.cost_adjustment_data.stage">{{selectOptions equipmentAdjustmentStageOptions selected=eqpModifierAdjustment.cost.stage valueAttr="id" labelAttr="label"}}</select></label>
+            <label class="eqp-adjustment-field eqp-field-card"><span>Expressão <i class="fas fa-circle-info" title="CF e multiplicadores estruturais pertencem normalmente ao valor base." aria-label="Ajuda sobre a expressão de preço"></i></span><input type="text" name="system.cost_adjustment_data.expression" value="{{eqpModifierAdjustment.cost.expression}}" placeholder="Ex.: +0,2 CF, x4, +50, -10%"/></label>
+            <label class="eqp-adjustment-field eqp-field-card"><span>Aplicar ao</span><select name="system.cost_adjustment_data.stage">{{selectOptions equipmentAdjustmentStageOptions selected=eqpModifierAdjustment.cost.stage valueAttr="id" labelAttr="label"}}</select></label>
           </div>
           <div class="eqp-adjustment-options-grid">
             <label class="eqp-adjustment-option"><input type="checkbox" name="system.cost_adjustment_data.per_level" {{checked eqpModifierAdjustment.cost.perLevel}}/><span>Por nível</span></label>
             <label class="eqp-adjustment-option"><input type="checkbox" name="system.cost_adjustment_data.per_weight" {{checked eqpModifierAdjustment.cost.perWeight}}/><span>Por peso</span></label>
-            <label class="eqp-adjustment-field is-compact"><span>Unidade do peso</span><select name="system.cost_adjustment_data.per_weight_unit"><option value="kg" {{#if (eq eqpModifierAdjustment.cost.perWeightUnit "kg")}}selected{{/if}}>kg</option><option value="lb" {{#if (eq eqpModifierAdjustment.cost.perWeightUnit "lb")}}selected{{/if}}>lb</option></select></label>
+            <label class="eqp-adjustment-field eqp-field-card is-compact"><span>Unidade para preço por peso</span><select name="system.cost_adjustment_data.per_weight_unit" title="Usada somente quando o preço é calculado por peso."><option value="kg" {{#if (eq eqpModifierAdjustment.cost.perWeightUnit "kg")}}selected{{/if}}>kg</option><option value="lb" {{#if (eq eqpModifierAdjustment.cost.perWeightUnit "lb")}}selected{{/if}}>lb</option></select></label>
           </div>
-          <div class="eqp-adjustment-summary"><i class="fas fa-calculator" aria-hidden="true"></i><strong>Interpretação</strong><span>{{eqpModifierAdjustment.cost.expression}} · {{eqpModifierAdjustment.cost.stage}}</span></div>
         </section>
 
         <section class="eqp-adjustment-panel">
           <div class="eqp-adjustment-panel-heading"><i class="fas fa-weight-hanging" aria-hidden="true"></i><div><h4>Ajuste de peso</h4></div><i class="fas fa-circle-info eqp-heading-help" title="Controle a massa final e sua ordem na resolução." aria-label="Informações sobre ajuste de peso"></i></div>
           <div class="eqp-adjustment-primary-grid">
-            <label class="eqp-adjustment-field"><span>Expressão</span><input type="text" name="system.weight_adjustment_data.expression" value="{{eqpModifierAdjustment.weight.expression}}" placeholder="Ex.: +0,5 kg, -10%, x0,75, x2/3"/></label>
-            <label class="eqp-adjustment-field"><span>Aplicar ao</span><select name="system.weight_adjustment_data.stage">{{selectOptions equipmentAdjustmentStageOptions selected=eqpModifierAdjustment.weight.stage valueAttr="id" labelAttr="label"}}</select></label>
+            <label class="eqp-adjustment-field eqp-field-card"><span>Expressão <i class="fas fa-circle-info" title="Inclua a unidade diretamente na expressão quando necessário, por exemplo: +0,5 kg ou +1 lb." aria-label="Ajuda sobre a expressão de peso"></i></span><input type="text" name="system.weight_adjustment_data.expression" value="{{eqpModifierAdjustment.weight.expression}}" placeholder="Ex.: +0,5 kg, -10%, x0,75, x2/3"/></label>
+            <label class="eqp-adjustment-field eqp-field-card"><span>Aplicar ao</span><select name="system.weight_adjustment_data.stage">{{selectOptions equipmentAdjustmentStageOptions selected=eqpModifierAdjustment.weight.stage valueAttr="id" labelAttr="label"}}</select></label>
           </div>
           <div class="eqp-adjustment-options-grid is-single">
             <label class="eqp-adjustment-option"><input type="checkbox" name="system.weight_adjustment_data.per_level" {{checked eqpModifierAdjustment.weight.perLevel}}/><span>Por nível</span></label>
           </div>
-          <div class="eqp-adjustment-summary"><i class="fas fa-calculator" aria-hidden="true"></i><strong>Interpretação</strong><span>{{eqpModifierAdjustment.weight.expression}} · {{eqpModifierAdjustment.weight.stage}}</span></div>
         </section>
 
       </div>

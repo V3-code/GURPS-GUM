@@ -27,7 +27,7 @@ test("equipment modifier editor uses the minimal adjustment workspace", () => {
   for (const className of [
     "eqp-modifier-workspace",
     "eqp-adjustment-panel",
-    "eqp-adjustment-summary",
+    "eqp-field-card",
     "eqp-modifier-catalog",
     "eqp-features-toolbar",
     "eqp-feature-list",
@@ -50,6 +50,8 @@ test("equipment modifier organization is consolidated in adjustments", () => {
   assert.match(adjustmentTab, /name="system\.level"/);
   assert.match(adjustmentTab, /name="system\.tech_level"/);
   assert.match(adjustmentTab, /name="system\.points"/);
+  assert.match(adjustmentTab, /Unidade para preço por peso/);
+  assert.doesNotMatch(adjustmentTab, /eqp-adjustment-summary/);
   assert.match(adjustmentTab, /Material predominante/);
   assert.ok(adjustmentTab.indexOf("Organização e cenário") < adjustmentTab.indexOf("Ajuste de preço"));
   assert.doesNotMatch(adjustmentTab, /Ajustes do modificador/);
