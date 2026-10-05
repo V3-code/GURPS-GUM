@@ -442,6 +442,7 @@
         "item_ht": 12,
         "item_dr": 0,
         "holdout": 0,
+        "defense_bonus_active": false,
         "max_uses": 0,
         "current_uses": 0,
         "uses_mode": "quantity",

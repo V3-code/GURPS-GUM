@@ -197,6 +197,12 @@
                         </div>
                     </div>
                 </div>
+                {{#if (and (eq item.type "equipment") (ne equipmentPropertyChanges.defense_bonus.final 0))}}
+                <label class="equipment-stat-card equipment-defense-bonus-toggle" title="{{localize 'GUM.Equipment.Label.DefenseBonusActiveHint'}}">
+                    <span class="equipment-stat-heading"><i class="fas fa-shield-alt"></i><span>{{localize "GUM.Equipment.Label.DefenseBonusActive"}}</span></span>
+                    <span class="equipment-toggle-pill"><input type="checkbox" name="system.defense_bonus_active" {{checked system.defense_bonus_active}}/><span>{{localize "GUM.Equipment.Label.Enabled"}}</span></span>
+                </label>
+                {{/if}}
             </div>
         </div>
 
@@ -855,9 +861,8 @@
                 <input type="checkbox" name="system.favorite_in_combat" {{checked system.favorite_in_combat}}/>
               </label>
               <div class="skill-dashboard-card skill-dashboard-field-card characteristic-organization-card">
-                <label class="skill-dashboard-card-heading"><i class="fas fa-layer-group" aria-hidden="true"></i><span>Organização na Ficha</span></label>
-                <div class="skill-dashboard-card-control"><input type="text" name="system.group" value="{{system.group}}" placeholder="Ex: Racial: Elfo, Poderes Psíquicos..."/></div>
-                <small class="characteristic-card-hint">O nome pode ser transformado em um grupo na ficha do personagem.</small>
+                <label class="skill-dashboard-card-heading" title="{{localize 'GUM.Traits.GroupHint'}}"><i class="fas fa-layer-group" aria-hidden="true"></i><span>{{localize "GUM.Traits.GroupLabel"}}</span><i class="fas fa-circle-info" aria-hidden="true"></i></label>
+                <div class="skill-dashboard-card-control"><input type="text" name="system.group" value="{{system.group}}" placeholder="{{localize 'GUM.Traits.GroupPlaceholder'}}"/></div>
               </div>
             </div>
 

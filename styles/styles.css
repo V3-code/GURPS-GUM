@@ -947,6 +947,36 @@
     font-size: 0.88rem;
 }
 
+.gurps-roll-card .defense-bonus-notice {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px 7px;
+    margin-top: 7px;
+    padding: 6px 8px;
+    border: 1px solid rgba(201, 161, 94, 0.52);
+    border-radius: 4px;
+    background: rgba(201, 161, 94, 0.10);
+    color: #60491f;
+    font-size: 0.74rem;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.gurps-roll-card .defense-bonus-notice.failure {
+    border-color: rgba(154, 62, 62, 0.48);
+    background: rgba(154, 62, 62, 0.09);
+    color: #792f2f;
+}
+
+.gurps-roll-card .defense-bonus-notice small {
+    width: 100%;
+    color: inherit;
+    font-size: 0.68rem;
+    font-weight: 600;
+    opacity: 0.82;
+}
+
 .attack-summary-card {
     border: 1px solid #cdbca2;
     box-shadow: 0 8px 18px rgba(24, 18, 13, 0.16);

@@ -223,6 +223,15 @@ export const registerSystemSettings = function() {
         default: "gum.status_bindings"
     });
 
+    game.settings.register("gum", "showDecisiveDefenseBonusNotice", {
+        name: "GUM.Settings.DefenseBonusNotice.Name",
+        hint: "GUM.Settings.DefenseBonusNotice.Hint",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false
+    });
+
     game.settings.register("gum", "hybridImportSearchAllCompendia", {
         name: "GUM.Settings.HybridImportSearchAll.Name",
         hint: "GUM.Settings.HybridImportSearchAll.Hint",

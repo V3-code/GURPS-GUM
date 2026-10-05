@@ -541,5 +541,15 @@
   "GUM.Equipment.Warning.Generic": "O ajuste não pôde ser aplicado.",
   "GUM.Equipment.Warning.UnknownSource": "Modificador desconhecido",
   "GUM.Equipment.Reserve.OpenEquipment": "Abrir equipamento",
-  "GUM.Equipment.Label.Charges": "cargas"
+  "GUM.Equipment.Label.Charges": "cargas",
+  "GUM.Equipment.Label.DefenseBonusActive": "Aplicar bônus de defesa",
+  "GUM.Equipment.Label.DefenseBonusActiveHint": "Quando equipado, o bônus de defesa deste item se aplica a Esquiva, Aparar e Bloqueio.",
+  "GUM.Settings.DefenseBonusNotice.Name": "Exibir avisos de BD decisiva",
+  "GUM.Settings.DefenseBonusNotice.Hint": "Adiciona um aviso no chat quando a BD ativa de equipamento, sozinha, muda um sucesso ou falha comum de defesa ativa.",
+  "GUM.DefenseBonus.DecisiveSuccess": "Sucesso devido à BD {bonus}",
+  "GUM.DefenseBonus.DecisiveFailure": "Falha devido à BD {bonus}",
+  "GUM.DefenseBonus.Sources": "Fontes: {sources}",
+  "GUM.Traits.GroupLabel": "Organização na ficha",
+  "GUM.Traits.GroupPlaceholder": "Ex.: Racial: Elfo, Poderes Psíquicos",
+  "GUM.Traits.GroupHint": "O nome pode ser usado como um grupo na ficha do personagem."
 }

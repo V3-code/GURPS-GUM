@@ -541,5 +541,15 @@
   "GUM.Equipment.Warning.Generic": "The adjustment could not be applied.",
   "GUM.Equipment.Warning.UnknownSource": "Unknown modifier",
   "GUM.Equipment.Reserve.OpenEquipment": "Open equipment",
-  "GUM.Equipment.Label.Charges": "charges"
+  "GUM.Equipment.Label.Charges": "charges",
+  "GUM.Equipment.Label.DefenseBonusActive": "Apply defense bonus",
+  "GUM.Equipment.Label.DefenseBonusActiveHint": "When equipped, this item's Defense Bonus applies to Dodge, Parry, and Block.",
+  "GUM.Settings.DefenseBonusNotice.Name": "Show decisive Defense Bonus notices",
+  "GUM.Settings.DefenseBonusNotice.Hint": "Adds a chat notice when an active equipment Defense Bonus alone changes an ordinary active-defense success or failure.",
+  "GUM.DefenseBonus.DecisiveSuccess": "Success due to Defense Bonus {bonus}",
+  "GUM.DefenseBonus.DecisiveFailure": "Failure due to Defense Bonus {bonus}",
+  "GUM.DefenseBonus.Sources": "Source: {sources}",
+  "GUM.Traits.GroupLabel": "Sheet organization",
+  "GUM.Traits.GroupPlaceholder": "E.g. Racial: Elf, Psionic Powers",
+  "GUM.Traits.GroupHint": "The name can be used as a group on the character sheet."
 }
