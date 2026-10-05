@@ -167,8 +167,11 @@ test("equipment modifier sheet exposes typed feature authoring", () => {
 test("equipment active toggle explains its limited lifecycle purpose", () => {
   assert.match(template, /Ligado \/ Ativo/);
   assert.match(template, /equipment-operational-toggle/);
-  assert.match(template, /Estado operacional usado por efeitos “Enquanto ativado”/);
-  assert.match(template, /não substitui Carregado ou Equipado/);
+  assert.match(template, /equipment-toggle-pill/);
+  assert.match(template, /efeitos com ciclo de vida Enquanto ativado/);
+  assert.match(template, /não substitui os estados Carregado ou Equipado/);
+  assert.match(template, /equipment-consume-toggle/);
+  assert.doesNotMatch(template, /No modo Quantidade, “Consumir \/ Usar”/);
 });
 
 test("granted effects expose UUID, domain and lifecycle and are synchronized by item hooks", () => {
@@ -218,8 +221,20 @@ test("equipment modifiers author structured follow-up and fragmentation damage",
 test("equipment attack cards identify modes changed by resolved features", () => {
   assert.match(itemSheet, /describeEquipmentAttackChanges\(baseEquipmentSystem\.melee_attacks, resolution\.meleeAttacks/);
   assert.match(itemSheet, /describeEquipmentAttackChanges\(baseEquipmentSystem\.ranged_attacks, resolution\.rangedAttacks/);
+  assert.match(itemSheet, /equipmentCreatedMeleeAttacks/);
+  assert.match(itemSheet, /equipmentCreatedRangedAttacks/);
   assert.match(template, /equipmentMeleeAttackChanges/);
   assert.match(template, /equipmentRangedAttackChanges/);
-  assert.match(template, /equipment-modifier-indicator/);
+  assert.match(template, /equipment-attack-resolution-tag/);
+  assert.match(template, /equipment-created-attack-card/);
+  assert.match(template, /Modos concedidos por modificadores/);
   assert.match(template, /fa-wrench/);
+});
+
+test("resolved equipment summary uses its own modern panel", () => {
+  assert.match(template, /equipment-resolution-panel/);
+  assert.match(template, /equipment-resolution-summary/);
+  assert.match(template, /equipment-resolution-card/);
+  assert.doesNotMatch(template, /<div class="form-section" style="margin-top: 10px;">/);
+  assert.match(styles, /\.equipment-resolution-header/);
 });

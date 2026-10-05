@@ -405,8 +405,15 @@ _promptMultipleReferences(parsedList) {
             context.equipmentResolution = resolution;
             context.equipmentUses = resolution.uses;
             context.equipmentPropertyChanges = describeEquipmentPropertyChanges(baseEquipmentSystem, resolution.properties);
-            context.equipmentMeleeAttackChanges = describeEquipmentAttackChanges(baseEquipmentSystem.melee_attacks, resolution.meleeAttacks, resolution.steps, "melee");
-            context.equipmentRangedAttackChanges = describeEquipmentAttackChanges(baseEquipmentSystem.ranged_attacks, resolution.rangedAttacks, resolution.steps, "ranged");
+            const meleeAttackChanges = describeEquipmentAttackChanges(baseEquipmentSystem.melee_attacks, resolution.meleeAttacks, resolution.steps, "melee");
+            const rangedAttackChanges = describeEquipmentAttackChanges(baseEquipmentSystem.ranged_attacks, resolution.rangedAttacks, resolution.steps, "ranged");
+            const createdAttackCards = (attacks, changes) => Object.entries(attacks || {})
+                .filter(([id]) => changes[id]?.created)
+                .map(([id, attack]) => ({ id, ...attack, change: changes[id] }));
+            context.equipmentMeleeAttackChanges = meleeAttackChanges;
+            context.equipmentRangedAttackChanges = rangedAttackChanges;
+            context.equipmentCreatedMeleeAttacks = createdAttackCards(resolution.meleeAttacks, meleeAttackChanges);
+            context.equipmentCreatedRangedAttacks = createdAttackCards(resolution.rangedAttacks, rangedAttackChanges);
             context.equipmentFeatureSteps = resolution.steps;
             const stageLabels = { original: "Original", base: "Base", final_base: "Base final", final: "Final" };
             const describeCalculationSteps = steps => steps.map(step => ({ ...step, stageLabel: stageLabels[step.stage] || step.stage }));

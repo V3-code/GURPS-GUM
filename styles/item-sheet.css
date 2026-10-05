@@ -5245,35 +5245,193 @@ color:#121114;
   grid-template-columns: minmax(280px, 1fr) minmax(110px, 0.28fr);
 }
 
-.gum.sheet.item .attack-item .attack-flags .equipment-modifier-indicator {
-  max-width: 180px;
-  padding-inline: 6px;
+.gum.sheet.item .equipment-attack-resolution-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 0 8px 5px 11px;
+}
+
+.gum.sheet.item .equipment-attack-resolution-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 3px 7px;
   overflow: hidden;
   color: #f3d08a;
-  border-color: rgba(201, 161, 94, 0.65);
-  background: rgba(112, 76, 20, 0.34);
+  border: 1px solid rgba(201, 161, 94, 0.42);
+  border-radius: 999px;
+  background: rgba(112, 76, 20, 0.24);
+  font-family: var(--item-font-condensed);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.gum.sheet.item .equipment-operational-toggle {
+.gum.sheet.item .equipment-created-attacks {
   display: flex;
-  justify-content: flex-end;
-  padding: 7px 10px;
-  border: 1px solid var(--item-border);
-  border-radius: 7px;
-  background: rgba(0, 0, 0, 0.16);
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid rgba(201, 161, 94, 0.13);
+  border-radius: 8px;
+  background: rgba(201, 161, 94, 0.035);
 }
 
-.gum.sheet.item .equipment-operational-toggle .custom-checkbox {
+.gum.sheet.item .equipment-created-attacks-heading {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 0;
+  gap: 6px;
+  color: var(--item-text-muted);
+  font-family: var(--item-font-condensed);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
-.gum.sheet.item .equipment-operational-toggle .notes {
-  margin-left: 4px;
+.gum.sheet.item .equipment-created-attacks-heading i {
+  color: var(--item-accent);
+}
+
+.gum.sheet.item .equipment-created-attack-card {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.6fr) repeat(3, minmax(68px, 0.65fr)) auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid rgba(201, 161, 94, 0.17);
+  border-left: 3px solid rgba(201, 161, 94, 0.68);
+  border-radius: 7px;
+  background: rgba(12, 11, 15, 0.48);
+}
+
+.gum.sheet.item .equipment-created-attack-identity,
+.gum.sheet.item .equipment-created-attack-stat {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.gum.sheet.item .equipment-created-attack-identity strong,
+.gum.sheet.item .equipment-created-attack-stat strong {
+  overflow: hidden;
+  color: var(--item-text);
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gum.sheet.item .equipment-created-attack-identity span,
+.gum.sheet.item .equipment-created-attack-stat span {
+  overflow: hidden;
+  color: var(--item-text-muted);
+  font-size: 0.58rem;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+@media (max-width: 620px) {
+  .gum.sheet.item .equipment-created-attack-card {
+    grid-template-columns: minmax(130px, 1fr) repeat(2, minmax(64px, 0.55fr));
+  }
+  .gum.sheet.item .equipment-created-attack-card > .equipment-created-attack-stat:nth-of-type(4) { display: none; }
+  .gum.sheet.item .equipment-created-attack-card > .equipment-attack-resolution-tag { grid-column: 1 / -1; justify-self: start; }
+}
+
+.gum.sheet.item .equipment-operational-toggle {
+  display: flex;
+  justify-content: center;
+  padding: 8px 10px;
+  border: 1px solid rgba(201, 161, 94, 0.18);
+  border-radius: 8px;
+  background:
+    radial-gradient(100% 110% at 12% 0%, rgba(201, 161, 94, 0.07), transparent 52%),
+    rgba(17, 15, 20, 0.68);
+}
+
+.gum.sheet.item .equipment-toggle-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 0;
+  color: rgba(240, 235, 227, 0.78);
+  font-family: var(--item-font-condensed);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.gum.sheet.item .equipment-toggle-pill > input[type="checkbox"] {
+  position: relative;
+  flex: 0 0 auto;
+  appearance: none;
+  width: 27px;
+  height: 15px;
+  margin: 0;
+  border: 1px solid rgba(201, 161, 94, 0.34);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.42);
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+
+.gum.sheet.item .equipment-toggle-pill > input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(235, 232, 228, 0.72);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+  transition: transform 0.16s ease, background 0.16s ease;
+}
+
+.gum.sheet.item .equipment-toggle-pill > input[type="checkbox"]:checked {
+  border-color: rgba(201, 161, 94, 0.68);
+  background: rgba(201, 161, 94, 0.36);
+}
+
+.gum.sheet.item .equipment-toggle-pill > input[type="checkbox"]:checked::after {
+  transform: translateX(11px);
+  background: #f5e3be;
+}
+
+.gum.sheet.item .equipment-toggle-pill > input[type="checkbox"]:focus-visible {
+  outline: 2px solid rgba(201, 161, 94, 0.42);
+  outline-offset: 2px;
+}
+
+.gum.sheet.item .equipment-toggle-pill i {
+  color: var(--item-accent);
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-consume-toggle {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  gap: 14px;
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-consume-toggle .equipment-stat-heading,
+.gum.sheet.item .equipment-details-layout .equipment-consume-toggle .equipment-toggle-pill {
+  white-space: nowrap;
 }
 
 .gum.sheet.item .equipment-descriptor-list {
@@ -5339,6 +5497,91 @@ color:#121114;
 .gum.sheet.item .equipment-feature-trace code,
 .gum.sheet.item .equipment-feature-trace .notes {
   margin-left: 6px;
+}
+
+.gum.sheet.item .equipment-resolution-panel {
+  margin-top: 12px;
+  padding: 0 12px 12px;
+  overflow: hidden;
+  border: 1px solid rgba(201, 161, 94, 0.18);
+  border-radius: 10px;
+  background:
+    radial-gradient(100% 100% at 12% 0%, rgba(201, 161, 94, 0.07), transparent 48%),
+    linear-gradient(145deg, rgba(17, 15, 20, 0.92), rgba(28, 25, 33, 0.88));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 10px 24px rgba(0, 0, 0, 0.26);
+}
+
+.gum.sheet.item .equipment-resolution-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 0 -12px 10px;
+  padding: 9px 12px;
+  color: rgba(240, 235, 227, 0.82);
+  border-bottom: 1px solid rgba(201, 161, 94, 0.13);
+  background: rgba(201, 161, 94, 0.07);
+  font-family: var(--item-font-condensed);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item .equipment-resolution-header i {
+  color: var(--item-accent);
+}
+
+.gum.sheet.item .equipment-resolution-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.gum.sheet.item .equipment-resolution-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "label base" "value value";
+  align-items: center;
+  gap: 5px 10px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(201, 161, 94, 0.16);
+  border-radius: 8px;
+  background: rgba(8, 7, 10, 0.28);
+}
+
+.gum.sheet.item .equipment-resolution-label {
+  grid-area: label;
+  color: var(--item-text-muted);
+  font-family: var(--item-font-condensed);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item .equipment-resolution-value {
+  grid-area: value;
+  color: var(--item-text);
+  font-size: 1rem;
+  line-height: 1.1;
+}
+
+.gum.sheet.item .equipment-resolution-base {
+  grid-area: base;
+  padding: 3px 7px;
+  color: var(--item-text-muted);
+  border: 1px solid rgba(201, 161, 94, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.025);
+  font-size: 0.66rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .gum.sheet.item .equipment-resolution-summary { grid-template-columns: 1fr; }
+  .gum.sheet.item .equipment-details-layout .equipment-consume-toggle { gap: 8px; }
 }
 
 .gum.sheet.item .equipment-feature-effect-link {

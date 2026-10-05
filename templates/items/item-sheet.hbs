@@ -3,10 +3,9 @@
     <div class="equipment-details-layout">
         {{!-- Este bloco contém os campos gerais para equipamentos. --}}
         <div class="equipment-operational-toggle">
-            <label class="custom-checkbox" title="Indica que o equipamento está ligado ou em funcionamento. Controla somente features configuradas como Enquanto ativado; não substitui Carregado ou Equipado.">
+            <label class="equipment-toggle-pill" title="Indica que o equipamento está ligado ou funcionando. Controla somente efeitos com ciclo de vida Enquanto ativado; não substitui os estados Carregado ou Equipado.">
                 <input type="checkbox" name="system.active" {{checked system.active}}/>
                 <span><i class="fas fa-power-off"></i> Ligado / Ativo</span>
-                <small class="notes">Estado operacional usado por efeitos “Enquanto ativado”.</small>
             </label>
         </div>
         <div class="form-section skill-details-compact equipment-details-form">
@@ -159,12 +158,11 @@
                     <div class="equipment-stat-control"><input type="number" min="0" name="system.current_uses" value="{{system.current_uses}}"/></div>
                     {{#if (eq equipmentUses.mode "charges")}}<small class="notes">Restantes: {{equipmentUses.remaining}} / {{equipmentUses.max}}</small>{{/if}}
                 </div>
-                <label class="equipment-stat-card custom-checkbox" title="Ao gastar a última carga, reduz a quantidade em um e recarrega a próxima unidade.">
+                <label class="equipment-stat-card equipment-consume-toggle" title="No modo Cargas, ao gastar a última carga, reduz a quantidade em uma unidade e prepara as cargas da próxima. No modo Quantidade, Consumir / Usar reduz diretamente uma unidade.">
                     <span class="equipment-stat-heading"><i class="fas fa-box-open"></i><span>Consumir unidade ao esgotar</span></span>
-                    <input type="checkbox" name="system.consume_quantity_when_empty" {{checked system.consume_quantity_when_empty}}/>
+                    <span class="equipment-toggle-pill"><input type="checkbox" name="system.consume_quantity_when_empty" {{checked system.consume_quantity_when_empty}}/><span>Ativado</span></span>
                 </label>
             </div>
-            <p class="notes">No modo Quantidade, “Consumir / Usar” mantém o comportamento legado e reduz uma unidade. No modo Cargas, o campo acima registra cargas gastas.</p>
         </div>
 
         <div class="form-section skill-details-compact equipment-details-form">
@@ -1855,9 +1853,6 @@
     </span>
 
     <span class="attack-flags">
-      {{#with (lookup @root.equipmentMeleeAttackChanges key) as |change|}}
-        {{#if change.changed}}<span class="pill-stat equipment-modifier-indicator" title="{{change.title}}"><i class="fas fa-wrench"></i> {{change.summary}}</span>{{/if}}
-      {{/with}}
       {{#if (objectValues attack.onDamageEffects)}}
         <span class="pill-stat effect-indicator" title="Este ataque aplica um ou mais efeitos."><i class="fas fa-magic"></i></span>
       {{/if}}
@@ -1942,6 +1937,13 @@
       </div>
 
     </div>
+    {{#with (lookup @root.equipmentMeleeAttackChanges key) as |change|}}
+      {{#if change.changed}}
+      <div class="equipment-attack-resolution-tags">
+        <span class="equipment-attack-resolution-tag" title="{{change.title}}"><i class="fas fa-wrench"></i> Modificado · {{change.summary}}</span>
+      </div>
+      {{/if}}
+    {{/with}}
   </div>
 </div>
                  {{!-- MODO EDIÇÃO (O FORMULÁRIO) --}}
@@ -2062,10 +2064,24 @@
                  </li>
                    {{else}}
                     <li class="attack-empty">
-                    Nenhum ataque corpo a corpo adicionado.
+                    Nenhum ataque corpo a corpo adicionado ao equipamento-base.
                     </li>
                  {{/each}}          
              </ol>
+             {{#if equipmentCreatedMeleeAttacks.length}}
+             <div class="equipment-created-attacks" aria-label="Modos corpo a corpo criados por modificadores">
+               <div class="equipment-created-attacks-heading"><i class="fas fa-wand-magic-sparkles"></i> Modos concedidos por modificadores</div>
+               {{#each equipmentCreatedMeleeAttacks as |attack|}}
+               <article class="equipment-created-attack-card" title="{{attack.change.title}}">
+                 <div class="equipment-created-attack-identity"><strong>{{attack.mode}}</strong><span>{{#if attack.skill_name}}{{attack.skill_name}}{{else}}Sem perícia{{/if}}</span></div>
+                 <div class="equipment-created-attack-stat"><span>Dano</span><strong>{{attack.damage_formula}} {{attack.damage_type}}</strong></div>
+                 <div class="equipment-created-attack-stat"><span>Aparar</span><strong>{{attack.parry}}</strong></div>
+                 <div class="equipment-created-attack-stat"><span>Alcance</span><strong>{{attack.reach}}</strong></div>
+                 <span class="equipment-attack-resolution-tag"><i class="fas fa-plus"></i> Modo criado</span>
+               </article>
+               {{/each}}
+             </div>
+             {{/if}}
         </div>
 
         {{!-- SEÇÃO DE ATAQUES À DISTÂNCIA (RANGED) --}}
@@ -2098,9 +2114,6 @@
           </span>
 
           <span class="attack-flags">
-            {{#with (lookup @root.equipmentRangedAttackChanges key) as |change|}}
-              {{#if change.changed}}<span class="pill-stat equipment-modifier-indicator" title="{{change.title}}"><i class="fas fa-wrench"></i> {{change.summary}}</span>{{/if}}
-            {{/with}}
             {{#if (objectValues attack.onDamageEffects)}}
               <span class="pill-stat effect-indicator" title="Este ataque aplica um ou mais efeitos."><i class="fas fa-magic"></i></span>
             {{/if}}
@@ -2196,6 +2209,13 @@
       </div>
 
     </div>
+    {{#with (lookup @root.equipmentRangedAttackChanges key) as |change|}}
+      {{#if change.changed}}
+      <div class="equipment-attack-resolution-tags">
+        <span class="equipment-attack-resolution-tag" title="{{change.title}}"><i class="fas fa-wrench"></i> Modificado · {{change.summary}}</span>
+      </div>
+      {{/if}}
+    {{/with}}
   </div>
 </div>
 
@@ -2330,10 +2350,24 @@
                  </li>
                    {{else}}
                     <li class="attack-empty">
-                    Nenhum ataque a Distância adicionado.
+                    Nenhum ataque à distância adicionado ao equipamento-base.
                     </li>
                  {{/each}}
              </ol>
+             {{#if equipmentCreatedRangedAttacks.length}}
+             <div class="equipment-created-attacks" aria-label="Modos à distância criados por modificadores">
+               <div class="equipment-created-attacks-heading"><i class="fas fa-wand-magic-sparkles"></i> Modos concedidos por modificadores</div>
+               {{#each equipmentCreatedRangedAttacks as |attack|}}
+               <article class="equipment-created-attack-card equipment-created-attack-card-ranged" title="{{attack.change.title}}">
+                 <div class="equipment-created-attack-identity"><strong>{{attack.mode}}</strong><span>{{#if attack.skill_name}}{{attack.skill_name}}{{else}}Sem perícia{{/if}}</span></div>
+                 <div class="equipment-created-attack-stat"><span>Dano</span><strong>{{attack.damage_formula}} {{attack.damage_type}}</strong></div>
+                 <div class="equipment-created-attack-stat"><span>Precisão</span><strong>{{attack.accuracy}}</strong></div>
+                 <div class="equipment-created-attack-stat"><span>Distância</span><strong>{{attack.range}}</strong></div>
+                 <span class="equipment-attack-resolution-tag"><i class="fas fa-plus"></i> Modo criado</span>
+               </article>
+               {{/each}}
+             </div>
+             {{/if}}
              </div>
          </div>
      
@@ -2583,11 +2617,19 @@
       {{/each}}
     </ol>
 
-    <div class="form-section" style="margin-top: 10px;">
-      <h4 class="section-title">Resultado resolvido</h4>
-      <div class="form-grid-2">
-        <div class="form-group"><label>Preço unitário</label><strong>{{finalCostString}}</strong><span class="notes">Base: {{system.cost}}</span></div>
-        <div class="form-group"><label>Peso unitário</label><strong>{{finalWeightString}} kg</strong><span class="notes">Base: {{system.weight}} kg</span></div>
+    <section class="equipment-resolution-panel">
+      <header class="equipment-resolution-header"><i class="fas fa-calculator"></i><span>Resultado resolvido</span></header>
+      <div class="equipment-resolution-summary">
+        <article class="equipment-resolution-card">
+          <span class="equipment-resolution-label">Preço unitário</span>
+          <strong class="equipment-resolution-value">{{finalCostString}}</strong>
+          <span class="equipment-resolution-base">Base {{system.cost}}</span>
+        </article>
+        <article class="equipment-resolution-card">
+          <span class="equipment-resolution-label">Peso unitário</span>
+          <strong class="equipment-resolution-value">{{finalWeightString}} kg</strong>
+          <span class="equipment-resolution-base">Base {{system.weight}} kg</span>
+        </article>
       </div>
       {{#if equipmentCostSteps.length}}
       <div class="equipment-feature-trace equipment-calculation-trace">
@@ -2623,7 +2665,7 @@
         <ul>{{#each equipmentResolutionWarnings as |warning|}}<li><strong>{{warning.source}}:</strong> {{warning.message}}</li>{{/each}}</ul>
       </div>
       {{/if}}
-    </div>
+    </section>
 
   </div>
 </div>
