@@ -5,14 +5,14 @@
         <div class="equipment-operational-toggle">
             <label class="equipment-toggle-pill" title="Indica que o equipamento está ligado ou funcionando. Controla somente efeitos com ciclo de vida Enquanto ativado; não substitui os estados Carregado ou Equipado.">
                 <input type="checkbox" name="system.active" {{checked system.active}}/>
-                <span><i class="fas fa-power-off"></i> Ligado / Ativo</span>
+                <span><i class="fas fa-power-off"></i> {{localize "GUM.Equipment.Label.Active"}}</span>
             </label>
         </div>
         <div class="form-section skill-details-compact equipment-details-form">
-            <h4 class="section-title">Geral</h4>
+            <h4 class="section-title">{{localize "GUM.Equipment.Details.General"}}</h4>
             <div class="equipment-general-grid">
                 <div class="equipment-stat-card">
-                    <label class="equipment-stat-heading"><i class="fas fa-coins"></i><span>Custo ($)</span></label>
+                    <label class="equipment-stat-heading"><i class="fas fa-coins"></i><span>{{localize "GUM.Equipment.Label.Cost"}}</span></label>
                     <div class="equipment-stat-control">
                         {{#if hasCostChange}}
                             <div class="equipment-calculated-value">
@@ -29,7 +29,7 @@
                 </div>
 
                 <div class="equipment-stat-card">
-                    <label class="equipment-stat-heading"><i class="fas fa-weight-hanging"></i><span>Peso (kg)</span></label>
+                    <label class="equipment-stat-heading"><i class="fas fa-weight-hanging"></i><span>{{localize "GUM.Equipment.Label.Weight"}}</span></label>
                     <div class="equipment-stat-control">
                         {{#if hasWeightChange}}
                             <div class="equipment-calculated-value">
@@ -46,21 +46,21 @@
                 </div>
 
                 <div class="equipment-stat-card">
-                    <label class="equipment-stat-heading"><i class="fas fa-cubes"></i><span>Quantidade</span></label>
+                    <label class="equipment-stat-heading"><i class="fas fa-cubes"></i><span>{{localize "GUM.Equipment.Label.Quantity"}}</span></label>
                     <div class="equipment-stat-control">
                         <input type="number" name="system.quantity" value="{{system.quantity}}"/>
                     </div>
                 </div>
 
                 <div class="equipment-stat-card">
-                    <label class="equipment-stat-heading" title="Nível Tecnológico"><i class="fas fa-microchip"></i><span>Nível Tecnológico</span></label>
+                    <label class="equipment-stat-heading" title="Nível Tecnológico"><i class="fas fa-microchip"></i><span>{{localize "GUM.Equipment.Label.TechLevel"}}</span></label>
                     <div class="equipment-stat-control">
                         <input type="text" name="system.tech_level" value="{{system.tech_level}}"/>
                     </div>
                 </div>
 
                 <div class="equipment-stat-card">
-                    <label class="equipment-stat-heading" title="Classe de Legalidade"><i class="fas fa-balance-scale"></i><span>Classe de Legalidade</span></label>
+                    <label class="equipment-stat-heading" title="Classe de Legalidade"><i class="fas fa-balance-scale"></i><span>{{localize "GUM.Equipment.Label.Legality"}}</span></label>
                     <div class="equipment-stat-control">
                         <div class="equipment-calculated-value">
                             <input type="text" name="system.legality_class" value="{{system.legality_class}}" title="Valor base"/>
@@ -74,10 +74,10 @@
         </div>
 
         <div class="form-section skill-details-compact equipment-details-form">
-            <h4 class="section-title">Propriedades Físicas</h4>
+            <h4 class="section-title">{{localize "GUM.Equipment.Details.Physical"}}</h4>
             <div class="equipment-text-grid">
                 <div class="equipment-field-card">
-                    <label class="equipment-stat-heading"><i class="fas fa-gem"></i><span>Qualidade</span></label>
+                    <label class="equipment-stat-heading"><i class="fas fa-gem"></i><span>{{localize "GUM.Equipment.Label.Quality"}}</span></label>
                     <div class="equipment-stat-control">
                         <div class="equipment-calculated-value">
                             <input type="text" name="system.quality" value="{{system.quality}}" placeholder="Ex: Fina, Barata" title="Valor base"/>
@@ -89,7 +89,7 @@
                 </div>
 
                 <div class="equipment-field-card">
-                    <label class="equipment-stat-heading"><i class="fas fa-cubes"></i><span>Material</span></label>
+                    <label class="equipment-stat-heading"><i class="fas fa-cubes"></i><span>{{localize "GUM.Equipment.Label.Material"}}</span></label>
                     <div class="equipment-stat-control">
                         <div class="equipment-calculated-value">
                             <input type="text" name="system.material" value="{{system.material}}" placeholder="Ex: Aço, Madeira" title="Valor base"/>
@@ -103,7 +103,7 @@
 
             <div class="equipment-physical-grid">
                 <div class="equipment-stat-card">
-                    <label class="equipment-stat-heading" title="Modificador de Tamanho (SM)"><i class="fas fa-expand-arrows-alt"></i><span>MT do Item</span></label>
+                    <label class="equipment-stat-heading" title="Modificador de Tamanho (SM)"><i class="fas fa-expand-arrows-alt"></i><span>{{localize "GUM.Equipment.Label.SizeModifier"}}</span></label>
                     <div class="equipment-stat-control">
                         <div class="equipment-calculated-value"><input type="number" name="system.tech_sm" value="{{system.tech_sm}}" placeholder="+0" title="Valor base"/>
                             {{#if equipmentPropertyChanges.tech_sm.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-right"></i><span>{{equipmentPropertyChanges.tech_sm.final}}</span></div>{{/if}}
@@ -112,7 +112,7 @@
                 </div>
 
                 <div class="equipment-stat-card">
-                    <label class="equipment-stat-heading" title="Resistência a Dano do próprio Item"><i class="fas fa-shield-alt"></i><span>RD do Item</span></label>
+                    <label class="equipment-stat-heading" title="Resistência a Dano do próprio Item"><i class="fas fa-shield-alt"></i><span>{{localize "GUM.Equipment.Label.ItemDR"}}</span></label>
                     <div class="equipment-stat-control">
                         <div class="equipment-calculated-value"><input type="number" name="system.item_dr" value="{{system.item_dr}}" title="Valor base"/>
                             {{#if equipmentPropertyChanges.item_dr.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-right"></i><span>{{equipmentPropertyChanges.item_dr.final}}</span></div>{{/if}}
@@ -121,7 +121,7 @@
                 </div>
 
                 <div class="equipment-stat-card">
-                    <label class="equipment-stat-heading" title="Pontos de Vida do Item"><i class="fas fa-heart"></i><span>PV do Item</span></label>
+                    <label class="equipment-stat-heading" title="Pontos de Vida do Item"><i class="fas fa-heart"></i><span>{{localize "GUM.Equipment.Label.ItemHP"}}</span></label>
                     <div class="equipment-stat-control">
                         <div class="equipment-calculated-value"><input type="number" name="system.item_hp" value="{{system.item_hp}}" title="Valor base"/>
                             {{#if equipmentPropertyChanges.item_hp.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-right"></i><span>{{equipmentPropertyChanges.item_hp.final}}</span></div>{{/if}}
@@ -130,7 +130,7 @@
                 </div>
 
                 <div class="equipment-stat-card">
-                    <label class="equipment-stat-heading" title="Vitalidade (HT) do Item"><i class="fas fa-heartbeat"></i><span>HT do Item</span></label>
+                    <label class="equipment-stat-heading" title="Vitalidade (HT) do Item"><i class="fas fa-heartbeat"></i><span>{{localize "GUM.Equipment.Label.ItemHT"}}</span></label>
                     <div class="equipment-stat-control">
                         <div class="equipment-calculated-value"><input type="number" name="system.item_ht" value="{{system.item_ht}}" title="Valor base"/>
                             {{#if equipmentPropertyChanges.item_ht.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-right"></i><span>{{equipmentPropertyChanges.item_ht.final}}</span></div>{{/if}}
@@ -141,35 +141,35 @@
         </div>
 
         <div class="form-section skill-details-compact equipment-details-form">
-            <h4 class="section-title">Usos e Consumo</h4>
+            <h4 class="section-title">{{localize "GUM.Equipment.Details.Uses"}}</h4>
             <div class="equipment-defense-grid">
                 <div class="equipment-stat-card">
-                    <label class="equipment-stat-heading"><i class="fas fa-flask"></i><span>Modo de consumo</span></label>
-                    <div class="equipment-stat-control"><select name="system.uses_mode"><option value="quantity" {{#if (eq system.uses_mode "quantity")}}selected{{/if}}>Consumir quantidade</option><option value="charges" {{#if (eq system.uses_mode "charges")}}selected{{/if}}>Usar cargas</option></select></div>
+                    <label class="equipment-stat-heading"><i class="fas fa-flask"></i><span>{{localize "GUM.Equipment.Label.ConsumptionMode"}}</span></label>
+                    <div class="equipment-stat-control"><select name="system.uses_mode"><option value="quantity" {{#if (eq system.uses_mode "quantity")}}selected{{/if}}>{{localize "GUM.Equipment.Label.ConsumeQuantity"}}</option><option value="charges" {{#if (eq system.uses_mode "charges")}}selected{{/if}}>{{localize "GUM.Equipment.Label.UseCharges"}}</option></select></div>
                 </div>
                 <div class="equipment-stat-card">
-                    <label class="equipment-stat-heading"><i class="fas fa-battery-full"></i><span>Cargas máximas</span></label>
+                    <label class="equipment-stat-heading"><i class="fas fa-battery-full"></i><span>{{localize "GUM.Equipment.Label.MaxCharges"}}</span></label>
                     <div class="equipment-stat-control"><div class="equipment-calculated-value"><input type="number" min="0" name="system.max_uses" value="{{system.max_uses}}" title="Valor base"/>
                         {{#if equipmentPropertyChanges.max_uses.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-right"></i><span>{{equipmentPropertyChanges.max_uses.final}}</span></div>{{/if}}
                     </div></div>
                 </div>
                 <div class="equipment-stat-card">
-                    <label class="equipment-stat-heading"><i class="fas fa-battery-half"></i><span>Cargas gastas</span></label>
+                    <label class="equipment-stat-heading"><i class="fas fa-battery-half"></i><span>{{localize "GUM.Equipment.Label.SpentCharges"}}</span></label>
                     <div class="equipment-stat-control"><input type="number" min="0" name="system.current_uses" value="{{system.current_uses}}"/></div>
-                    {{#if (eq equipmentUses.mode "charges")}}<small class="notes">Restantes: {{equipmentUses.remaining}} / {{equipmentUses.max}}</small>{{/if}}
+                    {{#if (eq equipmentUses.mode "charges")}}<small class="notes">{{localize "GUM.Equipment.Label.Remaining"}}: {{equipmentUses.remaining}} / {{equipmentUses.max}}</small>{{/if}}
                 </div>
                 <label class="equipment-stat-card equipment-consume-toggle" title="No modo Cargas, ao gastar a última carga, reduz a quantidade em uma unidade e prepara as cargas da próxima. No modo Quantidade, Consumir / Usar reduz diretamente uma unidade.">
-                    <span class="equipment-stat-heading"><i class="fas fa-box-open"></i><span>Consumir unidade ao esgotar</span></span>
-                    <span class="equipment-toggle-pill"><input type="checkbox" name="system.consume_quantity_when_empty" {{checked system.consume_quantity_when_empty}}/><span>Ativado</span></span>
+                    <span class="equipment-stat-heading"><i class="fas fa-box-open"></i><span>{{localize "GUM.Equipment.Label.ConsumeUnit"}}</span></span>
+                    <span class="equipment-toggle-pill"><input type="checkbox" name="system.consume_quantity_when_empty" {{checked system.consume_quantity_when_empty}}/><span>{{localize "GUM.Equipment.Label.Enabled"}}</span></span>
                 </label>
             </div>
         </div>
 
         <div class="form-section skill-details-compact equipment-details-form">
-            <h4 class="section-title">Uso & Defesa</h4>
+            <h4 class="section-title">{{localize "GUM.Equipment.Details.UseDefense"}}</h4>
             <div class="equipment-defense-grid">
                 <div class="equipment-stat-card">
-                    <label class="equipment-stat-heading" title="Penalidade de Ocultamento (Holdout)"><i class="fas fa-user-secret"></i><span>Ocultação</span></label>
+                    <label class="equipment-stat-heading" title="Penalidade de Ocultamento (Holdout)"><i class="fas fa-user-secret"></i><span>{{localize "GUM.Equipment.Label.Holdout"}}</span></label>
                     <div class="equipment-stat-control">
                         <div class="equipment-calculated-value"><input type="number" name="system.holdout" value="{{system.holdout}}" placeholder="0" title="Valor base"/>
                             {{#if equipmentPropertyChanges.holdout.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-right"></i><span>{{equipmentPropertyChanges.holdout.final}}</span></div>{{/if}}
@@ -178,7 +178,7 @@
                 </div>
 
                 <div class="equipment-stat-card">
-                    <label class="equipment-stat-heading" title="Tempo para equipar/vestir em segundos"><i class="fas fa-stopwatch"></i><span>Tempo para Vestir (s)</span></label>
+                    <label class="equipment-stat-heading" title="Tempo para equipar/vestir em segundos"><i class="fas fa-stopwatch"></i><span>{{localize "GUM.Equipment.Label.EquipTime"}}</span></label>
                     <div class="equipment-stat-control">
                         <div class="equipment-calculated-value"><input type="number" name="system.equip_time" value="{{system.equip_time}}" title="Valor base"/>
                             {{#if equipmentPropertyChanges.equip_time.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-right"></i><span>{{equipmentPropertyChanges.equip_time.final}}</span></div>{{/if}}
@@ -187,7 +187,7 @@
                 </div>
 
                 <div class="equipment-stat-card">
-                    <label class="equipment-stat-heading" title="Bônus de Defesa (DB) para Escudos ou Capas"><i class="fas fa-shield-alt"></i><span>Bônus de Defesa</span></label>
+                    <label class="equipment-stat-heading" title="Bônus de Defesa (DB) para Escudos ou Capas"><i class="fas fa-shield-alt"></i><span>{{localize "GUM.Equipment.Label.DefenseBonus"}}</span></label>
                     <div class="equipment-stat-control">
                         <div class="equipment-calculated-value"><input type="number" name="system.defense_bonus" value="{{system.defense_bonus}}" title="Valor base"/>
                             {{#if equipmentPropertyChanges.defense_bonus.changed}}<div class="equipment-final-value" title="Valor final após modificadores"><i class="fas fa-arrow-right"></i><span>{{equipmentPropertyChanges.defense_bonus.final}}</span></div>{{/if}}
@@ -199,12 +199,12 @@
 
         {{#if (eq item.type "equipment")}}
         <div class="form-section skill-details-compact equipment-details-form">
-            <h4 class="section-title">Capacidades</h4>
+            <h4 class="section-title">{{localize "GUM.Equipment.Details.Capacities"}}</h4>
             <div class="equipment-container-toggle">
                 <label class="custom-checkbox inline-checkbox">
                     <input type="checkbox" name="system.is_container" {{checked system.is_container}} />
                     <i class="fas fa-box-open"></i>
-                    <span>É um recipiente / contêiner</span>
+                    <span>{{localize "GUM.Equipment.Label.Container"}}</span>
                 </label>
             </div>
 
@@ -575,8 +575,8 @@
         <a class="item" data-tab="description">Descrição</a>
         {{#unless (eq item.type "eqp_modifier")}}<a class="item" data-tab="details">Detalhes</a>{{/unless}}
         {{#if (eq item.type "eqp_modifier")}}
-        <a class="item" data-tab="adjustments">Ajustes</a>
-        <a class="item" data-tab="equipment-features">Features</a>
+        <a class="item" data-tab="adjustments">{{localize "GUM.EquipmentModifier.Tab.Adjustments"}}</a>
+        <a class="item" data-tab="equipment-features">{{localize "GUM.EquipmentModifier.Tab.Features"}}</a>
         {{/if}}
         {{#if (or (eq item.type "advantage") (eq item.type "disadvantage"))}}
         <a class="item" data-tab="social">{{localize "GUM.Social.Tab"}}</a>
@@ -591,12 +591,12 @@
        
         {{!-- Bloco 2: Aba "Modos de Ataque" para Equipamentos --}}
         {{#if (eq item.type "equipment")}}
-        <a class="item" data-tab="attacks">Modos de Ataque</a>
+        <a class="item" data-tab="attacks">{{localize "GUM.Equipment.Tab.Attacks"}}</a>
         {{/if}}
 
         {{!-- Bloco 2.1: Aba "Proteção" para Equipamentos --}}
         {{#if (eq item.type "equipment")}}
-        <a class="item" data-tab="protection">Proteção</a>
+        <a class="item" data-tab="protection">{{localize "GUM.Equipment.Tab.Protection"}}</a>
         {{/if}}
         
         {{!-- Bloco 3: Aba "Efeitos" (lógica original) --}}
@@ -617,7 +617,7 @@
 
         {{!-- Aba Mods para Equipamentos e Armaduras --}}
         {{#if (eq item.type "equipment")}}
-        <a class="item" data-tab="eqp_modifiers">Mods</a>
+        <a class="item" data-tab="eqp_modifiers">{{localize "GUM.Equipment.Tab.Mods"}}</a>
         {{/if}}
   </nav>
 
@@ -1550,22 +1550,22 @@
       {{#if (eq item.type "eqp_modifier")}}
       <div class="eqp-modifier-workspace eqp-adjustments-workspace skill-details-dashboard">
         <section class="eqp-modifier-catalog">
-          <div class="eqp-modifier-section-heading"><i class="fas fa-folder-open" aria-hidden="true"></i><div><h4>Organização e cenário</h4></div><i class="fas fa-circle-info eqp-heading-help" title="Informações de catálogo usadas para encontrar e contextualizar este modificador." aria-label="Informações sobre organização e cenário"></i></div>
+          <div class="eqp-modifier-section-heading"><i class="fas fa-folder-open" aria-hidden="true"></i><div><h4>{{localize "GUM.EquipmentModifier.Organization"}}</h4></div><i class="fas fa-circle-info eqp-heading-help" title="Informações de catálogo usadas para encontrar e contextualizar este modificador." aria-label="Informações sobre organização e cenário"></i></div>
           <div class="eqp-modifier-catalog-grid">
-            <div class="skill-dashboard-card skill-dashboard-field-card eqp-modifier-catalog-field is-group"><label class="skill-dashboard-card-heading"><span>Grupo</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.group" value="{{system.group}}" placeholder="Ex.: Materiais, Encantamentos, Qualidade"/></div></div>
+            <div class="skill-dashboard-card skill-dashboard-field-card eqp-modifier-catalog-field is-group"><label class="skill-dashboard-card-heading"><span>{{localize "GUM.EquipmentModifier.Fields.Group"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.group" value="{{system.group}}" placeholder="Ex.: Materiais, Encantamentos, Qualidade"/></div></div>
             <div class="skill-dashboard-card skill-dashboard-stat-card eqp-modifier-catalog-field is-compact"><label class="skill-dashboard-card-heading"><span>NT</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.tech_level" value="{{system.tech_level}}" placeholder="Ex.: 3, 8^"/></div></div>
-            <div class="skill-dashboard-card skill-dashboard-stat-card eqp-modifier-catalog-field is-compact"><label class="skill-dashboard-card-heading"><span>Nível</span></label><div class="skill-dashboard-card-control"><input type="number" min="0" step="1" name="system.level" value="{{system.level}}"/></div></div>
-            <div class="skill-dashboard-card skill-dashboard-stat-card eqp-modifier-catalog-field is-compact"><label class="skill-dashboard-card-heading"><span>Pontos</span></label><div class="skill-dashboard-card-control"><input type="number" step="1" name="system.points" value="{{system.points}}" title="Valor de pontos de catálogo. Ainda não participa de nenhum cálculo automático."/></div></div>
-            <div class="skill-dashboard-card skill-dashboard-field-card eqp-modifier-catalog-field is-half"><label class="skill-dashboard-card-heading"><span>Raridade</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.scenario.rarity" value="{{system.scenario.rarity}}" placeholder="Ex.: Comum, Único"/></div></div>
-            <div class="skill-dashboard-card skill-dashboard-field-card eqp-modifier-catalog-field is-half"><label class="skill-dashboard-card-heading"><span>Disponibilidade</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.scenario.availability" value="{{system.scenario.availability}}" placeholder="Ex.: Mercado 12-, Apenas Conexão"/></div></div>
-            <div class="skill-dashboard-card skill-dashboard-field-card eqp-modifier-catalog-field is-half"><label class="skill-dashboard-card-heading"><span>Região / Origem</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.scenario.location" value="{{system.scenario.location}}" placeholder="Ex.: Forjas Reais de Khazad"/></div></div>
-            <div class="skill-dashboard-card skill-dashboard-field-card eqp-modifier-catalog-field is-half"><label class="skill-dashboard-card-heading"><span>Material predominante</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.scenario.components" value="{{system.scenario.components}}" placeholder="Ex.: Oricalco, aço meteórico"/></div></div>
+            <div class="skill-dashboard-card skill-dashboard-stat-card eqp-modifier-catalog-field is-compact"><label class="skill-dashboard-card-heading"><span>{{localize "GUM.EquipmentModifier.Fields.Level"}}</span></label><div class="skill-dashboard-card-control"><input type="number" min="0" step="1" name="system.level" value="{{system.level}}"/></div></div>
+            <div class="skill-dashboard-card skill-dashboard-stat-card eqp-modifier-catalog-field is-compact"><label class="skill-dashboard-card-heading"><span>{{localize "GUM.EquipmentModifier.Fields.Points"}}</span></label><div class="skill-dashboard-card-control"><input type="number" step="1" name="system.points" value="{{system.points}}" title="Valor de pontos de catálogo. Ainda não participa de nenhum cálculo automático."/></div></div>
+            <div class="skill-dashboard-card skill-dashboard-field-card eqp-modifier-catalog-field is-half"><label class="skill-dashboard-card-heading"><span>{{localize "GUM.EquipmentModifier.Fields.Rarity"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.scenario.rarity" value="{{system.scenario.rarity}}" placeholder="Ex.: Comum, Único"/></div></div>
+            <div class="skill-dashboard-card skill-dashboard-field-card eqp-modifier-catalog-field is-half"><label class="skill-dashboard-card-heading"><span>{{localize "GUM.EquipmentModifier.Fields.Availability"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.scenario.availability" value="{{system.scenario.availability}}" placeholder="Ex.: Mercado 12-, Apenas Conexão"/></div></div>
+            <div class="skill-dashboard-card skill-dashboard-field-card eqp-modifier-catalog-field is-half"><label class="skill-dashboard-card-heading"><span>{{localize "GUM.EquipmentModifier.Fields.RegionOrigin"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.scenario.location" value="{{system.scenario.location}}" placeholder="Ex.: Forjas Reais de Khazad"/></div></div>
+            <div class="skill-dashboard-card skill-dashboard-field-card eqp-modifier-catalog-field is-half"><label class="skill-dashboard-card-heading"><span>{{localize "GUM.EquipmentModifier.Fields.PrimaryMaterial"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.scenario.components" value="{{system.scenario.components}}" placeholder="Ex.: Oricalco, aço meteórico"/></div></div>
           </div>
           <label class="skill-dashboard-toggle-card eqp-modifier-enabled"><span class="skill-dashboard-toggle-icon"><i class="fas fa-power-off" aria-hidden="true"></i></span><span class="skill-dashboard-toggle-label">Habilitado por padrão <i class="fas fa-circle-info" title="Define se este modificador será incluído como ativo quando for adicionado a um equipamento. A ativação pode ser alterada depois no próprio equipamento." aria-label="Informações sobre habilitação padrão"></i></span><input type="checkbox" name="system.enabled" {{checked system.enabled}}/></label>
         </section>
 
         <section class="eqp-adjustment-panel">
-          <div class="eqp-adjustment-panel-heading"><i class="fas fa-coins" aria-hidden="true"></i><div><h4>Ajuste de preço</h4></div><i class="fas fa-circle-info eqp-heading-help" title="Configure o custo e a etapa em que o ajuste entra no cálculo." aria-label="Informações sobre ajuste de preço"></i></div>
+          <div class="eqp-adjustment-panel-heading"><i class="fas fa-coins" aria-hidden="true"></i><div><h4>{{localize "GUM.EquipmentModifier.PriceAdjustment"}}</h4></div><i class="fas fa-circle-info eqp-heading-help" title="Configure o custo e a etapa em que o ajuste entra no cálculo." aria-label="Informações sobre ajuste de preço"></i></div>
           <div class="eqp-adjustment-primary-grid">
             <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><span>Expressão</span><i class="fas fa-circle-info" title="CF e multiplicadores estruturais pertencem normalmente ao valor base." aria-label="Ajuda sobre a expressão de preço"></i></label><div class="skill-dashboard-card-control"><input type="text" name="system.cost_adjustment_data.expression" value="{{eqpModifierAdjustment.cost.expression}}" placeholder="Ex.: +0,2 CF, x4, +50, -10%"/></div></div>
             <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><span>Aplicar ao</span></label><div class="skill-dashboard-card-control"><select name="system.cost_adjustment_data.stage">{{selectOptions equipmentAdjustmentStageOptions selected=eqpModifierAdjustment.cost.stage valueAttr="id" labelAttr="label"}}</select></div></div>
@@ -1578,7 +1578,7 @@
         </section>
 
         <section class="eqp-adjustment-panel">
-          <div class="eqp-adjustment-panel-heading"><i class="fas fa-weight-hanging" aria-hidden="true"></i><div><h4>Ajuste de peso</h4></div><i class="fas fa-circle-info eqp-heading-help" title="Controle a massa final e sua ordem na resolução." aria-label="Informações sobre ajuste de peso"></i></div>
+          <div class="eqp-adjustment-panel-heading"><i class="fas fa-weight-hanging" aria-hidden="true"></i><div><h4>{{localize "GUM.EquipmentModifier.WeightAdjustment"}}</h4></div><i class="fas fa-circle-info eqp-heading-help" title="Controle a massa final e sua ordem na resolução." aria-label="Informações sobre ajuste de peso"></i></div>
           <div class="eqp-adjustment-primary-grid">
             <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><span>Expressão</span><i class="fas fa-circle-info" title="Inclua a unidade diretamente na expressão quando necessário, por exemplo: +0,5 kg ou +1 lb." aria-label="Ajuda sobre a expressão de peso"></i></label><div class="skill-dashboard-card-control"><input type="text" name="system.weight_adjustment_data.expression" value="{{eqpModifierAdjustment.weight.expression}}" placeholder="Ex.: +0,5 kg, -10%, x0,75, x2/3"/></div></div>
             <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><span>Aplicar ao</span></label><div class="skill-dashboard-card-control"><select name="system.weight_adjustment_data.stage">{{selectOptions equipmentAdjustmentStageOptions selected=eqpModifierAdjustment.weight.stage valueAttr="id" labelAttr="label"}}</select></div></div>
@@ -1596,33 +1596,33 @@
       {{#if (eq item.type "eqp_modifier")}}
       <div class="eqp-modifier-workspace eqp-features-workspace skill-details-dashboard">
         <div class="eqp-features-toolbar">
-          <span class="eqp-features-label"><i class="fas fa-puzzle-piece" aria-hidden="true"></i> Features</span>
-          <button type="button" class="add-eqp-feature"><i class="fas fa-plus"></i><span>Adicionar feature</span></button>
+          <span class="eqp-features-label"><i class="fas fa-puzzle-piece" aria-hidden="true"></i> {{localize "GUM.EquipmentModifier.Tab.Features"}}</span>
+          <button type="button" class="add-eqp-feature"><i class="fas fa-plus"></i><span>{{localize "GUM.EquipmentModifier.AddFeature"}}</span></button>
         </div>
 
         <ol class="eqpmod-line-list eqp-feature-list">
         {{#each eqpModifierFeatures as |feature|}}
           <li class="eqpmod-line-item eqp-feature-card {{#unless feature.enabled}}is-disabled{{/unless}}" data-feature-id="{{feature.id}}">
             <details class="eqp-feature-details" open>
-            <summary class="eqp-feature-collapse-toggle"><span><i class="fas fa-sliders-h" aria-hidden="true"></i> Configuração</span><i class="fas fa-chevron-down" aria-hidden="true"></i></summary>
+            <summary class="eqp-feature-collapse-toggle"><span><i class="fas fa-sliders-h" aria-hidden="true"></i> {{localize "GUM.EquipmentModifier.Configuration"}}</span><i class="fas fa-chevron-down" aria-hidden="true"></i></summary>
             <div class="eqp-feature-content">
             <div class="form-grid-2 eqp-feature-card-header">
-              <div class="form-group"><label>Nome</label><input type="text" name="system.features_data.{{feature.id}}.label" value="{{feature.label}}"/></div>
-              <div class="form-group"><label>Tipo</label><select class="eqp-feature-shape-select" name="system.features_data.{{feature.id}}.type">{{selectOptions ../equipmentFeatureTypeOptions selected=feature.type valueAttr="id" labelAttr="label"}}</select></div>
+              <div class="form-group"><label>{{localize "GUM.EquipmentModifier.Fields.Name"}}</label><input type="text" name="system.features_data.{{feature.id}}.label" value="{{feature.label}}"/></div>
+              <div class="form-group"><label>{{localize "GUM.EquipmentModifier.Fields.Type"}}</label><select class="eqp-feature-shape-select" name="system.features_data.{{feature.id}}.type">{{selectOptions ../equipmentFeatureTypeOptions selected=feature.type valueAttr="id" labelAttr="label"}}</select></div>
             </div>
 
             {{#if (eq feature.type "equipment_property")}}
             <div class="form-grid-3">
-              <div class="form-group"><label>Propriedade</label><select class="eqp-feature-shape-select" name="system.features_data.{{feature.id}}.path">{{selectOptions ../equipmentPropertyOptions selected=feature.path valueAttr="id" labelAttr="label"}}</select></div>
-              <div class="form-group"><label>Operação</label><select name="system.features_data.{{feature.id}}.operation">{{#if feature.cumulative_text_equipment_value}}<option value="add" {{#if (eq feature.operation "add")}}selected{{/if}}>Acrescentar</option><option value="set" {{#if (eq feature.operation "set")}}selected{{/if}}>Substituir</option>{{else}}{{selectOptions ../equipmentFeatureOperationOptions selected=feature.operation valueAttr="id" labelAttr="label"}}{{/if}}</select></div>
-              <div class="form-group"><label>Valor</label><input type="{{#if feature.numeric_equipment_value}}number{{else}}text{{/if}}" step="any" name="system.features_data.{{feature.id}}.value" value="{{feature.value}}"/></div>
+              <div class="form-group"><label>{{localize "GUM.EquipmentModifier.Fields.Property"}}</label><select class="eqp-feature-shape-select" name="system.features_data.{{feature.id}}.path">{{selectOptions ../equipmentPropertyOptions selected=feature.path valueAttr="id" labelAttr="label"}}</select></div>
+              <div class="form-group"><label>{{localize "GUM.EquipmentModifier.Fields.Operation"}}</label><select name="system.features_data.{{feature.id}}.operation">{{#if feature.cumulative_text_equipment_value}}<option value="add" {{#if (eq feature.operation "add")}}selected{{/if}}>Acrescentar</option><option value="set" {{#if (eq feature.operation "set")}}selected{{/if}}>Substituir</option>{{else}}{{selectOptions ../equipmentFeatureOperationOptions selected=feature.operation valueAttr="id" labelAttr="label"}}{{/if}}</select></div>
+              <div class="form-group"><label>{{localize "GUM.EquipmentModifier.Fields.Value"}}</label><input type="{{#if feature.numeric_equipment_value}}number{{else}}text{{/if}}" step="any" name="system.features_data.{{feature.id}}.value" value="{{feature.value}}"/></div>
             </div>
             {{/if}}
 
             {{#if (eq feature.type "equipment_dr")}}
             <div class="form-grid-2">
-              <div class="form-group"><label>Localização</label><select name="system.features_data.{{feature.id}}.location"><option value="all" {{#if (eq feature.location "all")}}selected{{/if}}>Todas as localizações do item</option>{{selectOptions ../equipmentBodyLocationOptions selected=feature.location valueAttr="id" labelAttr="name"}}</select></div>
-              <div class="form-group"><label>Operação</label><select name="system.features_data.{{feature.id}}.operation">{{selectOptions ../equipmentFeatureOperationOptions selected=feature.operation valueAttr="id" labelAttr="label"}}</select></div>
+              <div class="form-group"><label>{{localize "GUM.EquipmentModifier.Fields.Location"}}</label><select name="system.features_data.{{feature.id}}.location"><option value="all" {{#if (eq feature.location "all")}}selected{{/if}}>{{localize "GUM.EquipmentModifier.Options.AllLocations"}}</option>{{selectOptions ../equipmentBodyLocationOptions selected=feature.location valueAttr="id" labelAttr="name"}}</select></div>
+              <div class="form-group"><label>{{localize "GUM.EquipmentModifier.Fields.Operation"}}</label><select name="system.features_data.{{feature.id}}.operation">{{selectOptions ../equipmentFeatureOperationOptions selected=feature.operation valueAttr="id" labelAttr="label"}}</select></div>
             </div>
             <div class="form-grid-2">
               <div class="form-group"><label>Valor do RD</label><input type="number" step="any" name="system.features_data.{{feature.id}}.value" value="{{feature.value}}"/></div>
@@ -1691,8 +1691,8 @@
             </div>
             {{#if (eq feature.attack_type "melee")}}
             <div class="form-grid-2">
-              <div class="form-group"><label>Aparar <i class="fas fa-circle-info" title="Com “Calcular pelo NH” ativo, usa a defesa padrão do sistema a partir do NH final do personagem. Desative para usar o valor fixo informado." aria-label="Ajuda sobre aparar"></i></label><div class="equipment-feature-defense-input"><input type="text" aria-label="Valor fixo de aparar" name="system.features_data.{{feature.id}}.attack.parry" value="{{feature.attack.parry}}" placeholder="Valor fixo"/><label class="equipment-toggle-pill"><input type="checkbox" name="system.features_data.{{feature.id}}.attack.parry_default" {{checked feature.attack.parry_default}}/><span>Calcular pelo NH</span></label></div></div>
-              <div class="form-group"><label>Bloqueio <i class="fas fa-circle-info" title="Com “Calcular pelo NH” ativo, usa a defesa padrão do sistema a partir do NH final do personagem. Desative para usar o valor fixo informado." aria-label="Ajuda sobre bloqueio"></i></label><div class="equipment-feature-defense-input"><input type="text" aria-label="Valor fixo de bloqueio" name="system.features_data.{{feature.id}}.attack.block" value="{{feature.attack.block}}" placeholder="Valor fixo"/><label class="equipment-toggle-pill"><input type="checkbox" name="system.features_data.{{feature.id}}.attack.block_default" {{checked feature.attack.block_default}}/><span>Calcular pelo NH</span></label></div></div>
+              <div class="form-group"><label>{{localize "GUM.EquipmentModifier.Fields.Parry"}} <i class="fas fa-circle-info" title="Com “Calcular pelo NH” ativo, usa a defesa padrão do sistema a partir do NH final do personagem. Desative para usar o valor fixo informado." aria-label="Ajuda sobre aparar"></i></label><div class="equipment-feature-defense-input"><input type="text" aria-label="Valor fixo de aparar" name="system.features_data.{{feature.id}}.attack.parry" value="{{feature.attack.parry}}" placeholder="Valor fixo"/><label class="equipment-toggle-pill"><input type="checkbox" name="system.features_data.{{feature.id}}.attack.parry_default" {{checked feature.attack.parry_default}}/><span>{{localize "GUM.EquipmentModifier.Fields.CalculateFromNH"}}</span></label></div></div>
+              <div class="form-group"><label>{{localize "GUM.EquipmentModifier.Fields.Block"}} <i class="fas fa-circle-info" title="Com “Calcular pelo NH” ativo, usa a defesa padrão do sistema a partir do NH final do personagem. Desative para usar o valor fixo informado." aria-label="Ajuda sobre bloqueio"></i></label><div class="equipment-feature-defense-input"><input type="text" aria-label="Valor fixo de bloqueio" name="system.features_data.{{feature.id}}.attack.block" value="{{feature.attack.block}}" placeholder="Valor fixo"/><label class="equipment-toggle-pill"><input type="checkbox" name="system.features_data.{{feature.id}}.attack.block_default" {{checked feature.attack.block_default}}/><span>{{localize "GUM.EquipmentModifier.Fields.CalculateFromNH"}}</span></label></div></div>
             </div>
             {{/if}}
             {{#if (eq feature.attack_type "ranged")}}
@@ -1757,7 +1757,7 @@
         {{/if}}
         {{#if (and (eq item.type "equipment") equipmentResolution.descriptors.length)}}
         <div class="form-section skill-details-compact equipment-details-form equipment-descriptors-section">
-          <h4 class="section-title">Descritores e Decoração</h4>
+          <h4 class="section-title">{{localize "GUM.Equipment.Descriptors.Title"}}</h4>
           <div class="equipment-descriptor-list">
             {{#each equipmentResolution.descriptors as |descriptor|}}
             <span class="equipment-descriptor-tag" title="Origem: {{descriptor.sourceName}}"><i class="fas fa-tag"></i> {{descriptor.value}}</span>
@@ -1831,8 +1831,8 @@
         {{!-- SEÇÃO DE ATAQUES CORPO A CORPO (MELEE) --}}
         <div class="attacks-editor-section">
          <div class="attack-section-header">
-            <h4 class="attack-section-title">Ataques Corpo a Corpo</h4>
-            <a class="attack-add-button add-attack" data-type="melee" title="Adicionar Ataque Corpo a Corpo"><i class="fas fa-plus"></i></a>
+            <h4 class="attack-section-title">{{localize "GUM.Equipment.Attacks.Melee"}}</h4>
+            <a class="attack-add-button add-attack" data-type="melee" title="{{localize 'GUM.Equipment.Attacks.AddMelee'}}"><i class="fas fa-plus"></i></a>
          </div>
          <ol class="attack-list">
            {{#each system.melee_attacks as |attack key|}}
@@ -1848,7 +1848,7 @@
   <div class="attack-skill-line">
     <span class="attack-skill">
       {{#if (isNumeric attack.skill_name)}}
-        Valor Fixo
+        {{localize "GUM.Equipment.Attacks.FixedValue"}}
       {{else}}
         {{#if attack.skill_name}}{{attack.skill_name}}{{else}}<i>(N/A)</i>{{/if}}
         {{#if (signedMod attack.skill_level_mod)}}
@@ -1945,7 +1945,7 @@
     {{#with (lookup @root.equipmentMeleeAttackChanges key) as |change|}}
       {{#if change.changed}}
       <div class="equipment-attack-resolution-tags">
-        <span class="equipment-attack-resolution-tag" title="{{change.title}}"><i class="fas fa-wrench"></i> Modificado · {{change.summary}}</span>
+        <span class="equipment-attack-resolution-tag" title="{{change.title}}"><i class="fas fa-wrench"></i> {{localize "GUM.Equipment.Attacks.Modified"}} · {{change.displaySummary}}</span>
       </div>
       {{/if}}
     {{/with}}
@@ -2069,21 +2069,21 @@
                  </li>
                    {{else}}
                     <li class="attack-empty">
-                    Nenhum ataque corpo a corpo adicionado ao equipamento-base.
+                    {{localize "GUM.Equipment.Attacks.BaseMeleeEmpty"}}
                     </li>
                  {{/each}}          
              </ol>
              {{#if equipmentCreatedMeleeAttacks.length}}
              <div class="equipment-created-attacks" aria-label="Modos corpo a corpo criados por modificadores">
-               <div class="equipment-created-attacks-heading"><i class="fas fa-wand-magic-sparkles"></i> Modos concedidos por modificadores</div>
+               <div class="equipment-created-attacks-heading"><i class="fas fa-wand-magic-sparkles"></i> {{localize "GUM.Equipment.Attacks.CreatedModes"}}</div>
                {{#each equipmentCreatedMeleeAttacks as |attack|}}
                <article class="equipment-created-attack-card equipment-created-attack-card-melee" title="{{attack.change.title}}">
                  <div class="equipment-created-attack-identity"><strong>{{attack.mode}}</strong><span>{{#if attack.skill_name}}{{attack.skill_name}}{{else}}Sem perícia{{/if}}</span></div>
-                 <div class="equipment-created-attack-stat"><span>Dano</span><strong>{{attack.damage_formula}} {{attack.damage_type}}</strong></div>
-                 <div class="equipment-created-attack-stat"><span>Aparar</span><strong>{{#if attack.parry_default}}Pelo NH{{else}}{{attack.parry}}{{/if}}</strong></div>
-                 <div class="equipment-created-attack-stat"><span>Bloqueio</span><strong>{{#if attack.block_default}}Pelo NH{{else}}{{attack.block}}{{/if}}</strong></div>
-                 <div class="equipment-created-attack-stat"><span>Alcance</span><strong>{{attack.reach}}</strong></div>
-                 <span class="equipment-attack-resolution-tag"><i class="fas fa-plus"></i> Modo criado</span>
+                 <div class="equipment-created-attack-stat"><span>{{localize "GUM.Equipment.Attacks.Damage"}}</span><strong>{{attack.damage_formula}} {{attack.damage_type}}</strong></div>
+                 <div class="equipment-created-attack-stat"><span>{{localize "GUM.Equipment.Attacks.Parry"}}</span><strong>{{#if attack.parry_default}}{{localize "GUM.EquipmentModifier.Fields.CalculateFromNH"}}{{else}}{{attack.parry}}{{/if}}</strong></div>
+                 <div class="equipment-created-attack-stat"><span>{{localize "GUM.Equipment.Attacks.Block"}}</span><strong>{{#if attack.block_default}}{{localize "GUM.EquipmentModifier.Fields.CalculateFromNH"}}{{else}}{{attack.block}}{{/if}}</strong></div>
+                 <div class="equipment-created-attack-stat"><span>{{localize "GUM.Equipment.Attacks.Reach"}}</span><strong>{{attack.reach}}</strong></div>
+                 <span class="equipment-attack-resolution-tag"><i class="fas fa-plus"></i> {{localize "GUM.Equipment.Attacks.ModeCreated"}}</span>
                </article>
                {{/each}}
              </div>
@@ -2093,8 +2093,8 @@
         {{!-- SEÇÃO DE ATAQUES À DISTÂNCIA (RANGED) --}}
         <div class="attacks-editor-section">
          <div class="attack-section-header">
-            <h4 class="attack-section-title">Ataques à Distância</h4>
-            <a class="attack-add-button add-attack" data-type="ranged" title="Adicionar Ataque à Distância"><i class="fas fa-plus"></i></a>
+            <h4 class="attack-section-title">{{localize "GUM.Equipment.Attacks.Ranged"}}</h4>
+            <a class="attack-add-button add-attack" data-type="ranged" title="{{localize 'GUM.Equipment.Attacks.AddRanged'}}"><i class="fas fa-plus"></i></a>
          </div>
          <ol class="attack-list">
            {{#each system.ranged_attacks as |attack key|}}
@@ -2110,7 +2110,7 @@
         <div class="attack-skill-line">
           <span class="attack-skill">
             {{#if (isNumeric attack.skill_name)}}
-              Valor Fixo
+              {{localize "GUM.Equipment.Attacks.FixedValue"}}
             {{else}}
               {{#if attack.skill_name}}{{attack.skill_name}}{{else}}<i>(N/A)</i>{{/if}}
               {{#if (signedMod attack.skill_level_mod)}}
@@ -2218,7 +2218,7 @@
     {{#with (lookup @root.equipmentRangedAttackChanges key) as |change|}}
       {{#if change.changed}}
       <div class="equipment-attack-resolution-tags">
-        <span class="equipment-attack-resolution-tag" title="{{change.title}}"><i class="fas fa-wrench"></i> Modificado · {{change.summary}}</span>
+        <span class="equipment-attack-resolution-tag" title="{{change.title}}"><i class="fas fa-wrench"></i> {{localize "GUM.Equipment.Attacks.Modified"}} · {{change.displaySummary}}</span>
       </div>
       {{/if}}
     {{/with}}
@@ -2356,20 +2356,20 @@
                  </li>
                    {{else}}
                     <li class="attack-empty">
-                    Nenhum ataque à distância adicionado ao equipamento-base.
+                    {{localize "GUM.Equipment.Attacks.BaseRangedEmpty"}}
                     </li>
                  {{/each}}
              </ol>
              {{#if equipmentCreatedRangedAttacks.length}}
              <div class="equipment-created-attacks" aria-label="Modos à distância criados por modificadores">
-               <div class="equipment-created-attacks-heading"><i class="fas fa-wand-magic-sparkles"></i> Modos concedidos por modificadores</div>
+               <div class="equipment-created-attacks-heading"><i class="fas fa-wand-magic-sparkles"></i> {{localize "GUM.Equipment.Attacks.CreatedModes"}}</div>
                {{#each equipmentCreatedRangedAttacks as |attack|}}
                <article class="equipment-created-attack-card equipment-created-attack-card-ranged" title="{{attack.change.title}}">
                  <div class="equipment-created-attack-identity"><strong>{{attack.mode}}</strong><span>{{#if attack.skill_name}}{{attack.skill_name}}{{else}}Sem perícia{{/if}}</span></div>
-                 <div class="equipment-created-attack-stat"><span>Dano</span><strong>{{attack.damage_formula}} {{attack.damage_type}}</strong></div>
-                 <div class="equipment-created-attack-stat"><span>Precisão</span><strong>{{attack.accuracy}}</strong></div>
-                 <div class="equipment-created-attack-stat"><span>Distância</span><strong>{{attack.range}}</strong></div>
-                 <span class="equipment-attack-resolution-tag"><i class="fas fa-plus"></i> Modo criado</span>
+                 <div class="equipment-created-attack-stat"><span>{{localize "GUM.Equipment.Attacks.Damage"}}</span><strong>{{attack.damage_formula}} {{attack.damage_type}}</strong></div>
+                 <div class="equipment-created-attack-stat"><span>{{localize "GUM.Equipment.Attacks.Accuracy"}}</span><strong>{{attack.accuracy}}</strong></div>
+                 <div class="equipment-created-attack-stat"><span>{{localize "GUM.Equipment.Attacks.Distance"}}</span><strong>{{attack.range}}</strong></div>
+                 <span class="equipment-attack-resolution-tag"><i class="fas fa-plus"></i> {{localize "GUM.Equipment.Attacks.ModeCreated"}}</span>
                </article>
                {{/each}}
              </div>
@@ -2564,8 +2564,8 @@
 
     {{!-- Header vermelho + plus minimalista --}}
     <div class="eqpmod-block-header">
-      <h4 class="eqpmod-block-title">Modificadores de Equipamento</h4>
-      <a class="eqpmod-add-button add-eqp-modifier" title="Adicionar Modificador"><i class="fas fa-plus"></i></a>
+      <h4 class="eqpmod-block-title">{{localize "GUM.Equipment.Modifiers.Title"}}</h4>
+      <a class="eqpmod-add-button add-eqp-modifier" title="{{localize 'GUM.Equipment.Modifiers.Add'}}"><i class="fas fa-plus"></i></a>
     </div>
 
     {{!-- Lista em linhas --}}
@@ -2585,7 +2585,7 @@
 
               <div class="eqpmod-text">
                 <div class="eqpmod-name">{{mod.name}}{{#if (eq mod.source_type "effect")}} <span class="eqpmod-subline">Efeito</span>{{/if}}</div>
-                <div class="eqpmod-subline">Nível <input type="number" min="0" step="1" name="system.eqp_modifiers.{{mod.id}}.level" value="{{mod.level}}" style="width: 52px;"/></div>
+                <div class="eqpmod-subline">{{localize "GUM.EquipmentModifier.Fields.Level"}} <input type="number" min="0" step="1" name="system.eqp_modifiers.{{mod.id}}.level" value="{{mod.level}}" style="width: 52px;"/></div>
               </div>
             </div>
 
@@ -2619,22 +2619,22 @@
           {{/if}}
         </li>
       {{else}}
-        <li class="eqpmod-empty">Nenhum modificador de equipamento aplicado.</li>
+        <li class="eqpmod-empty">{{localize "GUM.Equipment.Modifiers.None"}}</li>
       {{/each}}
     </ol>
 
     <section class="equipment-resolution-panel">
-      <header class="equipment-resolution-header"><i class="fas fa-calculator"></i><span>Resultado resolvido</span></header>
+      <header class="equipment-resolution-header"><i class="fas fa-calculator"></i><span>{{localize "GUM.Equipment.Modifiers.Result"}}</span></header>
       <div class="equipment-resolution-summary">
         <article class="equipment-resolution-card">
-          <span class="equipment-resolution-label">Preço unitário</span>
+          <span class="equipment-resolution-label">{{localize "GUM.Equipment.Modifiers.UnitPrice"}}</span>
           <strong class="equipment-resolution-value">{{finalCostString}}</strong>
-          <span class="equipment-resolution-base">Base {{system.cost}}</span>
+          <span class="equipment-resolution-base">{{localize "GUM.Equipment.Modifiers.Base" value=system.cost}}</span>
         </article>
         <article class="equipment-resolution-card">
-          <span class="equipment-resolution-label">Peso unitário</span>
+          <span class="equipment-resolution-label">{{localize "GUM.Equipment.Modifiers.UnitWeight"}}</span>
           <strong class="equipment-resolution-value">{{finalWeightString}} kg</strong>
-          <span class="equipment-resolution-base">Base {{system.weight}} kg</span>
+          <span class="equipment-resolution-base">{{localize "GUM.Equipment.Modifiers.Base" value=(concat system.weight " kg")}}</span>
         </article>
       </div>
       {{#if equipmentCostSteps.length}}

@@ -42,6 +42,13 @@ const ATTACK_CHANGE_LABELS = Object.freeze({
   follow_up_damage: "dano de acompanhamento", fragmentation_damage: "fragmentação", groups: "grupos"
 });
 
+function formatAttackChangeValue(value) {
+  if (value === null || value === undefined || value === "") return "—";
+  if (typeof value !== "object") return String(value);
+  if (value.formula) return [value.formula, value.type, value.nature].filter(Boolean).join(" ");
+  return Object.values(value).filter(entry => entry !== null && entry !== undefined && entry !== "").join(" ") || "—";
+}
+
 /** Summarize resolver steps per attack without replacing editable base attack data. */
 export function describeEquipmentAttackChanges(baseAttacks = {}, resolvedAttacks = {}, steps = [], attackType = "melee") {
   return Object.fromEntries(Object.entries(resolvedAttacks || {}).map(([attackId, resolved]) => {
@@ -52,6 +59,9 @@ export function describeEquipmentAttackChanges(baseAttacks = {}, resolvedAttacks
     const changed = base === undefined || JSON.stringify(base) !== JSON.stringify(resolved);
     if (changed && labels.length === 0) labels.push("alterado por modificador");
     const uniqueLabels = [...new Set(labels)];
+    const valueSummary = matchingSteps
+      .filter(step => step.path)
+      .map(step => `${ATTACK_CHANGE_LABELS[step.path] || step.path}: ${formatAttackChangeValue(step.output)}`);
     const sources = [...new Set(matchingSteps.map(step => step.sourceName).filter(Boolean))];
     const sourcePrefix = sources.length ? `Modificado por ${sources.join(", ")}: ` : "Modificado: ";
     return [attackId, {
@@ -60,6 +70,7 @@ export function describeEquipmentAttackChanges(baseAttacks = {}, resolvedAttacks
       labels: uniqueLabels,
       sources,
       summary: uniqueLabels.join(", "),
+      displaySummary: valueSummary.join(" · ") || uniqueLabels.join(", "),
       title: uniqueLabels.length ? `${sourcePrefix}${uniqueLabels.join(", ")}` : ""
     }];
   }));

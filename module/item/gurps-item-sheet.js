@@ -457,24 +457,24 @@ _promptMultipleReferences(parsedList) {
                 numeric_attack_value: ["skill_level_mod", "armor_divisor", "min_strength", "accuracy", "rcl", "mag"].includes(feature.path)
             }));
             context.equipmentAdjustmentStageOptions = [
-                { id: "original", label: "Valor original" },
-                { id: "base", label: "Valor base" },
-                { id: "final_base", label: "Valor base final" },
-                { id: "final", label: "Valor final" }
+                { id: "original", label: game.i18n.localize("GUM.EquipmentModifier.Stages.Original") },
+                { id: "base", label: game.i18n.localize("GUM.EquipmentModifier.Stages.Base") },
+                { id: "final_base", label: game.i18n.localize("GUM.EquipmentModifier.Stages.FinalBase") },
+                { id: "final", label: game.i18n.localize("GUM.EquipmentModifier.Stages.Final") }
             ];
             context.equipmentFeatureTypeOptions = [
-                { id: "equipment_property", label: "Modificar propriedade do equipamento" },
-                { id: "equipment_descriptor", label: "Acrescentar descritor ou decoração" },
-                { id: "equipment_dr", label: "Modificar RD por localização" },
-                { id: "attack_property", label: "Modificar modo de ataque" },
-                { id: "attack_damage", label: "Definir dano secundário ou fragmentação" },
-                { id: "create_attack", label: "Criar modo de ataque" },
-                { id: "granted_effect", label: "Conceder efeito" }
+                { id: "equipment_property", label: game.i18n.localize("GUM.EquipmentModifier.Types.Property") },
+                { id: "equipment_descriptor", label: game.i18n.localize("GUM.EquipmentModifier.Types.Descriptor") },
+                { id: "equipment_dr", label: game.i18n.localize("GUM.EquipmentModifier.Types.DR") },
+                { id: "attack_property", label: game.i18n.localize("GUM.EquipmentModifier.Types.AttackProperty") },
+                { id: "attack_damage", label: game.i18n.localize("GUM.EquipmentModifier.Types.AttackDamage") },
+                { id: "create_attack", label: game.i18n.localize("GUM.EquipmentModifier.Types.CreateAttack") },
+                { id: "granted_effect", label: game.i18n.localize("GUM.EquipmentModifier.Types.GrantEffect") }
             ];
             context.equipmentFeatureOperationOptions = [
-                { id: "add", label: "Somar" },
-                { id: "multiply", label: "Multiplicar" },
-                { id: "set", label: "Definir" }
+                { id: "add", label: game.i18n.localize("GUM.EquipmentModifier.Operations.Add") },
+                { id: "multiply", label: game.i18n.localize("GUM.EquipmentModifier.Operations.Multiply") },
+                { id: "set", label: game.i18n.localize("GUM.EquipmentModifier.Operations.Set") }
             ];
             context.equipmentPropertyOptions = [
                 { id: "item_dr", label: "RD do item" }, { id: "item_hp", label: "PV do item" },

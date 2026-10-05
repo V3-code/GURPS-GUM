@@ -57,8 +57,8 @@ test("equipment modifier organization is consolidated in adjustments", () => {
   assert.match(adjustmentTab, /Unidade por peso/);
   assert.doesNotMatch(styles, /\.eqp-field-card/);
   assert.doesNotMatch(adjustmentTab, /eqp-adjustment-summary/);
-  assert.match(adjustmentTab, /Material predominante/);
-  assert.ok(adjustmentTab.indexOf("Organização e cenário") < adjustmentTab.indexOf("Ajuste de preço"));
+  assert.match(adjustmentTab, /GUM\.EquipmentModifier\.Fields\.PrimaryMaterial/);
+  assert.ok(adjustmentTab.indexOf("GUM.EquipmentModifier.Organization") < adjustmentTab.indexOf("GUM.EquipmentModifier.PriceAdjustment"));
   assert.doesNotMatch(adjustmentTab, /Ajustes do modificador/);
   assert.doesNotMatch(template, /Bloco de feature/);
   assert.doesNotMatch(template, /name="system\.tags"/);
@@ -84,7 +84,7 @@ test("item sheet and actor preparation delegate to the central resolver", () => 
 test("equipment modifier instances expose enabled, level and resolved totals", () => {
   assert.match(template, /system\.eqp_modifiers\.\{\{mod\.id\}\}\.enabled/);
   assert.match(template, /system\.eqp_modifiers\.\{\{mod\.id\}\}\.level/);
-  assert.match(template, /Resultado resolvido/);
+  assert.match(template, /GUM\.Equipment\.Modifiers\.Result/);
   assert.match(template, /equipmentResolutionWarnings\.length/);
   assert.match(template, /Memória do preço/);
   assert.match(template, /Memória do peso/);
@@ -124,7 +124,7 @@ test("equipment uses distinguish legacy quantity consumption from explicit charg
 });
 
 test("equipment modifiers author and display cumulative decoration descriptors", () => {
-  assert.match(itemSheet, /id: "equipment_descriptor", label: "Acrescentar descritor ou decoração"/);
+  assert.match(itemSheet, /id: "equipment_descriptor", label: game\.i18n\.localize\("GUM\.EquipmentModifier\.Types\.Descriptor"\)/);
   assert.match(itemSheet, /equipmentDescriptorKindOptions/);
   assert.match(template, /eq feature\.type "equipment_descriptor"/);
   assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.descriptor_kind/);
@@ -165,7 +165,7 @@ test("equipment modifier sheet exposes typed feature authoring", () => {
 });
 
 test("equipment active toggle explains its limited lifecycle purpose", () => {
-  assert.match(template, /Ligado \/ Ativo/);
+  assert.match(template, /GUM\.Equipment\.Label\.Active/);
   assert.match(template, /equipment-operational-toggle/);
   assert.match(template, /equipment-toggle-pill/);
   assert.match(template, /efeitos com ciclo de vida Enquanto ativado/);
@@ -176,7 +176,7 @@ test("equipment active toggle explains its limited lifecycle purpose", () => {
 
 test("granted effects expose UUID, domain and lifecycle and are synchronized by item hooks", () => {
   assert.match(template, /eq feature\.type "granted_effect"/);
-  assert.match(itemSheet, /id: "granted_effect", label: "Conceder efeito"/);
+  assert.match(itemSheet, /id: "granted_effect", label: game\.i18n\.localize\("GUM\.EquipmentModifier\.Types\.GrantEffect"\)/);
   assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.effect_uuid/);
   assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.effect_domain/);
   assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.lifecycle/);
@@ -207,7 +207,7 @@ test("created attack editor exposes specialized melee and ranged statistics", ()
   }
   assert.match(template, /attack\.parry_default/);
   assert.match(template, /attack\.block_default/);
-  assert.match(template, /Calcular pelo NH/);
+  assert.match(template, /GUM\.EquipmentModifier\.Fields\.CalculateFromNH/);
   assert.match(itemSheet, /numeric_equipment_value/);
   assert.match(itemSheet, /numeric_attack_value/);
 });
@@ -218,7 +218,7 @@ test("equipment modifiers author structured follow-up and fragmentation damage",
   for (const field of ["formula", "type", "nature", "armor_divisor", "scaling"]) {
     assert.match(template, new RegExp(`features_data\\.\\{\\{feature\\.id\\}\\}\\.damage\\.${field}`));
   }
-  assert.match(itemSheet, /id: "attack_damage", label: "Definir dano secundário ou fragmentação"/);
+  assert.match(itemSheet, /id: "attack_damage", label: game\.i18n\.localize\("GUM\.EquipmentModifier\.Types\.AttackDamage"\)/);
 });
 
 test("equipment attack cards identify modes changed by resolved features", () => {
@@ -230,9 +230,9 @@ test("equipment attack cards identify modes changed by resolved features", () =>
   assert.match(template, /equipmentRangedAttackChanges/);
   assert.match(template, /equipment-attack-resolution-tag/);
   assert.match(template, /equipment-created-attack-card/);
-  assert.match(template, /Bloqueio/);
-  assert.match(template, /Pelo NH/);
-  assert.match(template, /Modos concedidos por modificadores/);
+  assert.match(template, /GUM\.Equipment\.Attacks\.Block/);
+  assert.match(template, /GUM\.EquipmentModifier\.Fields\.CalculateFromNH/);
+  assert.match(template, /GUM\.Equipment\.Attacks\.CreatedModes/);
   assert.match(template, /fa-wrench/);
 });
 
