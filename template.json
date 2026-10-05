@@ -812,6 +812,7 @@
       "weight_mod": "x1",
       "enabled": true,
       "level": 1,
+      "points": 0,
       "cost_adjustment_data": {
         "expression": "0 CF",
         "stage": "base",

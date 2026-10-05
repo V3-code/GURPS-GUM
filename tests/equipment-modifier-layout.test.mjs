@@ -26,16 +26,17 @@ test("equipment modifier sheet exposes structured cost and weight controls", () 
 test("equipment modifier editor uses the minimal adjustment workspace", () => {
   for (const className of [
     "eqp-modifier-workspace",
-    "eqp-modifier-heading",
     "eqp-adjustment-panel",
     "eqp-adjustment-summary",
     "eqp-modifier-catalog",
+    "eqp-features-toolbar",
     "eqp-feature-list",
     "eqp-feature-card"
   ]) assert.match(template, new RegExp(className));
 
   const styles = fs.readFileSync("styles/item-sheet.css", "utf8");
   assert.match(styles, /\.eqp-adjustment-primary-grid/);
+  assert.match(styles, /\.eqp-modifier-catalog-field\.is-group/);
   assert.match(styles, /\.eqp-feature-card\.is-disabled/);
   assert.match(styles, /@media \(max-width: 620px\)/);
 });
@@ -48,6 +49,10 @@ test("equipment modifier organization is consolidated in adjustments", () => {
   assert.match(adjustmentTab, /name="system\.enabled"/);
   assert.match(adjustmentTab, /name="system\.level"/);
   assert.match(adjustmentTab, /name="system\.tech_level"/);
+  assert.match(adjustmentTab, /name="system\.points"/);
+  assert.match(adjustmentTab, /Material predominante/);
+  assert.ok(adjustmentTab.indexOf("Organização e cenário") < adjustmentTab.indexOf("Ajuste de preço"));
+  assert.doesNotMatch(adjustmentTab, /Ajustes do modificador/);
   assert.doesNotMatch(template, /name="system\.tags"/);
   assert.doesNotMatch(template, /name="system\.features"/);
   assert.doesNotMatch(template, /name="system\.target_type/);
