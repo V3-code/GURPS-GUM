@@ -9,6 +9,7 @@ const effectsEngine = fs.readFileSync("scripts/effects-engine.js", "utf8");
 const rollPrompt = fs.readFileSync("module/apps/roll-prompt.js", "utf8");
 const actorSheet = fs.readFileSync("module/actor/gurps-actor-sheet.js", "utf8");
 const actorTemplate = fs.readFileSync("templates/actors/characters.hbs", "utf8");
+const styles = fs.readFileSync("styles/item-sheet.css", "utf8");
 
 test("equipment modifier sheet exposes structured cost and weight controls", () => {
   assert.match(template, /data-tab="adjustments"/);
@@ -27,14 +28,13 @@ test("equipment modifier editor uses the minimal adjustment workspace", () => {
   for (const className of [
     "eqp-modifier-workspace",
     "eqp-adjustment-panel",
-    "eqp-field-card",
+    "skill-dashboard-card",
     "eqp-modifier-catalog",
     "eqp-features-toolbar",
     "eqp-feature-list",
     "eqp-feature-card"
   ]) assert.match(template, new RegExp(className));
 
-  const styles = fs.readFileSync("styles/item-sheet.css", "utf8");
   assert.match(styles, /\.eqp-adjustment-primary-grid/);
   assert.match(styles, /\.eqp-modifier-catalog-field\.is-group/);
   assert.match(styles, /\.eqp-feature-card\.is-disabled/);
@@ -50,7 +50,8 @@ test("equipment modifier organization is consolidated in adjustments", () => {
   assert.match(adjustmentTab, /name="system\.level"/);
   assert.match(adjustmentTab, /name="system\.tech_level"/);
   assert.match(adjustmentTab, /name="system\.points"/);
-  assert.match(adjustmentTab, /Unidade para preço por peso/);
+  assert.match(adjustmentTab, /Unidade por peso/);
+  assert.doesNotMatch(styles, /\.eqp-field-card/);
   assert.doesNotMatch(adjustmentTab, /eqp-adjustment-summary/);
   assert.match(adjustmentTab, /Material predominante/);
   assert.ok(adjustmentTab.indexOf("Organização e cenário") < adjustmentTab.indexOf("Ajuste de preço"));
