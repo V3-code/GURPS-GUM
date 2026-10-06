@@ -42,7 +42,7 @@ test("o efeito persiste metadados de combate e usa a fórmula efetiva", () => {
   assert.match(engine, /flags\.gum\.combatModifier/);
   assert.match(engine, /attack_context: attackContext,[\s\S]*?application_side/);
   assert.match(main, /attack\.effective_damage = resolveCombatDamageProfile/);
-  assert.match(main, /const effectiveDamage = resolveCombatDamageProfile/);
+  assert.match(main, /const effectiveDamage = payload\.ammunitionDamageProfile \|\| resolveCombatDamageProfile/);
 });
 
 test("perfil efetivo alcança componentes, metadados, ficha e janela de dano", () => {

@@ -12,6 +12,7 @@ import { resolveConditionalValue } from "../utils/effect-value-expression.mjs";
 import { evaluateModifierRollFormulaSync } from "../utils/modifier-roll-formula.mjs";
 import { getSkillDisplayName } from "../utils/skill-display-name.mjs";
 import { matchesEquipmentGrantedEffectScope } from "../utils/equipment-granted-effects.mjs";
+import { availableAmmunition, ammunitionRollModifier } from "../utils/ammunition.mjs";
 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
@@ -23,6 +24,9 @@ export class GurpsRollPrompt extends FormApplication {
         super(options);
         this.actor = actor;
         this.rollData = rollData;
+        const attack = actor?.items?.get(rollData.itemId)?.system?.ranged_attacks?.[rollData.attackId];
+        this.ammunitionOptions = rollData.type === "attack" && attack?.ammunition_ids?.length ? availableAmmunition(actor, attack) : [];
+        this.selectedAmmunitionId = "";
         this.selectedModifiers = [];
         this.onRoll = options.onRoll;
         this.baseAttributeOptions = [];
@@ -1185,6 +1189,10 @@ return 'default';
         context.manualLabel = this.rollData.modifierLabel || "Manual";
         context.lockInitialModifier = this.rollData.lockInitialModifier === true;
         context.fixedModifier = parseInt(this.rollData.fixedModifier) || 0;
+        context.ammunitionOptions = this.ammunitionOptions.map(item => ({ id: item.id, name: item.name, quantity: item.system.quantity, selected: item.id === this.selectedAmmunitionId }));
+        context.ammunitionId = this.selectedAmmunitionId;
+        context.ammunitionModifier = ammunitionRollModifier(this.ammunitionOptions.find(item => item.id === this.selectedAmmunitionId));
+        context.ammunitionModifierSummary = game.i18n.format("GUM.Equipment.Ammunition.ModifierSummary", { modifier: context.ammunitionModifier });
         context.fixedModifierLabel = this.rollData.fixedModifierLabel || "Fixo";
         context.baseAttributeOptions = this._prepareBaseAttributeOptions();
         if (preservedBaseKey && this.baseAttributeOptionsMap.has(preservedBaseKey)) {
@@ -1490,6 +1498,11 @@ return 'default';
             html.find('.defense-timing-panel').toggle(showTiming);
             this._updateTotals(html);
         });
+        html.find('[name="ammunitionId"]').on('change', ev => {
+            this.selectedAmmunitionId = ev.currentTarget.value;
+            html.find('.ammunition-modifier-summary').text(game.i18n.format("GUM.Equipment.Ammunition.ModifierSummary", { modifier: ammunitionRollModifier(this.ammunitionOptions.find(item => item.id === this.selectedAmmunitionId)) }));
+            this._updateTotals(html);
+        });
 
         html.find('.defense-timing-btn').click(ev => {
             ev.preventDefault();
@@ -1528,7 +1541,9 @@ return 'default';
     _updateTotals(html) {
         const base = parseInt(this.currentBaseValue) || parseInt(this.rollData.value) || 10;
         let manual = parseInt(html.find('input[name="manualMod"]').val()) || 0;
-        const fixedModifier = parseInt(this.rollData.fixedModifier) || 0;
+        const ordinaryFixedModifier = parseInt(this.rollData.fixedModifier) || 0;
+        const ammunitionModifier = ammunitionRollModifier(this.ammunitionOptions.find(item => item.id === this.selectedAmmunitionId));
+        const fixedModifier = ordinaryFixedModifier + ammunitionModifier;
         const fixedModifierLabel = this.rollData.fixedModifierLabel || "Fixo";
         let selected = 0;
         let activeCaps = [];
@@ -1585,9 +1600,10 @@ return 'default';
             stackContainer.append(`<span class="mod-tag locked">Manual <strong>${manual > 0 ? '+' : ''}${manual}</strong></span>`);
         }
 
-        if (fixedModifier !== 0) {
-            stackContainer.append(`<span class="mod-tag locked gm-locked">${fixedModifierLabel} <strong>${fixedModifier > 0 ? '+' : ''}${fixedModifier}</strong></span>`);
+        if (ordinaryFixedModifier !== 0) {
+            stackContainer.append(`<span class="mod-tag locked gm-locked">${fixedModifierLabel} <strong>${ordinaryFixedModifier > 0 ? '+' : ''}${ordinaryFixedModifier}</strong></span>`);
         }
+        if (ammunitionModifier !== 0) stackContainer.append(`<span class="mod-tag locked">${game.i18n.localize("GUM.Equipment.Ammunition.Label")} <strong>${ammunitionModifier > 0 ? '+' : ''}${ammunitionModifier}</strong></span>`);
         
         if (this.selectedModifiers.length === 0 && manual === 0 && fixedModifier === 0 && !baseChanged) {
              stackContainer.append(`<span class="empty-stack-msg" style="color:#666; font-style:italic; font-size:0.8em;">Nenhum modificador.</span>`);
@@ -1872,7 +1888,7 @@ const color = totalMod > 0 ? 'var(--c-accent-gold)' : (totalMod < 0 ? '#e57373' 
 
 async _updateObject(event, formData) {
         const manualMod = parseInt(formData.manualMod) || 0;
-        const fixedModifier = parseInt(this.rollData.fixedModifier) || 0;
+        const fixedModifier = (parseInt(this.rollData.fixedModifier) || 0) + ammunitionRollModifier(this.ammunitionOptions.find(item => item.id === this.selectedAmmunitionId));
         let buttonsMod = 0;
         let activeCaps = [];
         const baseValue = parseInt(this.currentBaseValue) || parseInt(this.rollData.value) || 10;
@@ -1905,6 +1921,9 @@ async _updateObject(event, formData) {
         
 const rollPayload = {
             ...this.rollData,
+            ammunitionId: this.selectedAmmunitionId || null,
+            ammunitionModifierIncluded: this.ammunitionOptions.length > 0,
+            ammunitionPromptModifier: ammunitionRollModifier(this.ammunitionOptions.find(item => item.id === this.selectedAmmunitionId)),
             // Enviamos o valor matemático puro, o performGURPSRoll aplica o corte visualmente
             value: computedValue,
             originalValue: baseValue,

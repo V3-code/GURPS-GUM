@@ -347,9 +347,14 @@
 .damage-header .selector-row {
   width: 100%;
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
   margin-top: -2px;
 }
+
+.damage-source-name { font-weight: 600; font-size: 0.82rem; color: var(--color-text-light-highlight, #eee); text-align: center; }
+.damage-ammunition-note { margin: 1px 0 4px; font-size: 0.72rem; color: var(--color-text-light-5, #aaa); text-align: center; }
 
 /* Estilo do select para se ajustar melhor */
 .damage-header select[name="damage_target_pool"] {

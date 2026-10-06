@@ -395,6 +395,7 @@ _promptMultipleReferences(parsedList) {
         // 2. LÓGICA DE EQUIPAMENTOS 
         // ======================================================= 
             if (['equipment', 'melee_weapon', 'ranged_weapon'].includes(this.item.type)) {
+            context.ammunitionLabels = Object.fromEntries(Array.from(this.item.actor?.items || []).map(item => [item.id, item.name]));
             const baseEquipmentSystem = this.item._source?.system || this.item.system;
             const eqpModsObj = baseEquipmentSystem.eqp_modifiers || {};
             const modifiersArray = Object.entries(eqpModsObj).map(([id, data]) => ({ 
@@ -416,6 +417,9 @@ _promptMultipleReferences(parsedList) {
             }
 
             context.equipmentResolution = resolution;
+            context.equipmentAmmunitionChanged = resolution.steps.some(step => ["create_ammunition", "ammunition_property"].includes(step.type))
+                && JSON.stringify(baseEquipmentSystem.ammunition || {}) !== JSON.stringify(resolution.ammunition);
+            context.equipmentResolvedAmmunition = resolution.ammunition;
             context.equipmentUses = resolution.uses;
             context.equipmentPropertyChanges = describeEquipmentPropertyChanges(baseEquipmentSystem, resolution.properties);
             const useChanges = describeEquipmentUseChanges(baseEquipmentSystem, resolution.uses);
@@ -516,7 +520,13 @@ _promptMultipleReferences(parsedList) {
                 reserve_type: feature.reserveType,
                 reserve_name: feature.reserveName,
                 reserve_scope: feature.reserveScope,
-                numeric_attack_value: ["skill_level_mod", "armor_divisor", "min_strength", "accuracy", "rcl", "mag"].includes(feature.path)
+                numeric_attack_value: ["skill_level_mod", "armor_divisor", "min_strength", "accuracy", "rcl", "mag"].includes(feature.path),
+                numeric_ammunition_value: ["attack_modifier", "low_warning"].includes(feature.path) || feature.path.endsWith(".armor_divisor"),
+                formula_ammunition_value: feature.path.endsWith(".formula"),
+                enabled_ammunition_value: feature.path === "enabled",
+                operation_ammunition_value: feature.path.endsWith(".operation"),
+                textual_ammunition_value: feature.path.endsWith(".type") || feature.path.endsWith(".nature"),
+                ammunition_value_string: String(feature.value)
             }));
             context.equipmentAdjustmentStageOptions = [
                 { id: "original", label: game.i18n.localize("GUM.EquipmentModifier.Stages.Original") },
@@ -531,12 +541,26 @@ _promptMultipleReferences(parsedList) {
                 { id: "attack_property", label: game.i18n.localize("GUM.EquipmentModifier.Types.AttackProperty") },
                 { id: "attack_damage", label: game.i18n.localize("GUM.EquipmentModifier.Types.AttackDamage") },
                 { id: "create_attack", label: game.i18n.localize("GUM.EquipmentModifier.Types.CreateAttack") },
+                { id: "create_ammunition", label: game.i18n.localize("GUM.EquipmentModifier.Types.CreateAmmunition") },
+                { id: "ammunition_property", label: game.i18n.localize("GUM.EquipmentModifier.Types.AmmunitionProperty") },
                 { id: "granted_effect", label: game.i18n.localize("GUM.EquipmentModifier.Types.GrantEffect") }
             ];
             context.equipmentFeatureOperationOptions = [
                 { id: "add", label: game.i18n.localize("GUM.EquipmentModifier.Operations.Add") },
                 { id: "multiply", label: game.i18n.localize("GUM.EquipmentModifier.Operations.Multiply") },
                 { id: "set", label: game.i18n.localize("GUM.EquipmentModifier.Operations.Set") }
+            ];
+            context.ammunitionPropertyOptions = [
+                { id: "enabled", label: game.i18n.localize("GUM.Equipment.Ammunition.Enabled") },
+                { id: "attack_modifier", label: game.i18n.localize("GUM.Equipment.Ammunition.AttackModifier") },
+                { id: "low_warning", label: game.i18n.localize("GUM.Equipment.Ammunition.LowWarning") },
+                ...["main", "follow_up", "fragmentation"].flatMap(part => {
+                    const label = game.i18n.localize(`GUM.Equipment.Ammunition.${{ main: "MainDamage", follow_up: "FollowUpDamage", fragmentation: "FragmentationDamage" }[part]}`);
+                    return ["formula", "operation", "type", "nature", "armor_divisor", "divisor_operation"].map(field => ({
+                        id: `${part}.${field}`,
+                        label: `${label} · ${game.i18n.localize(`GUM.Equipment.Ammunition.${{ formula: "Formula", operation: "FormulaOperation", type: "Type", nature: "Nature", armor_divisor: "ArmorDivisor", divisor_operation: "DivisorOperation" }[field]}`)}`
+                    }));
+                })
             ];
             context.equipmentPropertyOptions = [
                 { id: "item_dr", label: game.i18n.localize("GUM.Equipment.Label.ItemDR") }, { id: "item_hp", label: game.i18n.localize("GUM.Equipment.Label.ItemHP") },
@@ -1066,7 +1090,30 @@ if (this.item?.type === "equipment") {
             if (!id) return;
             await this.item.update({ [`system.features_data.-=${id}`]: null });
         });
-        html.find('.eqp-feature-shape-select').on('change', async () => {
+        html.find('.eqp-feature-shape-select').on('change', async ev => {
+            const select = ev.currentTarget;
+            if (select.name?.endsWith('.type') && this.item.type === 'eqp_modifier'
+                && ['ammunition_property', 'create_ammunition'].includes(select.value)) {
+                const id = $(select).closest('[data-feature-id]').data('feature-id');
+                await this.submit({ preventClose: true, preventRender: true });
+                if (id && select.value === 'ammunition_property') {
+                    await this.item.update({ [`system.features_data.${id}.path`]: 'attack_modifier', [`system.features_data.${id}.operation`]: 'set', [`system.features_data.${id}.value`]: 0 });
+                } else this.render(false);
+                return;
+            }
+            if (select.name?.endsWith('.path') && this.item.type === 'eqp_modifier') {
+                const id = $(select).closest('[data-feature-id]').data('feature-id');
+                const feature = this.item.system.features_data?.[id];
+                if (id && feature?.type === 'ammunition_property') {
+                    const path = select.value;
+                    const value = path === 'enabled' ? 'true'
+                        : path.endsWith('.operation') ? 'replace'
+                        : ["attack_modifier", "low_warning"].includes(path) || path.endsWith('.armor_divisor') ? 0 : '';
+                    await this.submit({ preventClose: true, preventRender: true });
+                    await this.item.update({ [`system.features_data.${id}.value`]: value, [`system.features_data.${id}.operation`]: 'set' });
+                    return;
+                }
+            }
             await this.submit({ preventClose: true });
         });
         html.find('.eqp-feature-conditional-select').on('change', async () => {
@@ -1225,10 +1272,14 @@ html.find('.delete-modifier').click(async ev => {
         }); 
          
         // Modo Edição de Ataque 
-        html.find('.edit-attack-mode').click(ev => { 
+        html.find('.edit-attack-mode').click(ev => {
             ev.preventDefault(); 
             this._onEditAttack(ev); 
-        }); 
+        });
+        html.find('.choose-attack-ammunition').click(ev => this._chooseAttackAmmunition(ev));
+        html.find('.ammunition-enabled-toggle').on('change', ev => {
+            html.find('.ammunition-options').toggleClass('is-hidden', !ev.currentTarget.checked);
+        });
  
         const saveAttackHandler = this._onSaveAttackMode ? this._onSaveAttackMode.bind(this) : null; 
         if (saveAttackHandler) { 
@@ -1239,7 +1290,32 @@ html.find('.delete-modifier').click(async ev => {
         if (cancelAttackHandler) { 
             html.find('.cancel-attack-edit').click(cancelAttackHandler); 
         } 
-    } 
+    }
+
+    async _chooseAttackAmmunition(ev) {
+        ev.preventDefault();
+        const attackId = ev.currentTarget.dataset.attackId;
+        const attack = this.item.system?.ranged_attacks?.[attackId];
+        if (!attack || !this.item.actor) return ui.notifications.warn(game.i18n.localize("GUM.Equipment.Ammunition.NeedsActor"));
+        const escape = value => foundry.utils.escapeHTML(String(value));
+        const choices = Array.from(this.item.actor.items).filter(item => item.id !== this.item.id && item.system?.ammunition?.enabled);
+        const selected = new Set(attack.ammunition_ids || []);
+        const content = `<div class="gum-ammunition-picker-content">
+            <p class="gum-ammunition-dialog-intro">${game.i18n.localize("GUM.Equipment.Ammunition.AcceptedHint")}</p>
+            <div class="gum-ammunition-choice-list">${choices.length ? choices.map(item =>
+                `<label class="gum-ammunition-choice-card"><input type="checkbox" name="ammo" value="${escape(item.id)}" ${selected.has(item.id) ? "checked" : ""}>
+                    <span class="gum-ammunition-choice-copy"><strong>${escape(item.name)}</strong><small>${game.i18n.format("GUM.Equipment.Ammunition.Available", { quantity: Number(item.system.quantity) || 0 })}</small></span>
+                </label>`
+            ).join("") : `<p class="gum-ammunition-empty">${game.i18n.localize("GUM.Equipment.Ammunition.None")}</p>`}</div>
+        </div>`;
+        new Dialog({ title: game.i18n.localize("GUM.Equipment.Ammunition.Accepted"), content, buttons: {
+            save: { label: game.i18n.localize("GUM.Equipment.Attacks.Save"), callback: async html => {
+                const ids = html.find('input[name="ammo"]:checked').map((_, input) => input.value).get();
+                await this.item.update({ [`system.ranged_attacks.${attackId}.ammunition_ids`]: ids });
+            } },
+            cancel: { label: game.i18n.localize("GUM.Equipment.Attacks.Cancel") }
+        }, default: "save" }, { classes: ["dialog", "gum", "gum-ammunition-picker-dialog"], width: 430, height: "auto" }).render(true);
+    }
  
 async _onOpenReferenceLink(event) { 
   event.preventDefault(); 

@@ -24,6 +24,7 @@ import { importFromGCS } from "../module/apps/importers.js";
 import { GumGMScreen } from "../module/apps/gm-screen.js";
 import { GurpsRollPrompt } from "../module/apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../module/apps/damage-roll-prompt.js";
+import { availableAmmunition, applyAmmunition, ammunitionRollModifier, reconcileAmmunitionModifier } from "../module/utils/ammunition.mjs";
 import { getPurposeLabels, matchesRollTags, resolveRollMetadata, shouldIncludeInPermanentNh } from "../module/utils/roll-purposes.mjs";
 import { getBodyProfile, getBodyLocationDefinition } from "../module/config/body-profiles.js";
 import { calculateDamageResistance, mergeDamageResistance, parseDamageResistanceEffectPath } from "../module/utils/damage-resistance.mjs";
@@ -655,6 +656,7 @@ const activeEffects = Array.isArray(this.effects) ? this.effects : Array.from(th
                 item.system.resolvedDescriptors = resolution.descriptors;
                 item.system.melee_attacks = resolution.meleeAttacks;
                 item.system.ranged_attacks = resolution.rangedAttacks;
+                item.system.ammunition = resolution.ammunition;
                 item.system.dr_locations = resolution.drLocations;
                 for (const [path, value] of Object.entries(resolution.properties)) {
                     if (value !== undefined) item.system[path] = value;
@@ -1393,12 +1395,84 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     } else if (rollData.itemId && actor?.items) {
         sourceItem = actor.items.get(rollData.itemId) || null;
     }
+    const sourceAttack = sourceItem?.system?.ranged_attacks?.[rollData.attackId];
+    if (rollData.type === "attack" && sourceAttack?.ammunition_ids?.length) {
+        const numericCadence = /^\d+$/.test(String(sourceAttack.rof || "").trim()) ? Number(sourceAttack.rof) : null;
+        const options = availableAmmunition(actor, sourceAttack);
+        const selectedId = options.some(item => item.id === rollData.ammunitionId) ? rollData.ammunitionId : "";
+        const escape = value => foundry.utils.escapeHTML(String(value));
+        const choice = await new Promise(resolve => new Dialog({
+            title: game.i18n.localize("GUM.Equipment.Ammunition.Confirm"),
+            content: `<form class="gum-ammo-confirm-form">
+                <div class="gum-ammo-confirm-cadence"><span>${game.i18n.localize("GUM.Equipment.Ammunition.Cadence")}</span><strong>${escape(sourceAttack.rof || "1")}</strong></div>
+                <div class="gum-ammo-confirm-card"><label for="gum-ammo-confirm-choice">${game.i18n.localize("GUM.Equipment.Ammunition.Label")}</label>
+                    <select id="gum-ammo-confirm-choice" name="ammunition"><option value="" ${selectedId ? "" : "selected"}>${game.i18n.localize("GUM.Equipment.Ammunition.Standard")}</option>${options.map(item => `<option value="${escape(item.id)}" ${selectedId === item.id ? "selected" : ""}>${escape(item.name)} — ${game.i18n.format("GUM.Equipment.Ammunition.Available", { quantity: Number(item.system.quantity) || 0 })}</option>`).join("")}</select>
+                </div>
+                <div class="gum-ammo-confirm-card gum-ammo-confirm-quantity ${selectedId ? "" : "is-disabled"}"><label for="gum-ammo-confirm-amount">${game.i18n.localize("GUM.Equipment.Ammunition.Spent")}</label>
+                    <div class="gum-ammo-quantity-controls"><button type="button" class="gum-ammo-quantity-step" data-step="-1" aria-label="−">−</button><input id="gum-ammo-confirm-amount" type="number" name="amount" min="1" ${numericCadence ? `max="${numericCadence}"` : ""} step="1" value="1" ${selectedId ? "" : "disabled"}><button type="button" class="gum-ammo-quantity-step" data-step="1" aria-label="+">+</button></div>
+                    <small class="gum-ammo-standard-note">${game.i18n.localize(selectedId ? "GUM.Equipment.Ammunition.SpentHint" : "GUM.Equipment.Ammunition.StandardHint")}</small>
+                </div>
+            </form>`,
+            render: html => {
+                const amountInput = html.find('[name="amount"]');
+                const updateQuantity = () => {
+                    const selected = options.find(item => item.id === html.find('[name="ammunition"]').val());
+                    const maximum = selected ? Math.min(Number(selected.system.quantity) || 0, numericCadence || Infinity) : 0;
+                    amountInput.prop('disabled', !selected).attr('max', maximum || 1);
+                    html.find('.gum-ammo-quantity-step').prop('disabled', !selected || maximum < 1);
+                    html.find('.gum-ammo-confirm-quantity').toggleClass('is-disabled', !selected);
+                    html.find('.gum-ammo-standard-note').text(game.i18n.localize(selected ? "GUM.Equipment.Ammunition.SpentHint" : "GUM.Equipment.Ammunition.StandardHint"));
+                    if (selected) amountInput.val(Math.min(Math.max(1, Number(amountInput.val()) || 1), Math.max(1, maximum)));
+                };
+                html.find('[name="ammunition"]').on('change', updateQuantity);
+                html.find('.gum-ammo-quantity-step').on('click', event => {
+                    const maximum = Number(amountInput.attr('max')) || 1;
+                    const next = (Number(amountInput.val()) || 1) + Number(event.currentTarget.dataset.step);
+                    amountInput.val(Math.min(maximum, Math.max(1, next)));
+                });
+                updateQuantity();
+            },
+            buttons: {
+                fire: { label: game.i18n.localize("GUM.Equipment.Ammunition.Fire"), callback: html => resolve({ id: String(html.find('[name="ammunition"]').val() || ""), amount: Number(html.find('[name="amount"]').val()) }) },
+                cancel: { label: game.i18n.localize("GUM.Equipment.Attacks.Cancel"), callback: () => resolve(null) }
+            },
+            default: "fire", close: () => resolve(null)
+        }, { classes: ["dialog", "gum", "gum-ammo-confirm-dialog"], width: 440, height: "auto" }).render(true));
+        if (!choice) return;
+        let selectedModifier = 0;
+        if (choice.id) {
+            const ammunition = actor.items.get(choice.id);
+            const amount = choice.amount;
+            const available = Number(ammunition?.system?.quantity);
+            if (!ammunition || !options.some(item => item.id === choice.id) || !Number.isSafeInteger(amount) || amount < 1 || amount > available) {
+                ui.notifications.warn(game.i18n.localize("GUM.Equipment.Ammunition.InvalidQuantity"));
+                return;
+            }
+            if (numericCadence && amount > numericCadence) {
+                ui.notifications.warn(game.i18n.format("GUM.Equipment.Ammunition.ExceedsCadence", { cadence: numericCadence }));
+                return;
+            }
+            const baseProfile = resolveCombatDamageProfile(actor, sourceItem, sourceAttack, "ranged", { includeTargeted: true, rollData });
+            const ammunitionProfile = applyAmmunition(baseProfile, ammunition);
+            await ammunition.update({ "system.quantity": available - amount });
+            const remaining = available - amount;
+            const warning = Number(ammunition.system.ammunition?.low_warning) || 0;
+            if (warning > 0 && remaining <= warning) ui.notifications.warn(game.i18n.format("GUM.Equipment.Ammunition.Remaining", { name: ammunition.name, quantity: remaining }));
+            selectedModifier = ammunitionRollModifier(ammunition);
+            rollData = { ...rollData, ammunitionName: ammunition.name, ammunitionSpent: amount,
+                ammunitionDamageProfile: ammunitionProfile };
+        } else {
+            rollData = { ...rollData, ammunitionName: null, ammunitionSpent: 0, ammunitionDamageProfile: null };
+        }
+        rollData.ammunitionModifier = selectedModifier;
+    }
     
     // Valor Base (Atributo Puro)
     const baseValue = parseInt(hasProcessedData ? rollData.originalValue : rollData.value) || 10;
     
     // Modificador que veio do Prompt (Manual)
-    const promptMod = parseInt(rollData.modifier) || 0;
+    const promptMod = reconcileAmmunitionModifier(rollData.modifier, rollData.ammunitionModifier,
+        rollData.ammunitionPromptModifier, rollData.ammunitionModifierIncluded);
     
     const label = rollData.label || "Teste";
 
@@ -1653,7 +1727,9 @@ function _buildDamageActionData(actor, sourceItem, rollData) {
                 itemId: sourceItem.id,
                 itemUuid: sourceItem.uuid,
                 attackId,
-                sourceLabel: `${sourceItem.name} (${attack.mode ?? attackId})`
+                sourceLabel: `${sourceItem.name} (${attack.mode ?? attackId})`,
+                ammunition: rollData.ammunitionName ? { name: rollData.ammunitionName, spent: rollData.ammunitionSpent } : null,
+                ammunitionDamageProfile: rollData.ammunitionDamageProfile || null
             };
         }
     }
@@ -1699,7 +1775,7 @@ async function _rollDamageFromChatAction(payload) {
     if (attackId && (item.system?.melee_attacks || item.system?.ranged_attacks)) {
         const attack = item.system.melee_attacks?.[attackId] || item.system.ranged_attacks?.[attackId];
         if (attack?.effective_damage_formula || attack?.damage_formula) {
-            const effectiveDamage = resolveCombatDamageProfile(actor, item, attack, item.system?.melee_attacks?.[attackId] ? "melee" : "ranged", { includeTargeted: true, rollData: payload });
+            const effectiveDamage = payload.ammunitionDamageProfile || resolveCombatDamageProfile(actor, item, attack, item.system?.melee_attacks?.[attackId] ? "melee" : "ranged", { includeTargeted: true, rollData: payload });
             normalizedAttack = {
                 name: payload.sourceLabel || `${item.name} (${attack.mode ?? attackId})`,
                 formula: effectiveDamage.main.formula,
@@ -1714,7 +1790,8 @@ async function _rollDamageFromChatAction(payload) {
                 sourceItemUuid: item.uuid,
                 sourceWeight: Number(item.system?.weight) || 0,
                 sourceAttackId: attackId || null,
-                sourceAttackType: item.system?.melee_attacks?.[attackId] ? "melee" : "ranged"
+                sourceAttackType: item.system?.melee_attacks?.[attackId] ? "melee" : "ranged",
+                ammunition: payload.ammunition || null
             };
         }
     } else if (item.system?.damage?.formula) {
@@ -1787,6 +1864,7 @@ async function _rollDamageFromChatAction(payload) {
 
     const promptResult = await GurpsDamageRollPrompt.prompt({
         sourceName: normalizedAttack.name,
+        ammunition: normalizedAttack.ammunition || null,
         main: {
             formula: normalizedAttack.formula,
             displayFormula: mainDisplayFormula,
@@ -1819,7 +1897,8 @@ async function _rollDamageFromChatAction(payload) {
     };
 
     normalizedAttack.formula = appendAdditional(normalizedAttack.formula, promptResult.mainAdditional);
-      normalizedAttack.nature = promptResult.mainNature || null;
+    normalizedAttack.nature = promptResult.mainNature || null;
+    normalizedAttack.armor_divisor = promptResult.mainArmorDivisor || normalizedAttack.armor_divisor || 1;
 
     if (promptResult.followUpAdditional) {
         normalizedAttack.follow_up_damage = normalizedAttack.follow_up_damage || { formula: "", type: "", armor_divisor: 1 };
@@ -1827,6 +1906,7 @@ async function _rollDamageFromChatAction(payload) {
         if (!normalizedAttack.follow_up_damage.type && promptResult.followUpType) normalizedAttack.follow_up_damage.type = promptResult.followUpType;
         normalizedAttack.follow_up_damage.nature = promptResult.followUpNature || null;
     }
+    if (normalizedAttack.follow_up_damage) normalizedAttack.follow_up_damage.armor_divisor = promptResult.followUpArmorDivisor || normalizedAttack.follow_up_damage.armor_divisor || 1;
 
     if (promptResult.fragmentationAdditional) {
         normalizedAttack.fragmentation_damage = normalizedAttack.fragmentation_damage || { formula: "", type: "", armor_divisor: 1 };
@@ -1834,6 +1914,7 @@ async function _rollDamageFromChatAction(payload) {
         if (!normalizedAttack.fragmentation_damage.type && promptResult.fragmentationType) normalizedAttack.fragmentation_damage.type = promptResult.fragmentationType;
         normalizedAttack.fragmentation_damage.nature = promptResult.fragmentationNature || null;
     }
+    if (normalizedAttack.fragmentation_damage) normalizedAttack.fragmentation_damage.armor_divisor = promptResult.fragmentationArmorDivisor || normalizedAttack.fragmentation_damage.armor_divisor || 1;
 
     const rolls = [];
     const mainFormula = extractMathFormula(resolveBaseDamage(actor, normalizedAttack.formula));
@@ -1869,6 +1950,7 @@ async function _rollDamageFromChatAction(payload) {
         sourceWeight: normalizedAttack.sourceWeight || 0,
         sourceAttackId: normalizedAttack.sourceAttackId || null,
         sourceAttackType: normalizedAttack.sourceAttackType || null,
+        ammunition: normalizedAttack.ammunition || null,
         main: {
             total: mainRoll.total,
             type: normalizedAttack.type || "",

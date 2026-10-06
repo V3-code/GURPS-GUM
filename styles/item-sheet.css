@@ -5245,6 +5245,113 @@ color:#121114;
   grid-template-columns: minmax(280px, 1fr) minmax(110px, 0.28fr);
 }
 
+.gum.sheet.item .ammunition-header-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  color: var(--item-text);
+  font-family: var(--item-font-condensed);
+  font-size: 0.76rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.gum.sheet.item .ammunition-header-toggle input { margin: 0; cursor: pointer; }
+
+.gum.sheet.item .ammunition-options {
+  padding: 12px 6px 0;
+}
+
+.gum.sheet.item .ammunition-effective-note { display: flex; align-items: center; gap: 8px; margin: 10px 6px 0; padding: 8px 10px; border: 1px solid rgba(197,160,91,.3); border-radius: 5px; background: rgba(197,160,91,.06); color: var(--item-text-muted); font-size: .71rem; line-height: 1.35; }
+.gum.sheet.item .ammunition-effective-note i { flex: 0 0 auto; color: var(--gum-accent-gold, #c5a05b); }
+.gum.sheet.item .ammunition-effective-note strong { color: var(--item-text); font-weight: 650; }
+.gum.sheet.item .ammunition-feature-editor { min-width: 0; margin-top: 8px; }
+
+.gum.sheet.item .ammunition-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.gum.sheet.item .ammunition-stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 6px;
+  background: rgba(255,255,255,.025);
+  color: var(--item-text);
+  text-align: center;
+}
+
+.gum.sheet.item .ammunition-stat-card span { color: var(--item-text-muted); font-size: .73rem; font-weight: 650; }
+.gum.sheet.item .ammunition-stat-card input { width: min(100%, 130px); margin: 0; text-align: center; }
+
+.gum.sheet.item .ammunition-damage-group {
+  min-width: 0;
+  margin: 12px 0 0;
+  padding: 11px 13px 13px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 6px;
+  background: rgba(255,255,255,.018);
+}
+
+.gum.sheet.item .ammunition-damage-group legend {
+  padding: 0 6px;
+  color: var(--item-text);
+  font-family: var(--item-font-condensed);
+  font-size: .79rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+}
+
+.gum.sheet.item .ammunition-damage-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 6px 10px;
+  align-items: center;
+  min-width: 0;
+}
+
+.gum.sheet.item .ammunition-damage-grid > span {
+  color: var(--item-text-muted);
+  font-size: .7rem;
+  text-align: center;
+}
+
+.gum.sheet.item .ammunition-damage-grid > .ammunition-grid-hint { font-size: .65rem; }
+
+.gum.sheet.item .ammunition-damage-grid > input,
+.gum.sheet.item .ammunition-damage-grid > select { width: 100%; min-width: 0; box-sizing: border-box; text-align: center; }
+
+.gum.sheet.item .ammunition-damage-grid > input { text-align: center; }
+.gum.sheet.item .ammunition-damage-grid > select { color: var(--item-text) !important; -webkit-text-fill-color: var(--item-text); color-scheme: dark; }
+.gum.sheet.item .ammunition-damage-grid > select option { background: #1d1c23; color: #ebe8e2; -webkit-text-fill-color: #ebe8e2; }
+
+.dialog.gum.gum-ammunition-picker-dialog .window-content,
+.dialog.gum.gum-ammunition-picker-dialog .dialog-content { background: var(--gum-bg-body, #18191e); color: var(--gum-text-claro, #ebe8e2); }
+
+.dialog.gum.gum-ammunition-picker-dialog .window-content { padding: 0; }
+.dialog.gum.gum-ammunition-picker-dialog .dialog-content { padding: 16px 18px 4px; }
+.gum-ammunition-dialog-intro { margin: 0 0 12px; color: var(--gum-text-medio, #b5b1ad); font-size: 12px; line-height: 1.4; }
+.gum-ammunition-choice-list { display: grid; gap: 8px; max-height: 340px; overflow-y: auto; }
+.gum-ammunition-choice-card { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 10px 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 7px; background: rgba(255,255,255,.045); cursor: pointer; transition: border-color .15s, background .15s; }
+.gum-ammunition-choice-card:hover { border-color: rgba(197,160,91,.55); background: rgba(197,160,91,.09); }
+.gum-ammunition-choice-card:has(input:checked) { border-color: rgba(197,160,91,.72); background: rgba(197,160,91,.13); }
+.gum-ammunition-choice-card input { flex: 0 0 auto; margin: 0; accent-color: var(--gum-accent-gold, #c5a05b); }
+.gum-ammunition-choice-copy { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.gum-ammunition-choice-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gum-text-claro, #ebe8e2); font-size: 12px; font-weight: 650; }
+.gum-ammunition-choice-copy small, .gum-ammunition-empty { color: var(--gum-text-medio, #b5b1ad); font-size: 11px; }
+.gum-ammunition-empty { margin: 0; padding: 12px; border: 1px dashed rgba(255,255,255,.18); border-radius: 7px; }
+.dialog.gum.gum-ammunition-picker-dialog .dialog-buttons { display: flex; gap: 8px; margin: 0; padding: 14px 18px 16px; background: var(--gum-bg-body, #18191e); }
+.dialog.gum.gum-ammunition-picker-dialog .dialog-buttons button { min-height: 34px; margin: 0; border: 1px solid rgba(255,255,255,.14); border-radius: 6px; background: #292d35; color: var(--gum-text-claro, #ebe8e2); font-size: 12px; font-weight: 650; box-shadow: none; }
+.dialog.gum.gum-ammunition-picker-dialog .dialog-buttons button[data-button="save"] { border-color: var(--gum-accent-gold, #c5a05b); background: var(--gum-accent-gold, #c5a05b); color: #1b1712; }
+.dialog.gum.gum-ammunition-picker-dialog .dialog-buttons button:hover { filter: brightness(1.1); }
+
 .gum.sheet.item .equipment-attack-resolution-tags {
   display: flex;
   flex-wrap: wrap;

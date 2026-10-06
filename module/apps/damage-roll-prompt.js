@@ -13,7 +13,7 @@ export class GurpsDamageRollPrompt extends FormApplication {
             title: "Configurar Rolagem de Dano",
             id: "gurps-damage-roll-prompt",
             template: "systems/gum/templates/apps/damage-roll-prompt.hbs",
-            width: 560,
+            width: 640,
             height: "auto",
             classes: ["gum", "damage-roll-prompt", "theme-dark"],
             closeOnSubmit: true
@@ -71,6 +71,7 @@ export class GurpsDamageRollPrompt extends FormApplication {
 
         return {
             sourceName: this.damageData.sourceName || "Rolagem de Dano",
+            ammunition: this.damageData.ammunition || null,
             main,
             followUp,
             fragmentation,
@@ -89,6 +90,10 @@ export class GurpsDamageRollPrompt extends FormApplication {
             this._refreshVisualCards(html);
         });
         html.find("[data-type-input='true']").on("input change", () => {
+            this._validateForm(html);
+            this._refreshVisualCards(html);
+        });
+        html.find("input[data-armor-divisor='true']").on("input change", () => {
             this._validateForm(html);
             this._refreshVisualCards(html);
         });
@@ -180,10 +185,14 @@ export class GurpsDamageRollPrompt extends FormApplication {
         const fragFormula = this._composeCardFormula(this.damageData.fragmentation?.displayFormula || this.damageData.fragmentation?.formula, fragAdd);
         const fuFormula = this._composeCardFormula(this.damageData.followUp?.displayFormula || this.damageData.followUp?.formula, fuAdd);
 
+        const divisor = (field, fallback) => {
+            const value = Number(html.find(`input[name='${field}']`).val());
+            return Number.isFinite(value) && value > 0 ? value : fallback;
+        };
         return [
-            { key: "main", label: "Dano Padrão", tone: "standard", formula: this._applyOptionalDiceNormalization(mainFormula), type: mainType, armorDivisor: this.damageData.main?.armorDivisor, nature: this.damageData.main?.natureDisplay },
-            { key: "followUp", label: "Dano de Acompanhamento", tone: "followup", formula: this._applyOptionalDiceNormalization(fuFormula), type: fuType, armorDivisor: this.damageData.followUp?.armorDivisor, nature: this.damageData.followUp?.natureDisplay },
-            { key: "fragmentation", label: "Dano de Fragmentação", tone: "fragmentation", formula: this._applyOptionalDiceNormalization(fragFormula), type: fragType, armorDivisor: this.damageData.fragmentation?.armorDivisor, nature: this.damageData.fragmentation?.natureDisplay }
+            { key: "main", label: "Dano Padrão", tone: "standard", formula: this._applyOptionalDiceNormalization(mainFormula), type: mainType, armorDivisor: divisor("mainArmorDivisor", this.damageData.main?.armorDivisor), nature: this.damageData.main?.natureDisplay },
+            { key: "followUp", label: "Dano de Acompanhamento", tone: "followup", formula: this._applyOptionalDiceNormalization(fuFormula), type: fuType, armorDivisor: divisor("followUpArmorDivisor", this.damageData.followUp?.armorDivisor), nature: this.damageData.followUp?.natureDisplay },
+            { key: "fragmentation", label: "Dano de Fragmentação", tone: "fragmentation", formula: this._applyOptionalDiceNormalization(fragFormula), type: fragType, armorDivisor: divisor("fragmentationArmorDivisor", this.damageData.fragmentation?.armorDivisor), nature: this.damageData.fragmentation?.natureDisplay }
         ].filter((card) => card.formula);
     }
 
@@ -278,6 +287,12 @@ export class GurpsDamageRollPrompt extends FormApplication {
         ];
 
         const natureFields = ["mainNature", "followUpNature", "fragmentationNature"];
+        const armorDivisors = ["mainArmorDivisor", "followUpArmorDivisor", "fragmentationArmorDivisor"].map((key, index) => {
+            const fallback = [this.damageData.main, this.damageData.followUp, this.damageData.fragmentation][index]?.armorDivisor || 1;
+            const raw = String(formData[key] ?? "").trim();
+            const value = Number(raw);
+            return { raw, value: raw ? value : fallback };
+        });
         const natures = natureFields.map(key => {
             const raw = String(formData[key] || "").trim();
             return raw ? resolveDamageNature(raw) : null;
@@ -295,6 +310,10 @@ export class GurpsDamageRollPrompt extends FormApplication {
             }
         }
 
+        if (armorDivisors.some(({ value }) => !Number.isFinite(value) || value <= 0)) {
+            return { valid: false, error: "O divisor de armadura deve ser maior que zero." };
+        }
+
         return {
             valid: true,
             payload: {
@@ -303,6 +322,9 @@ export class GurpsDamageRollPrompt extends FormApplication {
                 fragmentationAdditional: this._normalizeAdditionalFormula(fragExpr),
                 followUpType: sections[1].type,
                 fragmentationType: sections[2].type
+                ,mainArmorDivisor: armorDivisors[0].value
+                ,followUpArmorDivisor: armorDivisors[1].value
+                ,fragmentationArmorDivisor: armorDivisors[2].value
                 ,mainNature: natures[0]
                 ,followUpNature: natures[1]
                 ,fragmentationNature: natures[2]

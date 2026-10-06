@@ -1683,6 +1683,41 @@
             </div>
             {{/if}}
 
+            {{#if (eq feature.type "ammunition_property")}}
+            <div class="form-grid-3">
+              <div class="form-group"><label>{{localize "GUM.EquipmentModifier.Fields.Property"}}</label><select class="eqp-feature-shape-select" name="system.features_data.{{feature.id}}.path">{{selectOptions ../ammunitionPropertyOptions selected=feature.path valueAttr="id" labelAttr="label"}}</select></div>
+              <div class="form-group"><label>{{localize "GUM.EquipmentModifier.Fields.Operation"}}</label><select name="system.features_data.{{feature.id}}.operation">{{#if (or feature.enabled_ammunition_value feature.operation_ammunition_value feature.textual_ammunition_value)}}<option value="set" selected>{{localize "GUM.EquipmentModifier.Operations.Set"}}</option>{{else}}{{selectOptions ../equipmentFeatureOperationOptions selected=feature.operation valueAttr="id" labelAttr="label"}}{{/if}}</select></div>
+              <div class="form-group"><label>{{localize "GUM.EquipmentModifier.Fields.Value"}}</label>
+                {{#if feature.enabled_ammunition_value}}<select name="system.features_data.{{feature.id}}.value"><option value="true" {{#if (eq feature.ammunition_value_string "true")}}selected{{/if}}>{{localize "GUM.EquipmentModifier.Fields.Active"}}</option><option value="false" {{#if (eq feature.ammunition_value_string "false")}}selected{{/if}}>{{localize "GUM.EquipmentModifier.Options.None"}}</option></select>
+                {{else if feature.operation_ammunition_value}}<select name="system.features_data.{{feature.id}}.value"><option value="replace" {{#if (eq feature.ammunition_value_string "replace")}}selected{{/if}}>{{localize "GUM.EquipmentModifier.Operations.Set"}}</option><option value="add" {{#if (eq feature.ammunition_value_string "add")}}selected{{/if}}>{{localize "GUM.EquipmentModifier.Operations.Add"}}</option><option value="multiply" {{#if (eq feature.ammunition_value_string "multiply")}}selected{{/if}}>{{localize "GUM.EquipmentModifier.Operations.Multiply"}}</option></select>
+                {{else}}<input type="{{#if feature.numeric_ammunition_value}}number{{else}}text{{/if}}" step="any" name="system.features_data.{{feature.id}}.value" value="{{feature.value}}"/>{{/if}}
+              </div>
+            </div>
+            {{/if}}
+
+            {{#if (eq feature.type "create_ammunition")}}
+            <div class="ammunition-feature-editor">
+              <div class="ammunition-summary-grid">
+                <label class="ammunition-stat-card"><span>{{localize "GUM.Equipment.Ammunition.AttackModifier"}}</span><input type="number" step="any" name="system.features_data.{{feature.id}}.ammunition.attack_modifier" value="{{feature.ammunition.attack_modifier}}"/></label>
+                <label class="ammunition-stat-card"><span>{{localize "GUM.Equipment.Ammunition.LowWarning"}}</span><input type="number" min="0" name="system.features_data.{{feature.id}}.ammunition.low_warning" value="{{feature.ammunition.low_warning}}"/></label>
+              </div>
+              {{#each (array "main" "follow_up" "fragmentation") as |part|}}
+              <fieldset class="ammunition-damage-group"><legend>{{#if (eq part "main")}}{{localize "GUM.Equipment.Ammunition.MainDamage"}}{{else}}{{#if (eq part "follow_up")}}{{localize "GUM.Equipment.Ammunition.FollowUpDamage"}}{{else}}{{localize "GUM.Equipment.Ammunition.FragmentationDamage"}}{{/if}}{{/if}}</legend>
+                <div class="ammunition-damage-grid">
+                  <span>{{localize "GUM.Equipment.Ammunition.Formula"}}</span><span>{{localize "GUM.Equipment.Ammunition.Type"}}</span><span>{{localize "GUM.Equipment.Ammunition.Nature"}}</span><span>{{localize "GUM.Equipment.Ammunition.Divisor"}}</span>
+                  <input type="text" name="system.features_data.{{feature.id}}.ammunition.{{part}}.formula" value="{{lookup (lookup feature.ammunition part) 'formula'}}" aria-label="{{localize 'GUM.Equipment.Ammunition.Formula'}}"/>
+                  <input type="text" name="system.features_data.{{feature.id}}.ammunition.{{part}}.type" value="{{lookup (lookup feature.ammunition part) 'type'}}" aria-label="{{localize 'GUM.Equipment.Ammunition.Type'}}"/>
+                  <input type="text" name="system.features_data.{{feature.id}}.ammunition.{{part}}.nature" value="{{lookup (lookup feature.ammunition part) 'nature'}}" aria-label="{{localize 'GUM.Equipment.Ammunition.Nature'}}"/>
+                  <input type="number" step="0.1" min="0.1" name="system.features_data.{{feature.id}}.ammunition.{{part}}.armor_divisor" value="{{lookup (lookup feature.ammunition part) 'armor_divisor'}}" aria-label="{{localize 'GUM.Equipment.Ammunition.ArmorDivisor'}}"/>
+                  <select name="system.features_data.{{feature.id}}.ammunition.{{part}}.operation" aria-label="{{localize 'GUM.Equipment.Ammunition.FormulaOperation'}}"><option value="replace" {{#if (eq (lookup (lookup feature.ammunition part) 'operation') 'replace')}}selected{{/if}}>{{localize "GUM.EquipmentModifier.Operations.Set"}}</option><option value="add" {{#if (eq (lookup (lookup feature.ammunition part) 'operation') 'add')}}selected{{/if}}>{{localize "GUM.EquipmentModifier.Operations.Add"}}</option><option value="multiply" {{#if (eq (lookup (lookup feature.ammunition part) 'operation') 'multiply')}}selected{{/if}}>{{localize "GUM.EquipmentModifier.Operations.Multiply"}}</option></select>
+                  <span class="ammunition-grid-hint">{{localize "GUM.EquipmentModifier.Operations.Set"}}</span><span class="ammunition-grid-hint">{{localize "GUM.EquipmentModifier.Operations.Set"}}</span>
+                  <select name="system.features_data.{{feature.id}}.ammunition.{{part}}.divisor_operation" aria-label="{{localize 'GUM.Equipment.Ammunition.DivisorOperation'}}"><option value="replace" {{#if (eq (lookup (lookup feature.ammunition part) 'divisor_operation') 'replace')}}selected{{/if}}>{{localize "GUM.EquipmentModifier.Operations.Set"}}</option><option value="add" {{#if (eq (lookup (lookup feature.ammunition part) 'divisor_operation') 'add')}}selected{{/if}}>{{localize "GUM.EquipmentModifier.Operations.Add"}}</option><option value="multiply" {{#if (eq (lookup (lookup feature.ammunition part) 'divisor_operation') 'multiply')}}selected{{/if}}>{{localize "GUM.EquipmentModifier.Operations.Multiply"}}</option></select>
+                </div>
+              </fieldset>
+              {{/each}}
+            </div>
+            {{/if}}
+
             {{#if (eq feature.type "create_attack")}}
             <div class="form-grid-3">
               <div class="form-group"><label>{{localize "GUM.EquipmentModifier.Fields.Type"}}</label><select class="eqp-feature-shape-select" name="system.features_data.{{feature.id}}.attack_type"><option value="melee" {{#if (eq feature.attack_type "melee")}}selected{{/if}}>{{localize "GUM.EquipmentModifier.Options.Melee"}}</option><option value="ranged" {{#if (eq feature.attack_type "ranged")}}selected{{/if}}>{{localize "GUM.EquipmentModifier.Options.Ranged"}}</option></select></div>
@@ -1748,7 +1783,7 @@
             {{/unless}}
             {{/if}}
 
-            <div class="eqpmod-actions eqp-feature-actions"><div class="eqp-feature-toggles"><label class="custom-checkbox eqp-feature-enabled"><input type="checkbox" name="system.features_data.{{feature.id}}.enabled" {{checked feature.enabled}}/><span>{{localize "GUM.EquipmentModifier.Fields.Active"}}</span></label>{{#if (or (eq feature.type "equipment_property") (eq feature.type "equipment_dr") (eq feature.type "attack_property"))}}<label class="custom-checkbox eqp-feature-enabled"><input type="checkbox" name="system.features_data.{{feature.id}}.per_level" {{checked feature.per_level}}/><span>{{localize "GUM.EquipmentModifier.Fields.PerModifierLevel"}}</span></label>{{/if}}</div><button type="button" class="delete-eqp-feature" title="{{localize 'GUM.EquipmentModifier.Hint.RemoveFeature'}}"><i class="fas fa-trash"></i> {{localize "GUM.EquipmentModifier.Fields.Remove"}}</button></div>
+            <div class="eqpmod-actions eqp-feature-actions"><div class="eqp-feature-toggles"><label class="custom-checkbox eqp-feature-enabled"><input type="checkbox" name="system.features_data.{{feature.id}}.enabled" {{checked feature.enabled}}/><span>{{localize "GUM.EquipmentModifier.Fields.Active"}}</span></label>{{#if (or (eq feature.type "equipment_property") (eq feature.type "equipment_dr") (eq feature.type "attack_property") (and (eq feature.type "ammunition_property") feature.numeric_ammunition_value))}}<label class="custom-checkbox eqp-feature-enabled"><input type="checkbox" name="system.features_data.{{feature.id}}.per_level" {{checked feature.per_level}}/><span>{{localize "GUM.EquipmentModifier.Fields.PerModifierLevel"}}</span></label>{{/if}}</div><button type="button" class="delete-eqp-feature" title="{{localize 'GUM.EquipmentModifier.Hint.RemoveFeature'}}"><i class="fas fa-trash"></i> {{localize "GUM.EquipmentModifier.Fields.Remove"}}</button></div>
             </div>
             </details>
           </li>
@@ -1842,7 +1877,6 @@
      {{!--    ABA ESPECIAL: MODOS DE ATAQUE (para Equipamentos) --}}
      {{!-- ===================================================================== --}}
      <div class="tab" data-tab="attacks">
-        
         {{!-- SEÇÃO DE ATAQUES CORPO A CORPO (MELEE) --}}
         <div class="attacks-editor-section">
          <div class="attack-section-header">
@@ -2224,6 +2258,7 @@
       {{!-- Ações --}}
       <div class="attack-cell attack-actions">
         <span class="attack-controls">
+          <a class="choose-attack-ammunition" data-attack-id="{{key}}" title="{{localize "GUM.Equipment.Ammunition.Accepted"}}: {{#each attack.ammunition_ids}}{{lookup @root.ammunitionLabels this}} {{/each}}"><i class="fas fa-bullseye"></i></a>
           <a class="edit-attack-mode" title="{{localize 'GUM.Equipment.Attacks.EditMode'}}"><i class="fas fa-edit"></i></a>
           <a class="delete-attack" data-list="ranged_attacks" title="{{localize 'GUM.Equipment.Attacks.RemoveMode'}}"><i class="fas fa-trash"></i></a>
         </span>
@@ -2243,7 +2278,7 @@
 
                  {{!-- MODO EDIÇÃO (O FORMULÁRIO) L.D. --}}
                  <div class="attack-edit-mode" style="display:none;">
-                     
+
                      {{!-- GRUPO 1: HABILIDADE --}}
                      <div class="ability-grid">
                          <div class="ability-col-left">
@@ -2390,6 +2425,38 @@
              </div>
              {{/if}}
              </div>
+        <div class="attacks-editor-section ammunition-config-section">
+            <div class="attack-section-header">
+                <h4 class="attack-section-title">{{localize "GUM.Equipment.Ammunition.Section"}}</h4>
+                <label class="ammunition-header-toggle" title="{{localize "GUM.Equipment.Ammunition.EnabledHint"}}">
+                    <span>{{localize "GUM.Equipment.Ammunition.Enabled"}}</span>
+                    <input type="checkbox" class="ammunition-enabled-toggle" name="system.ammunition.enabled" {{checked system.ammunition.enabled}}/>
+                </label>
+            </div>
+            {{#if equipmentAmmunitionChanged}}
+            <div class="ammunition-effective-note"><i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i><span>{{localize "GUM.Equipment.Ammunition.ModifiedResult"}}: <strong>{{#if equipmentResolvedAmmunition.enabled}}{{localize "GUM.Equipment.Ammunition.Enabled"}}{{else}}{{localize "GUM.Equipment.Ammunition.Disabled"}}{{/if}}</strong> · {{localize "GUM.Equipment.Ammunition.AttackModifier"}} <strong>{{equipmentResolvedAmmunition.attack_modifier}}</strong> · {{localize "GUM.Equipment.Ammunition.MainDamage"}} <strong>{{#if equipmentResolvedAmmunition.main.formula}}{{equipmentResolvedAmmunition.main.formula}}{{else}}—{{/if}}</strong></span></div>
+            {{/if}}
+            <div class="ammunition-options {{#unless system.ammunition.enabled}}is-hidden{{/unless}}">
+                <div class="ammunition-summary-grid">
+                    <label class="ammunition-stat-card"><span>{{localize "GUM.Equipment.Ammunition.AttackModifier"}}</span><input type="number" name="system.ammunition.attack_modifier" value="{{system.ammunition.attack_modifier}}"></label>
+                    <label class="ammunition-stat-card"><span>{{localize "GUM.Equipment.Ammunition.LowWarning"}}</span><input type="number" min="0" name="system.ammunition.low_warning" value="{{system.ammunition.low_warning}}"></label>
+                </div>
+                {{#each (array "main" "follow_up" "fragmentation") as |part|}}
+                <fieldset class="ammunition-damage-group"><legend>{{#if (eq part "main")}}{{localize "GUM.Equipment.Ammunition.MainDamage"}}{{else}}{{#if (eq part "follow_up")}}{{localize "GUM.Equipment.Ammunition.FollowUpDamage"}}{{else}}{{localize "GUM.Equipment.Ammunition.FragmentationDamage"}}{{/if}}{{/if}}</legend>
+                    <div class="ammunition-damage-grid">
+                        <span>{{localize "GUM.Equipment.Ammunition.Formula"}}</span><span>{{localize "GUM.Equipment.Ammunition.Type"}}</span><span>{{localize "GUM.Equipment.Ammunition.Nature"}}</span><span>{{localize "GUM.Equipment.Ammunition.Divisor"}}</span>
+                        <input type="text" name="system.ammunition.{{part}}.formula" value="{{lookup (lookup @root.system.ammunition part) 'formula'}}" aria-label="{{localize "GUM.Equipment.Ammunition.Formula"}}"/>
+                        <input type="text" name="system.ammunition.{{part}}.type" value="{{lookup (lookup @root.system.ammunition part) 'type'}}" aria-label="{{localize "GUM.Equipment.Ammunition.Type"}}"/>
+                        <input type="text" name="system.ammunition.{{part}}.nature" value="{{lookup (lookup @root.system.ammunition part) 'nature'}}" aria-label="{{localize "GUM.Equipment.Ammunition.Nature"}}"/>
+                        <input type="number" step="0.1" min="0.1" name="system.ammunition.{{part}}.armor_divisor" value="{{lookup (lookup @root.system.ammunition part) 'armor_divisor'}}" aria-label="{{localize "GUM.Equipment.Ammunition.ArmorDivisor"}}"/>
+                        <select name="system.ammunition.{{part}}.operation" aria-label="{{localize "GUM.Equipment.Ammunition.FormulaOperation"}}"><option value="replace" {{#if (eq (lookup (lookup @root.system.ammunition part) 'operation') "replace")}}selected{{/if}}>{{localize "GUM.EquipmentModifier.Operations.Set"}}</option><option value="add" {{#if (eq (lookup (lookup @root.system.ammunition part) 'operation') "add")}}selected{{/if}}>{{localize "GUM.EquipmentModifier.Operations.Add"}}</option><option value="multiply" {{#if (eq (lookup (lookup @root.system.ammunition part) 'operation') "multiply")}}selected{{/if}}>{{localize "GUM.EquipmentModifier.Operations.Multiply"}}</option></select>
+                        <span class="ammunition-grid-hint">{{localize "GUM.EquipmentModifier.Operations.Set"}}</span><span class="ammunition-grid-hint">{{localize "GUM.EquipmentModifier.Operations.Set"}}</span>
+                        <select name="system.ammunition.{{part}}.divisor_operation" aria-label="{{localize "GUM.Equipment.Ammunition.DivisorOperation"}}"><option value="replace" {{#if (eq (lookup (lookup @root.system.ammunition part) 'divisor_operation') "replace")}}selected{{/if}}>{{localize "GUM.EquipmentModifier.Operations.Set"}}</option><option value="add" {{#if (eq (lookup (lookup @root.system.ammunition part) 'divisor_operation') "add")}}selected{{/if}}>{{localize "GUM.EquipmentModifier.Operations.Add"}}</option><option value="multiply" {{#if (eq (lookup (lookup @root.system.ammunition part) 'divisor_operation') "multiply")}}selected{{/if}}>{{localize "GUM.EquipmentModifier.Operations.Multiply"}}</option></select>
+                    </div>
+                </fieldset>
+                {{/each}}
+            </div>
+        </div>
          </div>
      
      {{!-- ===================================================================== --}}

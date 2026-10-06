@@ -6,12 +6,12 @@ const promptSource = readFileSync(new URL("../module/apps/damage-roll-prompt.js"
 const promptStyles = readFileSync(new URL("../styles/roll-prompt.css", import.meta.url), "utf8");
 const promptTemplate = readFileSync(new URL("../templates/apps/damage-roll-prompt.hbs", import.meta.url), "utf8");
 
-test("damage roll prompt reserves one column for each row control", () => {
+test("damage roll prompt reserves a column for the armor divisor", () => {
   const rule = promptStyles.match(/\.gum-damage-roll-prompt \.damage-row\s*\{[^}]+}/)?.[0] ?? "";
   const columns = rule.match(/grid-template-columns:\s*([^;]+);/)?.[1] ?? "";
 
-  assert.equal((columns.match(/minmax\(/g) ?? []).length, 4);
-  assert.match(promptSource, /width:\s*560/);
+  assert.equal((columns.match(/minmax\(/g) ?? []).length, 5);
+  assert.match(promptSource, /width:\s*640/);
 });
 
 test("every damage modifier row contains label, formula, type, and nature", () => {
@@ -23,6 +23,7 @@ test("every damage modifier row contains label, formula, type, and nature", () =
     assert.match(row, /data-formula-input="true"/);
     assert.match(row, /(?:data-type-input="true"|disabled)/);
     assert.match(row, /Nature"/);
+    assert.match(row, /data-armor-divisor="true"/);
   }
 });
 

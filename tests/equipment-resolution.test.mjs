@@ -25,6 +25,43 @@ test("turns resolver warnings into source-aware diagnostics", () => {
   assert.match(diagnostics[1].message, /escudo/);
 });
 
+test("equipment modifiers create an ammunition profile without changing the base item", () => {
+  assert.equal(resolveEquipment({}).ammunition.enabled, false);
+  const base = { quantity: 5, cost: 0, weight: 0, ammunition: { enabled: false, attack_modifier: 0 } };
+  const result = resolveEquipment(base, [{ id: "special-rounds", features_data: {
+    ammo: { id: "ammo", type: "create_ammunition", ammunition: {
+      attack_modifier: 2, low_warning: 1,
+      main: { formula: "1d6", operation: "add", type: "pi+", armor_divisor: 2, divisor_operation: "replace" }
+    } }
+  } }]);
+  assert.equal(result.ammunition.enabled, true);
+  assert.equal(result.ammunition.attack_modifier, 2);
+  assert.equal(result.ammunition.main.formula, "1d6");
+  assert.equal(result.ammunition.main.operation, "add");
+  assert.equal(result.ammunition.follow_up.formula, "");
+  assert.equal(base.ammunition.enabled, false);
+});
+
+test("equipment modifiers adjust existing ammunition fields and honor disabled features", () => {
+  const base = { quantity: 5, cost: 0, weight: 0, ammunition: {
+    enabled: true, attack_modifier: 1, low_warning: 2,
+    main: { formula: "2d6", operation: "replace", type: "pi", nature: "", armor_divisor: 2, divisor_operation: "replace" }
+  } };
+  const result = resolveEquipment(base, [{ id: "tuned", features_data: {
+    bonus: { id: "bonus", type: "ammunition_property", path: "attack_modifier", operation: "add", value: 3 },
+    divisor: { id: "divisor", type: "ammunition_property", path: "main.armor_divisor", operation: "multiply", value: 2 },
+    formula: { id: "formula", type: "ammunition_property", path: "main.formula", operation: "add", value: "1d6" },
+    type: { id: "type", type: "ammunition_property", path: "main.type", operation: "set", value: "imp" },
+    ignored: { id: "ignored", type: "ammunition_property", enabled: false, path: "low_warning", operation: "set", value: 0 }
+  } }]);
+  assert.equal(result.ammunition.attack_modifier, 4);
+  assert.equal(result.ammunition.main.armor_divisor, 4);
+  assert.equal(result.ammunition.main.formula, "(2d6)+(1d6)");
+  assert.equal(result.ammunition.main.type, "imp");
+  assert.equal(result.ammunition.low_warning, 2);
+  assert.equal(base.ammunition.main.type, "pi");
+});
+
 test("keeps legacy quantity consumption unless charge mode is explicit", () => {
   assert.deepEqual(buildEquipmentConsumptionUpdate({ quantity: 3, uses_mode: "quantity" }).updates, { "system.quantity": 2 });
   const result = resolveEquipment({ quantity: 3, max_uses: 5, current_uses: 1, uses_mode: "charges", cost: 0, weight: 0 });

@@ -2,6 +2,7 @@
   <header class="damage-prompt-header">
     <div class="header-kicker">Rolagem de Dano</div>
     <h2>{{sourceName}}</h2>
+    {{#if ammunition}}<div class="damage-prompt-ammunition">{{localize "GUM.Equipment.Ammunition.Label"}}: {{ammunition.name}} <span>×{{ammunition.spent}}</span></div>{{/if}}
   </header>
 
   <section class="damage-visual-box">
@@ -23,6 +24,7 @@
       <input type="text" name="mainAdditional" data-formula-input="true" placeholder="Ex: 2d6+3" />
             <input type="text" value="{{main.type}}" disabled />
       <input type="text" name="mainNature" value="{{main.natureDisplay}}" list="gum-damage-natures" placeholder="Natureza (opcional)" />
+      <input type="number" name="mainArmorDivisor" data-armor-divisor="true" value="{{main.armorDivisor}}" min="0.1" step="0.1" title="Divisor de armadura" aria-label="Divisor de armadura" />
     </div>
 
     <div class="damage-row">
@@ -34,6 +36,7 @@
         <input type="text" name="followUpType" data-type-input="true" placeholder="Tipo..." />
             {{/if}}
       <input type="text" name="followUpNature" value="{{followUp.natureDisplay}}" list="gum-damage-natures" placeholder="Natureza (opcional)" />
+      <input type="number" name="followUpArmorDivisor" data-armor-divisor="true" value="{{followUp.armorDivisor}}" min="0.1" step="0.1" title="Divisor de armadura" aria-label="Divisor de armadura" />
     </div>
 
     <div class="damage-row">
@@ -45,6 +48,7 @@
         <input type="text" name="fragmentationType" data-type-input="true" placeholder="Tipo..." />
             {{/if}}
       <input type="text" name="fragmentationNature" value="{{fragmentation.natureDisplay}}" list="gum-damage-natures" placeholder="Natureza (opcional)" />
+      <input type="number" name="fragmentationArmorDivisor" data-armor-divisor="true" value="{{fragmentation.armorDivisor}}" min="0.1" step="0.1" title="Divisor de armadura" aria-label="Divisor de armadura" />
     </div>
   </section>
 

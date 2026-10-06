@@ -419,6 +419,14 @@
       },
       "equipment_base": {
         "quantity": 1,
+        "ammunition": {
+          "enabled": false,
+          "attack_modifier": 0,
+          "low_warning": 0,
+          "main": { "formula": "", "operation": "replace", "type": "", "nature": "", "armor_divisor": "", "divisor_operation": "replace" },
+          "follow_up": { "formula": "", "operation": "replace", "type": "", "nature": "", "armor_divisor": "", "divisor_operation": "replace" },
+          "fragmentation": { "formula": "", "operation": "replace", "type": "", "nature": "", "armor_divisor": "", "divisor_operation": "replace" }
+        },
         "cost": 0,
         "weight": 0,
         "location": "carried",
@@ -490,6 +498,7 @@
     },
     "attack_ranged": {
       "mode": "Novo Ataque L.D.",
+      "ammunition_ids": [],
       "unbalanced": false,
       "fencing": false,
       "skill_name": "",

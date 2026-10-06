@@ -416,49 +416,58 @@
   background: var(--gum-bg-darkest);
 }
 
-.gum-damage-roll-prompt { display: flex; flex-direction: column; gap: 12px; color: var(--gum-text-claro); }
+.gum-damage-roll-prompt { display: flex; flex-direction: column; gap: 10px; min-width: 0; color: var(--gum-text-claro); }
 .gum-damage-roll-prompt.premium {
-  padding: 8px;
+  padding: 12px;
   border: 1px solid rgba(197, 160, 91, 0.35);
   border-radius: 10px;
-  background:
-    radial-gradient(circle at 20% 0%, rgba(197,160,91,0.10), transparent 45%),
-    linear-gradient(180deg, rgba(22,24,29,0.98), rgba(16,18,22,0.98));
+  background: linear-gradient(180deg, rgba(22,24,29,0.98), rgba(16,18,22,0.98));
 }
 .gum-damage-roll-prompt .damage-prompt-header { text-align: center; }
 .gum-damage-roll-prompt .header-kicker {
-  font-size: 10px;
-  letter-spacing: 1.6px;
+  font-size: 9px;
+  letter-spacing: 1.4px;
   text-transform: uppercase;
-  color: var(--gum-text-medio);
+  color: var(--gum-accent-gold);
 }
-.gum-damage-roll-prompt .damage-prompt-header h2 {     margin: 2px 0 0;
-    font-family: var(--gum-font-secondary);
-    color: var(--gum-text-claro);
-    font-size: 18px;
-    text-transform: uppercase;
-    border-bottom: 1px solid var(--gum-accent-bronze); }
+.gum-damage-roll-prompt .damage-prompt-header h2 {
+  margin: 3px 0 0;
+  padding-bottom: 5px;
+  font-family: var(--gum-font-primary, sans-serif);
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.25;
+  color: var(--gum-text-claro);
+}
+.gum-damage-roll-prompt .damage-prompt-ammunition {
+  padding-top: 2px;
+  border-top: 1px solid rgba(197,160,91,.28);
+  color: var(--gum-text-medio);
+  font-size: 11px;
+  line-height: 1.35;
+}
+.gum-damage-roll-prompt .damage-prompt-ammunition span { color: var(--gum-accent-gold); }
 .gum-damage-roll-prompt .damage-prompt-header h3 { margin: 2px 0 0; color: var(--gum-accent-gold); font-size: 14px; }
 .gum-damage-roll-prompt .damage-visual-box {
   display:flex;
   align-items:stretch;
   justify-content:center;
   gap:10px;
-  padding:10px;
+  padding:8px;
   border-radius:10px;
   background: rgba(255,255,255,.03);
 }
 .gum-damage-roll-prompt .damage-visual-card {
-  min-width: 110px;
-  max-width: 150px;
+  min-width: 100px;
+  max-width: 138px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
   gap: 4px;
-  padding: 12px 10px;
-  border-radius: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
   box-shadow: inset 0 0 0 1px rgba(0,0,0,0.28), 0 7px 15px rgba(0,0,0,0.32);
 }
 .gum-damage-roll-prompt .damage-visual-card.tone-standard {
@@ -471,13 +480,13 @@
   background: linear-gradient(180deg, #74343b, #57262c);
 }
 .gum-damage-roll-prompt .damage-card-formula {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 650;
   color: #f4f6ff;
   letter-spacing: 0.3px;
 }
 .gum-damage-roll-prompt .damage-card-meta {
-  font-size: 11px;
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.8px;
   color: rgba(245, 246, 250, 0.9);
@@ -492,30 +501,74 @@
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.07);
 }
-.gum-damage-roll-prompt .damage-modifier-section h4 { margin: 0 0 8px; color: var(--gum-accent-gold); text-transform: uppercase; font-size: 12px; letter-spacing: 1.2px; text-align: center; }
+.gum-damage-roll-prompt .damage-modifier-section h4 { margin: 0 0 8px; color: var(--gum-accent-gold); text-transform: uppercase; font-size: 10px; letter-spacing: 1.1px; text-align: center; }
 .gum-damage-roll-prompt .damage-row {
   display: grid;
-  grid-template-columns: minmax(145px, 1.35fr) minmax(125px, 1fr) minmax(100px, 0.8fr) minmax(120px, 1fr);
-  gap: 8px;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.1fr) minmax(0, .7fr) minmax(0, 1fr) minmax(0, 64px);
+  gap: 6px;
   align-items: center;
-  margin-bottom:6px; padding: 6px; border-radius: 8px;
+  min-width: 0;
+  margin-bottom: 6px; padding: 6px 8px; border-radius: 7px;
   background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
 }
-.gum-damage-roll-prompt .damage-row label { font-weight:600; color:var(--gum-text-label); text-transform: uppercase; font-size: 11px; }
-.gum-damage-roll-prompt input[type="text"], .gum-damage-roll-prompt select {
+.gum-damage-roll-prompt .damage-row label { min-width: 0; font-weight:600; color:var(--gum-text-label); text-transform: uppercase; font-size: 10px; line-height: 1.2; }
+.gum-damage-roll-prompt input[type="text"], .gum-damage-roll-prompt input[type="number"], .gum-damage-roll-prompt select {
+  box-sizing: border-box; width: 100%; min-width: 0;
   color: var(--gum-text-claro); background: #242833; border: 1px solid #3a4254;
-  padding: 6px 8px; border-radius: 6px;
+  padding: 5px 6px; border-radius: 5px; font-size: 12px;
 }
+.gum-damage-roll-prompt input[type="number"] { padding-right: 2px; }
 .gum-damage-roll-prompt .is-invalid { border-color: var(--gum-accent-red) !important; box-shadow: 0 0 0 1px rgba(165,53,65,.35); }
 .gum-damage-roll-prompt .damage-prompt-actions { display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top: 2px; }
 .gum-damage-roll-prompt .damage-prompt-actions button {
   border:1px solid #3a4254; background:#2a3040; color:var(--gum-text-claro);
-  padding:8px; font-weight:700; border-radius:8px; text-transform: uppercase;
+  padding:8px; font-size: 11px; font-weight:650; border-radius:7px; text-transform: uppercase;
 }
 .gum-damage-roll-prompt .damage-prompt-actions button[type="submit"] {
   background: linear-gradient(180deg, #5a6478, #40495d);
   border-color: rgba(197,160,91,0.5);
 }
+@media (max-width: 620px) {
+  .gum-damage-roll-prompt .damage-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 76px); }
+  .gum-damage-roll-prompt .damage-row label { grid-column: 1 / -1; }
+  .gum-damage-roll-prompt .damage-row input[data-formula-input="true"] { grid-column: 1 / 3; }
+  .gum-damage-roll-prompt .damage-row input[name$="Nature"] { grid-column: 1 / 3; }
+  .gum-damage-roll-prompt .damage-row input[data-armor-divisor="true"] { grid-column: 3; }
+}
+
+.dialog.gum.gum-ammo-confirm-dialog .window-content,
+.dialog.gum.gum-ammo-confirm-dialog .dialog-content { background: var(--gum-bg-body, #18191e); color: var(--gum-text-claro, #ebe8e2); }
+.dialog.gum.gum-ammo-confirm-dialog .window-content { padding: 0; }
+.dialog.gum.gum-ammo-confirm-dialog .dialog-content { padding: 16px 18px 2px; }
+.gum-ammo-confirm-form { display: grid; gap: 10px; min-width: 0; }
+.gum-ammo-confirm-cadence { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid rgba(197,160,91,.4); border-radius: 7px; background: rgba(197,160,91,.1); }
+.gum-ammo-confirm-cadence span { color: var(--gum-text-medio, #b5b1ad); font-size: 11px; }
+.gum-ammo-confirm-cadence strong { color: var(--gum-accent-gold, #c5a05b); font-size: 17px; }
+.gum-ammo-confirm-card { display: grid; gap: 7px; min-width: 0; padding: 11px 12px; border: 1px solid rgba(255,255,255,.11); border-radius: 7px; background: rgba(255,255,255,.045); }
+.gum-ammo-confirm-card label { color: var(--gum-text-claro, #ebe8e2); font-size: 11px; font-weight: 650; }
+.gum-ammo-confirm-card select,
+.gum-ammo-confirm-card input { box-sizing: border-box; width: 100%; min-width: 0; height: 33px; margin: 0; padding: 5px 9px; border: 1px solid rgba(255,255,255,.16); border-radius: 5px; background: #292d35; color: var(--gum-text-claro, #ebe8e2); font-size: 12px; box-shadow: none; }
+.dialog.gum.gum-ammo-confirm-dialog .gum-ammo-confirm-card select { color: #ebe8e2 !important; -webkit-text-fill-color: #ebe8e2; color-scheme: dark; }
+.dialog.gum.gum-ammo-confirm-dialog .gum-ammo-confirm-card select option { background: #292d35; color: #ebe8e2; -webkit-text-fill-color: #ebe8e2; }
+.dialog.gum.gum-ammo-confirm-dialog .gum-ammo-confirm-card input[type="number"] { color: #ebe8e2 !important; -webkit-text-fill-color: #ebe8e2; }
+.gum-roll-prompt select[name="ammunitionId"] { color-scheme: dark; }
+.gum-roll-prompt select[name="ammunitionId"] option { background: #292d35; color: #ebe8e2; }
+.gum-ammo-confirm-quantity { justify-items: center; text-align: center; }
+.gum-ammo-quantity-controls { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+.gum-ammo-quantity-controls input[type="number"] { flex: 0 0 72px; width: 72px; max-width: 72px; text-align: center; appearance: textfield; }
+.gum-ammo-quantity-controls input::-webkit-inner-spin-button,
+.gum-ammo-quantity-controls input::-webkit-outer-spin-button { appearance: none; margin: 0; }
+.gum-ammo-quantity-controls .gum-ammo-quantity-step { flex: 0 0 33px; width: 33px; height: 33px; margin: 0; padding: 0; border: 1px solid rgba(255,255,255,.17); border-radius: 5px; background: #292d35; color: #ebe8e2; font-size: 17px; line-height: 1; box-shadow: none; }
+.gum-ammo-quantity-controls .gum-ammo-quantity-step:hover:not(:disabled) { border-color: var(--gum-accent-gold, #c5a05b); color: var(--gum-accent-gold, #c5a05b); }
+.gum-ammo-quantity-controls .gum-ammo-quantity-step:disabled { cursor: default; opacity: .45; }
+.gum-ammo-confirm-card select:focus,
+.gum-ammo-confirm-card input:focus { border-color: var(--gum-accent-gold, #c5a05b); outline: none; }
+.gum-ammo-confirm-card small { color: var(--gum-text-medio, #b5b1ad); font-size: 10px; line-height: 1.3; }
+.gum-ammo-confirm-quantity.is-disabled { opacity: .62; }
+.dialog.gum.gum-ammo-confirm-dialog .dialog-buttons { display: flex; gap: 8px; margin: 0; padding: 14px 18px 16px; background: var(--gum-bg-body, #18191e); }
+.dialog.gum.gum-ammo-confirm-dialog .dialog-buttons button { min-height: 34px; margin: 0; border: 1px solid rgba(255,255,255,.14); border-radius: 6px; background: #292d35; color: var(--gum-text-claro, #ebe8e2); font-size: 12px; font-weight: 650; box-shadow: none; }
+.dialog.gum.gum-ammo-confirm-dialog .dialog-buttons button[data-button="fire"] { border-color: var(--gum-accent-gold, #c5a05b); background: var(--gum-accent-gold, #c5a05b); color: #1b1712; }
+.dialog.gum.gum-ammo-confirm-dialog .dialog-buttons button:hover { filter: brightness(1.1); }
 
 .defense-mode-panel {
     background: rgba(0,0,0,0.2);

@@ -33,6 +33,8 @@
   </div>
 
   <div class="header-row selector-row">
+    <div class="damage-source-name">{{damage.sourceName}}</div>
+    {{#if ammunition}}<div class="damage-ammunition-note">{{localize "GUM.Equipment.Ammunition.Label"}}: {{ammunition.name}} ×{{ammunition.spent}}</div>{{/if}}
     <select name="damage_target_pool">
       {{#each damageablePools as |pool|}}
         <option value="{{pool.path}}" data-pool-type="{{pool.type}}" data-dr="{{pool.dr}}">{{pool.label}}</option>
@@ -300,7 +302,7 @@
                 </div>
                 <div class="calc-item-compact">
                     <label>Divisor</label>
-                    <input type="number" name="armor_divisor" class="calc-input-compact" value="1" min="0.1" step="0.1"/>
+                    <input type="number" name="armor_divisor" class="calc-input-compact" value="{{damage.main.armorDivisor}}" min="0.1" step="0.1"/>
                 </div>
             </div>
 
