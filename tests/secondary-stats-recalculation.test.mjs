@@ -139,3 +139,20 @@ test("opção de modificador fixo da velocidade atualiza deslocamento e esquiva 
   assert.equal(system.attributes.basic_move.mod, 0);
   assert.equal(system.attributes.dodge.mod, 0);
 });
+
+test("labels and explanations accept the active localization function", () => {
+  const copy = {
+    "GUM.SecondaryRecalculation.Attributes.HitPointsMaximum": "Maximum HP",
+    "GUM.SecondaryRecalculation.Reason.PrimaryFinal": "Final {attribute}: {value}",
+    "GUM.SecondaryRecalculation.Reason.CalculatedFrom": "Calculated from {source}",
+  };
+  const localize = (key, data = {}) => Object.entries(data).reduce(
+    (text, [name, value]) => text.replaceAll(`{${name}}`, value),
+    copy[key] ?? key,
+  );
+  const plan = buildSecondaryStatsRecalculationPlan(fixture(), damage, { localize });
+  const hp = plan.find(entry => entry.id === "hp-max");
+
+  assert.equal(hp.label, "Maximum HP");
+  assert.equal(hp.reason, "Calculated from Final ST: 12");
+});

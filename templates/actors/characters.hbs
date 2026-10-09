@@ -39,7 +39,7 @@
         <div class="sidebar-block profile-block">
           <div class="profile-frame">
               <img class="profile-img" src="{{actor.img}}" data-action="edit-portrait"
-              alt="Retrato de {{actor.name}}" title="Alterar retrato de {{actor.name}}" role="button" tabindex="0"/>
+              alt="{{localize 'GUM.Character.Sidebar.PortraitAlt' name=actor.name}}" title="{{localize 'GUM.Character.Sidebar.PortraitEdit' name=actor.name}}" role="button" tabindex="0"/>
           </div>
         </div>
 
@@ -47,7 +47,7 @@
         <div class="sidebar-block encumbrance-dodge-bar">
           {{!-- Lado Esquerdo --}}
           <div class="enc-col left-col">
-            <a class="enc-label link edit-lifting-st">Base Carga</a>
+            <a class="enc-label link edit-lifting-st" title="{{localize 'GUM.Character.Sidebar.EditLiftingStrength'}}">{{localize "GUM.Character.Sidebar.BasicLift"}}</a>
             <span class="enc-val">{{actor.system.attributes.basic_lift.value}} kg</span>
           </div>
 
@@ -58,49 +58,49 @@
                 <circle class="badge-bg" cx="50" cy="50" r="48" />
                 <circle class="badge-border" cx="50" cy="50" r="44" />
               </svg>
-              <a class="rollable dodge-value" data-type="defense" data-roll-value="{{actor.system.attributes.dodge.final}}" data-label="Teste de Esquiva" data-defense-type="dodge" data-defense-bonus-included="true">
+              <a class="rollable dodge-value" data-type="defense" data-roll-value="{{actor.system.attributes.dodge.final}}" data-label="{{localize 'GUM.Character.Sidebar.DodgeTest'}}" data-defense-type="dodge" data-defense-bonus-included="true">
                 {{actor.system.attributes.dodge.final}}
               </a>
-              <div class="badge-label-curved">ESQUIVA</div>
+              <div class="badge-label-curved">{{localize "GUM.Character.Sidebar.Dodge"}}</div>
             </div>
           </div>
 
           {{!-- Lado Direito --}}
           <div class="enc-col right-col">
-            <span class="enc-label">Nível Carga</span>
-            <span class="enc-val {{actor.system.encumbrance.level_name}}">{{actor.system.encumbrance.level_name}}</span>
+            <span class="enc-label">{{localize "GUM.Character.Sidebar.EncumbranceLevel"}}</span>
+            <span class="enc-val {{actor.system.encumbrance.level_name}}">{{encumbranceLevelLabel}}</span>
           </div>
         </div>
 
         {{!-- 3. DADOS QUADRADOS --}}
         <div class="sidebar-block stats-cluster">
           <div class="cluster-header">
-            <span class="cluster-title">ATRIBUTOS SECUNDÁRIOS</span>
+            <span class="cluster-title">{{localize "GUM.Character.Sidebar.SecondaryAttributes"}}</span>
             <div class="cluster-actions">
-              <a class="recalc-secondary-stats-btn" title="Recalcular bases de atributos secundários"><i class="fas fa-sync-alt"></i></a>
-              <a class="edit-secondary-stats-btn" title="Editar Atributos"><i class="fas fa-cog"></i></a>
+              <a class="recalc-secondary-stats-btn" title="{{localize 'GUM.Character.Sidebar.RecalculateSecondaries'}}" aria-label="{{localize 'GUM.Character.Sidebar.RecalculateSecondaries'}}"><i class="fas fa-sync-alt"></i></a>
+              <a class="edit-secondary-stats-btn" title="{{localize 'GUM.Character.Sidebar.EditSecondaries'}}" aria-label="{{localize 'GUM.Character.Sidebar.EditSecondaries'}}"><i class="fas fa-cog"></i></a>
             </div>
           </div>
 
 
           <div class="dice-row">
-            <div class="d6-stat" title="Velocidade Básica">
+            <div class="d6-stat" title="{{localize 'GUM.Character.Sidebar.BasicSpeed'}}">
               <div class="d6-face">
                 <span class="d6-val">{{actor.system.attributes.basic_speed.final}}</span>
-                <span class="d6-label">VELOC.</span>
+                <span class="d6-label">{{localize "GUM.Character.Sidebar.SpeedAbbrev"}}</span>
               </div>
             </div>
-            <div class="d6-stat main-d6" title="Deslocamento">
+            <div class="d6-stat main-d6" title="{{localize 'GUM.Character.Sidebar.BasicMove'}}">
               <div class="d6-face">
                 {{#if actor.system.attributes.enhanced_move.final}}
                 <span class="d6-val d6-val-split">{{actor.system.attributes.basic_move.final}} <small style="color:#c2c2c2">/{{actor.system.attributes.enhanced_move.final}}</small></span>
                 {{else}}
                 <span class="d6-val">{{actor.system.attributes.basic_move.final}}</span>
                 {{/if}}
-                <span class="d6-label">DESLOC.</span>
+                <span class="d6-label">{{localize "GUM.Character.Sidebar.MoveAbbrev"}}</span>
               </div>
             </div>
-            <div class="d6-stat" title="Modificador de Tamanho">
+            <div class="d6-stat" title="{{localize 'GUM.Character.Sidebar.SizeModifier'}}">
               <div class="d6-face">
                 <span class="d6-val">{{actor.system.attributes.mt.final}}</span>
                 <span class="d6-label">MT</span>
@@ -110,50 +110,50 @@
 
           <div class="senses-container">
             <div class="sense-box">
-              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.vision.final}}" data-label="Teste de Visão" data-attribute-key="vision"><i class="fas fa-eye"></i> Visão</a>
+              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.vision.final}}" data-label="{{localize 'GUM.Character.Sidebar.VisionTest'}}" data-attribute-key="vision"><i class="fas fa-eye"></i> {{localize "GUM.Character.Sidebar.Vision"}}</a>
               <span class="sense-value">{{actor.system.attributes.vision.final}}</span>
             </div>
             <div class="sense-box">
-              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.hearing.final}}" data-label="Teste de Audição" data-attribute-key="hearing"><i class="fas fa-deaf"></i> Audição</a>
+              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.hearing.final}}" data-label="{{localize 'GUM.Character.Sidebar.HearingTest'}}" data-attribute-key="hearing"><i class="fas fa-deaf"></i> {{localize "GUM.Character.Sidebar.Hearing"}}</a>
               <span class="sense-value">{{actor.system.attributes.hearing.final}}</span>
             </div>
             <div class="sense-box">
-              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.tastesmell.final}}" data-label="Teste de Paladar/Olfato" data-attribute-key="tastesmell"><i class="fas fa-wine-bottle"></i> Olfato</a>
+              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.tastesmell.final}}" data-label="{{localize 'GUM.Character.Sidebar.TasteSmellTest'}}" data-attribute-key="tastesmell"><i class="fas fa-wine-bottle"></i> {{localize "GUM.Character.Sidebar.Smell"}}</a>
               <span class="sense-value">{{actor.system.attributes.tastesmell.final}}</span>
             </div>
             <div class="sense-box">
-              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.touch.final}}" data-label="Teste de Tato" data-attribute-key="touch"><i class="fas fa-hand-paper"></i> Tato</a>
+              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.touch.final}}" data-label="{{localize 'GUM.Character.Sidebar.TouchTest'}}" data-attribute-key="touch"><i class="fas fa-hand-paper"></i> {{localize "GUM.Character.Sidebar.Touch"}}</a>
               <span class="sense-value">{{actor.system.attributes.touch.final}}</span>
             </div>
           </div>
 
           <div class="basic-damage-card sidebar-basic-damage secondary-basic-damage">
             <div class="sidebar-basic-damage-header">
-              <span class="sidebar-basic-damage-title">Dano Básico</span>
+              <span class="sidebar-basic-damage-title">{{localize "GUM.Character.Sidebar.BasicDamage"}}</span>
             </div>
             <div class="sidebar-basic-damage-values">
               <a class="sidebar-basic-damage-item rollable-basic-damage"
                  data-roll-formula="{{actor.system.attributes.thrust_damage.final}}"
-                 data-label="Dano de Golpe de Ponta (GdP)">
-                <span class="label">GdP</span>
+                 data-label="{{localize 'GUM.Character.Sidebar.ThrustDamageTest'}}">
+                <span class="label">{{localize "GUM.Character.Sidebar.ThrustAbbrev"}}</span>
                 <span class="value">{{actor.system.attributes.thrust_damage.final}}</span>
               </a>
               <a class="sidebar-basic-damage-item rollable-basic-damage"
                  data-roll-formula="{{actor.system.attributes.swing_damage.final}}"
-                 data-label="Dano de Golpe em Balanço (GeB)">
-                <span class="label">GeB</span>
+                 data-label="{{localize 'GUM.Character.Sidebar.SwingDamageTest'}}">
+                <span class="label">{{localize "GUM.Character.Sidebar.SwingAbbrev"}}</span>
                 <span class="value">{{actor.system.attributes.swing_damage.final}}</span>
               </a>
               <a class="sidebar-basic-damage-item rollable-basic-damage"
                  data-roll-formula="{{actor.system.attributes.thrust_damage_alt.final}}"
-                 data-label="Dano Alternativo de Golpe de Ponta (GdPa)">
-                <span class="label">GdPa</span>
+                 data-label="{{localize 'GUM.Character.Sidebar.AlternateThrustDamageTest'}}">
+                <span class="label">{{localize "GUM.Character.Sidebar.AlternateThrustAbbrev"}}</span>
                 <span class="value">{{actor.system.attributes.thrust_damage_alt.final}}</span>
               </a>
               <a class="sidebar-basic-damage-item rollable-basic-damage"
                  data-roll-formula="{{#if actor.system.attributes.swing_damage_alt}}{{actor.system.attributes.swing_damage_alt}}{{else}}{{actor.system.attributes.swing_damage}}{{/if}}"
-                 data-label="Dano Alternativo em Balanço (GeBa)">
-                <span class="label">GeBa</span>
+                 data-label="{{localize 'GUM.Character.Sidebar.AlternateSwingDamageTest'}}">
+                <span class="label">{{localize "GUM.Character.Sidebar.AlternateSwingAbbrev"}}</span>
                 <span class="value">{{actor.system.attributes.swing_damage_alt.final}}</span>
               </a>
             </div>
@@ -164,8 +164,8 @@
         <div class="sidebar-block bars-block">
           <div class="bar-group">
             <div class="bar-label">
-              <span>PONTOS DE VIDA</span>
-              <a class="edit-resource-bar" data-stat="hp"><i class="fas fa-cog"></i></a>
+              <span>{{localize "GUM.Character.Sidebar.HitPoints"}}</span>
+              <a class="edit-resource-bar" data-stat="hp" title="{{localize 'GUM.Character.Sidebar.EditHitPoints'}}" aria-label="{{localize 'GUM.Character.Sidebar.EditHitPoints'}}"><i class="fas fa-cog"></i></a>
             </div>
             <div class="resource-bar original-style">
               <div class="bar-fill hp" style="{{bar_style actor.system.attributes.hp.value actor.system.attributes.hp.final 'hp'}}"></div>
@@ -178,8 +178,8 @@
           </div>
           <div class="bar-group">
             <div class="bar-label">
-              <span>PONTOS DE FADIGA</span>
-              <a class="edit-resource-bar" data-stat="fp"><i class="fas fa-cog"></i></a>
+              <span>{{localize "GUM.Character.Sidebar.FatiguePoints"}}</span>
+              <a class="edit-resource-bar" data-stat="fp" title="{{localize 'GUM.Character.Sidebar.EditFatiguePoints'}}" aria-label="{{localize 'GUM.Character.Sidebar.EditFatiguePoints'}}"><i class="fas fa-cog"></i></a>
             </div>
             <div class="resource-bar original-style">
               <div class="bar-fill fp" style="{{bar_style actor.system.attributes.fp.value actor.system.attributes.fp.final 'fp'}}"></div>
@@ -196,14 +196,14 @@
         <div class="sidebar-footer">
           <details class="sidebar-collapsible" data-group-id="sidebar-survival" {{collapsibleState "sidebar-survival" @root.collapsedData}}>
             <summary class="sidebar-summary">
-              <h4 class="block-title">SOBREVIVÊNCIA</h4>
+              <h4 class="block-title">{{localize "GUM.Character.Sidebar.Survival"}}</h4>
               <i class="fas fa-chevron-down expand-icon"></i>
             </summary>
 
             <div class="collapsible-content">
               <div class="survival-grid">
                 <div class="survival-item">
-                  <label>FOME</label>
+                  <label>{{localize "GUM.Character.Sidebar.Hunger"}}</label>
                   <div class="counter-wrapper">
                     <a class="adjust-survival" data-action="decrease" data-attr="fome"><i class="fas fa-minus"></i></a>
                     <input type="number" name="system.attributes.fome.value" value="{{actor.system.attributes.fome.value}}" min="0"/>
@@ -211,7 +211,7 @@
                   </div>
                 </div>
                 <div class="survival-item">
-                  <label>SEDE</label>
+                  <label>{{localize "GUM.Character.Sidebar.Thirst"}}</label>
                   <div class="counter-wrapper">
                     <a class="adjust-survival" data-action="decrease" data-attr="sede"><i class="fas fa-minus"></i></a>
                     <input type="number" name="system.attributes.sede.value" value="{{actor.system.attributes.sede.value}}" min="0"/>
@@ -219,7 +219,7 @@
                   </div>
                 </div>
                 <div class="survival-item">
-                  <label>SONO</label>
+                  <label>{{localize "GUM.Character.Sidebar.Sleep"}}</label>
                   <div class="counter-wrapper">
                     <a class="adjust-survival" data-action="decrease" data-attr="sono"><i class="fas fa-minus"></i></a>
                     <input type="number" name="system.attributes.sono.value" value="{{actor.system.attributes.sono.value}}" min="0"/>
@@ -227,7 +227,7 @@
                   </div>
                 </div>
                 <div class="survival-item radiation">
-                  <label class="warning-label">RADIAÇÃO</label>
+                  <label class="warning-label">{{localize "GUM.Character.Sidebar.Radiation"}}</label>
                   <div class="counter-wrapper">
                     <a class="adjust-survival" data-action="decrease" data-attr="radiation"><i class="fas fa-minus"></i></a>
                     <input type="number" name="system.attributes.radiation.value" value="{{actor.system.attributes.radiation.value}}" min="0"/>

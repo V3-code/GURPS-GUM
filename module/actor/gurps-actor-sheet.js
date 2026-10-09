@@ -134,6 +134,8 @@ async getData(options) {
         context.combatMetersFilterActive = this._combatControlFilters.has("meters");
         context.combatWoundsVisible = this._combatControlFilters.size === 0 || this._combatControlFilters.has("wounds");
         context.combatMetersVisible = this._combatControlFilters.size === 0 || this._combatControlFilters.has("meters");
+        const encumbranceLevel = Math.min(4, Math.max(0, Number(this.actor.system.encumbrance?.level_value) || 0));
+        context.encumbranceLevelLabel = game.i18n.localize(`GUM.Character.Sidebar.EncumbranceLevels.${encumbranceLevel}`);
         
         const profileId = this.actor.system.combat?.body_profile || "humanoid";
         const profile = getBodyProfile(profileId);
@@ -3919,24 +3921,35 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
         ev.preventDefault();
  
         const attrs = this.actor.system.attributes;
+        const t = key => game.i18n.localize(key);
+        const tf = (key, data) => game.i18n.format(key, data);
         const getAttr = (key, fallback = 10) => attrs[key] ?? {
             value: fallback, max: fallback, mod: 0, passive: 0, temp: 0, points: 0, final: fallback
         };
         const fmt = (value) => Number(value) > 0 ? `+${value}` : Number(value) || 0;
         const safe = (value) => foundry.utils.escapeHTML(String(value ?? ""));
+        const editorColumns = (firstColumn, secondColumn = "Base") => [
+            firstColumn,
+            t(`GUM.SecondaryEditor.Column.${secondColumn}`),
+            t("GUM.SecondaryEditor.Column.Fixed"),
+            t("GUM.SecondaryEditor.Column.Items"),
+            t("GUM.SecondaryEditor.Column.Temporary"),
+            t("GUM.SecondaryEditor.Column.Points"),
+            t("GUM.SecondaryEditor.Column.Final")
+        ].map(label => `<span>${label}</span>`).join("");
         const statRow = (key, label, { base = "value", step = 1, editableTemp = false } = {}) => {
             const stat = getAttr(key);
             return `
                 <div class="secondary-editor-row">
                     <label for="secondary-${key}-${base}">${label}</label>
                     <input id="secondary-${key}-${base}" type="number" name="${key}.${base}" value="${stat[base] ?? stat.value ?? 0}" step="${step}" />
-                    <input type="number" name="${key}.mod" value="${stat.mod ?? 0}" aria-label="Modificador fixo de ${label}" />
-                    <span class="read-only" title="Modificadores de itens e efeitos passivos">${fmt(stat.passive)}</span>
+                    <input type="number" name="${key}.mod" value="${stat.mod ?? 0}" aria-label="${tf("GUM.SecondaryEditor.FixedModifierFor", { attribute: label })}" />
+                    <span class="read-only" title="${t("GUM.SecondaryEditor.PassiveModifiersHint")}">${fmt(stat.passive)}</span>
                     ${editableTemp
-                        ? `<input type="number" name="${key}.temp" value="${stat.temp ?? 0}" aria-label="Modificador temporário de ${label}" />`
-                        : `<span class="read-only" title="Modificadores de condições e efeitos temporários">${fmt(stat.temp)}</span>`}
-                    <input type="number" name="${key}.points" value="${stat.points ?? 0}" aria-label="Pontos investidos em ${label}" />
-                    <span class="final-display" title="Valor final atual">${stat.final ?? 0}</span>
+                        ? `<input type="number" name="${key}.temp" value="${stat.temp ?? 0}" aria-label="${tf("GUM.SecondaryEditor.TemporaryModifierFor", { attribute: label })}" />`
+                        : `<span class="read-only" title="${t("GUM.SecondaryEditor.TemporaryEffectsHint")}">${fmt(stat.temp)}</span>`}
+                    <input type="number" name="${key}.points" value="${stat.points ?? 0}" aria-label="${tf("GUM.SecondaryEditor.PointsFor", { attribute: label })}" />
+                    <span class="final-display" title="${t("GUM.SecondaryEditor.CurrentFinal")}">${stat.final ?? 0}</span>
                 </div>`;
         };
 
@@ -3946,45 +3959,45 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
             const damage = attrs[key] || {};
             return `<div class="secondary-editor-row">
                 <label>${label}</label>
-                <input type="text" name="${key}.value" value="${safe(damage.value)}" placeholder="${placeholder}" aria-label="Fórmula-base de ${label}" />
-                <input type="number" name="${key}.mod" value="${damage.mod ?? 0}" aria-label="Modificador fixo de ${label}" />
+                <input type="text" name="${key}.value" value="${safe(damage.value)}" placeholder="${placeholder}" aria-label="${tf("GUM.SecondaryEditor.BaseFormulaFor", { attribute: label })}" />
+                <input type="number" name="${key}.mod" value="${damage.mod ?? 0}" aria-label="${tf("GUM.SecondaryEditor.FixedModifierFor", { attribute: label })}" />
                 <span class="read-only">${fmt(damage.passive)}</span>
-                <span class="read-only" title="Modificadores temporários são controlados por efeitos">${fmt(damage.temp)}</span>
-                <input type="number" name="${key}.points" value="${damage.points ?? 0}" aria-label="Pontos investidos em ${label}" />
+                <span class="read-only" title="${t("GUM.SecondaryEditor.DamageTemporaryHint")}">${fmt(damage.temp)}</span>
+                <input type="number" name="${key}.points" value="${damage.points ?? 0}" aria-label="${tf("GUM.SecondaryEditor.PointsFor", { attribute: label })}" />
                 <span class="final-display">${safe(damage.final)}</span>
             </div>`;
         };
         const content = `
             <form class="secondary-stats-editor secondary-stats-editor--unified">
-                <aside class="secondary-editor-nav" aria-label="Seções dos atributos secundários">
-                    <button type="button" class="secondary-editor-tab active" data-panel="movement"><i class="fas fa-running"></i><span>Movimento</span></button>
-                    <button type="button" class="secondary-editor-tab" data-panel="resources"><i class="fas fa-heartbeat"></i><span>Recursos</span></button>
-                    <button type="button" class="secondary-editor-tab" data-panel="senses"><i class="fas fa-eye"></i><span>Sentidos</span></button>
-                    <button type="button" class="secondary-editor-tab" data-panel="damage"><i class="fas fa-dice-d6"></i><span>Dano</span></button>
+                <aside class="secondary-editor-nav" aria-label="${t("GUM.SecondaryEditor.Sections")}">
+                    <button type="button" class="secondary-editor-tab active" data-panel="movement"><i class="fas fa-running"></i><span>${t("GUM.SecondaryEditor.Movement")}</span></button>
+                    <button type="button" class="secondary-editor-tab" data-panel="resources"><i class="fas fa-heartbeat"></i><span>${t("GUM.SecondaryEditor.Resources")}</span></button>
+                    <button type="button" class="secondary-editor-tab" data-panel="senses"><i class="fas fa-eye"></i><span>${t("GUM.SecondaryEditor.Senses")}</span></button>
+                    <button type="button" class="secondary-editor-tab" data-panel="damage"><i class="fas fa-dice-d6"></i><span>${t("GUM.SecondaryEditor.Damage")}</span></button>
                 </aside>
 
                 <div class="secondary-editor-workspace">
                     <header class="secondary-editor-intro">
-                        <div><span class="secondary-editor-eyebrow">Ficha do personagem</span><h2>Atributos secundários</h2></div>
-                        <p>Edite bases, modificadores e pontos em um único lugar.</p>
+                        <div><span class="secondary-editor-eyebrow">${t("GUM.SecondaryEditor.CharacterSheet")}</span><h2>${t("GUM.SecondaryEditor.Title")}</h2></div>
+                        <p>${t("GUM.SecondaryEditor.IntroHint")}</p>
                     </header>
 
                     <div class="secondary-editor-scroll">
                         <section class="secondary-editor-panel active" data-panel="movement">
                             <div class="secondary-editor-card">
-                                <header><i class="fas fa-running"></i><div><h3>Mobilidade e defesa</h3><p>Velocidade, deslocamento, tamanho e esquiva.</p></div></header>
+                                <header><i class="fas fa-running"></i><div><h3>${t("GUM.SecondaryEditor.MobilityTitle")}</h3><p>${t("GUM.SecondaryEditor.MobilityHint")}</p></div></header>
                                 <div class="secondary-editor-table">
-                                    <div class="secondary-editor-columns" aria-hidden="true"><span>Atributo</span><span>Base</span><span>Fixo</span><span>Itens</span><span>Temp.</span><span>Pontos</span><span>Final</span></div>
-                                    ${statRow('basic_speed', 'Velocidade', { step: 0.25 })}
-                                    ${statRow('basic_move', 'Deslocamento')}
-                                    ${statRow('enhanced_move', 'Desloc. ampliado')}
-                                    ${statRow('mt', 'MT (SM)')}
+                                    <div class="secondary-editor-columns" aria-hidden="true">${editorColumns(t("GUM.SecondaryEditor.Column.Attribute"))}</div>
+                                    ${statRow('basic_speed', t('GUM.SecondaryEditor.Attributes.BasicSpeed'), { step: 0.25 })}
+                                    ${statRow('basic_move', t('GUM.SecondaryEditor.Attributes.BasicMove'))}
+                                    ${statRow('enhanced_move', t('GUM.SecondaryEditor.Attributes.EnhancedMove'))}
+                                    ${statRow('mt', t('GUM.SecondaryEditor.Attributes.SizeModifier'))}
                                     <div class="secondary-editor-row">
-                                        <label>Esquiva</label>
+                                        <label>${t("GUM.SecondaryEditor.Attributes.Dodge")}</label>
                                         <span class="read-only">${Math.floor(Number(attrs.basic_speed?.final) || 0) + 3}</span>
-                                        <input type="number" name="dodge.mod" value="${dodge.mod ?? 0}" aria-label="Modificador fixo de Esquiva" />
+                                        <input type="number" name="dodge.mod" value="${dodge.mod ?? 0}" aria-label="${tf("GUM.SecondaryEditor.FixedModifierFor", { attribute: t("GUM.SecondaryEditor.Attributes.Dodge") })}" />
                                         <span class="read-only">${fmt(dodge.passive)}</span><span class="read-only">${fmt(dodge.temp)}</span>
-                                        <input type="number" name="dodge.points" value="${dodge.points ?? 0}" aria-label="Pontos investidos em Esquiva" />
+                                        <input type="number" name="dodge.points" value="${dodge.points ?? 0}" aria-label="${tf("GUM.SecondaryEditor.PointsFor", { attribute: t("GUM.SecondaryEditor.Attributes.Dodge") })}" />
                                         <span class="final-display">${dodge.final ?? 0}</span>
                                     </div>
                                 </div>
@@ -3993,48 +4006,48 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
 
                         <section class="secondary-editor-panel" data-panel="resources">
                             <div class="secondary-editor-card">
-                                <header><i class="fas fa-dumbbell"></i><div><h3>Força de levantamento</h3><p>Define a ST usada no cálculo da base de carga.</p></div></header>
+                                <header><i class="fas fa-dumbbell"></i><div><h3>${t("GUM.SecondaryEditor.LiftingTitle")}</h3><p>${t("GUM.SecondaryEditor.LiftingHint")}</p></div></header>
                                 <div class="secondary-editor-table">
-                                    <div class="secondary-editor-columns" aria-hidden="true"><span>Atributo</span><span>Base</span><span>Fixo</span><span>Itens</span><span>Temp.</span><span>Pontos</span><span>Final</span></div>
+                                    <div class="secondary-editor-columns" aria-hidden="true">${editorColumns(t("GUM.SecondaryEditor.Column.Attribute"))}</div>
                                     <div class="secondary-editor-row">
-                                        <label for="secondary-lifting-value">ST de Carga</label>
+                                        <label for="secondary-lifting-value">${t("GUM.SecondaryEditor.Attributes.LiftingStrength")}</label>
                                         <input id="secondary-lifting-value" type="number" name="lifting_st.value" value="${lifting.value ?? 0}" />
-                                        <input type="number" name="lifting_st.mod" value="${lifting.mod ?? 0}" aria-label="Modificador fixo de ST de Carga" />
+                                        <input type="number" name="lifting_st.mod" value="${lifting.mod ?? 0}" aria-label="${tf("GUM.SecondaryEditor.FixedModifierFor", { attribute: t("GUM.SecondaryEditor.Attributes.LiftingStrength") })}" />
                                         <span class="read-only">${fmt(lifting.passive)}</span>
-                                        <input type="number" name="lifting_st.temp" value="${lifting.temp ?? 0}" aria-label="Modificador temporário de ST de Carga" />
+                                        <input type="number" name="lifting_st.temp" value="${lifting.temp ?? 0}" aria-label="${tf("GUM.SecondaryEditor.TemporaryModifierFor", { attribute: t("GUM.SecondaryEditor.Attributes.LiftingStrength") })}" />
                                         <span class="read-only">—</span><span class="final-display">${lifting.final ?? lifting.final_computed ?? 0}</span>
                                     </div>
                                 </div>
                             </div>
                             <div class="secondary-editor-card">
-                                <header><i class="fas fa-heartbeat"></i><div><h3>Reservas</h3><p>Máximos, modificadores temporários e pontos de PV e PF.</p></div></header>
+                                <header><i class="fas fa-heartbeat"></i><div><h3>${t("GUM.SecondaryEditor.ReservesTitle")}</h3><p>${t("GUM.SecondaryEditor.ReservesHint")}</p></div></header>
                                 <div class="secondary-editor-table">
-                                    <div class="secondary-editor-columns" aria-hidden="true"><span>Atributo</span><span>Máximo</span><span>Fixo</span><span>Itens</span><span>Temp.</span><span>Pontos</span><span>Final</span></div>
-                                    ${statRow('hp', 'Pontos de Vida', { base: 'max', editableTemp: true })}
-                                    ${statRow('fp', 'Pontos de Fadiga', { base: 'max', editableTemp: true })}
+                                    <div class="secondary-editor-columns" aria-hidden="true">${editorColumns(t("GUM.SecondaryEditor.Column.Attribute"), "Maximum")}</div>
+                                    ${statRow('hp', t('GUM.SecondaryEditor.Attributes.HitPoints'), { base: 'max', editableTemp: true })}
+                                    ${statRow('fp', t('GUM.SecondaryEditor.Attributes.FatiguePoints'), { base: 'max', editableTemp: true })}
                                 </div>
                             </div>
                         </section>
 
                         <section class="secondary-editor-panel" data-panel="senses">
                             <div class="secondary-editor-card">
-                                <header><i class="fas fa-eye"></i><div><h3>Sentidos</h3><p>Percepções especiais e seus modificadores.</p></div></header>
+                                <header><i class="fas fa-eye"></i><div><h3>${t("GUM.SecondaryEditor.SensesTitle")}</h3><p>${t("GUM.SecondaryEditor.SensesHint")}</p></div></header>
                                 <div class="secondary-editor-table">
-                                    <div class="secondary-editor-columns" aria-hidden="true"><span>Atributo</span><span>Base</span><span>Fixo</span><span>Itens</span><span>Temp.</span><span>Pontos</span><span>Final</span></div>
-                                    ${statRow('vision', 'Visão')}${statRow('hearing', 'Audição')}${statRow('tastesmell', 'Olfato / Paladar')}${statRow('touch', 'Tato')}
+                                    <div class="secondary-editor-columns" aria-hidden="true">${editorColumns(t("GUM.SecondaryEditor.Column.Attribute"))}</div>
+                                    ${statRow('vision', t('GUM.SecondaryEditor.Attributes.Vision'))}${statRow('hearing', t('GUM.SecondaryEditor.Attributes.Hearing'))}${statRow('tastesmell', t('GUM.SecondaryEditor.Attributes.TasteSmell'))}${statRow('touch', t('GUM.SecondaryEditor.Attributes.Touch'))}
                                 </div>
                             </div>
                         </section>
 
                         <section class="secondary-editor-panel" data-panel="damage">
                             <div class="secondary-editor-card secondary-damage-card">
-                                <header><i class="fas fa-dice-d6"></i><div><h3>Dano básico</h3><p>Use fórmulas de dados válidas, como 1d6-2.</p></div></header>
+                                <header><i class="fas fa-dice-d6"></i><div><h3>${t("GUM.SecondaryEditor.BasicDamageTitle")}</h3><p>${t("GUM.SecondaryEditor.BasicDamageHint")}</p></div></header>
                                 <div class="secondary-editor-table">
-                                    <div class="secondary-editor-columns" aria-hidden="true"><span>Dano</span><span>Base</span><span>Fixo</span><span>Itens</span><span>Temp.</span><span>Pontos</span><span>Final</span></div>
-                                    ${damageRow('thrust_damage', 'GdP', '1d6-2')}
-                                    ${damageRow('swing_damage', 'GeB', '1d6')}
-                                    ${damageRow('thrust_damage_alt', 'GdPa', 'Opcional')}
-                                    ${damageRow('swing_damage_alt', 'GeBa', 'Opcional')}
+                                    <div class="secondary-editor-columns" aria-hidden="true">${editorColumns(t("GUM.SecondaryEditor.Column.Damage"))}</div>
+                                    ${damageRow('thrust_damage', t('GUM.SecondaryEditor.Attributes.Thrust'), '1d6-2')}
+                                    ${damageRow('swing_damage', t('GUM.SecondaryEditor.Attributes.Swing'), '1d6')}
+                                    ${damageRow('thrust_damage_alt', t('GUM.SecondaryEditor.Attributes.AlternateThrust'), t('GUM.SecondaryEditor.Optional'))}
+                                    ${damageRow('swing_damage_alt', t('GUM.SecondaryEditor.Attributes.AlternateSwing'), t('GUM.SecondaryEditor.Optional'))}
                                 </div>
                             </div>
                         </section>
@@ -4043,7 +4056,7 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
           </form>`;
 
         new Dialog({
-            title: "Editar Atributos Secundários",
+            title: t("GUM.SecondaryEditor.DialogTitle"),
             content,
             render: (dialogHtml) => {
                 dialogHtml.on('click', '.secondary-editor-tab', tabEvent => {
@@ -4056,7 +4069,7 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
             },
             buttons: {
                 save: {
-                    icon: '<i class="fas fa-save"></i>', label: "Salvar alterações",
+                    icon: '<i class="fas fa-save"></i>', label: t("GUM.SecondaryEditor.Save"),
                     callback: (dialogHtml) => {
                         const formData = new FormDataExtended(dialogHtml.find('form')[0]).object;
                         const numericFields = [
@@ -4768,24 +4781,26 @@ _renderQuickView(item) {
 async _onRecalculateSecondaryStats(ev) {
   ev.preventDefault();
   ev.stopPropagation();
+  const t = key => game.i18n.localize(key);
+  const tf = (key, data) => game.i18n.format(key, data);
 
     let plan;
   try {
     plan = this._buildSecondaryStatsRecalculationPlan();
   } catch (error) {
     console.error("GUM | Falha ao construir prévia de atributos derivados", error);
-    ui.notifications.error("Não foi possível calcular a prévia dos atributos derivados.");
+    ui.notifications.error(t("GUM.SecondaryRecalculation.Error.Build"));
     return;
   }
 
 const renderPreview = async (currentPlan, considerBasicSpeedFixedModifier = false) => {
     const groups = [
-      ["resources", "Recursos", "fas fa-heart"], ["physical", "Capacidade física", "fas fa-dumbbell"],
-      ["movement", "Movimento e defesa", "fas fa-running"], ["senses", "Sentidos", "fas fa-eye"],
-      ["damage", "Dano básico", "fas fa-fist-raised"]
-    ].map(([id, label, icon]) => {
+      ["resources", "GUM.SecondaryRecalculation.Groups.Resources", "fas fa-heart"], ["physical", "GUM.SecondaryRecalculation.Groups.Physical", "fas fa-dumbbell"],
+      ["movement", "GUM.SecondaryRecalculation.Groups.Movement", "fas fa-running"], ["senses", "GUM.SecondaryRecalculation.Groups.Senses", "fas fa-eye"],
+      ["damage", "GUM.SecondaryRecalculation.Groups.Damage", "fas fa-fist-raised"]
+    ].map(([id, labelKey, icon]) => {
       const entries = currentPlan.filter(entry => entry.group === id);
-      return { id, label, icon, entries, changedCount: entries.filter(entry => entry.changed).length };
+      return { id, label: t(labelKey), icon, entries, changedCount: entries.filter(entry => entry.changed).length };
     });
     return renderTemplate("systems/gum/templates/apps/secondary-stats-recalculation.hbs", { groups, considerBasicSpeedFixedModifier });
   };
@@ -4801,11 +4816,11 @@ const renderPreview = async (currentPlan, considerBasicSpeedFixedModifier = fals
   };
 
   new Dialog({
-    title: "Revisar atributos derivados",
+    title: t("GUM.SecondaryRecalculation.DialogTitle"),
     content,
     buttons: {
       apply: {
-        icon: '<i class="fas fa-check"></i>', label: "Aplicar alterações",
+        icon: '<i class="fas fa-check"></i>', label: t("GUM.SecondaryRecalculation.Apply"),
         callback: async html => {
           const selectedIds = html.find('input[name="secondary-stat"]:checked').map((_, input) => input.value).get();
           const updateData = buildSecondaryStatsUpdateData(plan, selectedIds);
@@ -4813,14 +4828,14 @@ const renderPreview = async (currentPlan, considerBasicSpeedFixedModifier = fals
           try {
             await this.actor.update(updateData);
             this.render(false);
-            ui.notifications.info(`${selectedIds.length} alteração(ões) de atributos derivados aplicada(s).`);
+            ui.notifications.info(tf("GUM.SecondaryRecalculation.Success", { count: selectedIds.length }));
           } catch (error) {
             console.error("GUM | Falha ao aplicar atributos derivados", error);
-            ui.notifications.error("Não foi possível aplicar as alterações de atributos derivados.");
+            ui.notifications.error(t("GUM.SecondaryRecalculation.Error.Apply"));
           }
         }
       },
-      cancel: { icon: '<i class="fas fa-times"></i>', label: "Cancelar" }
+      cancel: { icon: '<i class="fas fa-times"></i>', label: t("GUM.SecondaryRecalculation.Cancel") }
     },
     default: "apply",
     render: activatePreview
@@ -4828,7 +4843,10 @@ const renderPreview = async (currentPlan, considerBasicSpeedFixedModifier = fals
 }
 
 _buildSecondaryStatsRecalculationPlan(options = {}) {
-  return buildSecondaryStatsRecalculationPlan(this.actor.system, st => this._getBasicDamageFromST(st), options);
+  return buildSecondaryStatsRecalculationPlan(this.actor.system, st => this._getBasicDamageFromST(st), {
+    ...options,
+    localize: (key, data = {}) => game.i18n.format(key, data)
+  });
 }
 
 _activateSecondaryStatsPreview(html, plan, onCalculationModeChange = null) {
@@ -4836,7 +4854,7 @@ _activateSecondaryStatsPreview(html, plan, onCalculationModeChange = null) {
   const applyButton = html.closest(".app").find('button[data-button="apply"]');
   const updateState = () => {
     const count = fields.filter(":checked").length;
-    applyButton.prop("disabled", count === 0).html(`<i class="fas fa-check"></i> Aplicar ${count} alteração(ões)`);
+    applyButton.prop("disabled", count === 0).html(`<i class="fas fa-check"></i> ${game.i18n.format("GUM.SecondaryRecalculation.ApplyCount", { count })}`);
     html.find(".secondary-stat-row").each((_, row) => row.classList.toggle("selected", row.querySelector('input[name="secondary-stat"]')?.checked));
     html.find(".secondary-group-toggle").each((_, toggle) => {
       const groupFields = fields.filter(`[data-group="${toggle.dataset.group}"]:not(:disabled)`);
