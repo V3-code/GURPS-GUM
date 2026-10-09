@@ -75,7 +75,7 @@ test("status and organization use society as identity and status as a metric", (
     "GUM.Social.Fields.MonthlyCost": "Custo mensal",
     "GUM.Social.Fields.Salary": "Salário",
     "GUM.Social.Fields.LevelShort": "NÍV",
-    "GUM.Social.Fields.StatusShort": "ST",
+    "GUM.Social.Fields.StatusShort": "STATUS",
     "GUM.Social.Fields.MonthlyCostShort": "CUSTO",
     "GUM.Social.Fields.SalaryShort": "SAL",
     "GUM.Social.Manual": "Manual"
@@ -108,7 +108,7 @@ test("status and organization use society as identity and status as a metric", (
   assert.equal(entry.context, "");
   assert.deepEqual(entry.metrics, [
     { key: "level", label: "Nível", shortLabel: "NÍV", value: 0, tone: "default" },
-    { key: "status_name", label: "Status", shortLabel: "ST", value: "Cidadão Livre", tone: "default" },
+    { key: "status_name", label: "Status", shortLabel: "STATUS", value: "Cidadão Livre", tone: "default" },
     { key: "monthly_cost", label: "Custo mensal", shortLabel: "CUSTO", value: "-200", tone: "default" }
   ]);
   assert.equal(entry.observation, "Reconhecido nos distritos centrais.");
@@ -117,7 +117,7 @@ test("status and organization use society as identity and status as a metric", (
   assert.equal(organization.context, "");
   assert.deepEqual(organization.metrics, [
     { key: "level", label: "Nível", shortLabel: "NÍV", value: 1, tone: "default" },
-    { key: "status_name", label: "Status", shortLabel: "ST", value: "Aprendiz", tone: "default" },
+    { key: "status_name", label: "Status", shortLabel: "STATUS", value: "Aprendiz", tone: "default" },
     { key: "salary", label: "Salário", shortLabel: "SAL", value: "650", tone: "default" }
   ]);
   assert.equal(organization.observation, "Membro em treinamento.");

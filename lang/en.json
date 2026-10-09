@@ -301,7 +301,7 @@
   "GUM.Social.Fields.Status": "Status",
   "GUM.Social.Fields.Level": "Level",
   "GUM.Social.Fields.MonthlyCost": "Monthly cost of living",
-  "GUM.Social.Fields.StatusShort": "ST",
+  "GUM.Social.Fields.StatusShort": "STATUS",
   "GUM.Social.Fields.LevelShort": "LVL",
   "GUM.Social.Fields.MonthlyCostShort": "COST",
   "GUM.Social.Fields.Points": "Points",
