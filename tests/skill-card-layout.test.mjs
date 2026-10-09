@@ -51,12 +51,30 @@ test("skill dialogs share a scoped professional window treatment", () => {
   assert.match(styles, /\.skill-organization-confirm-dialog \.dialog-buttons button\[data-button="confirm"\]/);
 });
 
-test("skill cards expose compact mechanics and a dedicated control footer", () => {
+test("skill cards expose compact mechanics and a dedicated options footer", () => {
   assert.match(actorSheet, /points:\s*useTreeFields\s*\?/);
-  assert.match(skillTab, /title="Pontos investidos">\{\{this\.skillListDisplay\.points\}\} pts/);
-  assert.match(skillTab, /<div class="item-controls st-controls">[\s\S]*skill-modifier-indicators[\s\S]*st-control-actions/);
-  assert.doesNotMatch(skillTab, /gum-action-menu__toggle/);
+  assert.match(skillTab, /GUM\.Skills\.InvestedPoints.*\{\{this\.skillListDisplay\.points\}\} \{\{localize 'GUM\.Skills\.PointsAbbreviation'\}\}/s);
+  assert.match(skillTab, /<div class="item-controls st-controls">[\s\S]*skill-modifier-indicators[\s\S]*gum-action-menu__toggle/);
+  assert.match(skillTab, /remove-skill-from-group gum-action-menu__item/);
+  assert.match(skillTab, /item-edit gum-action-menu__item/);
+  assert.match(skillTab, /item-delete gum-action-menu__item is-danger/);
   assert.match(styles, /\.st-controls\s*\{[^}]*border-top:[^}]*opacity:\s*1;/s);
+});
+
+test("the skills tab localizes toolbar, card copy, and action menu labels", () => {
+  assert.match(skillTab, /GUM\.Skills\.SearchPlaceholder/);
+  assert.match(skillTab, /GUM\.Skills\.SearchLabel/);
+  assert.match(skillTab, /GUM\.Skills\.ToggleView/);
+  assert.match(skillTab, /GUM\.Skills\.NoSearchResults/);
+  assert.match(skillTab, /GUM\.Skills\.Empty/);
+  assert.match(skillTab, /GUM\.Inventory\.Options/);
+  assert.match(actorSheet, /game\.i18n\.localize\("GUM\.Skills\.NewGroup"\)/);
+  assert.match(actorSheet, /game\.i18n\.format\("GUM\.Skills\.DeleteGroupContent"/);
+});
+
+test("skill action menus use the light inventory menu treatment", () => {
+  assert.match(styles, /\.skills-tab \.gum-action-menu__panel\s*\{[^}]*background:\s*#f6f4f0;/s);
+  assert.match(styles, /\.skills-tab \.gum-action-menu__panel > \.gum-action-menu__item\s*\{\s*color:\s*#4a4743;/s);
 });
 
 test("skill modifier tags use restrained translucent treatments", () => {

@@ -456,7 +456,7 @@ async getData(options) {
             const treePointsPerLevel = savedTreePointsPerLevel !== undefined && savedTreePointsPerLevel !== "" ? savedTreePointsPerLevel : treePointsDefaults[treeHierarchyType] ?? "";
             skill.skillListDisplay = {
                 baseAttribute: useTreeFields ? (skill.system?.tree_base_attribute || skill.system?.base_attribute) : skill.system?.base_attribute,
-                difficulty: useTreeFields ? (treePointsPerLevel !== "" ? `${treePointsPerLevel}/nív` : "") : skill.system?.difficulty,
+                difficulty: useTreeFields ? (treePointsPerLevel !== "" ? `${treePointsPerLevel}/${game.i18n.localize("GUM.Skills.LevelAbbreviation")}` : "") : skill.system?.difficulty,
                 skillLevel: useTreeFields ? (skill.system?.tree_skill_level ?? skill.system?.skill_level ?? 0) : (skill.system?.skill_level ?? 0),
                 points: useTreeFields ? (skill.system?.tree_points ?? skill.system?.points ?? 0) : (skill.system?.points ?? 0),
                 nhMod: useTreeFields ? (skill.system?.tree_nh_mod ?? 0) : (skill.system?.nh_mod ?? 0),
@@ -490,7 +490,7 @@ async getData(options) {
             context.skillOrganization = organization;
             context.skillSections = [{
                 id: UNGROUPED_ORGANIZER_ID,
-                name: "Perícias",
+                name: game.i18n.localize("GUM.Skills.DefaultGroup"),
                 isUngrouped: true,
                 skills: orderedSkills(UNGROUPED_ORGANIZER_ID)
             }, ...organization.groupOrder.map(groupId => ({
@@ -1667,6 +1667,7 @@ async _saveSkillOrganization(organization) {
 }
 
 _promptSkillGroupName({ title, initial = "" }) {
+    const localize = key => game.i18n.localize(key);
     return new Promise(resolve => {
         let settled = false;
         const finish = value => {
@@ -1677,16 +1678,16 @@ _promptSkillGroupName({ title, initial = "" }) {
         new Dialog({
             title,
             content: `<form class="gum-popup-form gum-record-editor skill-group-name-dialog">
-                <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon"><i class="fas fa-folder-plus" aria-hidden="true"></i></span><span><strong>${foundry.utils.escapeHTML(title)}</strong><small>Use um nome curto e claro para organizar as perícias deste personagem.</small></span></header>
-                <div class="form-group form-group--full skill-group-name-field"><label>Nome do grupo</label><input class="gum-input-left" type="text" name="name" value="${foundry.utils.escapeHTML(initial)}" autocomplete="off" autofocus></div>
+                <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon"><i class="fas fa-folder-plus" aria-hidden="true"></i></span><span><strong>${foundry.utils.escapeHTML(title)}</strong><small>${localize("GUM.Skills.GroupNameHint")}</small></span></header>
+                <div class="form-group form-group--full skill-group-name-field"><label>${localize("GUM.Skills.GroupNameLabel")}</label><input class="gum-input-left" type="text" name="name" value="${foundry.utils.escapeHTML(initial)}" autocomplete="off" autofocus></div>
             </form>`,
             buttons: {
                 save: {
                     icon: '<i class="fas fa-check"></i>',
-                    label: "Salvar",
+                    label: localize("GUM.Skills.Save"),
                     callback: html => finish(String(html.find('[name="name"]').val() ?? "").trim() || null)
                 },
-                cancel: { label: "Cancelar", callback: () => finish(null) }
+                cancel: { label: localize("GUM.Skills.Cancel"), callback: () => finish(null) }
             },
             default: "save",
             close: () => finish(null)
@@ -1694,7 +1695,8 @@ _promptSkillGroupName({ title, initial = "" }) {
     });
 }
 
-_confirmSkillOrganizationAction({ title, content, confirmLabel = "Confirmar" }) {
+_confirmSkillOrganizationAction({ title, content, confirmLabel = game.i18n.localize("GUM.Skills.Confirm") }) {
+    const localize = key => game.i18n.localize(key);
     return new Promise(resolve => {
         let settled = false;
         const finish = value => {
@@ -1707,7 +1709,7 @@ _confirmSkillOrganizationAction({ title, content, confirmLabel = "Confirmar" }) 
             content,
             buttons: {
                 confirm: { icon: '<i class="fas fa-check"></i>', label: confirmLabel, callback: () => finish(true) },
-                cancel: { label: "Cancelar", callback: () => finish(false) }
+                cancel: { label: localize("GUM.Skills.Cancel"), callback: () => finish(false) }
             },
             default: "cancel",
             close: () => finish(false)
@@ -1716,6 +1718,8 @@ _confirmSkillOrganizationAction({ title, content, confirmLabel = "Confirmar" }) 
 }
 
 _promptSkillCategoryGroupPlan(plan) {
+    const localize = key => game.i18n.localize(key);
+    const format = (key, data) => game.i18n.format(key, data);
     return new Promise(resolve => {
         let settled = false;
         const finish = value => {
@@ -1725,22 +1729,22 @@ _promptSkillCategoryGroupPlan(plan) {
         };
         const rows = plan.map((category, index) => {
             const skillNames = category.items.map(item => foundry.utils.escapeHTML(item.name)).join(", ");
-            const destination = category.existingGroupId ? "Grupo existente" : "Novo grupo";
+            const destination = category.existingGroupId ? localize("GUM.Skills.ExistingGroup") : localize("GUM.Skills.NewGroupDestination");
             return `<label class="skill-category-preview__row">
                 <input type="checkbox" name="category" value="${index}" checked>
-                <span><strong>${foundry.utils.escapeHTML(category.name)}</strong><small>${destination} · ${category.items.length} perícia(s)</small><em>${skillNames}</em></span>
+                <span><strong>${foundry.utils.escapeHTML(category.name)}</strong><small>${destination} · ${format("GUM.Skills.SkillCount", { count: category.items.length })}</small><em>${skillNames}</em></span>
             </label>`;
         }).join("");
         new Dialog({
-            title: "Organizar pelas categorias das perícias",
+            title: localize("GUM.Skills.CategoryPlanTitle"),
             content: `<form class="skill-category-preview">
-                <div class="skill-category-preview__intro"><i class="fas fa-layer-group"></i><span><strong>Organizar perícias</strong><small>Selecione as categorias que deseja transformar em grupos visuais.</small></span></div>
+                <div class="skill-category-preview__intro"><i class="fas fa-layer-group"></i><span><strong>${localize("GUM.Skills.CategoryPlanHeading")}</strong><small>${localize("GUM.Skills.CategoryPlanHint")}</small></span></div>
                 <div class="skill-category-preview__list">${rows}</div>
             </form>`,
             buttons: {
                 apply: {
                     icon: '<i class="fas fa-layer-group"></i>',
-                    label: "Criar selecionados",
+                    label: localize("GUM.Skills.CreateSelected"),
                     callback: html => {
                         const selected = [...html[0].querySelectorAll('input[name="category"]:checked')]
                             .map(input => plan[Number(input.value)]?.key)
@@ -1748,7 +1752,7 @@ _promptSkillCategoryGroupPlan(plan) {
                         finish(selected);
                     }
                 },
-                cancel: { label: "Cancelar", callback: () => finish(null) }
+                cancel: { label: localize("GUM.Skills.Cancel"), callback: () => finish(null) }
             },
             default: "apply",
             close: () => finish(null)
@@ -1757,7 +1761,7 @@ _promptSkillCategoryGroupPlan(plan) {
 }
 
 async _createSkillOrganizationGroup() {
-    const name = await this._promptSkillGroupName({ title: "Novo grupo de perícias" });
+    const name = await this._promptSkillGroupName({ title: game.i18n.localize("GUM.Skills.NewGroup") });
     if (!name) return;
     const { skills, organization } = this._getSkillOrganizationState();
     const id = foundry.utils.randomID?.() ?? crypto.randomUUID();
@@ -1768,7 +1772,7 @@ async _renameSkillOrganizationGroup(groupId) {
     const { skills, organization } = this._getSkillOrganizationState();
     const current = organization.groups[groupId];
     if (!current) return;
-    const name = await this._promptSkillGroupName({ title: "Renomear grupo de perícias", initial: current.name });
+    const name = await this._promptSkillGroupName({ title: game.i18n.localize("GUM.Skills.RenameGroupDialog"), initial: current.name });
     if (!name || name === current.name) return;
     await this._saveSkillOrganization(renameItemOrganizationGroup(organization, { id: groupId, name }, skills.map(item => item.id)));
 }
@@ -1778,9 +1782,9 @@ async _deleteSkillOrganizationGroup(groupId) {
     const group = organization.groups[groupId];
     if (!group) return;
     const confirmed = await this._confirmSkillOrganizationAction({
-        title: "Excluir grupo de perícias",
-        content: `<p>Excluir o grupo <strong>${foundry.utils.escapeHTML(group.name)}</strong>? As perícias voltarão para a área livre.</p>`,
-        confirmLabel: "Excluir grupo"
+        title: game.i18n.localize("GUM.Skills.DeleteGroupDialog"),
+        content: `<p>${game.i18n.format("GUM.Skills.DeleteGroupContent", { name: foundry.utils.escapeHTML(group.name) })}</p>`,
+        confirmLabel: game.i18n.localize("GUM.Skills.DeleteGroupConfirm")
     });
     if (!confirmed) return;
     await this._saveSkillOrganization(removeItemOrganizationGroup(organization, groupId, skills.map(item => item.id)));
@@ -1789,7 +1793,7 @@ async _deleteSkillOrganizationGroup(groupId) {
 async _suggestSkillOrganizationGroups() {
     const { skills, organization } = this._getSkillOrganizationState();
     const plan = buildItemCategoryGroupPlan(organization, skills);
-    if (!plan.length) return ui.notifications.info("Não há categorias disponíveis entre as perícias livres.");
+    if (!plan.length) return ui.notifications.info(game.i18n.localize("GUM.Skills.NoCategories"));
     const selectedCategories = await this._promptSkillCategoryGroupPlan(plan);
     if (!selectedCategories?.length) return;
     const createId = () => foundry.utils.randomID?.() ?? crypto.randomUUID();
