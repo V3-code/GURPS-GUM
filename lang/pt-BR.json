@@ -1032,7 +1032,7 @@
   "GUM.Conditions.Disabled": "Desativado",
   "GUM.Conditions.Automatic": "Automático",
   "GUM.Conditions.AppliedStatus": "Status aplicado: {status}",
-  "GUM.Conditions.Source": "Fonte: {source}",
+  "GUM.Conditions.SourceLabel": "Fonte: {source}",
   "GUM.Conditions.ViewSource": "Visualizar fonte",
   "GUM.Conditions.Remove": "Remover",
   "GUM.Conditions.EditRule": "Editar regra",

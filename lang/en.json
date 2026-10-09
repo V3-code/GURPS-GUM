@@ -1032,7 +1032,7 @@
   "GUM.Conditions.Disabled": "Disabled",
   "GUM.Conditions.Automatic": "Automatic",
   "GUM.Conditions.AppliedStatus": "Applied status: {status}",
-  "GUM.Conditions.Source": "Source: {source}",
+  "GUM.Conditions.SourceLabel": "Source: {source}",
   "GUM.Conditions.ViewSource": "View source",
   "GUM.Conditions.Remove": "Remove",
   "GUM.Conditions.EditRule": "Edit rule",
