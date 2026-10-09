@@ -2163,6 +2163,7 @@
                 <div class="effect-origin-list">
             {{#each group.effects as |effect|}}
                 <div class="effect-pill-enhanced temp-effect" data-effect-id="{{effect.id}}">
+                    <div class="pill-switch-wrapper"><label class="switch" title="{{localize 'GUM.Conditions.ToggleEffect'}}"><input type="checkbox" class="effect-toggle" data-effect-id="{{effect.id}}" {{checked effect.disabled}}><span class="slider round"></span></label></div>
                     <img src="{{effect.img}}" class="pill-icon" title="{{effect.name}}"/>
                     <div class="pill-card-content">
                     <div class="pill-info">
@@ -2187,7 +2188,6 @@
                         </div>
                     </div>
                     <div class="pill-controls">
-                        <div class="pill-switch-wrapper"><label class="switch" title="{{localize 'GUM.Conditions.ToggleEffect'}}"><input type="checkbox" class="effect-toggle" data-effect-id="{{effect.id}}" {{checked effect.disabled}}><span class="slider round"></span></label></div>
                         <div class="gum-action-menu js-action-menu">
                           <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Inventory.Options'}}" aria-label="{{localize 'GUM.Inventory.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
                           <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Inventory.Options'}}">
@@ -2233,6 +2233,7 @@
                 <div class="effect-origin-list">
             {{#each group.effects as |effect|}}
                 <div class="effect-pill-enhanced perm-effect" data-effect-id="{{effect.id}}">
+                    <div class="pill-switch-wrapper"><label class="switch" title="{{localize 'GUM.Conditions.ToggleEffect'}}"><input type="checkbox" class="effect-toggle" data-effect-id="{{effect.id}}" {{checked effect.disabled}}><span class="slider round"></span></label></div>
                     <img src="{{effect.img}}" class="pill-icon" title="{{effect.name}}"/>
                     <div class="pill-card-content">
                     <div class="pill-info">
@@ -2252,7 +2253,6 @@
                         </div>
                     </div>
                     <div class="pill-controls">
-                        <div class="pill-switch-wrapper"><label class="switch" title="{{localize 'GUM.Conditions.ToggleEffect'}}"><input type="checkbox" class="effect-toggle" data-effect-id="{{effect.id}}" {{checked effect.disabled}}><span class="slider round"></span></label></div>
                         <div class="gum-action-menu js-action-menu">
                           <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Inventory.Options'}}" aria-label="{{localize 'GUM.Inventory.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
                           <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Inventory.Options'}}">
@@ -2290,6 +2290,7 @@
         <div class="effects-grid-container">
             {{#each installedConditions as |item|}}
                 <div class="item effect-pill-enhanced passive-rule" data-item-id="{{item.id}}">
+                    <div class="pill-switch-wrapper"><label class="switch" title="{{localize 'GUM.Conditions.OverrideAutomation'}}"><input type="checkbox" class="manual-override-toggle" data-item-id="{{item.id}}" {{checked item.flags.gum.manual_override}}><span class="slider round"></span></label></div>
                     <img src="{{item.img}}" class="pill-icon" alt="{{item.name}}"/>
                     <div class="pill-card-content">
                     <div class="pill-info">
@@ -2303,7 +2304,6 @@
                         </div>
                     </div>
                     <div class="pill-controls">
-                        <div class="pill-switch-wrapper"><label class="switch" title="{{localize 'GUM.Conditions.OverrideAutomation'}}"><input type="checkbox" class="manual-override-toggle" data-item-id="{{item.id}}" {{checked item.flags.gum.manual_override}}><span class="slider round"></span></label></div>
                         <div class="gum-action-menu js-action-menu">
                           <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Inventory.Options'}}" aria-label="{{localize 'GUM.Inventory.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
                           <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Inventory.Options'}}">

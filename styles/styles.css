@@ -7415,16 +7415,44 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .conditions-tab .gum-unified-header .header-hint { color: rgba(247,233,215,.48); font-size: 9px; }
 
 /* Condition effects follow the compact item-card treatment. */
-.gum.sheet.actor .conditions-tab .effects-grid-container { padding: 5px 0 0; gap: 6px; }
+.gum.sheet.actor .conditions-tab .effects-grid-container { grid-template-columns:1fr; padding:5px 0 0; gap:8px; }
 .gum.sheet.actor .conditions-tab .effect-origin-group { border: 0; border-radius: 0; background: transparent; overflow: visible; }
-.gum.sheet.actor .conditions-tab .effect-origin-summary { padding: 5px 6px; background: #202126; border-radius: 4px; }
-.gum.sheet.actor .conditions-tab .effect-origin-list { padding: 5px 0 0; border-top: 0; }
+.gum.sheet.actor .conditions-tab .effect-origin-summary {
+    min-height:28px;
+    padding:4px 7px;
+    border:0;
+    border-bottom:1px solid rgba(197,160,91,.2);
+    border-radius:0;
+    background:transparent !important;
+}
+.gum.sheet.actor .conditions-tab .effect-origin-summary:hover,
+.gum.sheet.actor .conditions-tab .effect-origin-group[open] > .effect-origin-summary { background:rgba(255,255,255,.025) !important; }
+.gum.sheet.actor .conditions-tab .effect-origin-summary .origin-heading {
+    color:rgba(247,233,215,.72);
+    font-family:var(--gum-font-primary);
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:.07em;
+    text-transform:uppercase;
+}
+.gum.sheet.actor .conditions-tab .effect-origin-summary .header-counter {
+    min-width:20px;
+    padding:1px 6px;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:10px;
+    background:transparent;
+    color:rgba(247,233,215,.48);
+    font-size:9px;
+    text-align:center;
+}
+.gum.sheet.actor .conditions-tab .effect-origin-summary .indicator { color:rgba(247,233,215,.46); font-size:9px; }
+.gum.sheet.actor .conditions-tab .effect-origin-list { grid-template-columns:repeat(2,minmax(0,1fr)); padding:6px 0 0; border-top:0; }
 .gum.sheet.actor .conditions-tab .effect-pill-enhanced {
     min-height: 46px;
     padding: 5px 6px;
     gap: 6px;
     display: grid;
-    grid-template-columns: 28px minmax(0, 1fr);
+    grid-template-columns: 28px 28px minmax(0, 1fr);
     align-items: start;
     position: relative;
     overflow: visible;
@@ -7438,10 +7466,11 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .conditions-tab .effect-pill-enhanced.action-menu-open-row { z-index: 120; }
 .gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-icon { width:28px; height:28px; border:0; border-radius:3px; background:rgba(190,148,91,.1); }
 .gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-card-content { min-width:0; }
-.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-info { min-width:0; }
-.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-name { color:var(--gum-text-claro); font-size:12px; line-height:1.2; }
-.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-details { gap:2px; margin-top:1px; }
-.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-tag { padding:0; border:0; border-radius:0; background:transparent; color:rgba(230,220,225,.5); font-family:var(--gum-font-condensed); font-size:9px; line-height:1.15; }
+.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-info { min-width:0; overflow:visible; }
+.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-name { display:block; overflow:visible; color:var(--gum-text-claro); font-size:12px; line-height:1.2; text-overflow:clip; white-space:normal; overflow-wrap:anywhere; }
+.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-details { align-items:flex-start; gap:2px; margin-top:1px; }
+.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-tag { max-width:100%; padding:0; border:0; border-radius:0; background:transparent; color:rgba(230,220,225,.5); font-family:var(--gum-font-condensed); font-size:9px; line-height:1.15; white-space:normal; overflow-wrap:anywhere; }
+.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-tag.source { overflow:visible; text-overflow:clip; }
 .gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-tag + .pill-tag::before { content:" · "; }
 .gum.sheet.actor .conditions-tab .gum-unified-section .effect-pill-enhanced .pill-controls {
     display:flex;
@@ -7456,7 +7485,7 @@ background-color: var(--gum-accent-gold);
     border-left:0;
     opacity:1;
 }
-.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-switch-wrapper { margin:0; }
+.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-switch-wrapper { align-self:center; margin:0; }
 .gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-controls .gum-action-menu { margin-left:auto; }
 .gum.sheet.actor .conditions-tab .effect-pill-enhanced .gum-action-menu__toggle { width:18px; height:18px; min-width:18px; padding:0; color:rgba(235,226,231,.48); font-size:10px; }
 .gum.sheet.actor .conditions-tab .effect-pill-enhanced .gum-action-menu__toggle:hover { color:#f0d79f; text-decoration:none; }
@@ -7481,6 +7510,10 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .conditions-tab .gum-action-menu__panel > a.gum-action-menu__item:hover { background:rgba(197,160,91,.14); color:#2f2c29; }
 .gum.sheet.actor .conditions-tab .gum-action-menu__panel > a.gum-action-menu__item.is-danger { color:#70424a; }
 .gum.sheet.actor .conditions-tab .gum-action-menu__panel > a.gum-action-menu__item.is-danger:hover { color:#862f3a; }
+
+@media (max-width:680px) {
+    .gum.sheet.actor .conditions-tab .effect-origin-list { grid-template-columns:1fr; }
+}
 
 .gum.sheet.actor .gum-unified-header::-webkit-details-marker {
     display: none;

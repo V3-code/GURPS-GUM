@@ -12,11 +12,14 @@ const conditionsTab = template.slice(template.indexOf('class="tab conditions-tab
 
 test("condition sections use neutral compact headers and cards", () => {
   assert.match(styles, /\.conditions-tab details\.form-section\.gum-unified-section > \.gum-unified-header\s*\{[^}]*background:\s*transparent !important;/s);
-  assert.match(styles, /\.conditions-tab \.effect-pill-enhanced\s*\{[^}]*display:\s*grid;[^}]*background:\s*#1a1b1f;[^}]*border:\s*0;[^}]*box-shadow:\s*inset 2px 0 0 rgba\(225,184,117,\.42\);/s);
+  assert.match(styles, /\.conditions-tab \.effect-pill-enhanced\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*28px 28px minmax\(0, 1fr\);[^}]*background:\s*#1a1b1f;[^}]*border:\s*0;[^}]*box-shadow:\s*inset 2px 0 0 rgba\(225,184,117,\.42\);/s);
   assert.match(styles, /\.conditions-tab \.effect-pill-enhanced \.pill-icon\s*\{[^}]*width:\s*28px;/s);
   assert.match(styles, /\.conditions-tab \.gum-unified-section \.effect-pill-enhanced \.pill-controls\s*\{[^}]*flex-direction:\s*row;[^}]*border-top:\s*1px solid/s);
   assert.match(styles, /\.conditions-tab \.gum-action-menu__panel\s*\{[^}]*background:\s*#f6f4f0;/s);
   assert.doesNotMatch(styles, /\.gum-unified-section \.effect-pill-enhanced\s*\{[^}]*background:\s*#2f343d;/s);
+  assert.match(styles, /\.conditions-tab \.effect-origin-summary\s*\{[^}]*border-bottom:\s*1px solid rgba\(197,160,91,\.2\);[^}]*background:\s*transparent !important;/s);
+  assert.match(styles, /\.conditions-tab \.effect-origin-list\s*\{[^}]*grid-template-columns:\s*repeat\(2,minmax\(0,1fr\)\);/s);
+  assert.match(styles, /\.conditions-tab \.effect-pill-enhanced \.pill-name\s*\{[^}]*white-space:\s*normal;[^}]*overflow-wrap:\s*anywhere;/s);
 });
 
 test("all condition card types keep their controls in the shared footer menu", () => {
@@ -26,6 +29,8 @@ test("all condition card types keep their controls in the shared footer menu", (
   assert.equal((conditionsTab.match(/quick-view-origin/g) ?? []).length, 2);
   assert.equal((conditionsTab.match(/data-action="delete-effect"/g) ?? []).length, 2);
   assert.match(conditionsTab, /class="manual-override-toggle"/);
+  assert.match(conditionsTab, /effect-pill-enhanced temp-effect[^>]*>\s*<div class="pill-switch-wrapper"[\s\S]*?<img src="\{\{effect\.img\}\}"/);
+  assert.match(conditionsTab, /effect-pill-enhanced passive-rule[^>]*>\s*<div class="pill-switch-wrapper"[\s\S]*?<img src="\{\{item\.img\}\}"/);
   assert.match(conditionsTab, /item-control item-edit gum-action-menu__item/);
   assert.match(conditionsTab, /item-control item-delete gum-action-menu__item is-danger/);
 });
