@@ -41,21 +41,23 @@ const WOUND_NATURE_ICONS = Object.freeze({
 });
 
 function prepareWoundForDisplay(id, wound = {}) {
+  const localize = key => globalThis.game?.i18n?.localize?.(key) ?? key;
+  const format = (key, data) => globalThis.game?.i18n?.format?.(key, data) ?? localize(key);
   const nature = typeof wound.nature === "object" && wound.nature?.id
     ? wound.nature
     : resolveDamageNature(wound.nature);
-  const natureLabel = nature?.label || "Natureza indefinida";
+  const natureLabel = nature?.label || localize("GUM.Combat.Wounds.NatureUnknown");
   const natureAbbreviation = nature?.abbreviation || "";
   const originDisplay = String(wound.origin || wound.attacker || "").trim();
   const locationDisplay = String(wound.location || "").trim();
   const natureDisplay = formatDamageNature(nature);
   const tooltipLines = [
     wound.title,
-    natureDisplay ? `Natureza: ${natureDisplay}` : "Natureza: indefinida",
-    wound.poolLabel ? `Destino: ${wound.poolLabel}` : "",
-    originDisplay ? `Origem: ${originDisplay}` : "",
-    locationDisplay ? `Local: ${locationDisplay}` : "",
-    wound.notes ? `Observações: ${wound.notes}` : ""
+    format("GUM.Combat.Wounds.NatureLine", { value: natureDisplay || natureLabel }),
+    wound.poolLabel ? format("GUM.Combat.Wounds.TargetLine", { value: wound.poolLabel }) : "",
+    originDisplay ? format("GUM.Combat.Wounds.OriginLine", { value: originDisplay }) : "",
+    locationDisplay ? format("GUM.Combat.Wounds.LocationLine", { value: locationDisplay }) : "",
+    wound.notes ? format("GUM.Combat.Wounds.NotesLine", { value: wound.notes }) : ""
   ].map(value => String(value || "").trim()).filter(Boolean);
 
   return {
@@ -65,7 +67,7 @@ function prepareWoundForDisplay(id, wound = {}) {
     natureDisplay,
     natureIcon: WOUND_NATURE_ICONS[nature?.id] || "fa-bandage",
     natureTooltip: nature
-      ? `Natureza: ${natureLabel}${natureAbbreviation ? ` [${natureAbbreviation}]` : ""}`
+      ? format("GUM.Combat.Wounds.NatureLine", { value: `${natureLabel}${natureAbbreviation ? ` [${natureAbbreviation}]` : ""}` })
       : natureLabel,
     originDisplay,
     locationDisplay,
@@ -794,18 +796,19 @@ async getData(options) {
         // ================================================================== //
         const combatFavoriteTypes = new Set(["advantage", "disadvantage", "skill", "spell", "power"]);
         const combatFavoritesByGroup = {};
+        const favoriteGeneralGroup = game.i18n.localize("GUM.Combat.Favorites.General");
 
         const resolveFavoriteGroup = (item) => {
             const typedGroup = (item.system?.group || "").trim();
             if (typedGroup) return typedGroup;
 
-            if (item.type === "advantage") return "Vantagens";
-            if (item.type === "disadvantage") return "Desvantagens";
-            if (item.type === "skill") return "Perícias";
-            if (item.type === "spell") return "Magias";
-            if (item.type === "power") return "Poderes";
+            if (item.type === "advantage") return game.i18n.localize("GUM.Combat.Favorites.Advantages");
+            if (item.type === "disadvantage") return game.i18n.localize("GUM.Combat.Favorites.Disadvantages");
+            if (item.type === "skill") return game.i18n.localize("GUM.Combat.Favorites.Skills");
+            if (item.type === "spell") return game.i18n.localize("GUM.Combat.Favorites.Spells");
+            if (item.type === "power") return game.i18n.localize("GUM.Combat.Favorites.Powers");
 
-            return "Geral";
+            return favoriteGeneralGroup;
         };
 
         for (const item of this.actor.items) {
@@ -823,8 +826,8 @@ async getData(options) {
 
         context.combatFavoritesByGroup = combatFavoritesByGroup;
         context.combatFavoriteGroupKeys = Object.keys(combatFavoritesByGroup).sort((a, b) => {
-            if (a === 'Geral') return -1;
-            if (b === 'Geral') return 1;
+            if (a === favoriteGeneralGroup) return -1;
+            if (b === favoriteGeneralGroup) return 1;
             return a.localeCompare(b);
         });
 
@@ -4847,6 +4850,7 @@ _getBasicDamageFromST(stValue) {
 async _onEditBasicDamage(ev) {
   ev.preventDefault();
   ev.stopPropagation();
+  const t = key => game.i18n.localize(key);
 
   const attrs = this.actor.system.attributes || {};
   const thrust = attrs.thrust_damage?.value ?? "";
@@ -4857,35 +4861,35 @@ async _onEditBasicDamage(ev) {
   const content = `
     <form class="gum-dialog-content basic-damage-editor">
       <div class="form-group">
-        <label>GdP (Thrust)</label>
+        <label>${t("GUM.Combat.BasicDamage.Thrust")}</label>
         <input type="text" name="thrust" value="${thrust}" placeholder="ex: 1d6-2" />
       </div>
       <div class="form-group">
-        <label>GeB (Swing)</label>
+        <label>${t("GUM.Combat.BasicDamage.Swing")}</label>
         <input type="text" name="swing" value="${swing}" placeholder="ex: 1d6" />
       </div>
       <hr/>
       <div class="form-group">
-        <label>GdPa (Thrust Alt)</label>
+        <label>${t("GUM.Combat.BasicDamage.ThrustAlt")}</label>
         <input type="text" name="thrust_alt" value="${thrustAlt}" placeholder="ex: 2d6-1" />
       </div>
       <div class="form-group">
-        <label>GeBa (Swing Alt)</label>
+        <label>${t("GUM.Combat.BasicDamage.SwingAlt")}</label>
         <input type="text" name="swing_alt" value="${swingAlt}" placeholder="ex: 2d6" />
       </div>
       <p style="opacity:0.75; font-size: 12px; margin-top: 8px;">
-        Dica: aqui você pode registrar a fórmula final exibida na ficha (ex.: <b>2d6+1</b>).
+        ${t("GUM.Combat.BasicDamage.Hint")}
       </p>
     </form>
   `;
 
   return new Dialog({
-    title: "Editar Dano Básico",
+    title: t("GUM.Combat.BasicDamage.EditTitle"),
     content,
     buttons: {
       save: {
         icon: '<i class="fas fa-save"></i>',
-        label: "Salvar",
+        label: t("GUM.Skills.Save"),
         callback: async (html) => {
           const form = html.find("form")[0];
           const fd = new FormData(form);
@@ -4898,7 +4902,7 @@ async _onEditBasicDamage(ev) {
           await this.actor.update(update);
         }
       },
-      cancel: { icon: '<i class="fas fa-times"></i>', label: "Cancelar" }
+      cancel: { icon: '<i class="fas fa-times"></i>', label: t("GUM.Skills.Cancel") }
     },
     default: "save"
   }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog"], width: 360 }).render(true);
@@ -4909,6 +4913,8 @@ async _onViewHitLocations(ev) {
   ev.stopPropagation();
 
   const actor = this.actor;
+  const t = key => game.i18n.localize(key);
+  const tf = (key, data) => game.i18n.format(key, data);
   const profiles = listBodyProfiles();
   const currentProfileId = actor.system.combat?.body_profile || "humanoid";
   const sheetData = await this.getData();
@@ -4949,12 +4955,12 @@ async _onViewHitLocations(ev) {
     tableRows += `
       <div class="table-row">
         <div class="loc-label">${loc.label ?? loc.name ?? key}</div>
-        <div class="loc-rd-armor" title="RD da Armadura">${armorDR_String}</div>
-        <div class="loc-rd-temp" title="Bônus Temporários">${tempDR_String}</div>
-        <div class="loc-rd-passive" title="Bônus Permanentes">${passiveDR_String}</div>
+        <div class="loc-rd-armor" title="${t("GUM.Combat.DR.Armor")}">${armorDR_String}</div>
+        <div class="loc-rd-temp" title="${t("GUM.Combat.DR.Temporary")}">${tempDR_String}</div>
+        <div class="loc-rd-passive" title="${t("GUM.Combat.DR.Permanent")}">${passiveDR_String}</div>
         <div class="loc-rd-mod"><input type="text" name="${key}" value="${manualMod_String}" /></div>
-        <div class="loc-rd-total" title="Valor calculado antes do override: ${computedDR_String}"><strong>${totalDR_String}</strong></div>
-        <div class="loc-rd-override" title="RD Sobrescrita: substitui o valor final calculado">${overrideDR_String}</div>
+        <div class="loc-rd-total" title="${tf("GUM.Combat.DR.ComputedHint", { value: computedDR_String })}"><strong>${totalDR_String}</strong></div>
+        <div class="loc-rd-override" title="${t("GUM.Combat.DR.OverrideHint")}">${overrideDR_String}</div>
       </div>
     `;
   }
@@ -4966,11 +4972,11 @@ async _onViewHitLocations(ev) {
 const profileSelectorHtml = `
   <div class="gum-rd-profile-card">
     <div class="gum-rd-profile-copy">
-      <span class="gum-rd-eyebrow"><i class="fas fa-shield-alt"></i> Configuração de proteção</span>
-      <label for="gum-rd-body-profile">Tipo corporal</label>
-      <span class="gum-rd-profile-hint">Define as localizações exibidas abaixo.</span>
+      <span class="gum-rd-eyebrow"><i class="fas fa-shield-alt"></i> ${t("GUM.Combat.DR.ProtectionConfig")}</span>
+      <label for="gum-rd-body-profile">${t("GUM.Combat.DR.BodyType")}</label>
+      <span class="gum-rd-profile-hint">${t("GUM.Combat.DR.BodyTypeHint")}</span>
     </div>
-    <select id="gum-rd-body-profile" class="gum-body-profile-select" name="body_profile" aria-label="Tipo corporal">
+    <select id="gum-rd-body-profile" class="gum-body-profile-select" name="body_profile" aria-label="${t("GUM.Combat.DR.BodyType")}">
       ${profileOptionsHtml}
     </select>
   </div>
@@ -4983,19 +4989,19 @@ const profileSelectorHtml = `
     <div class="gurps-rd-table">
         <div class="gum-rd-table-title">
           <div>
-            <span class="gum-rd-eyebrow">Resistência a dano</span>
-            <strong>Localizações de acerto</strong>
+            <span class="gum-rd-eyebrow">${t("GUM.Combat.DR.DamageResistance")}</span>
+            <strong>${t("GUM.Combat.DR.HitLocations")}</strong>
           </div>
-          <span class="gum-rd-table-help"><i class="fas fa-pen"></i> Edite apenas a coluna Manual</span>
+          <span class="gum-rd-table-help"><i class="fas fa-pen"></i> ${t("GUM.Combat.DR.ManualOnlyHint")}</span>
         </div>
         <div class="table-header">
-          <div>Local</div>
-          <div>Armadura</div>
-          <div>Temp.</div>
-          <div>Perm.</div>
-          <div>Manual</div>
-          <div>Total</div>
-          <div title="RD sobrescrita substitui o total calculado">Sobrescrita</div>
+          <div>${t("GUM.Combat.DR.Location")}</div>
+          <div>${t("GUM.Combat.DR.ArmorColumn")}</div>
+          <div>${t("GUM.Combat.DR.TemporaryColumn")}</div>
+          <div>${t("GUM.Combat.DR.PermanentColumn")}</div>
+          <div>${t("GUM.Combat.DR.Manual")}</div>
+          <div>${t("GUM.Combat.DR.Total")}</div>
+          <div title="${t("GUM.Combat.DR.OverrideHint")}">${t("GUM.Combat.DR.Override")}</div>
         </div>
         <div class="table-body">
           ${tableRows}
@@ -5005,12 +5011,12 @@ const profileSelectorHtml = `
   `;
 
 const dlg = new Dialog({
-  title: "Tabela de Locais de Acerto e RD",
+  title: t("GUM.Combat.DR.DialogTitle"),
   content,
   buttons: {
     save: {
       icon: '<i class="fas fa-save"></i>',
-      label: "Salvar Modificadores",
+      label: t("GUM.Combat.DR.Save"),
       callback: async (html) => {
         const form = html.find("form")[0];
         const formData = new FormDataExtended(form).object;
@@ -5026,7 +5032,7 @@ const dlg = new Dialog({
         await actor.update({ "system.combat.dr_mods": newDrMods });
       }
     },
-    cancel: { icon: '<i class="fas fa-times"></i>', label: "Cancelar" }
+    cancel: { icon: '<i class="fas fa-times"></i>', label: t("GUM.Skills.Cancel") }
   },
   default: "save",
 
@@ -5165,10 +5171,10 @@ async _onDeleteCombatMeter(ev) {
   const meterId = ev.currentTarget.closest(".meter-card")?.dataset?.meterId;
   if (!meterId) return;
 
-  const name = this.actor.system.combat.combat_meters?.[meterId]?.name || "registro";
+  const name = this.actor.system.combat.combat_meters?.[meterId]?.name || game.i18n.localize("GUM.Combat.Meters.DefaultName");
   Dialog.confirm({
-    title: `Excluir ${name}?`,
-    content: `<p>Tem certeza que deseja remover este registro?</p>`,
+    title: game.i18n.format("GUM.Combat.Meters.DeleteTitle", { name }),
+    content: game.i18n.localize("GUM.Combat.Meters.DeleteContent"),
     yes: async () => {
       await this.actor.update({ [`system.combat.combat_meters.-=${meterId}`]: null });
     }
@@ -5179,36 +5185,37 @@ async _onEditWound(ev) {
   ev.preventDefault();
   const woundId = ev.currentTarget.closest(".wound-card")?.dataset?.woundId || foundry.utils.randomID();
   const current = this.actor.system.combat?.wounds?.[woundId] || {};
+  const t = key => game.i18n.localize(key);
   const esc = value => foundry.utils.escapeHTML(String(value ?? ""));
   const natureOptions = buildDamageNatureSearchOptions()
     .map(option => `<option value="${esc(option.value)}" label="${esc(option.label)}"></option>`)
     .join("");
   const content = `<form class="gum-popup-form gum-wound-form gum-record-editor" autocomplete="off">
     <datalist id="gum-wound-natures">${natureOptions}</datalist>
-    <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon"><i class="fas fa-bandage" aria-hidden="true"></i></span><span><strong>Dados do ferimento</strong><small>Crie um card independente para acompanhar a lesão durante o jogo.</small></span></header>
-    <div class="form-group gum-record-field gum-record-field--title"><label>Título</label><input name="title" value="${esc(current.title)}" placeholder="Ex.: Corte no braço" required></div>
-    <div class="form-group gum-record-field gum-record-field--nature"><label>Natureza</label><input name="nature" list="gum-wound-natures" value="${esc(formatDamageNature(current.nature))}"></div>
-    <div class="form-group gum-record-field gum-record-field--initial"><label>Valor inicial</label><input name="value" type="number" min="0" value="${Number(current.value || 0)}"></div>
-    <p class="gum-record-editor__section-label form-group--full"><i class="fas fa-crosshairs" aria-hidden="true"></i> Contexto <span>opcional</span></p>
-    <div class="form-group gum-record-context-field"><label>Valor restante</label><input name="remaining" type="number" min="0" value="${Number(current.remaining ?? current.value ?? 0)}"></div>
-    <div class="form-group gum-record-context-field"><label>Destino</label><input name="poolLabel" value="${esc(current.poolLabel)}"></div>
-    <div class="form-group gum-record-context-field"><label>Local</label><input name="location" value="${esc(current.location)}"></div>
-    <div class="form-group gum-record-context-field"><label>Origem</label><input name="origin" value="${esc(current.origin)}"></div>
-    <div class="form-group form-group--full form-group--textarea"><label>Observação</label><textarea name="notes" placeholder="Detalhes úteis para o acompanhamento">${esc(current.notes)}</textarea></div>
+    <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon"><i class="fas fa-bandage" aria-hidden="true"></i></span><span><strong>${t("GUM.Combat.Wounds.EditorHeading")}</strong><small>${t("GUM.Combat.Wounds.EditorHint")}</small></span></header>
+    <div class="form-group gum-record-field gum-record-field--title"><label>${t("GUM.Combat.Wounds.TitleField")}</label><input name="title" value="${esc(current.title)}" placeholder="${t("GUM.Combat.Wounds.TitlePlaceholder")}" required></div>
+    <div class="form-group gum-record-field gum-record-field--nature"><label>${t("GUM.Combat.Wounds.NatureField")}</label><input name="nature" list="gum-wound-natures" value="${esc(formatDamageNature(current.nature))}"></div>
+    <div class="form-group gum-record-field gum-record-field--initial"><label>${t("GUM.Combat.Wounds.InitialValue")}</label><input name="value" type="number" min="0" value="${Number(current.value || 0)}"></div>
+    <p class="gum-record-editor__section-label form-group--full"><i class="fas fa-crosshairs" aria-hidden="true"></i> ${t("GUM.Combat.Wounds.Context")} <span>${t("GUM.Combat.Wounds.Optional")}</span></p>
+    <div class="form-group gum-record-context-field"><label>${t("GUM.Combat.Wounds.RemainingValue")}</label><input name="remaining" type="number" min="0" value="${Number(current.remaining ?? current.value ?? 0)}"></div>
+    <div class="form-group gum-record-context-field"><label>${t("GUM.Combat.Wounds.Target")}</label><input name="poolLabel" value="${esc(current.poolLabel)}"></div>
+    <div class="form-group gum-record-context-field"><label>${t("GUM.Combat.Wounds.Location")}</label><input name="location" value="${esc(current.location)}"></div>
+    <div class="form-group gum-record-context-field"><label>${t("GUM.Combat.Wounds.Origin")}</label><input name="origin" value="${esc(current.origin)}"></div>
+    <div class="form-group form-group--full form-group--textarea"><label>${t("GUM.Combat.Wounds.Notes")}</label><textarea name="notes" placeholder="${t("GUM.Combat.Wounds.NotesPlaceholder")}">${esc(current.notes)}</textarea></div>
     </form>`;
-  new Dialog({ title: current.title ? "Editar Ferimento" : "Novo Ferimento", content, buttons: { save: { label: "Salvar", callback: async html => {
+  new Dialog({ title: current.title ? t("GUM.Combat.Wounds.EditTitle") : t("GUM.Combat.Wounds.NewTitle"), content, buttons: { save: { label: t("GUM.Skills.Save"), callback: async html => {
     const f = html.find("form")[0]; const rawNature = f.nature.value.trim(); const nature = rawNature ? resolveDamageNature(rawNature) : null;
-    if (!f.title.value.trim()) return ui.notifications.warn("Informe o título do ferimento.");
-    if (rawNature && !nature) return ui.notifications.warn("Natureza inválida.");
+    if (!f.title.value.trim()) return ui.notifications.warn(t("GUM.Combat.Wounds.TitleRequired"));
+    if (rawNature && !nature) return ui.notifications.warn(t("GUM.Combat.Wounds.InvalidNature"));
     await this.actor.update({ [`system.combat.wounds.${woundId}`]: { ...current, title: f.title.value.trim(), value: Number(f.value.value)||0, remaining: Number(f.remaining.value)||0, poolLabel: f.poolLabel.value.trim(), nature, location: f.location.value.trim(), origin: f.origin.value.trim(), notes: f.notes.value.trim(), createdAt: current.createdAt || Date.now(), updatedAt: Date.now() }});
-  }}, cancel: { label: "Cancelar" } }, default: "save" }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-record-edit-dialog", "gum-wound-edit-dialog"], width: 480 }).render(true);
+  }}, cancel: { label: t("GUM.Skills.Cancel") } }, default: "save" }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-record-edit-dialog", "gum-wound-edit-dialog"], width: 480 }).render(true);
 }
 
 async _onDeleteWound(ev) {
   ev.preventDefault();
   const id = ev.currentTarget.closest(".wound-card")?.dataset?.woundId;
   if (!id) return;
-  Dialog.confirm({ title: "Excluir ferimento?", content: "<p>Este card será removido permanentemente.</p>", yes: () => this.actor.update({ [`system.combat.wounds.-=${id}`]: null }) });
+  Dialog.confirm({ title: game.i18n.localize("GUM.Combat.Wounds.DeleteTitle"), content: game.i18n.localize("GUM.Combat.Wounds.DeleteContent"), yes: () => this.actor.update({ [`system.combat.wounds.-=${id}`]: null }) });
 }
 
 async _onAdjustWound(ev) {
@@ -5247,22 +5254,23 @@ async _onAdjustCombatMeter(ev) {
 }
 
 async _promptCombatMeterData(initialData = {}, { isEdit = false } = {}) {
-  const data = this._normalizeResourceEntry(initialData, { defaultName: "Registro", includeDR: true });
+  const t = key => game.i18n.localize(key);
+  const data = this._normalizeResourceEntry(initialData, { defaultName: t("GUM.Combat.Meters.DefaultName"), includeDR: true });
   const escapedName = foundry.utils.escapeHTML(String(data.name || ""));
   const content = `
     <form class="gum-meter-form gum-popup-form gum-combat-meter-form gum-record-editor" autocomplete="off">
-      <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon gum-record-editor__icon--blue"><i class="fas fa-clipboard-list" aria-hidden="true"></i></span><span><strong>Registro de combate</strong><small>Acompanhe manualmente um recurso, marcador ou contador da cena.</small></span></header>
+      <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon gum-record-editor__icon--blue"><i class="fas fa-clipboard-list" aria-hidden="true"></i></span><span><strong>${t("GUM.Combat.Meters.EditorHeading")}</strong><small>${t("GUM.Combat.Meters.EditorHint")}</small></span></header>
       <div class="form-group form-group--full gum-resource-field gum-resource-field--name">
-        <label>Nome do Registro</label>
-        <input class="gum-input-left" type="text" name="name" value="${escapedName}" placeholder="Ex.: Cobertura do escudo" required/>
+        <label>${t("GUM.Combat.Meters.Name")}</label>
+        <input class="gum-input-left" type="text" name="name" value="${escapedName}" placeholder="${t("GUM.Combat.Meters.NamePlaceholder")}" required/>
       </div>
-      <p class="gum-record-editor__section-label form-group--full"><i class="fas fa-sliders-h" aria-hidden="true"></i> Valores</p>
+      <p class="gum-record-editor__section-label form-group--full"><i class="fas fa-sliders-h" aria-hidden="true"></i> ${t("GUM.Combat.Meters.Values")}</p>
       <div class="form-group form-group--number gum-resource-field gum-resource-field--current">
-        <label>Valor Atual</label>
+        <label>${t("GUM.Combat.Meters.CurrentValue")}</label>
         <input type="number" name="current" value="${data.current ?? 0}"/>
       </div>
       <div class="form-group form-group--number gum-resource-field gum-resource-field--max">
-        <label>Valor de Referência</label>
+        <label>${t("GUM.Combat.Meters.ReferenceValue")}</label>
         <input type="number" name="max" value="${data.max ?? 0}" min="0"/>
       </div>
       <div class="form-group form-group--number gum-resource-field gum-resource-field--dr">
@@ -5271,7 +5279,7 @@ async _promptCombatMeterData(initialData = {}, { isEdit = false } = {}) {
       </div>
     </form>`;
 
-  const title = isEdit ? "Editar Registro" : "Novo Registro";
+  const title = isEdit ? t("GUM.Combat.Meters.EditTitle") : t("GUM.Combat.Meters.NewTitle");
 
  return new Promise((resolve) => {
     let resolved = false;
@@ -5287,11 +5295,11 @@ async _promptCombatMeterData(initialData = {}, { isEdit = false } = {}) {
       buttons: {
         save: {
           icon: '<i class="fas fa-save"></i>',
-          label: "Salvar",
+          label: t("GUM.Skills.Save"),
           callback: (html) => {
             const form = html.find("form")[0];
             const name = form.name.value.trim();
-            if (!name) return ui.notifications.warn("Informe um nome para o registro.");
+            if (!name) return ui.notifications.warn(t("GUM.Combat.Meters.NameRequired"));
 
             const current = Number(form.current.value) || 0;
             const max = Number(form.max.value) || 0;
@@ -5302,7 +5310,7 @@ async _promptCombatMeterData(initialData = {}, { isEdit = false } = {}) {
         },
         cancel: {
           icon: '<i class="fas fa-times"></i>',
-          label: "Cancelar",
+          label: t("GUM.Skills.Cancel"),
           callback: () => finish(null)
         }
       },

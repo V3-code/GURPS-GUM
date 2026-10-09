@@ -5,10 +5,12 @@ import { readFileSync } from "node:fs";
 const template = readFileSync(new URL("../templates/actors/characters.hbs", import.meta.url), "utf8");
 const actorSheet = readFileSync(new URL("../module/actor/gurps-actor-sheet.js", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../styles/styles.css", import.meta.url), "utf8");
+const en = JSON.parse(readFileSync(new URL("../lang/en.json", import.meta.url), "utf8"));
+const pt = JSON.parse(readFileSync(new URL("../lang/pt-BR.json", import.meta.url), "utf8"));
 
 test("combat tab separates operational controls from offensive actions", () => {
-  assert.match(template, /combat-area-label[^>]*>[^<]*<span>Controle de Combate<\/span>/);
-  assert.match(template, /combat-area-label[^>]*>[^<]*<span>Ações de Combate<\/span>/);
+  assert.match(template, /combat-area-label[^>]*>[^<]*<span>{{localize "GUM\.Combat\.Control"}}<\/span>/);
+  assert.match(template, /combat-area-label[^>]*>[^<]*<span>{{localize "GUM\.Combat\.Actions"}}<\/span>/);
   assert.match(template, /combat-actions-list/);
 });
 
@@ -19,18 +21,18 @@ test("wound cards expose compact accessible controls and a discreet action menu"
   assert.match(woundSection, /adjust-wound wound-adjust[^>]+data-adjustment="-1"/);
   assert.match(woundSection, /adjust-wound wound-adjust[^>]+data-adjustment="1"/);
   assert.match(woundSection, /class="wound-grid"/);
-  assert.match(woundSection, /title="{{this\.woundTooltip}}" aria-label="Ferimento: {{this\.woundTooltip}}"/);
+  assert.match(woundSection, /title="{{this\.woundTooltip}}" aria-label="{{localize 'GUM\.Combat\.Wounds\.CardLabel' details=this\.woundTooltip}}"/);
   assert.match(woundSection, /class="wound-value-controls"/);
   assert.match(woundSection, /js-action-menu-toggle/);
   assert.match(woundSection, /edit-wound gum-action-menu__item/);
   assert.match(woundSection, /delete-wound gum-action-menu__item is-danger/);
   assert.doesNotMatch(woundSection, /wound-card-meta|originDisplay|locationDisplay/);
   assert.doesNotMatch(woundSection, /wound-card-tags|{{this\.value}}\s*\//);
-  assert.match(actorSheet, /Natureza: \$\{natureDisplay\}/);
-  assert.match(actorSheet, /Destino: \$\{wound\.poolLabel\}/);
-  assert.match(actorSheet, /Origem: \$\{originDisplay\}/);
-  assert.match(actorSheet, /Local: \$\{locationDisplay\}/);
-  assert.match(actorSheet, /Observações: \$\{wound\.notes\}/);
+  assert.match(actorSheet, /format\("GUM\.Combat\.Wounds\.NatureLine"/);
+  assert.match(actorSheet, /format\("GUM\.Combat\.Wounds\.TargetLine"/);
+  assert.match(actorSheet, /format\("GUM\.Combat\.Wounds\.OriginLine"/);
+  assert.match(actorSheet, /format\("GUM\.Combat\.Wounds\.LocationLine"/);
+  assert.match(actorSheet, /format\("GUM\.Combat\.Wounds\.NotesLine"/);
   assert.match(actorSheet, /woundTooltip: tooltipLines\.join\("\\n"\)/);
 });
 
@@ -60,11 +62,11 @@ test("combat meters use compact cards with unrestricted controls, reference, DR 
   assert.match(meterSection, /combat-meter-card-header[\s\S]+combat-meter-name/);
   assert.match(meterSection, /adjust-combat-meter combat-meter-adjust[^>]+data-adjustment="-1"/);
   assert.match(meterSection, /adjust-combat-meter combat-meter-adjust[^>]+data-adjustment="1"/);
-  assert.match(meterSection, /ref\. <strong>{{this\.meter\.max}}<\/strong>[\s\S]+RD <strong>{{this\.meter\.dr}}<\/strong>/);
+  assert.match(meterSection, /GUM\.Combat\.Meters\.ReferenceAbbrev[\s\S]+GUM\.Combat\.Meters\.ResistanceAbbrev/);
   assert.match(meterSection, /edit-combat-meter gum-action-menu__item/);
   assert.match(meterSection, /delete-combat-meter gum-action-menu__item is-danger/);
   assert.doesNotMatch(meterSection, /meter\.hidden|show-hidden-meters|hide-combat-meter|meter-inputs/);
-  assert.match(meterPrompt, /Valor de Referência/);
+  assert.match(meterPrompt, /GUM\.Combat\.Meters\.ReferenceValue/);
   assert.match(meterPrompt, /name="dr"[^>]+min="0"/);
   assert.match(meterPrompt, /name="current" value="\$\{data\.current \?\? 0}"\/>/);
   assert.doesNotMatch(meterPrompt, /name="hidden"|Ocultar na ficha/);
@@ -72,4 +74,23 @@ test("combat meters use compact cards with unrestricted controls, reference, DR 
   assert.match(meterAdjust, /const value = current \+ adjustment/);
   assert.doesNotMatch(meterAdjust, /Math\.max|Math\.min/);
   assert.match(styles, /\.combat-meter-grid \{ display:grid; grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+});
+
+test("combat tab and its auxiliary dialogs are localized in both languages", () => {
+  const requiredKeys = [
+    "GUM.Combat.Tab",
+    "GUM.Combat.Control",
+    "GUM.Combat.Actions",
+    "GUM.Combat.DR.DialogTitle",
+    "GUM.Combat.Wounds.EditorHeading",
+    "GUM.Combat.Meters.EditorHeading",
+    "GUM.Combat.Favorites.Title",
+    "GUM.Combat.Attacks.RollAttack",
+    "GUM.Combat.BasicDamage.EditTitle",
+  ];
+
+  for (const key of requiredKeys) {
+    assert.ok(en[key], `missing English localization for ${key}`);
+    assert.ok(pt[key], `missing Portuguese localization for ${key}`);
+  }
 });
