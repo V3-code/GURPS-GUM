@@ -21,9 +21,23 @@ test("spell cards use isolated compact markup while powers retain the legacy car
 
 test("collapsed spell cards form a responsive two-column grid", () => {
   assert.match(styles, /\.tab\[data-tab="spells"\] \.magic-card-grid\s*\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\);/s);
-  assert.match(styles, /\.tab\[data-tab="spells"\] \.magic-card__main\s*\{[^}]*grid-template-columns:28px minmax\(78px,1fr\)/s);
+  assert.match(styles, /\.tab\[data-tab="spells"\] \.magic-card__main\s*\{[^}]*grid-template-columns:28px minmax\(120px,1fr\) 34px minmax\(58px,78px\) 18px 18px;/s);
   assert.match(styles, /\.magic-card\.is-expanded\s*\{\s*grid-column:1 \/ -1;/s);
   assert.match(styles, /@media \(max-width:760px\)[\s\S]*\.magic-card-grid\s*\{\s*grid-template-columns:1fr;/s);
+});
+
+test("time and mana share the subtitle so the spell name keeps the flexible column", () => {
+  assert.match(spellTab, /magic-card__identity-meta[\s\S]*magic-card__identity-source[\s\S]*GUM\.Spells\.Time[\s\S]*GUM\.Spells\.Mana/);
+  assert.doesNotMatch(spellTab, /class="magic-card__metric magic-card__(?:time|mana)"/);
+  assert.match(styles, /\.magic-card__identity-meta\s*\{[^}]*display:flex;/s);
+});
+
+test("primary damage signals secondary damage and attack level uses a subtle tag", () => {
+  assert.match(actorSheet, /magicCardAdditionalDamageMarkers = "\+"\.repeat\(additionalDamageLabels\.length\)/);
+  assert.match(spellTab, /magic-card__additional-damage/);
+  assert.match(spellTab, /rollable magic-card__attack-level-tag/);
+  assert.match(styles, /\.magic-card__additional-damage\s*\{/);
+  assert.match(styles, /\.magic-card__attack-level-tag\s*\{[^}]*border:[^}]*background:/s);
 });
 
 test("spell rows preserve rolls, quick view, item actions, and drag behavior", () => {

@@ -696,7 +696,13 @@ async getData(options) {
             const identityParts = [system.source, system.spell_class, system.spell_school, system.usage_type]
                 .map(value => String(value || '').trim())
                 .filter(Boolean);
+            const additionalDamageLabels = [
+                damage.follow_up_damage?.formula ? game.i18n.localize("GUM.Spells.FollowUpDamage") : null,
+                damage.fragmentation_damage?.formula ? game.i18n.localize("GUM.Spells.FragmentationDamage") : null
+            ].filter(Boolean);
             spell.magicCardIdentity = identityParts.join(' · ');
+            spell.magicCardAdditionalDamageMarkers = "+".repeat(additionalDamageLabels.length);
+            spell.magicCardAdditionalDamageHint = additionalDamageLabels.join(" + ");
             spell.magicCardHasDetails = Boolean(
                 system.uses_attack
                 || damage.formula

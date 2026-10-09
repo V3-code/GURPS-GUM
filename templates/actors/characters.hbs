@@ -822,18 +822,12 @@
                   <img class="magic-card__icon" src="{{this.img}}" alt="{{this.name}}">
 
                   <div class="magic-card__identity">
-                    <h4 class="magic-card__name item-quick-view" title="{{localize 'GUM.Spells.View'}}">{{this.name}}</h4>
-                    <div class="magic-card__identity-meta">{{this.magicCardIdentity}}</div>
-                  </div>
-
-                  <div class="magic-card__metric magic-card__time" title="{{localize 'GUM.Spells.TimeHint'}}">
-                    <span class="magic-card__metric-label">{{localize 'GUM.Spells.Time'}}</span>
-                    <span class="magic-card__metric-value">{{this.system.casting_time}} · {{this.system.duration}}</span>
-                  </div>
-
-                  <div class="magic-card__metric magic-card__mana" title="{{localize 'GUM.Spells.ManaHint'}}">
-                    <span class="magic-card__metric-label">{{localize 'GUM.Spells.Mana'}}</span>
-                    <span class="magic-card__metric-value">{{this.system.mana_cost}} / {{this.system.mana_maint}}</span>
+                    <h4 class="magic-card__name item-quick-view" title="{{this.name}} — {{localize 'GUM.Spells.View'}}">{{this.name}}</h4>
+                    <div class="magic-card__identity-meta">
+                      {{#if this.magicCardIdentity}}<span class="magic-card__identity-source">{{this.magicCardIdentity}}</span>{{/if}}
+                      <span class="magic-card__identity-stat" title="{{localize 'GUM.Spells.TimeHint'}}"><strong>{{localize 'GUM.Spells.Time'}}</strong> {{this.system.casting_time}} · {{this.system.duration}}</span>
+                      <span class="magic-card__identity-stat" title="{{localize 'GUM.Spells.ManaHint'}}"><strong>{{localize 'GUM.Spells.Mana'}}</strong> {{this.system.mana_cost}} / {{this.system.mana_maint}}</span>
+                    </div>
                   </div>
 
                   <div class="magic-card__metric magic-card__nh">
@@ -843,7 +837,7 @@
 
                   <div class="magic-card__metric magic-card__damage">
                     <span class="magic-card__metric-label">{{localize 'GUM.Spells.Damage'}}</span>
-                    {{#if this.system.damage.formula}}<a class="rollable-damage magic-card__metric-value" title="{{localize 'GUM.Spells.RollDamage'}}" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}</a>{{/if}}
+                    {{#if this.system.damage.formula}}<div class="magic-card__damage-value"><a class="rollable-damage magic-card__metric-value" title="{{localize 'GUM.Spells.RollDamage'}}" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}</a>{{#if this.magicCardAdditionalDamageMarkers}}<sup class="magic-card__additional-damage" title="{{this.magicCardAdditionalDamageHint}}" aria-label="{{this.magicCardAdditionalDamageHint}}">{{this.magicCardAdditionalDamageMarkers}}</sup>{{/if}}</div>{{/if}}
                   </div>
 
                   {{#if this.magicCardHasDetails}}
@@ -871,7 +865,7 @@
                     <div class="magic-card__detail-values">
                       <span><strong>{{localize 'GUM.Spells.Type'}}</strong>{{#if (eq this.system.attack_type 'melee')}}{{localize 'GUM.Spells.Melee'}}{{else}}{{localize 'GUM.Spells.Ranged'}}{{/if}}</span>
                       <span><strong>{{localize 'GUM.Spells.Skill'}}</strong>{{#if this.system.attack_roll.resolved_skill_name}}{{this.system.attack_roll.resolved_skill_name}}{{else}}{{this.system.attack_roll.skill_name}}{{/if}}</span>
-                      {{#if this.system.attack_nh}}<a class="rollable" data-type="attack" data-attack-type="{{this.system.attack_type}}" data-attribute-key="{{this.system.attack_roll.skill_name}}" data-roll-value="{{this.system.attack_nh}}" data-label="{{localize 'GUM.Spells.AttackTest' name=this.name}}" data-item-id="{{this.id}}"><strong>{{localize 'GUM.Spells.SkillLevel'}}</strong>{{this.system.attack_nh}}</a>{{/if}}
+                      {{#if this.system.attack_nh}}<a class="rollable magic-card__attack-level-tag" data-type="attack" data-attack-type="{{this.system.attack_type}}" data-attribute-key="{{this.system.attack_roll.skill_name}}" data-roll-value="{{this.system.attack_nh}}" data-label="{{localize 'GUM.Spells.AttackTest' name=this.name}}" data-item-id="{{this.id}}"><strong>{{localize 'GUM.Spells.SkillLevel'}}</strong>{{this.system.attack_nh}}</a>{{/if}}
                       {{#if (eq this.system.attack_type 'melee')}}
                         {{#if this.system.attack_roll.reach}}<span><strong>{{localize 'GUM.Spells.Reach'}}</strong>{{this.system.attack_roll.reach}}</span>{{/if}}
                         {{#if this.system.attack_roll.parry}}<span><strong>{{localize 'GUM.Spells.Parry'}}</strong>{{this.system.attack_roll.parry}}</span>{{/if}}
