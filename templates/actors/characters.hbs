@@ -924,26 +924,26 @@
     {{! ========================================================= }}
     {{!  ABA DE PODERES (ESTRUTURA REFINADA E PADRONIZADA)        }}
     {{! ========================================================= }}
-    <div class="tab" data-group="primary" data-tab="powers">
+    <div class="tab powers-tab" data-group="primary" data-tab="powers">
 
  <div class="spells-tab-layout spells-tab-layout--stacked">
 
       <div class="skills-header-tools">
         <div class="skills-search-wrapper">
           <i class="fas fa-search"></i>
-          <input type="text" class="power-search-input" placeholder="Buscar poder..." autocomplete="off">
+          <input type="text" class="power-search-input" placeholder="{{localize 'GUM.Powers.SearchPlaceholder'}}" aria-label="{{localize 'GUM.Powers.SearchLabel'}}" autocomplete="off">
         </div>
 
         <div class="skills-header-buttons">
                     <div class="gum-action-menu js-action-menu support-add-menu">
-            <a class="support-add-menu__toggle gum-action-menu__toggle js-action-menu-toggle" title="Adicionar à aba Poderes" aria-label="Adicionar à aba Poderes" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-plus"></i> Adicionar</a>
-            <div class="gum-action-menu__panel js-action-menu-panel support-add-menu__panel" role="menu" aria-label="Adicionar à aba Poderes">
-              <a class="gum-action-menu__item create-primary-item" data-type="power" role="menuitem"><i class="fas fa-wand-magic-sparkles"></i><span><strong>Novo poder</strong><small>Criar um poder na ficha</small></span></a>
-              <a class="gum-action-menu__item add-power-source" role="menuitem"><i class="fas fa-link"></i><span><strong>Vincular fonte</strong><small>Usar uma vantagem ou desvantagem</small></span></a>
-              <a class="gum-action-menu__item add-energy-reserve" data-reserve-type="power" role="menuitem"><i class="fas fa-battery-three-quarters"></i><span><strong>Criar reserva</strong><small>Adicionar energia para poderes</small></span></a>
+            <a class="support-add-menu__toggle gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Powers.AddTitle'}}" aria-label="{{localize 'GUM.Powers.AddTitle'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-plus"></i> {{localize 'GUM.Powers.Add'}}</a>
+            <div class="gum-action-menu__panel js-action-menu-panel support-add-menu__panel" role="menu" aria-label="{{localize 'GUM.Powers.AddTitle'}}">
+              <a class="gum-action-menu__item create-primary-item" data-type="power" role="menuitem"><i class="fas fa-wand-magic-sparkles"></i><span><strong>{{localize 'GUM.Powers.New'}}</strong><small>{{localize 'GUM.Powers.NewHint'}}</small></span></a>
+              <a class="gum-action-menu__item add-power-source" role="menuitem"><i class="fas fa-link"></i><span><strong>{{localize 'GUM.Powers.LinkSource'}}</strong><small>{{localize 'GUM.Powers.LinkSourceHint'}}</small></span></a>
+              <a class="gum-action-menu__item add-energy-reserve" data-reserve-type="power" role="menuitem"><i class="fas fa-battery-three-quarters"></i><span><strong>{{localize 'GUM.Powers.CreateReserve'}}</strong><small>{{localize 'GUM.Powers.CreateReserveHint'}}</small></span></a>
             </div>
           </div>
-          <a class="sort-control" data-item-type="power" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
+          <a class="sort-control" data-item-type="power" title="{{localize 'GUM.Powers.Sort'}}"><i class="fas fa-sort-alpha-down"></i></a>
         </div>
       </div>
 
@@ -999,106 +999,118 @@
       </section>
       {{/if}}
 
-      {{!-- LISTA DE PODERES (AGRUPADA EM BLOCOS / PADRÃO LISTA DE ATAQUES) --}}
-
-      <div class="spell-groups-grid">
+      {{!-- Lista compacta de poderes, usando o mesmo componente visual das magias. --}}
+      <div class="magic-groups power-groups">
       {{#each powerGroupsKeys as |groupName|}}
           {{#with (lookup ../powersByGroup groupName) as |powers|}}
-          <details class="attack-group-details gum-unified-section spell-group-box" data-group-id="power-group-{{groupName}}" {{collapsibleState (concat "power-group-" groupName) @root.collapsedData}}>
-            <summary class="group-summary gum-unified-header">
-              <div class="summary-left">
+          <details class="magic-group power-group" data-group-id="power-group-{{groupName}}" {{collapsibleState (concat "power-group-" groupName) @root.collapsedData}}>
+            <summary class="magic-group__header">
+              <div class="magic-group__identity">
                 <i class="fas fa-chevron-right indicator"></i>
                 <i class="fas fa-bolt item-icon"></i>
                 <span class="group-name">{{groupName}}</span>
               </div>
-              <div class="summary-right">
-                <span class="group-tag pw">{{powers.length}} Poderes</span>
-              </div>
+              <span class="magic-group__count">{{localize 'GUM.Powers.Count' count=powers.length}}</span>
             </summary>
 
-            <div class="group-content">
-            <div class="spell-list-v2 grouped attack-style">
+            <div class="magic-card-grid power-card-grid">
               {{#each powers}}
-              <div class="item-wrapper item spell-row-v3 spell-card-two-line" data-item-id="{{this.id}}" draggable="true">
-                <div class="spell-card-primary">
-                  <img class="spell-thumb" src="{{this.img}}" alt="{{this.name}}">
+              <article class="item-wrapper item magic-card power-card{{#if this.powerCardExpanded}} is-expanded{{/if}}" data-item-id="{{this.id}}" draggable="true">
+                <div class="magic-card__main">
+                  <img class="magic-card__icon" src="{{this.img}}" alt="{{this.name}}">
 
-                  <div class="spell-name-stack">
-                    <h4 class="spell-name item-quick-view" title="Visualizar Card">{{this.name}}</h4>
-                    <div class="spell-school-line">{{this.system.source}} · {{this.system.spell_class}}</div>
-                  </div>
-
-                  <div class="spell-primary-stats">
-                    <div class="spell-meta-cell spell-pill-stat">
-                      <span class="spell-meta-label">NH</span>
-                      <a class="rollable spell-meta-value" data-type="power" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
-                    </div>
-
-                    {{#if this.system.uses_attack}}
-                    <div class="spell-meta-cell spell-pill-stat attack">
-                      <span class="spell-meta-label">Atq</span>
-                      {{#if this.system.attack_nh}}
-                      <a class="rollable spell-meta-value" data-type="attack" data-attack-type="{{this.system.attack_type}}" data-attribute-key="{{this.system.attack_roll.skill_name}}" data-roll-value="{{this.system.attack_nh}}" data-label="Ataque de {{this.name}}" data-item-id="{{this.id}}" title="{{this.system.attack_roll.resolved_skill_name}}">{{this.system.attack_nh}}</a>
-                      {{else}}
-                      <span class="spell-meta-value" title="Configure uma perícia de ataque no poder.">—</span>
-                      {{/if}}
-                    </div>
-                    {{/if}}
-
-                    <div class="spell-meta-cell spell-pill-stat damage">
-                      <span class="spell-meta-label">Dano</span>
-                      {{#if this.system.damage.formula}}
-                      <a class="rollable-damage spell-meta-value" title="Rolar Dano" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}{{#if this.system.damage.scaling}} ({{this.system.damage.scaling}}){{/if}}</a>
-                      {{else}}
-                      <span class="spell-meta-value">—</span>
-                      {{/if}}
+                  <div class="magic-card__identity">
+                    <h4 class="magic-card__name item-quick-view" title="{{this.name}} — {{localize 'GUM.Powers.View'}}">{{this.name}}</h4>
+                    <div class="magic-card__identity-meta">{{this.powerCardIdentity}}</div>
+                    <div class="magic-card__identity-mechanics">
+                      <span class="magic-card__identity-stat" title="{{localize 'GUM.Powers.TimeHint'}}"><strong>{{localize 'GUM.Powers.Time'}}</strong> {{this.system.activation_time}} · {{this.system.duration}}</span>
+                      <span class="magic-card__identity-stat" title="{{localize 'GUM.Powers.CostHint'}}"><strong>{{localize 'GUM.Powers.Cost'}}</strong> {{this.system.activation_cost}} / {{this.system.maint_cost}}</span>
                     </div>
                   </div>
 
-                  <div class="item-controls spell-controls-row">
+                  <div class="magic-card__metric magic-card__nh">
+                    <span class="magic-card__metric-label">{{localize 'GUM.Spells.SkillLevel'}}</span>
+                    <a class="rollable magic-card__metric-value" data-type="power" data-roll-value="{{this.system.final_nh}}" data-label="{{localize 'GUM.Powers.Test' name=this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
+                  </div>
+
+                  <div class="magic-card__metric magic-card__damage">
+                    <span class="magic-card__metric-label">{{localize 'GUM.Spells.Damage'}}</span>
+                    {{#if this.system.damage.formula}}<div class="magic-card__damage-value"><a class="rollable-damage magic-card__metric-value" title="{{localize 'GUM.Spells.RollDamage'}}" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}</a>{{#if this.powerCardAdditionalDamageMarkers}}<sup class="magic-card__additional-damage" title="{{this.powerCardAdditionalDamageHint}}" aria-label="{{this.powerCardAdditionalDamageHint}}">{{this.powerCardAdditionalDamageMarkers}}</sup>{{/if}}</div>{{/if}}
+                  </div>
+
+                  <button type="button" class="magic-card__expand" title="{{#if this.powerCardExpanded}}{{localize 'GUM.Powers.CollapseDetails'}}{{else}}{{localize 'GUM.Powers.ExpandDetails'}}{{/if}}" aria-label="{{#if this.powerCardExpanded}}{{localize 'GUM.Powers.CollapseDetails'}}{{else}}{{localize 'GUM.Powers.ExpandDetails'}}{{/if}}" aria-expanded="{{#if this.powerCardExpanded}}true{{else}}false{{/if}}"><i class="fas {{#if this.powerCardExpanded}}fa-compress-arrows-alt{{else}}fa-expand-arrows-alt{{/if}}"></i></button>
+
+                  <div class="item-controls magic-card__controls">
                     <div class="gum-action-menu js-action-menu">
-                      <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções do poder" aria-label="Opções do poder" role="button" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-ellipsis-v"></i>
-                      </a>
-                      <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações do poder">
-                        <a class="item-control item-quick-view gum-action-menu__item" role="menuitem" title="Visualizar Card"><i class="fas fa-eye"></i><span>Visualizar Card</span></a>
-                        <a class="item-control item-edit gum-action-menu__item" role="menuitem" title="{{localize 'GUM.Inventory.Edit'}}"><i class="fas fa-edit"></i><span>Editar</span></a>
-                        <a class="item-control item-delete gum-action-menu__item is-danger" role="menuitem" title="Deletar"><i class="fas fa-trash"></i><span>Deletar</span></a>
+                      <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Inventory.Options'}}" aria-label="{{localize 'GUM.Inventory.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+                      <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Inventory.Options'}}">
+                        <a class="item-control item-quick-view gum-action-menu__item" data-item-id="{{this.id}}" role="menuitem"><i class="fas fa-eye"></i><span>{{localize 'GUM.Powers.View'}}</span></a>
+                        <a class="item-control item-edit gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{localize 'GUM.Inventory.Edit'}}</span></a>
+                        <a class="item-control item-delete gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>{{localize 'GUM.Inventory.Delete'}}</span></a>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div class="spell-card-secondary">
-                  <span><strong>Ativ.</strong> {{this.system.activation_time}}</span>
-                  <span><strong>Duração</strong> {{this.system.duration}}</span>
-                  <span><strong>Custo</strong> {{this.system.activation_cost}}</span>
-                  <span><strong>Mant.</strong> {{this.system.maint_cost}}</span>
-                  <span><strong>Pts</strong> {{characteristicPoints this}}{{#if (eq this.system.cost_paid "alternative")}} alt{{/if}}</span>
+                <div class="magic-card__details" {{#unless this.powerCardExpanded}}hidden{{/unless}}>
                   {{#if this.system.uses_attack}}
-                  <span class="spell-attack-source"><strong>Perícia</strong> {{#if this.system.attack_roll.resolved_skill_name}}{{this.system.attack_roll.resolved_skill_name}}{{else}}{{this.system.attack_roll.skill_name}}{{/if}}</span>
+                  <section class="magic-card__detail-branch magic-card__detail-branch--attack">
+                    <h5><i class="fas fa-crosshairs"></i>{{localize 'GUM.Spells.Attack'}}</h5>
+                    <div class="magic-card__detail-values">
+                      <span><strong>{{localize 'GUM.Spells.Type'}}</strong>{{#if (eq this.system.attack_type 'melee')}}{{localize 'GUM.Spells.Melee'}}{{else}}{{localize 'GUM.Spells.Ranged'}}{{/if}}</span>
+                      <span><strong>{{localize 'GUM.Spells.Skill'}}</strong>{{#if this.system.attack_roll.resolved_skill_name}}{{this.system.attack_roll.resolved_skill_name}}{{else}}{{this.system.attack_roll.skill_name}}{{/if}}</span>
+                      {{#if this.system.attack_nh}}<a class="rollable magic-card__attack-level-tag" data-type="attack" data-attack-type="{{this.system.attack_type}}" data-attribute-key="{{this.system.attack_roll.skill_name}}" data-roll-value="{{this.system.attack_nh}}" data-label="{{localize 'GUM.Powers.AttackTest' name=this.name}}" data-item-id="{{this.id}}"><strong>{{localize 'GUM.Spells.SkillLevel'}}</strong>{{this.system.attack_nh}}</a>{{/if}}
+                      {{#if (eq this.system.attack_type 'melee')}}
+                        {{#if this.system.attack_roll.reach}}<span><strong>{{localize 'GUM.Spells.Reach'}}</strong>{{this.system.attack_roll.reach}}</span>{{/if}}
+                        {{#if this.system.attack_roll.parry}}<span><strong>{{localize 'GUM.Spells.Parry'}}</strong>{{this.system.attack_roll.parry}}</span>{{/if}}
+                      {{else}}
+                        {{#if this.system.attack_roll.accuracy}}<span><strong>{{localize 'GUM.Spells.Accuracy'}}</strong>{{this.system.attack_roll.accuracy}}</span>{{/if}}
+                        {{#if this.system.attack_roll.range}}<span><strong>{{localize 'GUM.Spells.Range'}}</strong>{{this.system.attack_roll.range}}</span>{{/if}}
+                        {{#if this.system.attack_roll.rof}}<span><strong>{{localize 'GUM.Spells.RateOfFire'}}</strong>{{this.system.attack_roll.rof}}</span>{{/if}}
+                        {{#if this.system.attack_roll.shots}}<span><strong>{{localize 'GUM.Spells.Shots'}}</strong>{{this.system.attack_roll.shots}}</span>{{/if}}
+                        {{#if this.system.attack_roll.bulk}}<span><strong>{{localize 'GUM.Spells.Bulk'}}</strong>{{this.system.attack_roll.bulk}}</span>{{/if}}
+                        {{#if this.system.attack_roll.rcl}}<span><strong>{{localize 'GUM.Spells.Recoil'}}</strong>{{this.system.attack_roll.rcl}}</span>{{/if}}
+                      {{/if}}
+                      {{#if this.system.attack_roll.min_strength}}<span><strong>{{localize 'GUM.Spells.MinimumStrength'}}</strong>{{this.system.attack_roll.min_strength}}</span>{{/if}}
+                    </div>
+                  </section>
                   {{/if}}
-                  {{#if this.system.damage.follow_up_damage.formula}}
-                  <span class="spell-damage-extra"><strong>FU</strong> {{this.system.damage.follow_up_damage.formula}} {{this.system.damage.follow_up_damage.type}}{{#if this.system.damage.follow_up_damage.scaling}} ({{this.system.damage.follow_up_damage.scaling}}){{/if}}</span>
+
+                  {{#if this.system.damage.formula}}
+                  <section class="magic-card__detail-branch magic-card__detail-branch--damage">
+                    <h5><i class="fas fa-burst"></i>{{localize 'GUM.Spells.Damage'}}</h5>
+                    <div class="magic-card__detail-values">
+                      <a class="rollable-damage" data-item-id="{{this.id}}"><strong>{{localize 'GUM.Spells.PrimaryDamage'}}</strong>{{this.system.damage.formula}} {{this.system.damage.type}}{{#if this.system.damage.nature}} · {{this.system.damage.nature}}{{/if}}{{#if (gt this.system.damage.armor_divisor 1)}} · ÷{{this.system.damage.armor_divisor}}{{/if}}{{#if this.system.damage.scaling}} · {{this.system.damage.scaling}}{{/if}}</a>
+                      {{#if this.system.damage.follow_up_damage.formula}}<span><strong>{{localize 'GUM.Spells.FollowUpDamage'}}</strong>{{this.system.damage.follow_up_damage.formula}} {{this.system.damage.follow_up_damage.type}}{{#if this.system.damage.follow_up_damage.nature}} · {{this.system.damage.follow_up_damage.nature}}{{/if}}{{#if this.system.damage.follow_up_damage.scaling}} · {{this.system.damage.follow_up_damage.scaling}}{{/if}}</span>{{/if}}
+                      {{#if this.system.damage.fragmentation_damage.formula}}<span><strong>{{localize 'GUM.Spells.FragmentationDamage'}}</strong>{{this.system.damage.fragmentation_damage.formula}} {{this.system.damage.fragmentation_damage.type}}{{#if this.system.damage.fragmentation_damage.nature}} · {{this.system.damage.fragmentation_damage.nature}}{{/if}}{{#if this.system.damage.fragmentation_damage.scaling}} · {{this.system.damage.fragmentation_damage.scaling}}{{/if}}</span>{{/if}}
+                    </div>
+                  </section>
                   {{/if}}
-                  {{#if this.system.damage.fragmentation_damage.formula}}
-                  <span class="spell-damage-extra"><strong>FR</strong> {{this.system.damage.fragmentation_damage.formula}} {{this.system.damage.fragmentation_damage.type}}{{#if this.system.damage.fragmentation_damage.scaling}} ({{this.system.damage.fragmentation_damage.scaling}}){{/if}}</span>
-                  {{/if}}
+
+                  <section class="magic-card__detail-branch magic-card__detail-branch--resolution">
+                    <h5><i class="fas fa-clipboard-check"></i>{{localize 'GUM.Powers.Configuration'}}</h5>
+                    <div class="magic-card__detail-values">
+                      <span><strong>{{localize 'GUM.Powers.Points'}}</strong>{{characteristicPoints this}}{{#if (eq this.system.cost_paid "alternative")}} {{localize 'GUM.Powers.Alternative'}}{{/if}}</span>
+                      {{#if this.system.resistance}}<span><strong>{{localize 'GUM.Spells.Resistance'}}</strong>{{this.system.resistance}}</span>{{/if}}
+                      {{#if this.system.requires_concentration}}<span><i class="fas fa-brain"></i> {{localize 'GUM.Spells.RequiresConcentration'}}</span>{{/if}}
+                      {{#if this.system.effect}}<span class="magic-card__effect"><strong>{{localize 'GUM.Spells.Effect'}}</strong>{{this.system.effect}}</span>{{/if}}
+                    </div>
+                  </section>
                 </div>
-              </div>
+              </article>
               {{/each}}
-            </div>
             </div>
           </details>
           {{/with}}
         {{/each}}
 
         {{#unless powerGroupsKeys}}
-        <div class="empty-placeholder" style="text-align:center; padding:20px; color:#666;">
-          <p>Nenhum poder adicionado.</p>
+        <div class="empty-placeholder magic-empty">
+          <p>{{localize 'GUM.Powers.Empty'}}</p>
         </div>
         {{/unless}}
       </div>
+      <div class="power-search-empty magic-search-empty" hidden>{{localize 'GUM.Powers.NoSearchResults'}}</div>
 
     </div>
     </div>

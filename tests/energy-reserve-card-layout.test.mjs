@@ -12,7 +12,7 @@ function templateSection(start, end) {
 
 test("spell and power support records share a compact two-column grid", () => {
   const spellSection = templateSection('{{#if spellSupportCount}}', "{{!-- Lista compacta de magias");
-  const powerSection = templateSection('{{#if powerSupportCount}}', "{{!-- LISTA DE PODERES");
+  const powerSection = templateSection('{{#if powerSupportCount}}', "{{!-- Lista compacta de poderes");
 
   assert.match(spellSection, /support-card-grid--spell/);
   assert.match(spellSection, /{{#each castingAbilities}}[\s\S]+{{#each spellReserves}}/);

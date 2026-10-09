@@ -11,17 +11,18 @@ const en = JSON.parse(readFileSync(new URL("../lang/en.json", import.meta.url), 
 const spellTab = template.slice(template.indexOf('data-tab="spells"'), template.indexOf("ABA DE PODERES"));
 const powerTab = template.slice(template.indexOf('data-tab="powers"'), template.indexOf("ABA DE COMBATE"));
 
-test("spell cards use isolated compact markup while powers retain the legacy card", () => {
+test("spell cards use the shared compact ability-card markup", () => {
   assert.match(spellTab, /class="item-wrapper item magic-card/);
   assert.match(spellTab, /class="magic-card__main"/);
   assert.match(spellTab, /class="magic-card__details"/);
   assert.doesNotMatch(spellTab, /spell-row-v3|spell-card-two-line|spell-card-primary|spell-card-secondary|spell-list-v2/);
-  assert.match(powerTab, /spell-row-v3 spell-card-two-line/);
+  assert.match(powerTab, /class="item-wrapper item magic-card power-card/);
+  assert.doesNotMatch(powerTab, /spell-row-v3|spell-card-two-line|spell-card-primary|spell-card-secondary|spell-list-v2/);
 });
 
 test("collapsed spell cards form a responsive two-column grid", () => {
-  assert.match(styles, /\.tab\[data-tab="spells"\] \.magic-card-grid\s*\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\);/s);
-  assert.match(styles, /\.tab\[data-tab="spells"\] \.magic-card__main\s*\{[^}]*grid-template-columns:28px minmax\(120px,1fr\) 34px minmax\(58px,78px\) 18px 18px;/s);
+  assert.match(styles, /:is\(\.tab\[data-tab="spells"\], \.tab\[data-tab="powers"\]\) \.magic-card-grid\s*\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\);/s);
+  assert.match(styles, /:is\(\.tab\[data-tab="spells"\], \.tab\[data-tab="powers"\]\) \.magic-card__main\s*\{[^}]*grid-template-columns:28px minmax\(120px,1fr\) 34px minmax\(58px,78px\) 18px 18px;/s);
   assert.match(styles, /\.magic-card\.is-expanded\s*\{\s*grid-column:1 \/ -1;/s);
   assert.match(styles, /@media \(max-width:760px\)[\s\S]*\.magic-card-grid\s*\{\s*grid-template-columns:1fr;/s);
 });

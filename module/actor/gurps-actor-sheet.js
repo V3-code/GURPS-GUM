@@ -120,6 +120,7 @@ _getContainerDescendants(containerId, acc = []) {
 async getData(options) {
         const context = await super.getData(options);
         this._expandedSpellCards ??= new Set();
+        this._expandedPowerCards ??= new Set();
         
         const profileId = this.actor.system.combat?.body_profile || "humanoid";
         const profile = getBodyProfile(profileId);
@@ -739,6 +740,20 @@ async getData(options) {
         const powersByGroup = {};
 
         powers.forEach((power) => {
+            const system = power.system || {};
+            const damage = system.damage || {};
+            const identityParts = [system.source, system.spell_class, system.usage_type]
+                .map(value => String(value || '').trim())
+                .filter(Boolean);
+            const additionalDamageLabels = [
+                damage.follow_up_damage?.formula ? game.i18n.localize("GUM.Spells.FollowUpDamage") : null,
+                damage.fragmentation_damage?.formula ? game.i18n.localize("GUM.Spells.FragmentationDamage") : null
+            ].filter(Boolean);
+            power.powerCardIdentity = identityParts.join(' · ');
+            power.powerCardAdditionalDamageMarkers = "+".repeat(additionalDamageLabels.length);
+            power.powerCardAdditionalDamageHint = additionalDamageLabels.join(" + ");
+            power.powerCardHasDetails = true;
+            power.powerCardExpanded = this._expandedPowerCards.has(power.id);
             let groupName = (power.system.group || 'Geral').trim();
             if (!groupName) groupName = 'Geral';
             if (!powersByGroup[groupName]) powersByGroup[groupName] = [];
@@ -2301,7 +2316,9 @@ html.on('click', '.magic-card__expand', (ev) => {
 
   const itemId = card.dataset.itemId;
   const expanded = button.getAttribute('aria-expanded') !== 'true';
-  const label = game.i18n.localize(expanded ? 'GUM.Spells.CollapseDetails' : 'GUM.Spells.ExpandDetails');
+  const isPower = card.classList.contains('power-card');
+  const localizationRoot = isPower ? 'GUM.Powers' : 'GUM.Spells';
+  const label = game.i18n.localize(`${localizationRoot}.${expanded ? 'CollapseDetails' : 'ExpandDetails'}`);
 
   card.classList.toggle('is-expanded', expanded);
   card.querySelector('.magic-card__details')?.toggleAttribute('hidden', !expanded);
@@ -2311,9 +2328,11 @@ html.on('click', '.magic-card__expand', (ev) => {
   button.querySelector('i')?.classList.toggle('fa-expand-arrows-alt', !expanded);
   button.querySelector('i')?.classList.toggle('fa-compress-arrows-alt', expanded);
 
-  this._expandedSpellCards ??= new Set();
-  if (expanded) this._expandedSpellCards.add(itemId);
-  else this._expandedSpellCards.delete(itemId);
+  const expandedCards = isPower
+    ? (this._expandedPowerCards ??= new Set())
+    : (this._expandedSpellCards ??= new Set());
+  if (expanded) expandedCards.add(itemId);
+  else expandedCards.delete(itemId);
 });
 
 // Busca de poderes
@@ -2322,7 +2341,8 @@ html.find(".power-search-input").on("input", (ev) => {
   const term = rawTerm.toLowerCase().trim();
   this._tabSearchState.powers = rawTerm;
   const tab = $(ev.currentTarget).closest('.tab[data-tab="powers"]');
-  applyGroupedItemSearch(tab, term, '.spell-school-line');
+  applyGroupedItemSearch(tab, term, '.magic-card__identity');
+  tab.find('.power-search-empty').prop('hidden', tab.find('.power-card[data-search-match="1"]').length > 0 || !term);
 });
 
 const spellSearchInput = html.find('.spell-search-input');
