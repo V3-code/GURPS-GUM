@@ -9708,6 +9708,7 @@ background-color: var(--gum-accent-gold);
     font-size: 10px;
 }
 .gum.sheet.actor .skills-tab .st-controls .item-control:hover { color: #f0d79f; transform: none; }
+.gum.sheet.actor .skills-tab .st-controls .gum-action-menu { margin-left: auto; }
 .gum.sheet.actor .skills-tab .st-control-actions { gap: 7px; }
 .gum.sheet.actor .skills-tab .st-control-actions .item-delete:hover { color: #e07a7a; }
 .gum.sheet.actor .skills-tab .gum-action-menu__toggle {
@@ -10260,9 +10261,13 @@ background-color: var(--gum-accent-gold);
     line-height: 1.15;
 }
 .gum.sheet.actor .characteristics-tab .characteristic-card .characteristic-kind + .characteristic-kind::before,
-.gum.sheet.actor .characteristics-tab .characteristic-card .characteristic-kind + .card-cr::before,
 .gum.sheet.actor .characteristics-tab .characteristic-card .characteristic-kind + .card-points::before,
 .gum.sheet.actor .characteristics-tab .characteristic-card .card-cr + .card-points::before { content: " · "; }
+.gum.sheet.actor .characteristics-tab .characteristic-card .characteristic-kind.advantage,
+.gum.sheet.actor .characteristics-tab .characteristic-card.advantage .card-points { color: rgba(185,235,208,.76); }
+.gum.sheet.actor .characteristics-tab .characteristic-card .characteristic-kind.disadvantage,
+.gum.sheet.actor .characteristics-tab .characteristic-card.disadvantage .card-points { color: rgba(241,184,184,.78); }
+.gum.sheet.actor .characteristics-tab .characteristic-card .characteristic-kind.racial { color: rgba(208,235,255,.78); }
 .gum.sheet.actor .characteristics-tab .characteristic-card .item-controls {
     width: 100%;
     min-height: 16px;
@@ -10272,6 +10277,22 @@ background-color: var(--gum-accent-gold);
     flex: none;
     justify-content: flex-start;
 }
+.gum.sheet.actor .characteristics-tab .characteristic-card .item-controls .card-cr {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: rgba(185,212,235,.62);
+    font-family: var(--gum-font-condensed);
+    font-size: 9px;
+    line-height: 1.15;
+    text-decoration: none;
+}
+.gum.sheet.actor .characteristics-tab .characteristic-card .item-controls .card-cr:hover { color: rgba(208,235,255,.94); }
+.gum.sheet.actor .characteristics-tab .characteristic-card .item-controls .gum-action-menu { margin-left: auto; }
 .gum.sheet.actor .characteristics-tab .characteristic-card .item-controls .gum-action-menu__toggle {
     width: 18px;
     height: 18px;

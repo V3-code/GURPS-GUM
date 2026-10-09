@@ -540,7 +540,7 @@
                 data-organizer-zone
                 data-organizer-group-id="{{section.id}}">
               {{#each section.characteristics}}
-                <li class="item characteristic-card"
+                <li class="item characteristic-card {{this.type}}"
                     data-item-id="{{this.id}}"
                     data-organizer-item-id="{{this.id}}"
                     data-organizer-item-type="{{this.type}}"
@@ -556,11 +556,11 @@
                     <div class="card-details">
                       <span class="characteristic-kind {{this.type}}">{{this.characteristicKindLabel}}</span>
                       {{#if this.characteristicIsRacial}}<span class="characteristic-kind racial">{{localize 'GUM.Characteristics.Racial'}}</span>{{/if}}
-                      {{#if this.system.self_control_roll}}<a class="rollable card-cr" title="{{localize 'GUM.Characteristics.SelfControlTest'}}" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="{{localize 'GUM.Characteristics.SelfControl' name=this.name}}" data-item-id="{{this.id}}">{{localize 'GUM.Characteristics.SelfControlAbbreviation'}}: {{this.system.self_control_roll}}</a>{{/if}}
                       <span class="card-points" title="{{localize 'GUM.Characteristics.PointCost'}}">{{characteristicPoints this}} {{localize 'GUM.Characteristics.PointsAbbreviation'}}</span>
                     </div>
                   </div>
                   <div class="item-controls">
+                    {{#if this.system.self_control_roll}}<a class="rollable card-cr" title="{{localize 'GUM.Characteristics.SelfControlTest'}}" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="{{localize 'GUM.Characteristics.SelfControl' name=this.name}}" data-item-id="{{this.id}}"><i class="fas fa-dice-d6" aria-hidden="true"></i> {{localize 'GUM.Characteristics.SelfControlAbbreviation'}} {{this.system.self_control_roll}}</a>{{/if}}
                     <div class="gum-action-menu js-action-menu">
                       <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Inventory.Options'}}" aria-label="{{localize 'GUM.Inventory.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
                       <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Inventory.Options'}}">

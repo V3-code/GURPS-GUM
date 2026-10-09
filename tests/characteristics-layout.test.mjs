@@ -52,9 +52,14 @@ test("trait cards use the compact card model with a consolidated options menu", 
   assert.match(characteristicTab, /remove-characteristic-from-group gum-action-menu__item/);
   assert.match(characteristicTab, /item-edit gum-action-menu__item/);
   assert.match(characteristicTab, /item-delete gum-action-menu__item is-danger/);
+  assert.match(characteristicTab, /characteristic-card \{\{this\.type\}\}/);
+  assert.match(characteristicTab, /<div class="item-controls">[\s\S]*card-cr[\s\S]*gum-action-menu/);
   assert.match(styles, /\.characteristics-tab \.characteristic-card\s*\{[^}]*grid-template-columns:\s*28px minmax\(0, 1fr\)/s);
   assert.match(styles, /\.characteristics-tab \.gum-action-menu__panel\s*\{[^}]*background:\s*#f6f4f0;/s);
   assert.match(actorSheet, /\.characteristic-card, \.spell-row-v3/);
+  assert.match(styles, /\.skills-tab \.st-controls \.gum-action-menu\s*\{\s*margin-left:\s*auto;/);
+  assert.match(styles, /\.characteristics-tab \.characteristic-card\.advantage \.card-points\s*\{\s*color:/);
+  assert.match(styles, /\.characteristics-tab \.characteristic-card\.disadvantage \.card-points\s*\{\s*color:/);
 });
 
 test("the traits tab localizes its toolbar, cards, and organization dialogs", () => {
