@@ -484,27 +484,23 @@
                 <div class="social-card__portrait social-card__portrait--{{source}}" title="{{sourceLabel}}">
                   {{#if sourceImg}}<img src="{{sourceImg}}" alt="{{sourceLabel}}">{{else}}<i class="{{displayIcon}}"></i>{{/if}}
                 </div>
-                <div class="social-card__content">
-                  <div class="social-card__headline">
-                    <div class="social-card__identity">
-                      <strong class="social-card__name" title="{{primary}}">{{primary}}</strong>
-                      {{#if context}}<span class="social-card__context">{{context}}</span>{{/if}}
-                    </div>
-                    <div class="item-controls social-card__controls">
-                      {{#if observation}}<a class="item-control social-card__expand" title="{{#if expanded}}{{localize 'GUM.Social.CollapseDescription'}}{{else}}{{localize 'GUM.Social.ExpandDescription'}}{{/if}}" aria-label="{{#if expanded}}{{localize 'GUM.Social.CollapseDescription'}}{{else}}{{localize 'GUM.Social.ExpandDescription'}}{{/if}}" aria-expanded="{{#if expanded}}true{{else}}false{{/if}}"><i class="fas fa-chevron-{{#if expanded}}up{{else}}down{{/if}}"></i></a>{{/if}}
-                      <div class="gum-action-menu js-action-menu">
-                        <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Social.Options'}}" aria-label="{{localize 'GUM.Social.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
-                        <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Social.Options'}}">
-                          {{#if itemId}}<a class="item-control edit-social-source gum-action-menu__item" data-item-id="{{itemId}}" role="menuitem"><i class="fas fa-external-link-alt"></i><span>{{localize 'GUM.Social.OpenSource'}}</span></a>{{else}}<a class="item-control edit-social-entry gum-action-menu__item" data-type="{{type}}" role="menuitem"><i class="fas fa-edit"></i><span>{{localize 'GUM.Inventory.Edit'}}</span></a><a class="item-control delete-social-entry gum-action-menu__item is-danger" data-type="{{type}}" role="menuitem"><i class="fas fa-trash"></i><span>{{localize 'GUM.Inventory.Delete'}}</span></a>{{/if}}
-                        </div>
-                      </div>
+                <div class="social-card__identity">
+                  <strong class="social-card__name" title="{{primary}}">{{primary}}</strong>
+                  {{#if context}}<span class="social-card__context">{{context}}</span>{{/if}}
+                </div>
+                {{#if metrics.length}}
+                <div class="social-card__metrics">
+                  {{#each metrics}}<span class="social-card__metric social-card__metric--{{tone}}" title="{{label}}: {{value}}"><small>{{shortLabel}}</small><strong>{{value}}</strong></span>{{/each}}
+                </div>
+                {{/if}}
+                {{#if observation}}<button type="button" class="social-card__expand" title="{{#if expanded}}{{localize 'GUM.Social.CollapseDescription'}}{{else}}{{localize 'GUM.Social.ExpandDescription'}}{{/if}}" aria-label="{{#if expanded}}{{localize 'GUM.Social.CollapseDescription'}}{{else}}{{localize 'GUM.Social.ExpandDescription'}}{{/if}}" aria-expanded="{{#if expanded}}true{{else}}false{{/if}}"><i class="fas {{#if expanded}}fa-compress-arrows-alt{{else}}fa-expand-arrows-alt{{/if}}"></i></button>{{else}}<span class="social-card__expand-spacer" aria-hidden="true"></span>{{/if}}
+                <div class="item-controls social-card__controls">
+                  <div class="gum-action-menu js-action-menu">
+                    <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Social.Options'}}" aria-label="{{localize 'GUM.Social.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+                    <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Social.Options'}}">
+                      {{#if itemId}}<a class="item-control edit-social-source gum-action-menu__item" data-item-id="{{itemId}}" role="menuitem"><i class="fas fa-external-link-alt"></i><span>{{localize 'GUM.Social.OpenSource'}}</span></a>{{else}}<a class="item-control edit-social-entry gum-action-menu__item" data-type="{{type}}" role="menuitem"><i class="fas fa-edit"></i><span>{{localize 'GUM.Inventory.Edit'}}</span></a><a class="item-control delete-social-entry gum-action-menu__item is-danger" data-type="{{type}}" role="menuitem"><i class="fas fa-trash"></i><span>{{localize 'GUM.Inventory.Delete'}}</span></a>{{/if}}
                     </div>
                   </div>
-                  {{#if metrics.length}}
-                  <div class="social-card__metrics">
-                    {{#each metrics}}<span class="social-card__metric social-card__metric--{{tone}}"><small>{{label}}</small><strong>{{value}}</strong></span>{{/each}}
-                  </div>
-                  {{/if}}
                 </div>
               </div>
               {{#if observation}}<div class="social-card__description"><i class="fas fa-align-left"></i><span>{{observation}}</span></div>{{/if}}

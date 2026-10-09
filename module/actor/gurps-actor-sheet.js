@@ -6579,8 +6579,11 @@ _onToggleSocialEntryDescription(ev) {
 
   card.classList.toggle("is-description-expanded", expanded);
   ev.currentTarget.setAttribute("aria-expanded", `${expanded}`);
-  ev.currentTarget.querySelector("i")?.classList.toggle("fa-chevron-up", expanded);
-  ev.currentTarget.querySelector("i")?.classList.toggle("fa-chevron-down", !expanded);
+  const toggleLabel = game.i18n.localize(expanded ? "GUM.Social.CollapseDescription" : "GUM.Social.ExpandDescription");
+  ev.currentTarget.setAttribute("title", toggleLabel);
+  ev.currentTarget.setAttribute("aria-label", toggleLabel);
+  ev.currentTarget.querySelector("i")?.classList.toggle("fa-compress-arrows-alt", expanded);
+  ev.currentTarget.querySelector("i")?.classList.toggle("fa-expand-arrows-alt", !expanded);
 }
 
 
