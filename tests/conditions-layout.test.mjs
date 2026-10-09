@@ -12,7 +12,7 @@ const conditionsTab = template.slice(template.indexOf('class="tab conditions-tab
 
 test("condition sections use neutral compact headers and cards", () => {
   assert.match(styles, /\.conditions-tab details\.form-section\.gum-unified-section > \.gum-unified-header\s*\{[^}]*background:\s*transparent !important;/s);
-  assert.match(styles, /\.conditions-tab \.effect-pill-enhanced\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*28px minmax\(0,1fr\) 18px;[^}]*background:\s*#1a1b1f;[^}]*border:\s*0;[^}]*box-shadow:\s*inset 2px 0 0 rgba\(225,184,117,\.42\);/s);
+  assert.match(styles, /\.conditions-tab \.effect-pill-enhanced\s*\{[^}]*gap:\s*8px;[^}]*display:\s*grid;[^}]*grid-template-columns:\s*28px minmax\(0,1fr\) 18px;[^}]*background:\s*#1a1b1f;[^}]*border:\s*0;[^}]*box-shadow:\s*inset 2px 0 0 rgba\(225,184,117,\.42\);/s);
   assert.match(styles, /\.conditions-tab \.effect-pill-enhanced \.pill-icon\s*\{[^}]*width:\s*28px;/s);
   assert.match(styles, /\.conditions-tab \.gum-unified-section \.effect-pill-enhanced \.pill-controls\s*\{[^}]*justify-content:\s*center;[^}]*width:\s*18px;[^}]*border:\s*0;/s);
   assert.match(styles, /\.conditions-tab \.gum-action-menu__panel\s*\{[^}]*background:\s*#f6f4f0;/s);

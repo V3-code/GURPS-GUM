@@ -7450,7 +7450,7 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .conditions-tab .effect-pill-enhanced {
     min-height: 46px;
     padding: 5px 6px;
-    gap: 6px;
+    gap: 8px;
     display: grid;
     grid-template-columns:28px minmax(0,1fr) 18px;
     align-items:center;
