@@ -366,7 +366,7 @@
           <a class="item" data-tab="skills" title="{{localize 'GUM.Skills.Tab'}}">
             <i class="fas fa-book-reader"></i>
           </a>
-          <a class="item" data-tab="characteristics" title="Características">
+          <a class="item" data-tab="characteristics" title="{{localize 'GUM.Characteristics.Tab'}}">
             <i class="fas fa-star"></i>
           </a>
           <a class="item" data-tab="social" title="{{localize 'GUM.Social.Tab'}}">
@@ -506,12 +506,12 @@
       <div class="characteristics-header-tools">
         <div class="characteristics-search-wrapper">
           <i class="fas fa-search" aria-hidden="true"></i>
-          <input type="search" class="characteristic-search-input" name="characteristic-search" placeholder="Buscar vantagem ou desvantagem..." autocomplete="off" aria-label="Buscar vantagem ou desvantagem">
+          <input type="search" class="characteristic-search-input" name="characteristic-search" placeholder="{{localize 'GUM.Characteristics.SearchPlaceholder'}}" autocomplete="off" aria-label="{{localize 'GUM.Characteristics.SearchLabel'}}">
         </div>
         <div class="characteristics-header-buttons">
-          <a class="create-characteristic-group" title="Criar grupo de características"><i class="fas fa-folder-plus"></i> Grupo</a>
-          {{#if @root.hasCharacteristicGroupSuggestions}}<a class="suggest-characteristic-groups" title="Criar grupos a partir da organização informada nos itens"><i class="fas fa-wand-magic-sparkles"></i> Organizar itens</a>{{/if}}
-          <a class="sort-control" data-item-type="characteristic" title="Ordenar características"><i class="fas fa-sort-alpha-down"></i></a>
+          <a class="create-characteristic-group" title="{{localize 'GUM.Characteristics.CreateGroup'}}"><i class="fas fa-folder-plus"></i> {{localize 'GUM.Characteristics.Group'}}</a>
+          {{#if @root.hasCharacteristicGroupSuggestions}}<a class="suggest-characteristic-groups" title="{{localize 'GUM.Characteristics.SuggestGroups'}}"><i class="fas fa-wand-magic-sparkles"></i> {{localize 'GUM.Characteristics.OrganizeItems'}}</a>{{/if}}
+          <a class="sort-control" data-item-type="characteristic" title="{{localize 'GUM.Characteristics.Sort'}}"><i class="fas fa-sort-alpha-down"></i></a>
         </div>
       </div>
 
@@ -528,8 +528,8 @@
               </div>
               <span class="characteristic-group-header-tools">
                 {{#unless section.isUngrouped}}<span class="characteristic-group-actions">
-                  <a class="rename-characteristic-group" data-group-id="{{section.id}}" title="Renomear grupo"><i class="fas fa-pen"></i></a>
-                  <a class="delete-characteristic-group" data-group-id="{{section.id}}" title="Excluir grupo"><i class="fas fa-trash"></i></a>
+                  <a class="rename-characteristic-group" data-group-id="{{section.id}}" title="{{localize 'GUM.Characteristics.RenameGroup'}}"><i class="fas fa-pen"></i></a>
+                  <a class="delete-characteristic-group" data-group-id="{{section.id}}" title="{{localize 'GUM.Characteristics.DeleteGroup'}}"><i class="fas fa-trash"></i></a>
                 </span>{{/unless}}
                 <span class="characteristic-group-count">{{section.characteristics.length}}</span>
               </span>
@@ -544,34 +544,42 @@
                     data-item-id="{{this.id}}"
                     data-organizer-item-id="{{this.id}}"
                     data-organizer-item-type="{{this.type}}"
-                    data-search="{{this.name}} {{this.system.specialization}} {{this.system.level}} {{this.system.characteristics}} {{this.characteristicKindLabel}} {{#if this.characteristicIsRacial}}Racial{{/if}}"
+                    data-search="{{this.name}} {{this.system.specialization}} {{this.system.level}} {{this.system.characteristics}} {{this.characteristicKindLabel}} {{#if this.characteristicIsRacial}}{{localize 'GUM.Characteristics.Racial'}}{{/if}}"
                     draggable="true">
                   <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
+                  <div class="characteristic-card-content">
                   <div class="card-info">
                     <div class="card-main">
-                      <span class="item-name"><a class="item-quick-view" title="Visualizar descrição">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}}{{#if this.system.level}} {{this.system.level}}{{/if}}</a></span>
+                      <span class="item-name"><a class="item-quick-view" title="{{localize 'GUM.Characteristics.ViewDetails'}}">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}}{{#if this.system.level}} {{this.system.level}}{{/if}}</a></span>
                       {{#if this.system.characteristics}}<span class="characteristic-notes">{{this.system.characteristics}}</span>{{/if}}
                     </div>
                     <div class="card-details">
                       <span class="characteristic-kind {{this.type}}">{{this.characteristicKindLabel}}</span>
-                      {{#if this.characteristicIsRacial}}<span class="characteristic-kind racial">Racial</span>{{/if}}
-                      {{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}
-                      <span class="card-points" title="Custo em Pontos">{{characteristicPoints this}} pts</span>
+                      {{#if this.characteristicIsRacial}}<span class="characteristic-kind racial">{{localize 'GUM.Characteristics.Racial'}}</span>{{/if}}
+                      {{#if this.system.self_control_roll}}<a class="rollable card-cr" title="{{localize 'GUM.Characteristics.SelfControlTest'}}" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="{{localize 'GUM.Characteristics.SelfControl' name=this.name}}" data-item-id="{{this.id}}">{{localize 'GUM.Characteristics.SelfControlAbbreviation'}}: {{this.system.self_control_roll}}</a>{{/if}}
+                      <span class="card-points" title="{{localize 'GUM.Characteristics.PointCost'}}">{{characteristicPoints this}} {{localize 'GUM.Characteristics.PointsAbbreviation'}}</span>
                     </div>
                   </div>
                   <div class="item-controls">
-                    {{#if this.characteristicOrganizationCanRemove}}<a class="item-control remove-characteristic-from-group" data-item-id="{{this.id}}" title="Retirar do grupo" aria-label="Retirar {{this.name}} do grupo"><i class="fas fa-arrow-up-from-bracket"></i></a>{{/if}}
-                    <span class="characteristic-control-actions"><a class="item-edit" title="{{localize 'GUM.Inventory.Edit'}}"><i class="fas fa-edit"></i></a><a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a></span>
+                    <div class="gum-action-menu js-action-menu">
+                      <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Inventory.Options'}}" aria-label="{{localize 'GUM.Inventory.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+                      <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Inventory.Options'}}">
+                        {{#if this.characteristicOrganizationCanRemove}}<a class="item-control remove-characteristic-from-group gum-action-menu__item" data-item-id="{{this.id}}" role="menuitem"><i class="fas fa-arrow-up-from-bracket"></i><span>{{localize 'GUM.Characteristics.RemoveFromGroup'}}</span></a>{{/if}}
+                        <a class="item-control item-edit gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{localize 'GUM.Inventory.Edit'}}</span></a>
+                        <a class="item-control item-delete gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>{{localize 'GUM.Inventory.Delete'}}</span></a>
+                      </div>
+                    </div>
+                  </div>
                   </div>
                 </li>
               {{/each}}
-              {{#unless section.characteristics.length}}<li class="placeholder-text">Arraste itens para este grupo.</li>{{/unless}}
+              {{#unless section.characteristics.length}}<li class="placeholder-text">{{localize 'GUM.Characteristics.DropHere'}}</li>{{/unless}}
             </ol>
           </details>
         {{/each}}
 
-        <div class="characteristics-search-empty" hidden>Nenhuma característica encontrada.</div>
-        {{#unless @root.hasCharacteristics}}<div class="empty-placeholder"><p>Nenhuma vantagem ou desvantagem adicionada.</p></div>{{/unless}}
+        <div class="characteristics-search-empty" hidden>{{localize 'GUM.Characteristics.NoSearchResults'}}</div>
+        {{#unless @root.hasCharacteristics}}<div class="empty-placeholder"><p>{{localize 'GUM.Characteristics.Empty'}}</p></div>{{/unless}}
       </div>
     </div>
 

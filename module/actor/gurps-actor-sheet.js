@@ -1066,7 +1066,9 @@ async getData(options) {
                 .filter(Boolean);
             entries.forEach(item => {
                 item.characteristicOrganizationCanRemove = bucketId !== UNGROUPED_ORGANIZER_ID;
-                item.characteristicKindLabel = item.type === 'disadvantage' ? 'Desvantagem' : 'Vantagem';
+                item.characteristicKindLabel = item.type === 'disadvantage'
+                    ? game.i18n.localize("GUM.Characteristics.Disadvantage")
+                    : game.i18n.localize("GUM.Characteristics.Advantage");
                 const organizationName = String(item.system?.group ?? "").trim().toLocaleLowerCase();
                 item.characteristicIsRacial = organizationName.startsWith('racial') || item.system?.block_id === 'block1';
             });
@@ -1076,7 +1078,7 @@ async getData(options) {
         context.characteristicOrganization = characteristicOrganization;
         context.characteristicSections = [{
             id: UNGROUPED_ORGANIZER_ID,
-            name: "Vantagens e Desvantagens",
+            name: game.i18n.localize("GUM.Characteristics.DefaultGroup"),
             isUngrouped: true,
             characteristics: orderedCharacteristics(UNGROUPED_ORGANIZER_ID)
         }, ...characteristicOrganization.groupOrder.map(groupId => ({
@@ -1829,6 +1831,7 @@ async _saveCharacteristicOrganization(organization) {
 }
 
 _promptCharacteristicGroupName({ title, initial = "" }) {
+    const localize = key => game.i18n.localize(key);
     return new Promise(resolve => {
         let settled = false;
         const finish = value => {
@@ -1839,12 +1842,12 @@ _promptCharacteristicGroupName({ title, initial = "" }) {
         new Dialog({
             title,
             content: `<form class="gum-popup-form gum-record-editor characteristic-group-name-dialog">
-                <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon"><i class="fas fa-folder-plus" aria-hidden="true"></i></span><span><strong>${foundry.utils.escapeHTML(title)}</strong><small>Use um nome curto e claro para organizar as características deste personagem.</small></span></header>
-                <div class="form-group form-group--full characteristic-group-name-field"><label>Nome do grupo</label><input class="gum-input-left" type="text" name="name" value="${foundry.utils.escapeHTML(initial)}" autocomplete="off" autofocus></div>
+                <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon"><i class="fas fa-folder-plus" aria-hidden="true"></i></span><span><strong>${foundry.utils.escapeHTML(title)}</strong><small>${localize("GUM.Characteristics.GroupNameHint")}</small></span></header>
+                <div class="form-group form-group--full characteristic-group-name-field"><label>${localize("GUM.Characteristics.GroupNameLabel")}</label><input class="gum-input-left" type="text" name="name" value="${foundry.utils.escapeHTML(initial)}" autocomplete="off" autofocus></div>
             </form>`,
             buttons: {
-                save: { icon: '<i class="fas fa-check"></i>', label: "Salvar", callback: html => finish(String(html.find('[name="name"]').val() ?? "").trim() || null) },
-                cancel: { label: "Cancelar", callback: () => finish(null) }
+                save: { icon: '<i class="fas fa-check"></i>', label: localize("GUM.Characteristics.Save"), callback: html => finish(String(html.find('[name="name"]').val() ?? "").trim() || null) },
+                cancel: { label: localize("GUM.Characteristics.Cancel"), callback: () => finish(null) }
             },
             default: "save",
             close: () => finish(null)
@@ -1861,6 +1864,8 @@ _characteristicSuggestionItems(characteristics) {
 }
 
 _promptCharacteristicGroupPlan(plan) {
+    const localize = key => game.i18n.localize(key);
+    const format = (key, data) => game.i18n.format(key, data);
     return new Promise(resolve => {
         let settled = false;
         const finish = value => {
@@ -1870,19 +1875,19 @@ _promptCharacteristicGroupPlan(plan) {
         };
         const rows = plan.map((category, index) => {
             const itemNames = category.items.map(item => foundry.utils.escapeHTML(item.name)).join(", ");
-            const destination = category.existingGroupId ? "Grupo existente" : "Novo grupo";
-            return `<label class="skill-category-preview__row"><input type="checkbox" name="category" value="${index}" checked><span><strong>${foundry.utils.escapeHTML(category.name)}</strong><small>${destination} · ${category.items.length} item(ns)</small><em>${itemNames}</em></span></label>`;
+            const destination = category.existingGroupId ? localize("GUM.Characteristics.ExistingGroup") : localize("GUM.Characteristics.NewGroupDestination");
+            return `<label class="skill-category-preview__row"><input type="checkbox" name="category" value="${index}" checked><span><strong>${foundry.utils.escapeHTML(category.name)}</strong><small>${destination} · ${format("GUM.Characteristics.ItemCount", { count: category.items.length })}</small><em>${itemNames}</em></span></label>`;
         }).join("");
         new Dialog({
-            title: "Organizar vantagens e desvantagens",
-            content: `<form class="skill-category-preview characteristic-category-preview"><div class="skill-category-preview__intro"><i class="fas fa-layer-group"></i><span><strong>Organizar características</strong><small>Selecione as organizações dos itens que deseja transformar em grupos visuais.</small></span></div><div class="skill-category-preview__list">${rows}</div></form>`,
+            title: localize("GUM.Characteristics.CategoryPlanTitle"),
+            content: `<form class="skill-category-preview characteristic-category-preview"><div class="skill-category-preview__intro"><i class="fas fa-layer-group"></i><span><strong>${localize("GUM.Characteristics.CategoryPlanHeading")}</strong><small>${localize("GUM.Characteristics.CategoryPlanHint")}</small></span></div><div class="skill-category-preview__list">${rows}</div></form>`,
             buttons: {
                 apply: {
                     icon: '<i class="fas fa-layer-group"></i>',
-                    label: "Criar selecionados",
+                    label: localize("GUM.Characteristics.CreateSelected"),
                     callback: html => finish([...html[0].querySelectorAll('input[name="category"]:checked')].map(input => plan[Number(input.value)]?.key).filter(Boolean))
                 },
-                cancel: { label: "Cancelar", callback: () => finish(null) }
+                cancel: { label: localize("GUM.Characteristics.Cancel"), callback: () => finish(null) }
             },
             default: "apply",
             close: () => finish(null)
@@ -1891,7 +1896,7 @@ _promptCharacteristicGroupPlan(plan) {
 }
 
 async _createCharacteristicOrganizationGroup() {
-    const name = await this._promptCharacteristicGroupName({ title: "Novo grupo de características" });
+    const name = await this._promptCharacteristicGroupName({ title: game.i18n.localize("GUM.Characteristics.NewGroup") });
     if (!name) return;
     const { characteristics, organization } = this._getCharacteristicOrganizationState();
     const id = foundry.utils.randomID?.() ?? crypto.randomUUID();
@@ -1902,7 +1907,7 @@ async _renameCharacteristicOrganizationGroup(groupId) {
     const { characteristics, organization } = this._getCharacteristicOrganizationState();
     const current = organization.groups[groupId];
     if (!current) return;
-    const name = await this._promptCharacteristicGroupName({ title: "Renomear grupo de características", initial: current.name });
+    const name = await this._promptCharacteristicGroupName({ title: game.i18n.localize("GUM.Characteristics.RenameGroupDialog"), initial: current.name });
     if (!name || name === current.name) return;
     await this._saveCharacteristicOrganization(renameItemOrganizationGroup(organization, { id: groupId, name }, characteristics.map(item => item.id)));
 }
@@ -1912,9 +1917,9 @@ async _deleteCharacteristicOrganizationGroup(groupId) {
     const group = organization.groups[groupId];
     if (!group) return;
     const confirmed = await this._confirmSkillOrganizationAction({
-        title: "Excluir grupo de características",
-        content: `<p>Excluir o grupo <strong>${foundry.utils.escapeHTML(group.name)}</strong>? Seus itens voltarão para a área livre.</p>`,
-        confirmLabel: "Excluir grupo"
+        title: game.i18n.localize("GUM.Characteristics.DeleteGroupDialog"),
+        content: `<p>${game.i18n.format("GUM.Characteristics.DeleteGroupContent", { name: foundry.utils.escapeHTML(group.name) })}</p>`,
+        confirmLabel: game.i18n.localize("GUM.Characteristics.DeleteGroupConfirm")
     });
     if (!confirmed) return;
     await this._saveCharacteristicOrganization(removeItemOrganizationGroup(organization, groupId, characteristics.map(item => item.id)));
@@ -1924,7 +1929,7 @@ async _suggestCharacteristicOrganizationGroups() {
     const { characteristics, organization } = this._getCharacteristicOrganizationState();
     const suggestionItems = this._characteristicSuggestionItems(characteristics);
     const plan = buildItemCategoryGroupPlan(organization, suggestionItems);
-    if (!plan.length) return ui.notifications.info("Não há classificações disponíveis entre os itens livres.");
+    if (!plan.length) return ui.notifications.info(game.i18n.localize("GUM.Characteristics.NoCategories"));
     const selectedCategories = await this._promptCharacteristicGroupPlan(plan);
     if (!selectedCategories?.length) return;
     const createId = () => foundry.utils.randomID?.() ?? crypto.randomUUID();
@@ -4963,7 +4968,7 @@ _onActionMenuToggle(ev) {
    if (!isOpen) {
     const controls = menu.closest(".item-controls");
     if (controls) controls.classList.add("menu-open");
-    const actionMenuRow = menu.closest(".skill-tree-item, .spell-row-v3, .meter-card");
+  const actionMenuRow = menu.closest(".skill-tree-item, .characteristic-card, .spell-row-v3, .meter-card");
     if (actionMenuRow) actionMenuRow.classList.add("action-menu-open-row");
     const toggle = menu.querySelector(".js-action-menu-toggle");
     if (toggle) toggle.setAttribute("aria-expanded", "true");

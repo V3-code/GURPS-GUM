@@ -15,7 +15,7 @@ const characteristicTab = template.slice(
 
 test("characteristics use an ungrouped-first hybrid organization", () => {
   assert.match(actorSheet, /context\.characteristicSections = \[\{/);
-  assert.match(actorSheet, /name: "Vantagens e Desvantagens"/);
+  assert.match(actorSheet, /name: game\.i18n\.localize\("GUM\.Characteristics\.DefaultGroup"\)/);
   assert.match(actorSheet, /isUngrouped: true/);
   assert.match(actorSheet, /\.\.\.characteristicOrganization\.groupOrder\.map/);
   assert.match(characteristicTab, /{{#each characteristicSections as \|section\|}}/);
@@ -44,6 +44,26 @@ test("characteristic group headers do not inherit the legacy red treatment", () 
   assert.doesNotMatch(styles, /\.tab\[data-tab="characteristics"\] \.gum-unified-header\s*\{/);
   assert.match(styles, /\.characteristic-group > \.characteristic-group-summary\s*\{[^}]*background:\s*transparent !important;/s);
   assert.match(styles, /\.characteristic-group\[open\] > \.characteristic-group-summary\s*\{\s*background:\s*rgba\(255,255,255,0\.025\) !important;/);
+});
+
+test("trait cards use the compact card model with a consolidated options menu", () => {
+  assert.match(characteristicTab, /characteristic-card-content/);
+  assert.match(characteristicTab, /gum-action-menu__toggle/);
+  assert.match(characteristicTab, /remove-characteristic-from-group gum-action-menu__item/);
+  assert.match(characteristicTab, /item-edit gum-action-menu__item/);
+  assert.match(characteristicTab, /item-delete gum-action-menu__item is-danger/);
+  assert.match(styles, /\.characteristics-tab \.characteristic-card\s*\{[^}]*grid-template-columns:\s*28px minmax\(0, 1fr\)/s);
+  assert.match(styles, /\.characteristics-tab \.gum-action-menu__panel\s*\{[^}]*background:\s*#f6f4f0;/s);
+  assert.match(actorSheet, /\.characteristic-card, \.spell-row-v3/);
+});
+
+test("the traits tab localizes its toolbar, cards, and organization dialogs", () => {
+  assert.match(characteristicTab, /GUM\.Characteristics\.SearchPlaceholder/);
+  assert.match(characteristicTab, /GUM\.Characteristics\.SearchLabel/);
+  assert.match(characteristicTab, /GUM\.Characteristics\.NoSearchResults/);
+  assert.match(characteristicTab, /GUM\.Characteristics\.Empty/);
+  assert.match(actorSheet, /GUM\.Characteristics\.CategoryPlanTitle/);
+  assert.match(actorSheet, /GUM\.Characteristics\.DeleteGroupContent/);
 });
 
 test("characteristic organization persists independently in the actor schema", () => {
