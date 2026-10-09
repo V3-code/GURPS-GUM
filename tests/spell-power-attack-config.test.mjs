@@ -10,7 +10,7 @@ const itemStyles = readFileSync(new URL("../styles/item-sheet.css", import.meta.
 const systemTemplate = JSON.parse(readFileSync(new URL("../template.json", import.meta.url), "utf8"));
 
 test("spell and power attack rolls expose the configured attack base to the prompt", () => {
-  const attackLinks = characterTemplate.match(/<a class="rollable spell-meta-value"[^>]+data-type="attack"[^>]+>/g) || [];
+  const attackLinks = characterTemplate.match(/<a class="(?:rollable spell-meta-value|rollable)"[^>]+data-type="attack"[^>]+>/g) || [];
 
   assert.equal(attackLinks.length, 3);
   for (const link of attackLinks) {

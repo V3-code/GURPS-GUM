@@ -119,6 +119,7 @@ _getContainerDescendants(containerId, acc = []) {
 
 async getData(options) {
         const context = await super.getData(options);
+        this._expandedSpellCards ??= new Set();
         
         const profileId = this.actor.system.combat?.body_profile || "humanoid";
         const profile = getBodyProfile(profileId);
@@ -690,6 +691,22 @@ async getData(options) {
         const spellsByGroup = {};
 
         spells.forEach((spell) => {
+            const system = spell.system || {};
+            const damage = system.damage || {};
+            const identityParts = [system.source, system.spell_class, system.spell_school, system.usage_type]
+                .map(value => String(value || '').trim())
+                .filter(Boolean);
+            spell.magicCardIdentity = identityParts.join(' · ');
+            spell.magicCardHasDetails = Boolean(
+                system.uses_attack
+                || damage.formula
+                || damage.follow_up_damage?.formula
+                || damage.fragmentation_damage?.formula
+                || system.resistance
+                || system.requires_concentration
+                || system.effect
+            );
+            spell.magicCardExpanded = this._expandedSpellCards.has(spell.id);
             let groupName = (spell.system.group || 'Geral').trim();
             if (!groupName) groupName = 'Geral';
             if (!spellsByGroup[groupName]) spellsByGroup[groupName] = [];
@@ -2231,9 +2248,9 @@ html.find(".modifier-search").on("input", (ev) => {
 });
 
 const applyGroupedItemSearch = (tab, term, extraTextSelector) => {
-  tab.find('.spell-row-v3').each((_, el) => {
+  tab.find('.spell-row-v3, .magic-card').each((_, el) => {
     const row = $(el);
-    const name = row.find('.spell-name').first().text().toLowerCase();
+    const name = row.find('.spell-name, .magic-card__name').first().text().toLowerCase();
     const extra = row.find(extraTextSelector).first().text().toLowerCase();
     const match = !term || name.includes(term) || extra.includes(term);
 
@@ -2241,9 +2258,9 @@ const applyGroupedItemSearch = (tab, term, extraTextSelector) => {
     row.toggle(match);
   });
 
-  tab.find('.spell-group-box').each((_, el) => {
+  tab.find('.spell-group-box, .magic-group').each((_, el) => {
     const group = $(el);
-    const matchedItems = group.find('.spell-row-v3[data-search-match="1"]').length;
+    const matchedItems = group.find('.spell-row-v3[data-search-match="1"], .magic-card[data-search-match="1"]').length;
     group.toggle(matchedItems > 0);
   });
 };
@@ -2254,7 +2271,33 @@ html.find(".spell-search-input").on("input", (ev) => {
   const term = rawTerm.toLowerCase().trim();
   this._tabSearchState.spells = rawTerm;
   const tab = $(ev.currentTarget).closest('.tab[data-tab="spells"]');
-  applyGroupedItemSearch(tab, term, '.spell-school-line');
+  applyGroupedItemSearch(tab, term, '.magic-card__identity-meta');
+  tab.find('.magic-search-empty').prop('hidden', tab.find('.magic-card[data-search-match="1"]').length > 0 || !term);
+});
+
+html.on('click', '.magic-card__expand', (ev) => {
+  ev.preventDefault();
+  ev.stopPropagation();
+
+  const button = ev.currentTarget;
+  const card = button.closest('.magic-card');
+  if (!card) return;
+
+  const itemId = card.dataset.itemId;
+  const expanded = button.getAttribute('aria-expanded') !== 'true';
+  const label = game.i18n.localize(expanded ? 'GUM.Spells.CollapseDetails' : 'GUM.Spells.ExpandDetails');
+
+  card.classList.toggle('is-expanded', expanded);
+  card.querySelector('.magic-card__details')?.toggleAttribute('hidden', !expanded);
+  button.setAttribute('aria-expanded', String(expanded));
+  button.setAttribute('aria-label', label);
+  button.setAttribute('title', label);
+  button.querySelector('i')?.classList.toggle('fa-expand-arrows-alt', !expanded);
+  button.querySelector('i')?.classList.toggle('fa-compress-arrows-alt', expanded);
+
+  this._expandedSpellCards ??= new Set();
+  if (expanded) this._expandedSpellCards.add(itemId);
+  else this._expandedSpellCards.delete(itemId);
 });
 
 // Busca de poderes
@@ -4972,7 +5015,7 @@ _onActionMenuToggle(ev) {
    if (!isOpen) {
     const controls = menu.closest(".item-controls");
     if (controls) controls.classList.add("menu-open");
-  const actionMenuRow = menu.closest(".skill-tree-item, .characteristic-card, .spell-row-v3, .meter-card, .effect-pill-enhanced");
+  const actionMenuRow = menu.closest(".skill-tree-item, .characteristic-card, .spell-row-v3, .magic-card, .meter-card, .effect-pill-enhanced");
     if (actionMenuRow) actionMenuRow.classList.add("action-menu-open-row");
     const toggle = menu.querySelector(".js-action-menu-toggle");
     if (toggle) toggle.setAttribute("aria-expanded", "true");
@@ -5016,7 +5059,7 @@ _positionActionMenu(menu) {
 _closeAllActionMenus() {
   if (!this.element?.length) return;
   this.element.find(".item-controls.menu-open").removeClass("menu-open");
-  this.element.find(".skill-tree-item.action-menu-open-row, .characteristic-card.action-menu-open-row, .effect-pill-enhanced.action-menu-open-row").removeClass("action-menu-open-row");
+  this.element.find(".skill-tree-item.action-menu-open-row, .characteristic-card.action-menu-open-row, .magic-card.action-menu-open-row, .effect-pill-enhanced.action-menu-open-row").removeClass("action-menu-open-row");
   this.element.find(".js-action-menu.is-open, .js-action-menu.is-open-up").removeClass("is-open is-open-up")
     .find(".js-action-menu-toggle").attr("aria-expanded", "false");
 }
