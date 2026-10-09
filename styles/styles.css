@@ -10309,11 +10309,18 @@ background-color: var(--gum-accent-gold);
     background: #f6f4f0;
     box-shadow: 0 7px 18px rgba(0,0,0,.32);
 }
-.gum.sheet.actor .characteristics-tab .gum-action-menu__panel > .gum-action-menu__item { color: #4a4743; }
-.gum.sheet.actor .characteristics-tab .gum-action-menu__panel > .gum-action-menu__item > i { width: 13px; color: #77716a; text-align: center; }
-.gum.sheet.actor .characteristics-tab .gum-action-menu__panel > .gum-action-menu__item:hover { background: rgba(197,160,91,.14); color: #2f2c29; }
-.gum.sheet.actor .characteristics-tab .gum-action-menu__panel > .gum-action-menu__item.is-danger { color: #70424a; }
-.gum.sheet.actor .characteristics-tab .gum-action-menu__panel > .gum-action-menu__item.is-danger:hover { color: #862f3a; }
+.gum.sheet.actor .characteristics-tab .gum-action-menu__panel > a.item-control.gum-action-menu__item {
+    padding: 6px 8px;
+    color: #4a4743;
+    font-size: 11px;
+    line-height: 1.2;
+    text-decoration: none;
+}
+.gum.sheet.actor .characteristics-tab .gum-action-menu__panel > a.item-control.gum-action-menu__item > span { color: inherit; }
+.gum.sheet.actor .characteristics-tab .gum-action-menu__panel > a.item-control.gum-action-menu__item > i { width: 13px; color: #77716a; text-align: center; }
+.gum.sheet.actor .characteristics-tab .gum-action-menu__panel > a.item-control.gum-action-menu__item:hover { background: rgba(197,160,91,.14); color: #2f2c29; }
+.gum.sheet.actor .characteristics-tab .gum-action-menu__panel > a.item-control.gum-action-menu__item.is-danger { color: #70424a; }
+.gum.sheet.actor .characteristics-tab .gum-action-menu__panel > a.item-control.gum-action-menu__item.is-danger:hover { color: #862f3a; }
 
 .dialog.gum.characteristic-group-dialog .window-content {
     padding: 0;
