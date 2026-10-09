@@ -9,6 +9,7 @@ import { EffectBrowser } from "../module/apps/effect-browser.js";
 import { GurpsActorSheet } from "../module/actor/gurps-actor-sheet.js";
 import "../scripts/journal-pdf.js";
 import { GurpsItemSheet } from "../module/item/gurps-item-sheet.js";
+import { MoneySourceSheet } from "../module/item/money-source-sheet.js";
 import { TemplateItemSheet } from "../module/item/template-item-sheet.js";
 import { migrateLegacyStatusBindingSource, migrateRetiredBundledSources, registerSystemSettings } from "../module/settings.js";
 import { GumPreviewDialog } from "../module/apps/preview-dialog.js";
@@ -2977,7 +2978,12 @@ Hooks.once('init', async function() {
     ActorsCollection.registerSheet("gum", GurpsActorSheet, { 
         types: ["character"], makeDefault: true 
     }); 
-    ItemsCollection.registerSheet("gum", GurpsItemSheet, { makeDefault: true }); 
+    ItemsCollection.registerSheet("gum", GurpsItemSheet, { makeDefault: true });
+    ItemsCollection.registerSheet("gum", MoneySourceSheet, {
+        types: ["money_source"],
+        makeDefault: true,
+        label: game.i18n.localize("GUM.MoneySource.SheetLabel")
+    });
     ItemsCollection.registerSheet("gum", ConditionSheet, { 
         types: ["condition"], 
         makeDefault: true 

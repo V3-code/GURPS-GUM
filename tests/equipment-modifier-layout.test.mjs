@@ -182,11 +182,9 @@ test("equipment modifier sheet exposes typed feature authoring", () => {
   assert.match(itemSheet, /await this\.submit\(\{ preventClose: true \}\)/);
 });
 
-test("equipment active toggle explains its limited lifecycle purpose", () => {
-  assert.match(template, /GUM\.Equipment\.Label\.Active/);
-  assert.match(template, /equipment-operational-toggle/);
-  assert.match(template, /equipment-toggle-pill/);
-  assert.match(template, /GUM\.Equipment\.Label\.ActiveHint/);
+test("equipment sheet omits the redundant internal active toggle", () => {
+  assert.doesNotMatch(template, /name="system\.active"/);
+  assert.doesNotMatch(template, /equipment-operational-toggle/);
   assert.match(template, /equipment-consume-toggle/);
   assert.doesNotMatch(template, /No modo Quantidade, “Consumir \/ Usar”/);
 });
@@ -206,7 +204,7 @@ test("granted effects expose UUID, domain and lifecycle and are synchronized by 
   assert.match(itemSheet, /new EffectBrowser\(this\.item/);
   assert.match(itemSheet, /system\.features_data\.\$\{id\}\.effect_uuid/);
   assert.match(itemSheet, /fromUuid\(uuid\)/);
-  assert.match(template, /name="system\.active"/);
+  assert.doesNotMatch(template, /name="system\.active"/);
   assert.match(main, /syncEquipmentModifierGrantedEffects\(item\)/);
   assert.match(main, /source: EQUIPMENT_GRANTED_EFFECT_SOURCE/);
   assert.match(main, /skipInstantEffects: true/);

@@ -1,11 +1,13 @@
-import { calculateItemTraitCost } from "../utils/trait-cost.mjs";
+import { calculateItemTraitCost, calculateTraitCost } from "../utils/trait-cost.mjs";
 import { applyEffectWithResistance, performGURPSRoll } from "/systems/gum/scripts/main.js";
 import { GurpsRollPrompt } from "../apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../apps/damage-roll-prompt.js";
 import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
 import { getBodyProfile, getBodyLocationDefinition, listBodyProfiles } from "../config/body-profiles.js";
 import { TemplateBrowser } from "../apps/template-browser.js";
+import { templateEntryDisplayName } from "../utils/template-entry-display.mjs";
 import { GumPreviewDialog } from "../apps/preview-dialog.js";
+import { showTemplateEntryPreview } from "../apps/template-entry-preview.js";
 import { buildSkillModifierIndicators } from "../utils/skill-modifier-indicators.mjs";
 import { resolveCharacterImage } from "../utils/character-image.mjs";
 import { buildSecondaryStatsRecalculationPlan, buildSecondaryStatsUpdateData, formatBasicDamageDiceCount } from "../utils/secondary-stats-recalculation.mjs";
@@ -794,8 +796,24 @@ async getData(options) {
 // ================================================================== //
         //    AGRUPAMENTO E ORDENAÇÃO DE EQUIPAMENTOS (VERSÃO FINAL)          //
         // ================================================================== //
-        const equipmentTypes = ['equipment', 'melee_weapon', 'ranged_weapon'];
+        const equipmentTypes = ['equipment', 'melee_weapon', 'ranged_weapon', 'money_source'];
         const allEquipment = context.actor.items.filter(i => equipmentTypes.includes(i.type));
+        context.moneySources = context.actor.items.filter(item => item.type === "money_source").map(item => {
+            const system = item.system || {};
+            const data = item.toObject();
+            const physical = system.mode !== "abstract";
+            const quantity = Math.max(0, Number(system.quantity) || 0);
+            const unitValue = Math.max(0, Number(system.unit_value) || 0);
+            return {
+                ...data,
+                system: {
+                    ...system,
+                    moneyAvailable: physical ? quantity * unitValue : Math.max(0, Number(system.balance) || 0),
+                    moneyPhysical: physical,
+                    moneyTotalWeight: physical ? quantity * Math.max(0, Number(system.weight) || 0) : 0
+                }
+            };
+        });
         const collapsedContainers = this.actor.getFlag("gum", "collapsed_containers") || {};
 
         const getItemOwnWeight = (item) => {
@@ -856,9 +874,9 @@ async getData(options) {
         });
 
         // ✅ FILTROS PARA O HTML (HBS) - Incluindo todos os tipos de equipamentos
-        context.equipmentInUse = allEquipment.filter(i => i.system.equipped);
-        context.equipmentStored = allEquipment.filter(i => i.system.stored);
-        context.equipmentCarried = allEquipment.filter(i => !i.system.equipped && !i.system.stored);
+        context.equipmentInUse = allEquipment.filter(i => i.type !== "money_source" && i.system.equipped);
+        context.equipmentStored = allEquipment.filter(i => i.type !== "money_source" && i.system.stored);
+        context.equipmentCarried = allEquipment.filter(i => i.type !== "money_source" && !i.system.equipped && !i.system.stored);
 
         // Ordenação das listas (Opcional, usando suas funções existentes)
         const sortingPrefs = this.actor.system.sorting?.equipment || {};
@@ -2287,6 +2305,7 @@ html.on("click", ".edit-power-source", (ev) => this._onEditPowerSource(ev));
 html.on("click", ".view-power-source", (ev) => this._onViewPowerSource(ev));
 html.on("click", ".delete-power-source", (ev) => this._onDeletePowerSource(ev));
 html.on("click", ".create-primary-item", (ev) => this._onCreatePrimaryItem(ev));
+html.on("click", ".money-source-create", (ev) => this._onCreateMoneySource(ev));
 
 // -------------------------------------------------------------
 //  ASPECTOS SOCIAIS
@@ -5252,6 +5271,18 @@ async _onAdjustEnergyReserve(ev) {
   });
 }
 
+async _onCreateMoneySource(ev) {
+  ev.preventDefault();
+  ev.stopPropagation();
+  const [item] = await this.actor.createEmbeddedDocuments("Item", [{
+    name: game.i18n.localize("GUM.MoneySource.Header"),
+    type: "money_source",
+    img: "icons/svg/item-bag.svg",
+    system: { mode: "physical", quantity: 0, unit_value: 1, weight: 0, location: "carried", balance: 0 }
+  }]);
+  item?.sheet?.render(true);
+}
+
 async _adjustEquipmentReserve(equipmentId, adjustment) {
   const item = this.actor.items.get(equipmentId);
   if (!item || !adjustment) return;
@@ -6429,7 +6460,7 @@ async _onAddCharacterModel(ev) {
   new TemplateBrowser(this.actor, {
     onSelect: async (selectedTemplate) => {
       const templateDoc = selectedTemplate?.uuid ? await fromUuid(selectedTemplate.uuid).catch(() => null) : null;
-      if (!templateDoc) return ui.notifications.error("Não foi possível carregar o Modelo selecionado.");
+      if (!templateDoc) return ui.notifications.error(game.i18n.localize("GUM.Template.ModelNotFound"));
       await this._runTemplateApplicationFlow(templateDoc);
     }
   }).render(true);
@@ -6440,112 +6471,808 @@ async _runTemplateApplicationFlow(templateItem) {
 
   const duplicate = this._findAppliedModelRecord(templateItem);
   if (duplicate) {
-    ui.notifications.warn(`O Modelo "${templateItem.name}" já foi aplicado nesta ficha.`);
+    ui.notifications.warn(game.i18n.format("GUM.Template.AlreadyApplied", { name: templateItem.name }));
     return;
   }
 
-  const blocks = Array.isArray(templateItem.system?.blocks) ? templateItem.system.blocks : [];
+  const resolvedGraph = await this._resolveTemplateReferenceGraph(templateItem);
+  if (!resolvedGraph) return;
+  const blocks = resolvedGraph.blocks;
+  const sharedBudgets = Array.isArray(templateItem.system?.sharedBudgets) ? foundry.utils.deepClone(templateItem.system.sharedBudgets) : [];
+  const budgetError = this._validateTemplateSharedBudgets(blocks, sharedBudgets);
+  if (budgetError) {
+    ui.notifications.error(game.i18n.format("GUM.Template.SharedBudgetInvalid", { name: budgetError }));
+    return;
+  }
   if (!blocks.length) {
-    ui.notifications.warn("Este Modelo não possui blocos para aplicação.");
+    ui.notifications.warn(game.i18n.localize("GUM.Template.NoBlocksToApply"));
+    return;
+  }
+  if (!this._collectTemplateSteps(blocks, {}).length) {
+    ui.notifications.warn(game.i18n.localize("GUM.Template.NoEntriesToApply"));
     return;
   }
 
-  const plan = [];
-  let pointsLeftoverTotal = 0;
-
-  for (const block of blocks) {
-    const processed = await this._processTemplateBlockForPlan(block, plan);
-    if (processed === null) return;
-    pointsLeftoverTotal += Number(processed.leftover) || 0;
+  const choices = {};
+  let index = 0;
+  while (true) {
+    const steps = this._collectTemplateSteps(blocks, choices);
+    const finalStep = index >= steps.length;
+    const step = finalStep ? null : steps[index];
+    const result = await this._promptTemplateWizardStep(step, choices, index, steps.length, templateItem, blocks, sharedBudgets);
+    if (!result || result.action === "cancel") return;
+    if (result.action === "retry") continue;
+    if (result.action === "back") {
+      if (step && result.choice) choices[step.id] = result.choice;
+      if (finalStep && result.destinations) choices.__destinations = result.destinations;
+      if (finalStep && result.conflicts) choices.__conflicts = result.conflicts;
+      if (finalStep) choices.__moneySourceIds = result.moneySourceIds || choices.__moneySourceIds || {};
+      index = Math.max(0, index - 1);
+      continue;
+    }
+    if (step) choices[step.id] = result.choice;
+    if (finalStep) {
+      choices.__destinations = result.destinations || {};
+      choices.__conflicts = result.conflicts || {};
+      choices.__moneySourceIds = result.moneySourceIds || {};
+      break;
+    }
+    index++;
   }
-
-  const confirmed = await this._promptTemplatePointsTransferSummary(pointsLeftoverTotal);
-  if (!confirmed) return;
-
-  const applied = await this._applyTemplatePlan(templateItem, plan, { pointsLeftoverTotal });
+  const { plan, pointsLeftoverTotal, budgetResults, selectedTemplates, duplicateReference } = this._buildTemplatePlanFromChoices(blocks, choices, sharedBudgets);
+  if (duplicateReference) {
+    ui.notifications.error(game.i18n.format("GUM.Template.ReferenceRepeated", { name: duplicateReference.name }));
+    return;
+  }
+  const exceeded = budgetResults.find(result => !this._isTemplateBudgetResultValid(result));
+  if (exceeded) {
+    ui.notifications.error(game.i18n.format("GUM.Template.SharedBudgetExceeded", { name: exceeded.title || exceeded.type }));
+    return;
+  }
+  if (this._validateTemplateChoiceRules(blocks, choices).length) {
+    ui.notifications.warn(game.i18n.localize("GUM.Template.ChoiceRulesInvalid"));
+    return;
+  }
+  if (this._findAppliedModelRecord(templateItem)) {
+    ui.notifications.warn(game.i18n.format("GUM.Template.AlreadyApplied", { name: templateItem.name }));
+    return;
+  }
+  const applied = await this._applyTemplatePlan(templateItem, plan, {
+    pointsLeftoverTotal,
+    budgetResults,
+    referencedTemplates: selectedTemplates,
+    moneySourceIds: choices.__moneySourceIds
+  });
   if (!applied) return;
 
-ui.notifications.info(`Modelo "${templateItem.name}" aplicado com sucesso.`);
+  ui.notifications.info(game.i18n.format("GUM.Template.Applied", { name: templateItem.name }));
 }
 
-async _processTemplateBlockForPlan(block, plan) {
-  const contents = Array.isArray(block.contents) ? block.contents : [];
-  if (!contents.length) return { leftover: 0 };
-
-  if (block.type === "guaranteed") {
-    let totalLeftover = 0;
-    for (const entry of contents) {
-      const processed = await this._appendTemplateEntryPlan(entry, plan, block);
-      if (processed === null) return null;
-      totalLeftover += Number(processed.leftover) || 0;
+async _resolveTemplateReferenceGraph(templateItem) {
+  const references = [];
+  const rootIdentity = templateItem.uuid || templateItem.id;
+  const expandBlocks = async (blocks, chain, stack, scope = "") => {
+    const expanded = foundry.utils.deepClone(Array.isArray(blocks) ? blocks : []);
+    for (const block of expanded) {
+      block.id = `${scope}${block.id}`;
+      block.originChain = foundry.utils.deepClone(chain);
+      for (const entry of block.contents || []) {
+        const sourceEntryId = entry.id;
+        entry.id = `${scope}${sourceEntryId}`;
+        entry.originChain = foundry.utils.deepClone(chain);
+        if (entry.kind === "template") {
+          const referenced = entry.uuid ? await fromUuid(entry.uuid).catch(() => null) : game.items.get(entry.sourceId);
+          if (!referenced || referenced.type !== "template") {
+            ui.notifications.error(game.i18n.format("GUM.Template.MissingReferencedModel", { name: entry.name || "?" }));
+            return null;
+          }
+          const identity = referenced.uuid || referenced.id;
+          if (stack.includes(identity)) {
+            ui.notifications.error(game.i18n.format("GUM.Template.ReferenceCycle", { name: referenced.name }));
+            return null;
+          }
+          const nextChain = [...chain, { id: referenced.id, uuid: referenced.uuid, name: referenced.name }];
+          const subBlocks = await expandBlocks(referenced.system?.blocks, nextChain, [...stack, identity], `${entry.id}:`);
+          if (!subBlocks) return null;
+          entry.name = entry.name || referenced.name;
+          entry.img = entry.img || referenced.img;
+          entry.templateUuid = referenced.uuid;
+          entry.templateId = referenced.id;
+          entry.subBlocks = [...(entry.subBlocks || []), ...subBlocks];
+          references.push({ id: referenced.id, uuid: referenced.uuid, name: referenced.name, chain: nextChain.map(item => item.name) });
+        } else if (entry.subBlocks?.length) {
+          const subBlocks = await expandBlocks(entry.subBlocks, chain, stack, scope);
+          if (!subBlocks) return null;
+          entry.subBlocks = subBlocks;
+        }
+      }
     }
-    return { leftover: totalLeftover };
-  }
-
-  if (block.type === "selection") {
-    const selected = await this._promptTemplateSelectionBlock(block);
-    if (selected === null) return null;
-
-    let totalLeftover = 0;
-    for (const entry of selected) {
-      const processed = await this._appendTemplateEntryPlan(entry, plan, block);
-      if (processed === null) return null;
-      totalLeftover += Number(processed.leftover) || 0;
-    }
-    return { leftover: totalLeftover };
-  }
-
-  if (block.type === "points") {
-    const result = await this._promptTemplatePointsBlock(block);
-    if (result === null) return null;
-
-    let totalLeftover = Number(result.leftover) || 0;
-    for (const entry of result.selected) {
-      const processed = await this._appendTemplateEntryPlan(entry, plan, block);
-      if (processed === null) return null;
-      totalLeftover += Number(processed.leftover) || 0;
-    }
-
-    return { leftover: totalLeftover };
-  }
-
-  return { leftover: 0 };
+    return expanded;
+  };
+  const root = { id: templateItem.id, uuid: templateItem.uuid, name: templateItem.name };
+  const blocks = await expandBlocks(templateItem.system?.blocks, [root], [rootIdentity]);
+  return blocks ? { blocks, references } : null;
 }
 
-async _appendTemplateEntryPlan(entry, plan, block) {
-  if (!entry) return { leftover: 0 };
-
-  const normalized = { ...entry, blockId: block.id, blockType: block.type };
-  if (normalized.kind !== "group") {
-    plan.push(normalized);
+_collectTemplateSteps(blocks, choices, output = []) {
+  for (const block of blocks || []) {
+    if (!Array.isArray(block.contents) || !block.contents.length) continue;
+    output.push(block);
+    const selected = block.type === "guaranteed"
+      ? block.contents
+      : block.contents.filter(entry => choices[block.id]?.ids?.includes(entry.id));
+    for (const entry of selected) this._collectTemplateSteps(entry.subBlocks, choices, output);
   }
-
-  const nestedBlocks = Array.isArray(entry.subBlocks) ? entry.subBlocks : [];
-  let totalLeftover = 0;
-  for (const nestedBlock of nestedBlocks) {
-    const processed = await this._processTemplateBlockForPlan(nestedBlock, plan);
-    if (processed === null) return null;
-    totalLeftover += Number(processed.leftover) || 0;
-  }
-
-  return { leftover: totalLeftover };
+  return output;
 }
 
-async _promptTemplatePointsTransferSummary(pointsLeftoverTotal) {
-  const value = Number(pointsLeftoverTotal) || 0;
-  const signal = value > 0 ? "+" : "";
+_buildTemplatePlanFromChoices(blocks, choices, sharedBudgets = []) {
+  const plan = [];
+  let pointsLeftoverTotal = 0;
+  const budgetResults = [];
+  const sharedSpent = new Map();
+  const sharedDefinitions = new Map(sharedBudgets.map(budget => [`${budget.type}:${String(budget.name || "").trim().toLocaleLowerCase()}`, budget]));
+  const selectedTemplates = [];
+  const selectedTemplateIds = new Set();
+  let duplicateReference = null;
+  const visit = (list, inherited = { group: "", container: "" }) => {
+    for (const block of list || []) {
+      const blockGroup = block.destinationGroup || inherited.group;
+      const blockContainer = block.containerName || inherited.container;
+      const contents = Array.isArray(block.contents) ? block.contents : [];
+      const choice = choices[block.id] || {};
+      const selected = block.type === "guaranteed" ? contents : contents.filter(entry => choice.ids?.includes(entry.id));
+      if (block.type === "points") {
+        const spent = selected.filter(entry => choices.__conflicts?.[entry.id]?.action !== "ignore")
+          .reduce((sum, entry) => sum + this._templateChoiceCost(entry, choice.levels?.[entry.id], choice.quantities?.[entry.id], choice.attributeValues?.[entry.id]), 0);
+        const key = String(block.sharedBudgetKey || "").trim().toLocaleLowerCase();
+        if (key) sharedSpent.set(`points:${key}`, (sharedSpent.get(`points:${key}`) || 0) + spent);
+        else {
+          pointsLeftoverTotal += (Number(block.pointsAvailable) || 0) - spent;
+          budgetResults.push({ blockId: block.id, title: block.title || "", type: "points", budget: Number(block.pointsAvailable) || 0,
+            spent, excess: Math.max(0, spent - (Number(block.pointsAvailable) || 0)), policy: block.budgetPolicy || "hard", originChain: block.originChain || [] });
+        }
+      }
+      if (block.type === "money") {
+        const spent = selected.filter(entry => choices.__conflicts?.[entry.id]?.action !== "ignore")
+          .reduce((sum, entry) => sum + this._templateMoneyCost(entry, choice.quantities?.[entry.id]), 0);
+        const key = String(block.sharedBudgetKey || "").trim().toLocaleLowerCase();
+        if (key) sharedSpent.set(`money:${key}`, (sharedSpent.get(`money:${key}`) || 0) + spent);
+        else budgetResults.push({ blockId: block.id, title: block.title || "", type: "money", budget: Number(block.moneyAvailable) || 0,
+          spent, excess: Math.max(0, spent - (Number(block.moneyAvailable) || 0)), policy: block.budgetPolicy || "hard",
+          accounting: block.moneyAccounting === "deduct" ? "deduct" : "budget", moneySourceFilter: String(block.moneySourceFilter || "").trim(), originChain: block.originChain || [] });
+      }
+      for (const entry of selected) {
+        if (entry.kind === "template") {
+          const identity = entry.templateUuid || entry.uuid || entry.templateId || entry.sourceId;
+          if (identity && selectedTemplateIds.has(identity) && !entry.repeatable) duplicateReference ||= entry;
+          if (identity) selectedTemplateIds.add(identity);
+          selectedTemplates.push({ id: entry.templateId || entry.sourceId, uuid: entry.templateUuid || entry.uuid,
+            name: entry.name, chain: [...(entry.originChain || []).map(item => item.name), entry.name] });
+        }
+        if (!["group", "template"].includes(entry.kind)) {
+          const groupMode = entry.destinationMode || (entry.destinationGroup ? "group" : "inherit");
+          const containerMode = entry.containerMode || (entry.containerName ? "new" : "inherit");
+          const resolved = { ...entry, blockId: block.id, blockType: block.type,
+            destinationGroup: groupMode === "source" ? "" : groupMode === "group" ? entry.destinationGroup || "" : blockGroup,
+            containerName: containerMode === "loose" ? "" : containerMode === "new" ? entry.containerName || "" : blockContainer };
+          if (choices.__destinations?.[entry.id]) {
+            const destination = choices.__destinations[entry.id];
+            resolved.containerName = destination.startsWith("new:") ? destination.slice(4) : "";
+            resolved.containerId = destination.startsWith("existing:") ? destination.slice(9) : "";
+          }
+          if (choice.levels?.[entry.id] !== undefined) {
+            resolved.level = this._templateEntryLevel(entry, choice.levels[entry.id]);
+            resolved.cost = this._templateChoiceCost(entry, resolved.level);
+          }
+          if (choice.quantities?.[entry.id] !== undefined) resolved.quantity = Math.max(1, Number(choice.quantities[entry.id]) || 1);
+          if (entry.kind === "attribute" && choice.attributeValues?.[entry.id]) {
+            resolved.attributes = this._templateAttributeAmounts(entry, choice.attributeValues[entry.id]);
+            resolved.cost = this._templateChoiceCost(entry, undefined, undefined, choice.attributeValues[entry.id]);
+          }
+          const conflict = choices.__conflicts?.[entry.id] || {};
+          resolved.conflictAction = conflict.action || "duplicate";
+          resolved.conflictTargetId = conflict.targetId || "";
+          if (resolved.conflictAction === "ignore") continue;
+          plan.push(resolved);
+        }
+        visit(entry.subBlocks, { group: blockGroup, container: blockContainer });
+      }
+    }
+  };
+  visit(blocks);
+  for (const [key, spent] of sharedSpent) {
+    const definition = sharedDefinitions.get(key);
+    if (!definition) continue;
+    const budget = Number(definition.amount) || 0;
+    const result = { blockId: `shared:${key}`, sharedKey: key, title: definition.name, type: definition.type,
+      budget, spent, excess: Math.max(0, spent - budget), policy: definition.policy || "hard",
+      accounting: definition.type === "money" && definition.accounting === "deduct" ? "deduct" : "budget", moneySourceFilter: "", originChain: [] };
+    budgetResults.push(result);
+    if (definition.type === "points") pointsLeftoverTotal += budget - spent;
+  }
+  return { plan, pointsLeftoverTotal, budgetResults, selectedTemplates, duplicateReference };
+}
 
-  return Dialog.confirm({
-    title: "Aplicar Modelo • Ajuste de Pontos Livres",
-    content: `
-      <div class="template-apply-block-dialog">
-        <p>Total de pontos restantes da seleção: <strong>${signal}${value}</strong></p>
-        <p>Esse valor será transferido para <strong>Pontos Livres</strong> da ficha (positivo ou negativo).</p>
-      </div>
-    `,
-    yes: () => true,
-    no: () => false,
-    defaultYes: true
+_templateRuleNames(value) {
+  return (Array.isArray(value) ? value : String(value || "").split(","))
+    .map(name => String(name).trim()).filter(Boolean);
+}
+
+_validateTemplateChoiceRules(blocks, choices) {
+  const selected = [];
+  const visit = list => {
+    for (const block of list || []) {
+      const choice = choices[block.id] || {};
+      const entries = block.type === "guaranteed" ? block.contents || []
+        : (block.contents || []).filter(entry => choice.ids?.includes(entry.id));
+      for (const entry of entries) {
+        if (choices.__conflicts?.[entry.id]?.action === "ignore") continue;
+        selected.push(entry);
+        visit(entry.subBlocks);
+      }
+    }
+  };
+  visit(blocks);
+  const normalize = value => String(value || "").trim().toLocaleLowerCase();
+  const actorNames = new Set((this.actor?.items || []).map(item => [normalize(item.name), normalize(templateEntryDisplayName(item, item))]).flat());
+  const issues = [];
+  for (const entry of selected) {
+    const present = name => actorNames.has(normalize(name)) || selected.some(other => other !== entry
+      && [normalize(other.name || other.label), normalize(templateEntryDisplayName(other))].includes(normalize(name)));
+    for (const name of this._templateRuleNames(entry.requiresNames)) {
+      if (!present(name)) issues.push({ entry: templateEntryDisplayName(entry) || "?", target: name, kind: "required" });
+    }
+    for (const name of this._templateRuleNames(entry.excludesNames)) {
+      if (present(name)) issues.push({ entry: templateEntryDisplayName(entry) || "?", target: name, kind: "incompatible" });
+    }
+  }
+  return issues;
+}
+
+_validateTemplateSharedBudgets(blocks, sharedBudgets) {
+  const definitions = new Set();
+  for (const budget of sharedBudgets) {
+    const name = String(budget.name || "").trim();
+    if (!name || !["points", "money"].includes(budget.type) || !Number.isFinite(Number(budget.amount))) return name || "?";
+    const key = `${budget.type}:${name.toLocaleLowerCase()}`;
+    if (definitions.has(key)) return name;
+    definitions.add(key);
+  }
+  const visit = list => {
+    for (const block of list || []) {
+      const name = String(block.sharedBudgetKey || "").trim();
+      if (name && !definitions.has(`${block.type}:${name.toLocaleLowerCase()}`)) return name;
+      for (const entry of block.contents || []) {
+        const error = visit(entry.subBlocks);
+        if (error) return error;
+      }
+    }
+    return null;
+  };
+  return visit(blocks);
+}
+
+_templateBudgetStatus(block, draftChoice, blocks, choices, sharedBudgets) {
+  const draft = { ...choices, [block.id]: draftChoice };
+  const steps = this._collectTemplateSteps(blocks, draft);
+  const currentIndex = steps.findIndex(step => step.id === block.id);
+  for (const step of steps.slice(currentIndex + 1)) delete draft[step.id];
+  const results = this._buildTemplatePlanFromChoices(blocks, draft, sharedBudgets).budgetResults;
+  const name = String(block.sharedBudgetKey || "").trim().toLocaleLowerCase();
+  const result = name
+    ? results.find(entry => entry.sharedKey === `${block.type}:${name}`)
+    : results.find(entry => entry.blockId === block.id);
+  if (!result) return { spent: 0, budget: 0, valid: false };
+  const valid = this._isTemplateBudgetResultValid(result);
+  return { spent: result.spent, budget: result.budget, valid };
+}
+
+_isTemplateBudgetResultValid(result) {
+  const rule = { budgetPolicy: result.policy, pointsAvailable: result.budget, moneyAvailable: result.budget };
+  return result.type === "money" ? this._isTemplateMoneySpendValid(rule, result.spent) : this._isTemplatePointsSpendValid(rule, result.spent);
+}
+
+_templateMoneyCost(entry, quantity = undefined) {
+  const unitPrice = Number(entry.moneyCost ?? entry.cost) || 0;
+  return unitPrice * Math.max(1, Number(quantity ?? entry.quantity) || 1);
+}
+
+_getTemplateItemConflicts(entry) {
+  const name = String(entry?.name || entry?.label || "").trim().toLocaleLowerCase();
+  if (!name || !entry?.itemType) return [];
+  const specialization = String(entry.specialization || entry.inlineItem?.system?.specialization || "").trim().toLocaleLowerCase();
+  return this.actor.items.filter(item => item.type === entry.itemType
+    && String(item.name || "").trim().toLocaleLowerCase() === name
+    && String(item.system?.specialization || "").trim().toLocaleLowerCase() === specialization);
+}
+
+_validateTemplateConflictPlan(plan) {
+  const targets = new Set();
+  for (const entry of plan) {
+    if (!["update", "replace"].includes(entry.conflictAction)) continue;
+    let target = this.actor.items.get(entry.conflictTargetId);
+    if (!target) {
+      const matches = this._getTemplateItemConflicts(entry);
+      if (matches.length === 1) {
+        target = matches[0];
+        entry.conflictTargetId = target.id;
+      }
+    }
+    if (!target || target.type !== entry.itemType) return "ConflictTargetUnavailable";
+    if (target.system?.is_container) return "ConflictContainerUnsupported";
+    if (targets.has(target.id)) return "ConflictTargetRepeated";
+    targets.add(target.id);
+  }
+  return null;
+}
+
+_templateAttributeAmounts(entry, values = undefined) {
+  const result = {};
+  const selected = new Set(Array.isArray(entry.selectedAttributes) ? entry.selectedAttributes : []);
+  for (const [key, raw] of Object.entries(entry.attributes || {})) {
+    const initial = Number(raw) || 0;
+    const configuredLimit = Number(entry.attributeLimits?.[key] ?? (key === "move" ? entry.attributeLimits?.basic_move : undefined));
+    if (!initial && !(Number.isFinite(configuredLimit) && configuredLimit > 0) && !selected.has(key)) continue;
+    const step = key === "basic_speed" ? 0.25 : 1;
+    const requested = values?.[key] === undefined ? initial : Number(values[key]);
+    const amount = Number.isFinite(requested) ? requested : initial;
+    const magnitudeLimit = Number.isFinite(configuredLimit) && configuredLimit > 0
+      ? Math.floor(Math.max(Math.abs(initial), configuredLimit) / step) * step : Infinity;
+    const bounded = Math.min(Math.max(-magnitudeLimit, amount), magnitudeLimit);
+    result[key] = Math.round(bounded / step) * step;
+  }
+  return result;
+}
+
+_templateAttributeLabel(key) {
+  const normalized = key === "move" ? "basic_move" : key;
+  return game.i18n.localize(`GUM.Template.AttributeLabel.${normalized}`);
+}
+
+_templateAttributeCost(entry, values = undefined) {
+  if (!values) return Number(entry.cost) || 0;
+  const amounts = this._templateAttributeAmounts(entry, values);
+  if (!Object.keys(entry.costs || {}).length) {
+    const configured = Object.values(entry.attributes || {}).reduce((sum, value) => sum + Math.abs(Number(value) || 0), 0);
+    const chosen = Object.values(amounts).reduce((sum, value) => sum + Number(value || 0), 0);
+    return configured ? (Number(entry.cost) || 0) * chosen / configured : 0;
+  }
+  const defaultCosts = { st: 10, dx: 20, iq: 20, ht: 10, will: 5, per: 5, hp: 2, fp: 3,
+    hp_max: 2, fp_max: 3, lifting_st: 3, vision: 2, hearing: 2, tastesmell: 2, touch: 2,
+    basic_speed: 5, basic_move: 5, move: 5 };
+  return Object.entries(amounts).reduce((sum, [key, amount]) =>
+    sum + amount / (key === "basic_speed" ? 0.25 : 1) * (Number(entry.costs?.[key] ?? defaultCosts[key]) || 0), 0);
+}
+
+_templateChoiceCost(entry, level = undefined, quantity = undefined, attributeValues = undefined) {
+  if (entry.kind === "attribute") return this._templateAttributeCost(entry, attributeValues);
+  if (entry.itemType === "equipment") return (Number(entry.pointsCost) || 0) * Math.max(1, Number(quantity ?? entry.quantity) || 1);
+  if (level !== undefined && ["advantage", "disadvantage"].includes(entry.itemType)) {
+    const trait = entry.trait_cost || entry._resolvedTraitCost || entry.inlineItem?.system;
+    if (trait?.can_level) return calculateTraitCost({ ...trait, level: this._templateEntryLevel(entry, level) }).finalPoints;
+  }
+  if (level === undefined || !["skill", "spell", "power"].includes(entry.itemType)) return Number(entry.cost) || 0;
+  level = this._templateEntryLevel(entry, level);
+  const difficulty = entry.inlineItem?.system?.difficulty || entry.difficulty || "M";
+  const normalized = ({ E: "F", A: "M", H: "D", VH: "MD" })[difficulty] || difficulty;
+  if (normalized === "TecM") return Math.max(0, level);
+  if (normalized === "TecD") return level > 0 ? level + 1 : 0;
+  const starts = { F: 0, M: -1, D: -2, MD: -3 };
+  const first = starts[normalized] ?? -1;
+  const offset = level - first;
+  if (offset < 0) return 0;
+  return offset === 0 ? 1 : offset === 1 ? 2 : offset === 2 ? 4 : 4 * (offset - 1);
+}
+
+_templateEntryLevel(entry, value) {
+  const level = Number(value) || 0;
+  const rawMaximum = entry?.maxLevel;
+  const maximum = Number(rawMaximum);
+  return rawMaximum !== "" && rawMaximum !== null && rawMaximum !== undefined && Number.isFinite(maximum)
+    ? Math.min(level, maximum)
+    : level;
+}
+
+_isTemplateSelectionValid(block, selectedCount) {
+  const limit = Math.max(1, Number(block?.choiceCount) || 1);
+  return selectedCount <= limit && (!block?.choiceExact || selectedCount === limit);
+}
+
+_templateSelectionUnits(block, ids = [], quantities = {}) {
+  const selected = new Set(ids || []);
+  return (block?.contents || []).reduce((total, entry) => {
+    if (!selected.has(entry.id)) return total;
+    const quantity = entry.selectionQuantity ? Math.max(1, Math.floor(Number(quantities?.[entry.id] ?? entry.quantity) || 1)) : 1;
+    return total + quantity;
+  }, 0);
+}
+
+_isTemplatePointsSpendValid(block, spent) {
+  const budget = Number(block?.pointsAvailable) || 0;
+  if (["unlimited", "allow"].includes(block?.budgetPolicy)) return true;
+  if (block?.budgetPolicy === "gm" && game.user?.isGM) return true;
+  return budget >= 0 ? spent <= budget : spent >= budget;
+}
+
+_isTemplateMoneySpendValid(block, spent) {
+  const policy = block?.budgetPolicy || "hard";
+  if (["unlimited", "allow"].includes(policy)) return true;
+  if (policy === "gm" && game.user?.isGM) return true;
+  return spent >= 0 && spent <= (Number(block?.moneyAvailable) || 0);
+}
+
+async _promptTemplateWizardStep(block, choices, index, total, templateItem, blocks, sharedBudgets = []) {
+  const t = key => game.i18n.localize(`GUM.Template.${key}`);
+  const esc = value => foundry.utils.escapeHTML(String(value ?? ""));
+  const choice = choices[block?.id] || { ids: [], levels: {}, quantities: {}, attributeValues: {} };
+  if (block?.type === "points") {
+    await Promise.all(block.contents.filter(entry => ["skill", "spell", "power", "advantage", "disadvantage"].includes(entry.itemType)).map(async entry => {
+      const source = !entry.difficulty || (!["skill", "spell", "power"].includes(entry.itemType) && !entry.trait_cost)
+        ? await this._resolveTemplateEntrySourceItem(entry) : null;
+      if (["skill", "spell", "power"].includes(entry.itemType) && !entry.difficulty) entry.difficulty = source?.system?.difficulty || entry.inlineItem?.system?.difficulty || "M";
+      if (["advantage", "disadvantage"].includes(entry.itemType) && !entry.trait_cost) entry._resolvedTraitCost = source?.system || entry.inlineItem?.system;
+    }));
+  }
+  const views = block ? await Promise.all(block.contents.map(entry => this._buildTemplateEntryViewData(entry))) : [];
+  const rows = block ? block.contents.map((entry, i) => {
+    const view = views[i];
+    const selected = choice.ids?.includes(entry.id);
+    const isLevelled = block.type === "points" && (["skill", "spell", "power"].includes(entry.itemType)
+      || (["advantage", "disadvantage"].includes(entry.itemType) && (entry.trait_cost || entry._resolvedTraitCost || entry.inlineItem?.system)?.can_level));
+    const level = this._templateEntryLevel(entry, choice.levels?.[entry.id] ?? entry.level ?? 0);
+    const quantity = Math.max(1, Number(choice.quantities?.[entry.id] ?? entry.quantity) || 1);
+    const quantityEditable = entry.itemType === "equipment" && (block.type !== "selection" || entry.selectionQuantity === true);
+    const minimumLevel = ["advantage", "disadvantage"].includes(entry.itemType) ? 0 : -3;
+    const rawMaximumLevel = entry.maxLevel;
+    const hasMaximumLevel = rawMaximumLevel !== "" && rawMaximumLevel !== null && rawMaximumLevel !== undefined && Number.isFinite(Number(rawMaximumLevel));
+    const maximumLevel = hasMaximumLevel ? Math.max(minimumLevel, Number(rawMaximumLevel)) : Math.max(12, level + 7);
+    const levelOptions = isLevelled ? Array.from({ length: maximumLevel - minimumLevel + 1 }, (_, index) => minimumLevel + index).map(n =>
+      `<option value="${n}" ${n === level ? "selected" : ""}>${n} (${this._templateChoiceCost(entry, n)} ${t("Points")})</option>`).join("") : "";
+    const attributeAmounts = entry.kind === "attribute" && block.type === "points"
+      ? this._templateAttributeAmounts(entry, choice.attributeValues?.[entry.id]) : {};
+    const attributeInputs = Object.entries(attributeAmounts).map(([key, amount]) => {
+      const initial = Number(entry.attributes[key]) || 0;
+      const configuredLimit = Number(entry.attributeLimits?.[key] ?? (key === "move" ? entry.attributeLimits?.basic_move : undefined));
+      const step = key === "basic_speed" ? 0.25 : 1;
+      const limit = Number.isFinite(configuredLimit) && configuredLimit > 0
+        ? Math.floor(Math.max(Math.abs(initial), configuredLimit) / step) * step : null;
+      const bound = limit !== null ? `min="${-limit}" max="${limit}"` : "";
+      return `<label class="template-choice-adjustment template-attribute-adjustment"><span>${esc(this._templateAttributeLabel(key))}</span><span class="template-attribute-stepper"><button type="button" class="template-attribute-step" data-step="-1" title="-" aria-label="-"><i class="fas fa-minus"></i></button><input type="number" class="template-attribute-choice" data-entry-id="${esc(entry.id)}" data-attribute="${esc(key)}" ${bound} step="${key === "basic_speed" ? "0.25" : "1"}" value="${amount}"><button type="button" class="template-attribute-step" data-step="1" title="+" aria-label="+"><i class="fas fa-plus"></i></button></span></label>`;
+    }).join("");
+    const rowCost = block.type === "money" ? this._templateMoneyCost(entry, quantity)
+      : this._templateChoiceCost(entry, isLevelled ? level : undefined, quantity, entry.kind === "attribute" ? attributeAmounts : undefined);
+    const costUnit = block.type === "money" ? t("Money") : t("Points");
+    return `<div class="template-choice-row template-wizard-row" data-entry-id="${esc(entry.id)}">
+      ${block.type === "guaranteed" ? `<span aria-hidden="true"><i class="fas fa-check"></i></span>` : `<input type="checkbox" name="entry" value="${esc(entry.id)}" ${selected ? "checked" : ""}>`}
+      <span class="template-choice-content"><strong>${view.title}</strong><small>${view.details.join(" · ")}</small></span>
+      ${isLevelled ? `<label class="template-choice-adjustment"><span>${t("Level")}</span><select class="template-level-choice" data-entry-id="${esc(entry.id)}">${levelOptions}</select></label>` : ""}
+      ${quantityEditable ? `<label class="template-choice-adjustment template-quantity-adjustment"><span>${t("QuantityShort")}</span><span class="template-quantity-stepper"><button type="button" class="template-quantity-step" data-step="-1" title="-" aria-label="-"><i class="fas fa-minus"></i></button><input type="number" class="template-quantity-choice" data-entry-id="${esc(entry.id)}" min="1" step="1" value="${quantity}"><button type="button" class="template-quantity-step" data-step="1" title="+" aria-label="+"><i class="fas fa-plus"></i></button></span></label>` : ""}
+      ${attributeInputs ? `<span class="template-attribute-choices">${attributeInputs}</span>` : ""}
+      <span class="template-choice-cost" data-cost-for="${esc(entry.id)}">${rowCost} ${costUnit}</span>
+      <button type="button" class="template-preview-entry" data-entry-id="${esc(entry.id)}" title="${t("PreviewEntry")}" aria-label="${t("PreviewEntry")}"><i class="fas fa-eye"></i></button>
+    </div>`;
+  }).join("") : "";
+  const preview = !block ? this._buildTemplatePlanFromChoices(blocks, choices, sharedBudgets) : null;
+  const reviewEntries = !block ? this._buildTemplatePlanFromChoices(blocks, { ...choices, __conflicts: {} }, sharedBudgets).plan : [];
+  const reviewViews = !block ? await Promise.all(reviewEntries.map(entry => this._buildTemplateEntryViewData(entry))) : [];
+  const ruleIssues = !block ? this._validateTemplateChoiceRules(blocks, choices) : [];
+  const containers = this.actor.items.filter(item => item.type === "equipment" && item.system?.is_container);
+  const reviewRows = reviewEntries.map((entry, index) => {
+    const chosenDestination = choices.__destinations?.[entry.id] || (entry.containerName ? `new:${entry.containerName}` : "loose");
+    const destination = entry.itemType === "equipment" ? `<select class="template-container-destination" data-entry-id="${esc(entry.id)}">
+      <option value="loose" ${chosenDestination === "loose" ? "selected" : ""}>${t("LooseEquipment")}</option>
+      ${entry.containerName ? `<option value="new:${esc(entry.containerName)}" ${chosenDestination === `new:${entry.containerName}` ? "selected" : ""}>${t("CreateContainer")}: ${esc(entry.containerName)}</option>` : ""}
+      ${containers.map(item => `<option value="existing:${esc(item.id)}" ${chosenDestination === `existing:${item.id}` ? "selected" : ""}>${t("ExistingContainer")}: ${esc(item.name)}</option>`).join("")}
+    </select>` : "";
+    const conflicts = this._getTemplateItemConflicts(entry);
+    const savedConflict = choices.__conflicts?.[entry.id] || {};
+    const action = savedConflict.action || "duplicate";
+    const targetId = savedConflict.targetId || conflicts[0]?.id || "";
+    const actionNeedsTarget = ["update", "replace"].includes(action);
+    const conflictAction = conflicts.length ? `<select class="template-conflict-action" data-entry-id="${esc(entry.id)}" title="${t("ConflictFound")}" aria-label="${t("ConflictFound")}">
+        <option value="duplicate" ${action === "duplicate" ? "selected" : ""}>${t("ConflictDuplicate")}</option>
+        <option value="update" ${action === "update" ? "selected" : ""}>${t("ConflictUpdate")}</option>
+        <option value="replace" ${action === "replace" ? "selected" : ""}>${t("ConflictReplace")}</option>
+        <option value="ignore" ${action === "ignore" ? "selected" : ""}>${t("ConflictIgnore")}</option>
+      </select>` : "";
+    const conflictControl = conflicts.length > 1 ? `<div class="template-conflict-control${actionNeedsTarget ? "" : " is-hidden"}">
+      <span class="template-conflict-label">${t("ExistingItem")}</span>
+      <select class="template-conflict-target" data-entry-id="${esc(entry.id)}" ${actionNeedsTarget ? "" : "disabled"}>
+        ${conflicts.map(item => `<option value="${esc(item.id)}" ${targetId === item.id ? "selected" : ""}>${esc(templateEntryDisplayName(item, item))}</option>`).join("")}
+      </select>
+    </div>${conflicts.length === 1 ? `<input type="hidden" class="template-conflict-target" data-entry-id="${esc(entry.id)}" value="${esc(targetId)}">` : ""}` : "";
+    const meta = [entry.itemType === "equipment" ? `×${Math.max(1, Number(entry.quantity) || 1)}` : "", entry.destinationGroup ? esc(entry.destinationGroup) : ""].filter(Boolean).join(" · ");
+    const details = [...(reviewViews[index].details || []), entry.level !== "" && entry.level !== null && entry.level !== undefined ? `${t("Level")}: ${entry.level}` : "", entry.cost !== undefined && entry.cost !== null ? `${entry.cost} ${t("Points")}` : "", meta].filter(Boolean).filter((value, position, values) => values.indexOf(value) === position).join(" · ");
+    return { entry, index, conflicts, row: `<li class="template-review-card"><div class="template-review-card__main"><strong>${reviewViews[index].title}</strong>${meta ? `<small>${meta}</small>` : ""}</div>
+      <div class="template-review-card__actions">${conflictAction}<button type="button" class="template-preview-entry" data-entry-id="${esc(entry.id)}" title="${t("PreviewEntry")}" aria-label="${t("PreviewEntry")}"><i class="fas fa-eye"></i></button>${destination}</div>${details ? `<small class="template-review-card__details">${details}</small>` : ""}${conflictControl}</li>` };
+  });
+  const categoryOrder = ["attribute", "skill", "advantage", "disadvantage", "spell", "power", "equipment", "other"];
+  const categoryLabel = key => key === "attribute" ? t("Attributes") : key === "other" ? t("Item") : this._getTemplateEntryTypeLabel(key);
+  const reviewGroups = categoryOrder.map(key => ({ key, label: categoryLabel(key), rows: reviewRows.filter(({ entry }) => (entry.kind === "attribute" ? "attribute" : entry.itemType || "other") === key && !this._getTemplateItemConflicts(entry).length) })).filter(group => group.rows.length);
+  const conflictRows = reviewRows.filter(({ conflicts }) => conflicts.length);
+  const confirmedSections = reviewGroups.map(group => `<details class="template-review-category"><summary><span>${group.label}</span><strong>${group.rows.length}</strong></summary><ul class="template-review-list">${group.rows.map(row => row.row).join("")}</ul></details>`).join("");
+  const pointCosts = reviewEntries.map(entry => entry.itemType === "equipment" ? Number(entry.pointsCost || 0) * Math.max(1, Number(entry.quantity) || 1) : Number(entry.cost || 0));
+  const pointTotals = { invested: pointCosts.filter(cost => cost > 0).reduce((total, cost) => total + cost, 0), disadvantages: pointCosts.filter(cost => cost < 0).reduce((total, cost) => total + cost, 0), remaining: (preview?.budgetResults || []).filter(result => result.type === "points").reduce((total, result) => total + Number(result.budget || 0) - Number(result.spent || 0), 0) };
+  const moneyTotals = { invested: (preview?.budgetResults || []).filter(result => result.type === "money").reduce((total, result) => total + Number(result.spent || 0), 0), remaining: (preview?.budgetResults || []).filter(result => result.type === "money").reduce((total, result) => total + Number(result.budget || 0) - Number(result.spent || 0), 0) };
+  const reviewTotals = (label, totals, type) => `<section class="template-review-total" data-review-total="${type}"><h3>${label}</h3><div><span>${t(type === "points" ? "PointsInvested" : "ResourcesInvested")}</span><strong data-review-${type}-invested>${type === "points" ? `${totals.invested}/${totals.disadvantages}` : totals.invested}</strong></div><div><span>${t(type === "points" ? "PointsRemaining" : "ResourcesRemaining")}</span><strong data-review-${type}-remaining>${totals.remaining}</strong></div></section>`;
+  const reviewTotalsMarkup = `${reviewEntries.length ? reviewTotals(t("PointsSummary"), pointTotals, "points") : ""}${moneyTotals.invested || moneyTotals.remaining ? reviewTotals(t("ResourcesSummary"), moneyTotals, "money") : ""}`;
+  const ruleSummary = ruleIssues.map(issue => `<li>${issue.kind === "required" ? t("RequiresChoice") : t("IncompatibleChoice")}: ${esc(issue.entry)} → ${esc(issue.target)}</li>`).join("");
+  const originLabel = block?.originChain?.length > 1 ? `${block.originChain.map(item => esc(item.name)).join(" → ")} · ` : "";
+  const title = block ? `${originLabel}${esc(block.title || t("Block"))} (${index + 1}/${total + 1})` : t("ReviewTitle");
+  const sharedDefinition = block?.sharedBudgetKey ? sharedBudgets.find(budget => budget.type === block.type &&
+    String(budget.name || "").trim().toLocaleLowerCase() === String(block.sharedBudgetKey).trim().toLocaleLowerCase()) : null;
+  const initialBudgetStatus = block?.type === "points" ? this._templateBudgetStatus(block, choice, blocks, choices, sharedBudgets) : null;
+  const blockHint = block?.type === "guaranteed" ? t("GuaranteedHint")
+    : block?.type === "selection" ? `${block.choiceExact ? t("ChooseExactly") : t("ChooseUpTo")} ${Number(block.choiceCount) || 1}`
+      : block?.type === "money" ? `${t("PurchaseBudget")}: ${Number(sharedDefinition?.amount ?? block.moneyAvailable) || 0}${sharedDefinition ? ` · ${t("SharedBudget")}: ${esc(sharedDefinition.name)}` : ""}`
+        : `${t("Budget")}: ${Number(sharedDefinition?.amount ?? block?.pointsAvailable) || 0}${sharedDefinition ? ` · ${t("SharedBudget")}: ${esc(sharedDefinition.name)}` : ""}`;
+  const needsPayment = !block && preview?.budgetResults?.some(result => result.type === "money" && result.accounting === "deduct" && Number(result.spent) > 0);
+  const moneySources = needsPayment ? this.actor.items.filter(item => item.type === "money_source") : [];
+  const paymentLines = needsPayment ? preview.budgetResults.filter(result => result.type === "money" && result.accounting === "deduct" && Number(result.spent) > 0) : [];
+  const paymentSource = needsPayment ? `<section class="template-review-summary template-payment-source"><h3>${t("PaymentSource")}</h3>${paymentLines.map(result => {
+    const filter = String(result.moneySourceFilter || "").trim();
+    const accepted = moneySources.filter(item => this._moneySourceMatchesFilter(item, filter));
+    const selectedId = choices.__moneySourceIds?.[result.blockId] || "";
+    return `<div class="template-payment-line"><strong>${esc(result.title || t("PurchaseBudget"))}</strong><small>${Number(result.spent)} ${t("Money")}${filter ? ` · ${t("PaymentSourceFilter")}: ${esc(filter)}` : ""}</small>${accepted.length
+      ? `<select class="template-money-source" data-payment-id="${esc(result.blockId)}"><option value="">${t("PaymentSource")}</option>${accepted.map(item => `<option value="${esc(item.id)}" ${selectedId === item.id ? "selected" : ""}>${esc(item.name)} · ${this._getMoneySourceBalance(item)}</option>`).join("")}</select><small class="template-payment-balance" data-payment-id="${esc(result.blockId)}"></small>`
+      : `<p>${t("NoPaymentSource")}</p>`}</div>`;
+  }).join("")}</section>` : "";
+  const pointBudgetSummary = block?.type === "points" ? `<section class="template-wizard-budget-summary${initialBudgetStatus.valid ? "" : " template-wizard-budget-summary--invalid"}">
+    <div><span>${t("PointsAvailable")}</span><strong data-template-budget>${initialBudgetStatus.budget}</strong></div>
+    <div><span>${t("PointsSpent")}</span><strong data-template-spent>${initialBudgetStatus.spent}</strong></div>
+    <div><span>${t("Leftover")}</span><strong data-template-remaining>${initialBudgetStatus.budget - initialBudgetStatus.spent}</strong></div>
+    <p class="template-wizard-budget-notice">${initialBudgetStatus.valid ? "" : t("InvalidBudget")}</p>
+  </section>` : "";
+  const guaranteedSpent = block?.type === "guaranteed" ? block.contents.reduce((sum, entry) => sum + this._templateChoiceCost(
+    entry,
+    undefined,
+    entry.quantity,
+    entry.kind === "attribute" ? this._templateAttributeAmounts(entry) : undefined
+  ), 0) : 0;
+  const guaranteedBudgetSummary = block?.type === "guaranteed" ? `<section class="template-wizard-budget-summary">
+    <div><span>${t("PointsAvailable")}</span><strong>${guaranteedSpent}</strong></div>
+    <div><span>${t("PointsSpent")}</span><strong>${guaranteedSpent}</strong></div>
+    <div><span>${t("Leftover")}</span><strong>0</strong></div>
+  </section>` : "";
+  const initialSelectionCount = block?.type === "selection" ? this._templateSelectionUnits(block, choice.ids, choice.quantities) : 0;
+  const selectionLimit = block?.type === "selection" ? Math.max(1, Number(block.choiceCount) || 1) : 0;
+  const selectionBudgetSummary = block?.type === "selection" ? `<section class="template-wizard-budget-summary${this._isTemplateSelectionValid(block, initialSelectionCount) ? "" : " template-wizard-budget-summary--invalid"}">
+    <div><span>${t("ChoicesAvailable")}</span><strong data-template-selection-budget>${selectionLimit}</strong></div>
+    <div><span>${t("ChoicesSelected")}</span><strong data-template-selection-spent>${initialSelectionCount}</strong></div>
+    <div><span>${t("ChoicesRemaining")}</span><strong data-template-selection-remaining>${selectionLimit - initialSelectionCount}</strong></div>
+    <p class="template-wizard-budget-notice">${this._isTemplateSelectionValid(block, initialSelectionCount) ? "" : t("InvalidChoiceCount")}</p>
+  </section>` : "";
+  const wizardBudgetSummary = pointBudgetSummary || guaranteedBudgetSummary || selectionBudgetSummary;
+  const reviewConflictCount = block ? 0 : conflictRows.length;
+  const content = `<div class="template-apply-block-dialog${wizardBudgetSummary ? " template-apply-block-dialog--budget" : ""}${block ? "" : " template-apply-block-dialog--review"}">
+    <header class="template-flow-header"><span class="template-flow-eyebrow">${t("Model")}</span><h2>${title}</h2><p>${block ? blockHint : t("ReviewHint")}</p></header>
+    ${block ? `<div class="template-apply-options">${rows}</div>${wizardBudgetSummary || '<div class="template-wizard-balance"></div>'}`
+      : `<div class="template-review-body"><details class="template-review-section"><summary><span>${t("ConfirmedItems")}</span><strong>${reviewRows.length - conflictRows.length}</strong></summary>${confirmedSections || `<p class="template-review-empty">${t("NoConfirmedItems")}</p>`}</details>${conflictRows.length ? `<details class="template-review-section template-review-section--conflicts" open><summary><span>${t("ResolveConflicts")}</span><strong>${conflictRows.length}</strong></summary><ul class="template-review-list">${conflictRows.map(row => row.row).join("")}</ul></details>` : ""}</div>${paymentSource}<div class="template-review-totals">${reviewTotalsMarkup}</div><ul class="template-rule-issues">${ruleSummary}</ul>`}</div>`;
+  return new Promise(resolve => {
+    let settled = false;
+    const finish = value => { if (!settled) { settled = true; resolve(value); } };
+    new Dialog({
+      title: `${t("Model")}: ${templateItem.name}`,
+      content,
+      buttons: {
+        ...(index ? { back: { label: t("Back"), callback: html => {
+          if (!block) {
+            return finish({ action: "back", ...this._readTemplateReviewChoices(html) });
+          }
+          const ids = block.type === "guaranteed" ? block.contents.map(entry => entry.id) : html.find('input[name="entry"]:checked').map((_, el) => el.value).get();
+          const levels = {};
+          html.find(".template-level-choice").each((_, el) => {
+            const entry = block.contents.find(candidate => candidate.id === el.dataset.entryId);
+            levels[el.dataset.entryId] = this._templateEntryLevel(entry, el.value);
+          });
+          const quantities = {};
+          html.find(".template-quantity-choice").each((_, el) => { quantities[el.dataset.entryId] = Math.max(1, Math.floor(Number(el.value) || 1)); });
+          const attributeValues = this._readTemplateAttributeChoices(html);
+          finish({ action: "back", choice: { ids, levels, quantities, attributeValues } });
+        } } } : {}),
+        next: { label: block ? t("Next") : t("Apply"), callback: html => {
+          if (!block) {
+            const review = this._readTemplateReviewChoices(html);
+            const draft = { ...choices, __conflicts: review.conflicts, __destinations: review.destinations };
+            if (this._validateTemplateChoiceRules(blocks, draft).length) {
+              ui.notifications.warn(t("ChoiceRulesInvalid"));
+              return finish({ action: "retry" });
+            }
+            const currentPlan = this._buildTemplatePlanFromChoices(blocks, draft, sharedBudgets);
+            const invalidBudget = currentPlan.budgetResults
+              .find(result => !this._isTemplateBudgetResultValid(result));
+            if (invalidBudget) {
+              ui.notifications.warn(game.i18n.format("GUM.Template.SharedBudgetExceeded", { name: invalidBudget.title || invalidBudget.type }));
+              return finish({ action: "retry" });
+            }
+            if (needsPayment) {
+              const payments = this._buildTemplatePaymentTransactions(currentPlan.budgetResults, review.moneySourceIds);
+              if (!payments.valid) {
+                ui.notifications.warn(t(payments.reason === "source" ? "NoPaymentSource" : "PaymentInsufficient"));
+                return finish({ action: "retry" });
+              }
+            }
+            return finish({ action: "next", ...review });
+          }
+          const ids = block.type === "guaranteed" ? block.contents.map(entry => entry.id) : html.find('input[name="entry"]:checked').map((_, el) => el.value).get();
+          const levels = {};
+          html.find(".template-level-choice").each((_, el) => {
+            const entry = block.contents.find(candidate => candidate.id === el.dataset.entryId);
+            levels[el.dataset.entryId] = this._templateEntryLevel(entry, el.value);
+          });
+          const quantities = {};
+          html.find(".template-quantity-choice").each((_, el) => { quantities[el.dataset.entryId] = Math.max(1, Math.floor(Number(el.value) || 1)); });
+          const attributeValues = this._readTemplateAttributeChoices(html);
+          if (block.type === "selection") {
+            if (!this._isTemplateSelectionValid(block, this._templateSelectionUnits(block, ids, quantities))) {
+              ui.notifications.warn(t("InvalidChoiceCount"));
+              return finish({ action: "retry" });
+            }
+          }
+          if (block.type === "points") {
+            const status = this._templateBudgetStatus(block, { ids, levels, quantities, attributeValues }, blocks, choices, sharedBudgets);
+            if (!status.valid) {
+              ui.notifications.warn(t("InvalidBudget"));
+              return finish({ action: "retry" });
+            }
+          }
+          if (block.type === "money") {
+            const status = this._templateBudgetStatus(block, { ids, levels, quantities, attributeValues }, blocks, choices, sharedBudgets);
+            if (!status.valid) {
+              ui.notifications.warn(t("InvalidMoneyBudget"));
+              return finish({ action: "retry" });
+            }
+          }
+          finish({ action: "next", choice: { ids, levels, quantities, attributeValues } });
+        } },
+        cancel: { label: t("Cancel"), callback: () => finish({ action: "cancel" }) }
+      },
+      default: "next",
+      close: () => finish({ action: "cancel" }),
+      render: html => {
+        html.find(".template-preview-entry").on("click", async event => {
+          event.preventDefault();
+          event.stopPropagation();
+          const entryId = event.currentTarget.dataset.entryId;
+          const entry = (block?.contents || reviewEntries).find(candidate => candidate.id === entryId);
+          if (!entry) return;
+          const previewEntry = { ...entry };
+          if (block) {
+            const levelField = html.find(".template-level-choice").filter((_, el) => el.dataset.entryId === entryId);
+            const quantityField = html.find(".template-quantity-choice").filter((_, el) => el.dataset.entryId === entryId);
+            if (levelField.length) previewEntry.level = Number(levelField.val());
+            if (quantityField.length) previewEntry.quantity = Math.max(1, Number(quantityField.val()) || 1);
+            if (levelField.length) previewEntry.cost = this._templateChoiceCost(entry, previewEntry.level, previewEntry.quantity);
+            if (entry.kind === "attribute" && block.type === "points") {
+              const amounts = this._readTemplateAttributeChoices(html)[entryId];
+              previewEntry.attributes = this._templateAttributeAmounts(entry, amounts);
+              previewEntry.cost = this._templateChoiceCost(entry, undefined, undefined, amounts);
+            }
+          }
+          const sourceItem = await this._resolveTemplateEntrySourceItem(entry);
+          await showTemplateEntryPreview(previewEntry, { actor: this.actor, sourceItem });
+        });
+        if (!block) {
+          const refreshReview = () => {
+            const review = this._readTemplateReviewChoices(html);
+            const draft = { ...choices, __conflicts: review.conflicts, __destinations: review.destinations };
+            const issues = this._validateTemplateChoiceRules(blocks, draft);
+            const currentPlan = this._buildTemplatePlanFromChoices(blocks, draft, sharedBudgets);
+            const invalidBudget = currentPlan.budgetResults
+              .find(result => !this._isTemplateBudgetResultValid(result));
+            for (const type of ["points", "money"]) {
+              const remaining = currentPlan.budgetResults.filter(result => result.type === type).reduce((total, result) => total + Number(result.budget || 0) - Number(result.spent || 0), 0);
+              const costs = currentPlan.plan.map(entry => entry.itemType === "equipment" ? Number(entry.pointsCost || 0) * Math.max(1, Number(entry.quantity) || 1) : Number(entry.cost || 0));
+              const invested = type === "points" ? `${costs.filter(cost => cost > 0).reduce((total, cost) => total + cost, 0)}/${costs.filter(cost => cost < 0).reduce((total, cost) => total + cost, 0)}` : currentPlan.budgetResults.filter(result => result.type === "money").reduce((total, result) => total + Number(result.spent || 0), 0);
+              html.find(`[data-review-${type}-invested]`).text(invested);
+              html.find(`[data-review-${type}-remaining]`).text(remaining);
+            }
+            html.find(".template-rule-issues").html(issues.map(issue => `<li>${issue.kind === "required" ? t("RequiresChoice") : t("IncompatibleChoice")}: ${esc(issue.entry)} → ${esc(issue.target)}</li>`).join(""));
+            html.find('button[data-button="next"]').prop("disabled", !!issues.length || !!invalidBudget);
+            this._refreshTemplatePaymentBalances(html, currentPlan.budgetResults);
+          };
+          html.find(".template-conflict-action").on("change", event => {
+            const action = event.currentTarget.value;
+            const targetField = html.find(".template-conflict-control").filter((_, el) => el.querySelector(".template-conflict-target")?.dataset.entryId === event.currentTarget.dataset.entryId);
+            const needsTarget = ["update", "replace"].includes(action);
+            targetField.toggleClass("is-hidden", !needsTarget).find(".template-conflict-target").prop("disabled", !needsTarget);
+            refreshReview();
+          });
+          html.find(".template-money-source").on("change", () => this._refreshTemplatePaymentBalances(html, this._buildTemplatePlanFromChoices(blocks, { ...choices, __conflicts: this._readTemplateReviewChoices(html).conflicts, __destinations: this._readTemplateReviewChoices(html).destinations }, sharedBudgets).budgetResults));
+          refreshReview();
+          return;
+        }
+        if (block.type === "guaranteed") return;
+        const inputs = html.find('input[name="entry"]');
+        const nextButton = html.find('button[data-button="next"]');
+        const setNextEnabled = enabled => nextButton.prop("disabled", !enabled).attr("aria-disabled", String(!enabled));
+
+        if (block.type === "selection") {
+          const refreshSelection = () => {
+            const quantities = {};
+            html.find(".template-quantity-choice").each((_, el) => { quantities[el.dataset.entryId] = Math.max(1, Math.floor(Number(el.value) || 1)); });
+            const selectedCount = this._templateSelectionUnits(block, inputs.filter(":checked").map((_, input) => input.value).get(), quantities);
+            const limit = Math.max(1, Number(block.choiceCount) || 1);
+            const atLimit = selectedCount >= limit;
+            inputs.each((_, input) => {
+              if (!input.checked) input.disabled = atLimit;
+            });
+            const valid = this._isTemplateSelectionValid(block, selectedCount);
+            html.find(".template-wizard-budget-summary")
+              .toggleClass("template-wizard-budget-summary--invalid", !valid);
+            html.find("[data-template-selection-budget]").text(limit);
+            html.find("[data-template-selection-spent]").text(selectedCount);
+            html.find("[data-template-selection-remaining]").text(limit - selectedCount);
+            html.find(".template-wizard-budget-notice").text(valid ? "" : t("InvalidChoiceCount"));
+            setNextEnabled(valid);
+          };
+          inputs.add(html.find(".template-quantity-choice")).on("change input", refreshSelection);
+          html.find(".template-quantity-step").on("click", event => {
+            event.preventDefault();
+            const input = $(event.currentTarget).siblings(".template-quantity-choice");
+            input.val(Math.max(1, (Number(input.val()) || 1) + (Number(event.currentTarget.dataset.step) || 0))).trigger("change");
+          });
+          refreshSelection();
+          return;
+        }
+
+        const refresh = () => {
+          const ids = html.find('input[name="entry"]:checked').map((_, el) => el.value).get();
+          const levels = {};
+          html.find(".template-level-choice").each((_, el) => { levels[el.dataset.entryId] = Number(el.value); });
+          const quantities = {};
+          html.find(".template-quantity-choice").each((_, el) => { quantities[el.dataset.entryId] = Math.max(1, Math.floor(Number(el.value) || 1)); });
+          const attributeValues = this._readTemplateAttributeChoices(html);
+          const moneyMode = block.type === "money";
+          const { spent, budget, valid } = this._templateBudgetStatus(block, { ids, levels, quantities, attributeValues }, blocks, choices, sharedBudgets);
+          if (block.type === "points") {
+            html.find(".template-wizard-budget-summary")
+              .toggleClass("template-wizard-budget-summary--invalid", !valid);
+            html.find("[data-template-budget]").text(budget);
+            html.find("[data-template-spent]").text(spent);
+            html.find("[data-template-remaining]").text(budget - spent);
+            html.find(".template-wizard-budget-notice").text(valid ? "" : t("InvalidBudget"));
+          } else {
+            html.find(".template-wizard-balance")
+              .toggleClass("template-wizard-balance--invalid", !valid)
+              .text(`${t("Leftover")}: ${budget - spent}${valid ? "" : ` · ${moneyMode ? t("InvalidMoneyBudget") : t("InvalidBudget")}`}`);
+          }
+          for (const entry of block.contents) html.find(`[data-cost-for="${entry.id}"]`).text(`${moneyMode ? this._templateMoneyCost(entry, quantities[entry.id]) : this._templateChoiceCost(entry, levels[entry.id], quantities[entry.id], attributeValues[entry.id])} ${moneyMode ? t("Money") : t("Points")}`);
+          setNextEnabled(valid);
+        };
+        html.find('input[name="entry"], .template-level-choice, .template-quantity-choice').on("change input", refresh);
+        html.find(".template-attribute-choice").on("change input", event => {
+          const field = event.currentTarget;
+          const entry = block.contents.find(candidate => candidate.id === field.dataset.entryId);
+          if (event.type === "change" && field.value === "") field.value = 0;
+          if (entry && field.value !== "" && Number.isFinite(Number(field.value))) {
+            const accepted = this._templateAttributeAmounts(entry, { [field.dataset.attribute]: Number(field.value) })[field.dataset.attribute];
+            if (accepted !== undefined && accepted !== Number(field.value)) field.value = accepted;
+          }
+          refresh();
+        });
+        html.find(".template-attribute-step").on("click", event => {
+          event.preventDefault();
+          const input = $(event.currentTarget).siblings(".template-attribute-choice");
+          const step = Number(input.attr("step")) || 1;
+          input.val((Number(input.val()) || 0) + (Number(event.currentTarget.dataset.step) || 0) * step).trigger("change");
+        });
+        html.find(".template-quantity-step").on("click", event => {
+          event.preventDefault();
+          const input = $(event.currentTarget).siblings(".template-quantity-choice");
+          input.val(Math.max(1, (Number(input.val()) || 1) + (Number(event.currentTarget.dataset.step) || 0))).trigger("change");
+        });
+        refresh();
+      }
+    }, {
+      classes: ["dialog", "gum", "template-apply-dialog", "gum-sheet-edit-dialog"],
+      width: block ? 520 : 640,
+      height: block
+        ? Math.max(390, Math.min(720, 270 + (block.contents?.length || 0) * 70))
+        : Math.max(500, Math.min(840, 305 + reviewEntries.length * 48 + reviewConflictCount * 56 + (reviewTotalsMarkup ? 82 : 0) + (needsPayment ? 64 : 0))),
+      resizable: true
+    }).render(true);
   });
 }
 
@@ -6553,158 +7280,129 @@ _findAppliedModelRecord(templateItem) {
   const records = Array.isArray(this.actor.system.applied_models) ? this.actor.system.applied_models : [];
   return records.find(record => {
     if (record.removedAt) return false;
-    if (templateItem.uuid && record.templateUuid && record.templateUuid === templateItem.uuid) return true;
-    if (templateItem.id && record.templateId && record.templateId === templateItem.id) return true;
+    if (templateItem.uuid && record.templateUuid) return record.templateUuid === templateItem.uuid;
+    if (templateItem.id && record.templateId) return record.templateId === templateItem.id;
     return (record.templateName || "").toLowerCase() === (templateItem.name || "").toLowerCase();
   });
 }
 
-async _promptTemplateSelectionBlock(block) {
-  const contents = Array.isArray(block.contents) ? block.contents : [];
-  const maxChoices = Math.max(1, Number(block.choiceCount) || 1);
+_readTemplateReviewChoices(html) {
+  const destinations = {};
+  html.find(".template-container-destination").each((_, el) => { destinations[el.dataset.entryId] = el.value; });
+  const conflicts = {};
+  html.find(".template-conflict-action").each((_, el) => {
+    const target = html.find(".template-conflict-target").filter((_, targetEl) => targetEl.dataset.entryId === el.dataset.entryId).val();
+    conflicts[el.dataset.entryId] = { action: el.value, targetId: target || "" };
+  });
+  const moneySourceIds = {};
+  html.find(".template-money-source").each((_, el) => { moneySourceIds[el.dataset.paymentId] = el.value || ""; });
+  return { destinations, conflicts, moneySourceIds };
+}
 
-  const entryViews = await Promise.all(contents.map(entry => this._buildTemplateEntryViewData(entry)));
-  const rows = entryViews.map(view => this._renderTemplateChoiceRow(view)).join("");
+_normalizeMoneySourceTerms(value = "") {
+  return String(value || "").split(",").map(term => term.trim().toLocaleLowerCase()).filter(Boolean);
+}
 
-  const content = `
-    <div class="template-apply-block-dialog">
-      <p><strong>${foundry.utils.escapeHTML(block.title || "Bloco de seleção")}</strong></p>
-      <p>Selecione até <strong>${maxChoices}</strong> opção(ões).</p>
-      <p>Selecionadas: <strong id="template-selection-count">0/${maxChoices}</strong></p>
-      <div class="template-apply-options">${rows}</div>
-    </div>`;
+_moneySourceMatchesFilter(item, rawFilter = "") {
+  const terms = this._normalizeMoneySourceTerms(rawFilter);
+  if (!terms.length) return true;
+  const name = String(item?.name || "").trim().toLocaleLowerCase();
+  const category = String(item?.system?.category || "").trim().toLocaleLowerCase();
+  return terms.includes(name) || terms.includes(category);
+}
 
-  return new Promise(resolve => {
-    let done = false;
-    const finish = value => { if (done) return; done = true; resolve(value); };
+_buildTemplatePaymentTransactions(budgetResults = [], moneySourceIds = {}) {
+  const transactions = [];
+  const totals = new Map();
+  for (const result of budgetResults) {
+    if (result.type !== "money" || result.accounting !== "deduct" || !(Number(result.spent) > 0)) continue;
+    const sourceId = moneySourceIds?.[result.blockId] || "";
+    const source = this.actor.items.get(sourceId);
+    if (!source || source.type !== "money_source" || !this._moneySourceMatchesFilter(source, result.moneySourceFilter)) {
+      return { valid: false, reason: "source", transactions: [], totals };
+    }
+    const amount = Number(result.spent) || 0;
+    totals.set(sourceId, (totals.get(sourceId) || 0) + amount);
+    transactions.push({ blockId: result.blockId, title: result.title || "", amount, sourceId, sourceName: source.name });
+  }
+  for (const [sourceId, amount] of totals) {
+    const source = this.actor.items.get(sourceId);
+    if (!source || this._getMoneySourceBalance(source) < amount || !this._getMoneySourceDebit(source, amount)) {
+      return { valid: false, reason: "insufficient", transactions: [], totals };
+    }
+  }
+  return { valid: true, transactions, totals };
+}
 
-    new Dialog({
-      title: "Aplicar Modelo • Bloco de Seleção",
-      content,
-      buttons: {
-        apply: {
-          label: "Confirmar",
-          callback: (html) => {
-            const selectedIds = html.find('input[name="entry"]:checked').map((_, el) => el.value).get();
-            if (selectedIds.length > maxChoices) {
-              ui.notifications.warn(`Selecione no máximo ${maxChoices} opções.`);
-              return false;
-            }
-            const selected = contents.filter(entry => selectedIds.includes(entry.id));
-            finish(selected);
-          }
-        },
-        cancel: { label: "Cancelar", callback: () => finish(null) }
-      },
-      default: "apply",
-      close: () => finish(null),
-      render: (html) => {
-        const inputs = html.find('input[name="entry"]');
-        const counterEl = html.find("#template-selection-count");
-        const applyBtn = html.find('button[data-button="apply"]');
-
-        const refreshState = () => {
-          const selectedCount = inputs.filter(":checked").length;
-          counterEl.text(`${selectedCount}/${maxChoices}`);
-
-          const atLimit = selectedCount >= maxChoices;
-          inputs.each((_, input) => {
-            if (!input.checked) input.disabled = atLimit;
-          });
-
-          if (applyBtn.length) applyBtn.prop("disabled", selectedCount > maxChoices);
-        };
-
-        inputs.on("change", refreshState);
-        refreshState();
-      }
-    }, { classes: ["dialog", "gum", "template-apply-dialog", "gum-sheet-edit-dialog"] }).render(true);
+_refreshTemplatePaymentBalances(html, budgetResults = []) {
+  const selections = this._readTemplateReviewChoices(html).moneySourceIds;
+  const running = new Map();
+  html.find(".template-payment-balance").each((_, el) => {
+    const result = budgetResults.find(entry => entry.blockId === el.dataset.paymentId);
+    const source = this.actor.items.get(selections[el.dataset.paymentId]);
+    if (!result || !source) { el.textContent = ""; return; }
+    const before = this._getMoneySourceBalance(source);
+    const spentBefore = running.get(source.id) || 0;
+    const after = before - spentBefore - (Number(result.spent) || 0);
+    running.set(source.id, spentBefore + (Number(result.spent) || 0));
+    el.textContent = `${before - spentBefore} → ${after}`;
   });
 }
 
-async _promptTemplatePointsBlock(block) {
-  const contents = Array.isArray(block.contents) ? block.contents : [];
-  const available = Number(block.pointsAvailable) || 0;
-  const isSpentValid = (spent) => {
-    if (available >= 0) return spent >= 0 && spent <= available;
-    return spent <= 0 && spent >= available;
-  };
-
-  const entryViews = await Promise.all(contents.map(entry => this._buildTemplateEntryViewData(entry)));
-  const rows = entryViews.map(view => this._renderTemplateChoiceRow(view, { includeCostDataAttr: true })).join("");
-
-  const content = `
-    <div class="template-apply-block-dialog">
-      <div class="template-apply-block-header">${foundry.utils.escapeHTML(block.title || "Bloco de pontos")}</div>
-      <div class="template-apply-block-header-2">
-        <div class="template-apply-block-header-2-content">Saldo: <strong id="template-points-left">${available}</strong></div>
-        <div class="template-apply-block-header-2-content">Orçamento: <strong>${available}</strong></div>
-      </div>
-      <div class="template-apply-options">${rows}</div>
-    </div>`;
-
-  return new Promise(resolve => {
-    let done = false;
-    const finish = value => { if (done) return; done = true; resolve(value); };
-
-    new Dialog({
-      title: "Aplicar Modelo • Bloco por Pontos",
-      width: 420,
-      height: "auto",
-      content,
-      buttons: {
-        apply: {
-          label: "Confirmar",
-          callback: (html) => {
-            const selectedInputs = html.find('input[name="entry"]:checked');
-            const selectedIds = selectedInputs.map((_, el) => el.value).get();
-            const spent = selectedInputs.map((_, el) => Number(el.dataset.cost) || 0).get().reduce((sum, val) => sum + val, 0);
-            if (!isSpentValid(spent)) {
-              ui.notifications.warn("A seleção não atende o orçamento de pontos deste bloco.");
-              return false;
-            }
-            finish({
-              selected: contents.filter(entry => selectedIds.includes(entry.id)),
-              leftover: available - spent
-            });
-          }
-        },
-        cancel: { label: "Cancelar", callback: () => finish(null) }
-      },
-      default: "apply",
-      close: () => finish(null),
-      render: (html) => {
-        const leftEl = html.find("#template-points-left");
-        const inputs = html.find('input[name="entry"]');
-        const applyBtn = html.find('button[data-button="apply"]');
-
-        const recalc = () => {
-          const spent = inputs.filter(":checked").map((_, el) => Number(el.dataset.cost) || 0).get().reduce((sum, val) => sum + val, 0);
-          leftEl.text(available - spent);
-
-          inputs.each((_, el) => {
-            if (el.checked) {
-              el.disabled = false;
-              return;
-            }
-
-            const nextCost = Number(el.dataset.cost) || 0;
-            const nextSpent = spent + nextCost;
-            el.disabled = !isSpentValid(nextSpent);
-          });
-
-          if (applyBtn.length) applyBtn.prop("disabled", !isSpentValid(spent));
-        };
-
-        inputs.on("change", recalc);
-        recalc();
-      }
-    }, { classes: ["dialog", "gum", "template-apply-dialog", "gum-sheet-edit-dialog"] }).render(true);
-  });
+_getMoneySourceBalance(item) {
+  const system = item?.system || {};
+  if (system.mode === "abstract") return Math.max(0, Number(system.balance) || 0);
+  return Math.max(0, Number(system.quantity) || 0) * Math.max(0, Number(system.unit_value) || 0);
 }
 
-async _applyTemplatePlan(templateItem, plan, { pointsLeftoverTotal = 0 } = {}) {
+_getMoneySourceDebit(item, amount) {
+  const system = item?.system || {};
+  const spent = Math.max(0, Number(amount) || 0);
+  if (system.mode === "abstract") return { "system.balance": Math.max(0, (Number(system.balance) || 0) - spent) };
+  const unitValue = Number(system.unit_value) || 0;
+  if (!unitValue) return null;
+  return { "system.quantity": Math.max(0, (Number(system.quantity) || 0) - spent / unitValue) };
+}
+
+_readTemplateAttributeChoices(html) {
+  const values = {};
+  html.find(".template-attribute-choice").each((_, el) => {
+    (values[el.dataset.entryId] ||= {})[el.dataset.attribute] = Number(el.value);
+  });
+  return values;
+}
+
+async _applyTemplatePlan(templateItem, plan, { pointsLeftoverTotal = 0, budgetResults = [], referencedTemplates = [], moneySourceId = "", moneySourceIds = {} } = {}) {
+  const conflictError = this._validateTemplateConflictPlan(plan);
+  if (conflictError) {
+    ui.notifications.error(game.i18n.localize(`GUM.Template.${conflictError}`));
+    return false;
+  }
+  const applicationId = foundry.utils.randomID();
+  const moneySpent = budgetResults.filter(result => result.type === "money" && result.accounting === "deduct")
+    .reduce((sum, result) => sum + (Number(result.spent) || 0), 0);
+  const paymentPlan = this._buildTemplatePaymentTransactions(budgetResults, moneySourceIds);
+  const hasPerBlockPayment = paymentPlan.transactions.length > 0;
+  const moneySource = moneySpent && !hasPerBlockPayment ? this.actor.items.get(moneySourceId) : null;
+  const legacyActorMoney = moneySpent && !hasPerBlockPayment && !moneySourceId;
+  if (moneySpent && !hasPerBlockPayment && Object.keys(moneySourceIds || {}).length && !paymentPlan.valid) {
+    ui.notifications.error(game.i18n.localize(paymentPlan.reason === "source" ? "GUM.Template.NoPaymentSource" : "GUM.Template.PaymentInsufficient"));
+    return false;
+  }
+  if (moneySpent && !hasPerBlockPayment && !legacyActorMoney && (!moneySource || moneySource.type !== "money_source")) {
+    ui.notifications.error(game.i18n.localize("GUM.Template.NoPaymentSource"));
+    return false;
+  }
+  const moneyBefore = moneySource ? this._getMoneySourceBalance(moneySource) : (Number(this.actor.system.money?.value) || 0);
+  const moneySourceBefore = moneySource?.toObject?.() || null;
+  const moneyDebit = moneySource ? this._getMoneySourceDebit(moneySource, moneySpent) : {};
+  if (moneySpent && moneySource && (!moneyDebit || moneyBefore < moneySpent)) {
+    ui.notifications.error(game.i18n.localize("GUM.Template.PaymentInsufficient"));
+    return false;
+  }
   const itemCreates = [];
+  const updates = [];
+  const replacements = [];
   const attributeDeltas = {};
   const attributeChanges = [];
   let shouldRecalculateSecondary = false;
@@ -6727,11 +7425,73 @@ async _applyTemplatePlan(templateItem, plan, { pointsLeftoverTotal = 0 } = {}) {
       createdData = this._buildActorItemFromInlineTemplateEntry(entry, templateItem);
     }
 
-    if (!createdData) continue;
-    itemCreates.push(createdData);
+    if (!createdData) {
+      ui.notifications.error(game.i18n.format("GUM.Template.MissingSource", { name: entry.name || entry.label || "?" }));
+      return false;
+    }
+    createdData.flags = createdData.flags || {};
+    createdData.flags.gum = createdData.flags.gum || {};
+    createdData.flags.gum.templateApplicationId = applicationId;
+    if (entry.destinationGroup && ["advantage", "disadvantage", "skill", "spell", "power"].includes(createdData.type)) {
+      createdData.system.group = entry.destinationGroup;
+    }
+    createdData.flags.gum.templateDestination = { group: entry.destinationGroup || "", containerName: entry.containerName || "", containerId: entry.containerId || "" };
+    const action = entry.conflictAction || "duplicate";
+    if (action === "update") {
+      const target = this.actor.items.get(entry.conflictTargetId);
+      updates.push({ itemId: target.id, before: target.toObject(), entry, data: createdData });
+    } else {
+      itemCreates.push(createdData);
+      if (action === "replace") replacements.push({ itemId: entry.conflictTargetId, entryId: entry.id, before: this.actor.items.get(entry.conflictTargetId).toObject() });
+    }
   }
+  const containerNames = [...new Set(plan.filter(entry => entry.itemType === "equipment" && entry.containerName).map(entry => entry.containerName))];
+  const containerCreates = containerNames.map(name => ({
+    name, type: "equipment", img: "icons/containers/bags/sack-cloth-tan.webp",
+    system: { quantity: 1, is_container: true, location: "carried", container: { max_weight: 0 }, parent_container_id: "" },
+    flags: { gum: { templateApplicationId: applicationId, templateContainer: true } }
+  }));
 
-  const createdItems = itemCreates.length ? await this.actor.createEmbeddedDocuments("Item", itemCreates) : [];
+  const previous = {
+    attributes: foundry.utils.deepClone(this.actor.system.attributes),
+    unspent: Number(this.actor.system.points?.unspent) || 0,
+    money: Number(this.actor.system.money?.value) || 0,
+    appliedModels: foundry.utils.deepClone(this.actor.system.applied_models || []),
+    skillOrganization: foundry.utils.deepClone(this.actor.system.skill_organization || {}),
+    characteristicOrganization: foundry.utils.deepClone(this.actor.system.characteristic_organization || {})
+  };
+  const paymentSourceBefore = new Map();
+  for (const sourceId of paymentPlan.totals.keys()) {
+    const source = this.actor.items.get(sourceId);
+    if (source) paymentSourceBefore.set(sourceId, source.toObject());
+  }
+  let createdItems = [];
+  try {
+    if (containerCreates.length) createdItems.push(...await this.actor.createEmbeddedDocuments("Item", containerCreates));
+    if (itemCreates.length) createdItems.push(...await this.actor.createEmbeddedDocuments("Item", itemCreates));
+    if (updates.length) {
+      await this.actor.updateEmbeddedDocuments("Item", updates.map(change => ({
+        _id: change.itemId, name: change.data.name, img: change.data.img,
+        system: change.data.system, "flags.gum.templateApplied": change.data.flags?.gum?.templateApplied
+      })));
+    }
+    if (replacements.length) await this.actor.deleteEmbeddedDocuments("Item", replacements.map(change => change.itemId));
+    const createdContainers = createdItems.filter(item => item.getFlag("gum", "templateContainer"));
+    const containerByName = new Map(createdContainers.map(item => [item.name, item.id]));
+    const updatedItems = updates.map(change => this.actor.items.get(change.itemId)).filter(Boolean);
+    const destinations = new Map(updates.map(change => [change.itemId, change.entry]));
+    const containerLinks = [...createdItems, ...updatedItems].filter(item => !item.getFlag("gum", "templateContainer") && item.type === "equipment")
+      .map(item => {
+        const templateDestination = item.getFlag("gum", "templateDestination");
+        const updateEntry = destinations.get(item.id);
+        const destination = templateDestination || { containerName: updateEntry?.containerName || "", containerId: updateEntry?.containerId || "" };
+        const parentId = destination.containerId || containerByName.get(destination.containerName);
+        const container = parentId ? this.actor.items.get(parentId) : null;
+        if (parentId && item.system?.is_container) throw new Error("Template cannot nest equipment containers");
+        if (parentId && !container) throw new Error("Template equipment container not found");
+        return container ? resolveEquipmentDrop(item, `container:${container.id}`, { container }) : null;
+      }).filter(Boolean);
+    if (containerLinks.length) await this.actor.updateEmbeddedDocuments("Item", containerLinks);
 
   const updateData = this._buildTemplateAttributeUpdateData(attributeDeltas, {
     recalculateSecondaryBases: shouldRecalculateSecondary && hasPrimaryAttributeChange
@@ -6739,17 +7499,43 @@ async _applyTemplatePlan(templateItem, plan, { pointsLeftoverTotal = 0 } = {}) {
   if (Number(pointsLeftoverTotal) !== 0) {
     updateData["system.points.unspent"] = (Number(this.actor.system.points?.unspent) || 0) + Number(pointsLeftoverTotal);
   }
+  if (hasPerBlockPayment) {
+    for (const [sourceId, amount] of paymentPlan.totals) {
+      const source = this.actor.items.get(sourceId);
+      await source.update(this._getMoneySourceDebit(source, amount));
+    }
+  }
+  if (moneySpent && moneySource) await moneySource.update(moneyDebit);
+  if (moneySpent && legacyActorMoney) updateData["system.money.value"] = moneyBefore - moneySpent;
+  const attributeSnapshots = Object.fromEntries(Object.entries(updateData)
+    .filter(([path, value]) => path.startsWith("system.attributes.") && !path.includes(".-=") && (typeof value === "number" || typeof value === "string"))
+    .map(([path, after]) => [path, { before: foundry.utils.getProperty(this.actor, path), after }]));
 
   if (Object.keys(updateData).length) {
     await this.actor.update(updateData);
   }
 
-  const applicationId = foundry.utils.randomID();
-  if (createdItems.length) {
-    await this.actor.updateEmbeddedDocuments("Item", createdItems.map(item => ({
-      _id: item.id,
-      "flags.gum.templateApplicationId": applicationId
-    })));
+  const createdGroups = { skills: [], characteristics: [] };
+  for (const [kind, types, field] of [
+    ["skills", ["skill"], "skill_organization"],
+    ["characteristics", ["advantage", "disadvantage"], "characteristic_organization"]
+  ]) {
+    const items = this.actor.items.filter(item => types.includes(item.type));
+    const grouped = [...createdItems, ...updatedItems].filter(item => types.includes(item.type) && (item.getFlag("gum", "templateDestination")?.group || destinations.get(item.id)?.destinationGroup));
+    if (!grouped.length) continue;
+    let organization = normalizeItemOrganization(this.actor.system[field], items.map(item => item.id));
+    for (const item of grouped) {
+      const name = item.getFlag("gum", "templateDestination")?.group || destinations.get(item.id)?.destinationGroup;
+      let groupId = organization.groupOrder.find(id => organization.groups[id]?.name?.toLocaleLowerCase() === name.toLocaleLowerCase());
+      if (!groupId) {
+        groupId = foundry.utils.randomID();
+        organization = addItemOrganizationGroup(organization, { id: groupId, name }, items.map(entry => entry.id));
+        createdGroups[kind].push(groupId);
+      }
+      organization = moveOrganizedItem(organization, { itemId: item.id, targetGroupId: groupId }, items.map(entry => entry.id));
+    }
+    if (kind === "skills") await this._saveSkillOrganization(organization);
+    else await this._saveCharacteristicOrganization(organization);
   }
 
   const records = Array.isArray(this.actor.system.applied_models) ? foundry.utils.deepClone(this.actor.system.applied_models) : [];
@@ -6762,14 +7548,58 @@ async _applyTemplatePlan(templateItem, plan, { pointsLeftoverTotal = 0 } = {}) {
     appliedAt: new Date().toISOString(),
     appliedBy: game.user?.id,
     createdItemIds: createdItems.map(item => item.id),
+    createdContainerIds: createdContainers.map(item => item.id),
+    createdGroups,
+    entries: createdItems.filter(item => !item.getFlag("gum", "templateContainer")).map(item => ({
+      itemId: item.id, entryId: item.getFlag("gum", "templateApplied")?.templateEntryId,
+      name: item.name, type: item.type, originChain: item.getFlag("gum", "templateApplied")?.originChain || []
+    })),
+    updatedItems: updates.map(change => ({ itemId: change.itemId, name: change.before.name, type: change.before.type, before: change.before })),
+    replacedItems: replacements.map(change => ({
+      replacedItemId: createdItems.find(item => item.getFlag("gum", "templateApplied")?.templateEntryId === change.entryId)?.id || "",
+      name: change.before.name, type: change.before.type, before: change.before
+    })),
     attributeChanges,
+    attributeSnapshots,
     secondaryRecalcApplied,
     pointsLeftover: Number(pointsLeftoverTotal) || 0,
+    moneySpent,
+    moneySource: moneySpent && moneySource ? { itemId: moneySource.id, name: moneySource.name, before: moneySourceBefore, beforeBalance: moneyBefore, afterBalance: moneyBefore - moneySpent } : null,
+    moneyTransactions: hasPerBlockPayment ? paymentPlan.transactions.map(transaction => {
+      const sourceBefore = paymentSourceBefore.get(transaction.sourceId);
+      const source = this.actor.items.get(transaction.sourceId);
+      return { ...transaction, beforeBalance: sourceBefore ? this._getMoneySourceBalance({ system: sourceBefore.system }) : 0,
+        afterBalance: source ? this._getMoneySourceBalance(source) : 0 };
+    }) : [],
+    moneySnapshot: moneySpent && legacyActorMoney ? { before: moneyBefore, after: moneyBefore - moneySpent } : null,
+    budgetResults: foundry.utils.deepClone(budgetResults),
+    referencedTemplates: foundry.utils.deepClone(referencedTemplates),
     totalEntries: plan.length
   });
 
   await this.actor.update({ "system.applied_models": records });
   return true;
+  } catch (error) {
+    console.error("GUM template application failed", error);
+    if (createdItems.length) await this.actor.deleteEmbeddedDocuments("Item", createdItems.map(item => item.id)).catch(console.error);
+    if (updates.length) await this.actor.updateEmbeddedDocuments("Item", updates.filter(change => this.actor.items.has(change.itemId)).map(change => change.before)).catch(console.error);
+    if (replacements.length) await this.actor.createEmbeddedDocuments("Item", replacements.map(change => change.before), { keepId: true }).catch(console.error);
+    await this.actor.update({
+      "system.attributes": previous.attributes,
+      "system.points.unspent": previous.unspent,
+      "system.money.value": previous.money,
+      "system.applied_models": previous.appliedModels,
+      "system.skill_organization": previous.skillOrganization,
+      "system.characteristic_organization": previous.characteristicOrganization
+    }).catch(console.error);
+    if (moneySpent && moneySourceBefore && this.actor.items.has(moneySource.id)) await moneySource.update({ system: moneySourceBefore.system }).catch(console.error);
+    for (const [sourceId, before] of paymentSourceBefore) {
+      const source = this.actor.items.get(sourceId);
+      if (source) await source.update({ system: before.system }).catch(console.error);
+    }
+    ui.notifications.error(game.i18n.localize("GUM.Template.ApplyFailed"));
+    return false;
+  }
 }
 
 _accumulateAttributeChanges(entry, attributeUpdates, attributeChanges) {
@@ -6783,8 +7613,19 @@ _accumulateAttributeChanges(entry, attributeUpdates, attributeChanges) {
     per: "per",
     hp: "hp",
     fp: "fp",
+    hp_max: "hp.max",
+    fp_max: "fp.max",
+    lifting_st: "lifting_st",
+    vision: "vision",
+    hearing: "hearing",
+    tastesmell: "tastesmell",
+    touch: "touch",
+    mt: "mt",
     basic_speed: "basic_speed",
-    move: "basic_move"
+    move: "basic_move",
+    basic_move: "basic_move",
+    enhanced_move: "enhanced_move",
+    dodge: "dodge"
   };
 
   for (const [sourceKey, amountRaw] of Object.entries(attributes)) {
@@ -6798,7 +7639,7 @@ _accumulateAttributeChanges(entry, attributeUpdates, attributeChanges) {
     attributeChanges.push({ key: actorKey, amount });
   }
 
-  const primaryKeys = ["st", "dx", "iq", "ht", "per"];
+  const primaryKeys = ["st", "dx", "ht", "per"];
   return {
     primaryChanged: primaryKeys.some(key => (Number(attributeUpdates[key]) || 0) !== 0)
   };
@@ -6811,8 +7652,8 @@ _buildTemplateAttributeUpdateData(attributeDeltas, { recalculateSecondaryBases =
   for (const [actorKey, deltaRaw] of Object.entries(attributeDeltas)) {
     const delta = Number(deltaRaw) || 0;
     if (!delta) continue;
-    const path = `system.attributes.${actorKey}.value`;
-    updateData[path] = getActorValue(actorKey) + delta;
+    const path = actorKey.includes(".") ? `system.attributes.${actorKey}` : `system.attributes.${actorKey}.value`;
+    updateData[path] = (Number(foundry.utils.getProperty(this.actor.system, path.slice(7))) || 0) + delta;
   }
 
   if (!recalculateSecondaryBases) return updateData;
@@ -6825,16 +7666,16 @@ _buildTemplateAttributeUpdateData(attributeDeltas, { recalculateSecondaryBases =
   const basicMoveBase = Math.floor(basicSpeedBase);
   const damage = this._getBasicDamageFromST(st);
 
-  updateData["system.attributes.hp.max"] = st;
-  updateData["system.attributes.fp.max"] = ht;
-  updateData["system.attributes.lifting_st.value"] = st;
-  updateData["system.attributes.vision.value"] = per;
-  updateData["system.attributes.hearing.value"] = per;
-  updateData["system.attributes.tastesmell.value"] = per;
+  updateData["system.attributes.hp.max"] = st + (Number(attributeDeltas["hp.max"]) || 0);
+  updateData["system.attributes.fp.max"] = ht + (Number(attributeDeltas["fp.max"]) || 0);
+  updateData["system.attributes.lifting_st.value"] = st + (Number(attributeDeltas.lifting_st) || 0);
+  updateData["system.attributes.vision.value"] = per + (Number(attributeDeltas.vision) || 0);
+  updateData["system.attributes.hearing.value"] = per + (Number(attributeDeltas.hearing) || 0);
+  updateData["system.attributes.tastesmell.value"] = per + (Number(attributeDeltas.tastesmell) || 0);
+  updateData["system.attributes.touch.value"] = per + (Number(attributeDeltas.touch) || 0);
   updateData["system.attributes.basic_speed.value"] = basicSpeedBase + (Number(attributeDeltas.basic_speed) || 0);
   updateData["system.attributes.basic_move.value"] = basicMoveBase + (Number(attributeDeltas.basic_move) || 0);
-  updateData["system.attributes.dodge.value"] = Math.floor(updateData["system.attributes.basic_speed.value"]) + 3;
-  updateData["system.attributes.dodge.-=gcs_imported_fixed"] = null;
+  updateData["system.attributes.dodge.value"] = Math.floor(updateData["system.attributes.basic_speed.value"]) + 3 + (Number(attributeDeltas.dodge) || 0);
   updateData["system.attributes.hp.max"] += (Number(attributeDeltas.hp) || 0);
   updateData["system.attributes.fp.max"] += (Number(attributeDeltas.fp) || 0);
   updateData["system.attributes.thrust_damage.value"] = damage.thrust;
@@ -6864,6 +7705,7 @@ async _resolveTemplateEntrySourceItem(entry) {
 
 _buildActorItemFromTemplateEntry(sourceItem, entry, templateItem) {
   const data = sourceItem.toObject();
+  data.name = entry.name || data.name;
   if (["advantage", "disadvantage"].includes(data.type) && entry.trait_cost) {
     Object.assign(data.system, foundry.utils.deepClone(entry.trait_cost));
   }
@@ -6880,7 +7722,7 @@ _buildActorItemFromTemplateEntry(sourceItem, entry, templateItem) {
   }
 
   if (["advantage", "disadvantage"].includes(sourceItem.type) && entry.level !== "" && entry.level !== null && entry.level !== undefined) {
-    data.system.level = entry.level;
+    data.system.level = this._templateEntryLevel(entry, entry.level);
   }
 
   if (sourceItem.type === "equipment") {
@@ -6894,7 +7736,8 @@ _buildActorItemFromTemplateEntry(sourceItem, entry, templateItem) {
     templateId: templateItem.id,
     templateUuid: templateItem.uuid,
     templateName: templateItem.name,
-    templateEntryId: entry.id
+    templateEntryId: entry.id,
+    originChain: foundry.utils.deepClone(entry.originChain || [])
   };
 
   return data;
@@ -6926,39 +7769,148 @@ async _onRemoveCharacterModel(ev) {
   const record = records.find(entry => entry.applicationId === applicationId && !entry.removedAt);
   if (!record) return;
 
-  const confirmed = await Dialog.confirm({
-    title: `Remover Modelo: ${record.templateName || "Modelo"}`,
-    content: "<p>Deseja remover este modelo da ficha? Itens adicionados e ajustes de atributos serão revertidos.</p>"
-  });
-
-  if (!confirmed) return;
-
   const createdItemIds = Array.isArray(record.createdItemIds) ? record.createdItemIds.filter(Boolean) : [];
-  const ownedItemIds = createdItemIds.filter(itemId => this.actor.items.has(itemId));
-  if (ownedItemIds.length) {
-    await this.actor.deleteEmbeddedDocuments("Item", ownedItemIds);
+  const updatedItems = Array.isArray(record.updatedItems) ? record.updatedItems : [];
+  const replacedItems = Array.isArray(record.replacedItems) ? record.replacedItems : [];
+  const attributeChanges = Array.isArray(record.attributeChanges) ? record.attributeChanges : [];
+  const t = key => game.i18n.localize(`GUM.Template.${key}`);
+  const esc = value => foundry.utils.escapeHTML(String(value ?? ""));
+  const itemRows = createdItemIds.map(itemId => {
+    const item = this.actor.items.get(itemId);
+    if (!item) return "";
+    return `<label class="template-choice-row"><input type="checkbox" name="remove-item" value="${esc(itemId)}" checked> ${esc(templateEntryDisplayName(item, item))}${item.system?.is_container ? ` (${t("Container")})` : ""}</label>`;
+  }).join("");
+  const attributeRows = attributeChanges.map((change, i) => {
+    const path = `system.attributes.${change.key}.value`;
+    const snapshot = record.attributeSnapshots?.[path];
+    const current = foundry.utils.getProperty(this.actor, path);
+    const changedSinceApplication = snapshot && Number(current) !== Number(snapshot.after);
+    return `<label class="template-choice-row"><input type="checkbox" name="remove-attribute" value="${i}" ${changedSinceApplication ? "" : "checked"}> ${esc(change.key)} ${Number(change.amount) > 0 ? "+" : ""}${Number(change.amount) || 0}${changedSinceApplication ? ` · <strong>${t("ChangedSinceApplication")}</strong>` : ""}</label>`;
+  }).join("");
+  const updateRows = updatedItems.map((change, i) => {
+    const item = this.actor.items.get(change.itemId);
+    return `<label class="template-choice-row"><input type="checkbox" name="remove-update" value="${i}" ${item ? "checked" : ""}> ${esc(item ? templateEntryDisplayName(item, item) : change.name)} · ${t("ConflictUpdate")}</label>`;
+  }).join("");
+  const replacementRows = replacedItems.map((change, i) => {
+    const item = this.actor.items.get(change.replacedItemId);
+    return `<label class="template-choice-row"><input type="checkbox" name="remove-replacement" value="${i}" ${item ? "checked" : ""}> ${esc(item ? templateEntryDisplayName(item, item) : change.name)} · ${t("ConflictReplace")}</label>`;
+  }).join("");
+  const recordedTransactions = Array.isArray(record.moneyTransactions) ? record.moneyTransactions : [];
+  const moneyRows = recordedTransactions.length ? recordedTransactions.map((transaction, i) => {
+    const source = this.actor.items.get(transaction.sourceId);
+    const changed = !source || this._getMoneySourceBalance(source) !== Number(transaction.afterBalance);
+    return `<label class="template-choice-row"><input type="checkbox" name="remove-money-transaction" value="${i}" ${changed ? "" : "checked"}>
+      ${t("MoneyRefund")}: ${Number(transaction.amount)} · ${esc(transaction.title || t("PurchaseBudget"))} → ${esc(transaction.sourceName || "?")}${changed ? ` · <strong>${t("PaymentChanged")}</strong>` : ""}</label>`;
+  }).join("") : (() => {
+    const recordedMoneySource = record.moneySource?.itemId ? this.actor.items.get(record.moneySource.itemId) : null;
+    const currentMoney = recordedMoneySource ? this._getMoneySourceBalance(recordedMoneySource) : Number(this.actor.system.money?.value) || 0;
+    const moneyChanged = record.moneySource ? (!recordedMoneySource || currentMoney !== Number(record.moneySource.afterBalance)) : record.moneySnapshot && currentMoney !== Number(record.moneySnapshot.after);
+    return record.moneySpent ? `<label class="template-choice-row"><input type="checkbox" name="remove-money" ${moneyChanged ? "" : "checked"}>
+      ${t("MoneyRefund")}: ${Number(record.moneySpent)}${moneyChanged ? ` · <strong>${t("PaymentChanged")}</strong>` : ""}</label>` : "";
+  })();
+  const selection = await new Promise(resolve => {
+    let settled = false;
+    const finish = value => { if (!settled) { settled = true; resolve(value); } };
+    new Dialog({
+      title: `${t("RemoveModel")}: ${esc(record.templateName || t("Model"))}`,
+      content: `<div class="template-apply-block-dialog"><header class="template-flow-header"><span class="template-flow-eyebrow">${t("Model")}</span><h2>${t("RemoveModel")}</h2><p>${t("RemoveHint")}</p></header><div class="template-remove-options">${itemRows}${updateRows}${replacementRows}${attributeRows}${moneyRows}
+        ${record.pointsLeftover ? `<label class="template-choice-row"><input type="checkbox" name="remove-points" checked> ${t("Leftover")}: ${Number(record.pointsLeftover)}</label>` : ""}
+        </div><p class="template-detach-hint">${t("DetachHint")}</p></div>`,
+      buttons: {
+        detach: { label: t("DetachModel"), callback: () => finish({ detach: true }) },
+        remove: { label: t("RemoveSelected"), callback: html => {
+          const checkedValues = name => {
+            const result = html.find(`input[name="${name}"]:checked`);
+            return typeof result.map === "function" ? result.map((_, el) => el.value).get() : [];
+          };
+          finish({
+            itemIds: checkedValues("remove-item"),
+            updateIndexes: checkedValues("remove-update").map(Number),
+            replacementIndexes: checkedValues("remove-replacement").map(Number),
+            attributeIndexes: checkedValues("remove-attribute").map(Number),
+            moneyTransactionIndexes: checkedValues("remove-money-transaction").map(Number),
+            points: html.find('input[name="remove-points"]').is(":checked"),
+            money: html.find('input[name="remove-money"]').is(":checked")
+          });
+        } },
+        cancel: { label: t("Cancel"), callback: () => finish(null) }
+      }, default: "cancel", close: () => finish(null)
+    }, { classes: ["dialog", "gum", "template-apply-dialog", "gum-sheet-edit-dialog"], width: 720, height: 620 }).render(true);
+  });
+  if (!selection) return;
+  if (selection.detach) {
+    await this._detachTemplateApplication(record, records);
+    return;
+  }
+  const missingIds = createdItemIds.filter(id => !this.actor.items.has(id));
+  if (!selection.itemIds.length && !selection.updateIndexes.length && !selection.replacementIndexes.length && !selection.attributeIndexes.length && !selection.moneyTransactionIndexes.length && !selection.points && !selection.money && !missingIds.length) return;
+  const selectedIds = selection.itemIds.filter(id => this.actor.items.has(id));
+  const removedItemData = selectedIds.map(id => this.actor.items.get(id)?.toObject?.()).filter(Boolean);
+  const selectedUpdates = selection.updateIndexes.map(i => updatedItems[i]).filter(Boolean);
+  const selectedReplacements = selection.replacementIndexes.map(i => replacedItems[i]).filter(Boolean);
+  const selectedSet = new Set([...selectedIds, ...missingIds, ...selectedReplacements.map(change => change.replacedItemId)]);
+  const removedReplacementData = selectedReplacements.map(change => this.actor.items.get(change.replacedItemId)?.toObject?.()).filter(Boolean);
+  const previousState = {
+    attributes: foundry.utils.deepClone(this.actor.system.attributes),
+    unspent: Number(this.actor.system.points?.unspent) || 0,
+    money: Number(this.actor.system.money?.value) || 0,
+    skillOrganization: foundry.utils.deepClone(this.actor.system.skill_organization || {}),
+    characteristicOrganization: foundry.utils.deepClone(this.actor.system.characteristic_organization || {}),
+    appliedModels: foundry.utils.deepClone(this.actor.system.applied_models || [])
+  };
+  const childUpdates = this.actor.items.filter(item => !selectedSet.has(item.id) && selectedSet.has(item.system?.parent_container_id))
+    .map(item => ({ _id: item.id, "system.parent_container_id": "" }));
+  const previousChildLinks = childUpdates.map(update => ({ _id: update._id,
+    "system.parent_container_id": this.actor.items.get(update._id)?.system?.parent_container_id || "" }));
+  try {
+  if (childUpdates.length) await this.actor.updateEmbeddedDocuments("Item", childUpdates);
+  if (selectedIds.length) await this.actor.deleteEmbeddedDocuments("Item", selectedIds);
+  if (selectedUpdates.length) await this.actor.updateEmbeddedDocuments("Item", selectedUpdates.filter(change => this.actor.items.has(change.itemId)).map(change => change.before));
+  const originals = selectedReplacements.filter(change => !this.actor.items.has(change.before?._id)).map(change => change.before);
+  if (originals.length) await this.actor.createEmbeddedDocuments("Item", originals, { keepId: true });
+  const replacementIds = selectedReplacements.map(change => change.replacedItemId).filter(id => this.actor.items.has(id));
+  if (replacementIds.length) await this.actor.deleteEmbeddedDocuments("Item", replacementIds);
+  for (const [kind, types, field] of [
+    ["skills", ["skill"], "skill_organization"],
+    ["characteristics", ["advantage", "disadvantage"], "characteristic_organization"]
+  ]) {
+    const createdGroupIds = record.createdGroups?.[kind] || [];
+    if (!createdGroupIds.length) continue;
+    const itemIds = this.actor.items.filter(item => types.includes(item.type)).map(item => item.id);
+    let organization = normalizeItemOrganization(this.actor.system[field], itemIds);
+    const retainedGroups = [];
+    for (const groupId of createdGroupIds) {
+      if (Object.values(organization.assignments).includes(groupId)) retainedGroups.push(groupId);
+      else organization = removeItemOrganizationGroup(organization, groupId, itemIds);
+    }
+    if (retainedGroups.length !== createdGroupIds.length) {
+      if (kind === "skills") await this._saveSkillOrganization(organization);
+      else await this._saveCharacteristicOrganization(organization);
+      record.createdGroups[kind] = retainedGroups;
+    }
   }
 
   const attributeReverts = {};
-  const attributeChanges = Array.isArray(record.attributeChanges) ? record.attributeChanges : [];
-  for (const change of attributeChanges) {
+  for (const i of selection.attributeIndexes) {
+    const change = attributeChanges[i];
     const key = change?.key;
     const amount = Number(change?.amount) || 0;
     if (!key || !amount) continue;
 
-    const path = `system.attributes.${key}.value`;
+    const path = key.includes(".") ? `system.attributes.${key}` : `system.attributes.${key}.value`;
     const current = Number(foundry.utils.getProperty(this.actor, path)) || 0;
     const previous = path in attributeReverts ? Number(attributeReverts[path]) : current;
     attributeReverts[path] = previous - amount;
   }
 
-  const pointsLeftover = Number(record.pointsLeftover) || 0;
+  const pointsLeftover = selection.points ? Number(record.pointsLeftover) || 0 : 0;
   if (pointsLeftover) {
     const currentUnspent = Number(this.actor.system?.points?.unspent) || 0;
-    attributeReverts["system.points.unspent"] = Math.max(0, currentUnspent - pointsLeftover);
+    attributeReverts["system.points.unspent"] = currentUnspent - pointsLeftover;
   }
 
-   const shouldRecalculateSecondary = Boolean(record.secondaryRecalcApplied);
+  const shouldRecalculateSecondary = Boolean(record.secondaryRecalcApplied && selection.attributeIndexes.some(i =>
+    ["st", "dx", "ht", "per"].includes(attributeChanges[i]?.key)));
   if (shouldRecalculateSecondary) {
     const currentAttrs = this.actor.system?.attributes || {};
     const getCurrentValue = (key) => Number(currentAttrs?.[key]?.value) || 0;
@@ -6976,79 +7928,171 @@ async _onRemoveCharacterModel(ev) {
     const basicSpeed = Math.round((((dx + ht) / 4) + Number.EPSILON) * 100) / 100;
     const basicMove = Math.floor(basicSpeed);
     const damage = this._getBasicDamageFromST(st);
-
-    attributeReverts["system.attributes.hp.max"] = st;
-    attributeReverts["system.attributes.fp.max"] = ht;
-    attributeReverts["system.attributes.lifting_st.value"] = st;
-    attributeReverts["system.attributes.vision.value"] = per;
-    attributeReverts["system.attributes.hearing.value"] = per;
-    attributeReverts["system.attributes.tastesmell.value"] = per;
-    attributeReverts["system.attributes.touch.value"] = per;
-    attributeReverts["system.attributes.basic_speed.value"] = basicSpeed;
-    attributeReverts["system.attributes.basic_move.value"] = basicMove;
-    attributeReverts["system.attributes.thrust_damage"] = damage.thrust;
-    attributeReverts["system.attributes.swing_damage"] = damage.swing;
+    const allAttributesSelected = selection.attributeIndexes.length === attributeChanges.length;
+    const remaining = attributeChanges.filter((_, i) => !selection.attributeIndexes.includes(i));
+    const remainingAmount = key => remaining.filter(change => change.key === key).reduce((sum, change) => sum + (Number(change.amount) || 0), 0);
+    const before = (path, fallback) => Number(record.attributeSnapshots?.[path]?.before ?? fallback);
+    const baseSpeed = before("system.attributes.basic_speed.value", basicSpeed);
+    const speedAfterPartial = baseSpeed + (remainingAmount("dx") + remainingAmount("ht")) / 4 + remainingAmount("basic_speed");
+    const setDerived = (path, value) => {
+      const snapshot = record.attributeSnapshots?.[path];
+      if (snapshot && String(foundry.utils.getProperty(this.actor, path)) !== String(snapshot.after)) return;
+      attributeReverts[path] = allAttributesSelected && snapshot ? snapshot.before : value;
+    };
+    setDerived("system.attributes.hp.max", before("system.attributes.hp.max", st) + remainingAmount("st") + remainingAmount("hp") + remainingAmount("hp.max"));
+    setDerived("system.attributes.fp.max", before("system.attributes.fp.max", ht) + remainingAmount("ht") + remainingAmount("fp") + remainingAmount("fp.max"));
+    setDerived("system.attributes.lifting_st.value", before("system.attributes.lifting_st.value", st) + remainingAmount("st") + remainingAmount("lifting_st"));
+    setDerived("system.attributes.vision.value", before("system.attributes.vision.value", per) + remainingAmount("per") + remainingAmount("vision"));
+    setDerived("system.attributes.hearing.value", before("system.attributes.hearing.value", per) + remainingAmount("per") + remainingAmount("hearing"));
+    setDerived("system.attributes.tastesmell.value", before("system.attributes.tastesmell.value", per) + remainingAmount("per") + remainingAmount("tastesmell"));
+    setDerived("system.attributes.touch.value", before("system.attributes.touch.value", per) + remainingAmount("per") + remainingAmount("touch"));
+    setDerived("system.attributes.basic_speed.value", speedAfterPartial);
+    setDerived("system.attributes.basic_move.value", before("system.attributes.basic_move.value", basicMove) + Math.floor(speedAfterPartial) - Math.floor(baseSpeed) + remainingAmount("basic_move"));
+    setDerived("system.attributes.dodge.value", before("system.attributes.dodge.value", Math.floor(basicSpeed) + 3) + Math.floor(speedAfterPartial) - Math.floor(baseSpeed) + remainingAmount("dodge"));
+    setDerived("system.attributes.thrust_damage.value", damage.thrust);
+    setDerived("system.attributes.swing_damage.value", damage.swing);
   }
 
-  record.removedAt = new Date().toISOString();
-  record.removedBy = game.user?.id;
+  record.createdItemIds = createdItemIds.filter(id => !selectedSet.has(id));
+  record.createdContainerIds = (record.createdContainerIds || []).filter(id => !selectedSet.has(id));
+  record.entries = (record.entries || []).filter(entry => !selectedSet.has(entry.itemId));
+  record.updatedItems = updatedItems.filter((_, i) => !selection.updateIndexes.includes(i));
+  record.replacedItems = replacedItems.filter((_, i) => !selection.replacementIndexes.includes(i));
+  record.attributeChanges = attributeChanges.filter((_, i) => !selection.attributeIndexes.includes(i));
+  for (const [path, value] of Object.entries(attributeReverts)) {
+    if (record.attributeSnapshots?.[path]) record.attributeSnapshots[path].after = value;
+  }
+  if (selection.moneyTransactionIndexes.length) {
+    const refunds = new Map();
+    for (const index of selection.moneyTransactionIndexes) {
+      const transaction = recordedTransactions[index];
+      if (transaction) refunds.set(transaction.sourceId, (refunds.get(transaction.sourceId) || 0) + (Number(transaction.amount) || 0));
+    }
+    for (const [sourceId, amount] of refunds) {
+      const source = this.actor.items.get(sourceId);
+      if (!source) continue;
+      const system = source.system || {};
+      const refund = system.mode === "abstract"
+        ? { "system.balance": (Number(system.balance) || 0) + amount }
+        : { "system.quantity": (Number(system.quantity) || 0) + amount / Math.max(Number(system.unit_value) || 1, 1e-9) };
+      await source.update(refund);
+    }
+    record.moneyTransactions = recordedTransactions.filter((_, index) => !selection.moneyTransactionIndexes.includes(index));
+    record.moneySpent = record.moneyTransactions.reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0);
+  }
+  if (selection.money && record.moneySpent) {
+    const source = record.moneySource?.itemId ? this.actor.items.get(record.moneySource.itemId) : null;
+    if (source) {
+      const system = source.system || {};
+      const amount = Number(record.moneySpent) || 0;
+      const refund = system.mode === "abstract"
+        ? { "system.balance": (Number(system.balance) || 0) + amount }
+        : { "system.quantity": (Number(system.quantity) || 0) + amount / Math.max(Number(system.unit_value) || 1, 1e-9) };
+      await source.update(refund);
+    } else {
+      attributeReverts["system.money.value"] = (Number(this.actor.system.money?.value) || 0) + Number(record.moneySpent);
+    }
+    record.moneySpent = 0;
+    record.moneySource = null;
+    record.moneySnapshot = null;
+  }
+  if (selection.points) record.pointsLeftover = 0;
+  if (!record.createdItemIds.length && !record.updatedItems.length && !record.replacedItems.length && !record.attributeChanges.length && !record.pointsLeftover && !record.moneySpent) {
+    record.removedAt = new Date().toISOString();
+    record.removedBy = game.user?.id;
+  }
 
   await this.actor.update({
     ...attributeReverts,
     "system.applied_models": records
   });
 
-  ui.notifications.info(`Modelo "${record.templateName || "Modelo"}" removido com sucesso.`);
+  ui.notifications.info(game.i18n.format("GUM.Template.Removed", { name: record.templateName || game.i18n.localize("GUM.Template.Model") }));
+  } catch (error) {
+    console.error("GUM template removal failed", error);
+    try {
+      const missingData = removedItemData.filter(data => !this.actor.items.has(data._id));
+      if (missingData.length) await this.actor.createEmbeddedDocuments("Item", missingData, { keepId: true });
+      const replacementData = selectedReplacements.map(change => change.before).filter(data => data && !this.actor.items.has(data._id));
+      if (replacementData.length) await this.actor.createEmbeddedDocuments("Item", replacementData, { keepId: true });
+      const replacementCopies = removedReplacementData.filter(data => !this.actor.items.has(data._id));
+      if (replacementCopies.length) await this.actor.createEmbeddedDocuments("Item", replacementCopies, { keepId: true });
+      const updateData = selectedUpdates.filter(change => this.actor.items.has(change.itemId)).map(change => change.before);
+      if (updateData.length) await this.actor.updateEmbeddedDocuments("Item", updateData);
+      const links = previousChildLinks.filter(update => this.actor.items.has(update._id));
+      if (links.length) await this.actor.updateEmbeddedDocuments("Item", links);
+      await this.actor.update({
+        "system.attributes": previousState.attributes,
+        "system.points.unspent": previousState.unspent,
+        "system.money.value": previousState.money,
+        "system.skill_organization": previousState.skillOrganization,
+        "system.characteristic_organization": previousState.characteristicOrganization,
+        "system.applied_models": previousState.appliedModels
+      });
+    } catch (restoreError) {
+      console.error("GUM template removal rollback failed", restoreError);
+    }
+    ui.notifications.error(game.i18n.localize("GUM.Template.RemoveFailed"));
+  }
 }
 
-
-_renderTemplateChoiceRow(view, { includeCostDataAttr = false } = {}) {
-  const costAttr = includeCostDataAttr ? ` data-cost="${view.cost}"` : "";
-  const details = view.details.length
-    ? `<div class="template-choice-details">${view.details.map(detail => `<span class="template-choice-chip">${detail}</span>`).join("")}</div>`
-    : "";
-
-  return `
-    <label class="template-choice-row">
-      <span class="template-choice-input"><input type="checkbox" name="entry" value="${view.id}"${costAttr}></span>
-      <span class="template-choice-content">
-        <span class="template-choice-title-row">
-          <span class="template-choice-title">${view.title}</span>
-          <span class="template-choice-cost">${view.cost} pts</span>
-        </span>
-        ${details}
-      </span>
-    </label>`;
+async _detachTemplateApplication(record, records) {
+  const relatedIds = new Set([
+    ...(record.createdItemIds || []),
+    ...(record.updatedItems || []).map(change => change.itemId),
+    ...(record.replacedItems || []).map(change => change.replacedItemId)
+  ]);
+  const itemUpdates = [...relatedIds].filter(id => this.actor.items.has(id)).map(id => ({
+    _id: id,
+    "flags.gum.-=templateApplicationId": null,
+    "flags.gum.-=templateApplied": null,
+    "flags.gum.-=templateDestination": null,
+    "flags.gum.-=templateContainer": null
+  }));
+  try {
+    if (itemUpdates.length) await this.actor.updateEmbeddedDocuments("Item", itemUpdates);
+    await this.actor.update({ "system.applied_models": records.filter(entry => entry.applicationId !== record.applicationId) });
+    ui.notifications.info(game.i18n.format("GUM.Template.Detached", { name: record.templateName || game.i18n.localize("GUM.Template.Model") }));
+  } catch (error) {
+    console.error("GUM template detach failed", error);
+    ui.notifications.error(game.i18n.localize("GUM.Template.DetachFailed"));
+  }
 }
+
 
 async _buildTemplateEntryViewData(entry) {
   const cost = Number(entry.cost) || 0;
-  const title = foundry.utils.escapeHTML(entry.name || entry.label || "Entrada");
+  const sourceItem = entry.kind === "attribute" ? null : await this._resolveTemplateEntrySourceItem(entry);
+  const title = foundry.utils.escapeHTML(templateEntryDisplayName(entry, sourceItem) || "Entrada");
+  const ruleDetails = [
+    ...this._templateRuleNames(entry.requiresNames).map(name => `${game.i18n.localize("GUM.Template.RequiresNames")}: ${name}`),
+    ...this._templateRuleNames(entry.excludesNames).map(name => `${game.i18n.localize("GUM.Template.ExcludesNames")}: ${name}`)
+  ].map(detail => foundry.utils.escapeHTML(detail));
 
   if (entry.kind === "attribute") {
     return {
       id: entry.id,
       title,
       cost,
-      details: this._getTemplateAttributeDetailChips(entry)
+      details: [...this._getTemplateAttributeDetailChips(entry), ...ruleDetails]
     };
   }
 
   const details = [];
-  if (entry.kind === "group") details.push("Pacote");
+  if (entry.kind === "group") details.push(game.i18n.localize("GUM.Template.Package"));
+  if (entry.kind === "template") details.push(game.i18n.localize("GUM.Template.ReferencedModel"));
   if (entry.itemType) details.push(this._getTemplateEntryTypeLabel(entry.itemType));
   if (entry.localNotes) details.push(String(entry.localNotes));
-  if (Array.isArray(entry.subBlocks) && entry.subBlocks.length) details.push(`Sub-blocos ${entry.subBlocks.length}`);
+  if (Array.isArray(entry.subBlocks) && entry.subBlocks.length) details.push(game.i18n.format("GUM.Template.SubblocksCount", { count: entry.subBlocks.length }));
 
-  const sourceItem = await this._resolveTemplateEntrySourceItem(entry);
   if (sourceItem) {
     details.push(...this._getTemplateSourceItemDetails(sourceItem));
   } else {
     if (entry.level !== "" && entry.level !== null && entry.level !== undefined) {
-      details.push(`Nível ${foundry.utils.escapeHTML(String(entry.level))}`);
+      details.push(game.i18n.format("GUM.Template.EntryLevel", { level: foundry.utils.escapeHTML(String(entry.level)) }));
     }
     if (entry.quantity !== undefined && entry.quantity !== null && Number(entry.quantity) > 1) {
-      details.push(`Qtd ${Number(entry.quantity)}`);
+      details.push(game.i18n.format("GUM.Template.EntryQuantity", { quantity: Number(entry.quantity) }));
     }
   }
 
@@ -7056,35 +8100,25 @@ async _buildTemplateEntryViewData(entry) {
     id: entry.id,
     title,
     cost,
-    details: details.filter(Boolean).map(detail => foundry.utils.escapeHTML(String(detail)))
+    details: [...details.filter(Boolean).map(detail => foundry.utils.escapeHTML(String(detail))), ...ruleDetails]
   };
 }
 
 _getTemplateAttributeDetailChips(entry) {
   const attributes = entry.attributes || {};
-  const labels = {
-    st: "ST",
-    dx: "DX",
-    iq: "IQ",
-    ht: "HT",
-    will: "Vont",
-    per: "Per",
-    hp: "PV",
-    fp: "PF",
-    basic_speed: "Velocidade",
-    move: "Deslocamento"
-  };
-
+  const selected = new Set(Array.isArray(entry.selectedAttributes) ? entry.selectedAttributes : []);
   const details = Object.entries(attributes)
-    .map(([key, value]) => ({ key, value: Number(value) || 0 }))
-    .filter(attr => attr.value !== 0)
+    .map(([key, value]) => ({ key, value: Number(value) || 0, limit: Number(entry.attributeLimits?.[key]) }))
+    .filter(attr => attr.value !== 0 || (Number.isFinite(attr.limit) && attr.limit > 0) || selected.has(attr.key))
     .map(attr => {
       const sign = attr.value > 0 ? "+" : "";
-      return `${labels[attr.key] || attr.key} ${sign}${attr.value}`;
+      const cap = Number.isFinite(attr.limit) && attr.limit > 0
+        ? ` (${attr.value < 0 ? "≥-" : "≤+"}${Math.max(Math.abs(attr.value), attr.limit)})` : "";
+      return `${this._templateAttributeLabel(attr.key)} ${sign}${attr.value}${cap}`;
     });
 
-  if (entry.linkSecondary) details.push("Recalcula secundários");
-  if (!details.length) details.push("Sem alterações");
+  if (entry.linkSecondary) details.push(game.i18n.localize("GUM.Template.RecalculateSecondaries"));
+  if (!details.length) details.push(game.i18n.localize("GUM.Template.NoChanges"));
 
   return details.map(detail => foundry.utils.escapeHTML(detail));
 }
@@ -7094,50 +8128,41 @@ _getTemplateSourceItemDetails(item) {
   const system = item.system || {};
 
   if (item.type === "skill") {
-    if (system.base_attribute) details.push(`Base ${String(system.base_attribute).toUpperCase()}`);
-    if (system.difficulty) details.push(`Dificuldade ${system.difficulty}`);
+    if (system.base_attribute) details.push(game.i18n.format("GUM.Template.BaseAttribute", { attribute: String(system.base_attribute).toUpperCase() }));
+    if (system.difficulty) details.push(game.i18n.format("GUM.Template.DifficultyValue", { difficulty: system.difficulty }));
     if (system.skill_level !== null && system.skill_level !== undefined && system.skill_level !== "") {
-      details.push(`NH ${system.skill_level}`);
+      details.push(game.i18n.format("GUM.Template.SkillLevel", { level: system.skill_level }));
     }
   }
 
   if (item.type === "spell") {
     if (system.spell_class) details.push(system.spell_class);
     if (system.mana_cost !== undefined && system.mana_cost !== null && system.mana_cost !== "") {
-      details.push(`Mana ${system.mana_cost}`);
+      details.push(game.i18n.format("GUM.Template.ManaCost", { cost: system.mana_cost }));
     }
   }
 
   if (item.type === "power") {
     if (system.activation_cost !== undefined && system.activation_cost !== null && system.activation_cost !== "") {
-      details.push(`Ativação ${system.activation_cost}`);
+      details.push(game.i18n.format("GUM.Template.ActivationCost", { cost: system.activation_cost }));
     }
-    if (system.duration) details.push(`Duração ${system.duration}`);
+    if (system.duration) details.push(game.i18n.format("GUM.Template.Duration", { duration: system.duration }));
   }
 
   if (["advantage", "disadvantage"].includes(item.type) && system.points !== undefined && system.points !== null && system.points !== "") {
-    details.push(`Base ${system.points} pts`);
+    details.push(game.i18n.format("GUM.Template.BasePointsValue", { points: system.points }));
   }
 
   if (item.type === "equipment") {
-    if (system.tech_level) details.push(`TL ${system.tech_level}`);
-    if (system.legality_class) details.push(`LC ${system.legality_class}`);
+    if (system.tech_level) details.push(game.i18n.format("GUM.Template.TechLevel", { level: system.tech_level }));
+    if (system.legality_class) details.push(game.i18n.format("GUM.Template.LegalityClass", { value: system.legality_class }));
   }
 
   return details;
 }
 
 _getTemplateEntryTypeLabel(type) {
-  const labels = {
-    skill: "Perícia",
-    spell: "Magia",
-    power: "Poder",
-    advantage: "Vantagem",
-    disadvantage: "Desvantagem",
-    equipment: "Equipamento",
-    attribute: "Atributo"
-  };
-  return labels[type] || type;
+  return game.i18n.localize(`GUM.Template.ItemType.${type}`) || type;
 }
 
 _buildActorItemFromInlineTemplateEntry(entry, templateItem) {
@@ -7151,7 +8176,8 @@ _buildActorItemFromInlineTemplateEntry(entry, templateItem) {
     templateId: templateItem.id,
     templateUuid: templateItem.uuid,
     templateName: templateItem.name,
-    templateEntryId: entry.id
+    templateEntryId: entry.id,
+    originChain: foundry.utils.deepClone(entry.originChain || [])
   };
 
   data.flags.gum.hybridImport = {
@@ -7179,7 +8205,7 @@ _buildActorItemFromInlineTemplateEntry(entry, templateItem) {
   }
 
   if (["advantage", "disadvantage"].includes(data.type) && entry.level !== "" && entry.level !== null && entry.level !== undefined) {
-    data.system.level = entry.level;
+    data.system.level = this._templateEntryLevel(entry, entry.level);
   }
 
   if (data.type === "equipment") {
@@ -7193,7 +8219,7 @@ _buildActorItemFromInlineTemplateEntry(entry, templateItem) {
 
 _resolveTemplateEntryRelativeLevel(entry, system = {}, itemType = "skill") {
   if (entry.level !== "" && entry.level !== null && entry.level !== undefined) {
-    return Number(entry.level) || 0;
+    return this._templateEntryLevel(entry, entry.level);
   }
 
   const pointsField = itemType === "power" ? "points_skill" : "points";

@@ -13,7 +13,7 @@ export class TemplateBrowser extends FormApplication {
 
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
-      title: "Navegador de Modelos",
+      title: game.i18n.localize("GUM.Template.BrowserTitle"),
       classes: ["gum", "template-browser", "theme-dark"],
       template: "systems/gum/templates/apps/template-browser.hbs",
       width: 900,
@@ -104,53 +104,28 @@ export class TemplateBrowser extends FormApplication {
     const system = template?.system || {};
     const blocks = system.blocks || [];
     return GumPreviewDialog.show({
-      title: template?.name || "Modelo",
-      type: "Modelo",
+      title: template?.name || game.i18n.localize("GUM.Template.Model"),
+      type: game.i18n.localize("GUM.Template.Model"),
       img: template?.img || "icons/svg/book.svg",
-      description: await GumPreviewDialog.enrichDescription(system.description || "<i>Modelo de personagem.</i>"),
+      description: await GumPreviewDialog.enrichDescription(system.description || `<i>${game.i18n.localize("GUM.Template.CharacterModel")}</i>`),
       tags: [
-        { label: "Categoria", value: system.model_category || "generic" },
-        { label: "Blocos", value: blocks.length },
-        { label: "Origem", value: templateData.sourceLabel || "-" },
-        { label: "Pasta", value: templateData.folderLabel || "Sem pasta" }
+        { label: "REF", value: system.ref || "" },
+        { label: game.i18n.localize("GUM.Template.Category"), value: system.model_category || "generic" },
+        { label: game.i18n.localize("GUM.Template.Blocks"), value: blocks.length },
+        { label: game.i18n.localize("GUM.Template.Source"), value: templateData.sourceLabel || "-" },
+        { label: game.i18n.localize("GUM.Template.Folder"), value: templateData.folderLabel || game.i18n.localize("GUM.Template.NoFolder") }
       ],
       width: 500
     });
 
-    const content = `
-      <div class="gurps-dialog-canvas">
-        <div class="gurps-item-preview-card">
-          <header class="preview-header">
-            <h3>${template?.name || "Modelo"}</h3>
-            <div class="header-controls"><span class="preview-item-type">Modelo</span></div>
-          </header>
-          <div class="preview-content">
-            <div class="preview-properties">
-              <div class="property-tag"><label>Categoria</label><span>${system.model_category || "generic"}</span></div>
-              <div class="property-tag"><label>Blocos</label><span>${blocks.length}</span></div>
-              <div class="property-tag"><label>Origem</label><span>${templateData.sourceLabel || "-"}</span></div>
-              <div class="property-tag"><label>Pasta</label><span>${templateData.folderLabel || "Sem pasta"}</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    new Dialog({
-      title: `Detalhes: ${template?.name || "Modelo"}`,
-      content,
-      buttons: { close: { label: "Fechar" } },
-      default: "close",
-      options: { classes: ["dialog", "gurps-item-preview-dialog"], width: 420 }
-    }).render(true);
   }
 
   async _updateObject(_event, formData) {
     const selectedId = formData.selectedTemplate;
-    if (!selectedId) return ui.notifications.warn("Nenhum Modelo foi selecionado.");
+    if (!selectedId) return ui.notifications.warn(game.i18n.localize("GUM.Template.NoModelSelected"));
 
     const selectedTemplate = this.allTemplates.find(entry => entry.selectionKey === selectedId);
-    if (!selectedTemplate) return ui.notifications.error("Modelo selecionado não encontrado.");
+    if (!selectedTemplate) return ui.notifications.error(game.i18n.localize("GUM.Template.ModelNotFound"));
 
     if (this.onSelect) {
       this.onSelect(selectedTemplate);

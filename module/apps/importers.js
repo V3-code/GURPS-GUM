@@ -78,6 +78,8 @@ export async function importFromJson({ pack: fixedPack = null } = {}) {
             }
             importEntries = portableLibrary.documents.map(item => ({ itemData: item, folderPath: [] }));
             compendiumFolders = portableLibrary.folders;
+        } else if (data?.type && data?.system && data?.name) {
+            importEntries = [{ itemData: data, folderPath: [] }];
         } else if (Array.isArray(data)) {
             const looksLikeGCSRows = data.some(entry =>
                 entry && typeof entry === "object" && (
@@ -111,7 +113,7 @@ export async function importFromJson({ pack: fixedPack = null } = {}) {
             return ui.notifications.error("Nenhum item encontrado no arquivo.");
         }
 
-        const isCompendiumJson = Boolean(portableLibrary) || (
+        const isCompendiumJson = Boolean(portableLibrary) || Boolean(data?.type && data?.system && data?.name) || (
             Array.isArray(data) && importEntries.some(entry =>
                 entry?.itemData && typeof entry.itemData === "object" &&
                 (entry.itemData._id || entry.itemData.system)
@@ -394,26 +396,44 @@ function escapeImportHTML(value) {
 }
 
 function chooseGCSActorChanges(plan) {
-    const section = (title, entries, kind, checked) => {
-        if (!entries.length) return "";
-        const rows = entries.map((entry, index) => {
-            const item = entry.incoming || entry;
-            return `<label style="display:flex;gap:.5rem;align-items:center"><input type="checkbox" name="${kind}" value="${index}" ${checked ? "checked" : ""}> <span>${escapeImportHTML(item.name)} <small>(${escapeImportHTML(item.type)})</small></span></label>`;
-        }).join("");
-        return `<fieldset><legend>${title} (${entries.length})</legend>${rows}</fieldset>`;
+    const typeLabels = {
+        attribute: "Atributos",
+        skill: "Perícias",
+        advantage: "Vantagens",
+        disadvantage: "Desvantagens",
+        spell: "Magias",
+        power: "Poderes",
+        equipment: "Equipamentos",
+        money_source: "Recursos monetários"
     };
-    const unchanged = plan.unchanged.map(entry => escapeImportHTML(entry.incoming.name)).join(", ");
-    const content = `<form class="gcs-actor-import-review">
-        <p>Os dados gerais da ficha serão atualizados. Revise os itens incorporados abaixo.</p>
-        ${section("Adicionar", plan.additions, "additions", true)}
-        ${section("Atualizar", plan.updates, "updates", true)}
-        ${section("Remover (desmarcado por segurança)", plan.removals, "removals", false)}
-        ${unchanged ? `<p><strong>Sem alterações (${plan.unchanged.length}):</strong> ${unchanged}</p>` : ""}
+    const section = (title, entries, kind, checked, open = false) => {
+        if (!entries.length) return "";
+        const groups = new Map();
+        entries.forEach((entry, index) => {
+            const item = entry.incoming || entry;
+            const type = item.type || "other";
+            if (!groups.has(type)) groups.set(type, []);
+            groups.get(type).push({ item, index });
+        });
+        const categories = [...groups.entries()].map(([type, rows]) => `<details class="template-review-category" open><summary><span>${typeLabels[type] || type}</span><strong>${rows.length}</strong></summary><ul class="template-review-list">${rows.map(({ item, index }) => `<li><label class="template-review-card gcs-import-review-card"><input type="checkbox" name="${kind}" value="${index}" ${checked ? "checked" : ""}><span class="template-review-card__main"><strong>${escapeImportHTML(item.name)}</strong><small>${escapeImportHTML(typeLabels[item.type] || item.type || "Item")}</small></span></label></li>`).join("")}</ul></details>`).join("");
+        return `<details class="template-review-section gcs-import-review-section" ${open ? "open" : ""}><summary><span>${title}</span><strong>${entries.length}</strong></summary>${categories}</details>`;
+    };
+    const unchanged = plan.unchanged.map(entry => `<li>${escapeImportHTML(entry.incoming.name)}</li>`).join("");
+    const total = plan.additions.length + plan.updates.length + plan.removals.length;
+    const height = Math.max(460, Math.min(840, 280 + total * 26));
+    const content = `<form class="template-apply-block-dialog template-apply-block-dialog--review gcs-actor-import-review">
+        <header class="template-flow-header"><span class="template-flow-eyebrow">GCS</span><h2>Revisar importação</h2><p>Os dados gerais da ficha serão atualizados. Selecione os itens que deseja aplicar.</p></header>
+        <div class="template-review-body">
+          ${section("Adicionar", plan.additions, "additions", true)}
+          ${section("Atualizar", plan.updates, "updates", true)}
+          ${section("Remover (desmarcado por segurança)", plan.removals, "removals", false)}
+          ${unchanged ? `<details class="template-review-section gcs-import-review-section"><summary><span>Sem alterações</span><strong>${plan.unchanged.length}</strong></summary><ul class="template-review-list gcs-import-unchanged">${unchanged}</ul></details>` : ""}
+        </div>
     </form>`;
 
     return new Promise(resolve => {
         new Dialog({
-            title: "Revisar importação do GCS",
+            title: "Importação do GCS",
             content,
             buttons: {
                 import: {
@@ -428,6 +448,11 @@ function chooseGCSActorChanges(plan) {
             },
             default: "import",
             close: () => resolve(null)
+        }, {
+            classes: ["dialog", "gum", "template-apply-dialog", "gcs-actor-import-review-dialog", "gum-sheet-edit-dialog"],
+            width: 640,
+            height,
+            resizable: true
         }).render(true);
     });
 }
@@ -533,6 +558,165 @@ export async function importTemplateFromGCS() {
         }
     };
 
+    input.click();
+}
+
+function nativeGUMTemplatesFromData(data) {
+    const portable = parseCompendiumLibraryExport(data);
+    if (portable && portable.documentType !== "Item") throw new Error(`Unsupported document type: ${portable.documentType}`);
+    const documents = portable ? portable.documents : Array.isArray(data) ? data : [data];
+    const sources = documents.filter(source => source?.type === "template");
+    if (!sources.length) return null;
+    if (sources.some(source => !Array.isArray(source.system?.blocks))) {
+        throw new Error(game.i18n.localize("GUM.LibraryImport.InvalidTemplateFile"));
+    }
+    return sources.map(source => {
+        const template = foundry.utils.deepClone(source);
+        delete template.folder;
+        delete template._stats;
+        return template;
+    });
+}
+
+async function readGCSTemplateFiles(files) {
+    const templates = [];
+    for (const file of files) {
+        let data;
+        try {
+            data = JSON.parse(await file.text());
+        } catch (error) {
+            throw new Error(`${file.name}: ${game.i18n.localize("GUM.LibraryImport.InvalidTemplateFile")}`, { cause: error });
+        }
+        let nativeTemplates;
+        try {
+            nativeTemplates = nativeGUMTemplatesFromData(data);
+        } catch (error) {
+            throw new Error(`${file.name}: ${error.message}`, { cause: error });
+        }
+        if (nativeTemplates) {
+            templates.push(...nativeTemplates);
+            continue;
+        }
+        const sources = Array.isArray(data) ? data : [data];
+        for (const source of sources) {
+            if (!source || typeof source !== "object" || Array.isArray(source)) {
+                throw new Error(`${file.name}: ${game.i18n.localize("GUM.LibraryImport.InvalidTemplateFile")}`);
+            }
+            let template;
+            try {
+                template = await parseGCSTemplate(source, file.name);
+            } catch (error) {
+                throw new Error(`${file.name}: ${error.message}`, { cause: error });
+            }
+            if (!template) throw new Error(`${file.name}: ${game.i18n.localize("GUM.LibraryImport.InvalidTemplateFile")}`);
+            templates.push(template);
+        }
+    }
+    return templates;
+}
+
+function chooseGCSTemplateCompendium(templates, fixedPack = null) {
+    const t = key => game.i18n.localize(`GUM.LibraryImport.${key}`);
+    const availablePacks = game.packs.filter(pack => pack.metadata.type === "Item");
+    const options = availablePacks.map(pack => `<option value="${escapeImportHTML(pack.collection)}">${escapeImportHTML(pack.title)}</option>`).join("");
+    const names = templates.map(template => `<li>${escapeImportHTML(template.name)}</li>`).join("");
+    const destination = fixedPack
+        ? `<p>${t("TemplateDestination")}: <strong>${escapeImportHTML(fixedPack.title)}</strong></p>`
+        : `<div class="form-group"><label>${t("TemplateDestination")}</label><select name="template-pack-mode">
+            ${availablePacks.length ? `<option value="existing">${t("UseExistingCompendium")}</option>` : ""}
+            <option value="new" ${availablePacks.length ? "" : "selected"}>${t("CreateNewCompendium")}</option>
+          </select></div>
+          ${availablePacks.length ? `<div class="form-group" data-template-destination="existing"><label>${t("TemplateDestination")}</label><select name="template-pack">${options}</select></div>` : ""}
+          <div class="form-group" data-template-destination="new" ${availablePacks.length ? 'style="display:none"' : ""}>
+            <label>${t("NewTemplateCompendiumName")}</label><input type="text" name="template-pack-name" value="${escapeImportHTML(t("NewTemplateCompendiumDefault"))}">
+          </div>`;
+    return new Promise(resolve => new Dialog({
+        title: t("ImportTemplates"),
+        content: `<form class="gum-compendium-import-form"><p>${game.i18n.format("GUM.LibraryImport.TemplatesFound", { count: templates.length })}</p>
+            <ul>${names}</ul>${destination}</form>`,
+        buttons: {
+            import: { label: t("ImportTemplates"), icon: '<i class="fas fa-file-import"></i>', callback: html => {
+                if (fixedPack) return resolve({ pack: fixedPack });
+                const mode = html.find('[name="template-pack-mode"]').val();
+                if (mode === "new") {
+                    const name = String(html.find('[name="template-pack-name"]').val() || "").trim();
+                    if (!name) {
+                        ui.notifications.warn(t("NewTemplateCompendiumNameRequired"));
+                        return resolve(null);
+                    }
+                    return resolve({ name });
+                }
+                resolve({ pack: game.packs.get(html.find('[name="template-pack"]').val()) });
+            } },
+            cancel: { label: game.i18n.localize("GUM.Template.Cancel"), callback: () => resolve(null) }
+        },
+        default: "import",
+        close: () => resolve(null),
+        render: html => html.find('[name="template-pack-mode"]').on("change", event => {
+            html.find('[data-template-destination]').hide();
+            html.find(`[data-template-destination="${event.currentTarget.value}"]`).show();
+        })
+    }, { classes: ["dialog", "gum", "gum-compendium-import-dialog"], width: 520 }).render(true));
+}
+
+async function createGCSTemplatesInCompendium(pack, templates) {
+    const idMap = new Map();
+    const prepared = templates.map(source => {
+        const template = foundry.utils.deepClone(source);
+        const oldId = template._id;
+        template._id = foundry.utils.randomID();
+        if (oldId && !idMap.has(oldId)) idMap.set(oldId, template._id);
+        return template;
+    });
+    const rewriteBlocks = blocks => {
+        for (const block of blocks || []) for (const entry of block.contents || []) {
+            if (entry.kind === "template") {
+                const oldId = entry.templateId || entry.sourceId || String(entry.uuid || entry.templateUuid || "").split(".").at(-1);
+                const newId = idMap.get(oldId);
+                if (newId) {
+                    entry.sourceId = newId;
+                    entry.templateId = newId;
+                    entry.uuid = `Compendium.${pack.collection}.Item.${newId}`;
+                    entry.templateUuid = entry.uuid;
+                }
+            }
+            rewriteBlocks(entry.subBlocks);
+        }
+    };
+    for (const template of prepared) rewriteBlocks(template.system?.blocks);
+    const wasLocked = Boolean(pack.locked);
+    try {
+        if (wasLocked) await pack.configure({ locked: false });
+        await Item.createDocuments(prepared, { pack: pack.collection, keepId: true });
+    } finally {
+        if (wasLocked) await pack.configure({ locked: true });
+    }
+}
+
+export async function importGCSTemplatesToCompendium({ pack: fixedPack = null } = {}) {
+    if (!game.user?.isGM) return;
+    if (fixedPack && fixedPack.metadata?.type !== "Item") return;
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".gct,.gcs,.json";
+    input.multiple = true;
+    input.onchange = async event => {
+        const files = Array.from(event.target.files || []);
+        if (!files.length) return;
+        try {
+            const templates = await readGCSTemplateFiles(files);
+            if (!templates.length) return ui.notifications.warn(game.i18n.localize("GUM.LibraryImport.NoTemplatesFound"));
+            const destination = await chooseGCSTemplateCompendium(templates, fixedPack);
+            if (!destination) return;
+            const pack = destination.pack || await createWorldItemCompendium(destination.name);
+            if (!pack || pack.metadata?.type !== "Item") throw new Error(game.i18n.localize("GUM.LibraryImport.Errors.CompendiumNotFound"));
+            await createGCSTemplatesInCompendium(pack, templates);
+            ui.notifications.info(game.i18n.format("GUM.LibraryImport.TemplatesImported", { count: templates.length, name: pack.title }));
+        } catch (error) {
+            console.error("GUM | Falha ao importar Modelos GCS para compêndio:", error);
+            ui.notifications.error(game.i18n.format("GUM.LibraryImport.TemplateImportFailed", { error: error.message }));
+        }
+    };
     input.click();
 }
 
@@ -3216,8 +3400,17 @@ async function buildTemplateEntryFromGCSNode(gcsNode, parserFn, itemType, { defa
         img: parsedItem.img || "icons/svg/item-bag.svg",
         quantity: Number(gcsNode.quantity) || 1,
         level: resolvedLevel,
-        cost: resolvedCost
+        cost: resolvedCost,
+        ref: String(gcsNode.reference || parsedItem.system?.ref || "").trim()
     };
+
+    const specialization = String(parsedItem.system?.specialization || gcsNode.specialization || "").trim();
+    if (specialization) entry.specialization = specialization;
+
+    if (parsedItem.type === "equipment") {
+        entry.cost = Number(parsedItem.system?.cost) || 0;
+        entry.pointsCost = Number(gcsNode.points ?? gcsNode.calc?.points) || 0;
+    }
 
     if (["advantage", "disadvantage"].includes(parsedItem.type)) {
         entry.trait_cost = importGCSTraitCost(gcsNode, gcsNode._inheritedModifiers || []);
@@ -3343,23 +3536,41 @@ async function buildTemplateBlocksRecursive(container, parserFn, itemType, path 
 async function parseGCSTemplate(gcsData, fileName = "") {
     const templateSystem = getSystemTemplate("Item", "template");
     const blocks = [];
-
-    const traitRoots = Array.isArray(gcsData.traits) ? gcsData.traits : [];
-    for (const root of traitRoots) {
-        const rootBlocks = await buildTemplateBlocksRecursive({ ...root, _multiplicativeModifiers: Boolean(gcsData.settings?.use_multiplicative_modifiers) }, parseGCSLibraryTrait, "advantage", []);
-        blocks.push(...rootBlocks);
-    }
-
-    const skillRoots = Array.isArray(gcsData.skills) ? gcsData.skills : [];
-    for (const root of skillRoots) {
-        const rootBlocks = await buildTemplateBlocksRecursive(root, parseGCSLibrarySkill, "skill", []);
-        blocks.push(...rootBlocks);
+    const sections = [
+        { key: "traits", type: "advantage", parser: parseGCSLibraryTrait, labelKey: "Advantage" },
+        { key: "skills", type: "skill", parser: parseGCSLibrarySkill, labelKey: "Skill" },
+        { key: "spells", type: "spell", parser: parseGCSLibrarySpell, labelKey: "Spell" },
+        { key: "equipment", type: "equipment", parser: parseGCSLibraryEquipment, labelKey: "Equipment" },
+        { key: "other_equipment", type: "equipment", parser: parseGCSLibraryEquipment, labelKey: "OtherEquipment" }
+    ];
+    for (const section of sections) {
+        const roots = Array.isArray(gcsData[section.key]) ? gcsData[section.key] : [];
+        const leaves = [];
+        for (const root of roots.filter(node => node && !node.disabled)) {
+            const node = section.type === "advantage"
+                ? { ...root, _multiplicativeModifiers: Boolean(gcsData.settings?.use_multiplicative_modifiers) }
+                : root;
+            if (Array.isArray(node.children) && node.children.length) {
+                blocks.push(...await buildTemplateBlocksRecursive(node, section.parser, section.type, []));
+            } else {
+                const entry = await buildTemplateEntryFromGCSNode(node, section.parser, section.type);
+                if (entry) leaves.push(entry);
+            }
+        }
+        if (leaves.length) {
+            const block = buildTemplateBlockBase({ type: "guaranteed", title: game.i18n.localize(`GUM.Template.${section.labelKey}`) });
+            block.contents = leaves;
+            blocks.push(block);
+        }
     }
 
     if (!blocks.length) return null;
 
-    const baseName = traitRoots[0]?.name || skillRoots[0]?.name || gcsData.profile?.name || String(fileName || "Template GCS").replace(/\.[^.]+$/, "");
+    const baseName = gcsData.traits?.[0]?.name || gcsData.skills?.[0]?.name || gcsData.profile?.name
+        || gcsData.spells?.[0]?.name || String(fileName || "Template GCS").replace(/\.[^.]+$/, "");
     templateSystem.blocks = blocks;
+    const topLevelRoots = sections.flatMap(section => Array.isArray(gcsData[section.key]) ? gcsData[section.key] : []);
+    templateSystem.ref = String(gcsData.reference || gcsData.ref || (topLevelRoots.length === 1 ? topLevelRoots[0]?.reference : "") || "").trim();
 
     return {
         name: baseName || "Template GCS",
@@ -3932,6 +4143,24 @@ const registerCompendiumContextOptions = (_app, options) => {
             onClick: (_event, entry) => activate(entry)
         });
     }
+    const templateImportLabel = game.i18n.localize("GUM.LibraryImport.ImportTemplatesIntoCompendium");
+    if (!options.some(option => (option.name || option.label) === templateImportLabel)) {
+        const visible = entry => Boolean(game.user?.isGM && getContextCompendium(entry)?.metadata.type === "Item");
+        const activate = entry => {
+            const pack = getContextCompendium(entry);
+            if (!pack) return ui.notifications.error(game.i18n.localize("GUM.LibraryImport.Errors.CompendiumNotFound"));
+            return importGCSTemplatesToCompendium({ pack });
+        };
+        options.push({
+            name: templateImportLabel,
+            label: templateImportLabel,
+            icon: '<i class="fas fa-layer-group"></i>',
+            condition: visible,
+            visible,
+            callback: entry => activate(entry),
+            onClick: (_event, entry) => activate(entry)
+        });
+    }
     const exportLabel = game.i18n.localize("GUM.LibraryImport.ExportCompendium");
     if (!options.some(option => (option.name || option.label) === exportLabel)) {
         const visible = entry => Boolean(game.user?.isGM && getContextCompendium(entry)?.metadata.type === "Item");
@@ -3986,8 +4215,11 @@ Hooks.on("renderCompendiumDirectory", (_app, html) => {
     row.className = "gum-directory-import-actions";
     row.innerHTML = `<button class="gum-compendium-import-button" type="button">
         <i class="fas fa-file-import"></i> ${game.i18n.localize("GUM.LibraryImport.ImportLibrary")}
+    </button><button class="gum-compendium-import-templates-button" type="button">
+        <i class="fas fa-layer-group"></i> ${game.i18n.localize("GUM.LibraryImport.ImportTemplates")}
     </button>`;
-    row.querySelector("button").addEventListener("click", () => importFromJson());
+    row.querySelector(".gum-compendium-import-button").addEventListener("click", () => importFromJson());
+    row.querySelector(".gum-compendium-import-templates-button").addEventListener("click", () => importGCSTemplatesToCompendium());
     headerActions.append(row);
 });
 

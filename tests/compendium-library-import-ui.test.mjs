@@ -16,6 +16,14 @@ test("o diretório de compêndios oferece importação global e contextual", () 
   assert.match(importer, /importFromJson\(\{ pack \}\)/);
 });
 
+test("o diretório oferece importação em lote de Modelos GCS para um compêndio", () => {
+  assert.match(importer, /gum-compendium-import-templates-button/);
+  assert.match(importer, /ImportTemplatesIntoCompendium/);
+  assert.match(importer, /importGCSTemplatesToCompendium\(\{ pack \}\)/);
+  assert.match(importer, /input\.multiple = true/);
+  assert.match(importer, /createGCSTemplatesInCompendium\(pack, templates\)/);
+});
+
 test("a importação permite criar um compêndio mundial de Item", () => {
   assert.match(importer, /Criar novo/);
   assert.match(importer, /CompendiumCollection\.createCompendium\(\{ label, name, type: "Item", package: "world" \}\)/);

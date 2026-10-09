@@ -778,11 +778,12 @@ _promptMultipleReferences(parsedList) {
             grid.find('.spell-power-attack-type, input[name="system.attack_roll.skill_name"], input[name="system.attack_roll.skill_level_mod"], input[name="system.attack_roll.min_strength"]')
                 .prop('disabled', !usesAttack)
                 .toggleClass('is-disabled', !usesAttack);
+            grid.find('.spell-power-attack-common-fields').toggleClass('is-hidden', !usesAttack);
 
-                grid.find('.spell-power-attack-type-fields').each((_index, element) => {
+            grid.find('.spell-power-attack-type-fields').each((_index, element) => {
                 const fields = $(element);
                 const isActiveType = fields.data('attackFields') === attackType;
-                fields.toggleClass('is-hidden', !isActiveType);
+                fields.toggleClass('is-hidden', !usesAttack || !isActiveType);
                 fields.find('input, select').prop('disabled', !usesAttack || !isActiveType);
             });
         };

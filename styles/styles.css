@@ -2293,6 +2293,33 @@
 .equipment-card .item-control:hover {
     transform: scale(1.2);
 }
+
+/* Fontes monetárias seguem a linguagem compacta dos vínculos de magia e poder. */
+.gum.sheet.actor .money-sources-panel { margin:7px 0; padding:0; background:transparent !important; border:0; border-radius:0; overflow:visible; box-shadow:none; }
+.gum.sheet.actor .money-sources-panel__header { display:flex; align-items:center; justify-content:space-between; min-height:25px; padding:0 2px 3px; background:transparent !important; border-bottom:1px solid rgba(197,160,91,.22); }
+.gum.sheet.actor .money-sources-panel__header { list-style:none; cursor:pointer; }
+.gum.sheet.actor .money-sources-panel__header::-webkit-details-marker { display:none; }
+.gum.sheet.actor .money-sources-panel__label { color:rgba(230,220,225,.62); font-family:var(--gum-font-condensed); font-size:9px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
+.gum.sheet.actor .money-sources-panel__label i { margin-right:4px; color:rgba(240,215,159,.78); }
+.gum.sheet.actor .money-sources-panel__label .money-sources-panel__toggle { display:inline-block; margin-right:6px; transition:transform .18s ease; }
+.gum.sheet.actor .money-sources-panel[open] .money-sources-panel__toggle { transform:rotate(90deg); }
+.gum.sheet.actor .money-sources-panel__header .money-source-create { padding:2px 3px; color:rgba(240,215,159,.8); font-size:11px; }
+.gum.sheet.actor .money-sources-panel__header .money-source-create:hover { color:#f0d79f; text-decoration:none; }
+.gum.sheet.actor .money-sources-panel__cards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:5px; padding:5px 0 0; background:transparent !important; }
+.gum.sheet.actor .money-source-card { position:relative; display:grid; grid-template-columns:28px minmax(0,1fr) auto 20px; align-items:center; gap:6px; min-width:0; min-height:46px; margin:0; padding:5px 6px; border:0; border-radius:4px; background:#1a1b1f; box-shadow:inset 2px 0 0 rgba(225,184,117,.42); }
+.gum.sheet.actor .money-source-card:hover { background:#22242a; transform:none; }
+.gum.sheet.actor .money-source-card__icon { width:28px; height:28px; object-fit:cover; border:0; border-radius:3px; background:rgba(190,148,91,.1); }
+.gum.sheet.actor .money-source-card__body { min-width:0; }
+.gum.sheet.actor .money-source-card__title-row { display:flex; align-items:baseline; min-width:0; }
+.gum.sheet.actor .money-source-card__name { min-width:0; overflow:hidden; color:var(--gum-text-claro); font-family:var(--gum-font-condensed); font-size:12px; font-weight:650; line-height:1.2; text-overflow:ellipsis; white-space:nowrap; }
+.gum.sheet.actor .money-source-card__name:hover { color:#f0d79f; text-decoration:none; }
+.gum.sheet.actor .money-source-card__meta { min-width:0; margin-top:2px; overflow:hidden; color:rgba(230,220,225,.5); font-family:var(--gum-font-condensed); font-size:9px; line-height:1.15; text-overflow:ellipsis; white-space:nowrap; }
+.gum.sheet.actor .money-source-card__value { color:rgba(240,215,159,.78); font-family:var(--gum-font-condensed); font-size:9px; white-space:nowrap; }
+.gum.sheet.actor .money-source-card__controls { display:flex; position:static; justify-content:center; }
+.gum.sheet.actor .money-source-card__controls .gum-action-menu__toggle { width:20px; height:22px; color:rgba(235,226,231,.48); font-size:10px; }
+.gum.sheet.actor .money-source-card__controls .gum-action-menu__toggle:hover { color:#f0d79f; text-decoration:none; }
+.gum.sheet.actor .money-sources-panel__empty { grid-column:1 / -1; margin:0; padding:3px 2px; opacity:.6; font-size:.72rem; }
+@media (max-width:700px) { .gum.sheet.actor .money-sources-panel__cards { grid-template-columns:minmax(0,1fr); } }
 /* =================================================================== */
 /* 9. ABA SOCIAL (Actor Sheet)                                        */
 /* =================================================================== */
@@ -10035,6 +10062,7 @@ background-color: var(--gum-accent-gold);
 }
 .gum-directory-import-actions {
   display: flex;
+  gap: 4px;
   grid-column: 1 / -1;
   flex: 1 0 100%;
   width: 100%;
@@ -10042,7 +10070,8 @@ background-color: var(--gum-accent-gold);
 }
 
 .gum-directory-import-actions > button {
-  width: 100%;
+  flex: 1 1 0;
+  min-width: 0;
   margin: 0;
 }
 
@@ -10307,3 +10336,161 @@ background-color: var(--gum-accent-gold);
   background: rgba(197,160,91,.1) !important;
   box-shadow: inset 0 0 0 1px rgba(197,160,91,.55) !important;
 }
+
+/* Inventário: mesma linguagem compacta das fontes monetárias e vínculos. */
+.gum.sheet.actor .equipment-column.gum-unified-section {
+  margin:7px 0;
+  background:transparent !important;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+  overflow:visible;
+}
+.gum.sheet.actor .equipment-column.gum-unified-section > .gum-unified-header,
+.gum.sheet.actor .equipment-column.gum-unified-section[open] > .gum-unified-header {
+  min-height:25px;
+  padding:0 2px 3px;
+  background:transparent !important;
+  border-bottom:1px solid rgba(197,160,91,.22);
+}
+.gum.sheet.actor .equipment-column.gum-unified-section > .gum-unified-header:hover { background:transparent !important; }
+.gum.sheet.actor .equipment-column.gum-unified-section > .gum-unified-header .header-title {
+  color:rgba(230,220,225,.62);
+  font-family:var(--gum-font-condensed);
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+.gum.sheet.actor .equipment-column.gum-unified-section > .gum-unified-header .toggle-icon {
+  width:auto;
+  margin-right:8px;
+  color:rgba(240,215,159,.78);
+  font-size:9px;
+}
+.gum.sheet.actor .equipment-column.gum-unified-section > .list-content {
+  padding:5px 0 0;
+  background:transparent !important;
+  border:0;
+}
+.gum.sheet.actor .equipment-column .flex-wrap-container { gap:5px; }
+.gum.sheet.actor .equipment-column .equipment-card {
+  flex:1 1 280px;
+  display:grid;
+  grid-template-columns:28px minmax(0,1fr);
+  align-items:start;
+  gap:6px;
+  min-height:46px;
+  margin:0;
+  padding:5px 6px;
+  background:#1a1b1f;
+  border:0;
+  border-radius:4px;
+  box-shadow:inset 2px 0 0 rgba(225,184,117,.42);
+}
+.gum.sheet.actor .equipment-column .equipment-card:hover {
+  background:#22242a;
+  border:0;
+  box-shadow:inset 2px 0 0 rgba(240,215,159,.7);
+  transform:none;
+}
+.gum.sheet.actor .equipment-column .equipment-card .item-icon {
+  width:28px;
+  height:28px;
+  border:0;
+  border-radius:3px;
+  object-fit:cover;
+  background:rgba(190,148,91,.1);
+}
+.gum.sheet.actor .equipment-column .equipment-card .card-info { min-width:0; gap:2px; }
+.gum.sheet.actor .equipment-column .equipment-card .item-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.gum.sheet.actor .equipment-column .equipment-card .item-name a {
+  color:var(--gum-text-claro);
+  font-family:var(--gum-font-condensed);
+  font-size:12px;
+  font-weight:650;
+  line-height:1.2;
+}
+.gum.sheet.actor .equipment-column .equipment-card .item-name a:hover { color:#f0d79f; }
+.gum.sheet.actor .equipment-column .equipment-card .equipment-stats {
+  min-width:0;
+  margin-top:1px;
+  gap:0;
+  overflow:hidden;
+  color:rgba(230,220,225,.5);
+  font-family:var(--gum-font-condensed);
+  font-size:9px;
+  line-height:1.15;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.gum.sheet.actor .equipment-column .equipment-card .equip-stat-tag {
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  color:inherit;
+  font-size:inherit;
+}
+.gum.sheet.actor .equipment-column .equipment-card .equip-stat-tag + .equip-stat-tag::before { content:" · "; }
+.gum.sheet.actor .equipment-column .equipment-card .item-controls {
+  gap:7px;
+  margin-top:3px;
+  padding-top:3px;
+  border-top:1px solid rgba(255,255,255,.08);
+}
+.gum.sheet.actor .equipment-column .equipment-card .item-control { color:rgba(235,226,231,.48); font-size:10px; }
+.gum.sheet.actor .equipment-column .equipment-card .item-control:hover { color:#f0d79f; transform:none; }
+.gum.sheet.actor .equipment-column .equipment-card .item-control.active { color:rgba(240,215,159,.85); }
+.gum.sheet.actor .equipment-column .equipment-card .item-control.item-consume-use { color:rgba(126,220,176,.75); }
+.gum.sheet.actor .equipment-column .container-section {
+  margin-top:7px;
+  padding-top:5px;
+  border-top:1px solid rgba(255,255,255,.09);
+}
+.gum.sheet.actor .equipment-column .container-section-header {
+  padding:6px;
+  border:0;
+  border-radius:4px;
+  background:#202126;
+  box-shadow:inset 2px 0 0 rgba(225,184,117,.3);
+}
+.gum.sheet.actor .equipment-column .container-children-list { margin-top:5px; padding-left:7px; }
+.gum.sheet.actor .equipment-column .container-section .container-children-list .equipment-card { min-width:0; width:auto; }
+
+/* Inventory: secondary actions use a menu and collapsed containers leave no empty area. */
+.gum.sheet.actor .equipment-column .container-children-list.is-collapsed { display:none; }
+.gum.sheet.actor .equipment-column .item-controls .gum-action-menu__toggle { width:18px; height:18px; min-width:18px; color:rgba(235,226,231,.48); font-size:10px; }
+.gum.sheet.actor .equipment-column .item-controls .gum-action-menu__toggle:hover { color:#f0d79f; text-decoration:none; }
+
+/* Equipamentos: menu legível, cabeçalho de contêiner limpo e automações compactas. */
+.gum.sheet.actor .equipment-column .gum-action-menu__panel {
+  min-width:142px;
+  padding:2px;
+  border-color:rgba(45,43,40,.2);
+  background:#f6f4f0;
+  box-shadow:0 7px 18px rgba(0,0,0,.32);
+}
+.gum.sheet.actor .equipment-column .gum-action-menu__panel > .gum-action-menu__item { color:#4a4743; }
+.gum.sheet.actor .equipment-column .gum-action-menu__panel > .gum-action-menu__item > i { width:13px; color:#77716a; text-align:center; }
+.gum.sheet.actor .equipment-column .gum-action-menu__panel > .gum-action-menu__item:hover { background:rgba(197,160,91,.14); color:#2f2c29; }
+.gum.sheet.actor .equipment-column .gum-action-menu__panel > .gum-action-menu__item.is-danger { color:#70424a; }
+.gum.sheet.actor .equipment-column .gum-action-menu__panel > .gum-action-menu__item.is-danger:hover { color:#862f3a; }
+.gum.sheet.actor .equipment-column .container-kind-icon { margin-right:6px; cursor:help; }
+.gum.sheet.actor .equipment-column .container-item-count {
+  padding:0;
+  border:0;
+  border-radius:0;
+  color:rgba(230,220,225,.5);
+  font-family:var(--gum-font-condensed);
+  font-size:9px;
+  font-weight:500;
+  letter-spacing:0;
+  text-transform:none;
+}
+.gum.sheet.actor .equipment-column .container-capacity-line { justify-content:flex-start; gap:7px; }
+.gum.sheet.actor .equipment-column .state-effect-switch { width:28px; min-width:28px; height:18px; padding:2px; }
+.gum.sheet.actor .equipment-column .state-effect-switch__track { width:24px; height:14px; border-color:rgba(255,255,255,.12); background:rgba(203,211,219,.22); }
+.gum.sheet.actor .equipment-column .state-effect-switch__thumb { top:2px; left:2px; width:8px; height:8px; background:rgba(248,244,236,.82); }
+.gum.sheet.actor .equipment-column .state-effect-switch.is-active .state-effect-switch__track { border-color:rgba(126,220,176,.45); background:rgba(56,156,104,.72); }
+.gum.sheet.actor .equipment-column .state-effect-switch.is-active .state-effect-switch__thumb { transform:translateX(10px); }

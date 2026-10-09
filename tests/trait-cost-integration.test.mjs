@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import * as pricing from '../module/utils/trait-cost.mjs';
+import { parseCompendiumLibraryExport } from '../module/utils/compendium-library-json.mjs';
 const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8');
-const context = vm.createContext({ ...pricing, console, Hooks: { on() {} },
-  foundry: { utils: { deepClone: structuredClone, randomID: () => 'test-id' } },
-  game: { model: { Item: { advantage: { points: 0 }, disadvantage: { points: 0 }, modifier: { cost: '0%' } } }, system: {} }
+const context = vm.createContext({ ...pricing, parseCompendiumLibraryExport, console, Hooks: { on() {} },
+  foundry: { utils: { deepClone: structuredClone, randomID: (() => { let id = 0; return () => `test-id-${++id}`; })() } },
+  game: { model: { Item: { advantage: { points: 0 }, disadvantage: { points: 0 }, modifier: { cost: '0%' } } }, system: {}, i18n: { localize: key => key } }
 });
 vm.runInContext(read('module/apps/importers.js').replace(/^import .*;\r?\n/gm, '').replace(/^export /gm, ''), context);
 
@@ -34,6 +35,34 @@ test('template imports keep canonical base separately from their selection cost'
   assert.equal(entry.cost,30);
   assert.equal(entry.inlineItem.system.points,20);
   assert.deepEqual(JSON.parse(JSON.stringify(entry.trait_cost)), JSON.parse(JSON.stringify(pricing.importGCSTraitCost({base_points:20,modifiers:[{cost_adj:'50%'}]}))));
+});
+
+test('GCS skill specialization is retained on the template entry for selection labels', async () => {
+  context.resolveHybridSourceItem = async () => ({ item: null });
+  const entry = await context.buildTemplateEntryFromGCSNode(
+    { name: 'Survival', specialization: 'Arctic', reference: 'B223', points: 1, levels: 0 },
+    node => ({ name: node.name, type: 'skill', system: { specialization: node.specialization, difficulty: 'M' } }),
+    'skill'
+  );
+  assert.equal(entry.name, 'Survival');
+  assert.equal(entry.specialization, 'Arctic');
+  assert.equal(entry.inlineItem.system.specialization, 'Arctic');
+});
+
+test('GCS template entry uses the hybrid source when a configured item matches', async () => {
+  const source = { id: 'skill-id', uuid: 'Compendium.world.skills.Item.skill-id' };
+  context.resolveHybridSourceItem = async () => ({ item: source, matchedBy: 'name+specialization' });
+  const entry = await context.buildTemplateEntryFromGCSNode(
+    { name: 'Survival', specialization: 'Arctic', reference: 'B223', points: 1, levels: 0 },
+    node => ({ name: node.name, type: 'skill', system: { specialization: node.specialization, difficulty: 'M' } }),
+    'skill'
+  );
+  assert.equal(entry.uuid, source.uuid);
+  assert.equal(entry.sourceId, source.id);
+  assert.equal(entry.hybrid.mode, 'linked');
+  assert.equal(entry.ref, 'B223');
+  assert.equal(entry.inlineItem, undefined);
+  context.resolveHybridSourceItem = async () => ({ item: null });
 });
 
 function actorMethods() {
@@ -94,4 +123,95 @@ test('template groups total canonical child costs instead of cached GCS totals',
   const entry = await context.buildTemplateOptionEntryFromNode({name:'Group',calc:{points:999},modifiers:[{cost_adj:'50%'}],children:[{name:'Child',base_points:20}]},context.parseGCSLibraryTrait,'advantage');
   assert.equal(entry.cost,30);
   assert.equal(entry.subBlocks[0].contents[0].inlineItem.system.points,20);
+});
+
+test('GCS template import includes spell and equipment roots with their own costs', async () => {
+  context.game.model.Item.template = { blocks: [] };
+  context.game.model.Item.spell = { points: 1, predefined: {} };
+  context.game.model.Item.equipment = { cost: 0 };
+  context.resolveHybridSourceItem = async () => ({ item: null });
+  const data = await context.parseGCSTemplate({
+    profile: { name: 'Adventurer' },
+    spells: [{ name: 'Light', points: 2 }],
+    equipment: [{ description: 'Rope', value: '15', quantity: 2 }]
+  }, 'test.gct');
+  const entries = data.system.blocks.flatMap(block => block.contents);
+  assert.deepEqual(Array.from(entries, entry => entry.itemType), ['spell', 'equipment']);
+  assert.equal(entries[1].cost, 15);
+  assert.equal(entries[1].quantity, 2);
+  assert.equal(data.name, 'Adventurer');
+});
+
+test('GCS template import preserves a package picker and direct trait roots', async () => {
+  context.game.model.Item.template = { blocks: [] };
+  context.resolveHybridSourceItem = async () => ({ item: null });
+  const data = await context.parseGCSTemplate({ traits: [
+    { name: 'Toughness', base_points: 5 },
+    { name: 'Travel kit', template_picker: { type: 'count', qualifier: { qualifier: 1 } }, children: [
+      { name: 'Strong', children: [{ name: 'Strength', base_points: 10 }] },
+      { name: 'Quick', children: [{ name: 'Dexterity', base_points: 20 }] }
+    ] }
+  ] }, 'test.gct');
+  const selection = data.system.blocks.find(block => block.type === 'selection');
+  assert.equal(selection.choiceCount, 1);
+  assert.equal(selection.contents.length, 2);
+  assert.equal(selection.contents[0].kind, 'group');
+  assert.equal(selection.contents[0].subBlocks[0].type, 'guaranteed');
+  assert.equal(data.system.blocks.some(block => block.type === 'guaranteed' && block.contents.some(entry => entry.name === 'Toughness')), true);
+});
+
+test('GCS template import carries a sole root reference into the model', async () => {
+  context.game.model.Item.template = { blocks: [] };
+  context.resolveHybridSourceItem = async () => ({ item: null });
+  const data = await context.parseGCSTemplate({ traits: [
+    { name: 'Barbarian', reference: 'B12', children: [{ name: 'Strong', base_points: 10 }] }
+  ] }, 'barbarian.gct');
+  assert.equal(data.system.ref, 'B12');
+});
+
+test('batch template reader accepts multiple files and rejects an invalid file before import', async () => {
+  context.game.model.Item.template = { blocks: [] };
+  context.resolveHybridSourceItem = async () => ({ item: null });
+  const files = [
+    { name: 'one.gct', text: async () => JSON.stringify({ profile: { name: 'One' }, traits: [{ name: 'A', base_points: 5 }] }) },
+    { name: 'two.gct', text: async () => JSON.stringify({ profile: { name: 'Two' }, traits: [{ name: 'B', base_points: 10 }] }) }
+  ];
+  const templates = await context.readGCSTemplateFiles(files);
+  assert.equal(templates.length, 2);
+  assert.equal(templates[0].type, 'template');
+  await assert.rejects(context.readGCSTemplateFiles([...files, { name: 'bad.gct', text: async () => '{}' }]), /bad\.gct/);
+});
+
+test('template reader accepts native GUM items and portable GUM compendium exports', async () => {
+  const native = { _id: 'template-1', name: 'Barbarian', type: 'template', system: { blocks: [] } };
+  const files = [
+    { name: 'barbarian.json', text: async () => JSON.stringify(native) },
+    { name: 'collection.json', text: async () => JSON.stringify({
+      format: 'gum-compendium-library', version: 1, documentType: 'Item', folders: [],
+      documents: [{ ...native, _id: 'template-2', name: 'Warrior' }, { _id: 'skill-1', type: 'skill', name: 'Sword' }]
+    }) }
+  ];
+  const templates = await context.readGCSTemplateFiles(files);
+  assert.deepEqual(Array.from(templates, item => item.name), ['Barbarian', 'Warrior']);
+  assert.equal(templates[0].system.blocks.length, 0);
+});
+
+test('batch template writer uses one compendium, rewrites internal references, and restores its lock', async () => {
+  const events = [];
+  context.Item = { async createDocuments(items, options) {
+    events.push(['create', items.length, options.pack, options.keepId]);
+    const reference = items[0].system.blocks[0].contents[0];
+    assert.equal(reference.sourceId, items[1]._id);
+    assert.equal(reference.uuid, `Compendium.${options.pack}.Item.${items[1]._id}`);
+  } };
+  const pack = { collection: 'world.gcs-templates', locked: true, async configure(data) {
+    events.push(['lock', data.locked]);
+    this.locked = data.locked;
+  } };
+  await context.createGCSTemplatesInCompendium(pack, [
+    { _id: 'old-a', type: 'template', system: { blocks: [{ contents: [{ kind: 'template', sourceId: 'old-b', uuid: 'Item.old-b' }] }] } },
+    { _id: 'old-b', type: 'template', system: { blocks: [] } }
+  ]);
+  assert.deepEqual(events, [['lock', false], ['create', 2, 'world.gcs-templates', true], ['lock', true]]);
+  assert.equal(pack.locked, true);
 });

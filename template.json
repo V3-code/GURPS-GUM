@@ -354,7 +354,7 @@
         "powers": "manual",
         "skills": "manual",
         "characteristics": "manual",
-        "equipment": {
+    "equipment": {
           "equipped": "manual",
           "carried": "manual",
           "stored": "manual"
@@ -391,6 +391,7 @@
       "disadvantage",
       "skill",
       "equipment",
+      "money_source",
       "spell",
       "power",
       "modifier",
@@ -430,7 +431,6 @@
         "cost": 0,
         "weight": 0,
         "location": "carried",
-        "active": false,
         "is_container": false,
         "container": {
           "max_weight": 0,
@@ -633,7 +633,7 @@
       "cost_mode": "standard",
       "cost_per_level": 1
     },
-    "equipment": {
+      "equipment": {
       "templates": [
         "base",
         "equipment_base"
@@ -643,6 +643,16 @@
       "defense_bonus": 0,
       "equip_time": 1,
       "dr_locations": {}
+    },
+    "money_source": {
+      "templates": [
+        "base",
+        "equipment_base"
+      ],
+      "mode": "physical",
+      "category": "",
+      "unit_value": 1,
+      "balance": 0
     },
     "spell": {
       "templates": [
@@ -918,8 +928,9 @@
       "templates": [
         "base"
       ],
-      "schemaVersion": 1,
+      "schemaVersion": 2,
       "model_category": "generic",
+      "sharedBudgets": [],
       "blocks": []
     },
     "trigger": {

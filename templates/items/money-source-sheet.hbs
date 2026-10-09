@@ -1,0 +1,138 @@
+<form class="{{cssClass}} gum-item-sheet money-source-sheet" autocomplete="off">
+  <header class="sheet-header">
+    <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}" />
+    <div class="header-info">
+      <div class="header-main-line">
+        <textarea name="name" rows="1" placeholder="{{localize 'GUM.MoneySource.Name'}}">{{item.name}}</textarea>
+      </div>
+      <div class="header-subline">
+        <span class="item-type-tag">{{localize "GUM.MoneySource.Header"}}</span>
+      </div>
+      <span class="header-divider" aria-hidden="true"></span>
+    </div>
+  </header>
+
+  <section class="sheet-content">
+    <nav class="sheet-tabs tabs" data-group="primary">
+      <a class="item" data-tab="description">{{localize "GUM.Equipment.Tab.Description"}}</a>
+      <a class="item" data-tab="details">{{localize "GUM.Equipment.Tab.Details"}}</a>
+    </nav>
+
+    <section class="sheet-body-content money-source-body">
+      <div class="tab" data-group="primary" data-tab="description">
+        <div class="description-tab money-source-description-tab">
+          <div class="item-description-reference">
+            <label for="money-source-ref"><i class="fas fa-book-open"></i> {{localize "GUM.MoneySource.Reference"}}</label>
+            <div class="item-description-reference-control">
+              <input id="money-source-ref" type="text" name="system.ref" value="{{system.ref}}" placeholder="{{localize 'GUM.Equipment.Description.ReferenceExample'}}" />
+            </div>
+          </div>
+          <div class="description-grid">
+            <div class="form-section description-section itemdesc-block">
+              <details class="itemdesc-panel" open>
+                <summary class="itemdesc-block-header"><h4 class="itemdesc-block-title">{{localize "GUM.Equipment.Description.Short"}}</h4></summary>
+                {{#if editable}}<span class="itemdesc-header-actions"><button type="button" class="toggle-editor itemdesc-edit-button" data-field="system.chat_description" aria-label="{{localize 'GUM.Equipment.Description.Short'}}"><i class="fas fa-pen"></i></button></span>{{/if}}
+                <div class="itemdesc-content">
+                  <div class="description-view itemdesc-inner">{{{enrichedChatDescription}}}</div>
+                  <div class="description-editor itemdesc-inner" style="display:none;">
+                    {{editor system.chat_description target="system.chat_description" engine="prosemirror" owner=owner editable=editable}}
+                    <div class="description-actions">
+                      <button type="button" class="save-description" data-field="system.chat_description"><i class="fas fa-save"></i> {{localize "GUM.Equipment.Description.Save"}}</button>
+                      <button type="button" class="expand-description" data-expanded="false"><i class="fas fa-expand"></i> {{localize "GUM.Equipment.Description.Expand"}}</button>
+                      <button type="button" class="cancel-description"><i class="fas fa-times"></i> {{localize "GUM.Equipment.Description.Cancel"}}</button>
+                    </div>
+                  </div>
+                </div>
+              </details>
+            </div>
+            <div class="form-section description-section itemdesc-block">
+              <details class="itemdesc-panel" open>
+                <summary class="itemdesc-block-header"><h4 class="itemdesc-block-title">{{localize "GUM.Equipment.Description.Full"}}</h4></summary>
+                {{#if editable}}<span class="itemdesc-header-actions"><button type="button" class="toggle-editor itemdesc-edit-button" data-field="system.description" aria-label="{{localize 'GUM.Equipment.Description.Full'}}"><i class="fas fa-pen"></i></button></span>{{/if}}
+                <div class="itemdesc-content">
+                  <div class="description-view itemdesc-inner">{{{enrichedDescription}}}</div>
+                  <div class="description-editor itemdesc-inner" style="display:none;">
+                    {{editor system.description target="system.description" engine="prosemirror" owner=owner editable=editable}}
+                    <div class="description-actions">
+                      <button type="button" class="save-description" data-field="system.description"><i class="fas fa-save"></i> {{localize "GUM.Equipment.Description.Save"}}</button>
+                      <button type="button" class="expand-description" data-expanded="false"><i class="fas fa-expand"></i> {{localize "GUM.Equipment.Description.Expand"}}</button>
+                      <button type="button" class="cancel-description"><i class="fas fa-times"></i> {{localize "GUM.Equipment.Description.Cancel"}}</button>
+                    </div>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab" data-group="primary" data-tab="details">
+        <div class="equipment-details-layout money-source-details-layout">
+          <div class="form-section skill-details-compact equipment-details-form">
+            <h4 class="section-title">{{localize "GUM.MoneySource.Configuration"}}</h4>
+            <div class="equipment-general-grid money-source-configuration-grid">
+              <div class="equipment-field-card money-source-category-card">
+                <label class="equipment-stat-heading"><i class="fas fa-tags"></i><span>{{localize "GUM.MoneySource.Category"}}</span></label>
+                <div class="equipment-stat-control"><input name="system.category" type="text" value="{{system.category}}" placeholder="{{localize 'GUM.MoneySource.CategoryHint'}}" /></div>
+              </div>
+              <div class="equipment-field-card">
+                <label class="equipment-stat-heading"><i class="fas fa-coins"></i><span>{{localize "GUM.MoneySource.Mode"}}</span></label>
+                <div class="equipment-stat-control"><select name="system.mode">
+                  <option value="physical" {{#if isPhysical}}selected{{/if}}>{{localize "GUM.MoneySource.Physical"}}</option>
+                  <option value="abstract" {{#unless isPhysical}}selected{{/unless}}>{{localize "GUM.MoneySource.Abstract"}}</option>
+                </select></div>
+              </div>
+              <div class="equipment-field-card">
+                <label class="equipment-stat-heading"><i class="fas fa-map-marker-alt"></i><span>{{localize "GUM.MoneySource.Location"}}</span></label>
+                <div class="equipment-stat-control"><select name="system.location">
+                  <option value="equipped" {{#if (eq system.location "equipped")}}selected{{/if}}>{{localize "GUM.MoneySource.Equipped"}}</option>
+                  <option value="carried" {{#if (eq system.location "carried")}}selected{{/if}}>{{localize "GUM.MoneySource.Carried"}}</option>
+                  <option value="stored" {{#if (eq system.location "stored")}}selected{{/if}}>{{localize "GUM.MoneySource.Stored"}}</option>
+                </select></div>
+              </div>
+            </div>
+          </div>
+
+          {{#if isPhysical}}
+          <div class="form-section skill-details-compact equipment-details-form">
+            <h4 class="section-title">{{localize "GUM.MoneySource.Physical"}}</h4>
+            <div class="equipment-general-grid">
+              <div class="equipment-stat-card">
+                <label class="equipment-stat-heading"><i class="fas fa-cubes"></i><span>{{localize "GUM.MoneySource.Quantity"}}</span></label>
+                <div class="equipment-stat-control"><input name="system.quantity" type="number" min="0" step="1" value="{{system.quantity}}" /></div>
+              </div>
+              <div class="equipment-stat-card">
+                <label class="equipment-stat-heading"><i class="fas fa-coins"></i><span>{{localize "GUM.MoneySource.UnitValue"}}</span></label>
+                <div class="equipment-stat-control"><input name="system.unit_value" type="number" min="0" step="any" value="{{system.unit_value}}" /></div>
+              </div>
+              <div class="equipment-stat-card">
+                <label class="equipment-stat-heading"><i class="fas fa-weight-hanging"></i><span>{{localize "GUM.MoneySource.UnitWeight"}}</span></label>
+                <div class="equipment-stat-control"><input name="system.weight" type="number" min="0" step="any" value="{{system.weight}}" /></div>
+              </div>
+              <div class="equipment-stat-card money-source-calculated-card">
+                <label class="equipment-stat-heading"><i class="fas fa-weight-hanging"></i><span>{{localize "GUM.MoneySource.TotalWeight"}}</span></label>
+                <output>{{totalWeight}} kg</output>
+              </div>
+            </div>
+          </div>
+          {{else}}
+          <div class="form-section skill-details-compact equipment-details-form">
+            <h4 class="section-title">{{localize "GUM.MoneySource.Abstract"}}</h4>
+            <div class="equipment-general-grid">
+              <div class="equipment-stat-card">
+                <label class="equipment-stat-heading"><i class="fas fa-wallet"></i><span>{{localize "GUM.MoneySource.Balance"}}</span></label>
+                <div class="equipment-stat-control"><input name="system.balance" type="number" min="0" step="any" value="{{system.balance}}" /></div>
+              </div>
+            </div>
+          </div>
+          {{/if}}
+
+          <div class="money-source-summary-card" aria-label="{{localize 'GUM.MoneySource.Available'}}">
+            <span>{{localize "GUM.MoneySource.Available"}}</span>
+            <strong>{{availableValue}}</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+  </section>
+</form>

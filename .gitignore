@@ -1,2 +1,8 @@
-# Ignorar apenas o arquivo de locj dos compêndios LevelDB
+# Arquivos de execução dos compêndios LevelDB; os diretórios vazios são mantidos por .gitkeep.
 packs/**/LOCK
+packs/**/*.ldb
+packs/**/*.log
+packs/**/CURRENT
+packs/**/LOG
+packs/**/LOG.old
+packs/**/MANIFEST-*

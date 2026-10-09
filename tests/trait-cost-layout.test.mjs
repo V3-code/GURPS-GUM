@@ -26,9 +26,9 @@ test('advantage and disadvantage cost controls share one dashboard section', () 
   assert.doesNotMatch(template, /Nível e Pontos/);
 });
 
-test('the separate legacy cost block remains limited to powers', () => {
-  assert.match(template, /\{\{#if \(eq item\.type "power"\)\}\}[\s\S]*?<div class="form-section"><h4 class="section-title">Cálculo do custo<\/h4>/);
-  assert.doesNotMatch(template, /\{\{#if \(or \(eq item\.type "advantage"\) \(eq item\.type "disadvantage"\) \(eq item\.type "power"\)\)\}\}\s*<div class="form-section"><h4 class="section-title">Cálculo do custo<\/h4>/);
+test('the dedicated power cost dashboard remains limited to powers', () => {
+  assert.match(template, /\{\{#if \(eq item\.type "power"\)\}\}\s*<div class="skill-details-dashboard spell-power-dashboard power-cost-dashboard">[\s\S]*?Cálculo do custo/);
+  assert.doesNotMatch(template, /\{\{#if \(or \(eq item\.type "advantage"\) \(eq item\.type "disadvantage"\) \(eq item\.type "power"\)\)\)\}\}\s*<div class="skill-details-dashboard spell-power-dashboard power-cost-dashboard">/);
 });
 
 test('modifier pricing fields and options use the dedicated dashboard', () => {
