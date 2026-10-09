@@ -125,7 +125,15 @@ async getData(options) {
         this._expandedPowerCards ??= new Set();
         this._expandedSocialCards ??= new Set();
         this._combatActionView ??= "actions";
+        this._combatAttackFilters ??= new Set();
+        this._combatControlFilters ??= new Set();
         context.combatActionView = this._combatActionView;
+        context.combatAttackFilterAll = this._combatAttackFilters.size === 0;
+        context.combatControlFilterAll = this._combatControlFilters.size === 0;
+        context.combatWoundsFilterActive = this._combatControlFilters.has("wounds");
+        context.combatMetersFilterActive = this._combatControlFilters.has("meters");
+        context.combatWoundsVisible = this._combatControlFilters.size === 0 || this._combatControlFilters.has("wounds");
+        context.combatMetersVisible = this._combatControlFilters.size === 0 || this._combatControlFilters.has("meters");
         
         const profileId = this.actor.system.combat?.body_profile || "humanoid";
         const profile = getBodyProfile(profileId);
@@ -799,42 +807,34 @@ async getData(options) {
         const combatFavoriteTypes = new Set(["advantage", "disadvantage", "skill", "spell", "power"]);
         const combatFavoritesByGroup = {};
         const favoriteGeneralGroup = game.i18n.localize("GUM.Combat.Favorites.General");
-
-        const resolveFavoriteGroup = (item) => {
-            const typedGroup = (item.system?.group || "").trim();
-            if (typedGroup) return typedGroup;
-
-            if (item.type === "advantage") return game.i18n.localize("GUM.Combat.Favorites.Advantages");
-            if (item.type === "disadvantage") return game.i18n.localize("GUM.Combat.Favorites.Disadvantages");
-            if (item.type === "skill") return game.i18n.localize("GUM.Combat.Favorites.Skills");
-            if (item.type === "spell") return game.i18n.localize("GUM.Combat.Favorites.Spells");
-            if (item.type === "power") return game.i18n.localize("GUM.Combat.Favorites.Powers");
-
-            return favoriteGeneralGroup;
-        };
+        const favoriteGroupByType = new Map([
+            ["advantage", game.i18n.localize("GUM.Combat.Favorites.Advantages")],
+            ["disadvantage", game.i18n.localize("GUM.Combat.Favorites.Disadvantages")],
+            ["skill", game.i18n.localize("GUM.Combat.Favorites.Skills")],
+            ["spell", game.i18n.localize("GUM.Combat.Favorites.Spells")],
+            ["power", game.i18n.localize("GUM.Combat.Favorites.Powers")]
+        ]);
 
         for (const item of this.actor.items) {
             if (!combatFavoriteTypes.has(item.type)) continue;
             if (item.system?.favorite_in_combat !== true) continue;
 
-            const groupName = resolveFavoriteGroup(item);
+            const groupName = favoriteGroupByType.get(item.type) || favoriteGeneralGroup;
             if (!combatFavoritesByGroup[groupName]) combatFavoritesByGroup[groupName] = [];
 
-            combatFavoritesByGroup[groupName].push(prepareCharacteristicDisplay(item));
+            const favoriteItem = prepareCharacteristicDisplay(item);
+            favoriteItem.combatFavoriteOriginGroup = String(item.system?.group || "").trim();
+            combatFavoritesByGroup[groupName].push(favoriteItem);
         }
 
         const combatFavoriteSortFn = getSortFunction('name');
         Object.values(combatFavoritesByGroup).forEach((groupItems) => groupItems.sort(combatFavoriteSortFn));
 
         context.combatFavoritesByGroup = combatFavoritesByGroup;
-        context.combatFavoriteGroupKeys = Object.keys(combatFavoritesByGroup).sort((a, b) => {
-            if (a === favoriteGeneralGroup) return -1;
-            if (b === favoriteGeneralGroup) return 1;
-            return a.localeCompare(b);
-        });
-        context.combatFavoriteCount = Object.values(combatFavoritesByGroup)
-            .reduce((total, items) => total + items.length, 0);
-
+        context.combatFavoriteGroupKeys = [
+            ...favoriteGroupByType.values(),
+            favoriteGeneralGroup
+        ].filter(groupName => combatFavoritesByGroup[groupName]?.length);
 
         // ================================================================== //
         //    ORDENAÇÃO DE LISTAS SIMPLES (Seu código original)
@@ -1100,6 +1100,15 @@ async getData(options) {
 
         // 6. Ordena a lista final e salva no contexto
         equipmentAttackGroups.sort((a, b) => (a.sort || 0) - (b.sort || 0));
+        const availableAttackGroupIds = new Set(equipmentAttackGroups.map(group => String(group.id)));
+        for (const selectedGroupId of this._combatAttackFilters) {
+            if (!availableAttackGroupIds.has(selectedGroupId)) this._combatAttackFilters.delete(selectedGroupId);
+        }
+        context.combatAttackFilterAll = this._combatAttackFilters.size === 0;
+        for (const group of equipmentAttackGroups) {
+            group.combatFilterActive = this._combatAttackFilters.has(String(group.id));
+            group.combatFilterVisible = this._combatAttackFilters.size === 0 || group.combatFilterActive;
+        }
         context.attackGroups = equipmentAttackGroups; // Salva no contexto para o .hbs usar
 
         // ================================================================== //
@@ -2033,6 +2042,43 @@ activateListeners(html) {
         html.find('.combat-action-panel').each((_index, panel) => {
             panel.hidden = panel.dataset.combatPanel !== view;
         });
+    });
+    html.on("click", ".combat-filter-chip", (ev) => {
+        ev.preventDefault();
+        const chip = ev.currentTarget;
+        const scope = chip.dataset.filterScope;
+        const value = String(chip.dataset.filterValue || "");
+        const filters = scope === "actions"
+            ? this._combatAttackFilters
+            : scope === "control"
+                ? this._combatControlFilters
+                : null;
+        if (!filters || !value) return;
+
+        if (value === "all") filters.clear();
+        else {
+            if (filters.size === 0) filters.add(value);
+            else if (filters.has(value)) filters.delete(value);
+            else filters.add(value);
+        }
+
+        const filterBar = $(chip).closest('.combat-filter-list');
+        filterBar.find('.combat-filter-chip').each((_index, button) => {
+            const buttonValue = String(button.dataset.filterValue || "");
+            const active = buttonValue === "all" ? filters.size === 0 : filters.has(buttonValue);
+            button.classList.toggle('is-active', active);
+            button.setAttribute('aria-pressed', String(active));
+        });
+
+        if (scope === "actions") {
+            html.find('[data-combat-filter-group]').each((_index, group) => {
+                group.hidden = filters.size > 0 && !filters.has(String(group.dataset.combatFilterGroup));
+            });
+        } else {
+            html.find('[data-combat-control-group]').each((_index, group) => {
+                group.hidden = filters.size > 0 && !filters.has(String(group.dataset.combatControlGroup));
+            });
+        }
     });
     if (!this.isEditable) return;
 

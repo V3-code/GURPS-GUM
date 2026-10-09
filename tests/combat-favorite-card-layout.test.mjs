@@ -52,4 +52,39 @@ test("combat actions and favorites use a subtle persistent view switcher", () =>
   assert.match(actorSheet, /this\._combatActionView \?\?= "actions"/);
   assert.match(actorSheet, /this\._combatActionView = view/);
   assert.match(actorSheet, /panel\.hidden = panel\.dataset\.combatPanel !== view/);
+  const switcher = template.slice(
+    template.indexOf('class="combat-view-switcher"'),
+    template.indexOf('{{!-- Favoritos de combate --}}'),
+  );
+  assert.doesNotMatch(switcher, /combatFavoriteCount|<small>/);
+});
+
+test("combat favorites are grouped by item type while retaining their source group as metadata", () => {
+  const favoritePreparation = actorSheet.slice(
+    actorSheet.indexOf("const combatFavoriteTypes"),
+    actorSheet.indexOf("//    FIM DA FASE 3.1"),
+  );
+
+  assert.match(favoritePreparation, /const favoriteGroupByType = new Map/);
+  assert.match(favoritePreparation, /favoriteGroupByType\.get\(item\.type\)/);
+  assert.match(favoritePreparation, /favoriteItem\.combatFavoriteOriginGroup/);
+  assert.doesNotMatch(favoritePreparation, /const typedGroup/);
+  assert.match(favorites, /this\.combatFavoriteOriginGroup/);
+});
+
+test("combat groups use wrapping multi-select filters with an all option", () => {
+  assert.match(template, /combat-filter-list--actions/);
+  assert.match(template, /data-filter-scope="actions" data-filter-value="all"/);
+  assert.match(template, /data-combat-filter-group="\{\{group\.id\}\}"/);
+  assert.match(template, /combat-filter-list--control/);
+  assert.match(template, /data-filter-scope="control" data-filter-value="wounds"/);
+  assert.match(template, /data-filter-scope="control" data-filter-value="meters"/);
+  assert.match(template, /data-combat-control-group="wounds"/);
+  assert.match(template, /data-combat-control-group="meters"/);
+  assert.match(styles, /\.combat-filter-list \{[\s\S]*?flex-wrap:wrap/);
+  assert.match(styles, /\.combat-filter-chip\.is-active/);
+  assert.match(actorSheet, /this\._combatAttackFilters \?\?= new Set\(\)/);
+  assert.match(actorSheet, /this\._combatControlFilters \?\?= new Set\(\)/);
+  assert.match(actorSheet, /html\.on\("click", "\.combat-filter-chip"/);
+  assert.match(actorSheet, /if \(value === "all"\) filters\.clear\(\)/);
 });

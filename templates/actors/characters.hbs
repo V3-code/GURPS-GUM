@@ -1649,9 +1649,15 @@
 
           <div class="combat-area-label" aria-hidden="true"><span>{{localize "GUM.Combat.Control"}}</span></div>
 
+          <div class="combat-filter-list combat-filter-list--control" role="group" aria-label="{{localize 'GUM.Combat.Filters.ControlGroups'}}">
+            <button type="button" class="combat-filter-chip {{#if combatControlFilterAll}}is-active{{/if}}" data-filter-scope="control" data-filter-value="all" aria-pressed="{{#if combatControlFilterAll}}true{{else}}false{{/if}}">{{localize "GUM.Combat.Filters.All"}}</button>
+            <button type="button" class="combat-filter-chip {{#if combatWoundsFilterActive}}is-active{{/if}}" data-filter-scope="control" data-filter-value="wounds" aria-pressed="{{#if combatWoundsFilterActive}}true{{else}}false{{/if}}">{{localize "GUM.Wounds.Title"}}</button>
+            <button type="button" class="combat-filter-chip {{#if combatMetersFilterActive}}is-active{{/if}}" data-filter-scope="control" data-filter-value="meters" aria-pressed="{{#if combatMetersFilterActive}}true{{else}}false{{/if}}">{{localize "GUM.Combat.Meters.Title"}}</button>
+          </div>
+
           {{!-- Grupo fixo de Registros de Combate --}}
           <div class="attack-group-list-v2 combat-fixed-groups-list">
-            <details class="attack-group-details gum-unified-section combat-fixed-group wounds-box" data-group-id="wounds-group" {{collapsibleState "wounds-group" @root.collapsedData}}>
+            <details class="attack-group-details gum-unified-section combat-fixed-group wounds-box" data-group-id="wounds-group" data-combat-control-group="wounds" {{#unless combatWoundsVisible}}hidden{{/unless}} {{collapsibleState "wounds-group" @root.collapsedData}}>
               <summary class="group-summary gum-unified-header">
                 <div class="summary-left"><i class="fas fa-chevron-right indicator"></i><i class="fas fa-bandage item-icon"></i><span class="group-name">{{localize "GUM.Wounds.Title"}}</span></div>
                 <div class="summary-right"><span class="group-tag">{{localize "GUM.Combat.Wounds.Count" count=preparedWounds.length}}</span><a class="add-wound" title="{{localize 'GUM.Wounds.Register'}}"><i class="fas fa-plus"></i></a></div>
@@ -1680,7 +1686,7 @@
                 </div>
               </div>
             </details>
-            <details class="attack-group-details gum-unified-section combat-meters-box combat-fixed-group" data-group-id="combat-meters-group" {{collapsibleState "combat-meters-group" @root.collapsedData}}>
+            <details class="attack-group-details gum-unified-section combat-meters-box combat-fixed-group" data-group-id="combat-meters-group" data-combat-control-group="meters" {{#unless combatMetersVisible}}hidden{{/unless}} {{collapsibleState "combat-meters-group" @root.collapsedData}}>
               <summary class="group-summary gum-unified-header">
                 <div class="summary-left">
                   <i class="fas fa-chevron-right indicator"></i>
@@ -1727,7 +1733,7 @@
 
           <nav class="combat-view-switcher" role="tablist" aria-label="{{localize 'GUM.Combat.ViewSelector'}}">
             <button type="button" class="combat-view-tab {{#if (eq @root.combatActionView 'actions')}}is-active{{/if}}" data-combat-view="actions" role="tab" aria-selected="{{#if (eq @root.combatActionView 'actions')}}true{{else}}false{{/if}}" aria-controls="combat-actions-panel"><i class="fas fa-khanda" aria-hidden="true"></i><span>{{localize "GUM.Combat.Actions"}}</span></button>
-            <button type="button" class="combat-view-tab {{#if (eq @root.combatActionView 'favorites')}}is-active{{/if}}" data-combat-view="favorites" role="tab" aria-selected="{{#if (eq @root.combatActionView 'favorites')}}true{{else}}false{{/if}}" aria-controls="combat-favorites-panel"><i class="fas fa-star" aria-hidden="true"></i><span>{{localize "GUM.Combat.Favorites.Title"}}</span>{{#if combatFavoriteCount}}<small>{{combatFavoriteCount}}</small>{{/if}}</button>
+            <button type="button" class="combat-view-tab {{#if (eq @root.combatActionView 'favorites')}}is-active{{/if}}" data-combat-view="favorites" role="tab" aria-selected="{{#if (eq @root.combatActionView 'favorites')}}true{{else}}false{{/if}}" aria-controls="combat-favorites-panel"><i class="fas fa-star" aria-hidden="true"></i><span>{{localize "GUM.Combat.Favorites.Title"}}</span></button>
           </nav>
 
           {{!-- Favoritos de combate --}}
@@ -1755,7 +1761,7 @@
                       <img class="combat-favorite-card__icon item-quick-view" src="{{this.img}}" alt="{{this.name}}" title="{{localize 'GUM.Characteristics.ViewDetails'}}">
                       <div class="combat-favorite-card__identity">
                         <h4 class="combat-favorite-card__name item-quick-view">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}}{{#if this.system.level}} {{this.system.level}}{{/if}}</h4>
-                        <div class="combat-favorite-card__meta"><span class="{{this.type}}">{{this.characteristicKindLabel}}</span>{{#if this.characteristicIsRacial}} · {{localize "GUM.Characteristics.Racial"}}{{/if}} · {{characteristicPoints this}} {{localize "GUM.Characteristics.PointsAbbreviation"}}{{#if this.system.characteristics}} · {{this.system.characteristics}}{{/if}}</div>
+                        <div class="combat-favorite-card__meta"><span class="{{this.type}}">{{this.characteristicKindLabel}}</span>{{#if this.characteristicIsRacial}} · {{localize "GUM.Characteristics.Racial"}}{{/if}}{{#if this.combatFavoriteOriginGroup}} · {{this.combatFavoriteOriginGroup}}{{/if}} · {{characteristicPoints this}} {{localize "GUM.Characteristics.PointsAbbreviation"}}{{#if this.system.characteristics}} · {{this.system.characteristics}}{{/if}}</div>
                       </div>
                       {{#if this.system.self_control_roll}}<a class="rollable combat-favorite-card__metric" title="{{localize 'GUM.Characteristics.SelfControlTest'}}" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="{{localize 'GUM.Characteristics.SelfControl' name=this.name}}" data-item-id="{{this.id}}"><span>{{localize "GUM.Characteristics.SelfControlAbbreviation"}}</span><strong>{{this.system.self_control_roll}}</strong></a>{{else}}<span class="combat-favorite-card__metric-spacer"></span>{{/if}}
                       <span class="combat-favorite-card__expand-spacer" aria-hidden="true"></span>
@@ -1768,7 +1774,7 @@
                       <div class="combat-favorite-card__icon item-quick-view" style="background-image:url('{{this.img}}')" title="{{localize 'GUM.Skills.View'}}"></div>
                       <div class="combat-favorite-card__identity">
                         <h4 class="combat-favorite-card__name item-quick-view" title="{{localize 'GUM.Skills.ViewDetails'}}">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}}</h4>
-                        <div class="combat-favorite-card__meta">{{this.skillListDisplay.baseAttribute}}{{#if (gte this.skillListDisplay.skillLevel 0)}}+{{/if}}{{this.skillListDisplay.skillLevel}}{{#if this.skillListDisplay.difficulty}} · {{this.skillListDisplay.difficulty}}{{/if}} · {{this.skillListDisplay.points}} {{localize "GUM.Skills.PointsAbbreviation"}}{{#if (ne this.skillListDisplay.nhMod 0)}} · {{#if (gte this.skillListDisplay.nhMod 0)}}+{{/if}}{{this.skillListDisplay.nhMod}} {{localize "GUM.Skills.ModifierAbbreviation"}}{{/if}}</div>
+                        <div class="combat-favorite-card__meta">{{this.skillListDisplay.baseAttribute}}{{#if (gte this.skillListDisplay.skillLevel 0)}}+{{/if}}{{this.skillListDisplay.skillLevel}}{{#if this.skillListDisplay.difficulty}} · {{this.skillListDisplay.difficulty}}{{/if}}{{#if this.combatFavoriteOriginGroup}} · {{this.combatFavoriteOriginGroup}}{{/if}} · {{this.skillListDisplay.points}} {{localize "GUM.Skills.PointsAbbreviation"}}{{#if (ne this.skillListDisplay.nhMod 0)}} · {{#if (gte this.skillListDisplay.nhMod 0)}}+{{/if}}{{this.skillListDisplay.nhMod}} {{localize "GUM.Skills.ModifierAbbreviation"}}{{/if}}</div>
                       </div>
                       <a class="rollable combat-favorite-card__metric" data-roll-value="{{#if this.tree_final_nh}}{{this.tree_final_nh}}{{else}}{{this.system.final_nh}}{{/if}}" data-label="{{localize 'GUM.Skills.Test' name=this.name}}" data-type="skill" data-item-id="{{this._id}}" data-attribute-key="{{this.skillListDisplay.baseAttribute}}"><span>{{localize "GUM.Equipment.Attacks.SkillAbbrev"}}</span><strong>{{#if this.tree_final_nh}}{{this.tree_final_nh}}{{else}}{{this.system.final_nh}}{{/if}}</strong></a>
                       <span class="combat-favorite-card__expand-spacer" aria-hidden="true"></span>
@@ -1782,7 +1788,7 @@
                         <img class="combat-favorite-card__icon item-quick-view" src="{{this.img}}" alt="{{this.name}}">
                         <div class="combat-favorite-card__identity">
                           <h4 class="combat-favorite-card__name item-quick-view">{{this.name}}</h4>
-                          <div class="combat-favorite-card__meta">{{#if (eq this.type "spell")}}{{this.magicCardIdentity}}{{else}}{{this.powerCardIdentity}}{{/if}}</div>
+                          <div class="combat-favorite-card__meta">{{#if (eq this.type "spell")}}{{this.magicCardIdentity}}{{else}}{{this.powerCardIdentity}}{{/if}}{{#if this.combatFavoriteOriginGroup}} · {{this.combatFavoriteOriginGroup}}{{/if}}</div>
                           <div class="combat-favorite-card__mechanics">{{#if (eq this.type "spell")}}<span title="{{localize 'GUM.Spells.TimeHint'}}"><strong>{{localize "GUM.Spells.Time"}}</strong> {{this.system.casting_time}} · {{this.system.duration}}</span><span title="{{localize 'GUM.Spells.ManaHint'}}"><strong>{{localize "GUM.Spells.Mana"}}</strong> {{this.system.mana_cost}} / {{this.system.mana_maint}}</span>{{else}}<span title="{{localize 'GUM.Powers.TimeHint'}}"><strong>{{localize "GUM.Powers.Time"}}</strong> {{this.system.activation_time}} · {{this.system.duration}}</span><span title="{{localize 'GUM.Powers.CostHint'}}"><strong>{{localize "GUM.Powers.Cost"}}</strong> {{this.system.activation_cost}} / {{this.system.maint_cost}}</span>{{/if}}</div>
                         </div>
                         <a class="rollable combat-favorite-card__metric" data-type="{{this.type}}" data-roll-value="{{this.system.final_nh}}" data-label="{{#if (eq this.type 'spell')}}{{localize 'GUM.Spells.Test' name=this.name}}{{else}}{{localize 'GUM.Powers.Test' name=this.name}}{{/if}}" data-item-id="{{this.id}}"><span>{{localize "GUM.Spells.SkillLevel"}}</span><strong>{{this.system.final_nh}}</strong></a>
@@ -1811,10 +1817,16 @@
 
           {{!-- Bloco de Lista de ataque --}}
     <section id="combat-actions-panel" class="combat-action-panel combat-action-panel--actions" data-combat-panel="actions" role="tabpanel" {{#unless (eq @root.combatActionView "actions")}}hidden{{/unless}}>
+    <div class="combat-filter-list combat-filter-list--actions" role="group" aria-label="{{localize 'GUM.Combat.Filters.AttackGroups'}}">
+      <button type="button" class="combat-filter-chip {{#if combatAttackFilterAll}}is-active{{/if}}" data-filter-scope="actions" data-filter-value="all" aria-pressed="{{#if combatAttackFilterAll}}true{{else}}false{{/if}}">{{localize "GUM.Combat.Filters.All"}}</button>
+      {{#each attackGroups as |group|}}
+      <button type="button" class="combat-filter-chip {{#if group.combatFilterActive}}is-active{{/if}}" data-filter-scope="actions" data-filter-value="{{group.id}}" aria-pressed="{{#if group.combatFilterActive}}true{{else}}false{{/if}}" title="{{group.name}}">{{group.name}}</button>
+      {{/each}}
+    </div>
     <div class="attack-group-list-v2 combat-actions-list">
     {{#each attackGroups as |group|}}
     {{!-- USANDO group.id EM VEZ DE group.name --}}
-    <details class="attack-group-details gum-unified-section" data-group-id="attack-group-{{group.id}}" {{collapsibleState (concat "attack-group-" group.id) @root.collapsedData}}>
+    <details class="attack-group-details gum-unified-section" data-group-id="attack-group-{{group.id}}" data-combat-filter-group="{{group.id}}" {{#unless group.combatFilterVisible}}hidden{{/unless}} {{collapsibleState (concat "attack-group-" group.id) @root.collapsedData}}>
 
         <summary class="group-summary gum-unified-header">
             <div class="summary-left">
