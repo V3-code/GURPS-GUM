@@ -36,8 +36,7 @@ test("spell rows preserve rolls, quick view, item actions, and drag behavior", (
   assert.match(actorSheet, /html\.find\("\.magic-card"\)\.each/);
   assert.match(actorSheet, /card\.addEventListener\("dragstart"/);
   assert.match(actorSheet, /ev\.target\.closest\?\.\("\.rollable"\)/);
-  assert.match(actorSheet, /card\.querySelector\("\.magic-card__main"\)/);
-  assert.match(actorSheet, /setDragImage\?\.\(dragImage, offsetX, offsetY\)/);
+  assert.match(actorSheet, /this\._setCardDragImage\(ev, card, "\.magic-card__main"\)/);
 });
 
 test("mechanical details expand into attack, damage, and resolution branches", () => {

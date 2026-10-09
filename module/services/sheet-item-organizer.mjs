@@ -42,6 +42,7 @@ export function attachSheetItemOrganizer(root, {
 }) {
   if (!root || !namespace || typeof onMove !== "function") return () => {};
   let activeZone = null;
+  let draggedItem = null;
 
   const clearTarget = () => {
     activeZone?.classList.remove("is-organizer-drop-target");
@@ -58,10 +59,14 @@ export function attachSheetItemOrganizer(root, {
     event.dataTransfer.setData(ORGANIZER_MIME, payload);
     event.dataTransfer.setData("text/plain", payload);
     event.dataTransfer.effectAllowed = "move";
-    item.classList.add("is-organizer-dragging");
+    draggedItem = item;
+    requestAnimationFrame(() => {
+      if (draggedItem === item) item.classList.add("is-organizer-dragging");
+    });
   };
 
   const onDragEnd = event => {
+    draggedItem = null;
     event.target.closest(itemSelector)?.classList.remove("is-organizer-dragging");
     clearTarget();
   };

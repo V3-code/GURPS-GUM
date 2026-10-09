@@ -61,6 +61,13 @@ test("skill cards expose compact mechanics and a dedicated options footer", () =
   assert.match(styles, /\.st-controls\s*\{[^}]*border-top:[^}]*opacity:\s*1;/s);
 });
 
+test("skill dragging uses only the selected card as its visual preview", () => {
+  assert.match(actorSheet, /html\.find\("\.skill-tree-item"\)\.each/);
+  assert.match(actorSheet, /card\.addEventListener\("dragstart"/);
+  assert.match(actorSheet, /this\._setCardDragImage\(ev, card\)/);
+  assert.match(actorSheet, /dataTransfer\.setDragImage\(dragImage, offsetX, offsetY\)/);
+});
+
 test("the skills tab localizes toolbar, card copy, and action menu labels", () => {
   assert.match(skillTab, /GUM\.Skills\.SearchPlaceholder/);
   assert.match(skillTab, /GUM\.Skills\.SearchLabel/);

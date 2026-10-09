@@ -1648,6 +1648,16 @@ _onDragStart(event) {
     return super._onDragStart(event);
 }
 
+_setCardDragImage(event, card, contentSelector = null) {
+    const dataTransfer = event?.dataTransfer || event?.originalEvent?.dataTransfer;
+    if (!card || !dataTransfer?.setDragImage) return;
+    const dragImage = contentSelector ? card.querySelector(contentSelector) || card : card;
+    const bounds = dragImage.getBoundingClientRect();
+    const offsetX = Math.max(0, Math.min(bounds.width, event.clientX - bounds.left));
+    const offsetY = Math.max(0, Math.min(bounds.height, event.clientY - bounds.top));
+    dataTransfer.setDragImage(dragImage, offsetX, offsetY);
+}
+
 async _onDrop(event) {
     const data = TextEditorImpl.getDragEventData(event);
     if (data?.type === "Item") {
@@ -3185,6 +3195,15 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
         });
     }
 
+    // Define uma miniatura precisa tanto no modo de organização quanto no
+    // modo árvore, sem interferir no payload criado pelo organizador.
+    html.find(".skill-tree-item").each((_, card) => {
+        card.addEventListener("dragstart", ev => {
+            if (ev.target.closest?.(".rollable")) return;
+            this._setCardDragImage(ev, card);
+        });
+    });
+
     // MENU DE CONTEXTO (Botão de Opções)
     html.on('click', '.equipment-options-btn', ev => {
             ev.preventDefault();
@@ -3266,11 +3285,7 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
             // O Chromium pode usar todo o grid como imagem nativa quando um
             // de seus itens é arrastado. Limitar a prévia ao conteúdo deste
             // card evita a sobreposição visual dos demais cards do grupo.
-            const dragImage = card.querySelector(".magic-card__main") || card;
-            const bounds = dragImage.getBoundingClientRect();
-            const offsetX = Math.max(0, Math.min(bounds.width, ev.clientX - bounds.left));
-            const offsetY = Math.max(0, Math.min(bounds.height, ev.clientY - bounds.top));
-            ev.dataTransfer?.setDragImage?.(dragImage, offsetX, offsetY);
+            this._setCardDragImage(ev, card, ".magic-card__main");
         });
     });
 

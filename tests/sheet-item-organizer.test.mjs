@@ -20,6 +20,12 @@ test("captures organizer drops before Foundry's generic sheet drop handler", () 
   assert.match(source, /removeEventListener\("drop", onDrop, true\)/);
 });
 
+test("delays source translucency until after the browser captures the drag preview", () => {
+  assert.match(source, /requestAnimationFrame\(\(\) => \{/);
+  assert.match(source, /if \(draggedItem === item\) item\.classList\.add\("is-organizer-dragging"\)/);
+  assert.match(source, /draggedItem = null;[\s\S]*classList\.remove\("is-organizer-dragging"\)/);
+});
+
 test("treats dropping an organizer item on itself as a no-op", () => {
   assert.match(source, /organizerItemId === draggedItemId\) return null/);
   assert.match(source, /if \(targetIndex === null\) return/);
