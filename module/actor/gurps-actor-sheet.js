@@ -124,6 +124,8 @@ async getData(options) {
         this._expandedSpellCards ??= new Set();
         this._expandedPowerCards ??= new Set();
         this._expandedSocialCards ??= new Set();
+        this._combatActionView ??= "actions";
+        context.combatActionView = this._combatActionView;
         
         const profileId = this.actor.system.combat?.body_profile || "humanoid";
         const profile = getBodyProfile(profileId);
@@ -830,6 +832,8 @@ async getData(options) {
             if (b === favoriteGeneralGroup) return 1;
             return a.localeCompare(b);
         });
+        context.combatFavoriteCount = Object.values(combatFavoritesByGroup)
+            .reduce((total, items) => total + items.length, 0);
 
 
         // ================================================================== //
@@ -2013,6 +2017,23 @@ _onEditPortrait() {
 
 activateListeners(html) {
     super.activateListeners(html);
+    html.on("click", ".combat-view-tab", (ev) => {
+        ev.preventDefault();
+        const view = ev.currentTarget.dataset.combatView;
+        if (!['actions', 'favorites'].includes(view)) return;
+
+        this._combatActionView = view;
+        const switcher = $(ev.currentTarget).closest('.combat-view-switcher');
+        switcher.find('.combat-view-tab')
+            .removeClass('is-active')
+            .attr('aria-selected', 'false');
+        $(ev.currentTarget)
+            .addClass('is-active')
+            .attr('aria-selected', 'true');
+        html.find('.combat-action-panel').each((_index, panel) => {
+            panel.hidden = panel.dataset.combatPanel !== view;
+        });
+    });
     if (!this.isEditable) return;
 
     html.on('click keydown', '[data-action="edit-portrait"]', (ev) => {

@@ -10,7 +10,9 @@ const pt = JSON.parse(readFileSync(new URL("../lang/pt-BR.json", import.meta.url
 
 test("combat tab separates operational controls from offensive actions", () => {
   assert.match(template, /combat-area-label[^>]*>[^<]*<span>{{localize "GUM\.Combat\.Control"}}<\/span>/);
-  assert.match(template, /combat-area-label[^>]*>[^<]*<span>{{localize "GUM\.Combat\.Actions"}}<\/span>/);
+  assert.match(template, /class="combat-view-switcher"/);
+  assert.match(template, /data-combat-view="actions"[\s\S]+GUM\.Combat\.Actions/);
+  assert.match(template, /data-combat-view="favorites"[\s\S]+GUM\.Combat\.Favorites\.Title/);
   assert.match(template, /combat-actions-list/);
 });
 
@@ -81,6 +83,7 @@ test("combat tab and its auxiliary dialogs are localized in both languages", () 
     "GUM.Combat.Tab",
     "GUM.Combat.Control",
     "GUM.Combat.Actions",
+    "GUM.Combat.ViewSelector",
     "GUM.Combat.DR.DialogTitle",
     "GUM.Combat.Wounds.EditorHeading",
     "GUM.Combat.Meters.EditorHeading",

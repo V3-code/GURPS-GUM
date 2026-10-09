@@ -11202,6 +11202,70 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .combat-tab .gum-action-menu__panel > .gum-action-menu__item.is-danger { color:#70424a; }
 
 /* Combat favorites use one compact card model for traits, skills, spells, and powers. */
+.gum.sheet.actor .combat-tab .combat-view-switcher {
+  display:flex;
+  align-items:flex-end;
+  gap:14px;
+  min-height:24px;
+  border-bottom:1px solid rgba(197,160,91,.16);
+}
+.gum.sheet.actor .combat-tab .combat-view-tab {
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  width:auto;
+  min-height:23px;
+  margin:0;
+  padding:0 2px 5px;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  color:rgba(216,207,211,.46);
+  font-family:var(--gum-font-condensed);
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.1em;
+  line-height:1;
+  text-transform:uppercase;
+}
+.gum.sheet.actor .combat-tab .combat-view-tab::after {
+  content:"";
+  position:absolute;
+  right:0;
+  bottom:-1px;
+  left:0;
+  height:2px;
+  background:transparent;
+}
+.gum.sheet.actor .combat-tab .combat-view-tab:hover,
+.gum.sheet.actor .combat-tab .combat-view-tab:focus { background:transparent; box-shadow:none; color:rgba(240,215,159,.78); }
+.gum.sheet.actor .combat-tab .combat-view-tab.is-active { color:#e5c47e; }
+.gum.sheet.actor .combat-tab .combat-view-tab.is-active::after { background:#b99047; }
+.gum.sheet.actor .combat-tab .combat-view-tab i { font-size:9px; }
+.gum.sheet.actor .combat-tab .combat-view-tab small {
+  display:grid;
+  min-width:15px;
+  height:15px;
+  padding:0 4px;
+  place-items:center;
+  border-radius:8px;
+  background:rgba(197,160,91,.1);
+  color:rgba(240,215,159,.66);
+  font-size:8px;
+  letter-spacing:0;
+}
+.gum.sheet.actor .combat-tab .combat-action-panel { min-width:0; }
+.gum.sheet.actor .combat-tab .combat-action-panel[hidden] { display:none !important; }
+.gum.sheet.actor .combat-tab .combat-action-panel > .attack-group-list-v2 { margin-top:1px; }
+.gum.sheet.actor .combat-tab .combat-favorites-root-content {
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  padding:0;
+  background:transparent;
+}
 .gum.sheet.actor .combat-tab .combat-favorites-root-content > .attack-group-details > .group-content {
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
@@ -11234,12 +11298,12 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .combat-tab .combat-favorite-card:not(.combat-favorite-card--magic),
 .gum.sheet.actor .combat-tab .combat-favorite-card__main {
   display:grid;
-  grid-template-columns:28px minmax(100px,1fr) 34px 18px 18px;
+  grid-template-columns:28px minmax(0,1fr) 32px 16px 16px;
   align-items:center;
-  gap:5px;
+  gap:4px;
   min-width:0;
 }
-.gum.sheet.actor .combat-tab .combat-favorite-card__main { grid-template-columns:28px minmax(100px,1fr) 34px minmax(54px,74px) 18px 18px; }
+.gum.sheet.actor .combat-tab .combat-favorite-card__main { width:100%; grid-template-columns:28px minmax(0,1fr) 30px minmax(0,58px) 16px 16px; }
 .gum.sheet.actor .combat-tab .combat-favorite-card__icon {
   width:28px;
   height:28px;
@@ -11307,11 +11371,11 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .combat-tab .combat-favorite-card__damage sup { flex:0 0 auto; margin-left:2px; color:#e99aa2; font-size:8px; font-weight:800; }
 .gum.sheet.actor .combat-tab .combat-favorite-card__expand,
 .gum.sheet.actor .combat-tab .combat-favorite-card__expand-spacer,
-.gum.sheet.actor .combat-tab .combat-favorite-card__controls { width:18px; min-width:18px; height:18px; }
+.gum.sheet.actor .combat-tab .combat-favorite-card__controls { width:16px; min-width:16px; height:18px; }
 .gum.sheet.actor .combat-tab .combat-favorite-card__expand { display:grid; min-height:18px; margin:0; padding:0; place-items:center; border:0; background:transparent; box-shadow:none; color:rgba(235,226,231,.48); font-size:9px; }
 .gum.sheet.actor .combat-tab .combat-favorite-card__expand:hover { background:transparent; box-shadow:none; color:#f0d79f; }
 .gum.sheet.actor .combat-tab .combat-favorite-card__controls { display:flex; margin:0; padding:0; }
-.gum.sheet.actor .combat-tab .combat-favorite-card__controls .gum-action-menu__toggle { width:18px; height:18px; min-width:18px; padding:0; color:rgba(235,226,231,.48); font-size:10px; }
+.gum.sheet.actor .combat-tab .combat-favorite-card__controls .gum-action-menu__toggle { width:16px; height:18px; min-width:16px; padding:0; color:rgba(235,226,231,.48); font-size:10px; }
 .gum.sheet.actor .combat-tab .combat-favorite-card__controls .gum-action-menu__toggle:hover { color:#f0d79f; text-decoration:none; }
 .gum.sheet.actor .combat-tab .combat-favorite-card__details {
   position:relative;

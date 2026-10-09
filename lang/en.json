@@ -351,6 +351,7 @@
   "GUM.Combat.Tab": "Combat",
   "GUM.Combat.Control": "Combat control",
   "GUM.Combat.Actions": "Combat actions",
+  "GUM.Combat.ViewSelector": "Combat content",
   "GUM.Combat.ExpandGroup": "Expand group",
   "GUM.Combat.DR.Title": "DR table",
   "GUM.Combat.DR.Edit": "Edit DR modifiers",

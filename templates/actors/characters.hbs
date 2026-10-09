@@ -1725,22 +1725,15 @@
 
 
 
-          <div class="combat-area-label" aria-hidden="true"><span>{{localize "GUM.Combat.Actions"}}</span></div>
+          <nav class="combat-view-switcher" role="tablist" aria-label="{{localize 'GUM.Combat.ViewSelector'}}">
+            <button type="button" class="combat-view-tab {{#if (eq @root.combatActionView 'actions')}}is-active{{/if}}" data-combat-view="actions" role="tab" aria-selected="{{#if (eq @root.combatActionView 'actions')}}true{{else}}false{{/if}}" aria-controls="combat-actions-panel"><i class="fas fa-khanda" aria-hidden="true"></i><span>{{localize "GUM.Combat.Actions"}}</span></button>
+            <button type="button" class="combat-view-tab {{#if (eq @root.combatActionView 'favorites')}}is-active{{/if}}" data-combat-view="favorites" role="tab" aria-selected="{{#if (eq @root.combatActionView 'favorites')}}true{{else}}false{{/if}}" aria-controls="combat-favorites-panel"><i class="fas fa-star" aria-hidden="true"></i><span>{{localize "GUM.Combat.Favorites.Title"}}</span>{{#if combatFavoriteCount}}<small>{{combatFavoriteCount}}</small>{{/if}}</button>
+          </nav>
 
-          {{!-- Grupo fixo de Favoritos de Combate --}}
+          {{!-- Favoritos de combate --}}
+          <section id="combat-favorites-panel" class="combat-action-panel combat-action-panel--favorites" data-combat-panel="favorites" role="tabpanel" {{#unless (eq @root.combatActionView "favorites")}}hidden{{/unless}}>
           <div class="attack-group-list-v2 combat-favorites-list">
-            <details class="attack-group-details gum-unified-section combat-fixed-group combat-favorites-wrapper" data-group-id="combat-favorites-root" {{collapsibleState "combat-favorites-root" @root.collapsedData}}>
-              <summary class="group-summary gum-unified-header">
-                <div class="summary-left">
-                  <i class="fas fa-chevron-right indicator"></i>
-                  <i class="fas fa-star item-icon"></i>
-                  <span class="group-name">{{localize "GUM.Combat.Favorites.Title"}}</span>
-                </div>
-                <div class="summary-right">
-                  <span class="group-tag">{{localize "GUM.Combat.Favorites.GroupCount" count=combatFavoriteGroupKeys.length}}</span>
-                </div>
-              </summary>
-              <div class="group-content combat-favorites-root-content">
+              <div class="combat-favorites-root-content">
             {{#each combatFavoriteGroupKeys as |groupName groupIndex|}}
               {{#with (lookup @root.combatFavoritesByGroup groupName)}}
               <details class="attack-group-details gum-unified-section" data-group-id="combat-favorites-group-{{groupIndex}}" {{collapsibleState (concat "combat-favorites-group-" groupIndex) @root.collapsedData}}>
@@ -1813,10 +1806,11 @@
                   <div class="placeholder-text">{{localize "GUM.Combat.Favorites.Empty"}}</div>
                 {{/unless}}
               </div>
-            </details>
           </div>
+          </section>
 
           {{!-- Bloco de Lista de ataque --}}
+    <section id="combat-actions-panel" class="combat-action-panel combat-action-panel--actions" data-combat-panel="actions" role="tabpanel" {{#unless (eq @root.combatActionView "actions")}}hidden{{/unless}}>
     <div class="attack-group-list-v2 combat-actions-list">
     {{#each attackGroups as |group|}}
     {{!-- USANDO group.id EM VEZ DE group.name --}}
@@ -1946,6 +1940,7 @@
     <div class="placeholder-text">{{localize "GUM.Combat.Attacks.Empty"}}</div>
     {{/unless}}
 </div>
+    </section>
 
         </div>
 

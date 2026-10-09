@@ -4,9 +4,10 @@ import { readFileSync } from "node:fs";
 
 const template = readFileSync(new URL("../templates/actors/characters.hbs", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../styles/styles.css", import.meta.url), "utf8");
+const actorSheet = readFileSync(new URL("../module/actor/gurps-actor-sheet.js", import.meta.url), "utf8");
 
 const favorites = template.slice(
-  template.indexOf('class="group-content combat-favorites-root-content"'),
+  template.indexOf('class="combat-favorites-root-content"'),
   template.indexOf("{{!-- Bloco de Lista de ataque --}}"),
 );
 
@@ -35,6 +36,20 @@ test("favorite spells and powers keep rolls, details, menus, and drag support", 
 test("favorite cards use two columns and expanded magic cards span the group", () => {
   assert.match(styles, /combat-favorites-root-content > \.attack-group-details > \.group-content \{\s*display:grid;\s*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(styles, /combat-favorite-card\.is-expanded \{ grid-column:1 \/ -1; \}/);
-  assert.match(styles, /combat-favorite-card__main \{ grid-template-columns:28px minmax\(100px,1fr\) 34px minmax\(54px,74px\) 18px 18px; \}/);
+  assert.match(styles, /combat-favorite-card__main \{ width:100%; grid-template-columns:28px minmax\(0,1fr\) 30px minmax\(0,58px\) 16px 16px; \}/);
   assert.match(styles, /max-width:760px[^}]+combat-favorites-root-content > \.attack-group-details > \.group-content \{ grid-template-columns:1fr;/);
+});
+
+test("combat actions and favorites use a subtle persistent view switcher", () => {
+  assert.match(template, /class="combat-view-switcher"[^>]+role="tablist"/);
+  assert.match(template, /data-combat-view="actions"[^>]+role="tab"/);
+  assert.match(template, /data-combat-view="favorites"[^>]+role="tab"/);
+  assert.match(template, /data-combat-panel="actions"[^>]+role="tabpanel"/);
+  assert.match(template, /data-combat-panel="favorites"[^>]+role="tabpanel"/);
+  assert.doesNotMatch(favorites, /combat-favorites-wrapper|combat-favorites-root"/);
+  assert.match(styles, /combat-view-tab\.is-active::after \{ background:#b99047; \}/);
+  assert.match(styles, /combat-action-panel\[hidden\] \{ display:none !important; \}/);
+  assert.match(actorSheet, /this\._combatActionView \?\?= "actions"/);
+  assert.match(actorSheet, /this\._combatActionView = view/);
+  assert.match(actorSheet, /panel\.hidden = panel\.dataset\.combatPanel !== view/);
 });

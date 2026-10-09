@@ -351,6 +351,7 @@
   "GUM.Combat.Tab": "Combate",
   "GUM.Combat.Control": "Controle de combate",
   "GUM.Combat.Actions": "Ações de combate",
+  "GUM.Combat.ViewSelector": "Conteúdo de combate",
   "GUM.Combat.ExpandGroup": "Expandir grupo",
   "GUM.Combat.DR.Title": "Tabela de RD",
   "GUM.Combat.DR.Edit": "Editar modificadores de RD",
