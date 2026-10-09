@@ -2779,7 +2779,7 @@ html.on('change', '.manual-override-toggle', async (ev) => {
     if (statusTag.length) {
         statusTag.toggleClass('off', isDisabled);
         statusTag.toggleClass('on', !isDisabled);
-        statusTag.text(isDisabled ? 'Desativado' : 'Automático');
+        statusTag.text(game.i18n.localize(isDisabled ? 'GUM.Conditions.Disabled' : 'GUM.Conditions.Automatic'));
  }
 });
 
@@ -2814,7 +2814,7 @@ html.on('change', '.effect-toggle', async (ev) => {
     if (statusTag.length) {
         statusTag.toggleClass('off', isDisabled);
         statusTag.toggleClass('on', !isDisabled);
-        statusTag.text(isDisabled ? 'Desativado' : 'Ativo');
+        statusTag.text(game.i18n.localize(isDisabled ? 'GUM.Conditions.Disabled' : 'GUM.Conditions.Active'));
     }
 
     this.actor.sheet.render(false);
@@ -4972,7 +4972,7 @@ _onActionMenuToggle(ev) {
    if (!isOpen) {
     const controls = menu.closest(".item-controls");
     if (controls) controls.classList.add("menu-open");
-  const actionMenuRow = menu.closest(".skill-tree-item, .characteristic-card, .spell-row-v3, .meter-card");
+  const actionMenuRow = menu.closest(".skill-tree-item, .characteristic-card, .spell-row-v3, .meter-card, .effect-pill-enhanced");
     if (actionMenuRow) actionMenuRow.classList.add("action-menu-open-row");
     const toggle = menu.querySelector(".js-action-menu-toggle");
     if (toggle) toggle.setAttribute("aria-expanded", "true");
@@ -5016,7 +5016,7 @@ _positionActionMenu(menu) {
 _closeAllActionMenus() {
   if (!this.element?.length) return;
   this.element.find(".item-controls.menu-open").removeClass("menu-open");
-  this.element.find(".skill-tree-item.action-menu-open-row, .characteristic-card.action-menu-open-row").removeClass("action-menu-open-row");
+  this.element.find(".skill-tree-item.action-menu-open-row, .characteristic-card.action-menu-open-row, .effect-pill-enhanced.action-menu-open-row").removeClass("action-menu-open-row");
   this.element.find(".js-action-menu.is-open, .js-action-menu.is-open-up").removeClass("is-open is-open-up")
     .find(".js-action-menu-toggle").attr("aria-expanded", "false");
 }

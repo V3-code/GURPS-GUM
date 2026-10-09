@@ -12,8 +12,27 @@ const conditionsTab = template.slice(template.indexOf('class="tab conditions-tab
 
 test("condition sections use neutral compact headers and cards", () => {
   assert.match(styles, /\.conditions-tab details\.form-section\.gum-unified-section > \.gum-unified-header\s*\{[^}]*background:\s*transparent !important;/s);
-  assert.match(styles, /\.conditions-tab \.effect-pill-enhanced\s*\{[^}]*background:\s*#1a1b1f;[^}]*border-left:\s*2px solid/s);
+  assert.match(styles, /\.conditions-tab \.effect-pill-enhanced\s*\{[^}]*display:\s*grid;[^}]*background:\s*#1a1b1f;[^}]*border-left:\s*2px solid/s);
   assert.match(styles, /\.conditions-tab \.effect-pill-enhanced \.pill-icon\s*\{[^}]*width:\s*28px;/s);
+  assert.match(styles, /\.conditions-tab \.gum-unified-section \.effect-pill-enhanced \.pill-controls\s*\{[^}]*flex-direction:\s*row;[^}]*border-top:\s*1px solid/s);
+  assert.match(styles, /\.conditions-tab \.gum-action-menu__panel\s*\{[^}]*background:\s*#f6f4f0;/s);
+});
+
+test("all condition card types keep their controls in the shared footer menu", () => {
+  assert.equal((conditionsTab.match(/class="pill-card-content"/g) ?? []).length, 3);
+  assert.equal((conditionsTab.match(/class="gum-action-menu js-action-menu"/g) ?? []).length, 3);
+  assert.equal((conditionsTab.match(/class="effect-toggle"/g) ?? []).length, 2);
+  assert.equal((conditionsTab.match(/quick-view-origin/g) ?? []).length, 2);
+  assert.equal((conditionsTab.match(/data-action="delete-effect"/g) ?? []).length, 2);
+  assert.match(conditionsTab, /class="manual-override-toggle"/);
+  assert.match(conditionsTab, /item-control item-edit gum-action-menu__item/);
+  assert.match(conditionsTab, /item-control item-delete gum-action-menu__item is-danger/);
+});
+
+test("condition cards rise above neighboring cards while their action menu is open", () => {
+  assert.match(actorSheet, /menu\.closest\("\.skill-tree-item, \.characteristic-card, \.spell-row-v3, \.meter-card, \.effect-pill-enhanced"\)/);
+  assert.match(actorSheet, /\.effect-pill-enhanced\.action-menu-open-row/);
+  assert.match(styles, /\.conditions-tab \.effect-pill-enhanced\.action-menu-open-row\s*\{[^}]*z-index:\s*120;/s);
 });
 
 test("conditions tab localizes headings, states, controls, and generated origins", () => {
@@ -24,6 +43,8 @@ test("conditions tab localizes headings, states, controls, and generated origins
   assert.match(conditionsTab, /GUM\.Conditions\.NoTemporaryEffects/);
   assert.match(actorSheet, /GUM\.Conditions\.Source\.Advantages/);
   assert.match(actorSheet, /GUM\.Conditions\.Duration\.Permanent/);
+  assert.match(actorSheet, /game\.i18n\.localize\(isDisabled \? 'GUM\.Conditions\.Disabled' : 'GUM\.Conditions\.Automatic'\)/);
+  assert.match(actorSheet, /game\.i18n\.localize\(isDisabled \? 'GUM\.Conditions\.Disabled' : 'GUM\.Conditions\.Active'\)/);
 });
 
 test("localization keys do not collide with their own nested namespaces", () => {
