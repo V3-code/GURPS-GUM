@@ -69,6 +69,9 @@ test("spell groups and card copy are localized in English and Portuguese", () =>
   for (const key of [
     "GUM.Spells.SearchPlaceholder",
     "GUM.Spells.Count",
+    "GUM.Spells.Options",
+    "GUM.Spells.Edit",
+    "GUM.Spells.Delete",
     "GUM.Spells.Time",
     "GUM.Spells.Mana",
     "GUM.Spells.ExpandDetails",
