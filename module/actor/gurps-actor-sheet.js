@@ -3,7 +3,7 @@ import { applyEffectWithResistance, performGURPSRoll } from "/systems/gum/script
 import { GurpsRollPrompt } from "../apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../apps/damage-roll-prompt.js";
 import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
-import { getBodyProfile, getBodyLocationDefinition, listBodyProfiles } from "../config/body-profiles.js";
+import { getBodyProfile, getBodyLocationDefinition, listBodyProfiles, localizeBodyGroupLabel, localizeBodyLocationLabel, localizeBodyProfileLabel } from "../config/body-profiles.js";
 import { TemplateBrowser } from "../apps/template-browser.js";
 import { templateEntryDisplayName } from "../utils/template-entry-display.mjs";
 import { GumPreviewDialog } from "../apps/preview-dialog.js";
@@ -139,8 +139,11 @@ async getData(options) {
         const profile = getBodyProfile(profileId);
 
         context.bodyProfileId = profileId;
-        context.bodyProfileLabel = profile?.label ?? profileId;
-        context.bodyProfiles = listBodyProfiles();         // útil pra dropdown depois
+        context.bodyProfileLabel = localizeBodyProfileLabel(profile, key => game.i18n.localize(key));
+        context.bodyProfiles = listBodyProfiles().map(bodyProfile => ({
+            ...bodyProfile,
+            label: localizeBodyProfileLabel(bodyProfile, key => game.i18n.localize(key))
+        }));
         context.hitLocations = profile.locations;          // <- isso substitui o hardcoded
         context.hitLocationOrder = profile.order || [];
         context.drDisplayRows = this._buildDrDisplayRows(profile, this.actor.system.combat?.dr_locations || {});
@@ -1391,10 +1394,12 @@ _getSubmitData(updateData) {
             const extraLine = this._formatDRExtraLine(drObject);
             items.push({
                 key,
-                label: loc.label ?? loc.name ?? key,
+                label: localizeBodyLocationLabel(key, loc, localizationKey => game.i18n.localize(localizationKey)),
                 groupKey: loc.groupKey,
                 groupLabel: loc.groupLabel,
-                groupPlural: loc.groupPlural,
+                groupPlural: loc.groupKey
+                    ? localizeBodyGroupLabel(loc.groupKey, loc.groupPlural || loc.groupLabel, localizationKey => game.i18n.localize(localizationKey))
+                    : loc.groupPlural,
                 base,
                 extraLine,
                 drSignature: this._getDRSignature(drObject)
@@ -5002,8 +5007,10 @@ async _onViewHitLocations(ev) {
   const extraKeys = Object.keys(actor.system.combat?.dr_locations || {})
     .filter(key => !sheetData.hitLocations?.[key] && getBodyLocationDefinition(key))
     .sort((a, b) => {
-      const aLabel = getBodyLocationDefinition(a)?.label ?? a;
-      const bLabel = getBodyLocationDefinition(b)?.label ?? b;
+      const aLocation = getBodyLocationDefinition(a);
+      const bLocation = getBodyLocationDefinition(b);
+      const aLabel = localizeBodyLocationLabel(a, aLocation, t);
+      const bLabel = localizeBodyLocationLabel(b, bLocation, t);
       return aLabel.localeCompare(bLabel);
     });
   const locationOrder = [...baseOrder, ...extraKeys];
@@ -5011,6 +5018,7 @@ async _onViewHitLocations(ev) {
   for (const key of locationOrder) {
     const loc = sheetData.hitLocations?.[key] ?? getBodyLocationDefinition(key);
     if (!loc) continue;
+    const locationLabel = localizeBodyLocationLabel(key, loc, t);
     const armorDR_String  = this._formatDRObjectToString(actorDR_Armor[key]);
     const tempDR_String   = this._formatDRObjectToString(actorDR_Temp[key]);
     const passiveDR_String = this._formatDRObjectToString(actorDR_Passive[key]);
@@ -5021,11 +5029,11 @@ async _onViewHitLocations(ev) {
 
     tableRows += `
       <div class="table-row">
-        <div class="loc-label">${loc.label ?? loc.name ?? key}</div>
+        <div class="loc-label">${locationLabel}</div>
         <div class="loc-rd-armor" title="${t("GUM.Combat.DR.Armor")}">${armorDR_String}</div>
         <div class="loc-rd-temp" title="${t("GUM.Combat.DR.Temporary")}">${tempDR_String}</div>
         <div class="loc-rd-passive" title="${t("GUM.Combat.DR.Permanent")}">${passiveDR_String}</div>
-        <div class="loc-rd-mod"><input type="text" name="${key}" value="${manualMod_String}" /></div>
+        <div class="loc-rd-mod"><input type="text" name="${key}" value="${manualMod_String}" aria-label="${tf("GUM.Combat.DR.ManualFor", { location: locationLabel })}" /></div>
         <div class="loc-rd-total" title="${tf("GUM.Combat.DR.ComputedHint", { value: computedDR_String })}"><strong>${totalDR_String}</strong></div>
         <div class="loc-rd-override" title="${t("GUM.Combat.DR.OverrideHint")}">${overrideDR_String}</div>
       </div>
@@ -5033,7 +5041,7 @@ async _onViewHitLocations(ev) {
   }
 
   const profileOptionsHtml = profiles.map(p =>
-  `<option value="${p.id}" ${p.id === currentProfileId ? "selected" : ""}>${p.label}</option>`
+  `<option value="${p.id}" ${p.id === currentProfileId ? "selected" : ""}>${localizeBodyProfileLabel(p, t)}</option>`
 ).join("");
 
 const profileSelectorHtml = `
@@ -5099,7 +5107,7 @@ const dlg = new Dialog({
         await actor.update({ "system.combat.dr_mods": newDrMods });
       }
     },
-    cancel: { icon: '<i class="fas fa-times"></i>', label: t("GUM.Skills.Cancel") }
+    cancel: { icon: '<i class="fas fa-times"></i>', label: t("GUM.Combat.DR.Cancel") }
   },
   default: "save",
 
