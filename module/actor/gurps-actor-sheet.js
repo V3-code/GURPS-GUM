@@ -119,6 +119,9 @@ _getContainerDescendants(containerId, acc = []) {
 
 async getData(options) {
         const context = await super.getData(options);
+        this._expandedSpellCards ??= new Set();
+        this._expandedPowerCards ??= new Set();
+        this._expandedSocialCards ??= new Set();
         
         const profileId = this.actor.system.combat?.body_profile || "humanoid";
         const profile = getBodyProfile(profileId);
@@ -140,7 +143,13 @@ async getData(options) {
           return acc;
         }, {});
              context.itemsByType = itemsByType;
-        context.socialSections = buildSocialSections(this.actor.system, Array.from(this.actor.items), key => game.i18n.localize(key));
+        context.socialSections = buildSocialSections(this.actor.system, Array.from(this.actor.items), key => game.i18n.localize(key)).map(section => ({
+          ...section,
+          entries: section.entries.map(entry => {
+            const cardKey = `${section.type}:${entry.source}:${entry.itemId || "manual"}:${entry.id}`;
+            return { ...entry, cardKey, expanded: this._expandedSocialCards.has(cardKey) };
+          })
+        }));
 // ---------------------------------------------------------
         // PREPARAÇÃO DA ABA DE MODIFICADORES (AGRUPAMENTO LIVRE POR NOME)
         // ---------------------------------------------------------
@@ -231,19 +240,19 @@ async getData(options) {
                     fonteIcon = "fas fa-heartbeat";
                 }
                 const fonteRotulos = {
-                    advantage: "Vantagem",
-                    disadvantage: "Desvantagem",
-                    spell: "Magia",
-                    power: "Poder",
-                    equipment: "Equipamento",
-                    condition: "Condição",
-                    status: "Status"
+                    advantage: game.i18n.localize("GUM.Conditions.Source.Advantage"),
+                    disadvantage: game.i18n.localize("GUM.Conditions.Source.Disadvantage"),
+                    spell: game.i18n.localize("GUM.Conditions.Source.Spell"),
+                    power: game.i18n.localize("GUM.Conditions.Source.Power"),
+                    equipment: game.i18n.localize("GUM.Conditions.Source.EquipmentSingle"),
+                    condition: game.i18n.localize("GUM.Conditions.Source.Condition"),
+                    status: game.i18n.localize("GUM.Conditions.Source.Status")
                 };
                 effectData.fonteNome = fonteNome;
                 effectData.fonteIcon = fonteIcon;
                 effectData.fonteUuid = fonteUuid;
                 effectData.fonteTipo = fonteTipo;
-                effectData.fonteRotulo = fonteRotulos[fonteTipo] || "Outra origem";
+                effectData.fonteRotulo = fonteRotulos[fonteTipo] || game.i18n.localize("GUM.Conditions.Source.Unknown");
 
                 // --- Lógica de Duração ---
                 const d = effect.duration || {};
@@ -254,34 +263,38 @@ async getData(options) {
                 let isPermanent = true; // Assume permanente até que se prove o contrário
 
                 if (effectData.pendingCombat && countsInCombatOnly) {
-                    effectData.durationString = "Pendente (combate)";
+                    effectData.durationString = game.i18n.localize("GUM.Conditions.Duration.PendingCombat");
                     isPermanent = false;
                 }
                 else if (gumDuration.pendingStart && countsInCombatOnly) {
-                    effectData.durationString = "Inicia no próximo turno";
+                    effectData.durationString = game.i18n.localize("GUM.Conditions.Duration.NextTurn");
                     isPermanent = false;
                 }
                 else if (!isMarkedPermanent && d.seconds) {
-                    effectData.durationString = `${d.seconds} seg.`;
+                    effectData.durationString = game.i18n.format("GUM.Conditions.Duration.Seconds", { count: d.seconds });
                     isPermanent = false;
                 } 
                 else if (!isMarkedPermanent && d.rounds) {
                     // Calcula rodadas restantes
                     const remaining = d.startRound ? (d.startRound + d.rounds - (game.combat?.round || 0)) : d.rounds;
-                    effectData.durationString = `${remaining} rodada(s)`;
+                    effectData.durationString = game.i18n.format("GUM.Conditions.Duration.Rounds", { count: remaining });
                     isPermanent = false;
                 } 
                 else if (!isMarkedPermanent && d.turns) {
                     // Calcula turnos restantes
                     const remaining = d.startTurn ? (d.startTurn + d.turns - (game.combat?.turn || 0)) : d.turns;
-                    effectData.durationString = `${remaining} turno(s)`;
+                    effectData.durationString = game.i18n.format("GUM.Conditions.Duration.Turns", { count: remaining });
                     isPermanent = false;
                 } 
                 else if (!isMarkedPermanent && countsInCombatOnly) {
                     // Efeitos marcados como "apenas em combate" devem ser tratados como temporários,
                     // mesmo que ainda não tenham campos de duração preenchidos pelo Foundry.
                     const fallbackValue = parseInt(originalDuration.value ?? gumDuration.value) || 1;
-                    const unit = originalDuration.unit === "seconds" ? "seg." : originalDuration.unit === "turns" ? "turno(s)" : "rodada(s)";
+                    const unitKey = originalDuration.unit === "seconds"
+                        ? "GUM.Conditions.Duration.Seconds"
+                        : originalDuration.unit === "turns"
+                            ? "GUM.Conditions.Duration.Turns"
+                            : "GUM.Conditions.Duration.Rounds";
                     const elapsedTargetTurns = Math.max(0, Number(gumDuration.elapsedTargetTurns) || 0);
                     const endMode = originalDuration.endMode || gumDuration.endMode || "turnEnd";
 
@@ -296,11 +309,11 @@ async getData(options) {
                         }
                     }
 
-                    effectData.durationString = `${remaining} ${unit}`;
+                    effectData.durationString = game.i18n.format(unitKey, { count: remaining });
                     isPermanent = false;
                 }
                 else {
-                    effectData.durationString = "Permanente";
+                    effectData.durationString = game.i18n.localize("GUM.Conditions.Duration.Permanent");
                     isPermanent = true;
                 }
 
@@ -319,12 +332,12 @@ async getData(options) {
  await Promise.allSettled(activeEffectsPromises);
 
         const effectOriginGroups = [
-            { key: "traits", label: "Vantagens e Desvantagens", icon: "fas fa-star", types: ["advantage", "disadvantage"] },
-            { key: "powers", label: "Poderes", icon: "fas fa-bolt", types: ["power"] },
-            { key: "spells", label: "Magias", icon: "fas fa-magic", types: ["spell"] },
-            { key: "equipment", label: "Equipamentos", icon: "fas fa-archive", types: ["equipment"] },
-            { key: "conditions", label: "Condições e Status", icon: "fas fa-heartbeat", types: ["condition", "status"] },
-            { key: "other", label: "Outros", icon: "fas fa-question-circle", types: [] }
+            { key: "traits", label: game.i18n.localize("GUM.Conditions.Source.Advantages"), icon: "fas fa-star", types: ["advantage", "disadvantage"] },
+            { key: "powers", label: game.i18n.localize("GUM.Conditions.Source.Powers"), icon: "fas fa-bolt", types: ["power"] },
+            { key: "spells", label: game.i18n.localize("GUM.Conditions.Source.Spells"), icon: "fas fa-magic", types: ["spell"] },
+            { key: "equipment", label: game.i18n.localize("GUM.Conditions.Source.Equipment"), icon: "fas fa-archive", types: ["equipment"] },
+            { key: "conditions", label: game.i18n.localize("GUM.Conditions.Source.Conditions"), icon: "fas fa-heartbeat", types: ["condition", "status"] },
+            { key: "other", label: game.i18n.localize("GUM.Conditions.Source.Other"), icon: "fas fa-question-circle", types: [] }
         ];
 
         const groupEffectsByOrigin = (effects) => {
@@ -456,7 +469,7 @@ async getData(options) {
             const treePointsPerLevel = savedTreePointsPerLevel !== undefined && savedTreePointsPerLevel !== "" ? savedTreePointsPerLevel : treePointsDefaults[treeHierarchyType] ?? "";
             skill.skillListDisplay = {
                 baseAttribute: useTreeFields ? (skill.system?.tree_base_attribute || skill.system?.base_attribute) : skill.system?.base_attribute,
-                difficulty: useTreeFields ? (treePointsPerLevel !== "" ? `${treePointsPerLevel}/nív` : "") : skill.system?.difficulty,
+                difficulty: useTreeFields ? (treePointsPerLevel !== "" ? `${treePointsPerLevel}/${game.i18n.localize("GUM.Skills.LevelAbbreviation")}` : "") : skill.system?.difficulty,
                 skillLevel: useTreeFields ? (skill.system?.tree_skill_level ?? skill.system?.skill_level ?? 0) : (skill.system?.skill_level ?? 0),
                 points: useTreeFields ? (skill.system?.tree_points ?? skill.system?.points ?? 0) : (skill.system?.points ?? 0),
                 nhMod: useTreeFields ? (skill.system?.tree_nh_mod ?? 0) : (skill.system?.nh_mod ?? 0),
@@ -490,7 +503,7 @@ async getData(options) {
             context.skillOrganization = organization;
             context.skillSections = [{
                 id: UNGROUPED_ORGANIZER_ID,
-                name: "Perícias",
+                name: game.i18n.localize("GUM.Skills.DefaultGroup"),
                 isUngrouped: true,
                 skills: orderedSkills(UNGROUPED_ORGANIZER_ID)
             }, ...organization.groupOrder.map(groupId => ({
@@ -686,6 +699,28 @@ async getData(options) {
         const spellsByGroup = {};
 
         spells.forEach((spell) => {
+            const system = spell.system || {};
+            const damage = system.damage || {};
+            const identityParts = [system.source, system.spell_class, system.spell_school, system.usage_type]
+                .map(value => String(value || '').trim())
+                .filter(Boolean);
+            const additionalDamageLabels = [
+                damage.follow_up_damage?.formula ? game.i18n.localize("GUM.Spells.FollowUpDamage") : null,
+                damage.fragmentation_damage?.formula ? game.i18n.localize("GUM.Spells.FragmentationDamage") : null
+            ].filter(Boolean);
+            spell.magicCardIdentity = identityParts.join(' · ');
+            spell.magicCardAdditionalDamageMarkers = "+".repeat(additionalDamageLabels.length);
+            spell.magicCardAdditionalDamageHint = additionalDamageLabels.join(" + ");
+            spell.magicCardHasDetails = Boolean(
+                system.uses_attack
+                || damage.formula
+                || damage.follow_up_damage?.formula
+                || damage.fragmentation_damage?.formula
+                || system.resistance
+                || system.requires_concentration
+                || system.effect
+            );
+            spell.magicCardExpanded = this._expandedSpellCards.has(spell.id);
             let groupName = (spell.system.group || 'Geral').trim();
             if (!groupName) groupName = 'Geral';
             if (!spellsByGroup[groupName]) spellsByGroup[groupName] = [];
@@ -712,6 +747,20 @@ async getData(options) {
         const powersByGroup = {};
 
         powers.forEach((power) => {
+            const system = power.system || {};
+            const damage = system.damage || {};
+            const identityParts = [system.source, system.spell_class, system.usage_type]
+                .map(value => String(value || '').trim())
+                .filter(Boolean);
+            const additionalDamageLabels = [
+                damage.follow_up_damage?.formula ? game.i18n.localize("GUM.Spells.FollowUpDamage") : null,
+                damage.fragmentation_damage?.formula ? game.i18n.localize("GUM.Spells.FragmentationDamage") : null
+            ].filter(Boolean);
+            power.powerCardIdentity = identityParts.join(' · ');
+            power.powerCardAdditionalDamageMarkers = "+".repeat(additionalDamageLabels.length);
+            power.powerCardAdditionalDamageHint = additionalDamageLabels.join(" + ");
+            power.powerCardHasDetails = true;
+            power.powerCardExpanded = this._expandedPowerCards.has(power.id);
             let groupName = (power.system.group || 'Geral').trim();
             if (!groupName) groupName = 'Geral';
             if (!powersByGroup[groupName]) powersByGroup[groupName] = [];
@@ -1066,7 +1115,9 @@ async getData(options) {
                 .filter(Boolean);
             entries.forEach(item => {
                 item.characteristicOrganizationCanRemove = bucketId !== UNGROUPED_ORGANIZER_ID;
-                item.characteristicKindLabel = item.type === 'disadvantage' ? 'Desvantagem' : 'Vantagem';
+                item.characteristicKindLabel = item.type === 'disadvantage'
+                    ? game.i18n.localize("GUM.Characteristics.Disadvantage")
+                    : game.i18n.localize("GUM.Characteristics.Advantage");
                 const organizationName = String(item.system?.group ?? "").trim().toLocaleLowerCase();
                 item.characteristicIsRacial = organizationName.startsWith('racial') || item.system?.block_id === 'block1';
             });
@@ -1076,7 +1127,7 @@ async getData(options) {
         context.characteristicOrganization = characteristicOrganization;
         context.characteristicSections = [{
             id: UNGROUPED_ORGANIZER_ID,
-            name: "Vantagens e Desvantagens",
+            name: game.i18n.localize("GUM.Characteristics.DefaultGroup"),
             isUngrouped: true,
             characteristics: orderedCharacteristics(UNGROUPED_ORGANIZER_ID)
         }, ...characteristicOrganization.groupOrder.map(groupId => ({
@@ -1125,8 +1176,8 @@ async getData(options) {
                     .map(([id, wound]) => prepareWoundForDisplay(id, wound))
                     .sort((a, b) => Number(b.updatedAt || b.createdAt || 0) - Number(a.updatedAt || a.createdAt || 0));
  
-                context.spellReserves = this._normalizeResourceCollection(context.actor.system.spell_reserves || {}, { defaultName: "Reserva de Magia" });
-                context.powerReserves = this._normalizeResourceCollection(context.actor.system.power_reserves || {}, { defaultName: "Reserva de Poder" });
+                context.spellReserves = this._normalizeResourceCollection(context.actor.system.spell_reserves || {}, { defaultName: game.i18n.localize("GUM.Spells.Reserve") });
+                context.powerReserves = this._normalizeResourceCollection(context.actor.system.power_reserves || {}, { defaultName: game.i18n.localize("GUM.Powers.Reserve") });
                 for (const reserve of linkedEquipmentReserves) {
                     if (reserve.type === "spell") context.spellReserves[`equipment-${reserve.equipmentId}`] = reserve;
                     if (reserve.type === "power") context.powerReserves[`equipment-${reserve.equipmentId}`] = reserve;
@@ -1625,6 +1676,16 @@ _onDragStart(event) {
     return super._onDragStart(event);
 }
 
+_setCardDragImage(event, card, contentSelector = null) {
+    const dataTransfer = event?.dataTransfer || event?.originalEvent?.dataTransfer;
+    if (!card || !dataTransfer?.setDragImage) return;
+    const dragImage = contentSelector ? card.querySelector(contentSelector) || card : card;
+    const bounds = dragImage.getBoundingClientRect();
+    const offsetX = Math.max(0, Math.min(bounds.width, event.clientX - bounds.left));
+    const offsetY = Math.max(0, Math.min(bounds.height, event.clientY - bounds.top));
+    dataTransfer.setDragImage(dragImage, offsetX, offsetY);
+}
+
 async _onDrop(event) {
     const data = TextEditorImpl.getDragEventData(event);
     if (data?.type === "Item") {
@@ -1667,6 +1728,7 @@ async _saveSkillOrganization(organization) {
 }
 
 _promptSkillGroupName({ title, initial = "" }) {
+    const localize = key => game.i18n.localize(key);
     return new Promise(resolve => {
         let settled = false;
         const finish = value => {
@@ -1677,16 +1739,16 @@ _promptSkillGroupName({ title, initial = "" }) {
         new Dialog({
             title,
             content: `<form class="gum-popup-form gum-record-editor skill-group-name-dialog">
-                <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon"><i class="fas fa-folder-plus" aria-hidden="true"></i></span><span><strong>${foundry.utils.escapeHTML(title)}</strong><small>Use um nome curto e claro para organizar as perícias deste personagem.</small></span></header>
-                <div class="form-group form-group--full skill-group-name-field"><label>Nome do grupo</label><input class="gum-input-left" type="text" name="name" value="${foundry.utils.escapeHTML(initial)}" autocomplete="off" autofocus></div>
+                <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon"><i class="fas fa-folder-plus" aria-hidden="true"></i></span><span><strong>${foundry.utils.escapeHTML(title)}</strong><small>${localize("GUM.Skills.GroupNameHint")}</small></span></header>
+                <div class="form-group form-group--full skill-group-name-field"><label>${localize("GUM.Skills.GroupNameLabel")}</label><input class="gum-input-left" type="text" name="name" value="${foundry.utils.escapeHTML(initial)}" autocomplete="off" autofocus></div>
             </form>`,
             buttons: {
                 save: {
                     icon: '<i class="fas fa-check"></i>',
-                    label: "Salvar",
+                    label: localize("GUM.Skills.Save"),
                     callback: html => finish(String(html.find('[name="name"]').val() ?? "").trim() || null)
                 },
-                cancel: { label: "Cancelar", callback: () => finish(null) }
+                cancel: { label: localize("GUM.Skills.Cancel"), callback: () => finish(null) }
             },
             default: "save",
             close: () => finish(null)
@@ -1694,7 +1756,8 @@ _promptSkillGroupName({ title, initial = "" }) {
     });
 }
 
-_confirmSkillOrganizationAction({ title, content, confirmLabel = "Confirmar" }) {
+_confirmSkillOrganizationAction({ title, content, confirmLabel = game.i18n.localize("GUM.Skills.Confirm") }) {
+    const localize = key => game.i18n.localize(key);
     return new Promise(resolve => {
         let settled = false;
         const finish = value => {
@@ -1707,7 +1770,7 @@ _confirmSkillOrganizationAction({ title, content, confirmLabel = "Confirmar" }) 
             content,
             buttons: {
                 confirm: { icon: '<i class="fas fa-check"></i>', label: confirmLabel, callback: () => finish(true) },
-                cancel: { label: "Cancelar", callback: () => finish(false) }
+                cancel: { label: localize("GUM.Skills.Cancel"), callback: () => finish(false) }
             },
             default: "cancel",
             close: () => finish(false)
@@ -1716,6 +1779,8 @@ _confirmSkillOrganizationAction({ title, content, confirmLabel = "Confirmar" }) 
 }
 
 _promptSkillCategoryGroupPlan(plan) {
+    const localize = key => game.i18n.localize(key);
+    const format = (key, data) => game.i18n.format(key, data);
     return new Promise(resolve => {
         let settled = false;
         const finish = value => {
@@ -1725,22 +1790,22 @@ _promptSkillCategoryGroupPlan(plan) {
         };
         const rows = plan.map((category, index) => {
             const skillNames = category.items.map(item => foundry.utils.escapeHTML(item.name)).join(", ");
-            const destination = category.existingGroupId ? "Grupo existente" : "Novo grupo";
+            const destination = category.existingGroupId ? localize("GUM.Skills.ExistingGroup") : localize("GUM.Skills.NewGroupDestination");
             return `<label class="skill-category-preview__row">
                 <input type="checkbox" name="category" value="${index}" checked>
-                <span><strong>${foundry.utils.escapeHTML(category.name)}</strong><small>${destination} · ${category.items.length} perícia(s)</small><em>${skillNames}</em></span>
+                <span><strong>${foundry.utils.escapeHTML(category.name)}</strong><small>${destination} · ${format("GUM.Skills.SkillCount", { count: category.items.length })}</small><em>${skillNames}</em></span>
             </label>`;
         }).join("");
         new Dialog({
-            title: "Organizar pelas categorias das perícias",
+            title: localize("GUM.Skills.CategoryPlanTitle"),
             content: `<form class="skill-category-preview">
-                <div class="skill-category-preview__intro"><i class="fas fa-layer-group"></i><span><strong>Organizar perícias</strong><small>Selecione as categorias que deseja transformar em grupos visuais.</small></span></div>
+                <div class="skill-category-preview__intro"><i class="fas fa-layer-group"></i><span><strong>${localize("GUM.Skills.CategoryPlanHeading")}</strong><small>${localize("GUM.Skills.CategoryPlanHint")}</small></span></div>
                 <div class="skill-category-preview__list">${rows}</div>
             </form>`,
             buttons: {
                 apply: {
                     icon: '<i class="fas fa-layer-group"></i>',
-                    label: "Criar selecionados",
+                    label: localize("GUM.Skills.CreateSelected"),
                     callback: html => {
                         const selected = [...html[0].querySelectorAll('input[name="category"]:checked')]
                             .map(input => plan[Number(input.value)]?.key)
@@ -1748,7 +1813,7 @@ _promptSkillCategoryGroupPlan(plan) {
                         finish(selected);
                     }
                 },
-                cancel: { label: "Cancelar", callback: () => finish(null) }
+                cancel: { label: localize("GUM.Skills.Cancel"), callback: () => finish(null) }
             },
             default: "apply",
             close: () => finish(null)
@@ -1757,7 +1822,7 @@ _promptSkillCategoryGroupPlan(plan) {
 }
 
 async _createSkillOrganizationGroup() {
-    const name = await this._promptSkillGroupName({ title: "Novo grupo de perícias" });
+    const name = await this._promptSkillGroupName({ title: game.i18n.localize("GUM.Skills.NewGroup") });
     if (!name) return;
     const { skills, organization } = this._getSkillOrganizationState();
     const id = foundry.utils.randomID?.() ?? crypto.randomUUID();
@@ -1768,7 +1833,7 @@ async _renameSkillOrganizationGroup(groupId) {
     const { skills, organization } = this._getSkillOrganizationState();
     const current = organization.groups[groupId];
     if (!current) return;
-    const name = await this._promptSkillGroupName({ title: "Renomear grupo de perícias", initial: current.name });
+    const name = await this._promptSkillGroupName({ title: game.i18n.localize("GUM.Skills.RenameGroupDialog"), initial: current.name });
     if (!name || name === current.name) return;
     await this._saveSkillOrganization(renameItemOrganizationGroup(organization, { id: groupId, name }, skills.map(item => item.id)));
 }
@@ -1778,9 +1843,9 @@ async _deleteSkillOrganizationGroup(groupId) {
     const group = organization.groups[groupId];
     if (!group) return;
     const confirmed = await this._confirmSkillOrganizationAction({
-        title: "Excluir grupo de perícias",
-        content: `<p>Excluir o grupo <strong>${foundry.utils.escapeHTML(group.name)}</strong>? As perícias voltarão para a área livre.</p>`,
-        confirmLabel: "Excluir grupo"
+        title: game.i18n.localize("GUM.Skills.DeleteGroupDialog"),
+        content: `<p>${game.i18n.format("GUM.Skills.DeleteGroupContent", { name: foundry.utils.escapeHTML(group.name) })}</p>`,
+        confirmLabel: game.i18n.localize("GUM.Skills.DeleteGroupConfirm")
     });
     if (!confirmed) return;
     await this._saveSkillOrganization(removeItemOrganizationGroup(organization, groupId, skills.map(item => item.id)));
@@ -1789,7 +1854,7 @@ async _deleteSkillOrganizationGroup(groupId) {
 async _suggestSkillOrganizationGroups() {
     const { skills, organization } = this._getSkillOrganizationState();
     const plan = buildItemCategoryGroupPlan(organization, skills);
-    if (!plan.length) return ui.notifications.info("Não há categorias disponíveis entre as perícias livres.");
+    if (!plan.length) return ui.notifications.info(game.i18n.localize("GUM.Skills.NoCategories"));
     const selectedCategories = await this._promptSkillCategoryGroupPlan(plan);
     if (!selectedCategories?.length) return;
     const createId = () => foundry.utils.randomID?.() ?? crypto.randomUUID();
@@ -1825,6 +1890,7 @@ async _saveCharacteristicOrganization(organization) {
 }
 
 _promptCharacteristicGroupName({ title, initial = "" }) {
+    const localize = key => game.i18n.localize(key);
     return new Promise(resolve => {
         let settled = false;
         const finish = value => {
@@ -1835,12 +1901,12 @@ _promptCharacteristicGroupName({ title, initial = "" }) {
         new Dialog({
             title,
             content: `<form class="gum-popup-form gum-record-editor characteristic-group-name-dialog">
-                <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon"><i class="fas fa-folder-plus" aria-hidden="true"></i></span><span><strong>${foundry.utils.escapeHTML(title)}</strong><small>Use um nome curto e claro para organizar as características deste personagem.</small></span></header>
-                <div class="form-group form-group--full characteristic-group-name-field"><label>Nome do grupo</label><input class="gum-input-left" type="text" name="name" value="${foundry.utils.escapeHTML(initial)}" autocomplete="off" autofocus></div>
+                <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon"><i class="fas fa-folder-plus" aria-hidden="true"></i></span><span><strong>${foundry.utils.escapeHTML(title)}</strong><small>${localize("GUM.Characteristics.GroupNameHint")}</small></span></header>
+                <div class="form-group form-group--full characteristic-group-name-field"><label>${localize("GUM.Characteristics.GroupNameLabel")}</label><input class="gum-input-left" type="text" name="name" value="${foundry.utils.escapeHTML(initial)}" autocomplete="off" autofocus></div>
             </form>`,
             buttons: {
-                save: { icon: '<i class="fas fa-check"></i>', label: "Salvar", callback: html => finish(String(html.find('[name="name"]').val() ?? "").trim() || null) },
-                cancel: { label: "Cancelar", callback: () => finish(null) }
+                save: { icon: '<i class="fas fa-check"></i>', label: localize("GUM.Characteristics.Save"), callback: html => finish(String(html.find('[name="name"]').val() ?? "").trim() || null) },
+                cancel: { label: localize("GUM.Characteristics.Cancel"), callback: () => finish(null) }
             },
             default: "save",
             close: () => finish(null)
@@ -1857,6 +1923,8 @@ _characteristicSuggestionItems(characteristics) {
 }
 
 _promptCharacteristicGroupPlan(plan) {
+    const localize = key => game.i18n.localize(key);
+    const format = (key, data) => game.i18n.format(key, data);
     return new Promise(resolve => {
         let settled = false;
         const finish = value => {
@@ -1866,19 +1934,19 @@ _promptCharacteristicGroupPlan(plan) {
         };
         const rows = plan.map((category, index) => {
             const itemNames = category.items.map(item => foundry.utils.escapeHTML(item.name)).join(", ");
-            const destination = category.existingGroupId ? "Grupo existente" : "Novo grupo";
-            return `<label class="skill-category-preview__row"><input type="checkbox" name="category" value="${index}" checked><span><strong>${foundry.utils.escapeHTML(category.name)}</strong><small>${destination} · ${category.items.length} item(ns)</small><em>${itemNames}</em></span></label>`;
+            const destination = category.existingGroupId ? localize("GUM.Characteristics.ExistingGroup") : localize("GUM.Characteristics.NewGroupDestination");
+            return `<label class="skill-category-preview__row"><input type="checkbox" name="category" value="${index}" checked><span><strong>${foundry.utils.escapeHTML(category.name)}</strong><small>${destination} · ${format("GUM.Characteristics.ItemCount", { count: category.items.length })}</small><em>${itemNames}</em></span></label>`;
         }).join("");
         new Dialog({
-            title: "Organizar vantagens e desvantagens",
-            content: `<form class="skill-category-preview characteristic-category-preview"><div class="skill-category-preview__intro"><i class="fas fa-layer-group"></i><span><strong>Organizar características</strong><small>Selecione as organizações dos itens que deseja transformar em grupos visuais.</small></span></div><div class="skill-category-preview__list">${rows}</div></form>`,
+            title: localize("GUM.Characteristics.CategoryPlanTitle"),
+            content: `<form class="skill-category-preview characteristic-category-preview"><div class="skill-category-preview__intro"><i class="fas fa-layer-group"></i><span><strong>${localize("GUM.Characteristics.CategoryPlanHeading")}</strong><small>${localize("GUM.Characteristics.CategoryPlanHint")}</small></span></div><div class="skill-category-preview__list">${rows}</div></form>`,
             buttons: {
                 apply: {
                     icon: '<i class="fas fa-layer-group"></i>',
-                    label: "Criar selecionados",
+                    label: localize("GUM.Characteristics.CreateSelected"),
                     callback: html => finish([...html[0].querySelectorAll('input[name="category"]:checked')].map(input => plan[Number(input.value)]?.key).filter(Boolean))
                 },
-                cancel: { label: "Cancelar", callback: () => finish(null) }
+                cancel: { label: localize("GUM.Characteristics.Cancel"), callback: () => finish(null) }
             },
             default: "apply",
             close: () => finish(null)
@@ -1887,7 +1955,7 @@ _promptCharacteristicGroupPlan(plan) {
 }
 
 async _createCharacteristicOrganizationGroup() {
-    const name = await this._promptCharacteristicGroupName({ title: "Novo grupo de características" });
+    const name = await this._promptCharacteristicGroupName({ title: game.i18n.localize("GUM.Characteristics.NewGroup") });
     if (!name) return;
     const { characteristics, organization } = this._getCharacteristicOrganizationState();
     const id = foundry.utils.randomID?.() ?? crypto.randomUUID();
@@ -1898,7 +1966,7 @@ async _renameCharacteristicOrganizationGroup(groupId) {
     const { characteristics, organization } = this._getCharacteristicOrganizationState();
     const current = organization.groups[groupId];
     if (!current) return;
-    const name = await this._promptCharacteristicGroupName({ title: "Renomear grupo de características", initial: current.name });
+    const name = await this._promptCharacteristicGroupName({ title: game.i18n.localize("GUM.Characteristics.RenameGroupDialog"), initial: current.name });
     if (!name || name === current.name) return;
     await this._saveCharacteristicOrganization(renameItemOrganizationGroup(organization, { id: groupId, name }, characteristics.map(item => item.id)));
 }
@@ -1908,9 +1976,9 @@ async _deleteCharacteristicOrganizationGroup(groupId) {
     const group = organization.groups[groupId];
     if (!group) return;
     const confirmed = await this._confirmSkillOrganizationAction({
-        title: "Excluir grupo de características",
-        content: `<p>Excluir o grupo <strong>${foundry.utils.escapeHTML(group.name)}</strong>? Seus itens voltarão para a área livre.</p>`,
-        confirmLabel: "Excluir grupo"
+        title: game.i18n.localize("GUM.Characteristics.DeleteGroupDialog"),
+        content: `<p>${game.i18n.format("GUM.Characteristics.DeleteGroupContent", { name: foundry.utils.escapeHTML(group.name) })}</p>`,
+        confirmLabel: game.i18n.localize("GUM.Characteristics.DeleteGroupConfirm")
     });
     if (!confirmed) return;
     await this._saveCharacteristicOrganization(removeItemOrganizationGroup(organization, groupId, characteristics.map(item => item.id)));
@@ -1920,7 +1988,7 @@ async _suggestCharacteristicOrganizationGroups() {
     const { characteristics, organization } = this._getCharacteristicOrganizationState();
     const suggestionItems = this._characteristicSuggestionItems(characteristics);
     const plan = buildItemCategoryGroupPlan(organization, suggestionItems);
-    if (!plan.length) return ui.notifications.info("Não há classificações disponíveis entre os itens livres.");
+    if (!plan.length) return ui.notifications.info(game.i18n.localize("GUM.Characteristics.NoCategories"));
     const selectedCategories = await this._promptCharacteristicGroupPlan(plan);
     if (!selectedCategories?.length) return;
     const createId = () => foundry.utils.randomID?.() ?? crypto.randomUUID();
@@ -2218,9 +2286,9 @@ html.find(".modifier-search").on("input", (ev) => {
 });
 
 const applyGroupedItemSearch = (tab, term, extraTextSelector) => {
-  tab.find('.spell-row-v3').each((_, el) => {
+  tab.find('.spell-row-v3, .magic-card').each((_, el) => {
     const row = $(el);
-    const name = row.find('.spell-name').first().text().toLowerCase();
+    const name = row.find('.spell-name, .magic-card__name').first().text().toLowerCase();
     const extra = row.find(extraTextSelector).first().text().toLowerCase();
     const match = !term || name.includes(term) || extra.includes(term);
 
@@ -2228,9 +2296,9 @@ const applyGroupedItemSearch = (tab, term, extraTextSelector) => {
     row.toggle(match);
   });
 
-  tab.find('.spell-group-box').each((_, el) => {
+  tab.find('.spell-group-box, .magic-group').each((_, el) => {
     const group = $(el);
-    const matchedItems = group.find('.spell-row-v3[data-search-match="1"]').length;
+    const matchedItems = group.find('.spell-row-v3[data-search-match="1"], .magic-card[data-search-match="1"]').length;
     group.toggle(matchedItems > 0);
   });
 };
@@ -2241,7 +2309,37 @@ html.find(".spell-search-input").on("input", (ev) => {
   const term = rawTerm.toLowerCase().trim();
   this._tabSearchState.spells = rawTerm;
   const tab = $(ev.currentTarget).closest('.tab[data-tab="spells"]');
-  applyGroupedItemSearch(tab, term, '.spell-school-line');
+  applyGroupedItemSearch(tab, term, '.magic-card__identity-meta');
+  tab.find('.magic-search-empty').prop('hidden', tab.find('.magic-card[data-search-match="1"]').length > 0 || !term);
+});
+
+html.on('click', '.magic-card__expand', (ev) => {
+  ev.preventDefault();
+  ev.stopPropagation();
+
+  const button = ev.currentTarget;
+  const card = button.closest('.magic-card');
+  if (!card) return;
+
+  const itemId = card.dataset.itemId;
+  const expanded = button.getAttribute('aria-expanded') !== 'true';
+  const isPower = card.classList.contains('power-card');
+  const localizationRoot = isPower ? 'GUM.Powers' : 'GUM.Spells';
+  const label = game.i18n.localize(`${localizationRoot}.${expanded ? 'CollapseDetails' : 'ExpandDetails'}`);
+
+  card.classList.toggle('is-expanded', expanded);
+  card.querySelector('.magic-card__details')?.toggleAttribute('hidden', !expanded);
+  button.setAttribute('aria-expanded', String(expanded));
+  button.setAttribute('aria-label', label);
+  button.setAttribute('title', label);
+  button.querySelector('i')?.classList.toggle('fa-expand-arrows-alt', !expanded);
+  button.querySelector('i')?.classList.toggle('fa-compress-arrows-alt', expanded);
+
+  const expandedCards = isPower
+    ? (this._expandedPowerCards ??= new Set())
+    : (this._expandedSpellCards ??= new Set());
+  if (expanded) expandedCards.add(itemId);
+  else expandedCards.delete(itemId);
 });
 
 // Busca de poderes
@@ -2250,7 +2348,8 @@ html.find(".power-search-input").on("input", (ev) => {
   const term = rawTerm.toLowerCase().trim();
   this._tabSearchState.powers = rawTerm;
   const tab = $(ev.currentTarget).closest('.tab[data-tab="powers"]');
-  applyGroupedItemSearch(tab, term, '.spell-school-line');
+  applyGroupedItemSearch(tab, term, '.magic-card__identity');
+  tab.find('.power-search-empty').prop('hidden', tab.find('.power-card[data-search-match="1"]').length > 0 || !term);
 });
 
 const spellSearchInput = html.find('.spell-search-input');
@@ -2315,6 +2414,7 @@ html.on("click", ".edit-social-entry", (ev) => this._onEditSocialEntry(ev));
 html.on("click", ".delete-social-entry", (ev) => this._onDeleteSocialEntry(ev));
 html.on("click", ".edit-social-source", (ev) => this._onEditSocialSource(ev));
 html.on("click", ".add-social-aspect", (ev) => this._onChooseSocialCategory(ev));
+html.on("click", ".social-card__expand", (ev) => this._onToggleSocialEntryDescription(ev));
 
 // -------------------------------------------------------------
 //  EDITAR ITEM (ABRIR ITEM SHEET)
@@ -2766,7 +2866,7 @@ html.on('change', '.manual-override-toggle', async (ev) => {
     if (statusTag.length) {
         statusTag.toggleClass('off', isDisabled);
         statusTag.toggleClass('on', !isDisabled);
-        statusTag.text(isDisabled ? 'Desativado' : 'Automático');
+        statusTag.text(game.i18n.localize(isDisabled ? 'GUM.Conditions.Disabled' : 'GUM.Conditions.Automatic'));
  }
 });
 
@@ -2801,7 +2901,7 @@ html.on('change', '.effect-toggle', async (ev) => {
     if (statusTag.length) {
         statusTag.toggleClass('off', isDisabled);
         statusTag.toggleClass('on', !isDisabled);
-        statusTag.text(isDisabled ? 'Desativado' : 'Ativo');
+        statusTag.text(game.i18n.localize(isDisabled ? 'GUM.Conditions.Disabled' : 'GUM.Conditions.Active'));
     }
 
     this.actor.sheet.render(false);
@@ -3129,6 +3229,15 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
         });
     }
 
+    // Define uma miniatura precisa tanto no modo de organização quanto no
+    // modo árvore, sem interferir no payload criado pelo organizador.
+    html.find(".skill-tree-item").each((_, card) => {
+        card.addEventListener("dragstart", ev => {
+            if (ev.target.closest?.(".rollable")) return;
+            this._setCardDragImage(ev, card);
+        });
+    });
+
     // MENU DE CONTEXTO (Botão de Opções)
     html.on('click', '.equipment-options-btn', ev => {
             ev.preventDefault();
@@ -3198,6 +3307,21 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
 
     html.find(".rollable").attr("draggable", true);
     html.on("dragstart", ".rollable", this._onDragStart.bind(this));
+
+    // Os cards compactos de magia ficam fora de `.item-list`, portanto não
+    // recebem o listener de arraste criado pelo ActorSheet base. O listener
+    // direto garante que currentTarget seja exatamente o card selecionado.
+    html.find(".magic-card").each((_, card) => {
+        card.addEventListener("dragstart", ev => {
+            if (ev.target.closest?.(".rollable")) return;
+            this._onDragStart(ev);
+
+            // O Chromium pode usar todo o grid como imagem nativa quando um
+            // de seus itens é arrastado. Limitar a prévia ao conteúdo deste
+            // card evita a sobreposição visual dos demais cards do grupo.
+            this._setCardDragImage(ev, card, ".magic-card__main");
+        });
+    });
 
 // ================================================================== //
 //  ROLAGEM DE DANO (ATAQUES DE EQUIPAMENTO + MAGIAS / PODERES)
@@ -4959,14 +5083,12 @@ _onActionMenuToggle(ev) {
    if (!isOpen) {
     const controls = menu.closest(".item-controls");
     if (controls) controls.classList.add("menu-open");
-    const actionMenuRow = menu.closest(".skill-tree-item, .spell-row-v3, .meter-card");
+  const actionMenuRow = menu.closest(".skill-tree-item, .characteristic-card, .spell-row-v3, .magic-card, .social-card, .meter-card, .effect-pill-enhanced");
     if (actionMenuRow) actionMenuRow.classList.add("action-menu-open-row");
     const toggle = menu.querySelector(".js-action-menu-toggle");
     if (toggle) toggle.setAttribute("aria-expanded", "true");
-    this._positionActionMenu(menu);
-  
-    // Posiciona enquanto o painel ainda está invisível para evitar um frame
-    // inicial renderizado abaixo dos cards antes do cálculo final.
+    // Position while the panel is still invisible to avoid a frame rendered
+    // beneath neighboring cards before its final coordinates are known.
     this._positionActionMenu(menu);
     menu.classList.add("is-open");
   }
@@ -5005,7 +5127,7 @@ _positionActionMenu(menu) {
 _closeAllActionMenus() {
   if (!this.element?.length) return;
   this.element.find(".item-controls.menu-open").removeClass("menu-open");
-  this.element.find(".skill-tree-item.action-menu-open-row").removeClass("action-menu-open-row");
+  this.element.find(".skill-tree-item.action-menu-open-row, .characteristic-card.action-menu-open-row, .magic-card.action-menu-open-row, .social-card.action-menu-open-row, .effect-pill-enhanced.action-menu-open-row").removeClass("action-menu-open-row");
   this.element.find(".js-action-menu.is-open, .js-action-menu.is-open-up").removeClass("is-open is-open-up")
     .find(".js-action-menu-toggle").attr("aria-expanded", "false");
 }
@@ -5237,11 +5359,11 @@ async _onDeleteEnergyReserve(ev) {
   const reserveType = card?.dataset?.reserveType === "power" ? "power" : "spell";
   if (!reserveId) return;
 
-  const name = this.actor.system?.[`${reserveType}_reserves`]?.[reserveId]?.name || "reserva";
+  const name = this.actor.system?.[`${reserveType}_reserves`]?.[reserveId]?.name || game.i18n.localize("GUM.Resources.Reserve");
 
   Dialog.confirm({
-    title: `Excluir ${name}?`,
-    content: `<p>Tem certeza que deseja remover esta reserva?</p>`,
+    title: game.i18n.format("GUM.Resources.DeleteReserveTitle", { name }),
+    content: `<p>${foundry.utils.escapeHTML(game.i18n.localize("GUM.Resources.DeleteReserveContent"))}</p>`,
     yes: async () => {
       await this.actor.update({ [`system.${reserveType}_reserves.-=${reserveId}`]: null });
     }
@@ -5263,7 +5385,7 @@ async _onAdjustEnergyReserve(ev) {
 
   const current = Number(reserve.current ?? reserve.value ?? 0) || 0;
   const max = Math.max(0, Number(reserve.max) || 0);
-  const value = Math.max(0, Math.min(max, current + adjustment));
+  const value = Math.min(max, current + adjustment);
   const pathBase = `system.${reserveType}_reserves.${reserveId}`;
   await this.actor.update({
     [`${pathBase}.current`]: value,
@@ -5294,38 +5416,39 @@ async _adjustEquipmentReserve(equipmentId, adjustment) {
 }
 
 async _promptEnergyReserveData(reserveType, initialData = {}, { isEdit = false } = {}) {
-  const data = this._normalizeResourceEntry(initialData, { defaultName: reserveType === "power" ? "Reserva de Poder" : "Reserva de Magia" });
+  const data = this._normalizeResourceEntry(initialData, { defaultName: reserveType === "power" ? game.i18n.localize("GUM.Powers.Reserve") : game.i18n.localize("GUM.Spells.Reserve") });
   const esc = value => foundry.utils.escapeHTML(String(value ?? ""));
   const isPowerReserve = reserveType === "power";
-  const reserveLabel = isPowerReserve ? "Reserva de poder" : "Reserva de magia";
-  const reserveDescription = isPowerReserve
-    ? "Acompanhe a energia disponível para uma fonte de poderes."
-    : "Acompanhe a energia disponível para conjurar suas magias.";
+  const copy = {
+    reserveLabel: game.i18n.localize(isPowerReserve ? "GUM.Powers.Reserve" : "GUM.Spells.Reserve"),
+    reserveDescription: game.i18n.localize(isPowerReserve ? "GUM.Powers.ReserveDialogHint" : "GUM.Spells.ReserveDialogHint"),
+    namePlaceholder: game.i18n.localize(isPowerReserve ? "GUM.Powers.ReserveNamePlaceholder" : "GUM.Spells.ReserveNamePlaceholder"),
+    sourcePlaceholder: game.i18n.localize(isPowerReserve ? "GUM.Powers.ReserveSourcePlaceholder" : "GUM.Spells.ReserveSourcePlaceholder"),
+    title: game.i18n.localize(isPowerReserve
+      ? (isEdit ? "GUM.Powers.EditReserve" : "GUM.Powers.NewReserve")
+      : (isEdit ? "GUM.Spells.EditReserve" : "GUM.Spells.NewReserve"))
+  };
   const content = `
     <form class="gum-meter-form gum-popup-form gum-energy-reserve-form gum-record-editor" autocomplete="off">
-      <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon ${isPowerReserve ? "gum-record-editor__icon--power" : "gum-record-editor__icon--magic"}"><i class="fas ${isPowerReserve ? "fa-bolt" : "fa-hat-wizard"}" aria-hidden="true"></i></span><span><strong>${reserveLabel}</strong><small>${reserveDescription}</small></span></header>
+      <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon ${isPowerReserve ? "gum-record-editor__icon--power" : "gum-record-editor__icon--magic"}"><i class="fas ${isPowerReserve ? "fa-bolt" : "fa-hat-wizard"}" aria-hidden="true"></i></span><span><strong>${esc(copy.reserveLabel)}</strong><small>${esc(copy.reserveDescription)}</small></span></header>
       <div class="form-group form-group--full gum-resource-field gum-resource-field--name">
-        <label>Nome</label>
-        <input class="gum-input-left" type="text" name="name" value="${esc(data.name)}" placeholder="${isPowerReserve ? "Ex.: Chi" : "Ex.: Reserva de mana"}" required/>
+        <label>${esc(game.i18n.localize("GUM.Resources.Name"))}</label>
+        <input class="gum-input-left" type="text" name="name" value="${esc(data.name)}" placeholder="${esc(copy.namePlaceholder)}" required/>
       </div>
       <div class="form-group form-group--full gum-resource-field gum-resource-field--source">
-        <label>Fonte / Origem</label>
-                <input class="gum-input-left" type="text" name="source" value="${esc(data.source)}" placeholder="${isPowerReserve ? "Ex.: Poderes psíquicos" : "Ex.: Aptidão Mágica"}" />
+        <label>${esc(game.i18n.localize("GUM.Resources.Source"))}</label>
+                <input class="gum-input-left" type="text" name="source" value="${esc(data.source)}" placeholder="${esc(copy.sourcePlaceholder)}" />
       </div>
-      <p class="gum-record-editor__section-label form-group--full"><i class="fas fa-sliders-h" aria-hidden="true"></i> Valores</p>
+      <p class="gum-record-editor__section-label form-group--full"><i class="fas fa-sliders-h" aria-hidden="true"></i> ${esc(game.i18n.localize("GUM.Resources.Values"))}</p>
       <div class="form-group form-group--number gum-resource-field gum-resource-field--current">
-        <label>Valor Atual</label>
-        <input type="number" name="current" value="${data.current ?? 0}" min="0"/>
+        <label>${esc(game.i18n.localize("GUM.Resources.Current"))}</label>
+        <input type="number" name="current" value="${data.current ?? 0}"/>
       </div>
      <div class="form-group form-group--number gum-resource-field gum-resource-field--max">
-        <label>Valor Máximo</label>
+        <label>${esc(game.i18n.localize("GUM.Resources.Maximum"))}</label>
         <input type="number" name="max" value="${data.max ?? 0}" min="0"/>
       </div>
     </form>`;
-
-  const title = reserveType === "power"
-    ? isEdit ? "Editar Reserva de Poder" : "Nova Reserva de Poder"
-    : isEdit ? "Editar Reserva de Magia" : "Nova Reserva de Magia";
 
  return new Promise((resolve) => {
     let resolved = false;
@@ -5336,16 +5459,16 @@ async _promptEnergyReserveData(reserveType, initialData = {}, { isEdit = false }
     };
 
     new Dialog({
-      title,
+      title: copy.title,
       content,
       buttons: {
         save: {
           icon: '<i class="fas fa-save"></i>',
-          label: "Salvar",
+          label: game.i18n.localize("GUM.Resources.Save"),
           callback: (html) => {
             const form = html.find("form")[0];
             const name = form.name.value.trim();
-            if (!name) return ui.notifications.warn("Informe um nome para a reserva.");
+            if (!name) return ui.notifications.warn(game.i18n.localize("GUM.Resources.NameRequired"));
 
             const source = form.source.value.trim();
             const current = Number(form.current.value) || 0;
@@ -5356,7 +5479,7 @@ async _promptEnergyReserveData(reserveType, initialData = {}, { isEdit = false }
         },
         cancel: {
           icon: '<i class="fas fa-times"></i>',
-          label: "Cancelar",
+          label: game.i18n.localize("GUM.Characteristics.Cancel"),
           callback: () => finish(null)
         }
       },
@@ -5390,8 +5513,8 @@ _prepareCharacteristicLink(id, record, fallbackName) {
     return {
       id,
       itemId,
-      name: "Característica não encontrada",
-      kindLabel: "Vínculo interrompido",
+      name: game.i18n.localize("GUM.Resources.LinkedTraitMissing"),
+      kindLabel: game.i18n.localize("GUM.Resources.BrokenLink"),
       broken: true
     };
   }
@@ -5406,7 +5529,7 @@ _prepareCharacteristicLink(id, record, fallbackName) {
     level: Number(item.system?.level) || 0,
     points: Number(item.system?.points) || 0,
     notes: String(item.system?.characteristics || "").trim(),
-    kindLabel: item.type === "disadvantage" ? "Desvantagem" : "Vantagem"
+    kindLabel: game.i18n.localize(item.type === "disadvantage" ? "GUM.Characteristics.Disadvantage" : "GUM.Characteristics.Advantage")
   };
 }
 
@@ -5417,30 +5540,42 @@ async _promptCharacteristicLink(linkType) {
   const linkedIds = new Set(Object.values(collection).map((entry) => entry?.item_id || entry?.itemId).filter(Boolean));
   const candidates = this._getLinkableCharacteristics().filter((item) => !linkedIds.has(item.id));
 
+  const localize = (key, data) => data ? game.i18n.format(key, data) : game.i18n.localize(key);
+  const isPowerSource = linkType === "power";
+  const copy = {
+    title: localize(isPowerSource ? "GUM.Powers.LinkSourceDialogTitle" : "GUM.Spells.LinkAbilityDialogTitle"),
+    hint: localize("GUM.Characteristics.LinkDialogHint"),
+    searchLabel: localize("GUM.Characteristics.LinkDialogSearchLabel"),
+    searchPlaceholder: localize("GUM.Characteristics.LinkDialogSearchPlaceholder"),
+    noResults: localize("GUM.Characteristics.LinkDialogNoResults"),
+    link: localize("GUM.Characteristics.Link"),
+    cancel: localize("GUM.Characteristics.Cancel"),
+    selectRequired: localize("GUM.Characteristics.LinkDialogSelectionRequired")
+  };
+
   if (!candidates.length) {
-    ui.notifications.warn("Não há vantagens ou desvantagens disponíveis para vincular.");
+    ui.notifications.warn(localize("GUM.Characteristics.LinkDialogEmpty"));
     return null;
   }
 
   const escape = (value) => foundry.utils.escapeHTML(String(value ?? ""));
   const rows = candidates.map((item) => {
-    const kind = item.type === "disadvantage" ? "Desvantagem" : "Vantagem";
+    const kind = localize(item.type === "disadvantage" ? "GUM.Characteristics.Disadvantage" : "GUM.Characteristics.Advantage");
     const specialization = item.system?.specialization ? ` (${escape(item.system.specialization)})` : "";
-    const level = Number(item.system?.level) ? ` · Nv ${Number(item.system.level)}` : "";
+    const level = Number(item.system?.level) ? ` · ${localize("GUM.Characteristics.LevelAbbreviation")} ${Number(item.system.level)}` : "";
     const points = Number(item.system?.points) || 0;
     return `
       <label class="characteristic-link-option" data-search="${escape(`${item.name} ${item.system?.specialization || ""} ${kind}`.toLowerCase())}">
         <input type="radio" name="item_id" value="${item.id}">
-        <img src="${escape(item.img)}" alt="">
+        <span class="characteristic-link-option__image"><img src="${escape(item.img)}" alt=""></span>
         <span class="characteristic-link-option__text">
           <strong>${escape(item.name)}${specialization}</strong>
           <small>${kind}${level}</small>
         </span>
-        <span class="characteristic-link-option__points">${points} pts</span>
+        <span class="characteristic-link-option__points">${points} ${localize("GUM.Characteristics.PointsAbbreviation")}</span>
       </label>`;
   }).join("");
 
-  const title = linkType === "power" ? "Vincular Fonte de Poder" : "Vincular Habilidade de Conjuração";
   return new Promise((resolve) => {
     let resolved = false;
     const finish = (value) => {
@@ -5450,31 +5585,40 @@ async _promptCharacteristicLink(linkType) {
     };
 
     new Dialog({
-      title,
+      title: copy.title,
       content: `
         <form class="characteristic-link-picker" autocomplete="off">
-          <p class="hint">Selecione uma vantagem ou desvantagem desta ficha. O card permanecerá sincronizado com o item original.</p>
-          <div class="characteristic-link-search"><i class="fas fa-search"></i><input type="search" placeholder="Buscar característica..."></div>
+          <div class="characteristic-link-picker__intro">
+            <span class="characteristic-link-picker__intro-icon"><i class="fas ${isPowerSource ? "fa-bolt" : "fa-hat-wizard"}"></i></span>
+            <p class="hint">${escape(copy.hint)}</p>
+          </div>
+          <label class="characteristic-link-search" aria-label="${escape(copy.searchLabel)}"><i class="fas fa-search"></i><input type="search" placeholder="${escape(copy.searchPlaceholder)}"></label>
           <div class="characteristic-link-options">${rows}</div>
-          <p class="characteristic-link-no-results" hidden>Nenhuma característica encontrada.</p>
+          <p class="characteristic-link-no-results" hidden>${escape(copy.noResults)}</p>
         </form>`,
       buttons: {
         link: {
           icon: '<i class="fas fa-link"></i>',
-          label: "Vincular",
+          label: copy.link,
           callback: (html) => {
             const selected = html.find('input[name="item_id"]:checked').val();
             if (!selected) {
-              ui.notifications.warn("Selecione uma característica para vincular.");
+              ui.notifications.warn(copy.selectRequired);
               return false;
             }
             finish(String(selected));
           }
         },
-        cancel: { icon: '<i class="fas fa-times"></i>', label: "Cancelar", callback: () => finish(null) }
+        cancel: { icon: '<i class="fas fa-times"></i>', label: copy.cancel, callback: () => finish(null) }
       },
       default: "link",
       render: (html) => {
+        const syncSelection = () => {
+          html.find(".characteristic-link-option").each((_, element) => {
+            element.classList.toggle("is-selected", Boolean(element.querySelector('input[type="radio"]')?.checked));
+          });
+        };
+        html.find('input[name="item_id"]').on("change", syncSelection);
         html.find('input[type="search"]').on("input", (event) => {
           const term = String(event.currentTarget.value || "").toLowerCase().trim();
           let visible = 0;
@@ -5485,6 +5629,7 @@ async _promptCharacteristicLink(linkType) {
           });
           html.find(".characteristic-link-no-results").prop("hidden", visible > 0);
         });
+        syncSelection();
       },
       close: () => finish(null)
     }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-characteristic-link-dialog"], width: 520 }).render(true);
@@ -5495,7 +5640,7 @@ async _promptCharacteristicLink(linkType) {
 _prepareCastingAbilities() {
   const collection = foundry.utils.duplicate(this.actor.system.casting_abilities || {});
   const abilities = Object.entries(collection).map(([id, ability]) =>
-    this._prepareCharacteristicLink(id, ability, "Habilidade de Conjuração")
+    this._prepareCharacteristicLink(id, ability, game.i18n.localize("GUM.Spells.CastingAbility"))
   );
 
   if (!abilities.length) {
@@ -5511,8 +5656,8 @@ _prepareCastingAbilities() {
     if (hasLegacyData) {
       abilities.push({
         id: "legacy",
-        name: legacy.name || "Habilidade de Conjuração",
-        source: legacy.source || "Fonte Mágica",
+        name: legacy.name || game.i18n.localize("GUM.Spells.CastingAbility"),
+        source: legacy.source || game.i18n.localize("GUM.Spells.LegacySource"),
         level: Number(legacy.level) || 0,
         points: Number(legacy.points) || 0,
         description: legacy.description || ""
@@ -5530,8 +5675,8 @@ _getCastingAbilityById(abilityId) {
     const legacy = this.actor.system.casting_ability || {};
     return {
       id: "legacy",
-      name: legacy.name || "Habilidade de Conjuração",
-      source: legacy.source || "Fonte Mágica",
+      name: legacy.name || game.i18n.localize("GUM.Spells.CastingAbility"),
+      source: legacy.source || game.i18n.localize("GUM.Spells.LegacySource"),
       level: Number(legacy.level) || 0,
       points: Number(legacy.points) || 0,
       description: legacy.description || ""
@@ -5542,7 +5687,7 @@ _getCastingAbilityById(abilityId) {
   if (!ability) return null;
 
     if (ability.item_id || ability.itemId) {
-    return this._prepareCharacteristicLink(abilityId, ability, "Habilidade de Conjuração");
+    return this._prepareCharacteristicLink(abilityId, ability, game.i18n.localize("GUM.Spells.CastingAbility"));
   }
 
   return {
@@ -5742,7 +5887,7 @@ _onViewCastingAbility(ev) {
 _preparePowerSources() {
   const collection = foundry.utils.duplicate(this.actor.system.power_sources || {});
   const sources = Object.entries(collection).map(([id, source]) =>
-    this._prepareCharacteristicLink(id, source, "Fonte de Poder")
+    this._prepareCharacteristicLink(id, source, game.i18n.localize("GUM.Powers.Source"))
   );
 
   
@@ -5765,7 +5910,7 @@ _preparePowerSources() {
     if (hasLegacyData) {
       sources.push({
         id: "legacy",
-        name: legacy.name || "Fonte de Poder",
+        name: legacy.name || game.i18n.localize("GUM.Powers.Source"),
         source: legacy.source || "",
         focus: legacy.focus || "",
         level: Number(legacy.level) || 0,
@@ -5788,7 +5933,7 @@ _getPowerSourceById(sourceId) {
     const legacy = this.actor.system.power_source || {};
     return {
       id: "legacy",
-      name: legacy.name || "Fonte de Poder",
+      name: legacy.name || game.i18n.localize("GUM.Powers.Source"),
       source: legacy.source || "",
       focus: legacy.focus || "",
       level: Number(legacy.level) || 0,
@@ -5804,12 +5949,12 @@ _getPowerSourceById(sourceId) {
   if (!source) return null;
 
     if (source.item_id || source.itemId) {
-    return this._prepareCharacteristicLink(sourceId, source, "Fonte de Poder");
+    return this._prepareCharacteristicLink(sourceId, source, game.i18n.localize("GUM.Powers.Source"));
   }
 
   return {
     id: sourceId,
-    name: source.name || "Fonte de Poder",
+    name: source.name || game.i18n.localize("GUM.Powers.Source"),
     source: source.source || "",
     focus: source.focus || "",
     level: Number(source.level) || 0,
@@ -6441,6 +6586,27 @@ async _onDeleteSocialEntry(ev) {
       await this.actor.update({ [`${config.path}.-=${entryId}`]: null });
     }
   });
+}
+
+_onToggleSocialEntryDescription(ev) {
+  ev.preventDefault();
+  ev.stopPropagation();
+  const card = ev.currentTarget.closest(".social-card");
+  const cardKey = card?.dataset?.socialCardKey;
+  if (!cardKey) return;
+
+  this._expandedSocialCards ??= new Set();
+  const expanded = !this._expandedSocialCards.has(cardKey);
+  if (expanded) this._expandedSocialCards.add(cardKey);
+  else this._expandedSocialCards.delete(cardKey);
+
+  card.classList.toggle("is-description-expanded", expanded);
+  ev.currentTarget.setAttribute("aria-expanded", `${expanded}`);
+  const toggleLabel = game.i18n.localize(expanded ? "GUM.Social.CollapseDescription" : "GUM.Social.ExpandDescription");
+  ev.currentTarget.setAttribute("title", toggleLabel);
+  ev.currentTarget.setAttribute("aria-label", toggleLabel);
+  ev.currentTarget.querySelector("i")?.classList.toggle("fa-compress-arrows-alt", expanded);
+  ev.currentTarget.querySelector("i")?.classList.toggle("fa-expand-arrows-alt", !expanded);
 }
 
 

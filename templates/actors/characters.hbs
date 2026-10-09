@@ -363,10 +363,10 @@
           <a class="item" data-tab="combat" title="Combate">
             <i class="fas fa-khanda"></i>
           </a>
-          <a class="item" data-tab="skills" title="Perícias">
+          <a class="item" data-tab="skills" title="{{localize 'GUM.Skills.Tab'}}">
             <i class="fas fa-book-reader"></i>
           </a>
-          <a class="item" data-tab="characteristics" title="Características">
+          <a class="item" data-tab="characteristics" title="{{localize 'GUM.Characteristics.Tab'}}">
             <i class="fas fa-star"></i>
           </a>
           <a class="item" data-tab="social" title="{{localize 'GUM.Social.Tab'}}">
@@ -384,7 +384,7 @@
           <a class="item" data-tab="biography" title="Biografia">
             <i class="fas fa-scroll"></i>
           </a>
-          <a class="item" data-tab="conditions" title="Condições">
+          <a class="item" data-tab="conditions" title="{{localize 'GUM.Conditions.Tab'}}">
             <i class="fas fa-heart-pulse"></i>
           </a>
           <a class="item" data-tab="modifiers" title="Modificadores de Rolagens">
@@ -460,38 +460,50 @@
 
     {{! ============================================================= }}
     {{! ABA DE ASPECTOS SOCIAIS: registros manuais + contribuições de itens }}
-    <div class="tab" data-group="primary" data-tab="social">
-       <div class="social-toolbar"><button type="button" class="add-social-aspect">{{localize "GUM.Social.AddAspect"}}</button></div>
-      <div class="social-sections">
+    <div class="tab social-aspects-tab" data-group="primary" data-tab="social">
+      <div class="social-tab__toolbar"><button type="button" class="add-social-aspect">{{localize "GUM.Social.AddAspect"}}</button></div>
+      <div class="social-groups">
       {{#each socialSections}}
-        <details class="social-section {{#if featured}}social-section--featured{{/if}}">
-          <summary class="block-header">
-            <span class="social-section-icon"><i class="{{icon}}"></i></span>
-            <h4>{{label}}</h4>
-            <span class="social-count">{{count}}</span>
-            <a class="add-social-entry" data-type="{{type}}" title="{{localize 'GUM.Social.AddAspect'}}"><i class="fas fa-plus"></i></a>
-            <span class="social-section-chevron"><i class="fas fa-chevron-down"></i></span>
+        <details class="social-group gum-unified-section {{#if featured}}social-group--featured{{/if}}"
+            data-group-id="social-{{type}}"
+            {{collapsibleState (concat "social-" type) @root.collapsedData}}>
+          <summary class="social-group__header gum-unified-header">
+            <span class="header-left">
+              <i class="fas fa-chevron-right indicator"></i>
+              <i class="{{icon}} social-group__icon"></i>
+              <h4 class="header-title">{{label}}</h4>
+            </span>
+            <span class="social-group__tools">
+              <span class="header-counter">{{count}}</span>
+              <a class="add-social-entry" data-type="{{type}}" title="{{localize 'GUM.Social.AddAspect'}}"><i class="fas fa-plus"></i></a>
+            </span>
           </summary>
-          <ol class="item-list social-entry-list">{{#each entries}}
-            <li class="item item-row social-entry-card social-entry-card--{{source}} {{#unless metrics.length}}social-entry-card--no-metrics{{/unless}}" data-entry-id="{{id}}">
-              <div class="social-entry-main">
-                <div class="social-entry-portrait {{source}}" title="{{sourceLabel}}">
+          <ol class="item-list social-card-grid">{{#each entries}}
+            <li class="item item-row social-card social-card--{{source}} {{#if expanded}}is-description-expanded{{/if}}" data-entry-id="{{id}}" data-social-card-key="{{cardKey}}">
+              <div class="social-card__main">
+                <div class="social-card__portrait social-card__portrait--{{source}}" title="{{sourceLabel}}">
                   {{#if sourceImg}}<img src="{{sourceImg}}" alt="{{sourceLabel}}">{{else}}<i class="{{displayIcon}}"></i>{{/if}}
                 </div>
-                <div class="social-entry-identity">
-                  <strong class="social-entry-primary">{{primary}}</strong>
-                  {{#if context}}<span class="social-entry-context">{{context}}</span>{{/if}}
+                <div class="social-card__identity">
+                  <strong class="social-card__name" title="{{primary}}">{{primary}}</strong>
+                  {{#if context}}<span class="social-card__context">{{context}}</span>{{/if}}
                 </div>
                 {{#if metrics.length}}
-                <div class="social-entry-metrics">
-                  {{#each metrics}}
-                  <span class="social-metric social-metric--{{tone}}"><small>{{label}}</small><strong>{{value}}</strong></span>
-                  {{/each}}
+                <div class="social-card__metrics">
+                  {{#each metrics}}<span class="social-card__metric social-card__metric--{{tone}}" title="{{label}}: {{value}}"><small>{{shortLabel}}</small><strong>{{value}}</strong></span>{{/each}}
                 </div>
                 {{/if}}
-                <div class="item-controls social-entry-controls">{{#if itemId}}<a class="item-control edit-social-source" data-item-id="{{itemId}}" title="{{localize 'GUM.Social.OpenSource'}}"><i class="fas fa-external-link-alt"></i></a>{{else}}<a class="item-control edit-social-entry" data-type="{{type}}"><i class="fas fa-edit"></i></a><a class="item-control delete-social-entry" data-type="{{type}}"><i class="fas fa-trash"></i></a>{{/if}}</div>
+                {{#if observation}}<button type="button" class="social-card__expand" title="{{#if expanded}}{{localize 'GUM.Social.CollapseDescription'}}{{else}}{{localize 'GUM.Social.ExpandDescription'}}{{/if}}" aria-label="{{#if expanded}}{{localize 'GUM.Social.CollapseDescription'}}{{else}}{{localize 'GUM.Social.ExpandDescription'}}{{/if}}" aria-expanded="{{#if expanded}}true{{else}}false{{/if}}"><i class="fas {{#if expanded}}fa-compress-arrows-alt{{else}}fa-expand-arrows-alt{{/if}}"></i></button>{{else}}<span class="social-card__expand-spacer" aria-hidden="true"></span>{{/if}}
+                <div class="item-controls social-card__controls">
+                  <div class="gum-action-menu js-action-menu">
+                    <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Social.Options'}}" aria-label="{{localize 'GUM.Social.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+                    <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Social.Options'}}">
+                      {{#if itemId}}<a class="item-control edit-social-source gum-action-menu__item" data-item-id="{{itemId}}" role="menuitem"><i class="fas fa-external-link-alt"></i><span>{{localize 'GUM.Social.OpenSource'}}</span></a>{{else}}<a class="item-control edit-social-entry gum-action-menu__item" data-type="{{type}}" role="menuitem"><i class="fas fa-edit"></i><span>{{localize 'GUM.Inventory.Edit'}}</span></a><a class="item-control delete-social-entry gum-action-menu__item is-danger" data-type="{{type}}" role="menuitem"><i class="fas fa-trash"></i><span>{{localize 'GUM.Inventory.Delete'}}</span></a>{{/if}}
+                    </div>
+                  </div>
+                </div>
               </div>
-              {{#if observation}}<div class="social-entry-observation" title="{{observation}}"><i class="fas fa-align-left"></i><span>{{observation}}</span></div>{{/if}}
+              {{#if observation}}<div class="social-card__description"><i class="fas fa-align-left"></i><span>{{observation}}</span></div>{{/if}}
             </li>{{/each}}</ol>
         </details>
       {{/each}}
@@ -506,12 +518,12 @@
       <div class="characteristics-header-tools">
         <div class="characteristics-search-wrapper">
           <i class="fas fa-search" aria-hidden="true"></i>
-          <input type="search" class="characteristic-search-input" name="characteristic-search" placeholder="Buscar vantagem ou desvantagem..." autocomplete="off" aria-label="Buscar vantagem ou desvantagem">
+          <input type="search" class="characteristic-search-input" name="characteristic-search" placeholder="{{localize 'GUM.Characteristics.SearchPlaceholder'}}" autocomplete="off" aria-label="{{localize 'GUM.Characteristics.SearchLabel'}}">
         </div>
         <div class="characteristics-header-buttons">
-          <a class="create-characteristic-group" title="Criar grupo de características"><i class="fas fa-folder-plus"></i> Grupo</a>
-          {{#if @root.hasCharacteristicGroupSuggestions}}<a class="suggest-characteristic-groups" title="Criar grupos a partir da organização informada nos itens"><i class="fas fa-wand-magic-sparkles"></i> Organizar itens</a>{{/if}}
-          <a class="sort-control" data-item-type="characteristic" title="Ordenar características"><i class="fas fa-sort-alpha-down"></i></a>
+          <a class="create-characteristic-group" title="{{localize 'GUM.Characteristics.CreateGroup'}}"><i class="fas fa-folder-plus"></i> {{localize 'GUM.Characteristics.Group'}}</a>
+          {{#if @root.hasCharacteristicGroupSuggestions}}<a class="suggest-characteristic-groups" title="{{localize 'GUM.Characteristics.SuggestGroups'}}"><i class="fas fa-wand-magic-sparkles"></i> {{localize 'GUM.Characteristics.OrganizeItems'}}</a>{{/if}}
+          <a class="sort-control" data-item-type="characteristic" title="{{localize 'GUM.Characteristics.Sort'}}"><i class="fas fa-sort-alpha-down"></i></a>
         </div>
       </div>
 
@@ -528,8 +540,8 @@
               </div>
               <span class="characteristic-group-header-tools">
                 {{#unless section.isUngrouped}}<span class="characteristic-group-actions">
-                  <a class="rename-characteristic-group" data-group-id="{{section.id}}" title="Renomear grupo"><i class="fas fa-pen"></i></a>
-                  <a class="delete-characteristic-group" data-group-id="{{section.id}}" title="Excluir grupo"><i class="fas fa-trash"></i></a>
+                  <a class="rename-characteristic-group" data-group-id="{{section.id}}" title="{{localize 'GUM.Characteristics.RenameGroup'}}"><i class="fas fa-pen"></i></a>
+                  <a class="delete-characteristic-group" data-group-id="{{section.id}}" title="{{localize 'GUM.Characteristics.DeleteGroup'}}"><i class="fas fa-trash"></i></a>
                 </span>{{/unless}}
                 <span class="characteristic-group-count">{{section.characteristics.length}}</span>
               </span>
@@ -540,38 +552,46 @@
                 data-organizer-zone
                 data-organizer-group-id="{{section.id}}">
               {{#each section.characteristics}}
-                <li class="item characteristic-card"
+                <li class="item characteristic-card {{this.type}}"
                     data-item-id="{{this.id}}"
                     data-organizer-item-id="{{this.id}}"
                     data-organizer-item-type="{{this.type}}"
-                    data-search="{{this.name}} {{this.system.specialization}} {{this.system.level}} {{this.system.characteristics}} {{this.characteristicKindLabel}} {{#if this.characteristicIsRacial}}Racial{{/if}}"
+                    data-search="{{this.name}} {{this.system.specialization}} {{this.system.level}} {{this.system.characteristics}} {{this.characteristicKindLabel}} {{#if this.characteristicIsRacial}}{{localize 'GUM.Characteristics.Racial'}}{{/if}}"
                     draggable="true">
                   <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
+                  <div class="characteristic-card-content">
                   <div class="card-info">
                     <div class="card-main">
-                      <span class="item-name"><a class="item-quick-view" title="Visualizar descrição">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}}{{#if this.system.level}} {{this.system.level}}{{/if}}</a></span>
+                      <span class="item-name"><a class="item-quick-view" title="{{localize 'GUM.Characteristics.ViewDetails'}}">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}}{{#if this.system.level}} {{this.system.level}}{{/if}}</a></span>
                       {{#if this.system.characteristics}}<span class="characteristic-notes">{{this.system.characteristics}}</span>{{/if}}
                     </div>
                     <div class="card-details">
                       <span class="characteristic-kind {{this.type}}">{{this.characteristicKindLabel}}</span>
-                      {{#if this.characteristicIsRacial}}<span class="characteristic-kind racial">Racial</span>{{/if}}
-                      {{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}
-                      <span class="card-points" title="Custo em Pontos">{{characteristicPoints this}} pts</span>
+                      {{#if this.characteristicIsRacial}}<span class="characteristic-kind racial">{{localize 'GUM.Characteristics.Racial'}}</span>{{/if}}
+                      <span class="card-points" title="{{localize 'GUM.Characteristics.PointCost'}}">{{characteristicPoints this}} {{localize 'GUM.Characteristics.PointsAbbreviation'}}</span>
                     </div>
                   </div>
                   <div class="item-controls">
-                    {{#if this.characteristicOrganizationCanRemove}}<a class="item-control remove-characteristic-from-group" data-item-id="{{this.id}}" title="Retirar do grupo" aria-label="Retirar {{this.name}} do grupo"><i class="fas fa-arrow-up-from-bracket"></i></a>{{/if}}
-                    <span class="characteristic-control-actions"><a class="item-edit" title="{{localize 'GUM.Inventory.Edit'}}"><i class="fas fa-edit"></i></a><a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a></span>
+                    {{#if this.system.self_control_roll}}<a class="rollable card-cr" title="{{localize 'GUM.Characteristics.SelfControlTest'}}" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="{{localize 'GUM.Characteristics.SelfControl' name=this.name}}" data-item-id="{{this.id}}"><i class="fas fa-dice-d6" aria-hidden="true"></i> {{localize 'GUM.Characteristics.SelfControlAbbreviation'}} {{this.system.self_control_roll}}</a>{{/if}}
+                    <div class="gum-action-menu js-action-menu">
+                      <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Inventory.Options'}}" aria-label="{{localize 'GUM.Inventory.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+                      <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Inventory.Options'}}">
+                        {{#if this.characteristicOrganizationCanRemove}}<a class="item-control remove-characteristic-from-group gum-action-menu__item" data-item-id="{{this.id}}" role="menuitem"><i class="fas fa-arrow-up-from-bracket"></i><span>{{localize 'GUM.Characteristics.RemoveFromGroup'}}</span></a>{{/if}}
+                        <a class="item-control item-edit gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{localize 'GUM.Inventory.Edit'}}</span></a>
+                        <a class="item-control item-delete gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>{{localize 'GUM.Inventory.Delete'}}</span></a>
+                      </div>
+                    </div>
+                  </div>
                   </div>
                 </li>
               {{/each}}
-              {{#unless section.characteristics.length}}<li class="placeholder-text">Arraste itens para este grupo.</li>{{/unless}}
+              {{#unless section.characteristics.length}}<li class="placeholder-text">{{localize 'GUM.Characteristics.DropHere'}}</li>{{/unless}}
             </ol>
           </details>
         {{/each}}
 
-        <div class="characteristics-search-empty" hidden>Nenhuma característica encontrada.</div>
-        {{#unless @root.hasCharacteristics}}<div class="empty-placeholder"><p>Nenhuma vantagem ou desvantagem adicionada.</p></div>{{/unless}}
+        <div class="characteristics-search-empty" hidden>{{localize 'GUM.Characteristics.NoSearchResults'}}</div>
+        {{#unless @root.hasCharacteristics}}<div class="empty-placeholder"><p>{{localize 'GUM.Characteristics.Empty'}}</p></div>{{/unless}}
       </div>
     </div>
 
@@ -584,24 +604,24 @@
       <div class="skills-header-tools">
           <div class="skills-search-wrapper">
               <i class="fas fa-search"></i>
-              <input type="text" class="skill-search-input" name="search" placeholder="Buscar perícia..." autocomplete="off">
+              <input type="text" class="skill-search-input" name="search" placeholder="{{localize 'GUM.Skills.SearchPlaceholder'}}" aria-label="{{localize 'GUM.Skills.SearchLabel'}}" autocomplete="off">
           </div>
 
           <div class="skills-header-buttons">
               {{!-- NOVO: Botão de Alternar Visualização --}}
-              <a class="toggle-skills-view" title="Alternar: Organização / Árvore">
+              <a class="toggle-skills-view" title="{{localize 'GUM.Skills.ToggleView'}}">
 {{#if (eq @root.skillsViewMode 'tree')}}
-                      <i class="fas fa-sitemap"></i> Árvore
+                      <i class="fas fa-sitemap"></i> {{localize 'GUM.Skills.TreeView'}}
                   {{else}}
-                      <i class="fas fa-layer-group"></i> Organização
+                      <i class="fas fa-layer-group"></i> {{localize 'GUM.Skills.OrganizationView'}}
                   {{/if}}
               </a>
 
               {{#if (eq @root.skillsViewMode 'group')}}
-              <a class="create-skill-group" title="Criar grupo de perícias"><i class="fas fa-folder-plus"></i> Grupo</a>
-              {{#if @root.hasSkillCategorySuggestions}}<a class="suggest-skill-groups" title="Prévia de grupos a partir das categorias conceituais das perícias"><i class="fas fa-wand-magic-sparkles"></i> Categorias</a>{{/if}}
+              <a class="create-skill-group" title="{{localize 'GUM.Skills.CreateGroup'}}"><i class="fas fa-folder-plus"></i> {{localize 'GUM.Skills.Group'}} </a>
+              {{#if @root.hasSkillCategorySuggestions}}<a class="suggest-skill-groups" title="{{localize 'GUM.Skills.SuggestGroups'}}"><i class="fas fa-wand-magic-sparkles"></i> {{localize 'GUM.Skills.Categories'}}</a>{{/if}}
               {{/if}}
-              <a class="sort-control" data-item-type="skill" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
+              <a class="sort-control" data-item-type="skill" title="{{localize 'GUM.Skills.Sort'}}"><i class="fas fa-sort-alpha-down"></i></a>
           </div>
       </div>
 
@@ -623,8 +643,8 @@
                     </div>
                     <span class="skill-group-header-tools">
                         {{#unless section.isTree}}{{#unless section.isUngrouped}}<span class="skill-group-actions">
-                            <a class="rename-skill-group" data-group-id="{{section.id}}" title="Renomear grupo"><i class="fas fa-pen"></i></a>
-                            <a class="delete-skill-group" data-group-id="{{section.id}}" title="Excluir grupo"><i class="fas fa-trash"></i></a>
+                            <a class="rename-skill-group" data-group-id="{{section.id}}" title="{{localize 'GUM.Skills.RenameGroup'}}"><i class="fas fa-pen"></i></a>
+                            <a class="delete-skill-group" data-group-id="{{section.id}}" title="{{localize 'GUM.Skills.DeleteGroup'}}"><i class="fas fa-trash"></i></a>
                         </span>{{/unless}}{{/unless}}
                         <span class="st-group-count">{{section.skills.length}}</span>
                     </span>
@@ -642,26 +662,28 @@
                         {{!-- Ícone (Visualização Rápida) --}}
                         <div class="st-item-icon item-quick-view"
                              style="background-image: url('{{this.img}}');"
-                             title="Visualizar Perícia">
+                             title="{{localize 'GUM.Skills.View'}}">
                         </div>
 
+                        <div class="st-card-content">
+                        <div class="st-card-main">
                         {{!-- Info Central --}}
                         <div class="st-item-name">
 
                             {{!-- Nome (Visualização Rápida) --}}
-                            <h4 class="item-quick-view" title="Clique para ver detalhes">
+                            <h4 class="item-quick-view" title="{{localize 'GUM.Skills.ViewDetails'}}">
                                 {{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}}
                             </h4>
 
                             {{!-- Linha secundária compacta --}}
                             <div class="st-inheritance-path">
-                                <span title="Atributo e nível relativo">{{this.skillListDisplay.baseAttribute}}{{#if (gte this.skillListDisplay.skillLevel 0)}}+{{/if}}{{this.skillListDisplay.skillLevel}}</span>
-                                {{#unless this.isTrunk}}{{#if this.skillListDisplay.difficulty}}<span aria-hidden="true">•</span><span title="Dificuldade">{{this.skillListDisplay.difficulty}}</span>{{/if}}{{/unless}}
-                                <span aria-hidden="true">•</span><span title="Pontos investidos">{{this.skillListDisplay.points}} pts</span>
-                                {{#if (ne this.skillListDisplay.nhMod 0)}}<span aria-hidden="true">•</span><span title="Modificador base">{{#if (gte this.skillListDisplay.nhMod 0)}}+{{/if}}{{this.skillListDisplay.nhMod}} mod.</span>{{/if}}
-                                {{#if (ne this.skillListDisplay.treeDefaultMod 0)}}<span aria-hidden="true">•</span><span title="Pré-definido da árvore">{{#if (gte this.skillListDisplay.treeDefaultMod 0)}}+{{/if}}{{this.skillListDisplay.treeDefaultMod}} árvore</span>{{/if}}
+                                <span title="{{localize 'GUM.Skills.BaseAttributeAndRelativeLevel'}}">{{this.skillListDisplay.baseAttribute}}{{#if (gte this.skillListDisplay.skillLevel 0)}}+{{/if}}{{this.skillListDisplay.skillLevel}}</span>
+                                {{#unless this.isTrunk}}{{#if this.skillListDisplay.difficulty}}<span aria-hidden="true">•</span><span title="{{localize 'GUM.Skills.Difficulty'}}">{{this.skillListDisplay.difficulty}}</span>{{/if}}{{/unless}}
+                                <span aria-hidden="true">•</span><span title="{{localize 'GUM.Skills.InvestedPoints'}}">{{this.skillListDisplay.points}} {{localize 'GUM.Skills.PointsAbbreviation'}}</span>
+                                {{#if (ne this.skillListDisplay.nhMod 0)}}<span aria-hidden="true">•</span><span title="{{localize 'GUM.Skills.BaseModifier'}}">{{#if (gte this.skillListDisplay.nhMod 0)}}+{{/if}}{{this.skillListDisplay.nhMod}} {{localize 'GUM.Skills.ModifierAbbreviation'}}</span>{{/if}}
+                                {{#if (ne this.skillListDisplay.treeDefaultMod 0)}}<span aria-hidden="true">•</span><span title="{{localize 'GUM.Skills.TreeDefault'}}">{{#if (gte this.skillListDisplay.treeDefaultMod 0)}}+{{/if}}{{this.skillListDisplay.treeDefaultMod}} {{localize 'GUM.Skills.TreeAbbreviation'}}</span>{{/if}}
                             </div>
-                            {{#if (eq @root.skillsViewMode 'tree')}}{{#if this.inheritancePath.length}}<div class="st-tree-path" aria-label="Caminho de herança">{{#each this.inheritancePath}}<span class="path-node {{this.type}}" title="Bônus vindo de: {{this.name}}">{{this.name}} {{#if (gte this.value 0)}}+{{/if}}{{this.value}}</span>{{/each}}</div>{{/if}}{{/if}}
+                            {{#if (eq @root.skillsViewMode 'tree')}}{{#if this.inheritancePath.length}}<div class="st-tree-path" aria-label="{{localize 'GUM.Skills.InheritancePath'}}">{{#each this.inheritancePath}}<span class="path-node {{this.type}}" title="{{localize 'GUM.Skills.BonusFrom' name=this.name}}">{{this.name}} {{#if (gte this.value 0)}}+{{/if}}{{this.value}}</span>{{/each}}</div>{{/if}}{{/if}}
                         </div>
 
                         {{!-- NH Final --}}
@@ -669,12 +691,13 @@
                             <span>NH</span>
                             <a class="rollable"
                                data-roll-value="{{#if this.tree_final_nh}}{{this.tree_final_nh}}{{else}}{{this.system.final_nh}}{{/if}}"
-                               data-label="Teste de {{this.name}}"
+                               data-label="{{localize 'GUM.Skills.Test' name=this.name}}"
                                data-type="skill"
                                data-item-id="{{this._id}}"
                                data-attribute-key="{{this.skillListDisplay.baseAttribute}}">
                                {{#if this.tree_final_nh}}{{this.tree_final_nh}}{{else}}{{this.system.final_nh}}{{/if}}
                             </a>
+                        </div>
                         </div>
 
                         {{!-- Rodapé: efeitos/tags à esquerda e ações à direita --}}
@@ -683,8 +706,15 @@
                                 {{#if this.modifierIndicators.included.visible}}<span class="skill-modifier-tag is-included" title="{{this.modifierIndicators.included.title}}" aria-label="{{this.modifierIndicators.included.title}}">NH</span>{{/if}}
                                 {{#if this.modifierIndicators.roll.visible}}<span class="skill-modifier-tag is-roll {{this.modifierIndicators.roll.className}}" title="{{this.modifierIndicators.roll.title}}" aria-label="{{this.modifierIndicators.roll.title}}">ROL {{#if (gte this.modifierIndicators.roll.total 0)}}+{{/if}}{{this.modifierIndicators.roll.total}}</span>{{/if}}
                             </span>{{/if}}
-                            {{#if this.skillOrganizationCanRemove}}<a class="item-control remove-skill-from-group" data-item-id="{{this._id}}" title="Retirar do grupo" aria-label="Retirar {{this.name}} do grupo"><i class="fas fa-arrow-up-from-bracket"></i></a>{{/if}}
-                            <span class="st-control-actions"><a class="item-control item-edit" title="{{localize 'GUM.Inventory.Edit'}}"><i class="fas fa-edit"></i></a><a class="item-control item-delete" title="{{localize 'GUM.Inventory.Delete'}}"><i class="fas fa-trash"></i></a></span>
+                            <div class="gum-action-menu js-action-menu">
+                              <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Inventory.Options'}}" aria-label="{{localize 'GUM.Inventory.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+                              <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Inventory.Options'}}">
+                                {{#if this.skillOrganizationCanRemove}}<a class="item-control remove-skill-from-group gum-action-menu__item" data-item-id="{{this._id}}" role="menuitem"><i class="fas fa-arrow-up-from-bracket"></i><span>{{localize 'GUM.Skills.RemoveFromGroup'}}</span></a>{{/if}}
+                                <a class="item-control item-edit gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{localize 'GUM.Inventory.Edit'}}</span></a>
+                                <a class="item-control item-delete gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>{{localize 'GUM.Inventory.Delete'}}</span></a>
+                              </div>
+                            </div>
+                        </div>
                         </div>
                     </li>
                     {{/each}}
@@ -692,12 +722,12 @@
             </details>
         {{/each}}
 
-        <div class="skills-search-empty" hidden>Nenhuma perícia encontrada.</div>
+        <div class="skills-search-empty" hidden>{{localize 'GUM.Skills.NoSearchResults'}}</div>
 
         {{!-- Vazio --}}
         {{#unless @root.hasSkills}}
             <div class="empty-placeholder" style="text-align:center; padding:20px; color:#666;">
-                <p>Nenhuma perícia adicionada.</p>
+                <p>{{localize 'GUM.Skills.Empty'}}</p>
             </div>
         {{/unless}}
 
@@ -713,25 +743,25 @@
                   <div class="skills-header-tools">
         <div class="skills-search-wrapper">
           <i class="fas fa-search"></i>
-          <input type="text" class="spell-search-input" placeholder="Buscar magia..." autocomplete="off">
+          <input type="text" class="spell-search-input" placeholder="{{localize 'GUM.Spells.SearchPlaceholder'}}" aria-label="{{localize 'GUM.Spells.SearchLabel'}}" autocomplete="off">
         </div>
 
         <div class="skills-header-buttons">
           <div class="gum-action-menu js-action-menu support-add-menu">
-            <a class="support-add-menu__toggle gum-action-menu__toggle js-action-menu-toggle" title="Adicionar à aba Magias" aria-label="Adicionar à aba Magias" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-plus"></i> Adicionar</a>
-            <div class="gum-action-menu__panel js-action-menu-panel support-add-menu__panel" role="menu" aria-label="Adicionar à aba Magias">
-              <a class="gum-action-menu__item create-primary-item" data-type="spell" role="menuitem"><i class="fas fa-wand-magic-sparkles"></i><span><strong>Nova magia</strong><small>Criar uma magia na ficha</small></span></a>
-              <a class="gum-action-menu__item add-casting-ability" role="menuitem"><i class="fas fa-link"></i><span><strong>Vincular habilidade</strong><small>Usar uma vantagem ou desvantagem</small></span></a>
-              <a class="gum-action-menu__item add-energy-reserve" data-reserve-type="spell" role="menuitem"><i class="fas fa-battery-three-quarters"></i><span><strong>Criar reserva</strong><small>Adicionar energia para magias</small></span></a>
+            <a class="support-add-menu__toggle gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Spells.AddTitle'}}" aria-label="{{localize 'GUM.Spells.AddTitle'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-plus"></i> {{localize 'GUM.Spells.Add'}}</a>
+            <div class="gum-action-menu__panel js-action-menu-panel support-add-menu__panel" role="menu" aria-label="{{localize 'GUM.Spells.AddTitle'}}">
+              <a class="gum-action-menu__item create-primary-item" data-type="spell" role="menuitem"><i class="fas fa-wand-magic-sparkles"></i><span><strong>{{localize 'GUM.Spells.New'}}</strong><small>{{localize 'GUM.Spells.NewHint'}}</small></span></a>
+              <a class="gum-action-menu__item add-casting-ability" role="menuitem"><i class="fas fa-link"></i><span><strong>{{localize 'GUM.Spells.LinkAbility'}}</strong><small>{{localize 'GUM.Spells.LinkAbilityHint'}}</small></span></a>
+              <a class="gum-action-menu__item add-energy-reserve" data-reserve-type="spell" role="menuitem"><i class="fas fa-battery-three-quarters"></i><span><strong>{{localize 'GUM.Spells.CreateReserve'}}</strong><small>{{localize 'GUM.Spells.CreateReserveHint'}}</small></span></a>
             </div>
           </div>
-          <a class="sort-control" data-item-type="spell" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
+          <a class="sort-control" data-item-type="spell" title="{{localize 'GUM.Spells.Sort'}}"><i class="fas fa-sort-alpha-down"></i></a>
         </div>
       </div>
 
 
       {{#if spellSupportCount}}
-      <section class="support-card-grid support-card-grid--spell{{#if spellSupportCompactPair}} is-compact-pair{{/if}}" aria-label="Conjuração e reservas de magia">
+      <section class="support-card-grid support-card-grid--spell{{#if spellSupportCompactPair}} is-compact-pair{{/if}}" aria-label="{{localize 'GUM.Spells.SupportSectionLabel'}}">
         {{#each castingAbilities}}
         <article class="support-card support-link-card characteristic-link-card{{#if this.broken}} is-broken{{/if}}" data-ability-id="{{this.id}}">
           {{#if this.itemId}}
@@ -740,17 +770,17 @@
           <div class="support-card__body">
             <div class="support-card__title-row">
               <a class="support-card__name casting-ability-name {{#if this.itemId}}{{#if this.broken}}edit-casting-ability{{else}}view-casting-ability{{/if}}{{/if}}">{{this.name}}{{#if this.specialization}} ({{this.specialization}}){{/if}}</a>
-              <span class="support-card__stat">{{#if this.itemId}}{{this.points}} pts{{else}}Nv {{this.level}}{{/if}}</span>
+              <span class="support-card__stat">{{#if this.itemId}}{{this.points}} {{localize 'GUM.Characteristics.PointsAbbreviation'}}{{else}}{{localize 'GUM.Characteristics.LevelAbbreviation'}} {{this.level}}{{/if}}</span>
             </div>
-            <div class="support-card__meta"><span class="support-card__kind">Conjuração</span> · {{#if this.itemId}}{{this.kindLabel}}{{#if this.level}} · Nv {{this.level}}{{/if}}{{#if this.notes}} · {{this.notes}}{{/if}}{{else}}Registro legado · {{this.source}}{{/if}}</div>
+            <div class="support-card__meta"><span class="support-card__kind">{{localize 'GUM.Spells.CastingAbility'}}</span> · {{#if this.itemId}}{{this.kindLabel}}{{#if this.level}} · {{localize 'GUM.Characteristics.LevelAbbreviation'}} {{this.level}}{{/if}}{{#if this.notes}} · {{this.notes}}{{/if}}{{else}}{{localize 'GUM.Resources.LegacyRecord'}} · {{this.source}}{{/if}}</div>
           </div>
                   <div class="item-controls support-card__controls">
             <div class="gum-action-menu js-action-menu">
-              <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da habilidade" aria-label="Opções da habilidade" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
-              <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da habilidade de conjuração">
-                <a class="item-control view-casting-ability gum-action-menu__item" role="menuitem"><i class="fas fa-eye"></i><span>{{#if this.itemId}}Abrir característica{{else}}Visualizar{{/if}}</span></a>
-                <a class="item-control edit-casting-ability gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{#if this.broken}}Selecionar substituta{{else}}Editar{{/if}}</span></a>
-                <a class="item-control delete-casting-ability gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-unlink"></i><span>{{#if this.itemId}}Desvincular{{else}}Excluir{{/if}}</span></a>
+              <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Spells.CastingAbilityOptions'}}" aria-label="{{localize 'GUM.Spells.CastingAbilityOptions'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+              <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Spells.CastingAbilityActions'}}">
+                <a class="item-control view-casting-ability gum-action-menu__item" role="menuitem"><i class="fas fa-eye"></i><span>{{#if this.itemId}}{{localize 'GUM.Resources.OpenTrait'}}{{else}}{{localize 'GUM.Resources.View'}}{{/if}}</span></a>
+                <a class="item-control edit-casting-ability gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{#if this.broken}}{{localize 'GUM.Resources.SelectReplacement'}}{{else}}{{localize 'GUM.Inventory.Edit'}}{{/if}}</span></a>
+                <a class="item-control delete-casting-ability gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-unlink"></i><span>{{#if this.itemId}}{{localize 'GUM.Resources.Unlink'}}{{else}}{{localize 'GUM.Inventory.Delete'}}{{/if}}</span></a>
               </div>
             </div>
           </div>
@@ -758,23 +788,23 @@
         {{/each}}
 
        {{#each spellReserves}}
-        <article class="support-card support-reserve-card support-card--category-start energy-reserve-card energy-reserve-card--spell{{#if @first}} is-first-reserve{{/if}}" data-reserve-id="{{@key}}" data-reserve-type="spell" {{#if this.equipmentId}}data-equipment-id="{{this.equipmentId}}"{{/if}} title="{{this.name}} — {{this.current}} de {{this.max}}" aria-label="Reserva de magia {{this.name}}: valor atual {{this.current}}, máximo {{this.max}}">
+        <article class="support-card support-reserve-card support-card--category-start energy-reserve-card energy-reserve-card--spell{{#if @first}} is-first-reserve{{/if}}" data-reserve-id="{{@key}}" data-reserve-type="spell" {{#if this.equipmentId}}data-equipment-id="{{this.equipmentId}}"{{/if}} title="{{localize 'GUM.Resources.ReserveTitle' name=this.name current=this.current max=this.max}}" aria-label="{{localize 'GUM.Resources.ReserveTitle' name=this.name current=this.current max=this.max}}">
           <span class="support-card__icon support-card__icon--spell"><i class="fas fa-magic" aria-hidden="true"></i></span>
           <div class="support-card__body">
             <strong class="support-card__name energy-reserve-name">{{this.name}}</strong>
-            <div class="support-card__meta"><span class="support-card__kind">Reserva</span> · máx. <strong>{{this.max}}</strong>{{#if this.source}} · {{this.source}}{{/if}}</div>
+            <div class="support-card__meta"><span class="support-card__kind">{{localize 'GUM.Resources.Reserve'}}</span> · {{localize 'GUM.Resources.MaximumAbbreviation'}} <strong>{{this.max}}</strong>{{#if this.source}} · {{this.source}}{{/if}}</div>
           </div>
           <div class="energy-reserve-value-controls support-card__value-controls">
-            <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="-1" aria-label="Diminuir {{this.name}} em uma unidade"><i class="fas fa-minus" aria-hidden="true"></i></button>
-            <strong class="energy-reserve-value" aria-label="Valor atual: {{this.current}}">{{this.current}}</strong>
-            <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="1" aria-label="Aumentar {{this.name}} em uma unidade"><i class="fas fa-plus" aria-hidden="true"></i></button>
+            <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="-1" aria-label="{{localize 'GUM.Resources.Decrease' name=this.name}}"><i class="fas fa-minus" aria-hidden="true"></i></button>
+            <strong class="energy-reserve-value" aria-label="{{localize 'GUM.Resources.CurrentValue' value=this.current}}">{{this.current}}</strong>
+            <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="1" aria-label="{{localize 'GUM.Resources.Increase' name=this.name}}"><i class="fas fa-plus" aria-hidden="true"></i></button>
           </div>
           <div class="item-controls support-card__controls energy-reserve-controls">
             <div class="gum-action-menu js-action-menu">
-              <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da reserva" aria-label="Opções da reserva" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
-              <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da reserva">
-                <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{#if this.equipmentId}}{{localize "GUM.Equipment.Reserve.OpenEquipment"}}{{else}}Editar{{/if}}</span></a>
-                {{#unless this.equipmentId}}<a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>Excluir</span></a>{{/unless}}
+              <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Resources.ReserveOptions'}}" aria-label="{{localize 'GUM.Resources.ReserveOptions'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+              <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Resources.ReserveActions'}}">
+                <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{#if this.equipmentId}}{{localize "GUM.Equipment.Reserve.OpenEquipment"}}{{else}}{{localize 'GUM.Inventory.Edit'}}{{/if}}</span></a>
+                {{#unless this.equipmentId}}<a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>{{localize 'GUM.Inventory.Delete'}}</span></a>{{/unless}}
               </div>
             </div>
           </div>
@@ -783,135 +813,154 @@
       </section>
       {{/if}}
 
-      {{!-- LISTA DE MAGIAS (AGRUPADA EM BLOCOS / PADRÃO LISTA DE ATAQUES) --}}
-      <div class="spell-groups-grid">
+      {{!-- Lista compacta de magias, isolada dos cards legados de poderes e combate. --}}
+      <div class="magic-groups">
       {{#each spellGroupsKeys as |groupName|}}
           {{#with (lookup ../spellsByGroup groupName) as |spells|}}
-          <details class="attack-group-details gum-unified-section spell-group-box" data-group-id="spell-group-{{groupName}}" {{collapsibleState (concat "spell-group-" groupName) @root.collapsedData}}>
-            <summary class="group-summary gum-unified-header">
-              <div class="summary-left">
+          <details class="magic-group" data-group-id="spell-group-{{groupName}}" {{collapsibleState (concat "spell-group-" groupName) @root.collapsedData}}>
+            <summary class="magic-group__header">
+              <div class="magic-group__identity">
                 <i class="fas fa-chevron-right indicator"></i>
                 <i class="fas fa-hat-wizard item-icon"></i>
                 <span class="group-name">{{groupName}}</span>
               </div>
-              <div class="summary-right">
-                <span class="group-tag sp_cl">{{spells.length}} Magias</span>
-              </div>
+              <span class="magic-group__count">{{localize 'GUM.Spells.Count' count=spells.length}}</span>
             </summary>
 
-            <div class="group-content">
-            <div class="spell-list-v2 grouped attack-style">
+            <div class="magic-card-grid">
               {{#each spells}}
-              <div class="item-wrapper item spell-row-v3 spell-card-two-line" data-item-id="{{this.id}}" draggable="true">
-                <div class="spell-card-primary">
-                  <img class="spell-thumb" src="{{this.img}}" alt="{{this.name}}">
+              <article class="item-wrapper item magic-card{{#if this.magicCardExpanded}} is-expanded{{/if}}" data-item-id="{{this.id}}" draggable="true">
+                <div class="magic-card__main">
+                  <img class="magic-card__icon" src="{{this.img}}" alt="{{this.name}}">
 
-                  <div class="spell-name-stack">
-                    <h4 class="spell-name item-quick-view" title="Visualizar Card">{{this.name}}</h4>
-                    <div class="spell-school-line">{{this.system.source}} · {{this.system.spell_class}} · {{this.system.spell_school}}</div>
-                  </div>
-
-                  <div class="spell-primary-stats">
-                    <div class="spell-meta-cell spell-pill-stat">
-                      <span class="spell-meta-label">NH</span>
-                      <a class="rollable spell-meta-value" data-type="spell" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
-                    </div>
-
-                    {{#if this.system.uses_attack}}
-                    <div class="spell-meta-cell spell-pill-stat attack">
-                      <span class="spell-meta-label">Atq</span>
-                      {{#if this.system.attack_nh}}
-                      <a class="rollable spell-meta-value" data-type="attack" data-attack-type="{{this.system.attack_type}}" data-attribute-key="{{this.system.attack_roll.skill_name}}" data-roll-value="{{this.system.attack_nh}}" data-label="Ataque de {{this.name}}" data-item-id="{{this.id}}" title="{{this.system.attack_roll.resolved_skill_name}}">{{this.system.attack_nh}}</a>
-                      {{else}}
-                      <span class="spell-meta-value" title="Configure uma perícia de ataque na magia.">—</span>
-                      {{/if}}
-                    </div>
-                    {{/if}}
-
-                    <div class="spell-meta-cell spell-pill-stat damage">
-                      <span class="spell-meta-label">Dano</span>
-                      {{#if this.system.damage.formula}}
-                      <a class="rollable-damage spell-meta-value" title="Rolar Dano" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}{{#if this.system.damage.scaling}} ({{this.system.damage.scaling}}){{/if}}</a>
-                      {{else}}
-                      <span class="spell-meta-value">—</span>
-                      {{/if}}
+                  <div class="magic-card__identity">
+                    <h4 class="magic-card__name item-quick-view" title="{{this.name}} — {{localize 'GUM.Spells.View'}}">{{this.name}}</h4>
+                    <div class="magic-card__identity-meta">{{this.magicCardIdentity}}</div>
+                    <div class="magic-card__identity-mechanics">
+                      <span class="magic-card__identity-stat" title="{{localize 'GUM.Spells.TimeHint'}}"><strong>{{localize 'GUM.Spells.Time'}}</strong> {{this.system.casting_time}} · {{this.system.duration}}</span>
+                      <span class="magic-card__identity-stat" title="{{localize 'GUM.Spells.ManaHint'}}"><strong>{{localize 'GUM.Spells.Mana'}}</strong> {{this.system.mana_cost}} / {{this.system.mana_maint}}</span>
                     </div>
                   </div>
 
-                  <div class="item-controls spell-controls-row">
+                  <div class="magic-card__metric magic-card__nh">
+                    <span class="magic-card__metric-label">{{localize 'GUM.Spells.SkillLevel'}}</span>
+                    <a class="rollable magic-card__metric-value" data-type="spell" data-roll-value="{{this.system.final_nh}}" data-label="{{localize 'GUM.Spells.Test' name=this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
+                  </div>
+
+                  <div class="magic-card__metric magic-card__damage">
+                    <span class="magic-card__metric-label">{{localize 'GUM.Spells.Damage'}}</span>
+                    {{#if this.system.damage.formula}}<div class="magic-card__damage-value"><a class="rollable-damage magic-card__metric-value" title="{{localize 'GUM.Spells.RollDamage'}}" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}</a>{{#if this.magicCardAdditionalDamageMarkers}}<sup class="magic-card__additional-damage" title="{{this.magicCardAdditionalDamageHint}}" aria-label="{{this.magicCardAdditionalDamageHint}}">{{this.magicCardAdditionalDamageMarkers}}</sup>{{/if}}</div>{{/if}}
+                  </div>
+
+                  {{#if this.magicCardHasDetails}}
+                  <button type="button" class="magic-card__expand" title="{{#if this.magicCardExpanded}}{{localize 'GUM.Spells.CollapseDetails'}}{{else}}{{localize 'GUM.Spells.ExpandDetails'}}{{/if}}" aria-label="{{#if this.magicCardExpanded}}{{localize 'GUM.Spells.CollapseDetails'}}{{else}}{{localize 'GUM.Spells.ExpandDetails'}}{{/if}}" aria-expanded="{{#if this.magicCardExpanded}}true{{else}}false{{/if}}"><i class="fas {{#if this.magicCardExpanded}}fa-compress-arrows-alt{{else}}fa-expand-arrows-alt{{/if}}"></i></button>
+                  {{else}}
+                  <span class="magic-card__expand-spacer" aria-hidden="true"></span>
+                  {{/if}}
+
+                  <div class="item-controls magic-card__controls">
                     <div class="gum-action-menu js-action-menu">
-                      <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da magia" aria-label="Opções da magia" role="button" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-ellipsis-v"></i>
-                      </a>
-                      <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da magia">
-                        <a class="item-control item-quick-view gum-action-menu__item" data-item-id="{{this.id}}" role="menuitem" title="Visualizar"><i class="fas fa-eye"></i><span>Visualizar</span></a>
-                        <a class="item-control item-edit gum-action-menu__item" role="menuitem" title="{{localize 'GUM.Inventory.Edit'}}"><i class="fas fa-edit"></i><span>Editar</span></a>
-                        <a class="item-control item-delete gum-action-menu__item is-danger" role="menuitem" title="Deletar"><i class="fas fa-trash"></i><span>Deletar</span></a>
+                      <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Spells.Options'}}" aria-label="{{localize 'GUM.Spells.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+                      <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Spells.Options'}}">
+                        <a class="item-control item-quick-view gum-action-menu__item" data-item-id="{{this.id}}" role="menuitem"><i class="fas fa-eye"></i><span>{{localize 'GUM.Spells.View'}}</span></a>
+                        <a class="item-control item-edit gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{localize 'GUM.Spells.Edit'}}</span></a>
+                        <a class="item-control item-delete gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>{{localize 'GUM.Spells.Delete'}}</span></a>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div class="spell-card-secondary">
-                  <span><strong>Conj.</strong> {{this.system.casting_time}}</span>
-                  <span><strong>Duração</strong> {{this.system.duration}}</span>
-                  <span><strong>Custo</strong> {{this.system.mana_cost}}</span>
-                  <span><strong>Mant.</strong> {{this.system.mana_maint}}</span>
+                <div class="magic-card__details" {{#unless this.magicCardExpanded}}hidden{{/unless}}>
                   {{#if this.system.uses_attack}}
-                  <span class="spell-attack-source"><strong>Perícia</strong> {{#if this.system.attack_roll.resolved_skill_name}}{{this.system.attack_roll.resolved_skill_name}}{{else}}{{this.system.attack_roll.skill_name}}{{/if}}</span>
+                  <section class="magic-card__detail-branch magic-card__detail-branch--attack">
+                    <h5><i class="fas fa-crosshairs"></i>{{localize 'GUM.Spells.Attack'}}</h5>
+                    <div class="magic-card__detail-values">
+                      <span><strong>{{localize 'GUM.Spells.Type'}}</strong>{{#if (eq this.system.attack_type 'melee')}}{{localize 'GUM.Spells.Melee'}}{{else}}{{localize 'GUM.Spells.Ranged'}}{{/if}}</span>
+                      <span><strong>{{localize 'GUM.Spells.Skill'}}</strong>{{#if this.system.attack_roll.resolved_skill_name}}{{this.system.attack_roll.resolved_skill_name}}{{else}}{{this.system.attack_roll.skill_name}}{{/if}}</span>
+                      {{#if this.system.attack_nh}}<a class="rollable magic-card__attack-level-tag" data-type="attack" data-attack-type="{{this.system.attack_type}}" data-attribute-key="{{this.system.attack_roll.skill_name}}" data-roll-value="{{this.system.attack_nh}}" data-label="{{localize 'GUM.Spells.AttackTest' name=this.name}}" data-item-id="{{this.id}}"><strong>{{localize 'GUM.Spells.SkillLevel'}}</strong>{{this.system.attack_nh}}</a>{{/if}}
+                      {{#if (eq this.system.attack_type 'melee')}}
+                        {{#if this.system.attack_roll.reach}}<span><strong>{{localize 'GUM.Spells.Reach'}}</strong>{{this.system.attack_roll.reach}}</span>{{/if}}
+                        {{#if this.system.attack_roll.parry}}<span><strong>{{localize 'GUM.Spells.Parry'}}</strong>{{this.system.attack_roll.parry}}</span>{{/if}}
+                      {{else}}
+                        {{#if this.system.attack_roll.accuracy}}<span><strong>{{localize 'GUM.Spells.Accuracy'}}</strong>{{this.system.attack_roll.accuracy}}</span>{{/if}}
+                        {{#if this.system.attack_roll.range}}<span><strong>{{localize 'GUM.Spells.Range'}}</strong>{{this.system.attack_roll.range}}</span>{{/if}}
+                        {{#if this.system.attack_roll.rof}}<span><strong>{{localize 'GUM.Spells.RateOfFire'}}</strong>{{this.system.attack_roll.rof}}</span>{{/if}}
+                        {{#if this.system.attack_roll.shots}}<span><strong>{{localize 'GUM.Spells.Shots'}}</strong>{{this.system.attack_roll.shots}}</span>{{/if}}
+                        {{#if this.system.attack_roll.bulk}}<span><strong>{{localize 'GUM.Spells.Bulk'}}</strong>{{this.system.attack_roll.bulk}}</span>{{/if}}
+                        {{#if this.system.attack_roll.rcl}}<span><strong>{{localize 'GUM.Spells.Recoil'}}</strong>{{this.system.attack_roll.rcl}}</span>{{/if}}
+                      {{/if}}
+                      {{#if this.system.attack_roll.min_strength}}<span><strong>{{localize 'GUM.Spells.MinimumStrength'}}</strong>{{this.system.attack_roll.min_strength}}</span>{{/if}}
+                    </div>
+                  </section>
                   {{/if}}
-                  {{#if this.system.damage.follow_up_damage.formula}}
-                  <span class="spell-damage-extra"><strong>FU</strong> {{this.system.damage.follow_up_damage.formula}} {{this.system.damage.follow_up_damage.type}}{{#if this.system.damage.follow_up_damage.scaling}} ({{this.system.damage.follow_up_damage.scaling}}){{/if}}</span>
+
+                  {{#if this.system.damage.formula}}
+                  <section class="magic-card__detail-branch magic-card__detail-branch--damage">
+                    <h5><i class="fas fa-burst"></i>{{localize 'GUM.Spells.Damage'}}</h5>
+                    <div class="magic-card__detail-values">
+                      <a class="rollable-damage" data-item-id="{{this.id}}"><strong>{{localize 'GUM.Spells.PrimaryDamage'}}</strong>{{this.system.damage.formula}} {{this.system.damage.type}}{{#if this.system.damage.nature}} · {{this.system.damage.nature}}{{/if}}{{#if (gt this.system.damage.armor_divisor 1)}} · ÷{{this.system.damage.armor_divisor}}{{/if}}{{#if this.system.damage.scaling}} · {{this.system.damage.scaling}}{{/if}}</a>
+                      {{#if this.system.damage.follow_up_damage.formula}}<span><strong>{{localize 'GUM.Spells.FollowUpDamage'}}</strong>{{this.system.damage.follow_up_damage.formula}} {{this.system.damage.follow_up_damage.type}}{{#if this.system.damage.follow_up_damage.nature}} · {{this.system.damage.follow_up_damage.nature}}{{/if}}{{#if this.system.damage.follow_up_damage.scaling}} · {{this.system.damage.follow_up_damage.scaling}}{{/if}}</span>{{/if}}
+                      {{#if this.system.damage.fragmentation_damage.formula}}<span><strong>{{localize 'GUM.Spells.FragmentationDamage'}}</strong>{{this.system.damage.fragmentation_damage.formula}} {{this.system.damage.fragmentation_damage.type}}{{#if this.system.damage.fragmentation_damage.nature}} · {{this.system.damage.fragmentation_damage.nature}}{{/if}}{{#if this.system.damage.fragmentation_damage.scaling}} · {{this.system.damage.fragmentation_damage.scaling}}{{/if}}</span>{{/if}}
+                    </div>
+                  </section>
                   {{/if}}
-                  {{#if this.system.damage.fragmentation_damage.formula}}
-                  <span class="spell-damage-extra"><strong>FR</strong> {{this.system.damage.fragmentation_damage.formula}} {{this.system.damage.fragmentation_damage.type}}{{#if this.system.damage.fragmentation_damage.scaling}} ({{this.system.damage.fragmentation_damage.scaling}}){{/if}}</span>
+
+                  {{#if (or this.system.resistance this.system.requires_concentration this.system.effect)}}
+                  <section class="magic-card__detail-branch magic-card__detail-branch--resolution">
+                    <h5><i class="fas fa-clipboard-check"></i>{{localize 'GUM.Spells.Resolution'}}</h5>
+                    <div class="magic-card__detail-values">
+                      {{#if this.system.resistance}}<span><strong>{{localize 'GUM.Spells.Resistance'}}</strong>{{this.system.resistance}}</span>{{/if}}
+                      {{#if this.system.requires_concentration}}<span><i class="fas fa-brain"></i> {{localize 'GUM.Spells.RequiresConcentration'}}</span>{{/if}}
+                      {{#if this.system.effect}}<span class="magic-card__effect"><strong>{{localize 'GUM.Spells.Effect'}}</strong>{{this.system.effect}}</span>{{/if}}
+                    </div>
+                  </section>
                   {{/if}}
                 </div>
-              </div>
+              </article>
               {{/each}}
-            </div>
             </div>
           </details>
           {{/with}}
         {{/each}}
 
         {{#unless spellGroupsKeys}}
-        <div class="empty-placeholder" style="text-align:center; padding:20px; color:#666;">
-          <p>Nenhuma magia adicionada.</p>
+        <div class="empty-placeholder magic-empty">
+          <p>{{localize 'GUM.Spells.Empty'}}</p>
         </div>
         {{/unless}}
       </div>
+      <div class="magic-search-empty" hidden>{{localize 'GUM.Spells.NoSearchResults'}}</div>
       </div>
     </div>
 
     {{! ========================================================= }}
     {{!  ABA DE PODERES (ESTRUTURA REFINADA E PADRONIZADA)        }}
     {{! ========================================================= }}
-    <div class="tab" data-group="primary" data-tab="powers">
+    <div class="tab powers-tab" data-group="primary" data-tab="powers">
 
  <div class="spells-tab-layout spells-tab-layout--stacked">
 
       <div class="skills-header-tools">
         <div class="skills-search-wrapper">
           <i class="fas fa-search"></i>
-          <input type="text" class="power-search-input" placeholder="Buscar poder..." autocomplete="off">
+          <input type="text" class="power-search-input" placeholder="{{localize 'GUM.Powers.SearchPlaceholder'}}" aria-label="{{localize 'GUM.Powers.SearchLabel'}}" autocomplete="off">
         </div>
 
         <div class="skills-header-buttons">
                     <div class="gum-action-menu js-action-menu support-add-menu">
-            <a class="support-add-menu__toggle gum-action-menu__toggle js-action-menu-toggle" title="Adicionar à aba Poderes" aria-label="Adicionar à aba Poderes" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-plus"></i> Adicionar</a>
-            <div class="gum-action-menu__panel js-action-menu-panel support-add-menu__panel" role="menu" aria-label="Adicionar à aba Poderes">
-              <a class="gum-action-menu__item create-primary-item" data-type="power" role="menuitem"><i class="fas fa-wand-magic-sparkles"></i><span><strong>Novo poder</strong><small>Criar um poder na ficha</small></span></a>
-              <a class="gum-action-menu__item add-power-source" role="menuitem"><i class="fas fa-link"></i><span><strong>Vincular fonte</strong><small>Usar uma vantagem ou desvantagem</small></span></a>
-              <a class="gum-action-menu__item add-energy-reserve" data-reserve-type="power" role="menuitem"><i class="fas fa-battery-three-quarters"></i><span><strong>Criar reserva</strong><small>Adicionar energia para poderes</small></span></a>
+            <a class="support-add-menu__toggle gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Powers.AddTitle'}}" aria-label="{{localize 'GUM.Powers.AddTitle'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-plus"></i> {{localize 'GUM.Powers.Add'}}</a>
+            <div class="gum-action-menu__panel js-action-menu-panel support-add-menu__panel" role="menu" aria-label="{{localize 'GUM.Powers.AddTitle'}}">
+              <a class="gum-action-menu__item create-primary-item" data-type="power" role="menuitem"><i class="fas fa-wand-magic-sparkles"></i><span><strong>{{localize 'GUM.Powers.New'}}</strong><small>{{localize 'GUM.Powers.NewHint'}}</small></span></a>
+              <a class="gum-action-menu__item add-power-source" role="menuitem"><i class="fas fa-link"></i><span><strong>{{localize 'GUM.Powers.LinkSource'}}</strong><small>{{localize 'GUM.Powers.LinkSourceHint'}}</small></span></a>
+              <a class="gum-action-menu__item add-energy-reserve" data-reserve-type="power" role="menuitem"><i class="fas fa-battery-three-quarters"></i><span><strong>{{localize 'GUM.Powers.CreateReserve'}}</strong><small>{{localize 'GUM.Powers.CreateReserveHint'}}</small></span></a>
             </div>
           </div>
-          <a class="sort-control" data-item-type="power" title="Ordenar"><i class="fas fa-sort-alpha-down"></i></a>
+          <a class="sort-control" data-item-type="power" title="{{localize 'GUM.Powers.Sort'}}"><i class="fas fa-sort-alpha-down"></i></a>
         </div>
       </div>
 
       {{#if powerSupportCount}}
-      <section class="support-card-grid support-card-grid--power{{#if powerSupportCompactPair}} is-compact-pair{{/if}}" aria-label="Fontes e reservas de poder">
+      <section class="support-card-grid support-card-grid--power{{#if powerSupportCompactPair}} is-compact-pair{{/if}}" aria-label="{{localize 'GUM.Powers.SupportSectionLabel'}}">
         {{#each powerSources}}
         <article class="support-card support-link-card characteristic-link-card{{#if this.broken}} is-broken{{/if}}" data-power-source-id="{{this.id}}">
           {{#if this.itemId}}
@@ -920,40 +969,40 @@
           <div class="support-card__body">
             <div class="support-card__title-row">
               <a class="support-card__name casting-ability-name {{#if this.itemId}}{{#if this.broken}}edit-power-source{{else}}view-power-source{{/if}}{{/if}}">{{this.name}}{{#if this.specialization}} ({{this.specialization}}){{/if}}</a>
-              <span class="support-card__stat">{{#if this.itemId}}{{this.points}} pts{{else}}Nv {{this.level}}{{/if}}</span>
+              <span class="support-card__stat">{{#if this.itemId}}{{this.points}} {{localize 'GUM.Characteristics.PointsAbbreviation'}}{{else}}{{localize 'GUM.Characteristics.LevelAbbreviation'}} {{this.level}}{{/if}}</span>
             </div>
-            <div class="support-card__meta"><span class="support-card__kind">Fonte</span> · {{#if this.itemId}}{{this.kindLabel}}{{#if this.level}} · Nv {{this.level}}{{/if}}{{#if this.notes}} · {{this.notes}}{{/if}}{{else}}Registro legado · {{this.source}}{{/if}}</div>
+            <div class="support-card__meta"><span class="support-card__kind">{{localize 'GUM.Powers.Source'}}</span> · {{#if this.itemId}}{{this.kindLabel}}{{#if this.level}} · {{localize 'GUM.Characteristics.LevelAbbreviation'}} {{this.level}}{{/if}}{{#if this.notes}} · {{this.notes}}{{/if}}{{else}}{{localize 'GUM.Resources.LegacyRecord'}} · {{this.source}}{{/if}}</div>
           </div>
           <div class="item-controls support-card__controls">
             <div class="gum-action-menu js-action-menu">
-              <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da fonte" aria-label="Opções da fonte" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
-              <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da fonte de poder">
-                <a class="item-control view-power-source gum-action-menu__item" role="menuitem"><i class="fas fa-eye"></i><span>{{#if this.itemId}}Abrir característica{{else}}Visualizar{{/if}}</span></a>
-                <a class="item-control edit-power-source gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{#if this.broken}}Selecionar substituta{{else}}Editar{{/if}}</span></a>
-                <a class="item-control delete-power-source gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-unlink"></i><span>{{#if this.itemId}}Desvincular{{else}}Excluir{{/if}}</span></a>
+              <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Powers.SourceOptions'}}" aria-label="{{localize 'GUM.Powers.SourceOptions'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+              <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Powers.SourceActions'}}">
+                <a class="item-control view-power-source gum-action-menu__item" role="menuitem"><i class="fas fa-eye"></i><span>{{#if this.itemId}}{{localize 'GUM.Resources.OpenTrait'}}{{else}}{{localize 'GUM.Resources.View'}}{{/if}}</span></a>
+                <a class="item-control edit-power-source gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{#if this.broken}}{{localize 'GUM.Resources.SelectReplacement'}}{{else}}{{localize 'GUM.Inventory.Edit'}}{{/if}}</span></a>
+                <a class="item-control delete-power-source gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-unlink"></i><span>{{#if this.itemId}}{{localize 'GUM.Resources.Unlink'}}{{else}}{{localize 'GUM.Inventory.Delete'}}{{/if}}</span></a>
               </div>
             </div>
           </div>
         </article>
         {{/each}}
         {{#each powerReserves}}
-        <article class="support-card support-reserve-card support-card--category-start energy-reserve-card energy-reserve-card--power{{#if @first}} is-first-reserve{{/if}}" data-reserve-id="{{@key}}" data-reserve-type="power" {{#if this.equipmentId}}data-equipment-id="{{this.equipmentId}}"{{/if}} title="{{this.name}} — {{this.current}} de {{this.max}}" aria-label="Reserva de poder {{this.name}}: valor atual {{this.current}}, máximo {{this.max}}">
+        <article class="support-card support-reserve-card support-card--category-start energy-reserve-card energy-reserve-card--power{{#if @first}} is-first-reserve{{/if}}" data-reserve-id="{{@key}}" data-reserve-type="power" {{#if this.equipmentId}}data-equipment-id="{{this.equipmentId}}"{{/if}} title="{{localize 'GUM.Resources.ReserveTitle' name=this.name current=this.current max=this.max}}" aria-label="{{localize 'GUM.Resources.ReserveTitle' name=this.name current=this.current max=this.max}}">
           <span class="support-card__icon support-card__icon--power"><i class="fas fa-bolt" aria-hidden="true"></i></span>
           <div class="support-card__body">
             <strong class="support-card__name energy-reserve-name">{{this.name}}</strong>
-            <div class="support-card__meta"><span class="support-card__kind">Reserva</span> · máx. <strong>{{this.max}}</strong>{{#if this.source}} · {{this.source}}{{/if}}</div>
+            <div class="support-card__meta"><span class="support-card__kind">{{localize 'GUM.Resources.Reserve'}}</span> · {{localize 'GUM.Resources.MaximumAbbreviation'}} <strong>{{this.max}}</strong>{{#if this.source}} · {{this.source}}{{/if}}</div>
           </div>
           <div class="energy-reserve-value-controls support-card__value-controls">
-            <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="-1" aria-label="Diminuir {{this.name}} em uma unidade"><i class="fas fa-minus" aria-hidden="true"></i></button>
-            <strong class="energy-reserve-value" aria-label="Valor atual: {{this.current}}">{{this.current}}</strong>
-            <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="1" aria-label="Aumentar {{this.name}} em uma unidade"><i class="fas fa-plus" aria-hidden="true"></i></button>
+            <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="-1" aria-label="{{localize 'GUM.Resources.Decrease' name=this.name}}"><i class="fas fa-minus" aria-hidden="true"></i></button>
+            <strong class="energy-reserve-value" aria-label="{{localize 'GUM.Resources.CurrentValue' value=this.current}}">{{this.current}}</strong>
+            <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="1" aria-label="{{localize 'GUM.Resources.Increase' name=this.name}}"><i class="fas fa-plus" aria-hidden="true"></i></button>
           </div>
           <div class="item-controls support-card__controls energy-reserve-controls">
             <div class="gum-action-menu js-action-menu">
-              <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da reserva" aria-label="Opções da reserva" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
-              <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da reserva">
-                <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{#if this.equipmentId}}{{localize "GUM.Equipment.Reserve.OpenEquipment"}}{{else}}Editar{{/if}}</span></a>
-                {{#unless this.equipmentId}}<a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>Excluir</span></a>{{/unless}}
+              <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Resources.ReserveOptions'}}" aria-label="{{localize 'GUM.Resources.ReserveOptions'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+              <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Resources.ReserveActions'}}">
+                <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{#if this.equipmentId}}{{localize "GUM.Equipment.Reserve.OpenEquipment"}}{{else}}{{localize 'GUM.Inventory.Edit'}}{{/if}}</span></a>
+                {{#unless this.equipmentId}}<a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>{{localize 'GUM.Inventory.Delete'}}</span></a>{{/unless}}
               </div>
             </div>
           </div>
@@ -962,106 +1011,118 @@
       </section>
       {{/if}}
 
-      {{!-- LISTA DE PODERES (AGRUPADA EM BLOCOS / PADRÃO LISTA DE ATAQUES) --}}
-
-      <div class="spell-groups-grid">
+      {{!-- Lista compacta de poderes, usando o mesmo componente visual das magias. --}}
+      <div class="magic-groups power-groups">
       {{#each powerGroupsKeys as |groupName|}}
           {{#with (lookup ../powersByGroup groupName) as |powers|}}
-          <details class="attack-group-details gum-unified-section spell-group-box" data-group-id="power-group-{{groupName}}" {{collapsibleState (concat "power-group-" groupName) @root.collapsedData}}>
-            <summary class="group-summary gum-unified-header">
-              <div class="summary-left">
+          <details class="magic-group power-group" data-group-id="power-group-{{groupName}}" {{collapsibleState (concat "power-group-" groupName) @root.collapsedData}}>
+            <summary class="magic-group__header">
+              <div class="magic-group__identity">
                 <i class="fas fa-chevron-right indicator"></i>
                 <i class="fas fa-bolt item-icon"></i>
                 <span class="group-name">{{groupName}}</span>
               </div>
-              <div class="summary-right">
-                <span class="group-tag pw">{{powers.length}} Poderes</span>
-              </div>
+              <span class="magic-group__count">{{localize 'GUM.Powers.Count' count=powers.length}}</span>
             </summary>
 
-            <div class="group-content">
-            <div class="spell-list-v2 grouped attack-style">
+            <div class="magic-card-grid power-card-grid">
               {{#each powers}}
-              <div class="item-wrapper item spell-row-v3 spell-card-two-line" data-item-id="{{this.id}}" draggable="true">
-                <div class="spell-card-primary">
-                  <img class="spell-thumb" src="{{this.img}}" alt="{{this.name}}">
+              <article class="item-wrapper item magic-card power-card{{#if this.powerCardExpanded}} is-expanded{{/if}}" data-item-id="{{this.id}}" draggable="true">
+                <div class="magic-card__main">
+                  <img class="magic-card__icon" src="{{this.img}}" alt="{{this.name}}">
 
-                  <div class="spell-name-stack">
-                    <h4 class="spell-name item-quick-view" title="Visualizar Card">{{this.name}}</h4>
-                    <div class="spell-school-line">{{this.system.source}} · {{this.system.spell_class}}</div>
-                  </div>
-
-                  <div class="spell-primary-stats">
-                    <div class="spell-meta-cell spell-pill-stat">
-                      <span class="spell-meta-label">NH</span>
-                      <a class="rollable spell-meta-value" data-type="power" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
-                    </div>
-
-                    {{#if this.system.uses_attack}}
-                    <div class="spell-meta-cell spell-pill-stat attack">
-                      <span class="spell-meta-label">Atq</span>
-                      {{#if this.system.attack_nh}}
-                      <a class="rollable spell-meta-value" data-type="attack" data-attack-type="{{this.system.attack_type}}" data-attribute-key="{{this.system.attack_roll.skill_name}}" data-roll-value="{{this.system.attack_nh}}" data-label="Ataque de {{this.name}}" data-item-id="{{this.id}}" title="{{this.system.attack_roll.resolved_skill_name}}">{{this.system.attack_nh}}</a>
-                      {{else}}
-                      <span class="spell-meta-value" title="Configure uma perícia de ataque no poder.">—</span>
-                      {{/if}}
-                    </div>
-                    {{/if}}
-
-                    <div class="spell-meta-cell spell-pill-stat damage">
-                      <span class="spell-meta-label">Dano</span>
-                      {{#if this.system.damage.formula}}
-                      <a class="rollable-damage spell-meta-value" title="Rolar Dano" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}{{#if this.system.damage.scaling}} ({{this.system.damage.scaling}}){{/if}}</a>
-                      {{else}}
-                      <span class="spell-meta-value">—</span>
-                      {{/if}}
+                  <div class="magic-card__identity">
+                    <h4 class="magic-card__name item-quick-view" title="{{this.name}} — {{localize 'GUM.Powers.View'}}">{{this.name}}</h4>
+                    <div class="magic-card__identity-meta">{{this.powerCardIdentity}}</div>
+                    <div class="magic-card__identity-mechanics">
+                      <span class="magic-card__identity-stat" title="{{localize 'GUM.Powers.TimeHint'}}"><strong>{{localize 'GUM.Powers.Time'}}</strong> {{this.system.activation_time}} · {{this.system.duration}}</span>
+                      <span class="magic-card__identity-stat" title="{{localize 'GUM.Powers.CostHint'}}"><strong>{{localize 'GUM.Powers.Cost'}}</strong> {{this.system.activation_cost}} / {{this.system.maint_cost}}</span>
                     </div>
                   </div>
 
-                  <div class="item-controls spell-controls-row">
+                  <div class="magic-card__metric magic-card__nh">
+                    <span class="magic-card__metric-label">{{localize 'GUM.Spells.SkillLevel'}}</span>
+                    <a class="rollable magic-card__metric-value" data-type="power" data-roll-value="{{this.system.final_nh}}" data-label="{{localize 'GUM.Powers.Test' name=this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
+                  </div>
+
+                  <div class="magic-card__metric magic-card__damage">
+                    <span class="magic-card__metric-label">{{localize 'GUM.Spells.Damage'}}</span>
+                    {{#if this.system.damage.formula}}<div class="magic-card__damage-value"><a class="rollable-damage magic-card__metric-value" title="{{localize 'GUM.Spells.RollDamage'}}" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}</a>{{#if this.powerCardAdditionalDamageMarkers}}<sup class="magic-card__additional-damage" title="{{this.powerCardAdditionalDamageHint}}" aria-label="{{this.powerCardAdditionalDamageHint}}">{{this.powerCardAdditionalDamageMarkers}}</sup>{{/if}}</div>{{/if}}
+                  </div>
+
+                  <button type="button" class="magic-card__expand" title="{{#if this.powerCardExpanded}}{{localize 'GUM.Powers.CollapseDetails'}}{{else}}{{localize 'GUM.Powers.ExpandDetails'}}{{/if}}" aria-label="{{#if this.powerCardExpanded}}{{localize 'GUM.Powers.CollapseDetails'}}{{else}}{{localize 'GUM.Powers.ExpandDetails'}}{{/if}}" aria-expanded="{{#if this.powerCardExpanded}}true{{else}}false{{/if}}"><i class="fas {{#if this.powerCardExpanded}}fa-compress-arrows-alt{{else}}fa-expand-arrows-alt{{/if}}"></i></button>
+
+                  <div class="item-controls magic-card__controls">
                     <div class="gum-action-menu js-action-menu">
-                      <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções do poder" aria-label="Opções do poder" role="button" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-ellipsis-v"></i>
-                      </a>
-                      <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações do poder">
-                        <a class="item-control item-quick-view gum-action-menu__item" role="menuitem" title="Visualizar Card"><i class="fas fa-eye"></i><span>Visualizar Card</span></a>
-                        <a class="item-control item-edit gum-action-menu__item" role="menuitem" title="{{localize 'GUM.Inventory.Edit'}}"><i class="fas fa-edit"></i><span>Editar</span></a>
-                        <a class="item-control item-delete gum-action-menu__item is-danger" role="menuitem" title="Deletar"><i class="fas fa-trash"></i><span>Deletar</span></a>
+                      <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Powers.Options'}}" aria-label="{{localize 'GUM.Powers.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+                      <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Powers.Options'}}">
+                        <a class="item-control item-quick-view gum-action-menu__item" data-item-id="{{this.id}}" role="menuitem"><i class="fas fa-eye"></i><span>{{localize 'GUM.Powers.View'}}</span></a>
+                        <a class="item-control item-edit gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{localize 'GUM.Powers.Edit'}}</span></a>
+                        <a class="item-control item-delete gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>{{localize 'GUM.Powers.Delete'}}</span></a>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div class="spell-card-secondary">
-                  <span><strong>Ativ.</strong> {{this.system.activation_time}}</span>
-                  <span><strong>Duração</strong> {{this.system.duration}}</span>
-                  <span><strong>Custo</strong> {{this.system.activation_cost}}</span>
-                  <span><strong>Mant.</strong> {{this.system.maint_cost}}</span>
-                  <span><strong>Pts</strong> {{characteristicPoints this}}{{#if (eq this.system.cost_paid "alternative")}} alt{{/if}}</span>
+                <div class="magic-card__details" {{#unless this.powerCardExpanded}}hidden{{/unless}}>
                   {{#if this.system.uses_attack}}
-                  <span class="spell-attack-source"><strong>Perícia</strong> {{#if this.system.attack_roll.resolved_skill_name}}{{this.system.attack_roll.resolved_skill_name}}{{else}}{{this.system.attack_roll.skill_name}}{{/if}}</span>
+                  <section class="magic-card__detail-branch magic-card__detail-branch--attack">
+                    <h5><i class="fas fa-crosshairs"></i>{{localize 'GUM.Spells.Attack'}}</h5>
+                    <div class="magic-card__detail-values">
+                      <span><strong>{{localize 'GUM.Spells.Type'}}</strong>{{#if (eq this.system.attack_type 'melee')}}{{localize 'GUM.Spells.Melee'}}{{else}}{{localize 'GUM.Spells.Ranged'}}{{/if}}</span>
+                      <span><strong>{{localize 'GUM.Spells.Skill'}}</strong>{{#if this.system.attack_roll.resolved_skill_name}}{{this.system.attack_roll.resolved_skill_name}}{{else}}{{this.system.attack_roll.skill_name}}{{/if}}</span>
+                      {{#if this.system.attack_nh}}<a class="rollable magic-card__attack-level-tag" data-type="attack" data-attack-type="{{this.system.attack_type}}" data-attribute-key="{{this.system.attack_roll.skill_name}}" data-roll-value="{{this.system.attack_nh}}" data-label="{{localize 'GUM.Powers.AttackTest' name=this.name}}" data-item-id="{{this.id}}"><strong>{{localize 'GUM.Spells.SkillLevel'}}</strong>{{this.system.attack_nh}}</a>{{/if}}
+                      {{#if (eq this.system.attack_type 'melee')}}
+                        {{#if this.system.attack_roll.reach}}<span><strong>{{localize 'GUM.Spells.Reach'}}</strong>{{this.system.attack_roll.reach}}</span>{{/if}}
+                        {{#if this.system.attack_roll.parry}}<span><strong>{{localize 'GUM.Spells.Parry'}}</strong>{{this.system.attack_roll.parry}}</span>{{/if}}
+                      {{else}}
+                        {{#if this.system.attack_roll.accuracy}}<span><strong>{{localize 'GUM.Spells.Accuracy'}}</strong>{{this.system.attack_roll.accuracy}}</span>{{/if}}
+                        {{#if this.system.attack_roll.range}}<span><strong>{{localize 'GUM.Spells.Range'}}</strong>{{this.system.attack_roll.range}}</span>{{/if}}
+                        {{#if this.system.attack_roll.rof}}<span><strong>{{localize 'GUM.Spells.RateOfFire'}}</strong>{{this.system.attack_roll.rof}}</span>{{/if}}
+                        {{#if this.system.attack_roll.shots}}<span><strong>{{localize 'GUM.Spells.Shots'}}</strong>{{this.system.attack_roll.shots}}</span>{{/if}}
+                        {{#if this.system.attack_roll.bulk}}<span><strong>{{localize 'GUM.Spells.Bulk'}}</strong>{{this.system.attack_roll.bulk}}</span>{{/if}}
+                        {{#if this.system.attack_roll.rcl}}<span><strong>{{localize 'GUM.Spells.Recoil'}}</strong>{{this.system.attack_roll.rcl}}</span>{{/if}}
+                      {{/if}}
+                      {{#if this.system.attack_roll.min_strength}}<span><strong>{{localize 'GUM.Spells.MinimumStrength'}}</strong>{{this.system.attack_roll.min_strength}}</span>{{/if}}
+                    </div>
+                  </section>
                   {{/if}}
-                  {{#if this.system.damage.follow_up_damage.formula}}
-                  <span class="spell-damage-extra"><strong>FU</strong> {{this.system.damage.follow_up_damage.formula}} {{this.system.damage.follow_up_damage.type}}{{#if this.system.damage.follow_up_damage.scaling}} ({{this.system.damage.follow_up_damage.scaling}}){{/if}}</span>
+
+                  {{#if this.system.damage.formula}}
+                  <section class="magic-card__detail-branch magic-card__detail-branch--damage">
+                    <h5><i class="fas fa-burst"></i>{{localize 'GUM.Spells.Damage'}}</h5>
+                    <div class="magic-card__detail-values">
+                      <a class="rollable-damage" data-item-id="{{this.id}}"><strong>{{localize 'GUM.Spells.PrimaryDamage'}}</strong>{{this.system.damage.formula}} {{this.system.damage.type}}{{#if this.system.damage.nature}} · {{this.system.damage.nature}}{{/if}}{{#if (gt this.system.damage.armor_divisor 1)}} · ÷{{this.system.damage.armor_divisor}}{{/if}}{{#if this.system.damage.scaling}} · {{this.system.damage.scaling}}{{/if}}</a>
+                      {{#if this.system.damage.follow_up_damage.formula}}<span><strong>{{localize 'GUM.Spells.FollowUpDamage'}}</strong>{{this.system.damage.follow_up_damage.formula}} {{this.system.damage.follow_up_damage.type}}{{#if this.system.damage.follow_up_damage.nature}} · {{this.system.damage.follow_up_damage.nature}}{{/if}}{{#if this.system.damage.follow_up_damage.scaling}} · {{this.system.damage.follow_up_damage.scaling}}{{/if}}</span>{{/if}}
+                      {{#if this.system.damage.fragmentation_damage.formula}}<span><strong>{{localize 'GUM.Spells.FragmentationDamage'}}</strong>{{this.system.damage.fragmentation_damage.formula}} {{this.system.damage.fragmentation_damage.type}}{{#if this.system.damage.fragmentation_damage.nature}} · {{this.system.damage.fragmentation_damage.nature}}{{/if}}{{#if this.system.damage.fragmentation_damage.scaling}} · {{this.system.damage.fragmentation_damage.scaling}}{{/if}}</span>{{/if}}
+                    </div>
+                  </section>
                   {{/if}}
-                  {{#if this.system.damage.fragmentation_damage.formula}}
-                  <span class="spell-damage-extra"><strong>FR</strong> {{this.system.damage.fragmentation_damage.formula}} {{this.system.damage.fragmentation_damage.type}}{{#if this.system.damage.fragmentation_damage.scaling}} ({{this.system.damage.fragmentation_damage.scaling}}){{/if}}</span>
-                  {{/if}}
+
+                  <section class="magic-card__detail-branch magic-card__detail-branch--resolution">
+                    <h5><i class="fas fa-clipboard-check"></i>{{localize 'GUM.Powers.Configuration'}}</h5>
+                    <div class="magic-card__detail-values">
+                      <span><strong>{{localize 'GUM.Powers.Points'}}</strong>{{characteristicPoints this}}{{#if (eq this.system.cost_paid "alternative")}} {{localize 'GUM.Powers.Alternative'}}{{/if}}</span>
+                      {{#if this.system.resistance}}<span><strong>{{localize 'GUM.Spells.Resistance'}}</strong>{{this.system.resistance}}</span>{{/if}}
+                      {{#if this.system.requires_concentration}}<span><i class="fas fa-brain"></i> {{localize 'GUM.Spells.RequiresConcentration'}}</span>{{/if}}
+                      {{#if this.system.effect}}<span class="magic-card__effect"><strong>{{localize 'GUM.Spells.Effect'}}</strong>{{this.system.effect}}</span>{{/if}}
+                    </div>
+                  </section>
                 </div>
-              </div>
+              </article>
               {{/each}}
-            </div>
             </div>
           </details>
           {{/with}}
         {{/each}}
 
         {{#unless powerGroupsKeys}}
-        <div class="empty-placeholder" style="text-align:center; padding:20px; color:#666;">
-          <p>Nenhum poder adicionado.</p>
+        <div class="empty-placeholder magic-empty">
+          <p>{{localize 'GUM.Powers.Empty'}}</p>
         </div>
         {{/unless}}
       </div>
+      <div class="power-search-empty magic-search-empty" hidden>{{localize 'GUM.Powers.NoSearchResults'}}</div>
 
     </div>
     </div>
@@ -2128,10 +2189,10 @@
         <summary class="block-header gum-unified-header">
             <div class="header-left">
                 <i class="fas fa-chevron-right indicator"></i>
-                <span class="header-title">Efeitos Temporários</span>
+                <span class="header-title">{{localize 'GUM.Conditions.TemporaryEffects'}}</span>
                 <span class="header-counter">{{temporaryEffects.length}}</span>
             </div>
-            <p class="header-hint">Duração limitada (rodadas, minutos).</p>
+            <p class="header-hint">{{localize 'GUM.Conditions.TemporaryHint'}}</p>
         </summary>
 
         <div class="effects-grid-container">
@@ -2145,37 +2206,41 @@
                 <div class="effect-origin-list">
             {{#each group.effects as |effect|}}
                 <div class="effect-pill-enhanced temp-effect" data-effect-id="{{effect.id}}">
-                    <div class="pill-switch-wrapper">
-                        <label class="switch" title="Ativar/Desativar efeito">
-                            <input type="checkbox" class="effect-toggle" data-effect-id="{{effect.id}}" {{checked effect.disabled}}>
-                            <span class="slider round"></span>
-                        </label>
+                    <div class="pill-card-visual">
+                        <img src="{{effect.img}}" class="pill-icon" title="{{effect.name}}"/>
+                        <div class="pill-switch-wrapper"><label class="switch" title="{{localize 'GUM.Conditions.ToggleEffect'}}"><input type="checkbox" class="effect-toggle" data-effect-id="{{effect.id}}" {{checked effect.disabled}}><span class="slider round"></span></label></div>
                     </div>
-                    <img src="{{effect.img}}" class="pill-icon" title="{{effect.name}}"/>
+                    <div class="pill-card-content">
                     <div class="pill-info">
                         <span class="pill-name">{{effect.name}}</span>
                         <div class="pill-details">
-                            <span class="pill-tag duration" title="Duração Restante">
+                            <span class="pill-tag duration" title="{{localize 'GUM.Conditions.RemainingDuration'}}">
                                 <i class="fas fa-hourglass-half"></i> {{effect.durationString}}
                             </span>
                             {{#if effect.disabled}}
-                                <span class="pill-tag status off">Desativado</span>
+                                <span class="pill-tag status off">{{localize 'GUM.Conditions.Disabled'}}</span>
                             {{else}}
-                                <span class="pill-tag status on">Ativo</span>
+                                <span class="pill-tag status on">{{localize 'GUM.Conditions.Active'}}</span>
                             {{/if}}
                             {{#if effect.appliedStatusLabel}}
-                                <span class="pill-tag status-applied">Status aplicado: {{effect.appliedStatusLabel}}</span>
+                                <span class="pill-tag status-applied">{{localize 'GUM.Conditions.AppliedStatus' status=effect.appliedStatusLabel}}</span>
                             {{/if}}
                             {{#if effect.fonteNome}}
-                            <span class="pill-tag source" title="Fonte: {{effect.fonteNome}}">
+                            <span class="pill-tag source" title="{{localize 'GUM.Conditions.SourceLabel' source=effect.fonteNome}}">
                                 <i class="{{effect.fonteIcon}}"></i> {{effect.fonteRotulo}} · {{effect.fonteNome}}
                             </span>
                             {{/if}}
                         </div>
                     </div>
+                    </div>
                     <div class="pill-controls">
-                        <a class="effect-control quick-view-origin" title="Visualizar Fonte" data-origin-uuid="{{effect.fonteUuid}}"><i class="fas fa-eye"></i></a>
-                        <a class="effect-control delete" data-action="delete-effect" data-effect-id="{{effect.id}}" title="Remover"><i class="fas fa-trash"></i></a>
+                        <div class="gum-action-menu js-action-menu">
+                          <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Inventory.Options'}}" aria-label="{{localize 'GUM.Inventory.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+                          <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Inventory.Options'}}">
+                            <a class="effect-control quick-view-origin gum-action-menu__item" role="menuitem" data-origin-uuid="{{effect.fonteUuid}}"><i class="fas fa-eye"></i><span>{{localize 'GUM.Conditions.ViewSource'}}</span></a>
+                            <a class="effect-control delete gum-action-menu__item is-danger" role="menuitem" data-action="delete-effect" data-effect-id="{{effect.id}}"><i class="fas fa-trash"></i><span>{{localize 'GUM.Conditions.Remove'}}</span></a>
+                          </div>
+                        </div>
                     </div>
                  </div>
             {{/each}}
@@ -2184,7 +2249,7 @@
             {{/each}}
 
             {{#unless temporaryEffects.length}}
-                <div class="placeholder-text">Nenhum efeito temporário ativo.</div>
+                <div class="placeholder-text">{{localize 'GUM.Conditions.NoTemporaryEffects'}}</div>
             {{/unless}}
         </div>
     </details>
@@ -2196,10 +2261,10 @@
         <summary class="block-header gum-unified-header">
             <div class="header-left">
                 <i class="fas fa-chevron-right indicator"></i>
-                <span class="header-title">Efeitos Permanentes</span>
+                <span class="header-title">{{localize 'GUM.Conditions.PermanentEffects'}}</span>
                 <span class="header-counter">{{permanentEffects.length}}</span>
             </div>
-            <p class="header-hint">Vantagens, equipamentos e passivos.</p>
+            <p class="header-hint">{{localize 'GUM.Conditions.PermanentHint'}}</p>
         </summary>
 
         <div class="effects-grid-container">
@@ -2213,32 +2278,36 @@
                 <div class="effect-origin-list">
             {{#each group.effects as |effect|}}
                 <div class="effect-pill-enhanced perm-effect" data-effect-id="{{effect.id}}">
-                    <div class="pill-switch-wrapper">
-                        <label class="switch" title="Ativar/Desativar efeito">
-                            <input type="checkbox" class="effect-toggle" data-effect-id="{{effect.id}}" {{checked effect.disabled}}>
-                            <span class="slider round"></span>
-                        </label>
+                    <div class="pill-card-visual">
+                        <img src="{{effect.img}}" class="pill-icon" title="{{effect.name}}"/>
+                        <div class="pill-switch-wrapper"><label class="switch" title="{{localize 'GUM.Conditions.ToggleEffect'}}"><input type="checkbox" class="effect-toggle" data-effect-id="{{effect.id}}" {{checked effect.disabled}}><span class="slider round"></span></label></div>
                     </div>
-                    <img src="{{effect.img}}" class="pill-icon" title="{{effect.name}}"/>
+                    <div class="pill-card-content">
                     <div class="pill-info">
                         <span class="pill-name">{{effect.name}}</span>
                         <div class="pill-details">
                            {{#if effect.disabled}}
-                                <span class="pill-tag status off">Desativado</span>
+                                <span class="pill-tag status off">{{localize 'GUM.Conditions.Disabled'}}</span>
                             {{else}}
-                                <span class="pill-tag status on">Ativo</span>
+                                <span class="pill-tag status on">{{localize 'GUM.Conditions.Active'}}</span>
                             {{/if}}
                             {{#if effect.appliedStatusLabel}}
-                                <span class="pill-tag status-applied">Status aplicado: {{effect.appliedStatusLabel}}</span>
+                                <span class="pill-tag status-applied">{{localize 'GUM.Conditions.AppliedStatus' status=effect.appliedStatusLabel}}</span>
                             {{/if}}
-                            <span class="pill-tag source" title="Fonte: {{effect.fonteNome}}">
+                            <span class="pill-tag source" title="{{localize 'GUM.Conditions.SourceLabel' source=effect.fonteNome}}">
                                 <i class="{{effect.fonteIcon}}"></i> {{effect.fonteRotulo}} · {{effect.fonteNome}}
                             </span>
                         </div>
                     </div>
+                    </div>
                     <div class="pill-controls">
-                        <a class="effect-control quick-view-origin" title="Visualizar Fonte" data-origin-uuid="{{effect.fonteUuid}}"><i class="fas fa-eye"></i></a>
-                        <a class="effect-control delete" data-action="delete-effect" data-effect-id="{{effect.id}}" title="Remover"><i class="fas fa-times"></i></a>
+                        <div class="gum-action-menu js-action-menu">
+                          <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Inventory.Options'}}" aria-label="{{localize 'GUM.Inventory.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+                          <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Inventory.Options'}}">
+                            <a class="effect-control quick-view-origin gum-action-menu__item" role="menuitem" data-origin-uuid="{{effect.fonteUuid}}"><i class="fas fa-eye"></i><span>{{localize 'GUM.Conditions.ViewSource'}}</span></a>
+                            <a class="effect-control delete gum-action-menu__item is-danger" role="menuitem" data-action="delete-effect" data-effect-id="{{effect.id}}"><i class="fas fa-trash"></i><span>{{localize 'GUM.Conditions.Remove'}}</span></a>
+                          </div>
+                        </div>
                     </div>
                      </div>
             {{/each}}
@@ -2247,7 +2316,7 @@
             {{/each}}
 
             {{#unless permanentEffects.length}}
-                <div class="placeholder-text">Nenhum efeito permanente.</div>
+                <div class="placeholder-text">{{localize 'GUM.Conditions.NoPermanentEffects'}}</div>
             {{/unless}}
         </div>
     </details>
@@ -2259,46 +2328,45 @@
         <summary class="block-header gum-unified-header">
             <div class="header-left">
                 <i class="fas fa-chevron-right indicator"></i>
-                <span class="header-title">Condições Passivas (Regras)</span>
+                <span class="header-title">{{localize 'GUM.Conditions.PassiveRules'}}</span>
                 <span class="header-counter">{{installedConditions.length}}</span>
             </div>
-            <p class="header-hint">Automações de sistema e cenário.</p>
+            <p class="header-hint">{{localize 'GUM.Conditions.PassiveHint'}}</p>
         </summary>
 
         <div class="effects-grid-container">
             {{#each installedConditions as |item|}}
-                <div class="effect-pill-enhanced passive-rule" data-item-id="{{item.id}}">
-
-                    {{!-- O SWITCH --}}
-                    <div class="pill-switch-wrapper">
-                        <label class="switch" title="Anular Automação (Override)">
-                            <input type="checkbox" class="manual-override-toggle" data-item-id="{{item.id}}" {{checked item.flags.gum.manual_override}}>
-                            <span class="slider round"></span>
-                        </label>
+                <div class="item effect-pill-enhanced passive-rule" data-item-id="{{item.id}}">
+                    <div class="pill-card-visual">
+                        <img src="{{item.img}}" class="pill-icon" alt="{{item.name}}"/>
+                        <div class="pill-switch-wrapper"><label class="switch" title="{{localize 'GUM.Conditions.OverrideAutomation'}}"><input type="checkbox" class="manual-override-toggle" data-item-id="{{item.id}}" {{checked item.flags.gum.manual_override}}><span class="slider round"></span></label></div>
                     </div>
-
-                    <img src="{{item.img}}" class="pill-icon" alt="{{item.name}}"/>
-
+                    <div class="pill-card-content">
                     <div class="pill-info">
                         <span class="pill-name">{{item.name}}</span>
                         <div class="pill-details">
                             {{#if item.flags.gum.manual_override}}
-                                <span class="pill-tag status off">Desativado</span>
+                                <span class="pill-tag status off">{{localize 'GUM.Conditions.Disabled'}}</span>
                             {{else}}
-                                <span class="pill-tag status on">Automático</span>
+                                <span class="pill-tag status on">{{localize 'GUM.Conditions.Automatic'}}</span>
                             {{/if}}
                         </div>
                     </div>
-
+                    </div>
                     <div class="pill-controls">
-                        <a class="effect-control item-edit" title="Editar Regra"><i class="fas fa-edit"></i></a>
-                        <a class="effect-control item-delete" title="Remover Regra"><i class="fas fa-trash"></i></a>
+                        <div class="gum-action-menu js-action-menu">
+                          <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Inventory.Options'}}" aria-label="{{localize 'GUM.Inventory.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+                          <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Inventory.Options'}}">
+                            <a class="item-control item-edit gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{localize 'GUM.Conditions.EditRule'}}</span></a>
+                            <a class="item-control item-delete gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>{{localize 'GUM.Conditions.RemoveRule'}}</span></a>
+                          </div>
+                        </div>
                     </div>
                 </div>
             {{/each}}
 
             {{#unless installedConditions.length}}
-                <div class="placeholder-text">Nenhuma regra de condição instalada.</div>
+                <div class="placeholder-text">{{localize 'GUM.Conditions.NoPassiveRules'}}</div>
             {{/unless}}
         </div>
     </details>

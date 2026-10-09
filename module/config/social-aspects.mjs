@@ -35,34 +35,34 @@ const values = (collection) => collection ? Object.entries(collection) : [];
 const SOCIAL_PRESENTATION = Object.freeze({
   status: {
     primary: ["society", "status_name"], context: [], observation: ["description"],
-    metrics: [["level", "GUM.Social.Fields.Level"], ["status_name", "GUM.Social.Fields.Status"], ["monthly_cost", "GUM.Social.Fields.MonthlyCost"]]
+    metrics: [["level", "GUM.Social.Fields.Level", { shortLabel: "GUM.Social.Fields.LevelShort" }], ["status_name", "GUM.Social.Fields.Status", { shortLabel: "GUM.Social.Fields.StatusShort" }], ["monthly_cost", "GUM.Social.Fields.MonthlyCost", { shortLabel: "GUM.Social.Fields.MonthlyCostShort" }]]
   },
   organization: {
     primary: ["organization_name", "status_name"], context: [], observation: ["description"],
-    metrics: [["level", "GUM.Social.Fields.Level"], ["status_name", "GUM.Social.Fields.Status"], ["salary", "GUM.Social.Fields.Salary"]]
+    metrics: [["level", "GUM.Social.Fields.Level", { shortLabel: "GUM.Social.Fields.LevelShort" }], ["status_name", "GUM.Social.Fields.Status", { shortLabel: "GUM.Social.Fields.StatusShort" }], ["salary", "GUM.Social.Fields.Salary", { shortLabel: "GUM.Social.Fields.SalaryShort" }]]
   },
   culture: {
     primary: ["culture_name"], context: [], observation: ["description"],
-    metrics: [["level", "GUM.Social.Fields.Level"]]
+    metrics: [["level", "GUM.Social.Fields.Level", { shortLabel: "GUM.Social.Fields.LevelShort" }]]
   },
   language: {
     primary: ["language_name"], context: [], observation: ["description"],
-    metrics: [["spoken_level", "GUM.Social.Fields.SpokenLevel"], ["written_level", "GUM.Social.Fields.WrittenLevel"]]
+    metrics: [["spoken_level", "GUM.Social.Fields.SpokenLevel", { shortLabel: "GUM.Social.Fields.SpokenLevelShort" }], ["written_level", "GUM.Social.Fields.WrittenLevel", { shortLabel: "GUM.Social.Fields.WrittenLevelShort" }]]
   },
   reputation: {
     primary: ["title"], context: ["scope"], observation: ["notes"],
-    metrics: [["reaction_modifier", "GUM.Social.Fields.ReactionValue", { signed: true }], ["recognition_frequency", "GUM.Social.Fields.Frequency"], ["circumstance", "GUM.Social.Fields.Circumstance"]]
+    metrics: [["reaction_modifier", "GUM.Social.Fields.ReactionValue", { signed: true, shortLabel: "GUM.Social.Fields.ReactionValueShort" }], ["recognition_frequency", "GUM.Social.Fields.Frequency", { shortLabel: "GUM.Social.Fields.FrequencyShort" }], ["circumstance", "GUM.Social.Fields.Circumstance", { shortLabel: "GUM.Social.Fields.CircumstanceShort" }]]
   },
   wealth: {
     primary: ["wealth_level"], context: [], observation: ["effects"], metrics: []
   },
   bond: {
     primary: ["name"], context: [], observation: ["description"],
-    metrics: [["bond_type", "GUM.Social.Fields.BondType"]]
+    metrics: [["bond_type", "GUM.Social.Fields.BondType", { shortLabel: "GUM.Social.Fields.BondTypeShort" }]]
   },
   reaction: {
     primary: ["title", "audience"], context: ["audience"], observation: ["notes"],
-    metrics: [["value", "GUM.Social.Fields.ReactionValue", { signed: true }], ["recognition_frequency", "GUM.Social.Fields.Frequency"], ["circumstance", "GUM.Social.Fields.Circumstance"]]
+    metrics: [["value", "GUM.Social.Fields.ReactionValue", { signed: true, shortLabel: "GUM.Social.Fields.ReactionValueShort" }], ["recognition_frequency", "GUM.Social.Fields.Frequency", { shortLabel: "GUM.Social.Fields.FrequencyShort" }], ["circumstance", "GUM.Social.Fields.Circumstance", { shortLabel: "GUM.Social.Fields.CircumstanceShort" }]]
   }
 });
 
@@ -88,7 +88,13 @@ function decorateSocialEntry(type, id, entry, sourceData, localize) {
     const tone = options.signed && Number.isFinite(numericValue)
       ? (numericValue > 0 ? "positive" : numericValue < 0 ? "negative" : "neutral")
       : "default";
-    return [{ key, label: localize(label), value: options.signed ? signedValue(rawValue) : rawValue, tone }];
+    return [{
+      key,
+      label: localize(label),
+      shortLabel: localize(options.shortLabel || label),
+      value: options.signed ? signedValue(rawValue) : rawValue,
+      tone
+    }];
   });
   const observation = firstValue(entry, presentation.observation);
 

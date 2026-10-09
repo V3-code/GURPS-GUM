@@ -74,6 +74,10 @@ test("status and organization use society as identity and status as a metric", (
     "GUM.Social.Fields.Status": "Status",
     "GUM.Social.Fields.MonthlyCost": "Custo mensal",
     "GUM.Social.Fields.Salary": "Salário",
+    "GUM.Social.Fields.LevelShort": "NÍV",
+    "GUM.Social.Fields.StatusShort": "STATUS",
+    "GUM.Social.Fields.MonthlyCostShort": "CUSTO",
+    "GUM.Social.Fields.SalaryShort": "SAL",
     "GUM.Social.Manual": "Manual"
   };
   const system = {
@@ -103,32 +107,61 @@ test("status and organization use society as identity and status as a metric", (
   assert.equal(entry.primary, "Império Kalashtar");
   assert.equal(entry.context, "");
   assert.deepEqual(entry.metrics, [
-    { key: "level", label: "Nível", value: 0, tone: "default" },
-    { key: "status_name", label: "Status", value: "Cidadão Livre", tone: "default" },
-    { key: "monthly_cost", label: "Custo mensal", value: "-200", tone: "default" }
+    { key: "level", label: "Nível", shortLabel: "NÍV", value: 0, tone: "default" },
+    { key: "status_name", label: "Status", shortLabel: "STATUS", value: "Cidadão Livre", tone: "default" },
+    { key: "monthly_cost", label: "Custo mensal", shortLabel: "CUSTO", value: "-200", tone: "default" }
   ]);
   assert.equal(entry.observation, "Reconhecido nos distritos centrais.");
   assert.equal(entry.sourceLabel, "Manual");
   assert.equal(organization.primary, "Guilda Alquimista");
   assert.equal(organization.context, "");
   assert.deepEqual(organization.metrics, [
-    { key: "level", label: "Nível", value: 1, tone: "default" },
-    { key: "status_name", label: "Status", value: "Aprendiz", tone: "default" },
-    { key: "salary", label: "Salário", value: "650", tone: "default" }
+    { key: "level", label: "Nível", shortLabel: "NÍV", value: 1, tone: "default" },
+    { key: "status_name", label: "Status", shortLabel: "STATUS", value: "Aprendiz", tone: "default" },
+    { key: "salary", label: "Salário", shortLabel: "SAL", value: "650", tone: "default" }
   ]);
   assert.equal(organization.observation, "Membro em treinamento.");
 });
 
-test("actor social template keeps the source image at left and observations in a conditional footer", () => {
+test("actor social template uses the compact shared card structure", () => {
   const template = readFileSync(new URL("../templates/actors/characters.hbs", import.meta.url), "utf8");
   const styles = readFileSync(new URL("../styles/styles.css", import.meta.url), "utf8");
 
-  assert.match(template, /class="social-entry-portrait \{\{source\}\}"/);
-  assert.match(template, /class="social-entry-primary"/);
-  assert.match(template, /class="social-entry-metrics"/);
-  assert.match(template, /\{\{#if observation\}\}<div class="social-entry-observation"/);
+  assert.match(template, /class="social-card__portrait social-card__portrait--\{\{source\}\}"/);
+  assert.match(template, /class="social-card__name"/);
+  assert.match(template, /class="social-card__metrics"/);
+  assert.match(template, /title="\{\{label\}\}: \{\{value\}\}"/);
+  assert.match(template, /<small>\{\{shortLabel\}\}<\/small>/);
+  assert.match(template, /social-card__expand/);
+  assert.match(template, /fa-compress-arrows-alt/);
+  assert.match(template, /fa-expand-arrows-alt/);
+  assert.match(template, /gum-action-menu js-action-menu/);
+  assert.match(template, /\{\{#if observation\}\}<div class="social-card__description"/);
   assert.doesNotMatch(template, /class="social-origin /);
-  assert.match(styles, /\.tab\[data-tab="social"\] \.social-entry-list > \.social-entry-card \{ display:block;/);
+  assert.doesNotMatch(template, /social-entry-card|social-entry-main|social-entry-metrics/);
+  assert.match(styles, /\.social-card-grid \{ display:grid; grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(styles, /\.social-card--item \{ background:linear-gradient/);
+  assert.match(styles, /\.social-aspects-tab \.gum-action-menu__panel/);
+  assert.match(styles, /> a\.item-control\.gum-action-menu__item \{ display:flex; width:auto; height:auto;/);
+});
+
+test("social descriptions keep their expansion state independently from the section state", () => {
+  const source = readFileSync(new URL("../module/actor/gurps-actor-sheet.js", import.meta.url), "utf8");
+
+  assert.match(source, /this\._expandedSocialCards \?\?= new Set\(\)/);
+  assert.match(source, /\.social-card__expand/);
+  assert.match(source, /_onToggleSocialEntryDescription\(ev\)/);
+  assert.match(source, /\.social-card, \.meter-card/);
+  assert.doesNotMatch(source, /this\.render\(false\);\s*\}\s*\n\s*\n_prepareAppliedModels/);
+});
+
+test("social groups use unified headers and preserve their collapse state", () => {
+  const template = readFileSync(new URL("../templates/actors/characters.hbs", import.meta.url), "utf8");
+
+  assert.match(template, /social-group gum-unified-section/);
+  assert.match(template, /social-group__header gum-unified-header/);
+  assert.match(template, /data-group-id="social-\{\{type\}\}"/);
+  assert.match(template, /collapsibleState \(concat "social-" type\)/);
 });
 
 test("manual social dialogs use the shared dark editor presentation", () => {

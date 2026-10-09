@@ -11,8 +11,8 @@ function templateSection(start, end) {
 }
 
 test("spell and power support records share a compact two-column grid", () => {
-  const spellSection = templateSection('{{#if spellSupportCount}}', "{{!-- LISTA DE MAGIAS");
-  const powerSection = templateSection('{{#if powerSupportCount}}', "{{!-- LISTA DE PODERES");
+  const spellSection = templateSection('{{#if spellSupportCount}}', "{{!-- Lista compacta de magias");
+  const powerSection = templateSection('{{#if powerSupportCount}}', "{{!-- Lista compacta de poderes");
 
   assert.match(spellSection, /support-card-grid--spell/);
   assert.match(spellSection, /{{#each castingAbilities}}[\s\S]+{{#each spellReserves}}/);
@@ -55,13 +55,36 @@ test("support compact-pair state is enabled only for one link and one reserve", 
   assert.match(actorSheet, /powerSupportCompactPair = context\.powerSources\.length === 1 && context\.powerReserveCount === 1/);
 });
 
-test("reserve buttons update current and legacy value within zero and maximum", () => {
+test("manual reserve buttons preserve negative balances while respecting the maximum", () => {
   const listenerSection = actorSheet.slice(actorSheet.indexOf("RESERVAS DE ENERGIA"), actorSheet.indexOf("HABILIDADES DE CONJURAÇÃO"));
   const adjustHandler = actorSheet.slice(actorSheet.indexOf("async _onAdjustEnergyReserve"), actorSheet.indexOf("async _promptEnergyReserveData"));
 
   assert.match(listenerSection, /click", "\.adjust-energy-reserve"/);
   assert.match(adjustHandler, /reserve\.current \?\? reserve\.value \?\? 0/);
-  assert.match(adjustHandler, /Math\.max\(0, Math\.min\(max, current \+ adjustment\)\)/);
+  assert.match(adjustHandler, /Math\.min\(max, current \+ adjustment\)/);
+  assert.doesNotMatch(adjustHandler, /Math\.max\(0, Math\.min\(max, current \+ adjustment\)\)/);
   assert.match(adjustHandler, /`\$\{pathBase\}\.current`/);
   assert.match(adjustHandler, /`\$\{pathBase\}\.value`/);
+});
+
+test("support cards and reserve controls are localized", () => {
+  const ptBr = JSON.parse(readFileSync(new URL("../lang/pt-BR.json", import.meta.url), "utf8"));
+  const en = JSON.parse(readFileSync(new URL("../lang/en.json", import.meta.url), "utf8"));
+  const keys = [
+    "GUM.Spells.SupportSectionLabel",
+    "GUM.Spells.CastingAbilityOptions",
+    "GUM.Powers.SupportSectionLabel",
+    "GUM.Powers.SourceOptions",
+    "GUM.Resources.ReserveTitle",
+    "GUM.Resources.Decrease",
+    "GUM.Resources.Increase",
+    "GUM.Resources.ReserveOptions"
+  ];
+
+  for (const key of keys) {
+    assert.equal(typeof en[key], "string");
+    assert.equal(typeof ptBr[key], "string");
+    assert.match(template, new RegExp(key.replaceAll(".", "\\.")));
+  }
+  assert.match(actorSheet, /GUM\.Resources\.DeleteReserveTitle/);
 });
