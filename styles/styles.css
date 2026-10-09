@@ -3595,83 +3595,32 @@ background-color: var(--gum-accent-gold);
     padding: 12px 6px;
 }
 
-.dialog.gum.gum-characteristic-link-dialog .characteristic-link-picker .hint {
-    margin: 0 0 10px;
-}
-
-.dialog.gum.gum-characteristic-link-dialog .characteristic-link-search {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-    padding: 0 9px;
-    border: 1px solid var(--gum-border-light);
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.75);
-}
-
-.dialog.gum.gum-characteristic-link-dialog .characteristic-link-search input {
-    flex: 1;
-    border: 0;
-    box-shadow: none;
-}
-
-.dialog.gum.gum-characteristic-link-dialog .characteristic-link-options {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    max-height: 330px;
-    overflow-y: auto;
-    padding-right: 3px;
-}
-
-.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    padding: 7px 9px;
-    border: 1px solid rgba(92, 68, 45, 0.25);
-    border-radius: 5px;
-    cursor: pointer;
-    background: rgba(255, 255, 255, 0.45);
-}
-
-.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option:hover,
-.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option:has(input:checked) {
-    border-color: var(--gum-accent-gold);
-    background: rgba(197, 160, 91, 0.16);
-}
-
-.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option img {
-    width: 34px;
-    height: 34px;
-    border: 0;
-    border-radius: 4px;
-    object-fit: cover;
-}
-
-.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option__text {
-    display: flex;
-    flex: 1;
-    min-width: 0;
-    flex-direction: column;
-}
-
-.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option__text small {
-    color: var(--gum-text-medio);
-}
-
-.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option__points {
-    font-family: var(--gum-font-condensed);
-    font-weight: 700;
-    white-space: nowrap;
-}
-
-.dialog.gum.gum-characteristic-link-dialog .characteristic-link-no-results {
-    padding: 18px;
-    text-align: center;
-    color: var(--gum-text-medio);
-}
+.dialog.gum.gum-characteristic-link-dialog .window-content { padding: 0; background: #202126; }
+.dialog.gum.gum-characteristic-link-dialog .dialog-content { padding: 14px 16px 10px; }
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-picker { display: flex; flex-direction: column; gap: 9px; }
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-picker__intro { display: flex; align-items: center; gap: 10px; margin: -14px -16px 2px; padding: 12px 16px; background: rgba(123, 105, 183, .09); }
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-picker__intro-icon { display: grid; flex: 0 0 30px; width: 30px; height: 30px; place-items: center; border-radius: 8px; background: rgba(141, 119, 207, .18); color: #c8b8ef; font-size: 13px; }
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-picker .hint { margin: 0; color: rgba(238, 231, 220, .68); line-height: 1.35; }
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-search { display: flex; align-items: center; gap: 8px; min-height: 32px; margin: 0; padding: 0 9px; border: 0; border-radius: 6px; background: rgba(255, 255, 255, .065); color: rgba(217, 203, 177, .72); }
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-search:focus-within { background: rgba(255, 255, 255, .095); box-shadow: inset 0 -2px rgba(151, 130, 213, .65); }
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-search input { flex: 1; min-width: 0; height: 30px; margin: 0; padding: 3px 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-search input:focus { box-shadow: none; }
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-options { display: flex; flex-direction: column; gap: 4px; max-height: 322px; overflow-y: auto; padding-right: 3px; }
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option { display: grid; grid-template-columns: 14px 36px minmax(0, 1fr) auto; align-items: center; gap: 9px; min-width: 0; padding: 7px 9px; border: 0; border-radius: 6px; cursor: pointer; background: rgba(255, 255, 255, .045); transition: background .14s ease, box-shadow .14s ease; }
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option:hover { background: rgba(255, 255, 255, .075); }
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option.is-selected { background: rgba(128, 108, 187, .17); box-shadow: inset 3px 0 #a892e3; }
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option input { width: 13px; height: 13px; margin: 0; accent-color: #a892e3; }
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option__image { display: grid; width: 36px; height: 36px; place-items: center; overflow: hidden; border-radius: 6px; background: rgba(0, 0, 0, .18); }
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option img { width: 32px; height: 32px; border: 0; border-radius: 4px; object-fit: cover; }
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option__text { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 1px; }
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option__text strong { overflow: hidden; color: #eee7dc; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option__text small { overflow: hidden; color: rgba(238, 231, 220, .55); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-option__points { min-width: 46px; color: #d5c28e; font-family: var(--gum-font-condensed); font-size: 11px; font-weight: 700; text-align: right; white-space: nowrap; }
+.dialog.gum.gum-characteristic-link-dialog .characteristic-link-no-results { margin: 0; padding: 18px; border-radius: 6px; background: rgba(255, 255, 255, .035); text-align: center; color: rgba(238, 231, 220, .58); }
+.dialog.gum.gum-characteristic-link-dialog .dialog-buttons { margin: 0; padding: 10px 16px 14px; border: 0; background: rgba(0, 0, 0, .1); }
+.dialog.gum.gum-characteristic-link-dialog .dialog-buttons button { min-height: 31px; border: 0; background: rgba(255, 255, 255, .075); }
+.dialog.gum.gum-characteristic-link-dialog .dialog-buttons button[data-button="link"] { background: rgba(141, 119, 207, .76); color: #17141e; font-weight: 700; }
+.dialog.gum.gum-characteristic-link-dialog .dialog-buttons button[data-button="link"]:hover { background: #ae96e9; }
 
 .gum.sheet.actor .spell-list-v2 {
     display: flex;
@@ -11036,3 +10985,12 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .equipment-column .state-effect-switch__thumb { top:2px; left:2px; width:8px; height:8px; background:rgba(248,244,236,.82); }
 .gum.sheet.actor .equipment-column .state-effect-switch.is-active .state-effect-switch__track { border-color:rgba(126,220,176,.45); background:rgba(56,156,104,.72); }
 .gum.sheet.actor .equipment-column .state-effect-switch.is-active .state-effect-switch__thumb { transform:translateX(10px); }
+
+/* O seletor de características compartilha o tema escuro dos editores, sem herdar os campos claros legados. */
+.dialog.gum.gum-sheet-edit-dialog.gum-characteristic-link-dialog .window-content { padding:0; background:#202126; }
+.dialog.gum.gum-sheet-edit-dialog.gum-characteristic-link-dialog .dialog-content { padding:14px 16px 10px; }
+.dialog.gum.gum-sheet-edit-dialog.gum-characteristic-link-dialog .characteristic-link-search input { border:0; background:transparent; box-shadow:none; }
+.dialog.gum.gum-sheet-edit-dialog.gum-characteristic-link-dialog .characteristic-link-search input:focus { border:0; background:transparent; box-shadow:none; }
+.dialog.gum.gum-sheet-edit-dialog.gum-characteristic-link-dialog .dialog-buttons { margin:0; padding:10px 16px 14px; border:0; background:rgba(0,0,0,.1); }
+.dialog.gum.gum-sheet-edit-dialog.gum-characteristic-link-dialog .dialog-buttons button { min-height:31px; border:0; background:rgba(255,255,255,.075); }
+.dialog.gum.gum-sheet-edit-dialog.gum-characteristic-link-dialog .dialog-buttons button[data-button="link"] { background:rgba(141,119,207,.76); color:#17141e; font-weight:700; }

@@ -5539,30 +5539,42 @@ async _promptCharacteristicLink(linkType) {
   const linkedIds = new Set(Object.values(collection).map((entry) => entry?.item_id || entry?.itemId).filter(Boolean));
   const candidates = this._getLinkableCharacteristics().filter((item) => !linkedIds.has(item.id));
 
+  const localize = (key, data) => data ? game.i18n.format(key, data) : game.i18n.localize(key);
+  const isPowerSource = linkType === "power";
+  const copy = {
+    title: localize(isPowerSource ? "GUM.Powers.LinkSourceDialogTitle" : "GUM.Spells.LinkAbilityDialogTitle"),
+    hint: localize("GUM.Characteristics.LinkDialogHint"),
+    searchLabel: localize("GUM.Characteristics.LinkDialogSearchLabel"),
+    searchPlaceholder: localize("GUM.Characteristics.LinkDialogSearchPlaceholder"),
+    noResults: localize("GUM.Characteristics.LinkDialogNoResults"),
+    link: localize("GUM.Characteristics.Link"),
+    cancel: localize("GUM.Characteristics.Cancel"),
+    selectRequired: localize("GUM.Characteristics.LinkDialogSelectionRequired")
+  };
+
   if (!candidates.length) {
-    ui.notifications.warn("Não há vantagens ou desvantagens disponíveis para vincular.");
+    ui.notifications.warn(localize("GUM.Characteristics.LinkDialogEmpty"));
     return null;
   }
 
   const escape = (value) => foundry.utils.escapeHTML(String(value ?? ""));
   const rows = candidates.map((item) => {
-    const kind = item.type === "disadvantage" ? "Desvantagem" : "Vantagem";
+    const kind = localize(item.type === "disadvantage" ? "GUM.Characteristics.Disadvantage" : "GUM.Characteristics.Advantage");
     const specialization = item.system?.specialization ? ` (${escape(item.system.specialization)})` : "";
-    const level = Number(item.system?.level) ? ` · Nv ${Number(item.system.level)}` : "";
+    const level = Number(item.system?.level) ? ` · ${localize("GUM.Characteristics.LevelAbbreviation")} ${Number(item.system.level)}` : "";
     const points = Number(item.system?.points) || 0;
     return `
       <label class="characteristic-link-option" data-search="${escape(`${item.name} ${item.system?.specialization || ""} ${kind}`.toLowerCase())}">
         <input type="radio" name="item_id" value="${item.id}">
-        <img src="${escape(item.img)}" alt="">
+        <span class="characteristic-link-option__image"><img src="${escape(item.img)}" alt=""></span>
         <span class="characteristic-link-option__text">
           <strong>${escape(item.name)}${specialization}</strong>
           <small>${kind}${level}</small>
         </span>
-        <span class="characteristic-link-option__points">${points} pts</span>
+        <span class="characteristic-link-option__points">${points} ${localize("GUM.Characteristics.PointsAbbreviation")}</span>
       </label>`;
   }).join("");
 
-  const title = linkType === "power" ? "Vincular Fonte de Poder" : "Vincular Habilidade de Conjuração";
   return new Promise((resolve) => {
     let resolved = false;
     const finish = (value) => {
@@ -5572,31 +5584,40 @@ async _promptCharacteristicLink(linkType) {
     };
 
     new Dialog({
-      title,
+      title: copy.title,
       content: `
         <form class="characteristic-link-picker" autocomplete="off">
-          <p class="hint">Selecione uma vantagem ou desvantagem desta ficha. O card permanecerá sincronizado com o item original.</p>
-          <div class="characteristic-link-search"><i class="fas fa-search"></i><input type="search" placeholder="Buscar característica..."></div>
+          <div class="characteristic-link-picker__intro">
+            <span class="characteristic-link-picker__intro-icon"><i class="fas ${isPowerSource ? "fa-bolt" : "fa-hat-wizard"}"></i></span>
+            <p class="hint">${escape(copy.hint)}</p>
+          </div>
+          <label class="characteristic-link-search" aria-label="${escape(copy.searchLabel)}"><i class="fas fa-search"></i><input type="search" placeholder="${escape(copy.searchPlaceholder)}"></label>
           <div class="characteristic-link-options">${rows}</div>
-          <p class="characteristic-link-no-results" hidden>Nenhuma característica encontrada.</p>
+          <p class="characteristic-link-no-results" hidden>${escape(copy.noResults)}</p>
         </form>`,
       buttons: {
         link: {
           icon: '<i class="fas fa-link"></i>',
-          label: "Vincular",
+          label: copy.link,
           callback: (html) => {
             const selected = html.find('input[name="item_id"]:checked').val();
             if (!selected) {
-              ui.notifications.warn("Selecione uma característica para vincular.");
+              ui.notifications.warn(copy.selectRequired);
               return false;
             }
             finish(String(selected));
           }
         },
-        cancel: { icon: '<i class="fas fa-times"></i>', label: "Cancelar", callback: () => finish(null) }
+        cancel: { icon: '<i class="fas fa-times"></i>', label: copy.cancel, callback: () => finish(null) }
       },
       default: "link",
       render: (html) => {
+        const syncSelection = () => {
+          html.find(".characteristic-link-option").each((_, element) => {
+            element.classList.toggle("is-selected", Boolean(element.querySelector('input[type="radio"]')?.checked));
+          });
+        };
+        html.find('input[name="item_id"]').on("change", syncSelection);
         html.find('input[type="search"]').on("input", (event) => {
           const term = String(event.currentTarget.value || "").toLowerCase().trim();
           let visible = 0;
@@ -5607,6 +5628,7 @@ async _promptCharacteristicLink(linkType) {
           });
           html.find(".characteristic-link-no-results").prop("hidden", visible > 0);
         });
+        syncSelection();
       },
       close: () => finish(null)
     }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-characteristic-link-dialog"], width: 520 }).render(true);
