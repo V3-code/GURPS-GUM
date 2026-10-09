@@ -1176,8 +1176,8 @@ async getData(options) {
                     .map(([id, wound]) => prepareWoundForDisplay(id, wound))
                     .sort((a, b) => Number(b.updatedAt || b.createdAt || 0) - Number(a.updatedAt || a.createdAt || 0));
  
-                context.spellReserves = this._normalizeResourceCollection(context.actor.system.spell_reserves || {}, { defaultName: "Reserva de Magia" });
-                context.powerReserves = this._normalizeResourceCollection(context.actor.system.power_reserves || {}, { defaultName: "Reserva de Poder" });
+                context.spellReserves = this._normalizeResourceCollection(context.actor.system.spell_reserves || {}, { defaultName: game.i18n.localize("GUM.Spells.Reserve") });
+                context.powerReserves = this._normalizeResourceCollection(context.actor.system.power_reserves || {}, { defaultName: game.i18n.localize("GUM.Powers.Reserve") });
                 for (const reserve of linkedEquipmentReserves) {
                     if (reserve.type === "spell") context.spellReserves[`equipment-${reserve.equipmentId}`] = reserve;
                     if (reserve.type === "power") context.powerReserves[`equipment-${reserve.equipmentId}`] = reserve;
@@ -5359,11 +5359,11 @@ async _onDeleteEnergyReserve(ev) {
   const reserveType = card?.dataset?.reserveType === "power" ? "power" : "spell";
   if (!reserveId) return;
 
-  const name = this.actor.system?.[`${reserveType}_reserves`]?.[reserveId]?.name || "reserva";
+  const name = this.actor.system?.[`${reserveType}_reserves`]?.[reserveId]?.name || game.i18n.localize("GUM.Resources.Reserve");
 
   Dialog.confirm({
-    title: `Excluir ${name}?`,
-    content: `<p>Tem certeza que deseja remover esta reserva?</p>`,
+    title: game.i18n.format("GUM.Resources.DeleteReserveTitle", { name }),
+    content: `<p>${foundry.utils.escapeHTML(game.i18n.localize("GUM.Resources.DeleteReserveContent"))}</p>`,
     yes: async () => {
       await this.actor.update({ [`system.${reserveType}_reserves.-=${reserveId}`]: null });
     }
@@ -5385,7 +5385,7 @@ async _onAdjustEnergyReserve(ev) {
 
   const current = Number(reserve.current ?? reserve.value ?? 0) || 0;
   const max = Math.max(0, Number(reserve.max) || 0);
-  const value = Math.max(0, Math.min(max, current + adjustment));
+  const value = Math.min(max, current + adjustment);
   const pathBase = `system.${reserveType}_reserves.${reserveId}`;
   await this.actor.update({
     [`${pathBase}.current`]: value,
@@ -5416,38 +5416,39 @@ async _adjustEquipmentReserve(equipmentId, adjustment) {
 }
 
 async _promptEnergyReserveData(reserveType, initialData = {}, { isEdit = false } = {}) {
-  const data = this._normalizeResourceEntry(initialData, { defaultName: reserveType === "power" ? "Reserva de Poder" : "Reserva de Magia" });
+  const data = this._normalizeResourceEntry(initialData, { defaultName: reserveType === "power" ? game.i18n.localize("GUM.Powers.Reserve") : game.i18n.localize("GUM.Spells.Reserve") });
   const esc = value => foundry.utils.escapeHTML(String(value ?? ""));
   const isPowerReserve = reserveType === "power";
-  const reserveLabel = isPowerReserve ? "Reserva de poder" : "Reserva de magia";
-  const reserveDescription = isPowerReserve
-    ? "Acompanhe a energia disponível para uma fonte de poderes."
-    : "Acompanhe a energia disponível para conjurar suas magias.";
+  const copy = {
+    reserveLabel: game.i18n.localize(isPowerReserve ? "GUM.Powers.Reserve" : "GUM.Spells.Reserve"),
+    reserveDescription: game.i18n.localize(isPowerReserve ? "GUM.Powers.ReserveDialogHint" : "GUM.Spells.ReserveDialogHint"),
+    namePlaceholder: game.i18n.localize(isPowerReserve ? "GUM.Powers.ReserveNamePlaceholder" : "GUM.Spells.ReserveNamePlaceholder"),
+    sourcePlaceholder: game.i18n.localize(isPowerReserve ? "GUM.Powers.ReserveSourcePlaceholder" : "GUM.Spells.ReserveSourcePlaceholder"),
+    title: game.i18n.localize(isPowerReserve
+      ? (isEdit ? "GUM.Powers.EditReserve" : "GUM.Powers.NewReserve")
+      : (isEdit ? "GUM.Spells.EditReserve" : "GUM.Spells.NewReserve"))
+  };
   const content = `
     <form class="gum-meter-form gum-popup-form gum-energy-reserve-form gum-record-editor" autocomplete="off">
-      <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon ${isPowerReserve ? "gum-record-editor__icon--power" : "gum-record-editor__icon--magic"}"><i class="fas ${isPowerReserve ? "fa-bolt" : "fa-hat-wizard"}" aria-hidden="true"></i></span><span><strong>${reserveLabel}</strong><small>${reserveDescription}</small></span></header>
+      <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon ${isPowerReserve ? "gum-record-editor__icon--power" : "gum-record-editor__icon--magic"}"><i class="fas ${isPowerReserve ? "fa-bolt" : "fa-hat-wizard"}" aria-hidden="true"></i></span><span><strong>${esc(copy.reserveLabel)}</strong><small>${esc(copy.reserveDescription)}</small></span></header>
       <div class="form-group form-group--full gum-resource-field gum-resource-field--name">
-        <label>Nome</label>
-        <input class="gum-input-left" type="text" name="name" value="${esc(data.name)}" placeholder="${isPowerReserve ? "Ex.: Chi" : "Ex.: Reserva de mana"}" required/>
+        <label>${esc(game.i18n.localize("GUM.Resources.Name"))}</label>
+        <input class="gum-input-left" type="text" name="name" value="${esc(data.name)}" placeholder="${esc(copy.namePlaceholder)}" required/>
       </div>
       <div class="form-group form-group--full gum-resource-field gum-resource-field--source">
-        <label>Fonte / Origem</label>
-                <input class="gum-input-left" type="text" name="source" value="${esc(data.source)}" placeholder="${isPowerReserve ? "Ex.: Poderes psíquicos" : "Ex.: Aptidão Mágica"}" />
+        <label>${esc(game.i18n.localize("GUM.Resources.Source"))}</label>
+                <input class="gum-input-left" type="text" name="source" value="${esc(data.source)}" placeholder="${esc(copy.sourcePlaceholder)}" />
       </div>
-      <p class="gum-record-editor__section-label form-group--full"><i class="fas fa-sliders-h" aria-hidden="true"></i> Valores</p>
+      <p class="gum-record-editor__section-label form-group--full"><i class="fas fa-sliders-h" aria-hidden="true"></i> ${esc(game.i18n.localize("GUM.Resources.Values"))}</p>
       <div class="form-group form-group--number gum-resource-field gum-resource-field--current">
-        <label>Valor Atual</label>
-        <input type="number" name="current" value="${data.current ?? 0}" min="0"/>
+        <label>${esc(game.i18n.localize("GUM.Resources.Current"))}</label>
+        <input type="number" name="current" value="${data.current ?? 0}"/>
       </div>
      <div class="form-group form-group--number gum-resource-field gum-resource-field--max">
-        <label>Valor Máximo</label>
+        <label>${esc(game.i18n.localize("GUM.Resources.Maximum"))}</label>
         <input type="number" name="max" value="${data.max ?? 0}" min="0"/>
       </div>
     </form>`;
-
-  const title = reserveType === "power"
-    ? isEdit ? "Editar Reserva de Poder" : "Nova Reserva de Poder"
-    : isEdit ? "Editar Reserva de Magia" : "Nova Reserva de Magia";
 
  return new Promise((resolve) => {
     let resolved = false;
@@ -5458,16 +5459,16 @@ async _promptEnergyReserveData(reserveType, initialData = {}, { isEdit = false }
     };
 
     new Dialog({
-      title,
+      title: copy.title,
       content,
       buttons: {
         save: {
           icon: '<i class="fas fa-save"></i>',
-          label: "Salvar",
+          label: game.i18n.localize("GUM.Resources.Save"),
           callback: (html) => {
             const form = html.find("form")[0];
             const name = form.name.value.trim();
-            if (!name) return ui.notifications.warn("Informe um nome para a reserva.");
+            if (!name) return ui.notifications.warn(game.i18n.localize("GUM.Resources.NameRequired"));
 
             const source = form.source.value.trim();
             const current = Number(form.current.value) || 0;
@@ -5478,7 +5479,7 @@ async _promptEnergyReserveData(reserveType, initialData = {}, { isEdit = false }
         },
         cancel: {
           icon: '<i class="fas fa-times"></i>',
-          label: "Cancelar",
+          label: game.i18n.localize("GUM.Characteristics.Cancel"),
           callback: () => finish(null)
         }
       },
@@ -5512,8 +5513,8 @@ _prepareCharacteristicLink(id, record, fallbackName) {
     return {
       id,
       itemId,
-      name: "Característica não encontrada",
-      kindLabel: "Vínculo interrompido",
+      name: game.i18n.localize("GUM.Resources.LinkedTraitMissing"),
+      kindLabel: game.i18n.localize("GUM.Resources.BrokenLink"),
       broken: true
     };
   }
@@ -5528,7 +5529,7 @@ _prepareCharacteristicLink(id, record, fallbackName) {
     level: Number(item.system?.level) || 0,
     points: Number(item.system?.points) || 0,
     notes: String(item.system?.characteristics || "").trim(),
-    kindLabel: item.type === "disadvantage" ? "Desvantagem" : "Vantagem"
+    kindLabel: game.i18n.localize(item.type === "disadvantage" ? "GUM.Characteristics.Disadvantage" : "GUM.Characteristics.Advantage")
   };
 }
 
@@ -5639,7 +5640,7 @@ async _promptCharacteristicLink(linkType) {
 _prepareCastingAbilities() {
   const collection = foundry.utils.duplicate(this.actor.system.casting_abilities || {});
   const abilities = Object.entries(collection).map(([id, ability]) =>
-    this._prepareCharacteristicLink(id, ability, "Habilidade de Conjuração")
+    this._prepareCharacteristicLink(id, ability, game.i18n.localize("GUM.Spells.CastingAbility"))
   );
 
   if (!abilities.length) {
@@ -5655,8 +5656,8 @@ _prepareCastingAbilities() {
     if (hasLegacyData) {
       abilities.push({
         id: "legacy",
-        name: legacy.name || "Habilidade de Conjuração",
-        source: legacy.source || "Fonte Mágica",
+        name: legacy.name || game.i18n.localize("GUM.Spells.CastingAbility"),
+        source: legacy.source || game.i18n.localize("GUM.Spells.LegacySource"),
         level: Number(legacy.level) || 0,
         points: Number(legacy.points) || 0,
         description: legacy.description || ""
@@ -5674,8 +5675,8 @@ _getCastingAbilityById(abilityId) {
     const legacy = this.actor.system.casting_ability || {};
     return {
       id: "legacy",
-      name: legacy.name || "Habilidade de Conjuração",
-      source: legacy.source || "Fonte Mágica",
+      name: legacy.name || game.i18n.localize("GUM.Spells.CastingAbility"),
+      source: legacy.source || game.i18n.localize("GUM.Spells.LegacySource"),
       level: Number(legacy.level) || 0,
       points: Number(legacy.points) || 0,
       description: legacy.description || ""
@@ -5686,7 +5687,7 @@ _getCastingAbilityById(abilityId) {
   if (!ability) return null;
 
     if (ability.item_id || ability.itemId) {
-    return this._prepareCharacteristicLink(abilityId, ability, "Habilidade de Conjuração");
+    return this._prepareCharacteristicLink(abilityId, ability, game.i18n.localize("GUM.Spells.CastingAbility"));
   }
 
   return {
@@ -5886,7 +5887,7 @@ _onViewCastingAbility(ev) {
 _preparePowerSources() {
   const collection = foundry.utils.duplicate(this.actor.system.power_sources || {});
   const sources = Object.entries(collection).map(([id, source]) =>
-    this._prepareCharacteristicLink(id, source, "Fonte de Poder")
+    this._prepareCharacteristicLink(id, source, game.i18n.localize("GUM.Powers.Source"))
   );
 
   
@@ -5909,7 +5910,7 @@ _preparePowerSources() {
     if (hasLegacyData) {
       sources.push({
         id: "legacy",
-        name: legacy.name || "Fonte de Poder",
+        name: legacy.name || game.i18n.localize("GUM.Powers.Source"),
         source: legacy.source || "",
         focus: legacy.focus || "",
         level: Number(legacy.level) || 0,
@@ -5932,7 +5933,7 @@ _getPowerSourceById(sourceId) {
     const legacy = this.actor.system.power_source || {};
     return {
       id: "legacy",
-      name: legacy.name || "Fonte de Poder",
+      name: legacy.name || game.i18n.localize("GUM.Powers.Source"),
       source: legacy.source || "",
       focus: legacy.focus || "",
       level: Number(legacy.level) || 0,
@@ -5948,12 +5949,12 @@ _getPowerSourceById(sourceId) {
   if (!source) return null;
 
     if (source.item_id || source.itemId) {
-    return this._prepareCharacteristicLink(sourceId, source, "Fonte de Poder");
+    return this._prepareCharacteristicLink(sourceId, source, game.i18n.localize("GUM.Powers.Source"));
   }
 
   return {
     id: sourceId,
-    name: source.name || "Fonte de Poder",
+    name: source.name || game.i18n.localize("GUM.Powers.Source"),
     source: source.source || "",
     focus: source.focus || "",
     level: Number(source.level) || 0,

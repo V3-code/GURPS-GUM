@@ -761,7 +761,7 @@
 
 
       {{#if spellSupportCount}}
-      <section class="support-card-grid support-card-grid--spell{{#if spellSupportCompactPair}} is-compact-pair{{/if}}" aria-label="Conjuração e reservas de magia">
+      <section class="support-card-grid support-card-grid--spell{{#if spellSupportCompactPair}} is-compact-pair{{/if}}" aria-label="{{localize 'GUM.Spells.SupportSectionLabel'}}">
         {{#each castingAbilities}}
         <article class="support-card support-link-card characteristic-link-card{{#if this.broken}} is-broken{{/if}}" data-ability-id="{{this.id}}">
           {{#if this.itemId}}
@@ -770,17 +770,17 @@
           <div class="support-card__body">
             <div class="support-card__title-row">
               <a class="support-card__name casting-ability-name {{#if this.itemId}}{{#if this.broken}}edit-casting-ability{{else}}view-casting-ability{{/if}}{{/if}}">{{this.name}}{{#if this.specialization}} ({{this.specialization}}){{/if}}</a>
-              <span class="support-card__stat">{{#if this.itemId}}{{this.points}} pts{{else}}Nv {{this.level}}{{/if}}</span>
+              <span class="support-card__stat">{{#if this.itemId}}{{this.points}} {{localize 'GUM.Characteristics.PointsAbbreviation'}}{{else}}{{localize 'GUM.Characteristics.LevelAbbreviation'}} {{this.level}}{{/if}}</span>
             </div>
-            <div class="support-card__meta"><span class="support-card__kind">Conjuração</span> · {{#if this.itemId}}{{this.kindLabel}}{{#if this.level}} · Nv {{this.level}}{{/if}}{{#if this.notes}} · {{this.notes}}{{/if}}{{else}}Registro legado · {{this.source}}{{/if}}</div>
+            <div class="support-card__meta"><span class="support-card__kind">{{localize 'GUM.Spells.CastingAbility'}}</span> · {{#if this.itemId}}{{this.kindLabel}}{{#if this.level}} · {{localize 'GUM.Characteristics.LevelAbbreviation'}} {{this.level}}{{/if}}{{#if this.notes}} · {{this.notes}}{{/if}}{{else}}{{localize 'GUM.Resources.LegacyRecord'}} · {{this.source}}{{/if}}</div>
           </div>
                   <div class="item-controls support-card__controls">
             <div class="gum-action-menu js-action-menu">
-              <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da habilidade" aria-label="Opções da habilidade" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
-              <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da habilidade de conjuração">
-                <a class="item-control view-casting-ability gum-action-menu__item" role="menuitem"><i class="fas fa-eye"></i><span>{{#if this.itemId}}Abrir característica{{else}}Visualizar{{/if}}</span></a>
-                <a class="item-control edit-casting-ability gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{#if this.broken}}Selecionar substituta{{else}}Editar{{/if}}</span></a>
-                <a class="item-control delete-casting-ability gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-unlink"></i><span>{{#if this.itemId}}Desvincular{{else}}Excluir{{/if}}</span></a>
+              <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Spells.CastingAbilityOptions'}}" aria-label="{{localize 'GUM.Spells.CastingAbilityOptions'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+              <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Spells.CastingAbilityActions'}}">
+                <a class="item-control view-casting-ability gum-action-menu__item" role="menuitem"><i class="fas fa-eye"></i><span>{{#if this.itemId}}{{localize 'GUM.Resources.OpenTrait'}}{{else}}{{localize 'GUM.Resources.View'}}{{/if}}</span></a>
+                <a class="item-control edit-casting-ability gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{#if this.broken}}{{localize 'GUM.Resources.SelectReplacement'}}{{else}}{{localize 'GUM.Inventory.Edit'}}{{/if}}</span></a>
+                <a class="item-control delete-casting-ability gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-unlink"></i><span>{{#if this.itemId}}{{localize 'GUM.Resources.Unlink'}}{{else}}{{localize 'GUM.Inventory.Delete'}}{{/if}}</span></a>
               </div>
             </div>
           </div>
@@ -788,23 +788,23 @@
         {{/each}}
 
        {{#each spellReserves}}
-        <article class="support-card support-reserve-card support-card--category-start energy-reserve-card energy-reserve-card--spell{{#if @first}} is-first-reserve{{/if}}" data-reserve-id="{{@key}}" data-reserve-type="spell" {{#if this.equipmentId}}data-equipment-id="{{this.equipmentId}}"{{/if}} title="{{this.name}} — {{this.current}} de {{this.max}}" aria-label="Reserva de magia {{this.name}}: valor atual {{this.current}}, máximo {{this.max}}">
+        <article class="support-card support-reserve-card support-card--category-start energy-reserve-card energy-reserve-card--spell{{#if @first}} is-first-reserve{{/if}}" data-reserve-id="{{@key}}" data-reserve-type="spell" {{#if this.equipmentId}}data-equipment-id="{{this.equipmentId}}"{{/if}} title="{{localize 'GUM.Resources.ReserveTitle' name=this.name current=this.current max=this.max}}" aria-label="{{localize 'GUM.Resources.ReserveTitle' name=this.name current=this.current max=this.max}}">
           <span class="support-card__icon support-card__icon--spell"><i class="fas fa-magic" aria-hidden="true"></i></span>
           <div class="support-card__body">
             <strong class="support-card__name energy-reserve-name">{{this.name}}</strong>
-            <div class="support-card__meta"><span class="support-card__kind">Reserva</span> · máx. <strong>{{this.max}}</strong>{{#if this.source}} · {{this.source}}{{/if}}</div>
+            <div class="support-card__meta"><span class="support-card__kind">{{localize 'GUM.Resources.Reserve'}}</span> · {{localize 'GUM.Resources.MaximumAbbreviation'}} <strong>{{this.max}}</strong>{{#if this.source}} · {{this.source}}{{/if}}</div>
           </div>
           <div class="energy-reserve-value-controls support-card__value-controls">
-            <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="-1" aria-label="Diminuir {{this.name}} em uma unidade"><i class="fas fa-minus" aria-hidden="true"></i></button>
-            <strong class="energy-reserve-value" aria-label="Valor atual: {{this.current}}">{{this.current}}</strong>
-            <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="1" aria-label="Aumentar {{this.name}} em uma unidade"><i class="fas fa-plus" aria-hidden="true"></i></button>
+            <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="-1" aria-label="{{localize 'GUM.Resources.Decrease' name=this.name}}"><i class="fas fa-minus" aria-hidden="true"></i></button>
+            <strong class="energy-reserve-value" aria-label="{{localize 'GUM.Resources.CurrentValue' value=this.current}}">{{this.current}}</strong>
+            <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="1" aria-label="{{localize 'GUM.Resources.Increase' name=this.name}}"><i class="fas fa-plus" aria-hidden="true"></i></button>
           </div>
           <div class="item-controls support-card__controls energy-reserve-controls">
             <div class="gum-action-menu js-action-menu">
-              <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da reserva" aria-label="Opções da reserva" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
-              <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da reserva">
-                <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{#if this.equipmentId}}{{localize "GUM.Equipment.Reserve.OpenEquipment"}}{{else}}Editar{{/if}}</span></a>
-                {{#unless this.equipmentId}}<a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>Excluir</span></a>{{/unless}}
+              <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Resources.ReserveOptions'}}" aria-label="{{localize 'GUM.Resources.ReserveOptions'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+              <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Resources.ReserveActions'}}">
+                <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{#if this.equipmentId}}{{localize "GUM.Equipment.Reserve.OpenEquipment"}}{{else}}{{localize 'GUM.Inventory.Edit'}}{{/if}}</span></a>
+                {{#unless this.equipmentId}}<a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>{{localize 'GUM.Inventory.Delete'}}</span></a>{{/unless}}
               </div>
             </div>
           </div>
@@ -960,7 +960,7 @@
       </div>
 
       {{#if powerSupportCount}}
-      <section class="support-card-grid support-card-grid--power{{#if powerSupportCompactPair}} is-compact-pair{{/if}}" aria-label="Fontes e reservas de poder">
+      <section class="support-card-grid support-card-grid--power{{#if powerSupportCompactPair}} is-compact-pair{{/if}}" aria-label="{{localize 'GUM.Powers.SupportSectionLabel'}}">
         {{#each powerSources}}
         <article class="support-card support-link-card characteristic-link-card{{#if this.broken}} is-broken{{/if}}" data-power-source-id="{{this.id}}">
           {{#if this.itemId}}
@@ -969,40 +969,40 @@
           <div class="support-card__body">
             <div class="support-card__title-row">
               <a class="support-card__name casting-ability-name {{#if this.itemId}}{{#if this.broken}}edit-power-source{{else}}view-power-source{{/if}}{{/if}}">{{this.name}}{{#if this.specialization}} ({{this.specialization}}){{/if}}</a>
-              <span class="support-card__stat">{{#if this.itemId}}{{this.points}} pts{{else}}Nv {{this.level}}{{/if}}</span>
+              <span class="support-card__stat">{{#if this.itemId}}{{this.points}} {{localize 'GUM.Characteristics.PointsAbbreviation'}}{{else}}{{localize 'GUM.Characteristics.LevelAbbreviation'}} {{this.level}}{{/if}}</span>
             </div>
-            <div class="support-card__meta"><span class="support-card__kind">Fonte</span> · {{#if this.itemId}}{{this.kindLabel}}{{#if this.level}} · Nv {{this.level}}{{/if}}{{#if this.notes}} · {{this.notes}}{{/if}}{{else}}Registro legado · {{this.source}}{{/if}}</div>
+            <div class="support-card__meta"><span class="support-card__kind">{{localize 'GUM.Powers.Source'}}</span> · {{#if this.itemId}}{{this.kindLabel}}{{#if this.level}} · {{localize 'GUM.Characteristics.LevelAbbreviation'}} {{this.level}}{{/if}}{{#if this.notes}} · {{this.notes}}{{/if}}{{else}}{{localize 'GUM.Resources.LegacyRecord'}} · {{this.source}}{{/if}}</div>
           </div>
           <div class="item-controls support-card__controls">
             <div class="gum-action-menu js-action-menu">
-              <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da fonte" aria-label="Opções da fonte" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
-              <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da fonte de poder">
-                <a class="item-control view-power-source gum-action-menu__item" role="menuitem"><i class="fas fa-eye"></i><span>{{#if this.itemId}}Abrir característica{{else}}Visualizar{{/if}}</span></a>
-                <a class="item-control edit-power-source gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{#if this.broken}}Selecionar substituta{{else}}Editar{{/if}}</span></a>
-                <a class="item-control delete-power-source gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-unlink"></i><span>{{#if this.itemId}}Desvincular{{else}}Excluir{{/if}}</span></a>
+              <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Powers.SourceOptions'}}" aria-label="{{localize 'GUM.Powers.SourceOptions'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+              <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Powers.SourceActions'}}">
+                <a class="item-control view-power-source gum-action-menu__item" role="menuitem"><i class="fas fa-eye"></i><span>{{#if this.itemId}}{{localize 'GUM.Resources.OpenTrait'}}{{else}}{{localize 'GUM.Resources.View'}}{{/if}}</span></a>
+                <a class="item-control edit-power-source gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{#if this.broken}}{{localize 'GUM.Resources.SelectReplacement'}}{{else}}{{localize 'GUM.Inventory.Edit'}}{{/if}}</span></a>
+                <a class="item-control delete-power-source gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-unlink"></i><span>{{#if this.itemId}}{{localize 'GUM.Resources.Unlink'}}{{else}}{{localize 'GUM.Inventory.Delete'}}{{/if}}</span></a>
               </div>
             </div>
           </div>
         </article>
         {{/each}}
         {{#each powerReserves}}
-        <article class="support-card support-reserve-card support-card--category-start energy-reserve-card energy-reserve-card--power{{#if @first}} is-first-reserve{{/if}}" data-reserve-id="{{@key}}" data-reserve-type="power" {{#if this.equipmentId}}data-equipment-id="{{this.equipmentId}}"{{/if}} title="{{this.name}} — {{this.current}} de {{this.max}}" aria-label="Reserva de poder {{this.name}}: valor atual {{this.current}}, máximo {{this.max}}">
+        <article class="support-card support-reserve-card support-card--category-start energy-reserve-card energy-reserve-card--power{{#if @first}} is-first-reserve{{/if}}" data-reserve-id="{{@key}}" data-reserve-type="power" {{#if this.equipmentId}}data-equipment-id="{{this.equipmentId}}"{{/if}} title="{{localize 'GUM.Resources.ReserveTitle' name=this.name current=this.current max=this.max}}" aria-label="{{localize 'GUM.Resources.ReserveTitle' name=this.name current=this.current max=this.max}}">
           <span class="support-card__icon support-card__icon--power"><i class="fas fa-bolt" aria-hidden="true"></i></span>
           <div class="support-card__body">
             <strong class="support-card__name energy-reserve-name">{{this.name}}</strong>
-            <div class="support-card__meta"><span class="support-card__kind">Reserva</span> · máx. <strong>{{this.max}}</strong>{{#if this.source}} · {{this.source}}{{/if}}</div>
+            <div class="support-card__meta"><span class="support-card__kind">{{localize 'GUM.Resources.Reserve'}}</span> · {{localize 'GUM.Resources.MaximumAbbreviation'}} <strong>{{this.max}}</strong>{{#if this.source}} · {{this.source}}{{/if}}</div>
           </div>
           <div class="energy-reserve-value-controls support-card__value-controls">
-            <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="-1" aria-label="Diminuir {{this.name}} em uma unidade"><i class="fas fa-minus" aria-hidden="true"></i></button>
-            <strong class="energy-reserve-value" aria-label="Valor atual: {{this.current}}">{{this.current}}</strong>
-            <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="1" aria-label="Aumentar {{this.name}} em uma unidade"><i class="fas fa-plus" aria-hidden="true"></i></button>
+            <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="-1" aria-label="{{localize 'GUM.Resources.Decrease' name=this.name}}"><i class="fas fa-minus" aria-hidden="true"></i></button>
+            <strong class="energy-reserve-value" aria-label="{{localize 'GUM.Resources.CurrentValue' value=this.current}}">{{this.current}}</strong>
+            <button type="button" class="adjust-energy-reserve energy-reserve-adjust" data-adjustment="1" aria-label="{{localize 'GUM.Resources.Increase' name=this.name}}"><i class="fas fa-plus" aria-hidden="true"></i></button>
           </div>
           <div class="item-controls support-card__controls energy-reserve-controls">
             <div class="gum-action-menu js-action-menu">
-              <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções da reserva" aria-label="Opções da reserva" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
-              <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações da reserva">
-                <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{#if this.equipmentId}}{{localize "GUM.Equipment.Reserve.OpenEquipment"}}{{else}}Editar{{/if}}</span></a>
-                {{#unless this.equipmentId}}<a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>Excluir</span></a>{{/unless}}
+              <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Resources.ReserveOptions'}}" aria-label="{{localize 'GUM.Resources.ReserveOptions'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+              <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Resources.ReserveActions'}}">
+                <a class="item-control edit-energy-reserve gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{#if this.equipmentId}}{{localize "GUM.Equipment.Reserve.OpenEquipment"}}{{else}}{{localize 'GUM.Inventory.Edit'}}{{/if}}</span></a>
+                {{#unless this.equipmentId}}<a class="item-control delete-energy-reserve gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>{{localize 'GUM.Inventory.Delete'}}</span></a>{{/unless}}
               </div>
             </div>
           </div>
