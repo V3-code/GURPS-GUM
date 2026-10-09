@@ -26,10 +26,10 @@ test("collapsed spell cards form a responsive two-column grid", () => {
   assert.match(styles, /@media \(max-width:760px\)[\s\S]*\.magic-card-grid\s*\{\s*grid-template-columns:1fr;/s);
 });
 
-test("time and mana share the subtitle so the spell name keeps the flexible column", () => {
-  assert.match(spellTab, /magic-card__identity-meta[\s\S]*magic-card__identity-source[\s\S]*GUM\.Spells\.Time[\s\S]*GUM\.Spells\.Mana/);
+test("time and mana share a third identity line so the spell name keeps the flexible column", () => {
+  assert.match(spellTab, /magic-card__identity-meta">\{\{this\.magicCardIdentity\}\}<\/div>[\s\S]*magic-card__identity-mechanics[\s\S]*GUM\.Spells\.Time[\s\S]*GUM\.Spells\.Mana/);
   assert.doesNotMatch(spellTab, /class="magic-card__metric magic-card__(?:time|mana)"/);
-  assert.match(styles, /\.magic-card__identity-meta\s*\{[^}]*display:flex;/s);
+  assert.match(styles, /\.magic-card__identity-mechanics\s*\{[^}]*display:flex;/s);
 });
 
 test("primary damage signals secondary damage and attack level uses a subtle tag", () => {

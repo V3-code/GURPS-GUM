@@ -823,8 +823,8 @@
 
                   <div class="magic-card__identity">
                     <h4 class="magic-card__name item-quick-view" title="{{this.name}} — {{localize 'GUM.Spells.View'}}">{{this.name}}</h4>
-                    <div class="magic-card__identity-meta">
-                      {{#if this.magicCardIdentity}}<span class="magic-card__identity-source">{{this.magicCardIdentity}}</span>{{/if}}
+                    <div class="magic-card__identity-meta">{{this.magicCardIdentity}}</div>
+                    <div class="magic-card__identity-mechanics">
                       <span class="magic-card__identity-stat" title="{{localize 'GUM.Spells.TimeHint'}}"><strong>{{localize 'GUM.Spells.Time'}}</strong> {{this.system.casting_time}} · {{this.system.duration}}</span>
                       <span class="magic-card__identity-stat" title="{{localize 'GUM.Spells.ManaHint'}}"><strong>{{localize 'GUM.Spells.Mana'}}</strong> {{this.system.mana_cost}} / {{this.system.mana_maint}}</span>
                     </div>

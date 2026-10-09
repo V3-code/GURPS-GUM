@@ -4467,9 +4467,6 @@ background-color: var(--gum-accent-gold);
 }
 .gum.sheet.actor .tab[data-tab="spells"] .magic-card__name:hover { color:#f0d79f; }
 .gum.sheet.actor .tab[data-tab="spells"] .magic-card__identity-meta {
-    display:flex;
-    align-items:center;
-    gap:4px;
     margin-top:1px;
     overflow:hidden;
     color:rgba(230,220,225,.5);
@@ -4479,17 +4476,29 @@ background-color: var(--gum-accent-gold);
     text-overflow:ellipsis;
     white-space:nowrap;
 }
-.gum.sheet.actor .tab[data-tab="spells"] .magic-card__identity-meta > span {
+.gum.sheet.actor .tab[data-tab="spells"] .magic-card__identity-mechanics {
+    display:flex;
+    align-items:center;
+    gap:4px;
+    min-width:0;
+    margin-top:1px;
+    overflow:hidden;
+    color:rgba(230,220,225,.5);
+    font-family:var(--gum-font-condensed);
+    font-size:9px;
+    line-height:1.1;
+    white-space:nowrap;
+}
+.gum.sheet.actor .tab[data-tab="spells"] .magic-card__identity-mechanics > span {
     min-width:0;
     overflow:hidden;
     text-overflow:ellipsis;
 }
-.gum.sheet.actor .tab[data-tab="spells"] .magic-card__identity-meta > span + span::before {
+.gum.sheet.actor .tab[data-tab="spells"] .magic-card__identity-mechanics > span + span::before {
     content:"·";
     margin-right:4px;
     color:rgba(230,220,225,.3);
 }
-.gum.sheet.actor .tab[data-tab="spells"] .magic-card__identity-source { flex:0 1 auto; }
 .gum.sheet.actor .tab[data-tab="spells"] .magic-card__identity-stat { flex:0 1 auto; }
 .gum.sheet.actor .tab[data-tab="spells"] .magic-card__identity-stat strong {
     color:rgba(225,184,117,.68);
