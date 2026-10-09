@@ -7452,8 +7452,8 @@ background-color: var(--gum-accent-gold);
     padding: 5px 6px;
     gap: 6px;
     display: grid;
-    grid-template-columns: 28px minmax(0, 1fr);
-    align-items: start;
+    grid-template-columns:28px minmax(0,1fr) 18px;
+    align-items:center;
     position: relative;
     overflow: visible;
     background: #1a1b1f;
@@ -7464,9 +7464,9 @@ background-color: var(--gum-accent-gold);
 }
 .gum.sheet.actor .conditions-tab .effect-pill-enhanced:hover { background: #22242a; border:0; transform:none; box-shadow:inset 2px 0 0 rgba(240,215,159,.7); }
 .gum.sheet.actor .conditions-tab .effect-pill-enhanced.action-menu-open-row { z-index: 120; }
-.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-card-visual { display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
+.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-card-visual { display:flex; flex-direction:column; align-items:center; align-self:center; gap:4px; min-width:0; }
 .gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-icon { width:28px; height:28px; border:0; border-radius:3px; background:rgba(190,148,91,.1); }
-.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-card-content { min-width:0; }
+.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-card-content { min-width:0; align-self:center; }
 .gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-info { min-width:0; overflow:visible; }
 .gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-name { display:block; overflow:visible; color:var(--gum-text-claro); font-size:12px; line-height:1.2; text-overflow:clip; white-space:normal; overflow-wrap:anywhere; }
 .gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-details { align-items:flex-start; gap:2px; margin-top:1px; }
@@ -7477,17 +7477,17 @@ background-color: var(--gum-accent-gold);
     display:flex;
     flex-direction:row;
     align-items:center;
-    gap:6px;
-    width:100%;
-    min-height:19px;
-    margin:3px 0 0;
-    padding:3px 0 0;
-    border-top:1px solid rgba(255,255,255,.08);
-    border-left:0;
+    justify-content:center;
+    gap:0;
+    width:18px;
+    min-height:18px;
+    margin:0;
+    padding:0;
+    border:0;
     opacity:1;
 }
 .gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-switch-wrapper { align-self:center; margin:0; }
-.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-controls .gum-action-menu { margin-left:auto; }
+.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-controls .gum-action-menu { margin:0; }
 .gum.sheet.actor .conditions-tab .effect-pill-enhanced .gum-action-menu__toggle { width:18px; height:18px; min-width:18px; padding:0; color:rgba(235,226,231,.48); font-size:10px; }
 .gum.sheet.actor .conditions-tab .effect-pill-enhanced .gum-action-menu__toggle:hover { color:#f0d79f; text-decoration:none; }
 .gum.sheet.actor .conditions-tab .gum-action-menu__panel {

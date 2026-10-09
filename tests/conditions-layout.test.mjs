@@ -12,9 +12,9 @@ const conditionsTab = template.slice(template.indexOf('class="tab conditions-tab
 
 test("condition sections use neutral compact headers and cards", () => {
   assert.match(styles, /\.conditions-tab details\.form-section\.gum-unified-section > \.gum-unified-header\s*\{[^}]*background:\s*transparent !important;/s);
-  assert.match(styles, /\.conditions-tab \.effect-pill-enhanced\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*28px minmax\(0, 1fr\);[^}]*background:\s*#1a1b1f;[^}]*border:\s*0;[^}]*box-shadow:\s*inset 2px 0 0 rgba\(225,184,117,\.42\);/s);
+  assert.match(styles, /\.conditions-tab \.effect-pill-enhanced\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*28px minmax\(0,1fr\) 18px;[^}]*background:\s*#1a1b1f;[^}]*border:\s*0;[^}]*box-shadow:\s*inset 2px 0 0 rgba\(225,184,117,\.42\);/s);
   assert.match(styles, /\.conditions-tab \.effect-pill-enhanced \.pill-icon\s*\{[^}]*width:\s*28px;/s);
-  assert.match(styles, /\.conditions-tab \.gum-unified-section \.effect-pill-enhanced \.pill-controls\s*\{[^}]*flex-direction:\s*row;[^}]*border-top:\s*1px solid/s);
+  assert.match(styles, /\.conditions-tab \.gum-unified-section \.effect-pill-enhanced \.pill-controls\s*\{[^}]*justify-content:\s*center;[^}]*width:\s*18px;[^}]*border:\s*0;/s);
   assert.match(styles, /\.conditions-tab \.gum-action-menu__panel\s*\{[^}]*background:\s*#f6f4f0;/s);
   assert.doesNotMatch(styles, /\.gum-unified-section \.effect-pill-enhanced\s*\{[^}]*background:\s*#2f343d;/s);
   assert.match(styles, /\.conditions-tab \.effect-origin-summary\s*\{[^}]*border-bottom:\s*1px solid rgba\(197,160,91,\.2\);[^}]*background:\s*transparent !important;/s);
@@ -25,7 +25,7 @@ test("condition sections use neutral compact headers and cards", () => {
   assert.match(styles, /\.conditions-tab \.effect-pill-enhanced \.pill-name\s*\{[^}]*white-space:\s*normal;[^}]*overflow-wrap:\s*anywhere;/s);
 });
 
-test("all condition card types keep their controls in the shared footer menu", () => {
+test("all condition card types keep their controls in the side action menu", () => {
   assert.equal((conditionsTab.match(/class="pill-card-content"/g) ?? []).length, 3);
   assert.equal((conditionsTab.match(/class="gum-action-menu js-action-menu"/g) ?? []).length, 3);
   assert.equal((conditionsTab.match(/class="effect-toggle"/g) ?? []).length, 2);
@@ -33,6 +33,7 @@ test("all condition card types keep their controls in the shared footer menu", (
   assert.equal((conditionsTab.match(/data-action="delete-effect"/g) ?? []).length, 2);
   assert.match(conditionsTab, /class="manual-override-toggle"/);
   assert.equal((conditionsTab.match(/class="pill-card-visual"/g) ?? []).length, 3);
+  assert.equal((conditionsTab.match(/<\/div>\s*<div class="pill-controls">/g) ?? []).length, 3);
   assert.match(conditionsTab, /pill-card-visual">\s*<img src="\{\{effect\.img\}\}"[\s\S]*?<div class="pill-switch-wrapper"/);
   assert.match(conditionsTab, /pill-card-visual">\s*<img src="\{\{item\.img\}\}"[\s\S]*?<div class="pill-switch-wrapper"/);
   assert.match(conditionsTab, /item-control item-edit gum-action-menu__item/);
