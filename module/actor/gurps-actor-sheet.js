@@ -3255,6 +3255,14 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
     html.find(".rollable").attr("draggable", true);
     html.on("dragstart", ".rollable", this._onDragStart.bind(this));
 
+    // Os cards compactos de magia ficam fora de `.item-list`, portanto não
+    // recebem o listener de arraste criado pelo ActorSheet base. Mantemos o
+    // arraste de rolagens independente para que puxar o NH ainda crie GUM.Roll.
+    html.on("dragstart", ".magic-card", ev => {
+        if ($(ev.target).closest(".rollable").length) return;
+        this._onDragStart(ev);
+    });
+
 // ================================================================== //
 //  ROLAGEM DE DANO (ATAQUES DE EQUIPAMENTO + MAGIAS / PODERES)
 // ================================================================== //

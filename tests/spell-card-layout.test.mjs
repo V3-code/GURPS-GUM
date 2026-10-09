@@ -33,6 +33,8 @@ test("spell rows preserve rolls, quick view, item actions, and drag behavior", (
   assert.match(spellTab, /item-edit gum-action-menu__item/);
   assert.match(spellTab, /item-delete gum-action-menu__item is-danger/);
   assert.match(spellTab, /data-item-id="{{this\.id}}" draggable="true"/);
+  assert.match(actorSheet, /html\.on\("dragstart", "\.magic-card"/);
+  assert.match(actorSheet, /closest\("\.rollable"\)\.length\) return/);
 });
 
 test("mechanical details expand into attack, damage, and resolution branches", () => {
