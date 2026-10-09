@@ -58,6 +58,9 @@ test("trait cards use the compact card model with a consolidated options menu", 
   assert.match(styles, /\.characteristics-tab \.gum-action-menu__panel\s*\{[^}]*background:\s*#f6f4f0;/s);
   assert.match(styles, /a\.item-control\.gum-action-menu__item\s*\{[^}]*color:\s*#4a4743;[^}]*font-size:\s*11px;/s);
   assert.match(actorSheet, /\.characteristic-card, \.spell-row-v3/);
+  assert.match(actorSheet, /_positionActionMenu\(menu\);[\s\S]*menu\.classList\.add\("is-open"\)/);
+  assert.equal((actorSheet.match(/this\._positionActionMenu\(menu\);/g) || []).length, 1);
+  assert.match(styles, /\.characteristic-card\.action-menu-open-row\s*\{\s*z-index:\s*120;/);
   assert.match(styles, /\.skills-tab \.st-controls \.gum-action-menu\s*\{\s*margin-left:\s*auto;/);
   assert.match(styles, /\.characteristics-tab \.characteristic-card\.advantage \.card-points\s*\{\s*color:/);
   assert.match(styles, /\.characteristics-tab \.characteristic-card\.disadvantage \.card-points\s*\{\s*color:/);

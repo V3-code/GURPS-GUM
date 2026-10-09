@@ -10265,6 +10265,7 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .tab[data-tab="characteristics"] .characteristic-group.gum-unified-section,
 .gum.sheet.actor .tab[data-tab="characteristics"] .characteristic-group-content,
 .gum.sheet.actor .tab[data-tab="characteristics"] .characteristic-card { overflow: visible; }
+.gum.sheet.actor .tab[data-tab="characteristics"] .characteristic-card.action-menu-open-row { z-index: 120; }
 .gum.sheet.actor .characteristics-tab .characteristic-card::before { display: none; }
 .gum.sheet.actor .characteristics-tab .characteristic-card .item-icon {
     width: 28px;

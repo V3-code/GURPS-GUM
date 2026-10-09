@@ -4976,10 +4976,8 @@ _onActionMenuToggle(ev) {
     if (actionMenuRow) actionMenuRow.classList.add("action-menu-open-row");
     const toggle = menu.querySelector(".js-action-menu-toggle");
     if (toggle) toggle.setAttribute("aria-expanded", "true");
-    this._positionActionMenu(menu);
-  
-    // Posiciona enquanto o painel ainda está invisível para evitar um frame
-    // inicial renderizado abaixo dos cards antes do cálculo final.
+    // Position while the panel is still invisible to avoid a frame rendered
+    // beneath neighboring cards before its final coordinates are known.
     this._positionActionMenu(menu);
     menu.classList.add("is-open");
   }
