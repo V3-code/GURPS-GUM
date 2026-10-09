@@ -119,16 +119,29 @@ test("status and organization use society as identity and status as a metric", (
   assert.equal(organization.observation, "Membro em treinamento.");
 });
 
-test("actor social template keeps the source image at left and observations in a conditional footer", () => {
+test("actor social template keeps the source image, expandable descriptions, and action menu", () => {
   const template = readFileSync(new URL("../templates/actors/characters.hbs", import.meta.url), "utf8");
   const styles = readFileSync(new URL("../styles/styles.css", import.meta.url), "utf8");
 
   assert.match(template, /class="social-entry-portrait \{\{source\}\}"/);
   assert.match(template, /class="social-entry-primary"/);
   assert.match(template, /class="social-entry-metrics"/);
+  assert.match(template, /social-entry-expand/);
+  assert.match(template, /gum-action-menu js-action-menu/);
   assert.match(template, /\{\{#if observation\}\}<div class="social-entry-observation"/);
   assert.doesNotMatch(template, /class="social-origin /);
-  assert.match(styles, /\.tab\[data-tab="social"\] \.social-entry-list > \.social-entry-card \{ display:block;/);
+  assert.match(styles, /\.social-entry-card--item \{ background:linear-gradient/);
+  assert.match(styles, /\.tab\[data-tab="social"\] \.gum-action-menu__panel/);
+});
+
+test("social descriptions keep their expansion state independently from the section state", () => {
+  const source = readFileSync(new URL("../module/actor/gurps-actor-sheet.js", import.meta.url), "utf8");
+
+  assert.match(source, /this\._expandedSocialCards \?\?= new Set\(\)/);
+  assert.match(source, /\.social-entry-expand/);
+  assert.match(source, /_onToggleSocialEntryDescription\(ev\)/);
+  assert.match(source, /\.social-entry-card, \.meter-card/);
+  assert.doesNotMatch(source, /this\.render\(false\);\s*\}\s*\n\s*\n_prepareAppliedModels/);
 });
 
 test("manual social dialogs use the shared dark editor presentation", () => {

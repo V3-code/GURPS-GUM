@@ -121,6 +121,7 @@ async getData(options) {
         const context = await super.getData(options);
         this._expandedSpellCards ??= new Set();
         this._expandedPowerCards ??= new Set();
+        this._expandedSocialCards ??= new Set();
         
         const profileId = this.actor.system.combat?.body_profile || "humanoid";
         const profile = getBodyProfile(profileId);
@@ -142,7 +143,13 @@ async getData(options) {
           return acc;
         }, {});
              context.itemsByType = itemsByType;
-        context.socialSections = buildSocialSections(this.actor.system, Array.from(this.actor.items), key => game.i18n.localize(key));
+        context.socialSections = buildSocialSections(this.actor.system, Array.from(this.actor.items), key => game.i18n.localize(key)).map(section => ({
+          ...section,
+          entries: section.entries.map(entry => {
+            const cardKey = `${section.type}:${entry.source}:${entry.itemId || "manual"}:${entry.id}`;
+            return { ...entry, cardKey, expanded: this._expandedSocialCards.has(cardKey) };
+          })
+        }));
 // ---------------------------------------------------------
         // PREPARAÇÃO DA ABA DE MODIFICADORES (AGRUPAMENTO LIVRE POR NOME)
         // ---------------------------------------------------------
@@ -2407,6 +2414,7 @@ html.on("click", ".edit-social-entry", (ev) => this._onEditSocialEntry(ev));
 html.on("click", ".delete-social-entry", (ev) => this._onDeleteSocialEntry(ev));
 html.on("click", ".edit-social-source", (ev) => this._onEditSocialSource(ev));
 html.on("click", ".add-social-aspect", (ev) => this._onChooseSocialCategory(ev));
+html.on("click", ".social-entry-expand", (ev) => this._onToggleSocialEntryDescription(ev));
 
 // -------------------------------------------------------------
 //  EDITAR ITEM (ABRIR ITEM SHEET)
@@ -5075,7 +5083,7 @@ _onActionMenuToggle(ev) {
    if (!isOpen) {
     const controls = menu.closest(".item-controls");
     if (controls) controls.classList.add("menu-open");
-  const actionMenuRow = menu.closest(".skill-tree-item, .characteristic-card, .spell-row-v3, .magic-card, .meter-card, .effect-pill-enhanced");
+  const actionMenuRow = menu.closest(".skill-tree-item, .characteristic-card, .spell-row-v3, .magic-card, .social-entry-card, .meter-card, .effect-pill-enhanced");
     if (actionMenuRow) actionMenuRow.classList.add("action-menu-open-row");
     const toggle = menu.querySelector(".js-action-menu-toggle");
     if (toggle) toggle.setAttribute("aria-expanded", "true");
@@ -5119,7 +5127,7 @@ _positionActionMenu(menu) {
 _closeAllActionMenus() {
   if (!this.element?.length) return;
   this.element.find(".item-controls.menu-open").removeClass("menu-open");
-  this.element.find(".skill-tree-item.action-menu-open-row, .characteristic-card.action-menu-open-row, .magic-card.action-menu-open-row, .effect-pill-enhanced.action-menu-open-row").removeClass("action-menu-open-row");
+  this.element.find(".skill-tree-item.action-menu-open-row, .characteristic-card.action-menu-open-row, .magic-card.action-menu-open-row, .social-entry-card.action-menu-open-row, .effect-pill-enhanced.action-menu-open-row").removeClass("action-menu-open-row");
   this.element.find(".js-action-menu.is-open, .js-action-menu.is-open-up").removeClass("is-open is-open-up")
     .find(".js-action-menu-toggle").attr("aria-expanded", "false");
 }
@@ -6555,6 +6563,24 @@ async _onDeleteSocialEntry(ev) {
       await this.actor.update({ [`${config.path}.-=${entryId}`]: null });
     }
   });
+}
+
+_onToggleSocialEntryDescription(ev) {
+  ev.preventDefault();
+  ev.stopPropagation();
+  const card = ev.currentTarget.closest(".social-entry-card");
+  const cardKey = card?.dataset?.socialCardKey;
+  if (!cardKey) return;
+
+  this._expandedSocialCards ??= new Set();
+  const expanded = !this._expandedSocialCards.has(cardKey);
+  if (expanded) this._expandedSocialCards.add(cardKey);
+  else this._expandedSocialCards.delete(cardKey);
+
+  card.classList.toggle("is-description-expanded", expanded);
+  ev.currentTarget.setAttribute("aria-expanded", `${expanded}`);
+  ev.currentTarget.querySelector("i")?.classList.toggle("fa-chevron-up", expanded);
+  ev.currentTarget.querySelector("i")?.classList.toggle("fa-chevron-down", !expanded);
 }
 
 

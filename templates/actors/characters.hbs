@@ -473,7 +473,7 @@
             <span class="social-section-chevron"><i class="fas fa-chevron-down"></i></span>
           </summary>
           <ol class="item-list social-entry-list">{{#each entries}}
-            <li class="item item-row social-entry-card social-entry-card--{{source}} {{#unless metrics.length}}social-entry-card--no-metrics{{/unless}}" data-entry-id="{{id}}">
+            <li class="item item-row social-entry-card social-entry-card--{{source}} {{#unless metrics.length}}social-entry-card--no-metrics{{/unless}} {{#if expanded}}is-description-expanded{{/if}}" data-entry-id="{{id}}" data-social-card-key="{{cardKey}}">
               <div class="social-entry-main">
                 <div class="social-entry-portrait {{source}}" title="{{sourceLabel}}">
                   {{#if sourceImg}}<img src="{{sourceImg}}" alt="{{sourceLabel}}">{{else}}<i class="{{displayIcon}}"></i>{{/if}}
@@ -489,9 +489,17 @@
                   {{/each}}
                 </div>
                 {{/if}}
-                <div class="item-controls social-entry-controls">{{#if itemId}}<a class="item-control edit-social-source" data-item-id="{{itemId}}" title="{{localize 'GUM.Social.OpenSource'}}"><i class="fas fa-external-link-alt"></i></a>{{else}}<a class="item-control edit-social-entry" data-type="{{type}}"><i class="fas fa-edit"></i></a><a class="item-control delete-social-entry" data-type="{{type}}"><i class="fas fa-trash"></i></a>{{/if}}</div>
+                <div class="item-controls social-entry-controls">
+                  {{#if observation}}<a class="item-control social-entry-expand" title="{{#if expanded}}{{localize 'GUM.Social.CollapseDescription'}}{{else}}{{localize 'GUM.Social.ExpandDescription'}}{{/if}}" aria-label="{{#if expanded}}{{localize 'GUM.Social.CollapseDescription'}}{{else}}{{localize 'GUM.Social.ExpandDescription'}}{{/if}}" aria-expanded="{{#if expanded}}true{{else}}false{{/if}}"><i class="fas fa-chevron-{{#if expanded}}up{{else}}down{{/if}}"></i></a>{{/if}}
+                  <div class="gum-action-menu js-action-menu">
+                    <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Social.Options'}}" aria-label="{{localize 'GUM.Social.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+                    <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Social.Options'}}">
+                      {{#if itemId}}<a class="item-control edit-social-source gum-action-menu__item" data-item-id="{{itemId}}" role="menuitem"><i class="fas fa-external-link-alt"></i><span>{{localize 'GUM.Social.OpenSource'}}</span></a>{{else}}<a class="item-control edit-social-entry gum-action-menu__item" data-type="{{type}}" role="menuitem"><i class="fas fa-edit"></i><span>{{localize 'GUM.Inventory.Edit'}}</span></a><a class="item-control delete-social-entry gum-action-menu__item is-danger" data-type="{{type}}" role="menuitem"><i class="fas fa-trash"></i><span>{{localize 'GUM.Inventory.Delete'}}</span></a>{{/if}}
+                    </div>
+                  </div>
+                </div>
               </div>
-              {{#if observation}}<div class="social-entry-observation" title="{{observation}}"><i class="fas fa-align-left"></i><span>{{observation}}</span></div>{{/if}}
+              {{#if observation}}<div class="social-entry-observation"><i class="fas fa-align-left"></i><span>{{observation}}</span></div>{{/if}}
             </li>{{/each}}</ol>
         </details>
       {{/each}}
