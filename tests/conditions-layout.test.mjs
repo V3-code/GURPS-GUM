@@ -41,7 +41,7 @@ test("all condition card types keep their controls in the side action menu", () 
 });
 
 test("condition cards rise above neighboring cards while their action menu is open", () => {
-  assert.match(actorSheet, /menu\.closest\("\.skill-tree-item, \.characteristic-card, \.spell-row-v3, \.magic-card, \.social-entry-card, \.meter-card, \.effect-pill-enhanced"\)/);
+  assert.match(actorSheet, /menu\.closest\("\.skill-tree-item, \.characteristic-card, \.spell-row-v3, \.magic-card, \.social-card, \.meter-card, \.effect-pill-enhanced"\)/);
   assert.match(actorSheet, /\.effect-pill-enhanced\.action-menu-open-row/);
   assert.match(styles, /\.conditions-tab \.effect-pill-enhanced\.action-menu-open-row\s*\{[^}]*z-index:\s*120;/s);
 });

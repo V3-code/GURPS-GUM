@@ -62,7 +62,7 @@ test("mechanical details expand into attack, damage, and resolution branches", (
   assert.match(actorSheet, /this\._expandedSpellCards \?\?= new Set\(\)/);
   assert.match(actorSheet, /html\.on\('click', '\.magic-card__expand'/);
   assert.match(actorSheet, /row\.find\('\.spell-name, \.magic-card__name'\)/);
-  assert.match(actorSheet, /\.magic-card, \.social-entry-card, \.meter-card/);
+  assert.match(actorSheet, /\.magic-card, \.social-card, \.meter-card/);
 });
 
 test("spell groups and card copy are localized in English and Portuguese", () => {

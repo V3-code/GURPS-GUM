@@ -119,29 +119,40 @@ test("status and organization use society as identity and status as a metric", (
   assert.equal(organization.observation, "Membro em treinamento.");
 });
 
-test("actor social template keeps the source image, expandable descriptions, and action menu", () => {
+test("actor social template uses the compact shared card structure", () => {
   const template = readFileSync(new URL("../templates/actors/characters.hbs", import.meta.url), "utf8");
   const styles = readFileSync(new URL("../styles/styles.css", import.meta.url), "utf8");
 
-  assert.match(template, /class="social-entry-portrait \{\{source\}\}"/);
-  assert.match(template, /class="social-entry-primary"/);
-  assert.match(template, /class="social-entry-metrics"/);
-  assert.match(template, /social-entry-expand/);
+  assert.match(template, /class="social-card__portrait social-card__portrait--\{\{source\}\}"/);
+  assert.match(template, /class="social-card__name"/);
+  assert.match(template, /class="social-card__metrics"/);
+  assert.match(template, /social-card__expand/);
   assert.match(template, /gum-action-menu js-action-menu/);
-  assert.match(template, /\{\{#if observation\}\}<div class="social-entry-observation"/);
+  assert.match(template, /\{\{#if observation\}\}<div class="social-card__description"/);
   assert.doesNotMatch(template, /class="social-origin /);
-  assert.match(styles, /\.social-entry-card--item \{ background:linear-gradient/);
-  assert.match(styles, /\.tab\[data-tab="social"\] \.gum-action-menu__panel/);
+  assert.doesNotMatch(template, /social-entry-card|social-entry-main|social-entry-metrics/);
+  assert.match(styles, /\.social-card-grid \{ display:grid; grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(styles, /\.social-card--item \{ background:linear-gradient/);
+  assert.match(styles, /\.social-aspects-tab \.gum-action-menu__panel/);
 });
 
 test("social descriptions keep their expansion state independently from the section state", () => {
   const source = readFileSync(new URL("../module/actor/gurps-actor-sheet.js", import.meta.url), "utf8");
 
   assert.match(source, /this\._expandedSocialCards \?\?= new Set\(\)/);
-  assert.match(source, /\.social-entry-expand/);
+  assert.match(source, /\.social-card__expand/);
   assert.match(source, /_onToggleSocialEntryDescription\(ev\)/);
-  assert.match(source, /\.social-entry-card, \.meter-card/);
+  assert.match(source, /\.social-card, \.meter-card/);
   assert.doesNotMatch(source, /this\.render\(false\);\s*\}\s*\n\s*\n_prepareAppliedModels/);
+});
+
+test("social groups use unified headers and preserve their collapse state", () => {
+  const template = readFileSync(new URL("../templates/actors/characters.hbs", import.meta.url), "utf8");
+
+  assert.match(template, /social-group gum-unified-section/);
+  assert.match(template, /social-group__header gum-unified-header/);
+  assert.match(template, /data-group-id="social-\{\{type\}\}"/);
+  assert.match(template, /collapsibleState \(concat "social-" type\)/);
 });
 
 test("manual social dialogs use the shared dark editor presentation", () => {
