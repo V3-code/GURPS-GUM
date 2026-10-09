@@ -3256,11 +3256,22 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
     html.on("dragstart", ".rollable", this._onDragStart.bind(this));
 
     // Os cards compactos de magia ficam fora de `.item-list`, portanto não
-    // recebem o listener de arraste criado pelo ActorSheet base. Mantemos o
-    // arraste de rolagens independente para que puxar o NH ainda crie GUM.Roll.
-    html.on("dragstart", ".magic-card", ev => {
-        if ($(ev.target).closest(".rollable").length) return;
-        this._onDragStart(ev);
+    // recebem o listener de arraste criado pelo ActorSheet base. O listener
+    // direto garante que currentTarget seja exatamente o card selecionado.
+    html.find(".magic-card").each((_, card) => {
+        card.addEventListener("dragstart", ev => {
+            if (ev.target.closest?.(".rollable")) return;
+            this._onDragStart(ev);
+
+            // O Chromium pode usar todo o grid como imagem nativa quando um
+            // de seus itens é arrastado. Limitar a prévia ao conteúdo deste
+            // card evita a sobreposição visual dos demais cards do grupo.
+            const dragImage = card.querySelector(".magic-card__main") || card;
+            const bounds = dragImage.getBoundingClientRect();
+            const offsetX = Math.max(0, Math.min(bounds.width, ev.clientX - bounds.left));
+            const offsetY = Math.max(0, Math.min(bounds.height, ev.clientY - bounds.top));
+            ev.dataTransfer?.setDragImage?.(dragImage, offsetX, offsetY);
+        });
     });
 
 // ================================================================== //
