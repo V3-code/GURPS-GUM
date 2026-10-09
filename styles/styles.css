@@ -7383,6 +7383,62 @@ background-color: var(--gum-accent-gold);
     background: linear-gradient(180deg, var(--gum-bg-cabecalho) 0%, #4f1a23 100%);
 }
 
+/* Conditions use the same neutral section headers as the other compact tabs. */
+.gum.sheet.actor .conditions-tab details.form-section.gum-unified-section {
+    margin: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+}
+.gum.sheet.actor .conditions-tab details.form-section.gum-unified-section > .gum-unified-header {
+    min-height: 28px;
+    padding: 4px 7px;
+    border-bottom: 1px solid rgba(197,160,91,.2);
+    background: transparent !important;
+}
+.gum.sheet.actor .conditions-tab details.form-section.gum-unified-section > .gum-unified-header:hover,
+.gum.sheet.actor .conditions-tab details.form-section.gum-unified-section[open] > .gum-unified-header { background: rgba(255,255,255,.025) !important; }
+.gum.sheet.actor .conditions-tab .gum-unified-header .header-title {
+    color: rgba(247,233,215,.76);
+    font-family: var(--gum-font-primary);
+    font-size: 10px;
+    letter-spacing: .07em;
+}
+.gum.sheet.actor .conditions-tab .gum-unified-header .header-counter {
+    padding: 1px 6px;
+    border: 1px solid rgba(255,255,255,.08);
+    background: transparent;
+    color: rgba(247,233,215,.5);
+    font-size: 9px;
+}
+.gum.sheet.actor .conditions-tab .gum-unified-header .header-hint { color: rgba(247,233,215,.48); font-size: 9px; }
+
+/* Condition effects follow the compact item-card treatment. */
+.gum.sheet.actor .conditions-tab .effects-grid-container { padding: 5px 0 0; gap: 6px; }
+.gum.sheet.actor .conditions-tab .effect-origin-group { border: 0; border-radius: 0; background: transparent; overflow: visible; }
+.gum.sheet.actor .conditions-tab .effect-origin-summary { padding: 5px 6px; background: #202126; border-radius: 4px; }
+.gum.sheet.actor .conditions-tab .effect-origin-list { padding: 5px 0 0; border-top: 0; }
+.gum.sheet.actor .conditions-tab .effect-pill-enhanced {
+    min-height: 46px;
+    padding: 5px 6px;
+    gap: 6px;
+    background: #1a1b1f;
+    border: 0;
+    border-left: 2px solid rgba(225,184,117,.42);
+    border-radius: 4px;
+    box-shadow: none;
+}
+.gum.sheet.actor .conditions-tab .effect-pill-enhanced:hover { background: #22242a; border-color: rgba(240,215,159,.7); transform: none; box-shadow: none; }
+.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-icon { width:28px; height:28px; border:0; border-radius:3px; background:rgba(190,148,91,.1); }
+.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-name { color:var(--gum-text-claro); font-size:12px; line-height:1.2; }
+.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-details { gap:2px; margin-top:1px; }
+.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-tag { padding:0; border:0; border-radius:0; background:transparent; color:rgba(230,220,225,.5); font-family:var(--gum-font-condensed); font-size:9px; line-height:1.15; }
+.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-tag + .pill-tag::before { content:" · "; }
+.gum.sheet.actor .conditions-tab .effect-pill-enhanced .pill-controls { margin-left:auto; padding-left:6px; border-left:1px solid rgba(255,255,255,.08); opacity:1; }
+.gum.sheet.actor .conditions-tab .effect-pill-enhanced .effect-control { color:rgba(235,226,231,.48); font-size:10px; }
+.gum.sheet.actor .conditions-tab .effect-pill-enhanced .effect-control:hover { color:#f0d79f; }
+
 .gum.sheet.actor .gum-unified-header::-webkit-details-marker {
     display: none;
 }

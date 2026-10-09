@@ -231,19 +231,19 @@ async getData(options) {
                     fonteIcon = "fas fa-heartbeat";
                 }
                 const fonteRotulos = {
-                    advantage: "Vantagem",
-                    disadvantage: "Desvantagem",
-                    spell: "Magia",
-                    power: "Poder",
-                    equipment: "Equipamento",
-                    condition: "Condição",
-                    status: "Status"
+                    advantage: game.i18n.localize("GUM.Conditions.Source.Advantage"),
+                    disadvantage: game.i18n.localize("GUM.Conditions.Source.Disadvantage"),
+                    spell: game.i18n.localize("GUM.Conditions.Source.Spell"),
+                    power: game.i18n.localize("GUM.Conditions.Source.Power"),
+                    equipment: game.i18n.localize("GUM.Conditions.Source.EquipmentSingle"),
+                    condition: game.i18n.localize("GUM.Conditions.Source.Condition"),
+                    status: game.i18n.localize("GUM.Conditions.Source.Status")
                 };
                 effectData.fonteNome = fonteNome;
                 effectData.fonteIcon = fonteIcon;
                 effectData.fonteUuid = fonteUuid;
                 effectData.fonteTipo = fonteTipo;
-                effectData.fonteRotulo = fonteRotulos[fonteTipo] || "Outra origem";
+                effectData.fonteRotulo = fonteRotulos[fonteTipo] || game.i18n.localize("GUM.Conditions.Source.Unknown");
 
                 // --- Lógica de Duração ---
                 const d = effect.duration || {};
@@ -254,34 +254,38 @@ async getData(options) {
                 let isPermanent = true; // Assume permanente até que se prove o contrário
 
                 if (effectData.pendingCombat && countsInCombatOnly) {
-                    effectData.durationString = "Pendente (combate)";
+                    effectData.durationString = game.i18n.localize("GUM.Conditions.Duration.PendingCombat");
                     isPermanent = false;
                 }
                 else if (gumDuration.pendingStart && countsInCombatOnly) {
-                    effectData.durationString = "Inicia no próximo turno";
+                    effectData.durationString = game.i18n.localize("GUM.Conditions.Duration.NextTurn");
                     isPermanent = false;
                 }
                 else if (!isMarkedPermanent && d.seconds) {
-                    effectData.durationString = `${d.seconds} seg.`;
+                    effectData.durationString = game.i18n.format("GUM.Conditions.Duration.Seconds", { count: d.seconds });
                     isPermanent = false;
                 } 
                 else if (!isMarkedPermanent && d.rounds) {
                     // Calcula rodadas restantes
                     const remaining = d.startRound ? (d.startRound + d.rounds - (game.combat?.round || 0)) : d.rounds;
-                    effectData.durationString = `${remaining} rodada(s)`;
+                    effectData.durationString = game.i18n.format("GUM.Conditions.Duration.Rounds", { count: remaining });
                     isPermanent = false;
                 } 
                 else if (!isMarkedPermanent && d.turns) {
                     // Calcula turnos restantes
                     const remaining = d.startTurn ? (d.startTurn + d.turns - (game.combat?.turn || 0)) : d.turns;
-                    effectData.durationString = `${remaining} turno(s)`;
+                    effectData.durationString = game.i18n.format("GUM.Conditions.Duration.Turns", { count: remaining });
                     isPermanent = false;
                 } 
                 else if (!isMarkedPermanent && countsInCombatOnly) {
                     // Efeitos marcados como "apenas em combate" devem ser tratados como temporários,
                     // mesmo que ainda não tenham campos de duração preenchidos pelo Foundry.
                     const fallbackValue = parseInt(originalDuration.value ?? gumDuration.value) || 1;
-                    const unit = originalDuration.unit === "seconds" ? "seg." : originalDuration.unit === "turns" ? "turno(s)" : "rodada(s)";
+                    const unitKey = originalDuration.unit === "seconds"
+                        ? "GUM.Conditions.Duration.Seconds"
+                        : originalDuration.unit === "turns"
+                            ? "GUM.Conditions.Duration.Turns"
+                            : "GUM.Conditions.Duration.Rounds";
                     const elapsedTargetTurns = Math.max(0, Number(gumDuration.elapsedTargetTurns) || 0);
                     const endMode = originalDuration.endMode || gumDuration.endMode || "turnEnd";
 
@@ -296,11 +300,11 @@ async getData(options) {
                         }
                     }
 
-                    effectData.durationString = `${remaining} ${unit}`;
+                    effectData.durationString = game.i18n.format(unitKey, { count: remaining });
                     isPermanent = false;
                 }
                 else {
-                    effectData.durationString = "Permanente";
+                    effectData.durationString = game.i18n.localize("GUM.Conditions.Duration.Permanent");
                     isPermanent = true;
                 }
 
@@ -319,12 +323,12 @@ async getData(options) {
  await Promise.allSettled(activeEffectsPromises);
 
         const effectOriginGroups = [
-            { key: "traits", label: "Vantagens e Desvantagens", icon: "fas fa-star", types: ["advantage", "disadvantage"] },
-            { key: "powers", label: "Poderes", icon: "fas fa-bolt", types: ["power"] },
-            { key: "spells", label: "Magias", icon: "fas fa-magic", types: ["spell"] },
-            { key: "equipment", label: "Equipamentos", icon: "fas fa-archive", types: ["equipment"] },
-            { key: "conditions", label: "Condições e Status", icon: "fas fa-heartbeat", types: ["condition", "status"] },
-            { key: "other", label: "Outros", icon: "fas fa-question-circle", types: [] }
+            { key: "traits", label: game.i18n.localize("GUM.Conditions.Source.Advantages"), icon: "fas fa-star", types: ["advantage", "disadvantage"] },
+            { key: "powers", label: game.i18n.localize("GUM.Conditions.Source.Powers"), icon: "fas fa-bolt", types: ["power"] },
+            { key: "spells", label: game.i18n.localize("GUM.Conditions.Source.Spells"), icon: "fas fa-magic", types: ["spell"] },
+            { key: "equipment", label: game.i18n.localize("GUM.Conditions.Source.Equipment"), icon: "fas fa-archive", types: ["equipment"] },
+            { key: "conditions", label: game.i18n.localize("GUM.Conditions.Source.Conditions"), icon: "fas fa-heartbeat", types: ["condition", "status"] },
+            { key: "other", label: game.i18n.localize("GUM.Conditions.Source.Other"), icon: "fas fa-question-circle", types: [] }
         ];
 
         const groupEffectsByOrigin = (effects) => {
