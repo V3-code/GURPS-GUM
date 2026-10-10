@@ -54,3 +54,16 @@ test("all sidebar and secondary attribute localization keys exist in both langua
     }
   }
 });
+
+test("the secondary editor spells out all four basic damage names", () => {
+  const en = locales[0];
+  const ptBr = locales[1];
+  assert.deepEqual(
+    [en["GUM.SecondaryEditor.Attributes.Thrust"], en["GUM.SecondaryEditor.Attributes.Swing"], en["GUM.SecondaryEditor.Attributes.AlternateThrust"], en["GUM.SecondaryEditor.Attributes.AlternateSwing"]],
+    ["Thrust Damage", "Swing Damage", "Alternate Thrust Damage", "Alternate Swing Damage"],
+  );
+  assert.deepEqual(
+    [ptBr["GUM.SecondaryEditor.Attributes.Thrust"], ptBr["GUM.SecondaryEditor.Attributes.Swing"], ptBr["GUM.SecondaryEditor.Attributes.AlternateThrust"], ptBr["GUM.SecondaryEditor.Attributes.AlternateSwing"]],
+    ["Golpe de Ponta", "Golpe em Balanço", "Golpe de Ponta Alternativo", "Golpe em Balanço Alternativo"],
+  );
+});

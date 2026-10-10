@@ -9206,7 +9206,7 @@ background-color: var(--gum-accent-gold);
 .secondary-stats-unified-dialog .secondary-editor-card header p { margin: 2px 0 0; color: var(--secondary-editor-muted); font-size: 9px; }
 .secondary-stats-unified-dialog .secondary-editor-table { display: grid; gap: 4px; min-width: 590px; }
 .secondary-stats-unified-dialog .secondary-editor-columns,
-.secondary-stats-unified-dialog .secondary-editor-row { display: grid; grid-template-columns: minmax(118px, 1.6fr) repeat(6, minmax(52px, .72fr)); align-items: center; gap: 5px; }
+.secondary-stats-unified-dialog .secondary-editor-row { display: grid; grid-template-columns: minmax(170px, 2fr) repeat(6, minmax(52px, .68fr)); align-items: center; gap: 5px; }
 .secondary-stats-unified-dialog .secondary-editor-columns { padding: 0 7px 3px; color: #777980; font-size: 8px; text-align: center; text-transform: uppercase; }
 .secondary-stats-unified-dialog .secondary-editor-columns span:first-child { text-align: left; }
 .secondary-stats-unified-dialog .secondary-editor-row { min-height: 35px; padding: 4px 7px; border-radius: 5px; background: var(--secondary-editor-card); }

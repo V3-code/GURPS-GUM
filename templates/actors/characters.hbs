@@ -852,11 +852,7 @@
                     {{#if this.system.damage.formula}}<div class="magic-card__damage-value"><a class="rollable-damage magic-card__metric-value" title="{{localize 'GUM.Spells.RollDamage'}}" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}</a>{{#if this.magicCardAdditionalDamageMarkers}}<sup class="magic-card__additional-damage" title="{{this.magicCardAdditionalDamageHint}}" aria-label="{{this.magicCardAdditionalDamageHint}}">{{this.magicCardAdditionalDamageMarkers}}</sup>{{/if}}</div>{{/if}}
                   </div>
 
-                  {{#if this.magicCardHasDetails}}
                   <button type="button" class="magic-card__expand" title="{{#if this.magicCardExpanded}}{{localize 'GUM.Spells.CollapseDetails'}}{{else}}{{localize 'GUM.Spells.ExpandDetails'}}{{/if}}" aria-label="{{#if this.magicCardExpanded}}{{localize 'GUM.Spells.CollapseDetails'}}{{else}}{{localize 'GUM.Spells.ExpandDetails'}}{{/if}}" aria-expanded="{{#if this.magicCardExpanded}}true{{else}}false{{/if}}"><i class="fas {{#if this.magicCardExpanded}}fa-compress-arrows-alt{{else}}fa-expand-arrows-alt{{/if}}"></i></button>
-                  {{else}}
-                  <span class="magic-card__expand-spacer" aria-hidden="true"></span>
-                  {{/if}}
 
                   <div class="item-controls magic-card__controls">
                     <div class="gum-action-menu js-action-menu">
@@ -871,6 +867,16 @@
                 </div>
 
                 <div class="magic-card__details" {{#unless this.magicCardExpanded}}hidden{{/unless}}>
+                  <section class="magic-card__detail-branch magic-card__detail-branch--mechanics">
+                    <h5><i class="fas fa-hourglass-half"></i>{{localize 'GUM.Spells.Mechanics'}}</h5>
+                    <div class="magic-card__detail-values">
+                      <span><strong>{{localize 'GUM.Spells.CastingTime'}}</strong>{{this.system.casting_time}}</span>
+                      <span><strong>{{localize 'GUM.Spells.Duration'}}</strong>{{this.system.duration}}</span>
+                      <span><strong>{{localize 'GUM.Spells.CastingCost'}}</strong>{{this.system.mana_cost}}</span>
+                      <span><strong>{{localize 'GUM.Spells.MaintenanceCost'}}</strong>{{this.system.mana_maint}}</span>
+                    </div>
+                  </section>
+
                   {{#if this.system.uses_attack}}
                   <section class="magic-card__detail-branch magic-card__detail-branch--attack">
                     <h5><i class="fas fa-crosshairs"></i>{{localize 'GUM.Spells.Attack'}}</h5>
@@ -1065,6 +1071,16 @@
                 </div>
 
                 <div class="magic-card__details" {{#unless this.powerCardExpanded}}hidden{{/unless}}>
+                  <section class="magic-card__detail-branch magic-card__detail-branch--mechanics">
+                    <h5><i class="fas fa-hourglass-half"></i>{{localize 'GUM.Powers.Mechanics'}}</h5>
+                    <div class="magic-card__detail-values">
+                      <span><strong>{{localize 'GUM.Powers.ActivationTime'}}</strong>{{this.system.activation_time}}</span>
+                      <span><strong>{{localize 'GUM.Powers.Duration'}}</strong>{{this.system.duration}}</span>
+                      <span><strong>{{localize 'GUM.Powers.ActivationCost'}}</strong>{{this.system.activation_cost}}</span>
+                      <span><strong>{{localize 'GUM.Powers.MaintenanceCost'}}</strong>{{this.system.maint_cost}}</span>
+                    </div>
+                  </section>
+
                   {{#if this.system.uses_attack}}
                   <section class="magic-card__detail-branch magic-card__detail-branch--attack">
                     <h5><i class="fas fa-crosshairs"></i>{{localize 'GUM.Spells.Attack'}}</h5>
@@ -1797,6 +1813,16 @@
                         <div class="item-controls combat-favorite-card__controls"><div class="gum-action-menu js-action-menu"><a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Inventory.Options'}}" aria-label="{{localize 'GUM.Inventory.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a><div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Combat.Favorites.Actions'}}"><a class="item-control item-quick-view gum-action-menu__item" role="menuitem"><i class="fas fa-eye"></i><span>{{localize "GUM.Combat.Favorites.View"}}</span></a><a class="item-control item-edit gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{localize "GUM.Inventory.Edit"}}</span></a><a class="item-control item-delete gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>{{localize "GUM.Inventory.Delete"}}</span></a></div></div></div>
                       </div>
                       <div class="magic-card__details combat-favorite-card__details" {{#unless (or this.magicCardExpanded this.powerCardExpanded)}}hidden{{/unless}}>
+                        <section class="magic-card__detail-branch magic-card__detail-branch--mechanics">
+                          <h5><i class="fas fa-hourglass-half"></i>{{#if (eq this.type "spell")}}{{localize "GUM.Spells.Mechanics"}}{{else}}{{localize "GUM.Powers.Mechanics"}}{{/if}}</h5>
+                          <div class="magic-card__detail-values">
+                            {{#if (eq this.type "spell")}}
+                            <span><strong>{{localize "GUM.Spells.CastingTime"}}</strong>{{this.system.casting_time}}</span><span><strong>{{localize "GUM.Spells.Duration"}}</strong>{{this.system.duration}}</span><span><strong>{{localize "GUM.Spells.CastingCost"}}</strong>{{this.system.mana_cost}}</span><span><strong>{{localize "GUM.Spells.MaintenanceCost"}}</strong>{{this.system.mana_maint}}</span>
+                            {{else}}
+                            <span><strong>{{localize "GUM.Powers.ActivationTime"}}</strong>{{this.system.activation_time}}</span><span><strong>{{localize "GUM.Powers.Duration"}}</strong>{{this.system.duration}}</span><span><strong>{{localize "GUM.Powers.ActivationCost"}}</strong>{{this.system.activation_cost}}</span><span><strong>{{localize "GUM.Powers.MaintenanceCost"}}</strong>{{this.system.maint_cost}}</span>
+                            {{/if}}
+                          </div>
+                        </section>
                         {{#if this.system.uses_attack}}<section class="magic-card__detail-branch magic-card__detail-branch--attack"><h5><i class="fas fa-crosshairs"></i>{{localize "GUM.Spells.Attack"}}</h5><div class="magic-card__detail-values"><span><strong>{{localize "GUM.Spells.Type"}}</strong>{{#if (eq this.system.attack_type 'melee')}}{{localize "GUM.Spells.Melee"}}{{else}}{{localize "GUM.Spells.Ranged"}}{{/if}}</span><span><strong>{{localize "GUM.Spells.Skill"}}</strong>{{#if this.system.attack_roll.resolved_skill_name}}{{this.system.attack_roll.resolved_skill_name}}{{else}}{{this.system.attack_roll.skill_name}}{{/if}}</span>{{#if this.system.attack_nh}}<a class="rollable magic-card__attack-level-tag" data-type="attack" data-attack-type="{{this.system.attack_type}}" data-attribute-key="{{this.system.attack_roll.skill_name}}" data-roll-value="{{this.system.attack_nh}}" data-label="{{#if (eq this.type 'spell')}}{{localize 'GUM.Spells.AttackTest' name=this.name}}{{else}}{{localize 'GUM.Powers.AttackTest' name=this.name}}{{/if}}" data-item-id="{{this.id}}"><strong>{{localize "GUM.Spells.SkillLevel"}}</strong>{{this.system.attack_nh}}</a>{{/if}}{{#if (eq this.system.attack_type 'melee')}}{{#if this.system.attack_roll.reach}}<span><strong>{{localize "GUM.Spells.Reach"}}</strong>{{this.system.attack_roll.reach}}</span>{{/if}}{{#if this.system.attack_roll.parry}}<span><strong>{{localize "GUM.Spells.Parry"}}</strong>{{this.system.attack_roll.parry}}</span>{{/if}}{{else}}{{#if this.system.attack_roll.accuracy}}<span><strong>{{localize "GUM.Spells.Accuracy"}}</strong>{{this.system.attack_roll.accuracy}}</span>{{/if}}{{#if this.system.attack_roll.range}}<span><strong>{{localize "GUM.Spells.Range"}}</strong>{{this.system.attack_roll.range}}</span>{{/if}}{{#if this.system.attack_roll.rof}}<span><strong>{{localize "GUM.Spells.RateOfFire"}}</strong>{{this.system.attack_roll.rof}}</span>{{/if}}{{#if this.system.attack_roll.shots}}<span><strong>{{localize "GUM.Spells.Shots"}}</strong>{{this.system.attack_roll.shots}}</span>{{/if}}{{#if this.system.attack_roll.bulk}}<span><strong>{{localize "GUM.Spells.Bulk"}}</strong>{{this.system.attack_roll.bulk}}</span>{{/if}}{{#if this.system.attack_roll.rcl}}<span><strong>{{localize "GUM.Spells.Recoil"}}</strong>{{this.system.attack_roll.rcl}}</span>{{/if}}{{/if}}</div></section>{{/if}}
                         {{#if this.system.damage.formula}}<section class="magic-card__detail-branch magic-card__detail-branch--damage"><h5><i class="fas fa-burst"></i>{{localize "GUM.Spells.Damage"}}</h5><div class="magic-card__detail-values"><a class="rollable-damage" data-item-id="{{this.id}}"><strong>{{localize "GUM.Spells.PrimaryDamage"}}</strong>{{this.system.damage.formula}} {{this.system.damage.type}}{{#if this.system.damage.nature}} · {{this.system.damage.nature}}{{/if}}{{#if (gt this.system.damage.armor_divisor 1)}} · ÷{{this.system.damage.armor_divisor}}{{/if}}</a>{{#if this.system.damage.follow_up_damage.formula}}<span><strong>{{localize "GUM.Spells.FollowUpDamage"}}</strong>{{this.system.damage.follow_up_damage.formula}} {{this.system.damage.follow_up_damage.type}}</span>{{/if}}{{#if this.system.damage.fragmentation_damage.formula}}<span><strong>{{localize "GUM.Spells.FragmentationDamage"}}</strong>{{this.system.damage.fragmentation_damage.formula}} {{this.system.damage.fragmentation_damage.type}}</span>{{/if}}</div></section>{{/if}}
                         {{#if (eq this.type "power")}}<section class="magic-card__detail-branch magic-card__detail-branch--resolution"><h5><i class="fas fa-clipboard-check"></i>{{localize "GUM.Powers.Configuration"}}</h5><div class="magic-card__detail-values"><span><strong>{{localize "GUM.Powers.Points"}}</strong>{{characteristicPoints this}}{{#if (eq this.system.cost_paid "alternative")}} {{localize "GUM.Powers.Alternative"}}{{/if}}</span>{{#if this.system.resistance}}<span><strong>{{localize "GUM.Spells.Resistance"}}</strong>{{this.system.resistance}}</span>{{/if}}{{#if this.system.requires_concentration}}<span><i class="fas fa-brain"></i> {{localize "GUM.Spells.RequiresConcentration"}}</span>{{/if}}{{#if this.system.effect}}<span class="magic-card__effect"><strong>{{localize "GUM.Spells.Effect"}}</strong>{{this.system.effect}}</span>{{/if}}</div></section>{{else}}{{#if (or this.system.resistance this.system.requires_concentration this.system.effect)}}<section class="magic-card__detail-branch magic-card__detail-branch--resolution"><h5><i class="fas fa-clipboard-check"></i>{{localize "GUM.Spells.Resolution"}}</h5><div class="magic-card__detail-values">{{#if this.system.resistance}}<span><strong>{{localize "GUM.Spells.Resistance"}}</strong>{{this.system.resistance}}</span>{{/if}}{{#if this.system.requires_concentration}}<span><i class="fas fa-brain"></i> {{localize "GUM.Spells.RequiresConcentration"}}</span>{{/if}}{{#if this.system.effect}}<span class="magic-card__effect"><strong>{{localize "GUM.Spells.Effect"}}</strong>{{this.system.effect}}</span>{{/if}}</div></section>{{/if}}{{/if}}

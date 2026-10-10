@@ -728,15 +728,6 @@ async getData(options) {
             spell.magicCardIdentity = identityParts.join(' · ');
             spell.magicCardAdditionalDamageMarkers = "+".repeat(additionalDamageLabels.length);
             spell.magicCardAdditionalDamageHint = additionalDamageLabels.join(" + ");
-            spell.magicCardHasDetails = Boolean(
-                system.uses_attack
-                || damage.formula
-                || damage.follow_up_damage?.formula
-                || damage.fragmentation_damage?.formula
-                || system.resistance
-                || system.requires_concentration
-                || system.effect
-            );
             spell.magicCardExpanded = this._expandedSpellCards.has(spell.id);
             let groupName = (spell.system.group || 'Geral').trim();
             if (!groupName) groupName = 'Geral';
@@ -776,7 +767,6 @@ async getData(options) {
             power.powerCardIdentity = identityParts.join(' · ');
             power.powerCardAdditionalDamageMarkers = "+".repeat(additionalDamageLabels.length);
             power.powerCardAdditionalDamageHint = additionalDamageLabels.join(" + ");
-            power.powerCardHasDetails = true;
             power.powerCardExpanded = this._expandedPowerCards.has(power.id);
             let groupName = (power.system.group || 'Geral').trim();
             if (!groupName) groupName = 'Geral';

@@ -32,8 +32,10 @@ test("power cards preserve rolls, damage details, item actions, and drag behavio
   assert.match(actorSheet, /html\.find\("\.magic-card"\)\.each/);
 });
 
-test("power expansion persists independently and exposes mechanical branches", () => {
+test("every power card expands into full mechanics and optional detail branches", () => {
   assert.match(powerTab, /powerCardExpanded/);
+  assert.match(powerTab, /magic-card__detail-branch--mechanics/);
+  assert.match(powerTab, /GUM\.Powers\.ActivationTime[\s\S]*GUM\.Powers\.Duration[\s\S]*GUM\.Powers\.ActivationCost[\s\S]*GUM\.Powers\.MaintenanceCost/);
   assert.match(powerTab, /magic-card__detail-branch--attack/);
   assert.match(powerTab, /magic-card__detail-branch--damage/);
   assert.match(powerTab, /magic-card__detail-branch--resolution/);
@@ -55,6 +57,11 @@ test("power toolbar, groups, cards, and search are localized in English and Port
     "GUM.Powers.Delete",
     "GUM.Powers.Time",
     "GUM.Powers.Cost",
+    "GUM.Powers.Mechanics",
+    "GUM.Powers.ActivationTime",
+    "GUM.Powers.Duration",
+    "GUM.Powers.ActivationCost",
+    "GUM.Powers.MaintenanceCost",
     "GUM.Powers.ExpandDetails",
     "GUM.Powers.Configuration",
     "GUM.Powers.Points"

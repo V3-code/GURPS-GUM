@@ -26,6 +26,9 @@ test("favorite spells and powers keep rolls, details, menus, and drag support", 
   assert.match(favorites, /draggable="true"/);
   assert.match(favorites, /magic-card__expand combat-favorite-card__expand/);
   assert.match(favorites, /magic-card__details combat-favorite-card__details/);
+  assert.match(favorites, /magic-card__detail-branch--mechanics/);
+  assert.match(favorites, /GUM\.Spells\.CastingTime/);
+  assert.match(favorites, /GUM\.Powers\.ActivationTime/);
   assert.match(favorites, /rollable combat-favorite-card__metric/);
   assert.match(favorites, /rollable-damage/);
   assert.match(favorites, /item-quick-view gum-action-menu__item/);

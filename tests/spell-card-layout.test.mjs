@@ -54,8 +54,11 @@ test("spell rows preserve rolls, quick view, item actions, and drag behavior", (
   assert.match(actorSheet, /this\._setCardDragImage\(ev, card, "\.magic-card__main"\)/);
 });
 
-test("mechanical details expand into attack, damage, and resolution branches", () => {
+test("every spell card expands into full mechanics, attack, damage, and resolution branches", () => {
   assert.match(spellTab, /magic-card__expand/);
+  assert.doesNotMatch(spellTab, /magicCardHasDetails|magic-card__expand-spacer/);
+  assert.match(spellTab, /magic-card__detail-branch--mechanics/);
+  assert.match(spellTab, /GUM\.Spells\.CastingTime[\s\S]*GUM\.Spells\.Duration[\s\S]*GUM\.Spells\.CastingCost[\s\S]*GUM\.Spells\.MaintenanceCost/);
   assert.match(spellTab, /magic-card__detail-branch--attack/);
   assert.match(spellTab, /magic-card__detail-branch--damage/);
   assert.match(spellTab, /magic-card__detail-branch--resolution/);
@@ -74,6 +77,11 @@ test("spell groups and card copy are localized in English and Portuguese", () =>
     "GUM.Spells.Delete",
     "GUM.Spells.Time",
     "GUM.Spells.Mana",
+    "GUM.Spells.Mechanics",
+    "GUM.Spells.CastingTime",
+    "GUM.Spells.Duration",
+    "GUM.Spells.CastingCost",
+    "GUM.Spells.MaintenanceCost",
     "GUM.Spells.ExpandDetails",
     "GUM.Spells.Attack",
     "GUM.Spells.Damage",
