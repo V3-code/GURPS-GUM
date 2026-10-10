@@ -3,6 +3,7 @@
     <div class="header-kicker">Rolagem de Dano</div>
     <h2>{{sourceName}}</h2>
     {{#if ammunition}}<div class="damage-prompt-ammunition">{{localize "GUM.Equipment.Ammunition.Label"}}: {{ammunition.name}} <span>×{{ammunition.spent}}</span></div>{{/if}}
+    {{#if rapidFire}}<div class="damage-prompt-ammunition"><i class="fas fa-bullseye" aria-hidden="true"></i> {{localize "GUM.RapidFire.ShotsFired"}}: {{rapidFire.shotsFired}} · {{localize "GUM.RapidFire.Recoil"}}: {{rapidFire.recoil}} · {{localize "GUM.RapidFire.HitsBeforeDefense" hits=rapidFire.hits}}</div>{{/if}}
   </header>
 
   <section class="damage-visual-box">

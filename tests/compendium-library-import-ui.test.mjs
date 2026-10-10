@@ -25,8 +25,15 @@ test("o diretório oferece importação em lote de Modelos GCS para um compêndi
 });
 
 test("a importação permite criar um compêndio mundial de Item", () => {
-  assert.match(importer, /Criar novo/);
+  assert.match(importer, /CreateNewCompendium/);
   assert.match(importer, /CompendiumCollection\.createCompendium\(\{ label, name, type: "Item", package: "world" \}\)/);
+});
+
+test("a janela de importação é localizada e explica a sincronização por ID", () => {
+  assert.match(importer, /SelectImportDestination/);
+  assert.match(importer, /RemoveMissingLabel/);
+  assert.match(importer, /previewCompendiumJsonSynchronization/);
+  assert.match(importer, /SameNameDifferentId/);
 });
 
 test("os botões de importação dos diretórios ocupam uma linha independente", () => {
@@ -52,6 +59,7 @@ test("a janela de destino usa formulário e seletor visual de modo", () => {
   assert.match(importer, /gum-import-mode-picker/);
   assert.match(importer, /gum-compendium-import-dialog/);
   assert.match(importer, /classes: \["dialog", "gum", "gum-compendium-import-dialog"\]/);
+  assert.match(importer, /width: 620/);
 });
 
 test("o diretório de atores usa o nome de ação orientado ao personagem", () => {

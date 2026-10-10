@@ -15,12 +15,12 @@ const removedPacks = [
   "powers",
   "skills",
   "spells",
-  "templates"
+  "templates",
+  "status_bindings"
 ];
 const functionalPacks = [
   "efeitos",
   "conditions",
-  "status_bindings",
   "regras"
 ];
 
@@ -30,7 +30,11 @@ test("content-only packs are no longer distributed by the system", () => {
 
   for (const packName of removedPacks) {
     assert.equal(declaredNames.has(packName), false, `${packName} should not be declared`);
-    assert.equal(fs.existsSync(`packs/${packName}`), false, `${packName} directory should not exist`);
+    if (packName === "status_bindings") {
+      assert.equal(fs.existsSync(`packs/${packName}/.gitkeep`), false, `${packName} should not contain distributed files`);
+    } else {
+      assert.equal(fs.existsSync(`packs/${packName}`), false, `${packName} directory should not exist`);
+    }
   }
 });
 

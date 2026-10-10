@@ -2,6 +2,7 @@
 
 import { EffectBuilder } from "./effect-builder.js";
 import { TriggerBrowser } from "../../module/apps/trigger-browser.js";
+import { WORLD_STATUS_SETTING, normalizeWorldStatusConfiguration } from "../../module/utils/world-status-config.mjs";
 
 const { ItemSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -49,6 +50,8 @@ export class ConditionSheet extends ItemSheet {
         context.statusEffects = (CONFIG.statusEffects || [])
             .map((status) => ({ id: status.id, label: status.name }))
             .sort((a, b) => a.label.localeCompare(b.label, "pt-BR", { sensitivity: "base" }));
+        const worldStatusConfiguration = normalizeWorldStatusConfiguration(game.settings.get("gum", WORLD_STATUS_SETTING));
+        context.showLegacyStatusBindingMode = !worldStatusConfiguration.bindingsMigrated || context.system.bindingMode === "status-link";
         context.enrichedDescription = await TextEditorImpl.enrichHTML(this.item.system.description, { async: true });
         context.enrichedChatDescription = await TextEditorImpl.enrichHTML(this.item.system.chat_description || "", { async: true });
         context.owner = this.item.isOwner;

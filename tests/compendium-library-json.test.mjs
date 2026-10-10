@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   buildCompendiumLibraryExport,
   parseCompendiumLibraryExport,
+  previewCompendiumJsonSynchronization,
   sortCompendiumFoldersParentFirst
 } from "../module/utils/compendium-library-json.mjs";
 
@@ -36,6 +37,14 @@ test("orders child folders after their parents", () => {
 
 test("does not claim legacy array exports", () => {
   assert.equal(parseCompendiumLibraryExport([{ _id: "item" }]), null);
+});
+
+test("previews synchronization by ID and flags same-name documents with different IDs", () => {
+  const preview = previewCompendiumJsonSynchronization(
+    [{ id: "existing", name: "Shield" }, { id: "other", name: "Sword" }],
+    [{ _id: "existing", name: "Renamed Shield" }, { _id: "new", name: " sword " }, { _id: "third", name: "Bow" }]
+  );
+  assert.deepEqual(preview, { updates: 1, creates: 2, sameNameDifferentId: 1 });
 });
 
 test("rejects null and primitive portable documents with a useful validation error", () => {

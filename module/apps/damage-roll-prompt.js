@@ -72,6 +72,7 @@ export class GurpsDamageRollPrompt extends FormApplication {
         return {
             sourceName: this.damageData.sourceName || "Rolagem de Dano",
             ammunition: this.damageData.ammunition || null,
+            rapidFire: this.damageData.rapidFire || null,
             main,
             followUp,
             fragmentation,

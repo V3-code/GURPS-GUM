@@ -22,9 +22,9 @@ test("content source names and descriptions are available in every supported lan
   }
 });
 
-test("the four distributed pack names are available in every supported language", () => {
+test("the three distributed pack names are available in every supported language", () => {
   const manifest = JSON.parse(fs.readFileSync("system.json", "utf8"));
-  assert.equal(manifest.packs.length, 4);
+  assert.equal(manifest.packs.length, 3);
   for (const pack of manifest.packs) {
     for (const language of languages) {
       assert.ok(catalogs[language][pack.label], `${pack.label} is missing from ${language}`);
@@ -36,7 +36,7 @@ test("status automation is the localized public name while stable binding IDs re
   assert.equal(catalogs.en["GUM.ContentSources.Purposes.StatusAutomations.Name"], "Status Automations");
   assert.equal(catalogs["pt-BR"]["GUM.ContentSources.Purposes.StatusAutomations.Name"], "Automações de Status");
   assert.ok(CONTENT_SOURCE_PURPOSES.statusBindings);
-  assert.equal(CONTENT_SOURCE_PURPOSES.statusBindings.defaults[0], "gum.status_bindings");
+  assert.deepEqual(CONTENT_SOURCE_PURPOSES.statusBindings.defaults, []);
 });
 
 test("library and character import actions are available in every supported language", () => {

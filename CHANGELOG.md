@@ -4,6 +4,35 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.4.1-beta] - 2026-10-10
+
+### Added
+
+- Configuração mundial de status do token, com ordenação refletida no HUD, edição de nome e ícone, vínculos de efeitos, revisão de referências, restauração dos padrões e importação ou exportação em JSON.
+- Arrastar e soltar Itens Efeito e Modificadores em fichas de itens, com permissão configurável por nível de usuário.
+- Contagem opcional de acertos por tiro rápido conforme margem de sucesso, Rcl e munição disparada, integrada aos cards de ataque e dano.
+- Distribuição de pagamentos de modelos entre múltiplas fontes monetárias do personagem.
+
+### Changed
+
+- Aplicação de modelos por dinheiro passou a separar os modos de gasto, aceitar limite vazio como ilimitado e apresentar totais monetários coerentes em todas as etapas.
+- Entradas de equipamento em modelos agora separam nível e valor em pontos, podem bloquear alterações de quantidade e preservam escolhas garantidas importadas do GCS.
+- Arrastar um Item Modelo para uma ficha de personagem agora inicia diretamente seu fluxo de aplicação.
+- Importação de bibliotecas para compêndios recebeu prévia de sincronização, explicação do critério por ID, aviso sobre nomes iguais, textos mais claros e interface internacionalizada.
+- Consumo de munição passou a respeitar o modo do equipamento — quantidade ou cargas — inclusive quando a própria arma é sua fonte de munição.
+- Cards de equipamentos exibem as cargas restantes em todas as localizações da ficha.
+
+### Removed
+
+- Compêndio legado de Automações de Status, substituído pela configuração mundial de status.
+
+### Fixed
+
+- Avisos de compatibilidade do Foundry v13 ao mover itens para compêndios e ao remover metadados de aplicações de modelos.
+- Processamento de arrastar e soltar que encaminhava eventos incompatíveis à API de `DragEvent` do Foundry.
+- Contraste, alinhamento e dimensionamento das janelas de status, importação de compêndios, configuração de modelos e seleção de fontes de pagamento.
+- Organização dos controles de conflitos e do resumo final na aplicação de modelos.
+
 ## [1.4.0-beta] - 2026-10-09
 
 ### Added

@@ -977,6 +977,34 @@
     opacity: 0.82;
 }
 
+.gurps-roll-card .rapid-fire-hit-notice,
+.gurps-damage-card .damage-rapid-fire-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin-top: 7px;
+    padding: 7px 10px;
+    border: 1px solid rgba(197, 160, 91, .38);
+    border-radius: 6px;
+    background: rgba(197, 160, 91, .1);
+    color: #60491f;
+    font-weight: 750;
+    font-size: 11px;
+    text-align: center;
+}
+
+.gurps-roll-card .rapid-fire-hit-notice i,
+.gurps-damage-card .damage-rapid-fire-note i {
+    color: var(--gum-accent-gold, #c5a05b);
+}
+
+.gurps-roll-card .rapid-fire-hit-notice.failure {
+    border-color: rgba(194, 79, 79, .42);
+    background: rgba(194, 79, 79, .11);
+    color: #792f2f;
+}
+
 .attack-summary-card {
     border: 1px solid #cdbca2;
     box-shadow: 0 8px 18px rgba(24, 18, 13, 0.16);
@@ -10596,6 +10624,11 @@ background-color: var(--gum-accent-gold);
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
+  font-size: 0.875rem;
+}
+
+.gum-compendium-import-form strong {
+  font-size: 0.95rem;
 }
 
 .gum-import-file-summary,
@@ -10629,6 +10662,60 @@ background-color: var(--gum-accent-gold);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.gum-import-sync-preview {
+  padding: 0.7rem 0.75rem;
+  border: 1px solid rgba(197, 160, 91, 0.22);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.14);
+  color: #d8d2c8;
+}
+
+.gum-import-sync-preview > strong {
+  color: #e8d6a7;
+}
+
+.gum-import-sync-preview p {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.3;
+}
+
+.gum-import-sync-preview dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  margin: 0.55rem 0 0;
+}
+
+.gum-import-sync-preview dl > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.gum-import-sync-preview dt {
+  color: #aaa6a0;
+  font-size: 0.8rem;
+}
+
+.gum-import-sync-preview dd {
+  margin: 0;
+  color: #f0ede7;
+  font-weight: 700;
+}
+
+.gum-import-sync-preview .gum-import-sync-warning {
+  color: #f0bf68;
+}
+
+.gum-import-remove-missing .hint {
+  margin: 0.35rem 0 0 1.6rem;
+  color: #aaa6a0;
+  font-size: 0.82rem;
+  line-height: 1.3;
 }
 
 .gum-import-mode-picker {
@@ -10671,6 +10758,7 @@ background-color: var(--gum-accent-gold);
 .dialog.gum.gum-compendium-import-dialog .form-group > label {
   color: #bdb6ac;
   font-family: var(--gum-font-condensed);
+  font-size: 0.9rem;
 }
 
 .dialog.gum.gum-compendium-import-dialog select,
@@ -10716,6 +10804,7 @@ background-color: var(--gum-accent-gold);
   color: #cbc7c0;
   box-shadow: none;
   font-family: var(--gum-font-condensed);
+  font-size: 0.9rem;
   text-transform: uppercase;
 }
 
@@ -10728,6 +10817,483 @@ background-color: var(--gum-accent-gold);
 
 .dialog.gum.gum-compendium-import-dialog .dialog-buttons button:hover {
   filter: brightness(1.1);
+}
+
+/* World token status configuration */
+.world-status-config .window-content {
+  padding: 0;
+  background: #1d2026;
+  color: #e7e1d8;
+}
+
+.world-status-form {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+}
+
+.world-status-toolbar {
+  display: grid;
+  grid-template-columns: minmax(190px, 1fr) repeat(4, auto);
+  gap: 8px;
+}
+
+.world-status-toolbar button,
+.world-status-add,
+.world-status-footer button,
+.world-status-row button {
+  border: 1px solid rgba(197, 160, 91, 0.28);
+  background: #2c313a;
+  color: #e7e1d8;
+  box-shadow: none;
+}
+
+.world-status-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 5px;
+  background: #292d35;
+}
+
+.world-status-search input,
+.world-status-row input {
+  border: 0;
+  background: transparent;
+  color: #f0ede7;
+  box-shadow: none;
+}
+
+.app.window-app.world-status-config .world-status-search input,
+.app.window-app.world-status-config .world-status-row input {
+  color: #f0ede7 !important;
+  -webkit-text-fill-color: #f0ede7;
+  caret-color: #e8d6a7;
+}
+
+.app.window-app.world-status-config input::placeholder {
+  color: #8f8b84 !important;
+  -webkit-text-fill-color: #8f8b84;
+  opacity: 1;
+}
+
+.world-status-intro,
+.world-status-migration {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.world-status-intro { color: #aaa6a0; }
+.world-status-migration {
+  padding: 8px 10px;
+  border: 1px solid rgba(197, 160, 91, 0.32);
+  border-radius: 5px;
+  background: rgba(197, 160, 91, 0.1);
+  color: #e8d6a7;
+}
+
+.world-status-column-headings,
+.world-status-row {
+  display: grid;
+  grid-template-columns: 28px minmax(145px, 0.8fr) minmax(220px, 1fr) minmax(285px, 1.35fr) 121px;
+  gap: 8px;
+  align-items: center;
+}
+
+.world-status-column-headings {
+  padding: 0 8px;
+  color: #aaa6a0;
+  font: 700 11px var(--gum-font-condensed);
+  text-transform: uppercase;
+}
+
+.world-status-list {
+  min-height: 0;
+  margin: 0;
+  padding: 0 4px 0 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.world-status-row {
+  min-height: 72px;
+  margin-bottom: 6px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  background: #242831;
+}
+
+.world-status-order {
+  color: #8f8b84;
+  text-align: center;
+}
+
+.world-status-identity,
+.world-status-effects,
+.world-status-icon-field {
+  min-width: 0;
+}
+
+.world-status-identity input {
+  width: 100%;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.13);
+  font-weight: 700;
+}
+
+.world-status-identity small {
+  display: block;
+  margin-top: 4px;
+  overflow: hidden;
+  color: #8f8b84;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.world-status-effects {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.world-status-effect-list {
+  display: flex;
+  min-width: 0;
+  min-height: 28px;
+  align-items: center;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.world-status-effect {
+  display: inline-flex;
+  max-width: 180px;
+  min-height: 26px;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 2px 2px 6px;
+  border: 1px solid rgba(197, 160, 91, 0.2);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.2);
+  font-size: 10px;
+}
+
+.world-status-effect.is-missing { border-color: rgba(207, 89, 89, 0.55); }
+.world-status-effect img { flex: 0 0 18px; width: 18px; height: 18px; border: 0; object-fit: cover; }
+.world-status-effect span { min-width: 0; overflow: hidden; line-height: 1; text-overflow: ellipsis; white-space: nowrap; }
+.world-status-effect button { flex: 0 0 20px; width: 20px; min-width: 20px; height: 20px; margin: 0; padding: 0; border: 0; background: transparent; }
+.world-status-no-effect { color: #817e79; font-size: 11px; font-style: italic; }
+.world-status-effect-picker { width: auto; min-width: 34px; margin: 0; padding: 4px 6px; font-size: 10px; white-space: nowrap; }
+
+.world-status-icon-field {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 6px;
+  align-items: center;
+}
+
+.world-status-icon-preview {
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 3px;
+}
+
+.world-status-icon-preview img { width: 100%; height: 100%; border: 0; object-fit: contain; }
+.world-status-icon-field input { min-width: 0; font-size: 10px; }
+
+.world-status-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 28px);
+  gap: 3px;
+}
+
+.world-status-actions button { width: 28px; height: 28px; margin: 0; padding: 0; }
+.world-status-actions button.danger { color: #e78b8b; }
+.world-status-actions button:disabled { opacity: 0.3; }
+.world-status-advanced {
+  grid-column: 2 / -1;
+  padding-top: 2px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  color: #aaa6a0;
+  font-size: 11px;
+}
+
+.world-status-advanced summary {
+  width: fit-content;
+  padding: 3px 0;
+  color: #c7b98f;
+  cursor: pointer;
+  font-family: var(--gum-font-condensed);
+}
+
+.world-status-advanced-fields {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(120px, 0.45fr) minmax(240px, 1.2fr);
+  gap: 10px;
+  align-items: end;
+  padding: 8px 0 2px;
+}
+
+.world-status-advanced-fields label:not(.world-status-advanced-check) {
+  display: grid;
+  gap: 4px;
+}
+
+.world-status-advanced-fields select,
+.world-status-advanced-fields input[type="number"] {
+  width: 100%;
+  height: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  background: #20242b;
+  color: #e7e1d8;
+}
+
+.world-status-advanced-check {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 28px;
+}
+
+.world-status-advanced-check input { flex: 0 0 auto; }
+.world-status-advanced > p { margin: 5px 0 0; color: #817e79; }
+.world-status-add { flex: 0 0 auto; margin: 0; }
+.world-status-empty { padding: 24px; color: #aaa6a0; text-align: center; }
+
+.world-status-footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.world-status-footer button { margin: 0; }
+.world-status-footer button[type="submit"] {
+  border-color: rgba(197, 160, 91, 0.65);
+  background: #a7884e;
+  color: #191817;
+  font-weight: 700;
+}
+
+.dialog.gum.world-status-delete-dialog,
+.dialog.gum.world-status-dependency-dialog {
+  min-width: 480px;
+  border: 1px solid rgba(197, 160, 91, 0.32);
+  background: #1d2026;
+  color: #e7e1d8;
+}
+
+.dialog.gum.world-status-delete-dialog .window-header,
+.dialog.gum.world-status-dependency-dialog .window-header {
+  border-bottom: 1px solid rgba(197, 160, 91, 0.25);
+  background: #181b20;
+}
+
+.dialog.gum.world-status-delete-dialog .window-title,
+.dialog.gum.world-status-dependency-dialog .window-title {
+  color: #e8d6a7;
+  font-family: var(--gum-font-condensed);
+  font-weight: 700;
+  letter-spacing: 0.025em;
+}
+
+.dialog.gum.world-status-delete-dialog .header-button,
+.dialog.gum.world-status-dependency-dialog .header-button {
+  color: #cdb477;
+}
+
+.dialog.gum.world-status-delete-dialog .window-content,
+.dialog.gum.world-status-dependency-dialog .window-content {
+  padding: 0;
+  background: #20242b;
+  color: #e7e1d8;
+}
+
+.dialog.gum.world-status-delete-dialog .dialog-content {
+  padding: 15px 16px 12px;
+}
+
+.dialog.gum.world-status-dependency-dialog .dialog-content {
+  padding: 12px 14px;
+}
+
+.dialog.gum.world-status-delete-dialog .dialog-buttons,
+.dialog.gum.world-status-dependency-dialog .dialog-buttons {
+  gap: 7px;
+  margin: 0;
+  padding: 11px 14px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  background: #1b1e24;
+}
+
+.dialog.gum.world-status-delete-dialog .dialog-buttons button,
+.dialog.gum.world-status-dependency-dialog .dialog-buttons button {
+  min-height: 34px;
+  margin: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 5px;
+  background: #2c313a;
+  color: #e7e1d8;
+  box-shadow: none;
+  font-family: var(--gum-font-condensed);
+  font-size: 12px;
+  text-transform: none;
+}
+
+.dialog.gum.world-status-delete-dialog .dialog-buttons button:hover,
+.dialog.gum.world-status-dependency-dialog .dialog-buttons button:hover {
+  border-color: rgba(197, 160, 91, 0.5);
+  background: #363c46;
+}
+
+.dialog.gum.world-status-delete-dialog .dialog-buttons button[data-button="cleanup"] {
+  border-color: rgba(197, 160, 91, 0.5);
+  background: #9d8049;
+  color: #181715;
+  font-weight: 700;
+}
+
+.dialog.gum.world-status-delete-dialog .dialog-buttons button[data-button="cleanup"]:hover {
+  background: #c09c59;
+}
+
+.dialog.gum.world-status-dependency-dialog .dialog-buttons button[data-button="close"] {
+  margin-left: auto;
+  background: rgba(197, 160, 91, 0.78);
+  color: #181715;
+  font-weight: 700;
+}
+
+.dialog.gum.world-status-dependency-dialog .world-status-dependency-report {
+  display: grid;
+  gap: 8px;
+}
+
+.dialog.gum.world-status-dependency-dialog .world-status-dependency-report section {
+  padding: 9px 11px;
+  border: 1px solid rgba(197, 160, 91, 0.2);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.dialog.gum.world-status-dependency-dialog .world-status-dependency-report h3,
+.dialog.gum.world-status-dependency-dialog .world-status-dependency-report p,
+.dialog.gum.world-status-dependency-dialog .world-status-dependency-report ul {
+  margin: 0;
+}
+
+.dialog.gum.world-status-dependency-dialog .world-status-report-intro {
+  padding: 9px 10px;
+  border-left: 3px solid rgba(197, 160, 91, 0.7);
+  border-radius: 0 5px 5px 0;
+  background: rgba(197, 160, 91, 0.09);
+  color: #c7b98f;
+  line-height: 1.4;
+}
+
+.dialog.gum.world-status-dependency-dialog .world-status-dependency-report h3 {
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(197, 160, 91, 0.25);
+  color: #e4d2a2;
+  font-family: var(--gum-font-condensed);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dialog.gum.world-status-dependency-dialog .world-status-dependency-report ul {
+  max-height: 130px;
+  margin-top: 6px;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.dialog.gum.world-status-dependency-dialog .world-status-dependency-report li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 26px;
+  gap: 7px;
+  align-items: center;
+  min-height: 28px;
+  padding: 3px 4px 3px 7px;
+  border-radius: 4px;
+  color: #ddd7ce;
+}
+
+.dialog.gum.world-status-dependency-dialog .world-status-dependency-report li:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.dialog.gum.world-status-dependency-dialog .world-status-dependency-report li span {
+  overflow-wrap: anywhere;
+}
+
+.dialog.gum.world-status-dependency-dialog .world-status-dependency-report li small {
+  display: block;
+  margin-top: 2px;
+  color: #d4a967;
+  font-size: 10px;
+}
+
+.dialog.gum.world-status-dependency-dialog .world-status-dependency-report li button {
+  width: 26px;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #cdb477;
+  box-shadow: none;
+}
+
+.dialog.gum.world-status-dependency-dialog .world-status-dependency-report li button:hover {
+  background: rgba(197, 160, 91, 0.14);
+  color: #f0d38e;
+}
+
+.dialog.gum.world-status-dependency-dialog .world-status-dependency-report .notes {
+  margin-top: 6px;
+  color: #8f8b84;
+  font-style: italic;
+}
+
+.dialog.gum.world-status-delete-dialog .world-status-delete-summary {
+  display: grid;
+  gap: 10px;
+}
+
+.dialog.gum.world-status-delete-dialog .world-status-delete-summary p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.dialog.gum.world-status-delete-dialog .world-status-delete-summary p:last-child {
+  padding: 9px 10px;
+  border-left: 3px solid rgba(197, 160, 91, 0.7);
+  border-radius: 0 5px 5px 0;
+  background: rgba(197, 160, 91, 0.09);
+  color: #c7b98f;
+}
+
+@media (max-width: 820px) {
+  .world-status-toolbar { grid-template-columns: 1fr 1fr; }
+  .world-status-column-headings { display: none; }
+  .world-status-row { grid-template-columns: 24px 1fr 121px; }
+  .world-status-effects,
+  .world-status-icon-field { grid-column: 2 / -1; }
+  .world-status-actions { grid-column: 3; grid-row: 1; }
+  .world-status-advanced-fields { grid-template-columns: 1fr; }
 }
 
 /* Equipment containers and equipment drag-and-drop */

@@ -455,6 +455,7 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
         const context = await super.getData();
         context.damage = this.damageData;
         context.ammunition = this.damageData.ammunition || null;
+        context.rapidFire = this.damageData.rapidFire || null;
         context.natureOptions = buildDamageNatureSearchOptions();
         context.activeNature = formatDamageNature(this.damageData.main?.nature);
         context.attacker = {

@@ -9,6 +9,7 @@ import { SOCIAL_CATEGORIES } from "../config/social-aspects.mjs";
 import { normalizeContextCsv, openContextPicker } from "../apps/context-picker.mjs";
 import { getSkillDisplayName } from "../utils/skill-display-name.mjs";
 import { describeEquipmentAttackChanges, describeEquipmentPropertyChanges, describeEquipmentResolutionWarnings, describeEquipmentUseChanges, normalizeEquipmentModifier, parseEquipmentAdjustment, resolveEquipment } from "../utils/equipment-resolution.mjs";
+import { ammunitionLinkCandidates } from "../utils/ammunition.mjs";
  
 const { ItemSheet } = foundry.appv1.sheets; 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -223,7 +224,8 @@ _promptMultipleReferences(parsedList) {
             ? foundry.utils.deepClone(this.item._source?.system || itemData.system)
             : itemData.system;
         context.flags = itemData.flags;
-        context.attackMinStrength = this._normalizeAttackMinStrength(itemData.system?.attack_roll?.min_strength); 
+        context.canUseItemAttachmentDrops = this._canUseItemAttachmentDrops();
+        context.attackMinStrength = this._normalizeAttackMinStrength(itemData.system?.attack_roll?.min_strength);
 
         context.socialCategories = Object.entries(SOCIAL_CATEGORIES).map(([type, config]) => ({ type, label: game.i18n.localize(config.label) }));
         context.socialContributions = Object.entries(itemData.system.social_contributions || {}).map(([id, contribution]) => {
@@ -721,8 +723,9 @@ _promptMultipleReferences(parsedList) {
    await this.item.update({ [`system.social_contributions.${row.dataset.id}`]: { type: event.currentTarget.value } });
  }
 
- activateListeners(html) { 
-        super.activateListeners(html); 
+    activateListeners(html) {
+        super.activateListeners(html);
+        this._activateItemAttachmentDropzones(html);
         this._bindHeaderNameAutosize(html); 
  
         html.on('click', '.open-reference-link', this._onOpenReferenceLink.bind(this)); 
@@ -1293,13 +1296,105 @@ html.find('.delete-modifier').click(async ev => {
         } 
     }
 
+    _canUseItemAttachmentDrops() {
+        if (!this.isEditable || !this.item?.isOwner) return false;
+        if (game.user?.isGM) return true;
+        if (!game.settings.get("gum", "allowPlayerItemAttachmentDrops")) return false;
+        const minimumRole = Number(game.settings.get("gum", "itemAttachmentDropMinimumRole"));
+        return Number(game.user?.role) >= minimumRole;
+    }
+
+    _activateItemAttachmentDropzones(html) {
+        html.on("dragenter dragover", ".item-attachment-dropzone", event => {
+            if (!this._canUseItemAttachmentDrops()) return;
+            event.preventDefault();
+            event.stopPropagation();
+            event.currentTarget.classList.add("is-dragover");
+        });
+        html.on("dragleave dragend", ".item-attachment-dropzone", event => {
+            event.currentTarget.classList.remove("is-dragover");
+        });
+        html.on("drop", ".item-attachment-dropzone", this._onItemAttachmentDrop.bind(this));
+    }
+
+    async _onItemAttachmentDrop(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const zone = event.currentTarget;
+        zone.classList.remove("is-dragover");
+        if (!this._canUseItemAttachmentDrops()) {
+            return ui.notifications.warn(game.i18n.localize("GUM.ItemAttachments.NotAllowed"));
+        }
+
+        // Listeners delegated by jQuery receive a jQuery.Event; Foundry's parser
+        // requires the native DragEvent and its dataTransfer payload.
+        const nativeEvent = event.originalEvent ?? event;
+        const data = TextEditorImpl.getDragEventData(nativeEvent);
+        if (data?.type !== "Item") return;
+        const source = await Item.fromDropData(data).catch(() => null);
+        if (!source?.uuid || source.parent?.documentName === "Actor") {
+            return ui.notifications.warn(game.i18n.localize("GUM.ItemAttachments.InvalidSource"));
+        }
+
+        const attachmentType = zone.dataset.attachmentType;
+        const targetList = zone.dataset.targetList;
+        const accepted = attachmentType === "effect" ? source.type === "effect"
+            : attachmentType === "modifier" ? source.type === "modifier" && ["advantage", "disadvantage", "power"].includes(this.item.type)
+                : attachmentType === "eqp-modifier" ? source.type === "eqp_modifier" && this.item.type === "equipment"
+                    : false;
+        if (!accepted) return ui.notifications.warn(game.i18n.localize("GUM.ItemAttachments.Incompatible"));
+
+        if (attachmentType === "effect") return this._attachDroppedEffect(source, targetList);
+        if (attachmentType === "modifier") return this._attachDroppedModifier(source);
+        return this._attachDroppedEquipmentModifier(source);
+    }
+
+    async _attachDroppedEffect(effect, targetList) {
+        if (!targetList) return;
+        const id = foundry.utils.randomID();
+        const entry = { id, effectUuid: effect.uuid, recipient: "target", name: effect.name, img: effect.img };
+        if (targetList === "useEventEffects") entry.useEventTrigger = "consume";
+        await this.item.update({ [`system.${targetList}.${id}`]: entry });
+        ui.notifications.info(game.i18n.format("GUM.ItemAttachments.Added", { name: effect.name }));
+    }
+
+    async _attachDroppedModifier(modifier) {
+        const id = foundry.utils.randomID();
+        await this.item.update({ [`system.modifiers.${id}`]: {
+            name: modifier.name, cost: modifier.system.cost, level: modifier.system.level,
+            affects: modifier.system.affects, use_level_from_trait: modifier.system.use_level_from_trait,
+            cost_ignores_level: modifier.system.cost_ignores_level, disabled: modifier.system.disabled,
+            ref: modifier.system.ref, applied_effect: modifier.system.applied_effect,
+            source_id: modifier.uuid, description: modifier.system.description
+        } });
+        ui.notifications.info(game.i18n.format("GUM.ItemAttachments.Added", { name: modifier.name }));
+    }
+
+    async _attachDroppedEquipmentModifier(modifier) {
+        const id = foundry.utils.randomID();
+        const clone = (value, fallback = {}) => foundry.utils.deepClone(value ?? fallback);
+        await this.item.update({ [`system.eqp_modifiers.${id}`]: {
+            id, name: modifier.name, cost_adjustment: modifier.system.cost_adjustment,
+            cost_factor: modifier.system.cost_factor, weight_mod: modifier.system.weight_mod,
+            enabled: modifier.system.enabled !== false, level: modifier.system.level ?? 1,
+            adjustment_schema: modifier.system.adjustment_schema ?? 0,
+            cost_adjustment_data: clone(modifier.system.cost_adjustment_data),
+            weight_adjustment_data: clone(modifier.system.weight_adjustment_data),
+            features_data: clone(modifier.system.features_data, []),
+            gcs_features_unmapped: clone(modifier.system.gcs_features_unmapped, []),
+            tech_level: modifier.system.tech_level, group: modifier.system.group,
+            ref: modifier.system.ref, source_uuid: modifier.uuid
+        } });
+        ui.notifications.info(game.i18n.format("GUM.ItemAttachments.Added", { name: modifier.name }));
+    }
+
     async _chooseAttackAmmunition(ev) {
         ev.preventDefault();
         const attackId = ev.currentTarget.dataset.attackId;
         const attack = this.item.system?.ranged_attacks?.[attackId];
         if (!attack || !this.item.actor) return ui.notifications.warn(game.i18n.localize("GUM.Equipment.Ammunition.NeedsActor"));
         const escape = value => foundry.utils.escapeHTML(String(value));
-        const choices = Array.from(this.item.actor.items).filter(item => item.id !== this.item.id && item.system?.ammunition?.enabled);
+        const choices = ammunitionLinkCandidates(this.item.actor);
         const selected = new Set(attack.ammunition_ids || []);
         const content = `<div class="gum-ammunition-picker-content">
             <p class="gum-ammunition-dialog-intro">${game.i18n.localize("GUM.Equipment.Ammunition.AcceptedHint")}</p>

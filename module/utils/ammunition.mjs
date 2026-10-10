@@ -1,7 +1,42 @@
+import { equipmentAvailableUses, resolveEquipment } from "./equipment-resolution.mjs";
+
+export function ammunitionLinkCandidates(actor) {
+    const collection = actor?.items;
+    const items = typeof collection?.values === "function" ? collection.values() : collection || [];
+    return Array.from(items).filter(item => item?.system?.ammunition?.enabled);
+}
+
+export function numericRateOfFire(value) {
+    const text = String(value ?? "").trim();
+    if (!/^\d+$/.test(text)) return null;
+    const rate = Number(text);
+    return Number.isSafeInteger(rate) && rate > 0 ? rate : null;
+}
+
+export function calculateRapidFireHits({ isSuccess = false, isCriticalSuccess = false, margin = 0, recoil, shotsFired }) {
+    const shots = Math.floor(Number(shotsFired));
+    const rcl = Number(recoil);
+    if (!Number.isSafeInteger(shots) || shots < 2 || !Number.isFinite(rcl) || rcl <= 0) return null;
+    if (!isSuccess) return { shotsFired: shots, recoil: rcl, hits: 0, isCriticalSuccess: false };
+    const successMargin = Math.max(0, Math.floor(Number(margin) || 0));
+    const hits = isCriticalSuccess ? shots : Math.min(shots, 1 + Math.floor(successMargin / rcl));
+    return { shotsFired: shots, recoil: rcl, hits, isCriticalSuccess: Boolean(isCriticalSuccess) };
+}
+
 export function availableAmmunition(actor, attack) {
     const ids = Array.isArray(attack?.ammunition_ids) ? attack.ammunition_ids : [];
     return ids.map(id => actor?.items?.get(id)).filter(item => item && item.system?.ammunition?.enabled &&
-        !item.system?.stored && item.system?.location !== "stored" && Number(item.system?.quantity) > 0);
+        !item.system?.stored && item.system?.location !== "stored" && ammunitionAvailableUses(item) > 0);
+}
+
+export function ammunitionAvailableUses(item) {
+    if (!item) return 0;
+    const system = item._source?.system || item.system || {};
+    // Resolve from the persisted equipment data at the moment of use. The prepared
+    // resolution may still describe the item before its latest charge-mode update,
+    // which is especially visible when the weapon uses itself as ammunition.
+    const resolution = resolveEquipment(system);
+    return equipmentAvailableUses(system, resolution);
 }
 
 export function applyAmmunition(profile, ammunition) {

@@ -420,6 +420,8 @@
       },
       "equipment_base": {
         "quantity": 1,
+        "level": "",
+        "points": 0,
         "ammunition": {
           "enabled": false,
           "attack_modifier": 0,

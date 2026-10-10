@@ -2,6 +2,7 @@ import {
   CONTENT_SOURCE_PURPOSES,
   contentSourceService
 } from "../services/content-source-service.mjs";
+import { WORLD_STATUS_SETTING, normalizeWorldStatusConfiguration } from "../utils/world-status-config.mjs";
 
 export class ContentSourceConfig extends FormApplication {
   constructor(...args) {
@@ -28,7 +29,11 @@ export class ContentSourceConfig extends FormApplication {
       .map(pack => ({ id: pack.collection, label: pack.title || pack.metadata?.label || pack.collection }))
       .sort((a, b) => a.label.localeCompare(b.label, game.i18n.lang));
 
-    context.purposes = Object.values(CONTENT_SOURCE_PURPOSES).map(definition => {
+    const worldStatuses = normalizeWorldStatusConfiguration(game.settings.get("gum", WORLD_STATUS_SETTING));
+    const definitions = Object.values(CONTENT_SOURCE_PURPOSES)
+      .filter(definition => definition.id !== "statusBindings" || !worldStatuses.bindingsMigrated);
+    this.visiblePurposeIds = definitions.map(definition => definition.id);
+    context.purposes = definitions.map(definition => {
       if (!this.selectedByPurpose.has(definition.id)) {
         this.selectedByPurpose.set(definition.id, contentSourceService.getSourceIds(definition.id));
       }
@@ -101,7 +106,7 @@ export class ContentSourceConfig extends FormApplication {
   }
 
   async _updateObject(_event, formData) {
-    for (const purpose of Object.keys(CONTENT_SOURCE_PURPOSES)) {
+    for (const purpose of this.visiblePurposeIds || Object.keys(CONTENT_SOURCE_PURPOSES)) {
       const raw = formData[`${purpose}Sources`] || "[]";
       let ids = [];
       try {
