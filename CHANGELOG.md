@@ -4,6 +4,31 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.4.0-beta] - 2026-10-09
+
+### Added
+
+- Novo fluxo de aplicação de modelos, com etapas configuráveis, escolhas, pacotes, limites de atributos e orçamentos compartilhados de pontos e dinheiro.
+- Perfis de munição vinculáveis aos equipamentos, com seleção durante o ataque e aplicação segura das alterações de dano.
+- Visualizações separadas para Ações de Combate e Favoritos, agrupamento dos favoritos por tipo de item e filtros por grupo de ataque.
+- Expansão mecânica em todos os cards de magias e poderes, incluindo conjuração ou ativação, duração, custo e manutenção sem cortes.
+
+### Changed
+
+- Ficha do personagem recebeu um padrão visual mais compacto e consistente para perícias, características, condições, magias, poderes, aspectos sociais e combate.
+- Cards de magias e poderes passaram a aceitar arrastar e soltar, expansão persistente e menus de ações unificados; o mesmo padrão foi aplicado aos favoritos de combate.
+- Cabeçalhos, cards, menus e janelas auxiliares das áreas revisadas receberam internacionalização ampliada em português e inglês.
+- Aba de combate, tabela de RD, barra lateral e editor de atributos secundários foram reorganizados para melhorar leitura e reduzir ruído visual.
+- Reservas de energia e de poder agora aceitam saldos negativos em seus registros.
+- Editor de atributos secundários passou a exibir por extenso os nomes das modalidades de dano básico.
+
+### Fixed
+
+- Prévia de arraste de perícias e magias agora representa somente o card selecionado, sem capturar a ficha ou o grupo inteiro.
+- Expansão de cards sociais deixou de recolher o grupo ou a aba inteira, e seus menus de opções voltaram a responder corretamente.
+- Textos extensos dos cards revisados agora quebram linha ou ficam disponíveis na expansão, evitando perda silenciosa de informações.
+- Colisões entre classes visuais legadas e os novos componentes de cards, cabeçalhos e menus foram removidas.
+
 ## [1.3.2-beta] - 2026-10-05
 
 ### Added
