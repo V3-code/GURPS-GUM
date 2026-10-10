@@ -11,7 +11,7 @@ test("manual wound and combat record dialogs use the shared minimal editor", () 
   assert.match(actorSheet, /gum-wound-edit-dialog/);
   assert.match(actorSheet, /gum-record-field--title[\s\S]+gum-record-field--nature[\s\S]+gum-record-field--initial/);
   assert.match(actorSheet, /gum-wound-edit-dialog"\], width: 480/);
-  assert.match(actorSheet, /Registro de combate[\s\S]+Acompanhe manualmente/);
+  assert.match(actorSheet, /GUM\.Combat\.Meters\.EditorHeading[\s\S]+GUM\.Combat\.Meters\.EditorHint/);
 });
 
 test("record editor favors subtle colored surfaces and responsive layout", () => {

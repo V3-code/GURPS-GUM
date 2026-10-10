@@ -39,7 +39,7 @@
         <div class="sidebar-block profile-block">
           <div class="profile-frame">
               <img class="profile-img" src="{{actor.img}}" data-action="edit-portrait"
-              alt="Retrato de {{actor.name}}" title="Alterar retrato de {{actor.name}}" role="button" tabindex="0"/>
+              alt="{{localize 'GUM.Character.Sidebar.PortraitAlt' name=actor.name}}" title="{{localize 'GUM.Character.Sidebar.PortraitEdit' name=actor.name}}" role="button" tabindex="0"/>
           </div>
         </div>
 
@@ -47,7 +47,7 @@
         <div class="sidebar-block encumbrance-dodge-bar">
           {{!-- Lado Esquerdo --}}
           <div class="enc-col left-col">
-            <a class="enc-label link edit-lifting-st">Base Carga</a>
+            <a class="enc-label link edit-lifting-st" title="{{localize 'GUM.Character.Sidebar.EditLiftingStrength'}}">{{localize "GUM.Character.Sidebar.BasicLift"}}</a>
             <span class="enc-val">{{actor.system.attributes.basic_lift.value}} kg</span>
           </div>
 
@@ -58,49 +58,49 @@
                 <circle class="badge-bg" cx="50" cy="50" r="48" />
                 <circle class="badge-border" cx="50" cy="50" r="44" />
               </svg>
-              <a class="rollable dodge-value" data-type="defense" data-roll-value="{{actor.system.attributes.dodge.final}}" data-label="Teste de Esquiva" data-defense-type="dodge" data-defense-bonus-included="true">
+              <a class="rollable dodge-value" data-type="defense" data-roll-value="{{actor.system.attributes.dodge.final}}" data-label="{{localize 'GUM.Character.Sidebar.DodgeTest'}}" data-defense-type="dodge" data-defense-bonus-included="true">
                 {{actor.system.attributes.dodge.final}}
               </a>
-              <div class="badge-label-curved">ESQUIVA</div>
+              <div class="badge-label-curved">{{localize "GUM.Character.Sidebar.Dodge"}}</div>
             </div>
           </div>
 
           {{!-- Lado Direito --}}
           <div class="enc-col right-col">
-            <span class="enc-label">Nível Carga</span>
-            <span class="enc-val {{actor.system.encumbrance.level_name}}">{{actor.system.encumbrance.level_name}}</span>
+            <span class="enc-label">{{localize "GUM.Character.Sidebar.EncumbranceLevel"}}</span>
+            <span class="enc-val {{actor.system.encumbrance.level_name}}">{{encumbranceLevelLabel}}</span>
           </div>
         </div>
 
         {{!-- 3. DADOS QUADRADOS --}}
         <div class="sidebar-block stats-cluster">
           <div class="cluster-header">
-            <span class="cluster-title">ATRIBUTOS SECUNDÁRIOS</span>
+            <span class="cluster-title">{{localize "GUM.Character.Sidebar.SecondaryAttributes"}}</span>
             <div class="cluster-actions">
-              <a class="recalc-secondary-stats-btn" title="Recalcular bases de atributos secundários"><i class="fas fa-sync-alt"></i></a>
-              <a class="edit-secondary-stats-btn" title="Editar Atributos"><i class="fas fa-cog"></i></a>
+              <a class="recalc-secondary-stats-btn" title="{{localize 'GUM.Character.Sidebar.RecalculateSecondaries'}}" aria-label="{{localize 'GUM.Character.Sidebar.RecalculateSecondaries'}}"><i class="fas fa-sync-alt"></i></a>
+              <a class="edit-secondary-stats-btn" title="{{localize 'GUM.Character.Sidebar.EditSecondaries'}}" aria-label="{{localize 'GUM.Character.Sidebar.EditSecondaries'}}"><i class="fas fa-cog"></i></a>
             </div>
           </div>
 
 
           <div class="dice-row">
-            <div class="d6-stat" title="Velocidade Básica">
+            <div class="d6-stat" title="{{localize 'GUM.Character.Sidebar.BasicSpeed'}}">
               <div class="d6-face">
                 <span class="d6-val">{{actor.system.attributes.basic_speed.final}}</span>
-                <span class="d6-label">VELOC.</span>
+                <span class="d6-label">{{localize "GUM.Character.Sidebar.SpeedAbbrev"}}</span>
               </div>
             </div>
-            <div class="d6-stat main-d6" title="Deslocamento">
+            <div class="d6-stat main-d6" title="{{localize 'GUM.Character.Sidebar.BasicMove'}}">
               <div class="d6-face">
                 {{#if actor.system.attributes.enhanced_move.final}}
                 <span class="d6-val d6-val-split">{{actor.system.attributes.basic_move.final}} <small style="color:#c2c2c2">/{{actor.system.attributes.enhanced_move.final}}</small></span>
                 {{else}}
                 <span class="d6-val">{{actor.system.attributes.basic_move.final}}</span>
                 {{/if}}
-                <span class="d6-label">DESLOC.</span>
+                <span class="d6-label">{{localize "GUM.Character.Sidebar.MoveAbbrev"}}</span>
               </div>
             </div>
-            <div class="d6-stat" title="Modificador de Tamanho">
+            <div class="d6-stat" title="{{localize 'GUM.Character.Sidebar.SizeModifier'}}">
               <div class="d6-face">
                 <span class="d6-val">{{actor.system.attributes.mt.final}}</span>
                 <span class="d6-label">MT</span>
@@ -110,50 +110,50 @@
 
           <div class="senses-container">
             <div class="sense-box">
-              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.vision.final}}" data-label="Teste de Visão" data-attribute-key="vision"><i class="fas fa-eye"></i> Visão</a>
+              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.vision.final}}" data-label="{{localize 'GUM.Character.Sidebar.VisionTest'}}" data-attribute-key="vision"><i class="fas fa-eye"></i> {{localize "GUM.Character.Sidebar.Vision"}}</a>
               <span class="sense-value">{{actor.system.attributes.vision.final}}</span>
             </div>
             <div class="sense-box">
-              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.hearing.final}}" data-label="Teste de Audição" data-attribute-key="hearing"><i class="fas fa-deaf"></i> Audição</a>
+              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.hearing.final}}" data-label="{{localize 'GUM.Character.Sidebar.HearingTest'}}" data-attribute-key="hearing"><i class="fas fa-deaf"></i> {{localize "GUM.Character.Sidebar.Hearing"}}</a>
               <span class="sense-value">{{actor.system.attributes.hearing.final}}</span>
             </div>
             <div class="sense-box">
-              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.tastesmell.final}}" data-label="Teste de Paladar/Olfato" data-attribute-key="tastesmell"><i class="fas fa-wine-bottle"></i> Olfato</a>
+              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.tastesmell.final}}" data-label="{{localize 'GUM.Character.Sidebar.TasteSmellTest'}}" data-attribute-key="tastesmell"><i class="fas fa-wine-bottle"></i> {{localize "GUM.Character.Sidebar.Smell"}}</a>
               <span class="sense-value">{{actor.system.attributes.tastesmell.final}}</span>
             </div>
             <div class="sense-box">
-              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.touch.final}}" data-label="Teste de Tato" data-attribute-key="touch"><i class="fas fa-hand-paper"></i> Tato</a>
+              <a class="rollable" data-type="skill" data-roll-value="{{actor.system.attributes.touch.final}}" data-label="{{localize 'GUM.Character.Sidebar.TouchTest'}}" data-attribute-key="touch"><i class="fas fa-hand-paper"></i> {{localize "GUM.Character.Sidebar.Touch"}}</a>
               <span class="sense-value">{{actor.system.attributes.touch.final}}</span>
             </div>
           </div>
 
           <div class="basic-damage-card sidebar-basic-damage secondary-basic-damage">
             <div class="sidebar-basic-damage-header">
-              <span class="sidebar-basic-damage-title">Dano Básico</span>
+              <span class="sidebar-basic-damage-title">{{localize "GUM.Character.Sidebar.BasicDamage"}}</span>
             </div>
             <div class="sidebar-basic-damage-values">
               <a class="sidebar-basic-damage-item rollable-basic-damage"
                  data-roll-formula="{{actor.system.attributes.thrust_damage.final}}"
-                 data-label="Dano de Golpe de Ponta (GdP)">
-                <span class="label">GdP</span>
+                 data-label="{{localize 'GUM.Character.Sidebar.ThrustDamageTest'}}">
+                <span class="label">{{localize "GUM.Character.Sidebar.ThrustAbbrev"}}</span>
                 <span class="value">{{actor.system.attributes.thrust_damage.final}}</span>
               </a>
               <a class="sidebar-basic-damage-item rollable-basic-damage"
                  data-roll-formula="{{actor.system.attributes.swing_damage.final}}"
-                 data-label="Dano de Golpe em Balanço (GeB)">
-                <span class="label">GeB</span>
+                 data-label="{{localize 'GUM.Character.Sidebar.SwingDamageTest'}}">
+                <span class="label">{{localize "GUM.Character.Sidebar.SwingAbbrev"}}</span>
                 <span class="value">{{actor.system.attributes.swing_damage.final}}</span>
               </a>
               <a class="sidebar-basic-damage-item rollable-basic-damage"
                  data-roll-formula="{{actor.system.attributes.thrust_damage_alt.final}}"
-                 data-label="Dano Alternativo de Golpe de Ponta (GdPa)">
-                <span class="label">GdPa</span>
+                 data-label="{{localize 'GUM.Character.Sidebar.AlternateThrustDamageTest'}}">
+                <span class="label">{{localize "GUM.Character.Sidebar.AlternateThrustAbbrev"}}</span>
                 <span class="value">{{actor.system.attributes.thrust_damage_alt.final}}</span>
               </a>
               <a class="sidebar-basic-damage-item rollable-basic-damage"
                  data-roll-formula="{{#if actor.system.attributes.swing_damage_alt}}{{actor.system.attributes.swing_damage_alt}}{{else}}{{actor.system.attributes.swing_damage}}{{/if}}"
-                 data-label="Dano Alternativo em Balanço (GeBa)">
-                <span class="label">GeBa</span>
+                 data-label="{{localize 'GUM.Character.Sidebar.AlternateSwingDamageTest'}}">
+                <span class="label">{{localize "GUM.Character.Sidebar.AlternateSwingAbbrev"}}</span>
                 <span class="value">{{actor.system.attributes.swing_damage_alt.final}}</span>
               </a>
             </div>
@@ -164,8 +164,8 @@
         <div class="sidebar-block bars-block">
           <div class="bar-group">
             <div class="bar-label">
-              <span>PONTOS DE VIDA</span>
-              <a class="edit-resource-bar" data-stat="hp"><i class="fas fa-cog"></i></a>
+              <span>{{localize "GUM.Character.Sidebar.HitPoints"}}</span>
+              <a class="edit-resource-bar" data-stat="hp" title="{{localize 'GUM.Character.Sidebar.EditHitPoints'}}" aria-label="{{localize 'GUM.Character.Sidebar.EditHitPoints'}}"><i class="fas fa-cog"></i></a>
             </div>
             <div class="resource-bar original-style">
               <div class="bar-fill hp" style="{{bar_style actor.system.attributes.hp.value actor.system.attributes.hp.final 'hp'}}"></div>
@@ -178,8 +178,8 @@
           </div>
           <div class="bar-group">
             <div class="bar-label">
-              <span>PONTOS DE FADIGA</span>
-              <a class="edit-resource-bar" data-stat="fp"><i class="fas fa-cog"></i></a>
+              <span>{{localize "GUM.Character.Sidebar.FatiguePoints"}}</span>
+              <a class="edit-resource-bar" data-stat="fp" title="{{localize 'GUM.Character.Sidebar.EditFatiguePoints'}}" aria-label="{{localize 'GUM.Character.Sidebar.EditFatiguePoints'}}"><i class="fas fa-cog"></i></a>
             </div>
             <div class="resource-bar original-style">
               <div class="bar-fill fp" style="{{bar_style actor.system.attributes.fp.value actor.system.attributes.fp.final 'fp'}}"></div>
@@ -196,14 +196,14 @@
         <div class="sidebar-footer">
           <details class="sidebar-collapsible" data-group-id="sidebar-survival" {{collapsibleState "sidebar-survival" @root.collapsedData}}>
             <summary class="sidebar-summary">
-              <h4 class="block-title">SOBREVIVÊNCIA</h4>
+              <h4 class="block-title">{{localize "GUM.Character.Sidebar.Survival"}}</h4>
               <i class="fas fa-chevron-down expand-icon"></i>
             </summary>
 
             <div class="collapsible-content">
               <div class="survival-grid">
                 <div class="survival-item">
-                  <label>FOME</label>
+                  <label>{{localize "GUM.Character.Sidebar.Hunger"}}</label>
                   <div class="counter-wrapper">
                     <a class="adjust-survival" data-action="decrease" data-attr="fome"><i class="fas fa-minus"></i></a>
                     <input type="number" name="system.attributes.fome.value" value="{{actor.system.attributes.fome.value}}" min="0"/>
@@ -211,7 +211,7 @@
                   </div>
                 </div>
                 <div class="survival-item">
-                  <label>SEDE</label>
+                  <label>{{localize "GUM.Character.Sidebar.Thirst"}}</label>
                   <div class="counter-wrapper">
                     <a class="adjust-survival" data-action="decrease" data-attr="sede"><i class="fas fa-minus"></i></a>
                     <input type="number" name="system.attributes.sede.value" value="{{actor.system.attributes.sede.value}}" min="0"/>
@@ -219,7 +219,7 @@
                   </div>
                 </div>
                 <div class="survival-item">
-                  <label>SONO</label>
+                  <label>{{localize "GUM.Character.Sidebar.Sleep"}}</label>
                   <div class="counter-wrapper">
                     <a class="adjust-survival" data-action="decrease" data-attr="sono"><i class="fas fa-minus"></i></a>
                     <input type="number" name="system.attributes.sono.value" value="{{actor.system.attributes.sono.value}}" min="0"/>
@@ -227,7 +227,7 @@
                   </div>
                 </div>
                 <div class="survival-item radiation">
-                  <label class="warning-label">RADIAÇÃO</label>
+                  <label class="warning-label">{{localize "GUM.Character.Sidebar.Radiation"}}</label>
                   <div class="counter-wrapper">
                     <a class="adjust-survival" data-action="decrease" data-attr="radiation"><i class="fas fa-minus"></i></a>
                     <input type="number" name="system.attributes.radiation.value" value="{{actor.system.attributes.radiation.value}}" min="0"/>
@@ -360,7 +360,7 @@
       {{! ================================================================== }}
       <main class="sheet-body-content">
         <nav class="sheet-tabs tabs" data-group="primary">
-          <a class="item" data-tab="combat" title="Combate">
+          <a class="item" data-tab="combat" title="{{localize 'GUM.Combat.Tab'}}">
             <i class="fas fa-khanda"></i>
           </a>
           <a class="item" data-tab="skills" title="{{localize 'GUM.Skills.Tab'}}">
@@ -852,11 +852,7 @@
                     {{#if this.system.damage.formula}}<div class="magic-card__damage-value"><a class="rollable-damage magic-card__metric-value" title="{{localize 'GUM.Spells.RollDamage'}}" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}</a>{{#if this.magicCardAdditionalDamageMarkers}}<sup class="magic-card__additional-damage" title="{{this.magicCardAdditionalDamageHint}}" aria-label="{{this.magicCardAdditionalDamageHint}}">{{this.magicCardAdditionalDamageMarkers}}</sup>{{/if}}</div>{{/if}}
                   </div>
 
-                  {{#if this.magicCardHasDetails}}
                   <button type="button" class="magic-card__expand" title="{{#if this.magicCardExpanded}}{{localize 'GUM.Spells.CollapseDetails'}}{{else}}{{localize 'GUM.Spells.ExpandDetails'}}{{/if}}" aria-label="{{#if this.magicCardExpanded}}{{localize 'GUM.Spells.CollapseDetails'}}{{else}}{{localize 'GUM.Spells.ExpandDetails'}}{{/if}}" aria-expanded="{{#if this.magicCardExpanded}}true{{else}}false{{/if}}"><i class="fas {{#if this.magicCardExpanded}}fa-compress-arrows-alt{{else}}fa-expand-arrows-alt{{/if}}"></i></button>
-                  {{else}}
-                  <span class="magic-card__expand-spacer" aria-hidden="true"></span>
-                  {{/if}}
 
                   <div class="item-controls magic-card__controls">
                     <div class="gum-action-menu js-action-menu">
@@ -871,6 +867,16 @@
                 </div>
 
                 <div class="magic-card__details" {{#unless this.magicCardExpanded}}hidden{{/unless}}>
+                  <section class="magic-card__detail-branch magic-card__detail-branch--mechanics">
+                    <h5><i class="fas fa-hourglass-half"></i>{{localize 'GUM.Spells.Mechanics'}}</h5>
+                    <div class="magic-card__detail-values">
+                      <span><strong>{{localize 'GUM.Spells.CastingTime'}}</strong>{{this.system.casting_time}}</span>
+                      <span><strong>{{localize 'GUM.Spells.Duration'}}</strong>{{this.system.duration}}</span>
+                      <span><strong>{{localize 'GUM.Spells.CastingCost'}}</strong>{{this.system.mana_cost}}</span>
+                      <span><strong>{{localize 'GUM.Spells.MaintenanceCost'}}</strong>{{this.system.mana_maint}}</span>
+                    </div>
+                  </section>
+
                   {{#if this.system.uses_attack}}
                   <section class="magic-card__detail-branch magic-card__detail-branch--attack">
                     <h5><i class="fas fa-crosshairs"></i>{{localize 'GUM.Spells.Attack'}}</h5>
@@ -1065,6 +1071,16 @@
                 </div>
 
                 <div class="magic-card__details" {{#unless this.powerCardExpanded}}hidden{{/unless}}>
+                  <section class="magic-card__detail-branch magic-card__detail-branch--mechanics">
+                    <h5><i class="fas fa-hourglass-half"></i>{{localize 'GUM.Powers.Mechanics'}}</h5>
+                    <div class="magic-card__detail-values">
+                      <span><strong>{{localize 'GUM.Powers.ActivationTime'}}</strong>{{this.system.activation_time}}</span>
+                      <span><strong>{{localize 'GUM.Powers.Duration'}}</strong>{{this.system.duration}}</span>
+                      <span><strong>{{localize 'GUM.Powers.ActivationCost'}}</strong>{{this.system.activation_cost}}</span>
+                      <span><strong>{{localize 'GUM.Powers.MaintenanceCost'}}</strong>{{this.system.maint_cost}}</span>
+                    </div>
+                  </section>
+
                   {{#if this.system.uses_attack}}
                   <section class="magic-card__detail-branch magic-card__detail-branch--attack">
                     <h5><i class="fas fa-crosshairs"></i>{{localize 'GUM.Spells.Attack'}}</h5>
@@ -1589,11 +1605,11 @@
           <div class="gum-block dr-location-block">
             <div class="block-header">
               <h4>
-                <span class="dr-header-title">Tabela de RD</span>
+                <span class="dr-header-title">{{localize "GUM.Combat.DR.Title"}}</span>
                 <span class="dr-header-subtitle">{{bodyProfileLabel}}</span>
               </h4>
               <div class="header-controls">
-                <a class="view-hit-locations" title="Editar Modificadores de RD"><i class="fas fa-edit"></i></a>
+                <a class="view-hit-locations" title="{{localize 'GUM.Combat.DR.Edit'}}"><i class="fas fa-edit"></i></a>
               </div>
             </div>
 
@@ -1603,7 +1619,7 @@
                   <li class="dr-location-row dr-group" data-group-id="{{row.id}}">
                     <div class="dr-row-main">
                       <div class="dr-row-start">
-                      <button class="dr-group-toggle" type="button" title="Expandir grupo">
+                      <button class="dr-group-toggle" type="button" title="{{localize 'GUM.Combat.ExpandGroup'}}">
                         <i class="fas fa-chevron-right"></i>
                       </button>
                       <span class="location-name">{{row.label}}</span>
@@ -1647,77 +1663,83 @@
         {{! --- COLUNA DA DIREITA (LARGA) --- }}
         <div class="combat-right-column">
 
-          <div class="combat-area-label" aria-hidden="true"><span>Controle de Combate</span></div>
+          <div class="combat-area-label" aria-hidden="true"><span>{{localize "GUM.Combat.Control"}}</span></div>
+
+          <div class="combat-filter-list combat-filter-list--control" role="group" aria-label="{{localize 'GUM.Combat.Filters.ControlGroups'}}">
+            <button type="button" class="combat-filter-chip {{#if combatControlFilterAll}}is-active{{/if}}" data-filter-scope="control" data-filter-value="all" aria-pressed="{{#if combatControlFilterAll}}true{{else}}false{{/if}}">{{localize "GUM.Combat.Filters.All"}}</button>
+            <button type="button" class="combat-filter-chip {{#if combatWoundsFilterActive}}is-active{{/if}}" data-filter-scope="control" data-filter-value="wounds" aria-pressed="{{#if combatWoundsFilterActive}}true{{else}}false{{/if}}">{{localize "GUM.Wounds.Title"}}</button>
+            <button type="button" class="combat-filter-chip {{#if combatMetersFilterActive}}is-active{{/if}}" data-filter-scope="control" data-filter-value="meters" aria-pressed="{{#if combatMetersFilterActive}}true{{else}}false{{/if}}">{{localize "GUM.Combat.Meters.Title"}}</button>
+          </div>
 
           {{!-- Grupo fixo de Registros de Combate --}}
           <div class="attack-group-list-v2 combat-fixed-groups-list">
-            <details class="attack-group-details gum-unified-section combat-fixed-group wounds-box" data-group-id="wounds-group" {{collapsibleState "wounds-group" @root.collapsedData}}>
+            <details class="attack-group-details gum-unified-section combat-fixed-group wounds-box" data-group-id="wounds-group" data-combat-control-group="wounds" {{#unless combatWoundsVisible}}hidden{{/unless}} {{collapsibleState "wounds-group" @root.collapsedData}}>
               <summary class="group-summary gum-unified-header">
-                <div class="summary-left"><i class="fas fa-chevron-right indicator"></i><i class="fas fa-bandage item-icon"></i><span class="group-name">Ferimentos</span></div>
-                <div class="summary-right"><span class="group-tag">{{preparedWounds.length}} card(s)</span><a class="add-wound" title="Adicionar Ferimento"><i class="fas fa-plus"></i></a></div>
+                <div class="summary-left"><i class="fas fa-chevron-right indicator"></i><i class="fas fa-bandage item-icon"></i><span class="group-name">{{localize "GUM.Wounds.Title"}}</span></div>
+                <div class="summary-right"><span class="group-tag">{{localize "GUM.Combat.Wounds.Count" count=preparedWounds.length}}</span><a class="add-wound" title="{{localize 'GUM.Wounds.Register'}}"><i class="fas fa-plus"></i></a></div>
               </summary>
               <div class="group-content wound-list">
                 <div class="wound-grid">
                   {{#each preparedWounds}}
-                    <article class="wound-card" data-wound-id="{{this.id}}" title="{{this.woundTooltip}}" aria-label="Ferimento: {{this.woundTooltip}}">
+                    <article class="wound-card" data-wound-id="{{this.id}}" title="{{this.woundTooltip}}" aria-label="{{localize 'GUM.Combat.Wounds.CardLabel' details=this.woundTooltip}}">
                       <i class="fas {{this.natureIcon}} wound-nature-icon" title="{{this.natureTooltip}}" aria-label="{{this.natureTooltip}}"></i>
                       <div class="wound-value-controls">
-                        <button type="button" class="adjust-wound wound-adjust" data-adjustment="-1" title="Diminuir ferimento em uma unidade" aria-label="Diminuir ferimento em uma unidade"><i class="fas fa-minus" aria-hidden="true"></i></button>
-                        <strong class="wound-value" aria-label="Valor restante: {{this.remaining}}">{{this.remaining}}</strong>
-                        <button type="button" class="adjust-wound wound-adjust" data-adjustment="1" title="Aumentar ferimento em uma unidade" aria-label="Aumentar ferimento em uma unidade"><i class="fas fa-plus" aria-hidden="true"></i></button>
+                        <button type="button" class="adjust-wound wound-adjust" data-adjustment="-1" title="{{localize 'GUM.Combat.Wounds.Decrease'}}" aria-label="{{localize 'GUM.Combat.Wounds.Decrease'}}"><i class="fas fa-minus" aria-hidden="true"></i></button>
+                        <strong class="wound-value" aria-label="{{localize 'GUM.Combat.Wounds.Remaining' value=this.remaining}}">{{this.remaining}}</strong>
+                        <button type="button" class="adjust-wound wound-adjust" data-adjustment="1" title="{{localize 'GUM.Combat.Wounds.Increase'}}" aria-label="{{localize 'GUM.Combat.Wounds.Increase'}}"><i class="fas fa-plus" aria-hidden="true"></i></button>
                       </div>
                       <div class="item-controls wound-controls">
                         <div class="gum-action-menu js-action-menu">
-                          <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções do ferimento" aria-label="Opções do ferimento" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
-                          <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações do ferimento">
-                            <a class="item-control edit-wound gum-action-menu__item" role="menuitem" title="{{localize 'GUM.Inventory.Edit'}}"><i class="fas fa-edit"></i><span>Editar</span></a>
-                            <a class="item-control delete-wound gum-action-menu__item is-danger" role="menuitem" title="{{localize 'GUM.Inventory.Delete'}}"><i class="fas fa-trash"></i><span>Excluir</span></a>
+                          <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Combat.Wounds.Options'}}" aria-label="{{localize 'GUM.Combat.Wounds.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+                          <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Combat.Wounds.Actions'}}">
+                            <a class="item-control edit-wound gum-action-menu__item" role="menuitem" title="{{localize 'GUM.Inventory.Edit'}}"><i class="fas fa-edit"></i><span>{{localize "GUM.Inventory.Edit"}}</span></a>
+                            <a class="item-control delete-wound gum-action-menu__item is-danger" role="menuitem" title="{{localize 'GUM.Inventory.Delete'}}"><i class="fas fa-trash"></i><span>{{localize "GUM.Inventory.Delete"}}</span></a>
                           </div>
                         </div>
                       </div>
                     </article>
-                  {{else}}<div class="placeholder-text">Nenhum ferimento registrado.</div>{{/each}}
+                  {{else}}<div class="placeholder-text">{{localize "GUM.Combat.Wounds.Empty"}}</div>{{/each}}
                 </div>
               </div>
             </details>
-            <details class="attack-group-details gum-unified-section combat-meters-box combat-fixed-group" data-group-id="combat-meters-group" {{collapsibleState "combat-meters-group" @root.collapsedData}}>
+            <details class="attack-group-details gum-unified-section combat-meters-box combat-fixed-group" data-group-id="combat-meters-group" data-combat-control-group="meters" {{#unless combatMetersVisible}}hidden{{/unless}} {{collapsibleState "combat-meters-group" @root.collapsedData}}>
               <summary class="group-summary gum-unified-header">
                 <div class="summary-left">
                   <i class="fas fa-chevron-right indicator"></i>
                   <i class="fas fa-clipboard-list item-icon"></i>
-                  <span class="group-name">Registros de Combate</span>
+                  <span class="group-name">{{localize "GUM.Combat.Meters.Title"}}</span>
                 </div>
                 <div class="summary-right">
-                  <span class="group-tag">{{preparedCombatMeters.length}} registro(s)</span>
+                  <span class="group-tag">{{localize "GUM.Combat.Meters.Count" count=preparedCombatMeters.length}}</span>
 
-                  <a class="add-combat-meter" title="Adicionar Registro"><i class="fas fa-plus"></i></a>
+                  <a class="add-combat-meter" title="{{localize 'GUM.Combat.Meters.Add'}}"><i class="fas fa-plus"></i></a>
                 </div>
               </summary>
               <div class="group-content combat-meter-group-content">
                 <div class="combat-meter-grid">
                   {{#each preparedCombatMeters}}
-                    <article class="meter-card combat-meter-card" data-meter-id="{{this.id}}" {{#if this.meter.equipmentId}}data-equipment-id="{{this.meter.equipmentId}}"{{/if}} title="{{this.meter.name}} — referência {{this.meter.max}}" aria-label="Registro {{this.meter.name}}: valor {{this.meter.current}}, referência {{this.meter.max}}">
+                    <article class="meter-card combat-meter-card" data-meter-id="{{this.id}}" {{#if this.meter.equipmentId}}data-equipment-id="{{this.meter.equipmentId}}"{{/if}} title="{{localize 'GUM.Combat.Meters.CardTitle' name=this.meter.name max=this.meter.max}}" aria-label="{{localize 'GUM.Combat.Meters.CardLabel' name=this.meter.name current=this.meter.current max=this.meter.max}}">
                       <header class="combat-meter-card-header">
                         <i class="fas fa-clipboard-list combat-meter-icon" aria-hidden="true"></i>
                         <strong class="combat-meter-name">{{this.meter.name}}</strong>
                         <div class="item-controls combat-meter-controls">
                           <div class="gum-action-menu js-action-menu">
-                            <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções do registro" aria-label="Opções do registro" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
-                            <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações do registro">
-                              <a class="item-control edit-combat-meter gum-action-menu__item" role="menuitem" title="{{#if this.meter.equipmentId}}{{localize 'GUM.Equipment.Reserve.OpenEquipment'}}{{else}}Editar{{/if}}"><i class="fas fa-edit"></i><span>{{#if this.meter.equipmentId}}{{localize "GUM.Equipment.Reserve.OpenEquipment"}}{{else}}Editar{{/if}}</span></a>
-                              {{#unless this.meter.equipmentId}}<a class="item-control delete-combat-meter gum-action-menu__item is-danger" role="menuitem" title="{{localize 'GUM.Inventory.Delete'}}"><i class="fas fa-trash"></i><span>Excluir</span></a>{{/unless}}
+                            <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Combat.Meters.Options'}}" aria-label="{{localize 'GUM.Combat.Meters.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
+                            <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Combat.Meters.Actions'}}">
+                              <a class="item-control edit-combat-meter gum-action-menu__item" role="menuitem" title="{{#if this.meter.equipmentId}}{{localize 'GUM.Equipment.Reserve.OpenEquipment'}}{{else}}{{localize 'GUM.Inventory.Edit'}}{{/if}}"><i class="fas fa-edit"></i><span>{{#if this.meter.equipmentId}}{{localize "GUM.Equipment.Reserve.OpenEquipment"}}{{else}}{{localize "GUM.Inventory.Edit"}}{{/if}}</span></a>
+                              {{#unless this.meter.equipmentId}}<a class="item-control delete-combat-meter gum-action-menu__item is-danger" role="menuitem" title="{{localize 'GUM.Inventory.Delete'}}"><i class="fas fa-trash"></i><span>{{localize "GUM.Inventory.Delete"}}</span></a>{{/unless}}
                             </div>
                           </div>
                         </div>
                                               </header>
                       <div class="combat-meter-value-controls">
-                        <button type="button" class="adjust-combat-meter combat-meter-adjust" data-adjustment="-1" title="Diminuir valor em uma unidade" aria-label="Diminuir {{this.meter.name}} em uma unidade"><i class="fas fa-minus" aria-hidden="true"></i></button>
-                        <strong class="combat-meter-value" aria-label="Valor atual: {{this.meter.current}}">{{this.meter.current}}</strong>
-                        <button type="button" class="adjust-combat-meter combat-meter-adjust" data-adjustment="1" title="Aumentar valor em uma unidade" aria-label="Aumentar {{this.meter.name}} em uma unidade"><i class="fas fa-plus" aria-hidden="true"></i></button>
+                        <button type="button" class="adjust-combat-meter combat-meter-adjust" data-adjustment="-1" title="{{localize 'GUM.Combat.Meters.Decrease'}}" aria-label="{{localize 'GUM.Combat.Meters.DecreaseNamed' name=this.meter.name}}"><i class="fas fa-minus" aria-hidden="true"></i></button>
+                        <strong class="combat-meter-value" aria-label="{{localize 'GUM.Combat.Meters.Current' value=this.meter.current}}">{{this.meter.current}}</strong>
+                        <button type="button" class="adjust-combat-meter combat-meter-adjust" data-adjustment="1" title="{{localize 'GUM.Combat.Meters.Increase'}}" aria-label="{{localize 'GUM.Combat.Meters.IncreaseNamed' name=this.meter.name}}"><i class="fas fa-plus" aria-hidden="true"></i></button>
                       </div>
-                      <div class="combat-meter-meta" aria-hidden="true"><span>ref. <strong>{{this.meter.max}}</strong></span>{{#if this.meter.equipmentId}}<span class="combat-meter-meta-separator">·</span><span>{{this.meter.source}}</span>{{else}}<span class="combat-meter-meta-separator">·</span><span>RD <strong>{{this.meter.dr}}</strong></span>{{/if}}</div>
+                      <div class="combat-meter-meta" aria-hidden="true"><span>{{localize "GUM.Combat.Meters.ReferenceAbbrev"}} <strong>{{this.meter.max}}</strong></span>{{#if this.meter.equipmentId}}<span class="combat-meter-meta-separator">·</span><span>{{this.meter.source}}</span>{{else}}<span class="combat-meter-meta-separator">·</span><span>{{localize "GUM.Combat.Meters.ResistanceAbbrev"}} <strong>{{this.meter.dr}}</strong></span>{{/if}}</div>
                     </article>
-                  {{else}}<div class="placeholder-text combat-meter-placeholder">Nenhum registro criado.</div>{{/each}}
+                  {{else}}<div class="placeholder-text combat-meter-placeholder">{{localize "GUM.Combat.Meters.Empty"}}</div>{{/each}}
                 </div>
               </div>
             </details>
@@ -1725,22 +1747,15 @@
 
 
 
-          <div class="combat-area-label" aria-hidden="true"><span>Ações de Combate</span></div>
+          <nav class="combat-view-switcher" role="tablist" aria-label="{{localize 'GUM.Combat.ViewSelector'}}">
+            <button type="button" class="combat-view-tab {{#if (eq @root.combatActionView 'actions')}}is-active{{/if}}" data-combat-view="actions" role="tab" aria-selected="{{#if (eq @root.combatActionView 'actions')}}true{{else}}false{{/if}}" aria-controls="combat-actions-panel"><i class="fas fa-khanda" aria-hidden="true"></i><span>{{localize "GUM.Combat.Actions"}}</span></button>
+            <button type="button" class="combat-view-tab {{#if (eq @root.combatActionView 'favorites')}}is-active{{/if}}" data-combat-view="favorites" role="tab" aria-selected="{{#if (eq @root.combatActionView 'favorites')}}true{{else}}false{{/if}}" aria-controls="combat-favorites-panel"><i class="fas fa-star" aria-hidden="true"></i><span>{{localize "GUM.Combat.Favorites.Title"}}</span></button>
+          </nav>
 
-          {{!-- Grupo fixo de Favoritos de Combate --}}
+          {{!-- Favoritos de combate --}}
+          <section id="combat-favorites-panel" class="combat-action-panel combat-action-panel--favorites" data-combat-panel="favorites" role="tabpanel" {{#unless (eq @root.combatActionView "favorites")}}hidden{{/unless}}>
           <div class="attack-group-list-v2 combat-favorites-list">
-            <details class="attack-group-details gum-unified-section combat-fixed-group combat-favorites-wrapper" data-group-id="combat-favorites-root" {{collapsibleState "combat-favorites-root" @root.collapsedData}}>
-              <summary class="group-summary gum-unified-header" style="background: var(--gum-bg-cabecalho);">
-                <div class="summary-left">
-                  <i class="fas fa-chevron-right indicator"></i>
-                  <i class="fas fa-star item-icon"></i>
-                  <span class="group-name">Favoritos</span>
-                </div>
-                <div class="summary-right">
-                  <span class="group-tag">{{combatFavoriteGroupKeys.length}} grupo(s)</span>
-                </div>
-              </summary>
-              <div class="group-content combat-favorites-root-content">
+              <div class="combat-favorites-root-content">
             {{#each combatFavoriteGroupKeys as |groupName groupIndex|}}
               {{#with (lookup @root.combatFavoritesByGroup groupName)}}
               <details class="attack-group-details gum-unified-section" data-group-id="combat-favorites-group-{{groupIndex}}" {{collapsibleState (concat "combat-favorites-group-" groupIndex) @root.collapsedData}}>
@@ -1752,150 +1767,67 @@
                   </div>
                   <div class="summary-right">
                     <span class="group-tag">
-                      {{this.length}} favorito(s)</span>
+                      {{localize "GUM.Combat.Favorites.ItemCount" count=this.length}}</span>
                   </div>
                 </summary>
                 <div class="group-content">
                   {{#each this}}
                     {{#if (or (eq this.type "advantage") (eq this.type "disadvantage"))}}
-                    <li class="item characteristic-card" data-item-id="{{this.id}}" draggable="true">
-                      <img src="{{this.img}}" class="item-icon" alt="{{this.name}}"/>
-                      <div class="card-info">
-                        <div class="card-main">
-                          <span class="item-name"><a class="item-quick-view" title="Visualizar Descrição">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}} {{#if this.system.level}}{{this.system.level}}{{/if}}</a></span>
-                          {{#if this.system.characteristics}}<span class="characteristic-notes">{{this.system.characteristics}}</span>{{/if}}
-                        </div>
-                        <div class="card-details">
-                          {{#if this.system.self_control_roll}}<a class="rollable card-cr" title="Teste de Autocontrole" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="Autocontrole: {{this.name}}" data-item-id="{{this.id}}">CR: {{this.system.self_control_roll}}</a>{{/if}}
-                              <span class="card-points" title="Custo em Pontos">{{characteristicPoints this}} pts</span>
-                        </div>
+                    <article class="item combat-favorite-card combat-favorite-card--trait {{this.type}}" data-item-id="{{this.id}}" draggable="true">
+                      <img class="combat-favorite-card__icon item-quick-view" src="{{this.img}}" alt="{{this.name}}" title="{{localize 'GUM.Characteristics.ViewDetails'}}">
+                      <div class="combat-favorite-card__identity">
+                        <h4 class="combat-favorite-card__name item-quick-view">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}}{{#if this.system.level}} {{this.system.level}}{{/if}}</h4>
+                        <div class="combat-favorite-card__meta"><span class="{{this.type}}">{{this.characteristicKindLabel}}</span>{{#if this.characteristicIsRacial}} · {{localize "GUM.Characteristics.Racial"}}{{/if}}{{#if this.combatFavoriteOriginGroup}} · {{this.combatFavoriteOriginGroup}}{{/if}} · {{characteristicPoints this}} {{localize "GUM.Characteristics.PointsAbbreviation"}}{{#if this.system.characteristics}} · {{this.system.characteristics}}{{/if}}</div>
                       </div>
-                      <div class="item-controls"><a class="item-edit" title="{{localize 'GUM.Inventory.Edit'}}"><i class="fas fa-edit"></i></a><a class="item-delete" title="Deletar"><i class="fas fa-trash"></i></a></div>
-                    </li>
+                      {{#if this.system.self_control_roll}}<a class="rollable combat-favorite-card__metric" title="{{localize 'GUM.Characteristics.SelfControlTest'}}" data-type="attribute" data-roll-value="{{this.system.self_control_roll}}" data-label="{{localize 'GUM.Characteristics.SelfControl' name=this.name}}" data-item-id="{{this.id}}"><span>{{localize "GUM.Characteristics.SelfControlAbbreviation"}}</span><strong>{{this.system.self_control_roll}}</strong></a>{{else}}<span class="combat-favorite-card__metric-spacer"></span>{{/if}}
+                      <span class="combat-favorite-card__expand-spacer" aria-hidden="true"></span>
+                      <div class="item-controls combat-favorite-card__controls"><div class="gum-action-menu js-action-menu"><a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Inventory.Options'}}" aria-label="{{localize 'GUM.Inventory.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a><div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Combat.Favorites.Actions'}}"><a class="item-control item-edit gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{localize "GUM.Inventory.Edit"}}</span></a><a class="item-control item-delete gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>{{localize "GUM.Inventory.Delete"}}</span></a></div></div></div>
+                    </article>
                     {{/if}}
 
                     {{#if (eq this.type "skill")}}
-                    <li class="item skill-tree-item {{this.indentClass}} {{#if this.isTrunk}}is-trunk{{/if}}" data-item-id="{{this._id}}" data-item-type="skill" draggable="true">
-                      <div class="st-item-icon item-quick-view" style="background-image: url('{{this.img}}');" title="Visualizar Perícia"></div>
-                      <div class="st-item-name">
-                       <h4 class="item-quick-view" title="Clique para ver detalhes">
-                          {{this.name}}
-                        </h4>
-                        <div class="st-inheritance-path">
-                          <div class="st-meta">
-                            {{#unless this.isTrunk}}<span>[{{this.skillListDisplay.difficulty}}]</span>{{/unless}}
-                          </div>
-                          {{#if (ne this.skillListDisplay.nhMod 0)}}
-                          <span class="path-node mod" title="Modificador Base">
-                            <i class="fas fa-adjust"></i>
-                            <span class="path-val">{{#if (gte this.skillListDisplay.nhMod 0)}}+{{/if}}{{this.skillListDisplay.nhMod}}</span>
-                          </span>
-                          {{/if}}
-                          {{#if (ne this.skillListDisplay.treeDefaultMod 0)}}
-                          <span class="path-node mod" title="Pré-definido da Árvore (aplicado somente a esta perícia)">
-                            <i class="fas fa-tree"></i>
-                            <span class="path-val">{{#if (gte this.skillListDisplay.treeDefaultMod 0)}}+{{/if}}{{this.skillListDisplay.treeDefaultMod}}</span>
-                          </span>
-                          {{/if}}
-                          <span class="path-node self" title="Base: {{this.skillListDisplay.baseAttribute}}">
-                            <i class="fas fa-chevron-right path-separator"></i> {{this.skillListDisplay.baseAttribute}}
-                            <span class="path-val">{{#if (gte this.skillListDisplay.skillLevel 0)}}+{{/if}}{{this.skillListDisplay.skillLevel}}</span>
-                          </span>
-                            {{#if (or this.modifierIndicators.included.visible this.modifierIndicators.roll.visible)}}<span class="skill-modifier-indicators">
-                            {{#if this.modifierIndicators.included.visible}}<span class="skill-modifier-tag is-included" title="{{this.modifierIndicators.included.title}}" aria-label="{{this.modifierIndicators.included.title}}">NH</span>{{/if}}
-                            {{#if this.modifierIndicators.roll.visible}}<span class="skill-modifier-tag is-roll {{this.modifierIndicators.roll.className}}" title="{{this.modifierIndicators.roll.title}}" aria-label="{{this.modifierIndicators.roll.title}}">ROL {{#if (gte this.modifierIndicators.roll.total 0)}}+{{/if}}{{this.modifierIndicators.roll.total}}</span>{{/if}}
-                          </span>{{/if}}
-                        </div>
+                    <article class="item combat-favorite-card combat-favorite-card--skill" data-item-id="{{this._id}}" data-item-type="skill" draggable="true">
+                      <div class="combat-favorite-card__icon item-quick-view" style="background-image:url('{{this.img}}')" title="{{localize 'GUM.Skills.View'}}"></div>
+                      <div class="combat-favorite-card__identity">
+                        <h4 class="combat-favorite-card__name item-quick-view" title="{{localize 'GUM.Skills.ViewDetails'}}">{{this.name}}{{#if this.system.specialization}} ({{this.system.specialization}}){{/if}}</h4>
+                        <div class="combat-favorite-card__meta">{{this.skillListDisplay.baseAttribute}}{{#if (gte this.skillListDisplay.skillLevel 0)}}+{{/if}}{{this.skillListDisplay.skillLevel}}{{#if this.skillListDisplay.difficulty}} · {{this.skillListDisplay.difficulty}}{{/if}}{{#if this.combatFavoriteOriginGroup}} · {{this.combatFavoriteOriginGroup}}{{/if}} · {{this.skillListDisplay.points}} {{localize "GUM.Skills.PointsAbbreviation"}}{{#if (ne this.skillListDisplay.nhMod 0)}} · {{#if (gte this.skillListDisplay.nhMod 0)}}+{{/if}}{{this.skillListDisplay.nhMod}} {{localize "GUM.Skills.ModifierAbbreviation"}}{{/if}}</div>
                       </div>
-                      <div class="st-nh-box">
-                        <span>NH</span>
-                        <a class="rollable" data-roll-value="{{#if this.tree_final_nh}}{{this.tree_final_nh}}{{else}}{{this.system.final_nh}}{{/if}}" data-label="Teste de {{this.name}}" data-type="skill" data-item-id="{{this._id}}" data-attribute-key="{{this.skillListDisplay.baseAttribute}}">{{#if this.tree_final_nh}}{{this.tree_final_nh}}{{else}}{{this.system.final_nh}}{{/if}}</a>
-                      </div>
-                      <div class="st-controls">
-                        <a class="item-control item-edit" title="Editar Ficha"><i class="fas fa-edit"></i></a>
-                        <a class="item-control item-delete" title="{{localize 'GUM.Inventory.Delete'}}"><i class="fas fa-trash"></i></a>
-                      </div>
-                    </li>
+                      <a class="rollable combat-favorite-card__metric" data-roll-value="{{#if this.tree_final_nh}}{{this.tree_final_nh}}{{else}}{{this.system.final_nh}}{{/if}}" data-label="{{localize 'GUM.Skills.Test' name=this.name}}" data-type="skill" data-item-id="{{this._id}}" data-attribute-key="{{this.skillListDisplay.baseAttribute}}"><span>{{localize "GUM.Equipment.Attacks.SkillAbbrev"}}</span><strong>{{#if this.tree_final_nh}}{{this.tree_final_nh}}{{else}}{{this.system.final_nh}}{{/if}}</strong></a>
+                      <span class="combat-favorite-card__expand-spacer" aria-hidden="true"></span>
+                      <div class="item-controls combat-favorite-card__controls"><div class="gum-action-menu js-action-menu"><a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Inventory.Options'}}" aria-label="{{localize 'GUM.Inventory.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a><div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Combat.Favorites.Actions'}}"><a class="item-control item-edit gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{localize "GUM.Inventory.Edit"}}</span></a><a class="item-control item-delete gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>{{localize "GUM.Inventory.Delete"}}</span></a></div></div></div>
+                    </article>
                     {{/if}}
 
                     {{#if (or (eq this.type "spell") (eq this.type "power"))}}
-                    <div class="item-wrapper item spell-row-v3 spell-card-two-line" data-item-id="{{this.id}}" draggable="true">
-                      <div class="spell-card-primary">
-                        <img class="spell-thumb" src="{{this.img}}" alt="{{this.name}}">
-
-                        <div class="spell-name-stack">
-                          <h4 class="spell-name item-quick-view" title="Visualizar Card">{{this.name}}</h4>
-                          <div class="spell-school-line">
-                            {{#if (eq this.type "spell")}}{{this.system.source}} · {{this.system.spell_class}} · {{this.system.spell_school}}{{/if}}
-                            {{#if (eq this.type "power")}}{{this.system.source}} · {{this.system.spell_class}}{{/if}}
-                          </div>
+                    <article class="item magic-card combat-favorite-card combat-favorite-card--magic{{#if (eq this.type 'power')}} power-card{{/if}}{{#if this.magicCardExpanded}} is-expanded{{/if}}{{#if this.powerCardExpanded}} is-expanded{{/if}}" data-item-id="{{this.id}}" draggable="true">
+                      <div class="combat-favorite-card__main">
+                        <img class="combat-favorite-card__icon item-quick-view" src="{{this.img}}" alt="{{this.name}}">
+                        <div class="combat-favorite-card__identity">
+                          <h4 class="combat-favorite-card__name item-quick-view">{{this.name}}</h4>
+                          <div class="combat-favorite-card__meta">{{#if (eq this.type "spell")}}{{this.magicCardIdentity}}{{else}}{{this.powerCardIdentity}}{{/if}}{{#if this.combatFavoriteOriginGroup}} · {{this.combatFavoriteOriginGroup}}{{/if}}</div>
+                          <div class="combat-favorite-card__mechanics">{{#if (eq this.type "spell")}}<span title="{{localize 'GUM.Spells.TimeHint'}}"><strong>{{localize "GUM.Spells.Time"}}</strong> {{this.system.casting_time}} · {{this.system.duration}}</span><span title="{{localize 'GUM.Spells.ManaHint'}}"><strong>{{localize "GUM.Spells.Mana"}}</strong> {{this.system.mana_cost}} / {{this.system.mana_maint}}</span>{{else}}<span title="{{localize 'GUM.Powers.TimeHint'}}"><strong>{{localize "GUM.Powers.Time"}}</strong> {{this.system.activation_time}} · {{this.system.duration}}</span><span title="{{localize 'GUM.Powers.CostHint'}}"><strong>{{localize "GUM.Powers.Cost"}}</strong> {{this.system.activation_cost}} / {{this.system.maint_cost}}</span>{{/if}}</div>
                         </div>
-
-                        <div class="spell-primary-stats">
-                          <div class="spell-meta-cell spell-pill-stat">
-                            <span class="spell-meta-label">NH</span>
-                            <a class="rollable spell-meta-value" data-type="{{this.type}}" data-roll-value="{{this.system.final_nh}}" data-label="Teste de {{this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
-                          </div>
-
-                          {{#if this.system.uses_attack}}
-                          <div class="spell-meta-cell spell-pill-stat attack">
-                            <span class="spell-meta-label">Atq</span>
-                            {{#if this.system.attack_nh}}
-                            <a class="rollable spell-meta-value" data-type="attack" data-attack-type="{{this.system.attack_type}}" data-attribute-key="{{this.system.attack_roll.skill_name}}" data-roll-value="{{this.system.attack_nh}}" data-label="Ataque de {{this.name}}" data-item-id="{{this.id}}" title="{{this.system.attack_roll.resolved_skill_name}}">{{this.system.attack_nh}}</a>
+                        <a class="rollable combat-favorite-card__metric" data-type="{{this.type}}" data-roll-value="{{this.system.final_nh}}" data-label="{{#if (eq this.type 'spell')}}{{localize 'GUM.Spells.Test' name=this.name}}{{else}}{{localize 'GUM.Powers.Test' name=this.name}}{{/if}}" data-item-id="{{this.id}}"><span>{{localize "GUM.Spells.SkillLevel"}}</span><strong>{{this.system.final_nh}}</strong></a>
+                        <div class="combat-favorite-card__damage"><span>{{localize "GUM.Spells.Damage"}}</span>{{#if this.system.damage.formula}}<div><a class="rollable-damage" title="{{localize 'GUM.Spells.RollDamage'}}" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}</a>{{#if (eq this.type "spell")}}{{#if this.magicCardAdditionalDamageMarkers}}<sup title="{{this.magicCardAdditionalDamageHint}}">{{this.magicCardAdditionalDamageMarkers}}</sup>{{/if}}{{else}}{{#if this.powerCardAdditionalDamageMarkers}}<sup title="{{this.powerCardAdditionalDamageHint}}">{{this.powerCardAdditionalDamageMarkers}}</sup>{{/if}}{{/if}}</div>{{else}}<strong>—</strong>{{/if}}</div>
+                        <button type="button" class="magic-card__expand combat-favorite-card__expand" title="{{#if (eq this.type 'spell')}}{{#if this.magicCardExpanded}}{{localize 'GUM.Spells.CollapseDetails'}}{{else}}{{localize 'GUM.Spells.ExpandDetails'}}{{/if}}{{else}}{{#if this.powerCardExpanded}}{{localize 'GUM.Powers.CollapseDetails'}}{{else}}{{localize 'GUM.Powers.ExpandDetails'}}{{/if}}{{/if}}" aria-label="{{#if (eq this.type 'spell')}}{{#if this.magicCardExpanded}}{{localize 'GUM.Spells.CollapseDetails'}}{{else}}{{localize 'GUM.Spells.ExpandDetails'}}{{/if}}{{else}}{{#if this.powerCardExpanded}}{{localize 'GUM.Powers.CollapseDetails'}}{{else}}{{localize 'GUM.Powers.ExpandDetails'}}{{/if}}{{/if}}" aria-expanded="{{#if (or this.magicCardExpanded this.powerCardExpanded)}}true{{else}}false{{/if}}"><i class="fas {{#if (or this.magicCardExpanded this.powerCardExpanded)}}fa-compress-arrows-alt{{else}}fa-expand-arrows-alt{{/if}}"></i></button>
+                        <div class="item-controls combat-favorite-card__controls"><div class="gum-action-menu js-action-menu"><a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Inventory.Options'}}" aria-label="{{localize 'GUM.Inventory.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a><div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Combat.Favorites.Actions'}}"><a class="item-control item-quick-view gum-action-menu__item" role="menuitem"><i class="fas fa-eye"></i><span>{{localize "GUM.Combat.Favorites.View"}}</span></a><a class="item-control item-edit gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{localize "GUM.Inventory.Edit"}}</span></a><a class="item-control item-delete gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>{{localize "GUM.Inventory.Delete"}}</span></a></div></div></div>
+                      </div>
+                      <div class="magic-card__details combat-favorite-card__details" {{#unless (or this.magicCardExpanded this.powerCardExpanded)}}hidden{{/unless}}>
+                        <section class="magic-card__detail-branch magic-card__detail-branch--mechanics">
+                          <h5><i class="fas fa-hourglass-half"></i>{{#if (eq this.type "spell")}}{{localize "GUM.Spells.Mechanics"}}{{else}}{{localize "GUM.Powers.Mechanics"}}{{/if}}</h5>
+                          <div class="magic-card__detail-values">
+                            {{#if (eq this.type "spell")}}
+                            <span><strong>{{localize "GUM.Spells.CastingTime"}}</strong>{{this.system.casting_time}}</span><span><strong>{{localize "GUM.Spells.Duration"}}</strong>{{this.system.duration}}</span><span><strong>{{localize "GUM.Spells.CastingCost"}}</strong>{{this.system.mana_cost}}</span><span><strong>{{localize "GUM.Spells.MaintenanceCost"}}</strong>{{this.system.mana_maint}}</span>
                             {{else}}
-                            <span class="spell-meta-value" title="Configure uma perícia de ataque.">—</span>
+                            <span><strong>{{localize "GUM.Powers.ActivationTime"}}</strong>{{this.system.activation_time}}</span><span><strong>{{localize "GUM.Powers.Duration"}}</strong>{{this.system.duration}}</span><span><strong>{{localize "GUM.Powers.ActivationCost"}}</strong>{{this.system.activation_cost}}</span><span><strong>{{localize "GUM.Powers.MaintenanceCost"}}</strong>{{this.system.maint_cost}}</span>
                             {{/if}}
                           </div>
-                          {{/if}}
-
-                          <div class="spell-meta-cell spell-pill-stat damage">
-                            <span class="spell-meta-label">Dano</span>
-                            {{#if this.system.damage.formula}}
-                            <a class="rollable-damage spell-meta-value" title="Rolar Dano" data-item-id="{{this.id}}">{{this.system.damage.formula}} {{this.system.damage.type}}{{#if this.system.damage.scaling}} ({{this.system.damage.scaling}}){{/if}}</a>
-                            {{else}}
-                            <span class="spell-meta-value">—</span>
-                            {{/if}}
-                          </div>
-                        </div>
-
-                        <div class="item-controls spell-controls-row">
-                          <div class="gum-action-menu js-action-menu">
-                            <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="Opções" aria-label="Opções" role="button" aria-haspopup="true" aria-expanded="false">
-                              <i class="fas fa-ellipsis-v"></i>
-                            </a>
-                            <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="Ações">
-                              <a class="item-control item-quick-view gum-action-menu__item" role="menuitem" title="Visualizar"><i class="fas fa-eye"></i><span>Visualizar</span></a>
-                              <a class="item-control item-edit gum-action-menu__item" role="menuitem" title="{{localize 'GUM.Inventory.Edit'}}"><i class="fas fa-edit"></i><span>Editar</span></a>
-                              <a class="item-control item-delete gum-action-menu__item is-danger" role="menuitem" title="Deletar"><i class="fas fa-trash"></i><span>Deletar</span></a>
-                            </div>
-                          </div>
-                        </div>
+                        </section>
+                        {{#if this.system.uses_attack}}<section class="magic-card__detail-branch magic-card__detail-branch--attack"><h5><i class="fas fa-crosshairs"></i>{{localize "GUM.Spells.Attack"}}</h5><div class="magic-card__detail-values"><span><strong>{{localize "GUM.Spells.Type"}}</strong>{{#if (eq this.system.attack_type 'melee')}}{{localize "GUM.Spells.Melee"}}{{else}}{{localize "GUM.Spells.Ranged"}}{{/if}}</span><span><strong>{{localize "GUM.Spells.Skill"}}</strong>{{#if this.system.attack_roll.resolved_skill_name}}{{this.system.attack_roll.resolved_skill_name}}{{else}}{{this.system.attack_roll.skill_name}}{{/if}}</span>{{#if this.system.attack_nh}}<a class="rollable magic-card__attack-level-tag" data-type="attack" data-attack-type="{{this.system.attack_type}}" data-attribute-key="{{this.system.attack_roll.skill_name}}" data-roll-value="{{this.system.attack_nh}}" data-label="{{#if (eq this.type 'spell')}}{{localize 'GUM.Spells.AttackTest' name=this.name}}{{else}}{{localize 'GUM.Powers.AttackTest' name=this.name}}{{/if}}" data-item-id="{{this.id}}"><strong>{{localize "GUM.Spells.SkillLevel"}}</strong>{{this.system.attack_nh}}</a>{{/if}}{{#if (eq this.system.attack_type 'melee')}}{{#if this.system.attack_roll.reach}}<span><strong>{{localize "GUM.Spells.Reach"}}</strong>{{this.system.attack_roll.reach}}</span>{{/if}}{{#if this.system.attack_roll.parry}}<span><strong>{{localize "GUM.Spells.Parry"}}</strong>{{this.system.attack_roll.parry}}</span>{{/if}}{{else}}{{#if this.system.attack_roll.accuracy}}<span><strong>{{localize "GUM.Spells.Accuracy"}}</strong>{{this.system.attack_roll.accuracy}}</span>{{/if}}{{#if this.system.attack_roll.range}}<span><strong>{{localize "GUM.Spells.Range"}}</strong>{{this.system.attack_roll.range}}</span>{{/if}}{{#if this.system.attack_roll.rof}}<span><strong>{{localize "GUM.Spells.RateOfFire"}}</strong>{{this.system.attack_roll.rof}}</span>{{/if}}{{#if this.system.attack_roll.shots}}<span><strong>{{localize "GUM.Spells.Shots"}}</strong>{{this.system.attack_roll.shots}}</span>{{/if}}{{#if this.system.attack_roll.bulk}}<span><strong>{{localize "GUM.Spells.Bulk"}}</strong>{{this.system.attack_roll.bulk}}</span>{{/if}}{{#if this.system.attack_roll.rcl}}<span><strong>{{localize "GUM.Spells.Recoil"}}</strong>{{this.system.attack_roll.rcl}}</span>{{/if}}{{/if}}</div></section>{{/if}}
+                        {{#if this.system.damage.formula}}<section class="magic-card__detail-branch magic-card__detail-branch--damage"><h5><i class="fas fa-burst"></i>{{localize "GUM.Spells.Damage"}}</h5><div class="magic-card__detail-values"><a class="rollable-damage" data-item-id="{{this.id}}"><strong>{{localize "GUM.Spells.PrimaryDamage"}}</strong>{{this.system.damage.formula}} {{this.system.damage.type}}{{#if this.system.damage.nature}} · {{this.system.damage.nature}}{{/if}}{{#if (gt this.system.damage.armor_divisor 1)}} · ÷{{this.system.damage.armor_divisor}}{{/if}}</a>{{#if this.system.damage.follow_up_damage.formula}}<span><strong>{{localize "GUM.Spells.FollowUpDamage"}}</strong>{{this.system.damage.follow_up_damage.formula}} {{this.system.damage.follow_up_damage.type}}</span>{{/if}}{{#if this.system.damage.fragmentation_damage.formula}}<span><strong>{{localize "GUM.Spells.FragmentationDamage"}}</strong>{{this.system.damage.fragmentation_damage.formula}} {{this.system.damage.fragmentation_damage.type}}</span>{{/if}}</div></section>{{/if}}
+                        {{#if (eq this.type "power")}}<section class="magic-card__detail-branch magic-card__detail-branch--resolution"><h5><i class="fas fa-clipboard-check"></i>{{localize "GUM.Powers.Configuration"}}</h5><div class="magic-card__detail-values"><span><strong>{{localize "GUM.Powers.Points"}}</strong>{{characteristicPoints this}}{{#if (eq this.system.cost_paid "alternative")}} {{localize "GUM.Powers.Alternative"}}{{/if}}</span>{{#if this.system.resistance}}<span><strong>{{localize "GUM.Spells.Resistance"}}</strong>{{this.system.resistance}}</span>{{/if}}{{#if this.system.requires_concentration}}<span><i class="fas fa-brain"></i> {{localize "GUM.Spells.RequiresConcentration"}}</span>{{/if}}{{#if this.system.effect}}<span class="magic-card__effect"><strong>{{localize "GUM.Spells.Effect"}}</strong>{{this.system.effect}}</span>{{/if}}</div></section>{{else}}{{#if (or this.system.resistance this.system.requires_concentration this.system.effect)}}<section class="magic-card__detail-branch magic-card__detail-branch--resolution"><h5><i class="fas fa-clipboard-check"></i>{{localize "GUM.Spells.Resolution"}}</h5><div class="magic-card__detail-values">{{#if this.system.resistance}}<span><strong>{{localize "GUM.Spells.Resistance"}}</strong>{{this.system.resistance}}</span>{{/if}}{{#if this.system.requires_concentration}}<span><i class="fas fa-brain"></i> {{localize "GUM.Spells.RequiresConcentration"}}</span>{{/if}}{{#if this.system.effect}}<span class="magic-card__effect"><strong>{{localize "GUM.Spells.Effect"}}</strong>{{this.system.effect}}</span>{{/if}}</div></section>{{/if}}{{/if}}
                       </div>
-
-                      <div class="spell-card-secondary">
-                        {{#if (eq this.type "spell")}}
-                        <span><strong>Conj.</strong> {{this.system.casting_time}}</span>
-                        <span><strong>Duração</strong> {{this.system.duration}}</span>
-                        <span><strong>Custo</strong> {{this.system.mana_cost}}</span>
-                        <span><strong>Mant.</strong> {{this.system.mana_maint}}</span>
-                        {{/if}}
-                        {{#if (eq this.type "power")}}
-                        <span><strong>Ativ.</strong> {{this.system.activation_time}}</span>
-                        <span><strong>Duração</strong> {{this.system.duration}}</span>
-                        <span><strong>Custo</strong> {{this.system.activation_cost}}</span>
-                        <span><strong>Mant.</strong> {{this.system.maint_cost}}</span>
-                        {{/if}}
-                        {{#if this.system.uses_attack}}
-                        <span class="spell-attack-source"><strong>Perícia</strong> {{#if this.system.attack_roll.resolved_skill_name}}{{this.system.attack_roll.resolved_skill_name}}{{else}}{{this.system.attack_roll.skill_name}}{{/if}}</span>
-                        {{/if}}
-                        {{#if this.system.damage.follow_up_damage.formula}}
-                        <span class="spell-damage-extra"><strong>FU</strong> {{this.system.damage.follow_up_damage.formula}} {{this.system.damage.follow_up_damage.type}}{{#if this.system.damage.follow_up_damage.scaling}} ({{this.system.damage.follow_up_damage.scaling}}){{/if}}</span>
-                        {{/if}}
-                        {{#if this.system.damage.fragmentation_damage.formula}}
-                        <span class="spell-damage-extra"><strong>FR</strong> {{this.system.damage.fragmentation_damage.formula}} {{this.system.damage.fragmentation_damage.type}}{{#if this.system.damage.fragmentation_damage.scaling}} ({{this.system.damage.fragmentation_damage.scaling}}){{/if}}</span>
-                        {{/if}}
-                      </div>
-                    </div>
+                    </article>
                     {{/if}}
                   {{/each}}
                 </div>
@@ -1903,17 +1835,24 @@
               {{/with}}
             {{/each}}
                 {{#unless combatFavoriteGroupKeys}}
-                  <div class="placeholder-text" style="color:#c2c2c2">Nenhum favorito marcado para combate.</div>
+                  <div class="placeholder-text">{{localize "GUM.Combat.Favorites.Empty"}}</div>
                 {{/unless}}
               </div>
-            </details>
           </div>
+          </section>
 
           {{!-- Bloco de Lista de ataque --}}
+    <section id="combat-actions-panel" class="combat-action-panel combat-action-panel--actions" data-combat-panel="actions" role="tabpanel" {{#unless (eq @root.combatActionView "actions")}}hidden{{/unless}}>
+    <div class="combat-filter-list combat-filter-list--actions" role="group" aria-label="{{localize 'GUM.Combat.Filters.AttackGroups'}}">
+      <button type="button" class="combat-filter-chip {{#if combatAttackFilterAll}}is-active{{/if}}" data-filter-scope="actions" data-filter-value="all" aria-pressed="{{#if combatAttackFilterAll}}true{{else}}false{{/if}}">{{localize "GUM.Combat.Filters.All"}}</button>
+      {{#each attackGroups as |group|}}
+      <button type="button" class="combat-filter-chip {{#if group.combatFilterActive}}is-active{{/if}}" data-filter-scope="actions" data-filter-value="{{group.id}}" aria-pressed="{{#if group.combatFilterActive}}true{{else}}false{{/if}}" title="{{group.name}}">{{group.name}}</button>
+      {{/each}}
+    </div>
     <div class="attack-group-list-v2 combat-actions-list">
     {{#each attackGroups as |group|}}
     {{!-- USANDO group.id EM VEZ DE group.name --}}
-    <details class="attack-group-details gum-unified-section" data-group-id="attack-group-{{group.id}}" {{collapsibleState (concat "attack-group-" group.id) @root.collapsedData}}>
+    <details class="attack-group-details gum-unified-section" data-group-id="attack-group-{{group.id}}" data-combat-filter-group="{{group.id}}" {{#unless group.combatFilterVisible}}hidden{{/unless}} {{collapsibleState (concat "attack-group-" group.id) @root.collapsedData}}>
 
         <summary class="group-summary gum-unified-header">
             <div class="summary-left">
@@ -1927,9 +1866,9 @@
                 <span class="group-tag weight">{{group.weight}} kg</span>
             {{/if}}
             {{#if (gt group.defense_bonus 0)}}
-                <span class="group-tag db" title="Bônus de Defesa">BD +{{group.defense_bonus}}</span>
+                <span class="group-tag db" title="{{localize 'GUM.Combat.Attacks.DefenseBonus'}}">{{localize "GUM.Combat.Attacks.DefenseBonusAbbrev"}} +{{group.defense_bonus}}</span>
             {{/if}}
-            <a class="item-control item-edit" data-item-id="{{group.id}}" title="Abrir Ficha do Item">
+            <a class="item-control item-edit" data-item-id="{{group.id}}" title="{{localize 'GUM.Combat.Attacks.OpenItem'}}">
                 <i class="fas fa-cog"></i>
             </a>
             </div>
@@ -1940,8 +1879,8 @@
               <div class="attack-row item-row attack-card-two-line attack-card-two-line--{{attack.attack_type}}" data-attack-id="{{attack.id}}" data-item-id="{{attack.itemId}}">
                 <div class="attack-card-primary">
                   <div class="attack-icon">
-                    {{#if (eq attack.attack_type "melee")}}<i class="fas fa-swords" title="Corpo a Corpo"></i>{{/if}}
-                    {{#if (eq attack.attack_type "ranged")}}<i class="fas fa-bullseye" title="À Distância"></i>{{/if}}
+                    {{#if (eq attack.attack_type "melee")}}<i class="fas fa-swords" title="{{localize 'GUM.Equipment.Attacks.Melee'}}"></i>{{/if}}
+                    {{#if (eq attack.attack_type "ranged")}}<i class="fas fa-bullseye" title="{{localize 'GUM.Equipment.Attacks.Ranged'}}"></i>{{/if}}
                   </div>
 
                   <div class="attack-name-stack">
@@ -1950,13 +1889,13 @@
                   </div>
 
                   <div class="attack-primary-stats">
-<a class="attack-pill-stat rollable" data-type="attack" data-attack-type="{{attack.attack_type}}" data-roll-value="{{attack.final_nh}}" data-label="{{group.name}} ({{attack.name}})" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}" title="Rolar ataque">
-                      <span class="attack-label">NH</span>
+<a class="attack-pill-stat rollable" data-type="attack" data-attack-type="{{attack.attack_type}}" data-roll-value="{{attack.final_nh}}" data-label="{{group.name}} ({{attack.name}})" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}" title="{{localize 'GUM.Combat.Attacks.RollAttack'}}">
+                      <span class="attack-label">{{localize "GUM.Equipment.Attacks.SkillAbbrev"}}</span>
                       <span class="attack-value">{{attack.final_nh}}</span>
                     </a>
 
                     <a class="attack-pill-stat damage rollable-damage"
-                        title="Rolar dano"
+                        title="{{localize 'GUM.Combat.Attacks.RollDamage'}}"
                         data-item-id="{{attack.itemId}}"
                         data-attack-id="{{attack.id}}"
                         data-dmg-formula="{{attack.damage_formula}}"
@@ -1968,7 +1907,7 @@
                             data-followup-type="{{this.type}}"
                           {{/if}}
                         {{/with}}>
-                      <span class="attack-label">Dano</span>
+                      <span class="attack-label">{{localize "GUM.Equipment.Attacks.Damage"}}</span>
                       <span class="attack-value attack-damage-main">
                           {{attack.damage_display_formula}}{{#if (gt attack.armor_divisor 1)}}({{attack.armor_divisor}}){{/if}} {{attack.damage_type}}{{#if attack.damage_nature_display}} [{{attack.damage_nature_display}}]{{/if}}{{#if attack.damage_scaling}} ({{attack.damage_scaling}}){{/if}}
                       </span>
@@ -1976,25 +1915,25 @@
 
                     {{#if (eq attack.attack_type "melee")}}
                     {{#if attack.final_parry}}
-                    <a class="attack-pill-stat defense rollable" data-type="defense" data-roll-value="{{attack.final_parry}}" data-label="Teste de Aparar" data-defense-type="parry" data-defense-bonus-included="true" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}" data-attack-type="{{attack.attack_type}}" title="Rolar aparar">
-                      <span class="attack-label">APR</span>
+                    <a class="attack-pill-stat defense rollable" data-type="defense" data-roll-value="{{attack.final_parry}}" data-label="{{localize 'GUM.Combat.Attacks.ParryTest'}}" data-defense-type="parry" data-defense-bonus-included="true" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}" data-attack-type="{{attack.attack_type}}" title="{{localize 'GUM.Combat.Attacks.RollParry'}}">
+                      <span class="attack-label">{{localize "GUM.Equipment.Attacks.ParryAbbrev"}}</span>
                       <span class="attack-value">{{attack.final_parry}}</span>
                     </a>
                       {{else}}
                     <div class="attack-pill-stat defense is-disabled">
-                      <span class="attack-label">APR</span>
-                      <span class="attack-value is-empty" title="Este modo não permite aparar" aria-label="Aparar indisponível">—</span>
+                      <span class="attack-label">{{localize "GUM.Equipment.Attacks.ParryAbbrev"}}</span>
+                      <span class="attack-value is-empty" title="{{localize 'GUM.Combat.Attacks.ParryUnavailable'}}" aria-label="{{localize 'GUM.Combat.Attacks.ParryUnavailable'}}">—</span>
                     </div>
                     {{/if}}
                     {{#if attack.final_block}}
-                    <a class="attack-pill-stat defense rollable" data-type="defense" data-roll-value="{{attack.final_block}}" data-label="Teste de Bloqueio" data-defense-type="block" data-defense-bonus-included="true" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}" data-attack-type="{{attack.attack_type}}" title="Rolar bloqueio">
-                      <span class="attack-label">BLQ</span>
+                    <a class="attack-pill-stat defense rollable" data-type="defense" data-roll-value="{{attack.final_block}}" data-label="{{localize 'GUM.Combat.Attacks.BlockTest'}}" data-defense-type="block" data-defense-bonus-included="true" data-item-id="{{attack.itemId}}" data-attack-id="{{attack.id}}" data-attack-type="{{attack.attack_type}}" title="{{localize 'GUM.Combat.Attacks.RollBlock'}}">
+                      <span class="attack-label">{{localize "GUM.Equipment.Attacks.BlockAbbrev"}}</span>
                       <span class="attack-value">{{attack.final_block}}</span>
                     </a>
                       {{else}}
                     <div class="attack-pill-stat defense is-disabled">
-                      <span class="attack-label">BLQ</span>
-                      <span class="attack-value is-empty" title="Este modo não permite bloquear" aria-label="Bloqueio indisponível">—</span>
+                      <span class="attack-label">{{localize "GUM.Equipment.Attacks.BlockAbbrev"}}</span>
+                      <span class="attack-value is-empty" title="{{localize 'GUM.Combat.Attacks.BlockUnavailable'}}" aria-label="{{localize 'GUM.Combat.Attacks.BlockUnavailable'}}">—</span>
                     </div>
                     {{/if}}
                     {{/if}}
@@ -2003,20 +1942,20 @@
 
                 <div class="attack-card-secondary">
                   {{#if (eq attack.attack_type "melee")}}
-                  <span><strong>Alc.</strong> {{attack.reach}}</span>
-                  <span><strong>ST Min</strong> {{attack.min_strength}}</span>
-                  {{#if attack.unbalanced}}<span class="attack-secondary-flag"><strong>U</strong> Desbalanceada</span>{{/if}}
-                  {{#if attack.fencing}}<span class="attack-secondary-flag"><strong>F</strong> Esgrima</span>{{/if}}
+                  <span><strong>{{localize "GUM.Equipment.Attacks.ReachAbbrev"}}</strong> {{attack.reach}}</span>
+                  <span><strong>{{localize "GUM.Equipment.Attacks.MinStrengthAbbrev"}}</strong> {{attack.min_strength}}</span>
+                  {{#if attack.unbalanced}}<span class="attack-secondary-flag"><strong>U</strong> {{localize "GUM.Equipment.Attacks.Unbalanced"}}</span>{{/if}}
+                  {{#if attack.fencing}}<span class="attack-secondary-flag"><strong>F</strong> {{localize "GUM.Equipment.Attacks.Fencing"}}</span>{{/if}}
                   {{/if}}
 
                   {{#if (eq attack.attack_type "ranged")}}
-                  {{#if attack.range}}<span><strong>Alc.</strong> {{attack.range}}</span>{{/if}}
-                  <span><strong>Prec</strong> {{attack.accuracy}}</span>
-                  <span><strong>CdT</strong> {{#if attack.rof}}{{attack.rof}}{{else}}—{{/if}}</span>
-                  <span><strong>Tiros</strong> {{#if attack.shots}}{{attack.shots}}{{else}}—{{/if}}</span>
-                  <span><strong>RCO</strong> {{#if attack.rcl}}{{attack.rcl}}{{else}}—{{/if}}</span>
-                  <span><strong>Mag</strong> {{attack.mag}}</span>
-                  <span><strong>ST Min</strong> {{attack.min_strength}}</span>
+                  {{#if attack.range}}<span><strong>{{localize "GUM.Equipment.Attacks.ReachAbbrev"}}</strong> {{attack.range}}</span>{{/if}}
+                  <span><strong>{{localize "GUM.Equipment.Attacks.AccuracyAbbrev"}}</strong> {{attack.accuracy}}</span>
+                  <span><strong>{{localize "GUM.Equipment.Attacks.RofAbbrev"}}</strong> {{#if attack.rof}}{{attack.rof}}{{else}}—{{/if}}</span>
+                  <span><strong>{{localize "GUM.Combat.Attacks.ShotsAbbrev"}}</strong> {{#if attack.shots}}{{attack.shots}}{{else}}—{{/if}}</span>
+                  <span><strong>{{localize "GUM.Equipment.Attacks.RecoilAbbrev"}}</strong> {{#if attack.rcl}}{{attack.rcl}}{{else}}—{{/if}}</span>
+                  <span><strong>{{localize "GUM.Combat.Attacks.BulkAbbrev"}}</strong> {{attack.mag}}</span>
+                  <span><strong>{{localize "GUM.Equipment.Attacks.MinStrengthAbbrev"}}</strong> {{attack.min_strength}}</span>
                   {{/if}}
 
                   {{#with attack.fragmentation_damage}}
@@ -2036,9 +1975,10 @@
     </details>
     {{/each}}
     {{#unless attackGroups}}
-    <div class="placeholder-text">Nenhum ataque disponível.</div>
+    <div class="placeholder-text">{{localize "GUM.Combat.Attacks.Empty"}}</div>
     {{/unless}}
 </div>
+    </section>
 
         </div>
 

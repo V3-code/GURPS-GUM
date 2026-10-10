@@ -7,7 +7,7 @@ const damageRowSource = actorSheetSource.match(/const damageRow[\s\S]+?const con
 
 test("basic damage temporary modifiers are read-only in the secondary editor", () => {
   assert.doesNotMatch(damageRowSource, /name="\$\{key\}\.temp"/);
-  assert.match(damageRowSource, /Modificadores temporários são controlados por efeitos/);
+  assert.match(damageRowSource, /GUM\.SecondaryEditor\.DamageTemporaryHint/);
 });
 
 test("basic damage points are editable, saved, and included in the points summary", () => {

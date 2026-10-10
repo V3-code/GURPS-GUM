@@ -63,8 +63,9 @@ test("actor preparation exposes computed/final DR and rebuilds effect layers", (
 
 test("DR dialog identifies permanent and override inputs separately", () => {
   const source = readFileSync(new URL("../module/actor/gurps-actor-sheet.js", import.meta.url), "utf8");
-  assert.match(source, /<div>Perm\.<\/div>/);
-  assert.match(source, /RD sobrescrita substitui o total calculado">Sobrescrita<\/div>/);
+  assert.match(source, /GUM\.Combat\.DR\.PermanentColumn/);
+  assert.match(source, /GUM\.Combat\.DR\.OverrideHint/);
+  assert.match(source, /GUM\.Combat\.DR\.Override/);
   assert.doesNotMatch(source, /<div>Override<\/div>/);
-  assert.match(source, /Valor calculado antes do override/);
+  assert.match(source, /GUM\.Combat\.DR\.ComputedHint/);
 });

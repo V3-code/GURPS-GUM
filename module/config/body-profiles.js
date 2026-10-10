@@ -369,6 +369,43 @@ export function listBodyProfiles() {
   return Object.values(BODY_PROFILES).map(p => ({ id: p.id, label: p.label }));
 }
 
+function localizedOrFallback(key, fallback, localize) {
+  const localized = typeof localize === "function" ? localize(key) : key;
+  return localized && localized !== key ? localized : fallback;
+}
+
+export function localizeBodyProfileLabel(profile, localize) {
+  if (!profile) return "";
+  return localizedOrFallback(`GUM.Combat.DR.Profiles.${profile.id}`, profile.label ?? profile.id, localize);
+}
+
+export function localizeBodyLocationLabel(locationId, locationData, localize) {
+  const fallback = locationData?.label ?? locationData?.name ?? locationId;
+  const segments = String(locationId || "").split("_");
+  const partId = segments[0];
+  const partKey = `GUM.Combat.DR.BodyParts.${partId}`;
+  const partLabel = localizedOrFallback(partKey, "", localize);
+  if (!partLabel) return fallback;
+
+  const sideId = segments.find(segment => segment === "l" || segment === "r");
+  const sideLabel = sideId
+    ? localizedOrFallback(`GUM.Combat.DR.Sides.${sideId}`, sideId.toUpperCase(), localize)
+    : "";
+  const number = [...segments].reverse().find(segment => /^\d+$/.test(segment))
+    ?? (sideId ? fallback.match(/(\d+)$/)?.[1] : "");
+  const suffix = sideLabel ? `${sideLabel}${number || ""}` : number || "";
+  const isExtra = /^ex-/i.test(fallback);
+  const extraPrefix = isExtra
+    ? localizedOrFallback("GUM.Combat.DR.ExtraLocation", "Extra", localize)
+    : "";
+
+  return [extraPrefix, partLabel, suffix].filter(Boolean).join(" ");
+}
+
+export function localizeBodyGroupLabel(groupKey, fallback, localize) {
+  return localizedOrFallback(`GUM.Combat.DR.BodyPartPlurals.${groupKey}`, fallback ?? groupKey, localize);
+}
+
 export function listBodyLocations(profileId) {
   const profiles = profileId ? [getBodyProfile(profileId)] : Object.values(BODY_PROFILES);
   const seen = new Set();
