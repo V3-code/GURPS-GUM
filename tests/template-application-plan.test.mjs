@@ -11,7 +11,9 @@ const source = fs.readFileSync("module/actor/gurps-actor-sheet.js", "utf8")
   .replace(/^import .*;\r?\n/gm, "")
   .replace("export class GurpsActorSheet", "class GurpsActorSheet");
 const context = vm.createContext({
-  foundry: { appv1: { sheets: { ActorSheet: class {} } }, applications: { ux: {} }, utils: {
+  foundry: { appv1: { sheets: { ActorSheet: class {} } }, applications: { ux: {} }, data: { operators: {
+    ForcedDeletion: class ForcedDeletion {}
+  } }, utils: {
     deepClone: value => structuredClone(value), randomID: (() => { let n = 0; return () => `id-${++n}`; })(),
     getProperty: (root, path) => path.split(".").reduce((value, key) => value?.[key], root),
     escapeHTML: value => String(value)
@@ -29,6 +31,29 @@ const context = vm.createContext({
 });
 vm.runInContext(`${source}\nthis.Sheet = GurpsActorSheet;`, context);
 const sheet = new context.Sheet();
+
+test("dropping a Template on a character starts the template application flow", async () => {
+  const droppedTemplate = { id: "template", type: "template", name: "Traveler" };
+  const dropSheet = new context.Sheet();
+  let appliedTemplate = null;
+  dropSheet._runTemplateApplicationFlow = async item => { appliedTemplate = item; };
+
+  const previousItem = context.Item;
+  const previousGetDragEventData = context.TextEditor.getDragEventData;
+  context.TextEditor.getDragEventData = () => ({ type: "Item", uuid: "Item.template" });
+  context.Item = { fromDropData: async () => droppedTemplate };
+  let prevented = false;
+
+  try {
+    await dropSheet._onDrop({ preventDefault: () => { prevented = true; } });
+  } finally {
+    context.Item = previousItem;
+    context.TextEditor.getDragEventData = previousGetDragEventData;
+  }
+
+  assert.equal(appliedTemplate, droppedTemplate);
+  assert.equal(prevented, true);
+});
 
 test("template entry titles distinguish skill specializations without changing item names", async () => {
   const first = { id: "m1", kind: "item", itemType: "skill", name: "Mimicry", specialization: "Animal", cost: 1,
@@ -97,6 +122,19 @@ test("point plan uses chosen levels and equipment quantities without charging eq
   assert.equal(result.plan[1].cost, 100);
 });
 
+test("fixed equipment quantity ignores a requested change unless quantity consumes choices", () => {
+  const fixed = { id: "fixed", kind: "item", itemType: "equipment", quantity: 2, quantityLocked: true, pointsCost: 3 };
+  const adjustable = { id: "adjustable", kind: "item", itemType: "equipment", quantity: 2, quantityLocked: true,
+    selectionQuantity: true, pointsCost: 3 };
+  const blocks = [{ id: "points", type: "points", pointsAvailable: 30, contents: [fixed, adjustable] }];
+  const result = sheet._buildTemplatePlanFromChoices(blocks, {
+    points: { ids: ["fixed", "adjustable"], quantities: { fixed: 5, adjustable: 4 } }
+  });
+  assert.equal(result.plan[0].quantity, 2);
+  assert.equal(result.plan[1].quantity, 4);
+  assert.equal(result.budgetResults[0].spent, 18);
+});
+
 test("point allocation scales attribute increments and cost, including quarter speed steps", () => {
   const entry = { id: "attrs", kind: "attribute", attributes: { st: 2, basic_speed: 0.5, dodge: 1 },
     costs: { st: 10, basic_speed: 5, dodge: 5 }, cost: 35 };
@@ -145,6 +183,18 @@ test("individual attribute caps constrain point allocation without limiting othe
     attributeLimits: { st: 3, basic_speed: 0.5 } }, { st: -4, basic_speed: 1 }).st, -3);
   assert.equal(sheet._templateAttributeAmounts({ attributes: { basic_speed: 0.25 },
     attributeLimits: { basic_speed: 0.5 } }, { basic_speed: 1 }).basic_speed, 0.5);
+});
+
+test("fixed attribute values cannot be reduced or increased during allocation", () => {
+  const entry = { id: "attrs", kind: "attribute", attributes: { st: 2, dx: 1 }, lockedAttributes: ["st"],
+    attributeLimits: { st: 4, dx: 4 }, costs: { st: 10, dx: 20 }, cost: 40 };
+  const result = sheet._buildTemplatePlanFromChoices(
+    [{ id: "points", type: "points", pointsAvailable: 100, contents: [entry] }],
+    { points: { ids: ["attrs"], attributeValues: { attrs: { st: 0, dx: 3 } } } }
+  );
+  assert.equal(result.plan[0].attributes.st, 2);
+  assert.equal(result.plan[0].attributes.dx, 3);
+  assert.equal(result.budgetResults[0].spent, 80);
 });
 
 test("an attribute may start at zero and become available through its configured cap", () => {
@@ -280,7 +330,30 @@ test("shared money pools are charged once and retain the pool accounting rule", 
   assert.equal(result.budgetResults.length, 1);
   assert.equal(result.budgetResults[0].spent, 55);
   assert.equal(result.budgetResults[0].accounting, "deduct");
+  assert.equal(result.budgetResults[0].moneyMode, "shared");
   assert.equal(result.pointsLeftoverTotal, 0);
+});
+
+test("money spending modes preserve legacy data and explicit mode semantics", () => {
+  const legacyDeduct = { id: "legacy", type: "money", moneyAvailable: 80, moneyAccounting: "deduct", moneySourceFilter: "wallet", contents: [
+    { id: "legacy-item", kind: "item", itemType: "equipment", cost: 20, quantity: 1 }
+  ] };
+  const explicitAvailable = { id: "available", type: "money", moneyMode: "available", sharedBudgetKey: "Stale", moneyAvailable: 50, moneyAccounting: "deduct", moneySourceFilter: "ignored", contents: [
+    { id: "available-item", kind: "item", itemType: "equipment", cost: 15, quantity: 1 }
+  ] };
+  const choices = { legacy: { ids: ["legacy-item"] }, available: { ids: ["available-item"] } };
+  const result = sheet._buildTemplatePlanFromChoices([legacyDeduct, explicitAvailable], choices, [
+    { name: "Stale", type: "money", amount: 999, policy: "hard", accounting: "deduct" }
+  ]);
+
+  assert.equal(result.budgetResults.length, 2);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(result.budgetResults.map(entry => ({ blockId: entry.blockId, moneyMode: entry.moneyMode, accounting: entry.accounting, filter: entry.moneySourceFilter })))),
+    [
+      { blockId: "legacy", moneyMode: "deduct", accounting: "deduct", filter: "wallet" },
+      { blockId: "available", moneyMode: "available", accounting: "budget", filter: "" }
+    ]
+  );
 });
 
 test("referenced template cycles are rejected", async () => {
@@ -302,6 +375,24 @@ test("money budgets support hard, permissive, and GM-only excess policies", () =
   context.game.user.isGM = true;
   assert.equal(sheet._isTemplateMoneySpendValid({ moneyAvailable: 100, budgetPolicy: "gm" }, 150), true);
   context.game.user.isGM = false;
+});
+
+test("an empty character spending limit is unlimited while a numeric limit remains enforced", () => {
+  const item = { id: "item", kind: "item", itemType: "equipment", cost: 150, quantity: 1 };
+  const choices = { purchase: { ids: ["item"] } };
+  const unlimited = sheet._buildTemplatePlanFromChoices([
+    { id: "purchase", type: "money", moneyMode: "deduct", spendingLimit: "", moneyAvailable: 50, budgetPolicy: "hard", contents: [item] }
+  ], choices).budgetResults[0];
+  const limited = sheet._buildTemplatePlanFromChoices([
+    { id: "purchase", type: "money", moneyMode: "deduct", spendingLimit: 100, moneyAvailable: 500, budgetPolicy: "hard", contents: [item] }
+  ], choices).budgetResults[0];
+
+  assert.equal(unlimited.unlimited, true);
+  assert.equal(unlimited.excess, 0);
+  assert.equal(sheet._isTemplateBudgetResultValid(unlimited), true);
+  assert.equal(limited.unlimited, false);
+  assert.equal(limited.budget, 100);
+  assert.equal(sheet._isTemplateBudgetResultValid(limited), false);
 });
 
 test("purchase blocks can deduct money and record the reversible charge", async () => {
@@ -360,6 +451,46 @@ test("purchase blocks select and debit their own compatible money sources", asyn
   assert.equal(actor.system.applied_models[0].moneyTransactions.length, 2);
 });
 
+test("one purchase can be split across multiple money sources", async () => {
+  const makeSource = (id, name, balance) => ({
+    id, name, type: "money_source", system: { mode: "abstract", category: "funds", balance },
+    toObject() { return structuredClone({ id, name, type: "money_source", system: this.system }); },
+    async update(data) { if (data["system.balance"] !== undefined) this.system.balance = data["system.balance"]; }
+  });
+  const purse = makeSource("purse", "Purse", 50);
+  const bank = makeSource("bank", "Bank", 40);
+  const items = [purse, bank];
+  items.get = id => items.find(item => item.id === id);
+  items.has = id => Boolean(items.get(id));
+  const actor = {
+    system: { attributes: {}, points: { unspent: 0 }, money: { value: 0 }, applied_models: [], skill_organization: {}, characteristic_organization: {} },
+    items,
+    async update(data) { if (data["system.applied_models"]) this.system.applied_models = data["system.applied_models"]; }
+  };
+  const purchaseSheet = new context.Sheet();
+  purchaseSheet.actor = actor;
+  purchaseSheet._buildTemplateAttributeUpdateData = () => ({});
+  const budgets = [{ blockId: "gear", title: "Gear", type: "money", accounting: "deduct", spent: 70, moneySourceFilter: "funds" }];
+  const moneyAllocations = { gear: [
+    { sourceId: "purse", amount: 20 },
+    { sourceId: "purse", amount: 20 },
+    { sourceId: "bank", amount: 30 }
+  ] };
+  const payments = purchaseSheet._buildTemplatePaymentTransactions(budgets, moneyAllocations);
+
+  assert.equal(payments.valid, true);
+  assert.equal(payments.transactions.length, 2);
+  assert.equal(payments.transactions.find(transaction => transaction.sourceId === "purse").amount, 40);
+  assert.equal(purchaseSheet._buildTemplatePaymentTransactions(budgets, { gear: [{ sourceId: "purse", amount: 40 }] }).reason, "allocation");
+  assert.equal(purchaseSheet._buildTemplatePaymentTransactions(budgets, { gear: [{ sourceId: "purse", amount: 60 }, { sourceId: "bank", amount: 10 }] }).reason, "insufficient");
+
+  const applied = await purchaseSheet._applyTemplatePlan({ id: "shop", name: "Shop" }, [], { budgetResults: budgets, moneyAllocations });
+  assert.equal(applied, true);
+  assert.equal(purse.system.balance, 10);
+  assert.equal(bank.system.balance, 10);
+  assert.equal(actor.system.applied_models[0].moneyTransactions.length, 2);
+});
+
 test("detaching a template removes only its record and clears item provenance", async () => {
   const item = { id: "sword" };
   const items = [item];
@@ -375,7 +506,10 @@ test("detaching a template removes only its record and clears item provenance", 
   await detachSheet._detachTemplateApplication({ applicationId: "app", templateName: "Starter", createdItemIds: ["sword"] }, actor.system.applied_models);
   assert.deepEqual(actor.system.applied_models.map(record => record.applicationId), ["other"]);
   assert.equal(actor.itemUpdates[0]._id, "sword");
-  assert.equal(actor.itemUpdates[0]["flags.gum.-=templateApplied"], null);
+  assert.ok(actor.itemUpdates[0].flags.gum.templateApplicationId instanceof context.foundry.data.operators.ForcedDeletion);
+  assert.ok(actor.itemUpdates[0].flags.gum.templateApplied instanceof context.foundry.data.operators.ForcedDeletion);
+  assert.ok(actor.itemUpdates[0].flags.gum.templateDestination instanceof context.foundry.data.operators.ForcedDeletion);
+  assert.ok(actor.itemUpdates[0].flags.gum.templateContainer instanceof context.foundry.data.operators.ForcedDeletion);
 });
 
 test("selection validation enforces the configured maximum and exact mode", () => {
@@ -462,11 +596,14 @@ test("application creates a real container, links equipment, and records both ID
   application._buildTemplateAttributeUpdateData = () => ({});
   const entry = {
     id: "rope", kind: "item", itemType: "equipment", name: "Rope", quantity: 3,
-    containerName: "Travel kit", inlineItem: { type: "equipment", name: "Rope", system: { cost: 12, quantity: 1 } }
+    level: "2", pointsCost: 4, containerName: "Travel kit",
+    inlineItem: { type: "equipment", name: "Rope", system: { cost: 12, quantity: 1, level: "", points: 0 } }
   };
   assert.equal(await application._applyTemplatePlan({ id: "template", uuid: "Item.template", name: "Travel" }, [entry]), true);
   assert.equal(items.length, 2);
   assert.equal(items[0].system.is_container, true);
+  assert.equal(items[1].system.level, "2");
+  assert.equal(items[1].system.points, 4);
   assert.equal(links[0]["system.parent_container_id"], items[0].id);
   assert.equal(actor.system.applied_models[0].createdItemIds.length, 2);
 });

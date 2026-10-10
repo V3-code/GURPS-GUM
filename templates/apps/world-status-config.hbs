@@ -1,0 +1,87 @@
+<form class="world-status-form">
+  <header class="world-status-toolbar">
+    <label class="world-status-search">
+      <i class="fas fa-search"></i>
+      <input type="search" name="status-search" placeholder="{{localize 'GUM.WorldStatus.Search'}}">
+    </label>
+    <button type="button" data-action="import"><i class="fas fa-file-import"></i> {{localize "GUM.WorldStatus.Import"}}</button>
+    <button type="button" data-action="export"><i class="fas fa-file-export"></i> {{localize "GUM.WorldStatus.Export"}}</button>
+    <button type="button" data-action="review-references"><i class="fas fa-stethoscope"></i> {{localize "GUM.WorldStatus.ReviewReferences"}}</button>
+    <button type="button" data-action="restore-defaults"><i class="fas fa-undo"></i> {{localize "GUM.WorldStatus.RestoreDefaults"}}</button>
+  </header>
+
+  <p class="world-status-intro">{{localize "GUM.WorldStatus.Introduction"}}</p>
+  {{#if loadedLegacyBindings}}
+  <p class="world-status-migration"><i class="fas fa-wand-magic-sparkles"></i> {{localize "GUM.WorldStatus.LegacyLoaded"}}</p>
+  {{/if}}
+
+  <div class="world-status-column-headings" aria-hidden="true">
+    <span></span><span>{{localize "GUM.WorldStatus.Name"}}</span><span>{{localize "GUM.WorldStatus.Icon"}}</span><span>{{localize "GUM.WorldStatus.LinkedEffects"}}</span><span></span>
+  </div>
+
+  <ol class="world-status-list">
+    {{#each statuses as |status|}}
+    <li class="world-status-row" data-status-id="{{status.id}}" data-search-text="{{status.name}} {{status.id}}">
+      <span class="world-status-order">{{status.index}}</span>
+      <div class="world-status-identity">
+        <input type="text" data-field="name" value="{{status.name}}" aria-label="{{localize 'GUM.WorldStatus.Name'}}">
+        <small>{{status.id}}{{#if status.custom}} · {{localize "GUM.WorldStatus.Custom"}}{{/if}}</small>
+      </div>
+      <div class="world-status-icon-field">
+        <button type="button" class="world-status-icon-preview" data-action="choose-icon" title="{{localize 'GUM.WorldStatus.ChooseIcon'}}"><img src="{{status.img}}" alt=""></button>
+        <input type="text" data-field="img" value="{{status.img}}" aria-label="{{localize 'GUM.WorldStatus.IconPath'}}">
+      </div>
+      <div class="world-status-effects">
+        <div class="world-status-effect-list">
+          {{#each status.linkedEffects as |effect|}}
+          <span class="world-status-effect {{#if effect.missing}}is-missing{{/if}}" title="{{effect.uuid}}">
+            <img src="{{effect.img}}" alt=""><span>{{effect.name}}</span>
+            <button type="button" data-action="remove-effect" data-effect-uuid="{{effect.uuid}}" title="{{localize 'GUM.WorldStatus.RemoveEffect'}}"><i class="fas fa-times"></i></button>
+          </span>
+          {{else}}
+          <span class="world-status-no-effect">{{localize "GUM.WorldStatus.NoEffects"}}</span>
+          {{/each}}
+        </div>
+        <button type="button" class="world-status-effect-picker" data-action="choose-effect"><i class="fas fa-magnifying-glass"></i> {{localize "GUM.WorldStatus.FindEffect"}}</button>
+      </div>
+      <div class="world-status-actions">
+        <button type="button" data-action="move-up" title="{{localize 'GUM.WorldStatus.MoveUp'}}" {{#unless status.canMoveUp}}disabled{{/unless}}><i class="fas fa-arrow-up"></i></button>
+        <button type="button" data-action="move-down" title="{{localize 'GUM.WorldStatus.MoveDown'}}" {{#unless status.canMoveDown}}disabled{{/unless}}><i class="fas fa-arrow-down"></i></button>
+        <button type="button" data-action="inspect-status" title="{{localize 'GUM.WorldStatus.Inspect'}}"><i class="fas fa-magnifying-glass-chart"></i></button>
+        <button type="button" class="danger" data-action="remove-status" title="{{localize 'GUM.WorldStatus.Delete'}}"><i class="fas fa-trash"></i></button>
+      </div>
+      <details class="world-status-advanced">
+        <summary><i class="fas fa-sliders"></i> {{localize "GUM.WorldStatus.Advanced"}}</summary>
+        <div class="world-status-advanced-fields">
+          <label>
+            <span>{{localize "GUM.WorldStatus.StackMode"}}</span>
+            <select data-field="stackMode">
+              <option value="refresh" {{#if (eq status.stackMode "refresh")}}selected{{/if}}>{{localize "GUM.WorldStatus.StackRefresh"}}</option>
+              <option value="replace" {{#if (eq status.stackMode "replace")}}selected{{/if}}>{{localize "GUM.WorldStatus.StackReplace"}}</option>
+              <option value="stack" {{#if (eq status.stackMode "stack")}}selected{{/if}}>{{localize "GUM.WorldStatus.StackAccumulate"}}</option>
+            </select>
+          </label>
+          <label>
+            <span>{{localize "GUM.WorldStatus.StackLimit"}}</span>
+            <input type="number" min="1" step="1" data-field="stackLimit" value="{{status.stackLimit}}">
+          </label>
+          <label class="world-status-advanced-check">
+            <input type="checkbox" data-field="removeOnStatusOff" {{checked status.removeOnStatusOff}}>
+            <span>{{localize "GUM.WorldStatus.RemoveOnStatusOff"}}</span>
+          </label>
+        </div>
+        <p>{{localize "GUM.WorldStatus.AdvancedHint"}}</p>
+      </details>
+    </li>
+    {{else}}
+    <li class="world-status-empty">{{localize "GUM.WorldStatus.Empty"}}</li>
+    {{/each}}
+  </ol>
+
+  <button type="button" class="world-status-add" data-action="add-status"><i class="fas fa-plus"></i> {{localize "GUM.WorldStatus.Add"}}</button>
+
+  <footer class="world-status-footer">
+    <button type="submit"><i class="fas fa-save"></i> {{localize "GUM.WorldStatus.Save"}}</button>
+    <button type="button" data-action="cancel"><i class="fas fa-times"></i> {{localize "GUM.WorldStatus.Cancel"}}</button>
+  </footer>
+</form>

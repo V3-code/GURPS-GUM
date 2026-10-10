@@ -11,7 +11,7 @@ import "../scripts/journal-pdf.js";
 import { GurpsItemSheet } from "../module/item/gurps-item-sheet.js";
 import { MoneySourceSheet } from "../module/item/money-source-sheet.js";
 import { TemplateItemSheet } from "../module/item/template-item-sheet.js";
-import { migrateLegacyStatusBindingSource, migrateRetiredBundledSources, registerSystemSettings } from "../module/settings.js";
+import { migrateLegacyStatusBindingSource, migrateRetiredBundledSources, registerSystemSettings, retireLegacyStatusBindingSources } from "../module/settings.js";
 import { GumPreviewDialog } from "../module/apps/preview-dialog.js";
 import DamageApplicationWindow from './apps/damage-application.js';
 import { ConditionSheet } from "./apps/condition-sheet.js";
@@ -21,11 +21,13 @@ import { applySingleEffect, getEffectActions } from './effects-engine.js';
 import { buildActorEffectTarget, buildActorEffectTargets, getActorEvaluationKey } from '../module/utils/condition-actor-context.mjs';
 import { reconcileAllStateEffects, removeAllStateEffectsForItem, setStateEffectGroupActive, syncItemStateEffects } from '../module/services/state-effect-service.js';
 import { GUM } from '../module/config.js';
+import { installItemCompendiumExportSourceCompatibility } from '../module/utils/foundry-item-compat.mjs';
+import { WORLD_STATUS_SETTING, buildWorldStatusBindingRules, buildWorldStatusPresentationPlan, collectWorldStatusActors, localizeBaseStatuses, normalizeWorldStatusConfiguration, resolveWorldStatusRows } from '../module/utils/world-status-config.mjs';
 import { importFromGCS } from "../module/apps/importers.js";
 import { GumGMScreen } from "../module/apps/gm-screen.js";
 import { GurpsRollPrompt } from "../module/apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../module/apps/damage-roll-prompt.js";
-import { availableAmmunition, applyAmmunition, ammunitionRollModifier, reconcileAmmunitionModifier } from "../module/utils/ammunition.mjs";
+import { ammunitionAvailableUses, availableAmmunition, applyAmmunition, ammunitionRollModifier, calculateRapidFireHits, numericRateOfFire, reconcileAmmunitionModifier } from "../module/utils/ammunition.mjs";
 import { getPurposeLabels, matchesRollTags, resolveRollMetadata, shouldIncludeInPermanentNh } from "../module/utils/roll-purposes.mjs";
 import { getBodyProfile, getBodyLocationDefinition } from "../module/config/body-profiles.js";
 import { calculateDamageResistance, mergeDamageResistance, parseDamageResistanceEffectPath } from "../module/utils/damage-resistance.mjs";
@@ -51,7 +53,7 @@ import { organizeGumCompendia } from "../module/utils/compendium-folder-organize
 
 import { getSkillDisplayName, setDirectoryEntryLabel } from "../module/utils/skill-display-name.mjs";
 import { installGumChatCommandInterceptor, normalizeGumLookup, resolveGumCommandActor, splitSkillModifier } from "../module/utils/gum-chat-command.mjs";
-import { resolveEquipment } from "../module/utils/equipment-resolution.mjs";
+import { buildEquipmentConsumptionUpdate, resolveEquipment } from "../module/utils/equipment-resolution.mjs";
 import { applyEquipmentDefenseBonus, collectActiveEquipmentDefenseBonuses, evaluateDecisiveDefenseBonus } from "../module/utils/equipment-defense-bonus.mjs";
 import { collectActiveEquipmentGrantedEffects, EQUIPMENT_GRANTED_EFFECT_SOURCE, hasEquipmentGrantRelevantChange, matchesEquipmentGrantedEffectScope } from "../module/utils/equipment-granted-effects.mjs";
 
@@ -1397,33 +1399,39 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
         sourceItem = actor.items.get(rollData.itemId) || null;
     }
     const sourceAttack = sourceItem?.system?.ranged_attacks?.[rollData.attackId];
-    if (rollData.type === "attack" && sourceAttack?.ammunition_ids?.length) {
-        const numericCadence = /^\d+$/.test(String(sourceAttack.rof || "").trim()) ? Number(sourceAttack.rof) : null;
+    const showRapidFireHitCount = game.settings.get("gum", "showRapidFireHitCount") === true;
+    const hasAmmunitionLinks = Boolean(sourceAttack?.ammunition_ids?.length);
+    const numericCadence = numericRateOfFire(sourceAttack?.rof);
+    const needsRangedConfirmation = hasAmmunitionLinks || (showRapidFireHitCount && numericCadence > 1);
+    if (rollData.type === "attack" && sourceAttack && needsRangedConfirmation) {
         const options = availableAmmunition(actor, sourceAttack);
         const selectedId = options.some(item => item.id === rollData.ammunitionId) ? rollData.ammunitionId : "";
         const escape = value => foundry.utils.escapeHTML(String(value));
         const choice = await new Promise(resolve => new Dialog({
-            title: game.i18n.localize("GUM.Equipment.Ammunition.Confirm"),
+            title: game.i18n.localize(hasAmmunitionLinks ? "GUM.Equipment.Ammunition.Confirm" : "GUM.Equipment.Ammunition.Fire"),
             content: `<form class="gum-ammo-confirm-form">
-                <div class="gum-ammo-confirm-cadence"><span>${game.i18n.localize("GUM.Equipment.Ammunition.Cadence")}</span><strong>${escape(sourceAttack.rof || "1")}</strong></div>
-                <div class="gum-ammo-confirm-card"><label for="gum-ammo-confirm-choice">${game.i18n.localize("GUM.Equipment.Ammunition.Label")}</label>
-                    <select id="gum-ammo-confirm-choice" name="ammunition"><option value="" ${selectedId ? "" : "selected"}>${game.i18n.localize("GUM.Equipment.Ammunition.Standard")}</option>${options.map(item => `<option value="${escape(item.id)}" ${selectedId === item.id ? "selected" : ""}>${escape(item.name)} — ${game.i18n.format("GUM.Equipment.Ammunition.Available", { quantity: Number(item.system.quantity) || 0 })}</option>`).join("")}</select>
+                <div class="gum-ammo-confirm-metrics">
+                    <div><span>${game.i18n.localize("GUM.Equipment.Ammunition.Cadence")}</span><strong>${escape(sourceAttack.rof || "1")}</strong></div>
+                    <div><span>${game.i18n.localize("GUM.RapidFire.Recoil")}</span><strong>${escape(sourceAttack.rcl || "—")}</strong></div>
                 </div>
-                <div class="gum-ammo-confirm-card gum-ammo-confirm-quantity ${selectedId ? "" : "is-disabled"}"><label for="gum-ammo-confirm-amount">${game.i18n.localize("GUM.Equipment.Ammunition.Spent")}</label>
-                    <div class="gum-ammo-quantity-controls"><button type="button" class="gum-ammo-quantity-step" data-step="-1" aria-label="−">−</button><input id="gum-ammo-confirm-amount" type="number" name="amount" min="1" ${numericCadence ? `max="${numericCadence}"` : ""} step="1" value="1" ${selectedId ? "" : "disabled"}><button type="button" class="gum-ammo-quantity-step" data-step="1" aria-label="+">+</button></div>
-                    <small class="gum-ammo-standard-note">${game.i18n.localize(selectedId ? "GUM.Equipment.Ammunition.SpentHint" : "GUM.Equipment.Ammunition.StandardHint")}</small>
+                ${hasAmmunitionLinks ? `<div class="gum-ammo-confirm-card"><label for="gum-ammo-confirm-choice">${game.i18n.localize("GUM.Equipment.Ammunition.Label")}</label>
+                    <select id="gum-ammo-confirm-choice" name="ammunition"><option value="" ${selectedId ? "" : "selected"}>${game.i18n.localize("GUM.Equipment.Ammunition.Standard")}</option>${options.map(item => `<option value="${escape(item.id)}" ${selectedId === item.id ? "selected" : ""}>${escape(item.name)} — ${game.i18n.format("GUM.Equipment.Ammunition.Available", { quantity: ammunitionAvailableUses(item) })}</option>`).join("")}</select>
+                </div>` : ""}
+                <div class="gum-ammo-confirm-card gum-ammo-confirm-quantity"><label for="gum-ammo-confirm-amount">${game.i18n.localize("GUM.RapidFire.ShotsFired")}</label>
+                    <div class="gum-ammo-quantity-controls"><button type="button" class="gum-ammo-quantity-step" data-step="-1" aria-label="−">−</button><input id="gum-ammo-confirm-amount" type="number" name="amount" min="1" ${numericCadence ? `max="${numericCadence}"` : ""} step="1" value="1"><button type="button" class="gum-ammo-quantity-step" data-step="1" aria-label="+">+</button></div>
+                    <small class="gum-ammo-standard-note">${game.i18n.localize("GUM.RapidFire.ShotsFiredHint")}</small>
                 </div>
             </form>`,
             render: html => {
                 const amountInput = html.find('[name="amount"]');
                 const updateQuantity = () => {
                     const selected = options.find(item => item.id === html.find('[name="ammunition"]').val());
-                    const maximum = selected ? Math.min(Number(selected.system.quantity) || 0, numericCadence || Infinity) : 0;
-                    amountInput.prop('disabled', !selected).attr('max', maximum || 1);
-                    html.find('.gum-ammo-quantity-step').prop('disabled', !selected || maximum < 1);
-                    html.find('.gum-ammo-confirm-quantity').toggleClass('is-disabled', !selected);
-                    html.find('.gum-ammo-standard-note').text(game.i18n.localize(selected ? "GUM.Equipment.Ammunition.SpentHint" : "GUM.Equipment.Ammunition.StandardHint"));
-                    if (selected) amountInput.val(Math.min(Math.max(1, Number(amountInput.val()) || 1), Math.max(1, maximum)));
+                    const maximum = selected
+                        ? Math.min(ammunitionAvailableUses(selected), numericCadence || Infinity)
+                        : numericCadence || 1;
+                    amountInput.attr('max', Math.max(1, maximum));
+                    html.find('.gum-ammo-quantity-step').prop('disabled', maximum < 1);
+                    amountInput.val(Math.min(Math.max(1, Number(amountInput.val()) || 1), Math.max(1, maximum)));
                 };
                 html.find('[name="ammunition"]').on('change', updateQuantity);
                 html.find('.gum-ammo-quantity-step').on('click', event => {
@@ -1441,11 +1449,15 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
         }, { classes: ["dialog", "gum", "gum-ammo-confirm-dialog"], width: 440, height: "auto" }).render(true));
         if (!choice) return;
         let selectedModifier = 0;
+        const amount = choice.amount;
+        if (!Number.isSafeInteger(amount) || amount < 1 || (numericCadence && amount > numericCadence)) {
+            ui.notifications.warn(game.i18n.localize("GUM.RapidFire.InvalidShots"));
+            return;
+        }
         if (choice.id) {
             const ammunition = actor.items.get(choice.id);
-            const amount = choice.amount;
-            const available = Number(ammunition?.system?.quantity);
-            if (!ammunition || !options.some(item => item.id === choice.id) || !Number.isSafeInteger(amount) || amount < 1 || amount > available) {
+            const available = ammunitionAvailableUses(ammunition);
+            if (!ammunition || !options.some(item => item.id === choice.id) || amount > available) {
                 ui.notifications.warn(game.i18n.localize("GUM.Equipment.Ammunition.InvalidQuantity"));
                 return;
             }
@@ -1455,15 +1467,24 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
             }
             const baseProfile = resolveCombatDamageProfile(actor, sourceItem, sourceAttack, "ranged", { includeTargeted: true, rollData });
             const ammunitionProfile = applyAmmunition(baseProfile, ammunition);
-            await ammunition.update({ "system.quantity": available - amount });
-            const remaining = available - amount;
+            const ammunitionSystem = ammunition._source?.system || ammunition.system;
+            // Re-resolve the selected document instead of trusting prepared data. This
+            // also covers a ranged weapon that points to itself as its ammunition.
+            const ammunitionResolution = resolveEquipment(ammunitionSystem);
+            const consumption = buildEquipmentConsumptionUpdate(ammunitionSystem, ammunitionResolution, amount);
+            if (!consumption.consumed) {
+                ui.notifications.warn(game.i18n.localize("GUM.Equipment.Ammunition.InvalidQuantity"));
+                return;
+            }
+            await ammunition.update(consumption.updates);
+            const remaining = consumption.remaining;
             const warning = Number(ammunition.system.ammunition?.low_warning) || 0;
             if (warning > 0 && remaining <= warning) ui.notifications.warn(game.i18n.format("GUM.Equipment.Ammunition.Remaining", { name: ammunition.name, quantity: remaining }));
             selectedModifier = ammunitionRollModifier(ammunition);
-            rollData = { ...rollData, ammunitionName: ammunition.name, ammunitionSpent: amount,
+            rollData = { ...rollData, shotsFired: amount, ammunitionName: ammunition.name, ammunitionSpent: amount,
                 ammunitionDamageProfile: ammunitionProfile };
         } else {
-            rollData = { ...rollData, ammunitionName: null, ammunitionSpent: 0, ammunitionDamageProfile: null };
+            rollData = { ...rollData, shotsFired: amount, ammunitionName: null, ammunitionSpent: 0, ammunitionDamageProfile: null };
         }
         rollData.ammunitionModifier = selectedModifier;
     }
@@ -1569,6 +1590,14 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     const evaluatedResult = evaluateGurpsRollResult(total, effectiveLevel);
     const { isSuccess, margin, resultLabel, statusClass, rollOutcome,
         isCriticalSuccess: isCritSuccess, isCriticalFailure: isCritFailure, outcome } = evaluatedResult;
+    const rapidFireResult = showRapidFireHitCount ? calculateRapidFireHits({
+        isSuccess,
+        isCriticalSuccess: isCritSuccess,
+        margin,
+        recoil: sourceAttack?.rcl,
+        shotsFired: rollData.shotsFired
+    }) : null;
+    rollData = { ...rollData, rapidFireResult };
 
     // --- 7. HTML DO CARD ---
  const diceFaces = roll.dice[0].results.map((d) => `<span class="die-face">${d.result}</span>`).join('');
@@ -1609,6 +1638,15 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
             : "";
         return `<div class="defense-bonus-notice ${decisiveDefenseBonus.outcome}"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>${game.i18n.format(key, { bonus })}</span>${sourceHtml}</div>`;
     })() : "";
+    const rapidFireNoticeHtml = rapidFireResult ? (() => {
+        const key = rapidFireResult.isCriticalSuccess ? "GUM.RapidFire.CriticalSummary" : "GUM.RapidFire.Summary";
+        const summary = game.i18n.format(key, {
+            shots: rapidFireResult.shotsFired,
+            recoil: rapidFireResult.recoil,
+            hits: rapidFireResult.hits
+        });
+        return `<div class="rapid-fire-hit-notice ${isSuccess ? "success" : "failure"}"><i class="fas fa-bullseye" aria-hidden="true"></i><span>${summary}</span></div>`;
+    })() : "";
 
     const content = `
         <div class="gurps-roll-card premium">
@@ -1646,6 +1684,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
                     <span class="result-margin">Margem ${margin}</span>
                 </div>
                 ${defenseBonusNoticeHtml}
+                ${rapidFireNoticeHtml}
                 ${damageActionData ? `
                     <div class="roll-chat-actions">
                         <button type="button" class="chat-roll-damage-button" data-damage-action="${damageActionAttr}">
@@ -1707,6 +1746,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
         globalModifier: globalModValue, defenseBonus: activeDefenseBonus, defenseBonusSources: activeDefenseBonusSources, totalModifier, mathLevel, effectiveLevel,
         effectiveCap: lowestCap === Infinity ? null : lowestCap, isCapped, isSuccess,
         isCriticalSuccess: isCritSuccess, isCriticalFailure: isCritFailure, margin, outcome,
+        rapidFireResult,
         resultLabel, statusClass, purposeIds: rollData.purposeIds ?? [], modifierBreakdown: [
             { source: "prompt", value: promptMod }, { source: "global", value: globalModValue }
         ] };
@@ -1730,6 +1770,7 @@ function _buildDamageActionData(actor, sourceItem, rollData) {
                 attackId,
                 sourceLabel: `${sourceItem.name} (${attack.mode ?? attackId})`,
                 ammunition: rollData.ammunitionName ? { name: rollData.ammunitionName, spent: rollData.ammunitionSpent } : null,
+                rapidFire: rollData.rapidFireResult || null,
                 ammunitionDamageProfile: rollData.ammunitionDamageProfile || null
             };
         }
@@ -1792,7 +1833,8 @@ async function _rollDamageFromChatAction(payload) {
                 sourceWeight: Number(item.system?.weight) || 0,
                 sourceAttackId: attackId || null,
                 sourceAttackType: item.system?.melee_attacks?.[attackId] ? "melee" : "ranged",
-                ammunition: payload.ammunition || null
+                ammunition: payload.ammunition || null,
+                rapidFire: payload.rapidFire || null
             };
         }
     } else if (item.system?.damage?.formula) {
@@ -1866,6 +1908,7 @@ async function _rollDamageFromChatAction(payload) {
     const promptResult = await GurpsDamageRollPrompt.prompt({
         sourceName: normalizedAttack.name,
         ammunition: normalizedAttack.ammunition || null,
+        rapidFire: normalizedAttack.rapidFire || null,
         main: {
             formula: normalizedAttack.formula,
             displayFormula: mainDisplayFormula,
@@ -1952,6 +1995,7 @@ async function _rollDamageFromChatAction(payload) {
         sourceAttackId: normalizedAttack.sourceAttackId || null,
         sourceAttackType: normalizedAttack.sourceAttackType || null,
         ammunition: normalizedAttack.ammunition || null,
+        rapidFire: normalizedAttack.rapidFire || null,
         main: {
             total: mainRoll.total,
             type: normalizedAttack.type || "",
@@ -1998,6 +2042,11 @@ async function _rollDamageFromChatAction(payload) {
         <div class="card-formula-container">
           <span class="formula-pill">${formulaSegments.join(" • ")}</span>
         </div>
+        ${normalizedAttack.rapidFire ? `<div class="damage-rapid-fire-note"><i class="fas fa-bullseye" aria-hidden="true"></i><span>${game.i18n.format(normalizedAttack.rapidFire.isCriticalSuccess ? "GUM.RapidFire.CriticalSummary" : "GUM.RapidFire.Summary", {
+            shots: normalizedAttack.rapidFire.shotsFired,
+            recoil: normalizedAttack.rapidFire.recoil,
+            hits: normalizedAttack.rapidFire.hits
+        })}</span></div>` : ""}
         <div class="card-content">
           <div class="card-main-flex">
             <div class="roll-column">
@@ -2938,7 +2987,8 @@ export async function applyEffectWithResistance(effectItem, targets, context = {
 // ================================================================== //
 //  2. HOOK DE INICIALIZAÇÃO (`init`)
 // ================================================================== //
-Hooks.once('init', async function() { 
+Hooks.once('init', async function() {
+    installItemCompendiumExportSourceCompatibility();
     console.log("GUM | Fase 'init': Registrando configurações e fichas."); 
     registerContextMenuCompatibilityHooks({ Hooks, generation: game.release?.generation });
     GumPreviewDialog.registerChatDetailsHandler();
@@ -2954,10 +3004,15 @@ Hooks.once('init', async function() {
     game.gum.setStateEffectGroupActive = setStateEffectGroupActive;
     game.gum.syncItemStateEffects = syncItemStateEffects;
 
-    CONFIG.statusEffects = GUM.statusEffects;
     CONFIG.Actor.documentClass = GurpsActor;
 
     registerSystemSettings();
+
+    Hooks.on("gumWorldStatusConfigurationChanged", ({ rows }) => {
+        synchronizeWorldStatusRuntime(rows).catch(error => {
+            console.error("GUM | Falha ao sincronizar a configuração de status do mundo.", error);
+        });
+    });
 
     Hooks.on("hotbarDrop", (bar, data, slot) => {
         if (data?.type !== "GUM.Roll") return;
@@ -3990,24 +4045,49 @@ const getActorActiveNativeStatusSet = (actor) => {
 
 const loadStatusBindingRules = async () => {
     const now = Date.now();
-    const sourceKey = contentSourceService.getSourceIds("statusBindings").join("\u0000");
+    const worldConfiguration = normalizeWorldStatusConfiguration(game.settings.get("gum", WORLD_STATUS_SETTING));
+    const sourceKey = worldConfiguration.bindingsMigrated
+        ? `world:${JSON.stringify(worldConfiguration)}`
+        : contentSourceService.getSourceIds("statusBindings").join("\u0000");
     if (statusBindingsCache.sourceKey === sourceKey
         && (now - statusBindingsCache.loadedAt) < STATUS_BINDINGS_CACHE_TTL_MS) {
         return statusBindingsCache.docs;
     }
 
-    const { documents, invalidSources } = await contentSourceService.getDocuments("statusBindings");
-    if (invalidSources.length) {
-        console.warn("GUM | Fontes inválidas de Automações de Status:", invalidSources);
+    let statusRules;
+    if (worldConfiguration.bindingsMigrated) {
+        const localizedBase = localizeBaseStatuses(GUM.statusEffects, key => game.i18n.localize(key));
+        statusRules = buildWorldStatusBindingRules(resolveWorldStatusRows(localizedBase, worldConfiguration));
+    } else {
+        const { documents, invalidSources } = await contentSourceService.getDocuments("statusBindings");
+        if (invalidSources.length) {
+            console.warn("GUM | Fontes inválidas de Automações de Status:", invalidSources);
+        }
+        statusRules = documents.filter((doc) => doc.system?.bindingMode === "status-link");
     }
-    const statusRules = documents.filter((doc) => doc.system?.bindingMode === "status-link");
     statusBindingsCache.sourceKey = sourceKey;
     statusBindingsCache.docs = statusRules;
     statusBindingsCache.loadedAt = now;
     return statusRules;
 };
 
+const getPrimaryActiveGM = () => game.users?.activeGM
+    || Array.from(game.users || []).filter(user => user.active && user.isGM).sort((a, b) => a.id.localeCompare(b.id))[0]
+    || null;
+
+const isPrimaryActiveGM = () => getPrimaryActiveGM()?.id === game.user?.id;
+
+const isStatusBindingAuthority = (actor) => {
+    const activeGM = getPrimaryActiveGM();
+    if (activeGM) return activeGM.id === game.user?.id;
+    const activeOwners = Array.from(game.users || [])
+        .filter(user => user.active && actor?.testUserPermission?.(user, "OWNER"))
+        .sort((a, b) => a.id.localeCompare(b.id));
+    return activeOwners[0]?.id === game.user?.id;
+};
+
 async function processStatusBindings(actor) {
+    if (!isStatusBindingAuthority(actor)) return;
     const evaluationKey = getActorEvaluationKey(actor);
     if (!evaluationKey || processingStatusBindingActors.has(evaluationKey)) return;
     processingStatusBindingActors.add(evaluationKey);
@@ -4025,10 +4105,12 @@ async function processStatusBindings(actor) {
             const stackMode = normalizeStatusBindingMode(binding.stackMode);
             const stackLimit = Math.max(1, Number(binding.stackLimit) || 1);
             const effectLinks = Array.isArray(rule.system?.effects) ? rule.system.effects : [];
+            const configuredEffectUuids = new Set(effectLinks.map(link => link?.uuid).filter(Boolean));
+            const compatibleRuleUuids = new Set([rule.uuid, ...(rule.legacyRuleUuids || [])].filter(Boolean));
 
             const existingRuleEffects = actor.effects.filter((effect) =>
                 foundry.utils.getProperty(effect, "flags.gum.source") === "statusBinding"
-                && foundry.utils.getProperty(effect, "flags.gum.statusBindingRuleUuid") === rule.uuid
+                && compatibleRuleUuids.has(foundry.utils.getProperty(effect, "flags.gum.statusBindingRuleUuid"))
                 && foundry.utils.getProperty(effect, "flags.gum.statusBindingStatusId") === statusId
             );
 
@@ -4038,6 +4120,10 @@ async function processStatusBindings(actor) {
                 }
                 continue;
             }
+
+            effectsToDelete.push(...existingRuleEffects
+                .filter(effect => !configuredEffectUuids.has(foundry.utils.getProperty(effect, "flags.gum.effectUuid")))
+                .map(effect => effect.id));
 
             for (const link of effectLinks) {
                 const effectUuid = link?.uuid;
@@ -4078,6 +4164,24 @@ await applySingleEffect(effectItem, buildActorEffectTargets(actor), {
     } finally {
         processingStatusBindingActors.delete(evaluationKey);
     }
+}
+
+const getWorldStatusRuntimeActors = () => collectWorldStatusActors({
+    worldActors: game.actors,
+    scenes: game.scenes,
+    canvasTokens: globalThis.canvas?.tokens?.placeables
+});
+
+async function synchronizeWorldStatusRuntime(rows) {
+    const actors = getWorldStatusRuntimeActors();
+    if (isPrimaryActiveGM()) {
+        for (const { actor, updates } of buildWorldStatusPresentationPlan(actors, rows)) {
+            await actor.updateEmbeddedDocuments("ActiveEffect", updates);
+        }
+        for (const actor of actors) await processStatusBindings(actor);
+    }
+    await Promise.allSettled(Array.from(globalThis.canvas?.tokens?.placeables || [], token => token.drawEffects?.()));
+    if (globalThis.canvas?.tokens?.hud?.rendered) globalThis.canvas.tokens.hud.render(true);
 }
 
 async function processConditions(actor, eventData = null) {
@@ -4943,6 +5047,18 @@ Hooks.once("ready", async () => {
         await migrateLegacyStatusBindingSource();
     } catch (error) {
         console.error("GUM | Falha ao migrar a fonte legada de Automações de Status.", error);
+    }
+    try {
+        await retireLegacyStatusBindingSources();
+    } catch (error) {
+        console.error("GUM | Falha ao aposentar as fontes legadas de Automações de Status.", error);
+    }
+    try {
+        const configuration = normalizeWorldStatusConfiguration(game.settings.get("gum", WORLD_STATUS_SETTING));
+        const localizedBase = localizeBaseStatuses(GUM.statusEffects, key => game.i18n.localize(key));
+        await synchronizeWorldStatusRuntime(resolveWorldStatusRows(localizedBase, configuration));
+    } catch (error) {
+        console.error("GUM | Falha ao consolidar os status do mundo ao iniciar.", error);
     }
     try {
         await reconcileAllStateEffects();

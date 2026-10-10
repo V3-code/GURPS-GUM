@@ -3094,6 +3094,29 @@ color:#121114;
   opacity: 0.9;
 }
 
+/* Área explícita para anexar conteúdo de biblioteca sem interferir no drop padrão da ficha. */
+.gum.sheet.item .item-attachment-dropzone {
+  display: flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 5px 2px 0;
+  padding: 5px 10px;
+  color: var(--item-text-muted);
+  background: rgba(0,0,0,.13);
+  border: 1px dashed rgba(201,161,94,.3);
+  border-radius: 6px;
+  font-family: var(--item-font-condensed);
+  font-size: .62rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.gum.sheet.item .item-attachment-dropzone i { color: var(--item-accent); }
+.gum.sheet.item .item-attachment-dropzone.is-dragover { color: var(--item-text); background: rgba(201,161,94,.13); border-color: var(--item-accent); }
+.gum.sheet.item .state-effect-group .item-attachment-dropzone { margin: 5px 0 0; }
+
 /* Item / Linha base */
 .gum.sheet.item .effects-line {
   background: linear-gradient(135deg, rgba(26, 24, 32, 0.92), rgba(32, 29, 38, 0.95)),
@@ -4004,7 +4027,7 @@ color:#121114;
 .template-attr-grid-header,
 .template-attr-row {
   display: grid;
-  grid-template-columns: 1.5fr repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1.5fr repeat(3, minmax(0, 1fr)) minmax(72px, 0.8fr);
   gap: 8px;
   align-items: center;
 }
@@ -4029,6 +4052,18 @@ color:#121114;
   font-size: 0.8rem;
   color: #3a3327;
   font-weight: 700;
+  margin: 0;
+}
+.template-attr-row .template-attr-fixed {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.template-attr-row .template-attr-fixed input {
+  width: 14px;
+  height: 14px;
+  min-height: 0;
   margin: 0;
 }
 .template-attr-dialog .template-attr-grid-header {
@@ -4210,6 +4245,7 @@ color:#121114;
 }
 
 .gum.sheet.item .equipment-details-layout .equipment-general-grid,
+.gum.sheet.item .equipment-details-layout .equipment-template-values-grid,
 .gum.sheet.item .equipment-details-layout .equipment-text-grid,
 .gum.sheet.item .equipment-details-layout .equipment-physical-grid,
 .gum.sheet.item .equipment-details-layout .equipment-defense-grid,
@@ -4223,6 +4259,10 @@ color:#121114;
 
 .gum.sheet.item .equipment-details-layout .equipment-general-grid {
   grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-template-values-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .gum.sheet.item .equipment-details-layout .equipment-text-grid {

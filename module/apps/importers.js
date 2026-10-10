@@ -4,7 +4,7 @@ import { buildGCSActorReconciliation } from "../utils/gcs-actor-reconciliation.m
 import { canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
 import { contentSourceService } from "../services/content-source-service.mjs";
 import { prepareGCSActorItemChanges } from "../utils/gcs-container-reconciliation.mjs";
-import { buildCompendiumLibraryExport, parseCompendiumLibraryExport, sortCompendiumFoldersParentFirst } from "../utils/compendium-library-json.mjs";
+import { buildCompendiumLibraryExport, parseCompendiumLibraryExport, previewCompendiumJsonSynchronization, sortCompendiumFoldersParentFirst } from "../utils/compendium-library-json.mjs";
 
 const GCS_LIBRARY_TYPES_BY_EXTENSION = {
     skl: "skill", spl: "spell", eqp: "equipment", adq: "advantage",
@@ -38,6 +38,8 @@ async function createWorldItemCompendium(label) {
  * um arquivo de Biblioteca GCS (.skl, .spl, .eqp, .adq, .adm, .eqm) para um compêndio.
  */
 export async function importFromJson({ pack: fixedPack = null } = {}) {
+    const t = key => game.i18n.localize(`GUM.LibraryImport.${key}`);
+    const format = (key, data) => game.i18n.format(`GUM.LibraryImport.${key}`, data);
     // 1. Cria um elemento <input> de arquivo, escondido
     const input = document.createElement('input');
     input.type = 'file';
@@ -147,69 +149,69 @@ export async function importFromJson({ pack: fixedPack = null } = {}) {
         const inferredType = inferGCSLibraryItemType(extension, importEntries, fixedPack);
         const typeField = GCS_LIBRARY_TYPES_BY_EXTENSION[extension] ? `
             <div class="form-group">
-                <label>Tipo da biblioteca:</label>
+                <label>${t("LibraryType")}</label>
                 <select name="library-item-type">
                     ${[
-                        ["skill", "Perícias"], ["spell", "Magias"], ["equipment", "Equipamentos"],
-                        ["advantage", "Vantagens"], ["disadvantage", "Desvantagens"],
-                        ["modifier", "Modificadores"], ["eqp_modifier", "Modificadores de equipamento"]
-                    ].map(([value, label]) => `<option value="${value}" ${value === inferredType ? "selected" : ""}>${label}</option>`).join("")}
+                        "skill", "spell", "equipment", "advantage", "disadvantage", "modifier", "eqp_modifier"
+                    ].map(value => `<option value="${value}" ${value === inferredType ? "selected" : ""}>${t(`ItemType.${value}`)}</option>`).join("")}
                 </select>
             </div>` : "";
         const canCreatePack = Boolean(game.user?.isGM && !fixedPack);
         const destinationFields = fixedPack ? `
             <div class="gum-import-destination-summary">
                 <i class="fas fa-book"></i>
-                <span><small>Destino selecionado</small><strong>${escapeImportHTML(fixedPack.title)}</strong></span>
+                <span><small>${t("SelectedDestination")}</small><strong>${escapeImportHTML(fixedPack.title)}</strong></span>
             </div>
         ` : `
             <div class="gum-import-mode-picker">
                 ${allItemPacks.length ? `<label><input type="radio" name="destination-mode" value="existing" checked>
-                    <span><i class="fas fa-book"></i> Usar existente</span></label>` : ''}
+                    <span><i class="fas fa-book"></i> ${t("UseExistingCompendium")}</span></label>` : ''}
                 ${canCreatePack ? `<label><input type="radio" name="destination-mode" value="new" ${allItemPacks.length ? '' : 'checked'}>
-                    <span><i class="fas fa-folder-plus"></i> Criar novo</span></label>` : ''}
+                    <span><i class="fas fa-folder-plus"></i> ${t("CreateNewCompendium")}</span></label>` : ''}
             </div>
             ${allItemPacks.length ? `<div class="form-group" data-destination="existing">
-                <label>Compêndio de destino</label><select name="compendium-target">${packOptions}</select>
+                <label>${t("TemplateDestination")}</label><select name="compendium-target">${packOptions}</select>
             </div>` : ""}
             ${canCreatePack ? `<div class="form-group" data-destination="new" ${allItemPacks.length ? 'style="display:none"' : ''}>
-                <label>Nome do novo compêndio</label><input type="text" name="new-compendium-name" value="${escapeImportHTML(file.name.replace(/\.[^.]+$/, ""))}">
+                <label>${t("NewCompendiumName")}</label><input type="text" name="new-compendium-name" value="${escapeImportHTML(file.name.replace(/\.[^.]+$/, ""))}">
             </div>` : ""}`;
 
         new Dialog({
-            title: "Selecionar Destino da Importação",
+            title: t("SelectImportDestination"),
             content: `
                 <form class="gum-compendium-import-form">
                     <div class="gum-import-file-summary">
                         <i class="fas fa-file-import"></i>
-                        <span><strong>${importEntries.length} itens encontrados</strong><small>${escapeImportHTML(file.name)}</small></span>
+                        <span><strong>${format("ItemsFound", { count: importEntries.length })}</strong><small>${escapeImportHTML(file.name)}</small></span>
                     </div>
                     ${typeField}
                     ${destinationFields}
                     ${isCompendiumJson ? `
-                    <div class="form-group" style="margin-top: 10px;">
+                    <section class="gum-import-sync-preview" data-sync-preview aria-live="polite"></section>
+                    <div class="form-group gum-import-remove-missing" style="margin-top: 10px;">
                         <label>
                             <input type="checkbox" name="remove-missing">
-                            Remover do compêndio os itens ausentes deste JSON
+                            ${t("RemoveMissingLabel")}
                         </label>
+                        <p class="hint">${t("RemoveMissingHint")}</p>
                     </div>` : ""}
                 </form>
             `,
             buttons: {
                 import: {
                     icon: '<i class="fas fa-file-import"></i>',
-                    label: "Importar",
+                    label: t("Import"),
                     callback: async (html) => {
                         const mode = fixedPack ? "fixed" : html.find('[name="destination-mode"]:checked').val();
                         let pack = fixedPack;
                         if (mode === "existing") pack = game.packs.get(html.find('[name="compendium-target"]').val());
                         if (mode === "new") {
                             const label = String(html.find('[name="new-compendium-name"]').val() || "").trim();
-                            if (!label) return ui.notifications.error("Informe um nome para o novo compêndio.");
+                            if (!label) return ui.notifications.error(t("NewCompendiumNameRequired"));
                             pack = await createWorldItemCompendium(label);
                         }
                         if (!pack) {
-                            return ui.notifications.error("O compêndio de destino não pôde ser encontrado.");
+                            return ui.notifications.error(t("Errors.CompendiumNotFound"));
                         }
                         
                         if (isCompendiumJson) {
@@ -226,18 +228,47 @@ export async function importFromJson({ pack: fixedPack = null } = {}) {
                 },
                 cancel: {
                     icon: '<i class="fas fa-times"></i>',
-                    label: "Cancelar"
+                    label: t("Cancel")
                 }
             },
             default: "import",
-            render: html => html.find('[name="destination-mode"]').on("change", event => {
-                const mode = event.currentTarget.value;
-                html.find('[data-destination]').hide();
-                html.find(`[data-destination="${mode}"]`).show();
-            })
+            render: html => {
+                const preview = html.find("[data-sync-preview]");
+                const updateSyncPreview = async pack => {
+                    if (!preview.length) return;
+                    if (!pack) return preview.empty();
+                    try {
+                        const existingDocuments = await pack.getDocuments();
+                        const summary = previewCompendiumJsonSynchronization(existingDocuments, importEntries.map(entry => entry.itemData));
+                        const collision = summary.sameNameDifferentId
+                            ? `<p class="gum-import-sync-warning"><i class="fas fa-triangle-exclamation"></i> ${format("SameNameDifferentId", { count: summary.sameNameDifferentId })}</p>`
+                            : "";
+                        preview.html(`<strong>${t("SyncPreviewTitle")}</strong><p>${t("SyncMatchingRule")}</p><dl>
+                            <div><dt>${t("SyncUpdates")}</dt><dd>${summary.updates}</dd></div>
+                            <div><dt>${t("SyncCreates")}</dt><dd>${summary.creates}</dd></div>
+                        </dl>${collision}`);
+                    } catch (error) {
+                        console.warn("GUM | Unable to preview compendium synchronization:", error);
+                        preview.html(`<p class="gum-import-sync-warning">${t("SyncPreviewUnavailable")}</p>`);
+                    }
+                };
+                const updateSelectedPackPreview = () => {
+                    const mode = fixedPack ? "fixed" : html.find('[name="destination-mode"]:checked').val();
+                    const pack = fixedPack || (mode === "existing" ? game.packs.get(html.find('[name="compendium-target"]').val()) : null);
+                    return updateSyncPreview(pack);
+                };
+                html.find('[name="destination-mode"]').on("change", event => {
+                    const mode = event.currentTarget.value;
+                    html.find('[data-destination]').hide();
+                    html.find(`[data-destination="${mode}"]`).show();
+                    updateSelectedPackPreview();
+                });
+                html.find('[name="compendium-target"]').on("change", updateSelectedPackPreview);
+                updateSelectedPackPreview();
+            }
         }, {
             classes: ["dialog", "gum", "gum-compendium-import-dialog"],
-            width: 520
+            width: 620
         }).render(true);
     };
 
@@ -2772,6 +2803,8 @@ function parseGCSLibraryEquipment(gcsEquip) {
     }
 
     template.quantity = gcsEquip.quantity || 1;
+    template.level = String(gcsEquip.level ?? gcsEquip.calc?.level ?? "").trim();
+    template.points = Number(gcsEquip.points ?? gcsEquip.calc?.points) || 0;
     template.ref = gcsEquip.reference || "";
     template.cost = parseFloat(gcsEquip.value || gcsEquip.base_value) || 0;
     
@@ -3409,7 +3442,8 @@ async function buildTemplateEntryFromGCSNode(gcsNode, parserFn, itemType, { defa
 
     if (parsedItem.type === "equipment") {
         entry.cost = Number(parsedItem.system?.cost) || 0;
-        entry.pointsCost = Number(gcsNode.points ?? gcsNode.calc?.points) || 0;
+        entry.level = String(parsedItem.system?.level ?? gcsNode.level ?? "").trim();
+        entry.pointsCost = Number(parsedItem.system?.points ?? gcsNode.points ?? gcsNode.calc?.points) || 0;
     }
 
     if (["advantage", "disadvantage"].includes(parsedItem.type)) {
@@ -3456,6 +3490,18 @@ function buildTemplateBlockBase({ type, title, picker = null }) {
     return block;
 }
 
+function lockGCSTemplateEntryValues(entry, blockType) {
+    if (!entry || !["guaranteed", "selection"].includes(blockType)) return entry;
+    if (entry.itemType === "equipment") entry.quantityLocked = true;
+    if (entry.kind === "attribute") {
+        const selected = Array.isArray(entry.selectedAttributes) && entry.selectedAttributes.length
+            ? entry.selectedAttributes
+            : Object.entries(entry.attributes || {}).filter(([, value]) => Number(value) !== 0).map(([key]) => key);
+        entry.lockedAttributes = [...new Set(selected)];
+    }
+    return entry;
+}
+
 async function buildTemplateOptionEntryFromNode(node, parserFn, itemType, path = []) {
     if (!node) return null;
 
@@ -3499,7 +3545,7 @@ async function buildTemplateBlocksRecursive(container, parserFn, itemType, path 
 
         for (const child of children) {
             const entry = await buildTemplateOptionEntryFromNode(child, parserFn, itemType, currentPath);
-            if (entry) block.contents.push(entry);
+            if (entry) block.contents.push(lockGCSTemplateEntryValues(entry, blockType));
         }
 
         if (block.contents.length || blockType !== "guaranteed") {
@@ -3515,7 +3561,7 @@ async function buildTemplateBlocksRecursive(container, parserFn, itemType, path 
             const entry = await buildTemplateEntryFromGCSNode(leaf, parserFn, itemType, {
                 defaultCost: Number(leaf.base_points || leaf.points_per_level || leaf.points || 0)
             });
-            if (entry) guaranteedBlock.contents.push(entry);
+            if (entry) guaranteedBlock.contents.push(lockGCSTemplateEntryValues(entry, "guaranteed"));
         }
 
         if (guaranteedBlock.contents.length) {
@@ -3554,7 +3600,7 @@ async function parseGCSTemplate(gcsData, fileName = "") {
                 blocks.push(...await buildTemplateBlocksRecursive(node, section.parser, section.type, []));
             } else {
                 const entry = await buildTemplateEntryFromGCSNode(node, section.parser, section.type);
-                if (entry) leaves.push(entry);
+                if (entry) leaves.push(lockGCSTemplateEntryValues(entry, "guaranteed"));
             }
         }
         if (leaves.length) {

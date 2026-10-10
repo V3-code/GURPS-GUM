@@ -42,8 +42,11 @@ async function syncCompendiumRules() {
 // --- IMPORTA A LÓGICA DOS IMPORTADORES ---
 import { importFromJson, importFromGCS, importTemplateFromGCS, exportCompendiumToJson, exportCharacterToJson } from "./apps/importers.js";
 import { ContentSourceConfig } from "./apps/content-source-config.js";
+import { WorldStatusConfig } from "./apps/world-status-config.js";
+import { GUM } from "./config.js";
 import { CONTENT_SOURCE_SETTING, contentSourceService } from "./services/content-source-service.mjs";
 import { buildPassiveConditionSyncOperations } from "./utils/passive-condition-sync.mjs";
+import { WORLD_STATUS_SETTING, applyWorldStatusConfiguration, normalizeWorldStatusConfiguration } from "./utils/world-status-config.mjs";
 
 const STATUS_BINDINGS_MIGRATION_SETTING = "contentSourcesStatusBindingsMigrationV1";
 const RETIRED_BUNDLED_SOURCES_MIGRATION_SETTING = "contentSourcesRetiredBundledSourcesMigrationV1";
@@ -79,6 +82,12 @@ export async function migrateLegacyStatusBindingSource() {
     if (!game.user?.isGM) return false;
     if (game.settings.get("gum", STATUS_BINDINGS_MIGRATION_SETTING)) return false;
 
+    const worldStatuses = normalizeWorldStatusConfiguration(game.settings.get("gum", WORLD_STATUS_SETTING));
+    if (worldStatuses.bindingsMigrated) {
+        await game.settings.set("gum", STATUS_BINDINGS_MIGRATION_SETTING, true);
+        return false;
+    }
+
     const configuredSources = contentSourceService.getSettings();
     if (!Object.hasOwn(configuredSources, "statusBindings")) {
         const legacyId = `${game.settings.get("gum", "statusBindingsCompendium") || ""}`.trim();
@@ -89,6 +98,16 @@ export async function migrateLegacyStatusBindingSource() {
     return true;
 }
 
+export async function retireLegacyStatusBindingSources() {
+    if (!game.user?.isGM) return false;
+    const worldStatuses = normalizeWorldStatusConfiguration(game.settings.get("gum", WORLD_STATUS_SETTING));
+    if (!worldStatuses.bindingsMigrated) return false;
+    const configuredSources = contentSourceService.getSettings();
+    if (!configuredSources.statusBindings?.length) return false;
+    configuredSources.statusBindings = [];
+    await game.settings.set("gum", CONTENT_SOURCE_SETTING, configuredSources);
+    return true;
+}
 
 // --- REGISTRO DAS CONFIGURAÇÕES ---
 
@@ -126,6 +145,65 @@ export const registerSystemSettings = function() {
         icon: "fas fa-books",
         type: ContentSourceConfig,
         restricted: true
+    });
+
+    game.settings.register("gum", WORLD_STATUS_SETTING, {
+        name: "GUM.WorldStatus.Title",
+        hint: "GUM.WorldStatus.SettingHint",
+        scope: "world",
+        config: false,
+        type: Object,
+        default: {},
+        onChange: configuration => {
+            const rows = applyWorldStatusConfiguration(GUM.statusEffects, configuration);
+            if (globalThis.canvas?.tokens?.hud?.rendered) globalThis.canvas.tokens.hud.render(true);
+            for (const app of Object.values(globalThis.ui?.windows || {})) {
+                const element = app.element?.[0] || app.element;
+                const hasClass = className => app.element?.hasClass?.(className) || element?.classList?.contains?.(className);
+                const isStatusAware = ["condition-sheet", "effect-sheet", "active-effect-config"]
+                    .some(className => hasClass(className))
+                    || app.constructor?.name?.includes?.("ActiveEffect");
+                if (isStatusAware) app.render(false);
+            }
+            Hooks.callAll("gumWorldStatusConfigurationChanged", { configuration, rows });
+        }
+    });
+
+    game.settings.registerMenu("gum", "worldStatusConfig", {
+        name: "GUM.WorldStatus.Title",
+        label: "GUM.WorldStatus.MenuLabel",
+        hint: "GUM.WorldStatus.SettingHint",
+        icon: "fas fa-person-circle-check",
+        type: WorldStatusConfig,
+        restricted: true
+    });
+
+    applyWorldStatusConfiguration(GUM.statusEffects, game.settings.get("gum", WORLD_STATUS_SETTING));
+
+    const userRoles = CONST.USER_ROLES;
+    game.settings.register("gum", "allowPlayerItemAttachmentDrops", {
+        name: "GUM.Settings.ItemAttachmentDrops.Enabled.Name",
+        hint: "GUM.Settings.ItemAttachmentDrops.Enabled.Hint",
+        scope: "world",
+        config: true,
+        restricted: true,
+        type: Boolean,
+        default: false
+    });
+    game.settings.register("gum", "itemAttachmentDropMinimumRole", {
+        name: "GUM.Settings.ItemAttachmentDrops.MinimumRole.Name",
+        hint: "GUM.Settings.ItemAttachmentDrops.MinimumRole.Hint",
+        scope: "world",
+        config: true,
+        restricted: true,
+        type: Number,
+        choices: {
+            [userRoles.PLAYER]: "GUM.Settings.ItemAttachmentDrops.Role.Player",
+            [userRoles.TRUSTED]: "GUM.Settings.ItemAttachmentDrops.Role.Trusted",
+            [userRoles.ASSISTANT]: "GUM.Settings.ItemAttachmentDrops.Role.Assistant",
+            [userRoles.GAMEMASTER]: "GUM.Settings.ItemAttachmentDrops.Role.Gamemaster"
+        },
+        default: userRoles.GAMEMASTER
     });
 
  game.settings.register("gum", "effectTokenIconPolicyMigration", {
@@ -220,12 +298,21 @@ export const registerSystemSettings = function() {
         scope: "world",
         config: false,
         type: String,
-        default: "gum.status_bindings"
+        default: ""
     });
 
     game.settings.register("gum", "showDecisiveDefenseBonusNotice", {
         name: "GUM.Settings.DefenseBonusNotice.Name",
         hint: "GUM.Settings.DefenseBonusNotice.Hint",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false
+    });
+
+    game.settings.register("gum", "showRapidFireHitCount", {
+        name: "GUM.Settings.RapidFireHits.Name",
+        hint: "GUM.Settings.RapidFireHits.Hint",
         scope: "world",
         config: true,
         type: Boolean,

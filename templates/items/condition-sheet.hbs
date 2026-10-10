@@ -109,7 +109,9 @@
                             <label class="effect-label">Modo da condição</label>
                             <select name="system.bindingMode">
                                 <option value="conditional" {{#if (eq system.bindingMode "conditional")}}selected{{/if}}>When (expressão)</option>
+                                {{#if showLegacyStatusBindingMode}}
                                 <option value="status-link" {{#if (eq system.bindingMode "status-link")}}selected{{/if}}>{{localize "GUM.StatusAutomations.BindingMode"}}</option>
+                                {{/if}}
                             </select>
                         </div>
                     </div>

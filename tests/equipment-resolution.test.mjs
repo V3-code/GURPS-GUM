@@ -7,6 +7,7 @@ import {
   describeEquipmentAttackChanges,
   describeEquipmentPropertyChanges,
   describeEquipmentUseChanges,
+  equipmentAvailableUses,
   equipmentLinkedReserve,
   equipmentReserveBalanceUpdate,
   normalizeEquipmentModifier,
@@ -81,6 +82,36 @@ test("charge exhaustion can consume one unit and reset the next unit", () => {
   const consumption = buildEquipmentConsumptionUpdate(equipment, resolveEquipment(equipment));
   assert.equal(consumption.exhausted, true);
   assert.deepEqual(consumption.updates, { "system.quantity": 1, "system.current_uses": 0 });
+});
+
+test("bulk consumption respects quantity mode", () => {
+  const equipment = { quantity: 6, uses_mode: "quantity", cost: 0, weight: 0 };
+  const consumption = buildEquipmentConsumptionUpdate(equipment, resolveEquipment(equipment), 4);
+  assert.equal(equipmentAvailableUses(equipment, resolveEquipment(equipment)), 6);
+  assert.equal(consumption.remaining, 2);
+  assert.deepEqual(consumption.updates, { "system.quantity": 2 });
+});
+
+test("bulk consumption respects charge mode without consuming stacked quantity", () => {
+  const equipment = { quantity: 3, max_uses: 5, current_uses: 1, uses_mode: "charges", consume_quantity_when_empty: false, cost: 0, weight: 0 };
+  const resolution = resolveEquipment(equipment);
+  assert.equal(equipmentAvailableUses(equipment, resolution), 4);
+  assert.deepEqual(buildEquipmentConsumptionUpdate(equipment, resolution, 4).updates, { "system.current_uses": 5 });
+  assert.equal(buildEquipmentConsumptionUpdate(equipment, resolution, 5).consumed, false);
+});
+
+test("bulk charge consumption crosses stack units only when configured", () => {
+  const equipment = { quantity: 3, max_uses: 5, current_uses: 1, uses_mode: "charges", consume_quantity_when_empty: true, cost: 0, weight: 0 };
+  const resolution = resolveEquipment(equipment);
+  assert.equal(equipmentAvailableUses(equipment, resolution), 14);
+  assert.deepEqual(buildEquipmentConsumptionUpdate(equipment, resolution, 6).updates, {
+    "system.quantity": 2,
+    "system.current_uses": 2
+  });
+  assert.deepEqual(buildEquipmentConsumptionUpdate(equipment, resolution, 14).updates, {
+    "system.quantity": 0,
+    "system.current_uses": 5
+  });
 });
 
 test("max-use modifiers increase remaining charges while preserving spent charges", () => {

@@ -182,18 +182,30 @@
                 {{/if}}
 
                 {{#if block.isBudget}}
+                {{#if block.isMoney}}
+                <div class="form-group">
+                  <label>{{localize "GUM.Template.MoneyMode"}}</label>
+                  <select class="block-field" data-block-id="{{block.id}}" data-field="moneyMode">
+                    <option value="deduct" {{#if block.isMoneyDeduct}}selected{{/if}}>{{localize "GUM.Template.MoneyModeDeduct"}}</option>
+                    <option value="available" {{#if block.isMoneyAvailable}}selected{{/if}}>{{localize "GUM.Template.MoneyModeAvailable"}}</option>
+                    <option value="shared" {{#if block.isMoneyShared}}selected{{/if}}>{{localize "GUM.Template.MoneyModeShared"}}</option>
+                  </select>
+                </div>
+
+                {{#if block.isMoneyShared}}
                 <div class="form-group">
                   <label>{{localize "GUM.Template.UseSharedBudget"}}</label>
-                  <input type="text" class="block-field" data-block-id="{{block.id}}" data-field="sharedBudgetKey" value="{{block.sharedBudgetKey}}" title="{{localize "GUM.Template.OwnBudget"}}">
+                  <input type="text" class="block-field" data-block-id="{{block.id}}" data-field="sharedBudgetKey" value="{{block.sharedBudgetKey}}" title="{{localize "GUM.Template.SharedBudgetHint"}}">
                 </div>
-                {{#unless block.sharedBudgetKey}}
+                {{else}}
                 <div class="form-group input-narrow">
-                  <label>{{#if block.isMoney}}{{localize "GUM.Template.MoneyAvailable"}}{{else}}{{localize "GUM.Template.PointsAvailable"}}{{/if}}</label>
+                  <label {{#if block.isMoneyDeduct}}title="{{localize 'GUM.Template.SpendingLimitHint'}}"{{/if}}>{{#if block.isMoneyDeduct}}{{localize "GUM.Template.SpendingLimit"}}{{else}}{{localize "GUM.Template.MoneyAvailable"}}{{/if}}</label>
                   <input type="number"
                          class="block-field"
                          data-block-id="{{block.id}}"
-                         data-field="{{block.budgetField}}"
-                         value="{{block.budgetValue}}"
+                         data-field="{{#if block.isMoneyDeduct}}spendingLimit{{else}}moneyAvailable{{/if}}"
+                         value="{{#if block.isMoneyDeduct}}{{block.spendingLimitValue}}{{else}}{{block.budgetValue}}{{/if}}"
+                         {{#if block.isMoneyDeduct}}placeholder="{{localize 'GUM.Template.Unlimited'}}"{{/if}}
                          min="0"/>
                 </div>
                 <div class="form-group">
@@ -205,20 +217,34 @@
                     <option value="unlimited" {{#if (eq block.budgetPolicy "unlimited")}}selected{{/if}}>{{localize "GUM.Template.BudgetUnlimited"}}</option>
                   </select>
                 </div>
-                {{#if block.isMoney}}
-                <div class="form-group">
-                  <label>{{localize "GUM.Template.MoneyAccounting"}}</label>
-                  <select class="block-field" data-block-id="{{block.id}}" data-field="moneyAccounting">
-                    <option value="budget" {{#unless (eq block.moneyAccounting "deduct")}}selected{{/unless}}>{{localize "GUM.Template.MoneyBudgetOnly"}}</option>
-                    <option value="deduct" {{#if (eq block.moneyAccounting "deduct")}}selected{{/if}}>{{localize "GUM.Template.MoneyDeduct"}}</option>
-                  </select>
-                </div>
+                {{#if block.isMoneyDeduct}}
                 <div class="form-group">
                   <label title="{{localize 'GUM.Template.PaymentSourceFilterHint'}}">{{localize "GUM.Template.PaymentSourceFilter"}}</label>
                   <input type="text" class="block-field" data-block-id="{{block.id}}" data-field="moneySourceFilter" value="{{block.moneySourceFilter}}" title="{{localize 'GUM.Template.PaymentSourceFilterHint'}}"/>
                 </div>
                 {{/if}}
+                {{/if}}
+                {{else}}
+                <div class="form-group">
+                  <label>{{localize "GUM.Template.UseSharedBudget"}}</label>
+                  <input type="text" class="block-field" data-block-id="{{block.id}}" data-field="sharedBudgetKey" value="{{block.sharedBudgetKey}}" title="{{localize "GUM.Template.OwnBudget"}}">
+                </div>
+                {{#unless block.sharedBudgetKey}}
+                <div class="form-group input-narrow">
+                  <label>{{localize "GUM.Template.PointsAvailable"}}</label>
+                  <input type="number" class="block-field" data-block-id="{{block.id}}" data-field="pointsAvailable" value="{{block.budgetValue}}" min="0"/>
+                </div>
+                <div class="form-group">
+                  <label>{{localize "GUM.Template.BudgetPolicy"}}</label>
+                  <select class="block-field" data-block-id="{{block.id}}" data-field="budgetPolicy">
+                    <option value="hard" {{#if (eq block.budgetPolicy "hard")}}selected{{/if}}>{{localize "GUM.Template.BudgetHard"}}</option>
+                    <option value="allow" {{#if (eq block.budgetPolicy "allow")}}selected{{/if}}>{{localize "GUM.Template.BudgetAllow"}}</option>
+                    <option value="gm" {{#if (eq block.budgetPolicy "gm")}}selected{{/if}}>{{localize "GUM.Template.BudgetGM"}}</option>
+                    <option value="unlimited" {{#if (eq block.budgetPolicy "unlimited")}}selected{{/if}}>{{localize "GUM.Template.BudgetUnlimited"}}</option>
+                  </select>
+                </div>
                 {{/unless}}
+                {{/if}}
                 {{/if}}
               </div>
 

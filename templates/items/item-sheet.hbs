@@ -65,6 +65,22 @@
                     </div>
                 </div>
             </div>
+
+            <div class="equipment-template-values-grid">
+                <div class="equipment-stat-card">
+                    <label class="equipment-stat-heading"><i class="fas fa-layer-group"></i><span>{{localize "GUM.Equipment.Label.Level"}}</span></label>
+                    <div class="equipment-stat-control">
+                        <input type="text" name="system.level" value="{{system.level}}"/>
+                    </div>
+                </div>
+
+                <div class="equipment-stat-card">
+                    <label class="equipment-stat-heading"><i class="fas fa-star"></i><span>{{localize "GUM.Equipment.Label.PointsValue"}}</span></label>
+                    <div class="equipment-stat-control">
+                        <input type="number" step="any" name="system.points" value="{{system.points}}"/>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="form-section skill-details-compact equipment-details-form">
@@ -295,6 +311,7 @@
                 <li class="effects-empty">{{localize "GUM.ItemEffects.NoEffect"}}</li>
             {{/each}}
             </ol>
+            {{#if canUseItemAttachmentDrops}}<div class="item-attachment-dropzone" data-attachment-type="effect" data-target-list="activationEffects.success"><i class="fas fa-arrow-down" aria-hidden="true"></i><span>{{localize "GUM.ItemAttachments.DropEffect"}}</span></div>{{/if}}
 
         </div>
 
@@ -338,6 +355,7 @@
                 <li class="effects-empty">{{localize "GUM.ItemEffects.NoEffect"}}</li>
             {{/each}}
             </ol>
+            {{#if canUseItemAttachmentDrops}}<div class="item-attachment-dropzone" data-attachment-type="effect" data-target-list="activationEffects.failure"><i class="fas fa-arrow-down" aria-hidden="true"></i><span>{{localize "GUM.ItemAttachments.DropEffect"}}</span></div>{{/if}}
         </div>
 
         {{!-- ================================================== --}}
@@ -387,6 +405,7 @@
                 <li class="effects-empty">{{localize "GUM.ItemEffects.NoEffect"}}</li>
             {{/each}}
             </ol>
+            {{#if canUseItemAttachmentDrops}}<div class="item-attachment-dropzone" data-attachment-type="effect" data-target-list="onDamageEffects"><i class="fas fa-arrow-down" aria-hidden="true"></i><span>{{localize "GUM.ItemAttachments.DropEffect"}}</span></div>{{/if}}
         </div>
 
         {{!-- ================================================== --}}
@@ -421,6 +440,7 @@
                 <li class="effects-empty">{{localize "GUM.ItemEffects.NoEffect"}}</li>
             {{/each}}
  </ol>
+ {{#if canUseItemAttachmentDrops}}<div class="item-attachment-dropzone" data-attachment-type="effect" data-target-list="passiveEffects"><i class="fas fa-arrow-down" aria-hidden="true"></i><span>{{localize "GUM.ItemAttachments.DropEffect"}}</span></div>{{/if}}
  </div>
 
         {{!-- ================================================== --}}
@@ -456,6 +476,7 @@
                     {{else}}<li class="effects-empty">{{localize "GUM.ItemEffects.NoGroupEffect"}}</li>{{/each}}
                 </ol>
                 <a class="effects-add-button add-effect" data-target-list="stateEffectGroups.{{group.id}}.effects"><i class="fas fa-plus"></i> {{localize "GUM.ItemEffects.AddEffect"}}</a>
+                {{#if @root.canUseItemAttachmentDrops}}<div class="item-attachment-dropzone item-attachment-dropzone--inline" data-attachment-type="effect" data-target-list="stateEffectGroups.{{group.id}}.effects"><i class="fas fa-arrow-down" aria-hidden="true"></i><span>{{localize "GUM.ItemAttachments.DropEffect"}}</span></div>{{/if}}
             </section>
             {{else}}<p class="effects-empty">{{localize "GUM.ItemEffects.NoGroups"}}</p>{{/each}}
         </div>
@@ -508,6 +529,7 @@
                 <li class="effects-empty">{{localize "GUM.ItemEffects.NoEffect"}}</li>
             {{/each}}
             </ol>
+            {{#if canUseItemAttachmentDrops}}<div class="item-attachment-dropzone" data-attachment-type="effect" data-target-list="useEventEffects"><i class="fas fa-arrow-down" aria-hidden="true"></i><span>{{localize "GUM.ItemAttachments.DropEffect"}}</span></div>{{/if}}
         </div>
 
         {{!-- ================================================== --}}
@@ -2632,6 +2654,7 @@
             <li class="eqpmod-empty">Nenhum modificador aplicado.</li>
           {{/each}}
         </ol>
+        {{#if canUseItemAttachmentDrops}}<div class="item-attachment-dropzone" data-attachment-type="modifier"><i class="fas fa-arrow-down" aria-hidden="true"></i><span>{{localize "GUM.ItemAttachments.DropModifier"}}</span></div>{{/if}}
 
       </div>
     </div>
@@ -2709,6 +2732,7 @@
         <li class="eqpmod-empty">{{localize "GUM.Equipment.Modifiers.None"}}</li>
       {{/each}}
     </ol>
+    {{#if canUseItemAttachmentDrops}}<div class="item-attachment-dropzone" data-attachment-type="eqp-modifier"><i class="fas fa-arrow-down" aria-hidden="true"></i><span>{{localize "GUM.ItemAttachments.DropEquipmentModifier"}}</span></div>{{/if}}
 
     <section class="equipment-resolution-panel">
       <header class="equipment-resolution-header"><i class="fas fa-calculator"></i><span>{{localize "GUM.Equipment.Modifiers.Result"}}</span></header>

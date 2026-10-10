@@ -771,23 +771,52 @@ export function equipmentReserveBalanceUpdate(item, available, resolution = null
   return { "system.current_uses": reserve.max - current };
 }
 
-/** Return persistence updates for one successful use without mutating the item. */
-export function buildEquipmentConsumptionUpdate(equipment = {}, resolution = null) {
+/** Return how many uses are currently available under the equipment's configured consumption mode. */
+export function equipmentAvailableUses(equipment = {}, resolution = null) {
   const quantity = Math.max(0, number(equipment.quantity));
   const uses = resolution?.uses || resolveEquipmentUses(equipment, resolution?.properties || {});
-  if (quantity <= 0) return { consumed: false, reason: "empty_quantity", updates: {}, uses };
-  if (uses.mode !== "charges") {
-    return { consumed: true, mode: "quantity", updates: { "system.quantity": Math.max(0, quantity - 1) }, uses };
-  }
-  if (uses.max <= 0) return { consumed: false, reason: "empty_charges", updates: {}, uses };
-  if (uses.remaining <= 0) return { consumed: false, reason: "empty_charges", updates: {}, uses };
+  if (quantity <= 0) return 0;
+  if (uses.mode !== "charges") return quantity;
+  if (uses.max <= 0) return 0;
+  if (!uses.consumeQuantityWhenEmpty) return uses.remaining;
+  return uses.remaining + (Math.max(0, quantity - 1) * uses.max);
+}
 
-  const exhausted = uses.remaining === 1;
-  if (exhausted && uses.consumeQuantityWhenEmpty) {
-    const nextQuantity = Math.max(0, quantity - 1);
-    return { consumed: true, mode: "charges", exhausted: true, updates: { "system.quantity": nextQuantity, "system.current_uses": nextQuantity > 0 ? 0 : uses.max }, uses };
+/** Return persistence updates for one or more successful uses without mutating the item. */
+export function buildEquipmentConsumptionUpdate(equipment = {}, resolution = null, amount = 1) {
+  const quantity = Math.max(0, number(equipment.quantity));
+  const uses = resolution?.uses || resolveEquipmentUses(equipment, resolution?.properties || {});
+  const requested = Number(amount);
+  if (!Number.isSafeInteger(requested) || requested < 1) return { consumed: false, reason: "invalid_amount", updates: {}, uses };
+  if (quantity <= 0) return { consumed: false, reason: "empty_quantity", updates: {}, uses };
+  const available = equipmentAvailableUses(equipment, { ...resolution, uses });
+  if (requested > available) {
+    return { consumed: false, reason: uses.mode === "charges" ? "empty_charges" : "empty_quantity", updates: {}, uses, available };
   }
-  return { consumed: true, mode: "charges", exhausted, updates: { "system.current_uses": Math.min(uses.max, uses.spent + 1) }, uses };
+  if (uses.mode !== "charges") {
+    return { consumed: true, mode: "quantity", amount: requested, available, remaining: available - requested,
+      updates: { "system.quantity": Math.max(0, quantity - requested) }, uses };
+  }
+  if (uses.max <= 0 || available <= 0) return { consumed: false, reason: "empty_charges", updates: {}, uses, available };
+
+  if (!uses.consumeQuantityWhenEmpty) {
+    const nextSpent = Math.min(uses.max, uses.spent + requested);
+    return { consumed: true, mode: "charges", amount: requested, available, remaining: available - requested,
+      exhausted: nextSpent >= uses.max, updates: { "system.current_uses": nextSpent }, uses };
+  }
+
+  if (requested < uses.remaining) {
+    return { consumed: true, mode: "charges", amount: requested, available, remaining: available - requested,
+      exhausted: false, updates: { "system.current_uses": uses.spent + requested }, uses };
+  }
+
+  const afterCurrent = requested - uses.remaining;
+  const fullAdditionalUnits = Math.floor(afterCurrent / uses.max);
+  const partialSpent = afterCurrent % uses.max;
+  const nextQuantity = Math.max(0, quantity - 1 - fullAdditionalUnits);
+  const nextSpent = nextQuantity > 0 ? partialSpent : uses.max;
+  return { consumed: true, mode: "charges", amount: requested, available, remaining: available - requested,
+    exhausted: true, updates: { "system.quantity": nextQuantity, "system.current_uses": nextSpent }, uses };
 }
 
 export function isGrantedEffectLifecycleActive(itemSystem = {}, grant = {}) {

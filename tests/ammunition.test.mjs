@@ -1,6 +1,44 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { availableAmmunition, applyAmmunition, ammunitionRollModifier, reconcileAmmunitionModifier } from "../module/utils/ammunition.mjs";
+import { ammunitionAvailableUses, ammunitionLinkCandidates, availableAmmunition, applyAmmunition, ammunitionRollModifier, calculateRapidFireHits, numericRateOfFire, reconcileAmmunitionModifier } from "../module/utils/ammunition.mjs";
+
+test("an equipment item can link itself as ammunition for its own ranged attack", () => {
+    const hybrid = { id: "thrown-weapon", system: { quantity: 3, ammunition: { enabled: true } } };
+    const ordinary = { id: "ordinary", system: { quantity: 1, ammunition: { enabled: false } } };
+    const actor = { items: new Map([[hybrid.id, hybrid], [ordinary.id, ordinary]]) };
+
+    assert.deepEqual(ammunitionLinkCandidates(actor).map(item => item.id), [hybrid.id]);
+    assert.deepEqual(availableAmmunition(actor, { ammunition_ids: [hybrid.id] }).map(item => item.id), [hybrid.id]);
+});
+
+test("self-linked ammunition resolves the persisted charge mode instead of stale prepared data", () => {
+    const hybrid = {
+        id: "rechargeable-weapon",
+        _source: { system: { quantity: 1, uses_mode: "charges", max_uses: 8, current_uses: 3, ammunition: { enabled: true } } },
+        system: {
+            ammunition: { enabled: true },
+            equipmentResolution: { uses: { mode: "quantity", max: 1, remaining: 1 } }
+        }
+    };
+
+    assert.equal(ammunitionAvailableUses(hybrid), 5);
+});
+
+test("rapid-fire hits use full recoil multiples and never exceed shots fired", () => {
+    assert.deepEqual(calculateRapidFireHits({ isSuccess: true, margin: 5, recoil: 2, shotsFired: 4 }), {
+        shotsFired: 4, recoil: 2, hits: 3, isCriticalSuccess: false
+    });
+    assert.equal(calculateRapidFireHits({ isSuccess: true, margin: 20, recoil: 2, shotsFired: 4 }).hits, 4);
+    assert.equal(calculateRapidFireHits({ isSuccess: false, margin: 8, recoil: 2, shotsFired: 4 }).hits, 0);
+    assert.equal(calculateRapidFireHits({ isSuccess: true, margin: 8, recoil: 2, shotsFired: 1 }), null);
+});
+
+test("critical rapid fire hits with every shot and rate of fire accepts only simple positive integers", () => {
+    assert.equal(calculateRapidFireHits({ isSuccess: true, isCriticalSuccess: true, margin: 0, recoil: 3, shotsFired: 6 }).hits, 6);
+    assert.equal(numericRateOfFire("6"), 6);
+    assert.equal(numericRateOfFire("3x9"), null);
+    assert.equal(numericRateOfFire("0"), null);
+});
 
 test("only linked, available ammunition can be selected", () => {
     const items = new Map([

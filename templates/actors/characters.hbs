@@ -1340,6 +1340,7 @@
                         <div class="card-details equipment-stats">
                             <span class="equip-stat-tag">x{{this.system.quantity}}</span>
                             <span class="equip-stat-tag">{{this.system.total_weight}} kg</span>
+                            {{#if (eq this.system.equipmentResolution.uses.mode "charges")}}<span class="equip-stat-tag" title="{{localize 'GUM.Equipment.Label.Remaining'}}">{{this.system.effectiveUsesRemaining}}/{{this.system.effectiveUsesMax}} {{localize "GUM.Equipment.Label.Charges"}}</span>{{/if}}
                         </div>
                         <div class="item-controls">
                             <a class="item-control item-remove-from-container" title="{{localize 'GUM.Inventory.RemoveFromContainer'}}"><i class="fas fa-sign-out-alt"></i></a>
@@ -1386,6 +1387,7 @@
                     <div class="card-details equipment-stats">
                         <span class="equip-stat-tag">x{{this.system.quantity}}</span>
                         <span class="equip-stat-tag">{{this.system.total_weight}} kg</span>
+                        {{#if (eq this.system.equipmentResolution.uses.mode "charges")}}<span class="equip-stat-tag" title="{{localize 'GUM.Equipment.Label.Remaining'}}">{{this.system.effectiveUsesRemaining}}/{{this.system.effectiveUsesMax}} {{localize "GUM.Equipment.Label.Charges"}}</span>{{/if}}
                     </div>
                     <div class="item-controls">
                         <a class="item-control item-toggle-equip" title="{{localize 'GUM.Inventory.Equip'}}"><i class="fas fa-tshirt" style="opacity: 0.3;"></i></a>
@@ -1450,6 +1452,7 @@
                         <div class="card-details equipment-stats">
                             <span class="equip-stat-tag">x{{this.system.quantity}}</span>
                             <span class="equip-stat-tag">{{this.system.total_weight}} kg</span>
+                            {{#if (eq this.system.equipmentResolution.uses.mode "charges")}}<span class="equip-stat-tag" title="{{localize 'GUM.Equipment.Label.Remaining'}}">{{this.system.effectiveUsesRemaining}}/{{this.system.effectiveUsesMax}} {{localize "GUM.Equipment.Label.Charges"}}</span>{{/if}}
                         </div>
                         <div class="item-controls">
                             <a class="item-control item-remove-from-container" title="{{localize 'GUM.Inventory.RemoveFromContainer'}}"><i class="fas fa-sign-out-alt"></i></a>
@@ -1493,6 +1496,7 @@
                     <div class="card-details equipment-stats">
                         <span class="equip-stat-tag">x{{this.system.quantity}}</span>
                         <span class="equip-stat-tag">{{this.system.total_weight}} kg</span>
+                        {{#if (eq this.system.equipmentResolution.uses.mode "charges")}}<span class="equip-stat-tag" title="{{localize 'GUM.Equipment.Label.Remaining'}}">{{this.system.effectiveUsesRemaining}}/{{this.system.effectiveUsesMax}} {{localize "GUM.Equipment.Label.Charges"}}</span>{{/if}}
                     </div>
                     <div class="item-controls">
                         <a class="item-control item-toggle-equip" title="{{localize 'GUM.Inventory.DirectEquip'}}"><i class="fas fa-tshirt" style="opacity: 0.3;"></i></a>
@@ -1557,6 +1561,7 @@
                         <div class="card-details equipment-stats">
                             <span class="equip-stat-tag">x{{this.system.quantity}}</span>
                             <span class="equip-stat-tag">{{this.system.total_weight}} kg</span>
+                            {{#if (eq this.system.equipmentResolution.uses.mode "charges")}}<span class="equip-stat-tag" title="{{localize 'GUM.Equipment.Label.Remaining'}}">{{this.system.effectiveUsesRemaining}}/{{this.system.effectiveUsesMax}} {{localize "GUM.Equipment.Label.Charges"}}</span>{{/if}}
                         </div>
                         <div class="item-controls">
                             <a class="item-control item-remove-from-container" title="{{localize 'GUM.Inventory.RemoveFromContainer'}}"><i class="fas fa-sign-out-alt"></i></a>

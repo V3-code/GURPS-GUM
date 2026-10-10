@@ -61,7 +61,7 @@ export const CONTENT_SOURCE_PURPOSES = Object.freeze({
     id: "statusBindings",
     label: "GUM.ContentSources.Purposes.StatusAutomations.Name",
     description: "GUM.ContentSources.Purposes.StatusAutomations.Description",
-    defaults: Object.freeze(["gum.status_bindings"]),
+    defaults: Object.freeze([]),
     documentName: "Item",
     itemTypes: Object.freeze(["condition"])
   }),

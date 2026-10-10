@@ -128,18 +128,38 @@ test('template groups total canonical child costs instead of cached GCS totals',
 test('GCS template import includes spell and equipment roots with their own costs', async () => {
   context.game.model.Item.template = { blocks: [] };
   context.game.model.Item.spell = { points: 1, predefined: {} };
-  context.game.model.Item.equipment = { cost: 0 };
+  context.game.model.Item.equipment = { cost: 0, level: '', points: 0 };
   context.resolveHybridSourceItem = async () => ({ item: null });
   const data = await context.parseGCSTemplate({
     profile: { name: 'Adventurer' },
     spells: [{ name: 'Light', points: 2 }],
-    equipment: [{ description: 'Rope', value: '15', quantity: 2 }]
+    equipment: [{ description: 'Rope', value: '15', quantity: 2, level: 3, points: 4 }]
   }, 'test.gct');
   const entries = data.system.blocks.flatMap(block => block.contents);
   assert.deepEqual(Array.from(entries, entry => entry.itemType), ['spell', 'equipment']);
   assert.equal(entries[1].cost, 15);
   assert.equal(entries[1].quantity, 2);
+  assert.equal(entries[1].level, '3');
+  assert.equal(entries[1].pointsCost, 4);
+  assert.equal(entries[1].quantityLocked, true);
+  assert.equal(entries[1].inlineItem.system.level, '3');
+  assert.equal(entries[1].inlineItem.system.points, 4);
   assert.equal(data.name, 'Adventurer');
+});
+
+test('GCS guaranteed and selected attribute values are imported as fixed', async () => {
+  context.game.model.Item.template = { blocks: [] };
+  context.resolveHybridSourceItem = async () => ({ item: null });
+  const data = await context.parseGCSTemplate({ traits: [
+    { name: 'Increase Strength 2', levels: 2, base_points: 20 },
+    { name: 'Choice', template_picker: { type: 'count', qualifier: { qualifier: 1 } }, children: [
+      { name: 'Increase Dexterity 1', levels: 1, base_points: 20 }
+    ] }
+  ] }, 'attributes.gct');
+  const guaranteed = data.system.blocks.find(block => block.type === 'guaranteed').contents[0];
+  const selected = data.system.blocks.find(block => block.type === 'selection').contents[0];
+  assert.deepEqual(Array.from(guaranteed.lockedAttributes), ['st']);
+  assert.deepEqual(Array.from(selected.lockedAttributes), ['dx']);
 });
 
 test('GCS template import preserves a package picker and direct trait roots', async () => {

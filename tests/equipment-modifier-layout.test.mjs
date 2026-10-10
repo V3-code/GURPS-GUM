@@ -131,6 +131,7 @@ test("equipment uses distinguish legacy quantity consumption from explicit charg
   assert.match(main, /effectiveUsesRemaining = resolution\.uses\.remaining/);
   assert.match(actorSheet, /buildEquipmentConsumptionUpdate\(item\.system, resolution\)/);
   assert.match(actorTemplate, /effectiveUsesRemaining/);
+  assert.ok((actorTemplate.match(/equipmentResolution\.uses\.mode "charges"/g) || []).length >= 6);
 });
 
 test("equipment Defense Bonus can be activated without adding explanatory text below trait grouping", () => {

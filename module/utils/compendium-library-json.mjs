@@ -38,6 +38,37 @@ export function getCompendiumFolderParentId(folder) {
   return folder?.folder?.id ?? folder?.folder ?? null;
 }
 
+/**
+ * Summarize how a portable compendium import will affect an existing pack.
+ * Documents are synchronized by Foundry ID; matching names deliberately do not
+ * replace one another because compendiums may legitimately contain homonyms.
+ */
+export function previewCompendiumJsonSynchronization(existingDocuments, incomingDocuments) {
+  const existing = Array.from(existingDocuments ?? []);
+  const incoming = Array.from(incomingDocuments ?? []);
+  const existingIds = new Set(existing.map(document => document?.id ?? document?._id).filter(Boolean));
+  const existingNames = new Set(existing
+    .map(document => String(document?.name || "").trim().toLocaleLowerCase())
+    .filter(Boolean));
+
+  let updates = 0;
+  let creates = 0;
+  let sameNameDifferentId = 0;
+
+  for (const document of incoming) {
+    const id = document?._id ?? document?.id;
+    if (id && existingIds.has(id)) {
+      updates += 1;
+      continue;
+    }
+    creates += 1;
+    const name = String(document?.name || "").trim().toLocaleLowerCase();
+    if (name && existingNames.has(name)) sameNameDifferentId += 1;
+  }
+
+  return { updates, creates, sameNameDifferentId };
+}
+
 /** Sort parents before children, while safely handling malformed cyclic references. */
 export function sortCompendiumFoldersParentFirst(folders) {
   const normalizedFolders = folders ?? [];

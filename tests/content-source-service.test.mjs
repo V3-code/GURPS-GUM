@@ -11,7 +11,7 @@ test("uses only the mechanical GUM sources by default and preserves empty select
   assert.deepEqual(getConfiguredSourceIds({}, "effects"), ["gum.efeitos"]);
   assert.deepEqual(getConfiguredSourceIds({}, "conditions"), ["gum.conditions"]);
   assert.deepEqual(getConfiguredSourceIds({}, "passiveConditions"), ["gum.regras"]);
-  assert.deepEqual(getConfiguredSourceIds({}, "statusBindings"), ["gum.status_bindings"]);
+  assert.deepEqual(getConfiguredSourceIds({}, "statusBindings"), []);
   assert.deepEqual(getConfiguredSourceIds({}, "modifiers"), []);
   assert.deepEqual(getConfiguredSourceIds({}, "templates"), []);
   assert.deepEqual(getConfiguredSourceIds({}, "equipmentModifiers"), []);
