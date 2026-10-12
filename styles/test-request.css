@@ -112,6 +112,9 @@
 .request-card-kicker { display: block; color: #836a43; font-size: .58rem; font-weight: 900; letter-spacing: .8px; text-transform: uppercase; }
 .gum-test-request h3 { margin: 1px 0 0; border: 0; color: #2d261b; font-size: 1.05rem; line-height: 1.1; }
 .gum-test-request header p { margin: 4px 0 0; color: #665d4f; font-size: .74rem; text-align: justify;}
+.gum-test-request .gum-request-description { margin: 0; padding: 9px 11px; border-bottom: 1px solid rgba(94,70,33,.16); color: #443d32; font-size: .74rem; line-height: 1.4; overflow-wrap: anywhere; }
+.gum-test-request .gum-request-description > :first-child { margin-top: 0; }
+.gum-test-request .gum-request-description > :last-child { margin-bottom: 0; }
 .request-summary { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 10px 2px; }
 .request-summary-pill { padding: 3px 6px; border: 1px solid rgba(94,70,33,.18); border-radius: 10px; color: #5c4a2f; background: rgba(255,255,255,.35); font-size: .62rem; font-weight: 700; }
 .request-summary-pill.purpose { color: #465a5e; }.request-summary-pill.modifier { color: #743b32; }
@@ -141,6 +144,12 @@
 .request-target-row button { width: calc(100% - 14px); margin: 0 7px 7px; min-height: 28px; border: 1px solid rgba(94,67,25,.4); border-radius: 4px; color: #4f3a1c; background: rgba(197,160,91,.15); font-size: .68rem; font-weight: 800; }
 .request-target-row button:hover { background: rgba(197,160,91,.3); }
 .request-target-row button:disabled { opacity:.65; cursor:default; }
+.gum-request-result-anchor { display: none; }
+.chat-message .gum-chat-roll-request,
+.chat-message .gum-chat-roll-request .request-targets,
+.chat-message .gum-chat-roll-request .request-target-row { height: auto !important; min-height: 0; }
+.chat-message .gum-chat-roll-request .request-target-row { display: flex; flex-direction: column; }
+.chat-message .gum-chat-roll-request .gum-request-target-summary { width: 100%; box-sizing: border-box; }
 .gum-request-inline-result { margin:0 7px 7px; padding:7px; border-top:1px solid rgba(88,65,31,.18); border-radius:4px; background:rgba(76,57,29,.06); }
 .gum-request-result-block { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 8px; border-radius:6px; color:#fff; font-size:.68rem; font-weight:800; letter-spacing:.02em; text-transform:uppercase; box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 2px 4px rgba(32,20,8,.16); }
 .gum-request-result-block.success,.gum-request-result-block.critical-success { background:#235c36; }

@@ -6,8 +6,8 @@ test("prepares namespaced folders and collision-free selection keys across sourc
   const documents = [
     {
       id: "same-id",
-      uuid: "Compendium.gum.conditions.Item.same-id",
-      pack: "gum.conditions",
+      uuid: "Compendium.world.base-conditions.Item.same-id",
+      pack: "world.base-conditions",
       name: "Zeta",
       type: "condition",
       system: {},
@@ -28,7 +28,7 @@ test("prepares namespaced folders and collision-free selection keys across sourc
   const service = {
     getDocuments: async () => ({ documents, invalidSources: [{ id: "missing.conditions", status: "missing" }] }),
     resolveSources: () => [
-      { id: "gum.conditions", pack: { title: "[GUM] Condições", folders: [{ id: "shared-folder", name: "Básicas" }] } },
+      { id: "world.base-conditions", pack: { title: "Condições Básicas", folders: [{ id: "shared-folder", name: "Básicas" }] } },
       { id: "world.conditions", pack: { title: "Condições da Campanha", folders: [{ id: "shared-folder", name: "Campanha" }] } }
     ]
   };
@@ -58,14 +58,14 @@ test("prepares namespaced folders and collision-free selection keys across sourc
     {
       name: "Zeta",
       selectionKey: "conditionSelection-0",
-      folderId: "gum.conditions:shared-folder",
-      sourceLabel: "[GUM] Condições",
+      folderId: "world.base-conditions:shared-folder",
+      sourceLabel: "Condições Básicas",
       folderLabel: "Básicas",
       displayImg: null
     }
   ]);
   assert.deepEqual(result.folders.map(folder => folder.id), [
-    "gum.conditions:shared-folder",
+    "world.base-conditions:shared-folder",
     "world.conditions:shared-folder"
   ]);
   assert.deepEqual(result.invalidSources, [{ id: "missing.conditions", status: "missing" }]);

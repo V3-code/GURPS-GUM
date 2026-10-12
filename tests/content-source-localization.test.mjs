@@ -22,14 +22,9 @@ test("content source names and descriptions are available in every supported lan
   }
 });
 
-test("the three distributed pack names are available in every supported language", () => {
+test("the system does not distribute content compendiums", () => {
   const manifest = JSON.parse(fs.readFileSync("system.json", "utf8"));
-  assert.equal(manifest.packs.length, 3);
-  for (const pack of manifest.packs) {
-    for (const language of languages) {
-      assert.ok(catalogs[language][pack.label], `${pack.label} is missing from ${language}`);
-    }
-  }
+  assert.deepEqual(manifest.packs, []);
 });
 
 test("status automation is the localized public name while stable binding IDs remain unchanged", () => {

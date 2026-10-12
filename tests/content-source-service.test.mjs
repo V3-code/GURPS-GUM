@@ -7,10 +7,10 @@ import {
   normalizeContentSourceSettings
 } from "../module/services/content-source-service.mjs";
 
-test("uses only the mechanical GUM sources by default and preserves empty selections", () => {
-  assert.deepEqual(getConfiguredSourceIds({}, "effects"), ["gum.efeitos"]);
-  assert.deepEqual(getConfiguredSourceIds({}, "conditions"), ["gum.conditions"]);
-  assert.deepEqual(getConfiguredSourceIds({}, "passiveConditions"), ["gum.regras"]);
+test("uses no bundled content sources by default and preserves empty selections", () => {
+  assert.deepEqual(getConfiguredSourceIds({}, "effects"), []);
+  assert.deepEqual(getConfiguredSourceIds({}, "conditions"), []);
+  assert.deepEqual(getConfiguredSourceIds({}, "passiveConditions"), []);
   assert.deepEqual(getConfiguredSourceIds({}, "statusBindings"), []);
   assert.deepEqual(getConfiguredSourceIds({}, "modifiers"), []);
   assert.deepEqual(getConfiguredSourceIds({}, "templates"), []);
@@ -191,13 +191,13 @@ test("loads only conditions from condition sources", async () => {
 
 test("normalizes source lists without changing their priority", () => {
   assert.deepEqual(normalizeContentSourceSettings({
-    effects: [" world.effects ", "gum.efeitos", "world.effects", ""]
-  }), { effects: ["world.effects", "gum.efeitos"] });
+    effects: [" world.effects ", "world.base-effects", "world.effects", ""]
+  }), { effects: ["world.effects", "world.base-effects"] });
 });
 
 test("deduplicates copied documents by their original source UUID", () => {
   const documents = [
-    { uuid: "Compendium.gum.efeitos.Item.a", flags: { core: { sourceId: "shared" } } },
+    { uuid: "Compendium.world.base-effects.Item.a", flags: { core: { sourceId: "shared" } } },
     { uuid: "Compendium.world.effects.Item.b", flags: { core: { sourceId: "shared" } } },
     { uuid: "Compendium.world.effects.Item.c" }
   ];
@@ -205,43 +205,43 @@ test("deduplicates copied documents by their original source UUID", () => {
 });
 
 test("loads valid effect documents in configured priority and reports missing sources", async () => {
-  const officialEffect = { type: "effect", uuid: "Compendium.gum.efeitos.Item.a" };
+  const baseEffect = { type: "effect", uuid: "Compendium.world.base-effects.Item.a" };
   const campaignEffect = { type: "effect", uuid: "Compendium.world.effects.Item.b" };
   const wrongType = { type: "condition", uuid: "Compendium.world.effects.Item.c" };
   const packs = new Map([
-    ["gum.efeitos", { documentName: "Item", getDocuments: async () => [officialEffect] }],
+    ["world.base-effects", { documentName: "Item", getDocuments: async () => [baseEffect] }],
     ["world.effects", { documentName: "Item", getDocuments: async () => [campaignEffect, wrongType] }]
   ]);
   const foundryGame = {
     packs,
     settings: {
-      get: () => ({ effects: ["world.effects", "missing.effects", "gum.efeitos"] }),
+      get: () => ({ effects: ["world.effects", "missing.effects", "world.base-effects"] }),
       set: async () => undefined
     }
   };
 
   const result = await new ContentSourceService(foundryGame).getDocuments("effects");
-  assert.deepEqual(result.documents, [campaignEffect, officialEffect]);
+  assert.deepEqual(result.documents, [campaignEffect, baseEffect]);
   assert.deepEqual(result.invalidSources, [{ id: "missing.effects", status: "missing" }]);
 });
 
 test("loads status bindings from multiple sources in configured priority", async () => {
   const campaignRule = { type: "condition", uuid: "Compendium.world.bindings.Item.a" };
-  const officialRule = { type: "condition", uuid: "Compendium.gum.status_bindings.Item.b" };
+  const sharedRule = { type: "condition", uuid: "Compendium.world.shared-bindings.Item.b" };
   const unrelatedItem = { type: "effect", uuid: "Compendium.world.bindings.Item.c" };
   const service = new ContentSourceService({
     packs: new Map([
       ["world.bindings", { documentName: "Item", getDocuments: async () => [campaignRule, unrelatedItem] }],
-      ["gum.status_bindings", { documentName: "Item", getDocuments: async () => [officialRule] }]
+      ["world.shared-bindings", { documentName: "Item", getDocuments: async () => [sharedRule] }]
     ]),
     settings: {
-      get: () => ({ statusBindings: ["world.bindings", "gum.status_bindings"] }),
+      get: () => ({ statusBindings: ["world.bindings", "world.shared-bindings"] }),
       set: async () => undefined
     }
   });
 
   assert.deepEqual(await service.getDocuments("statusBindings"), {
-    documents: [campaignRule, officialRule],
+    documents: [campaignRule, sharedRule],
     invalidSources: []
   });
 });

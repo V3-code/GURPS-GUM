@@ -1,4 +1,4 @@
-# Arquivos de execução dos compêndios LevelDB; os diretórios vazios são mantidos por .gitkeep.
+# Resíduos locais LevelDB dos compêndios internos descontinuados.
 packs/**/LOCK
 packs/**/*.ldb
 packs/**/*.log

@@ -8,47 +8,35 @@ const removedPacks = [
   "disadvantages",
   "equipment",
   "eqp_modifiers",
+  "efeitos",
   "gatilhos",
   "gm_modifiers",
   "macros",
   "modifiers",
   "powers",
+  "conditions",
+  "regras",
   "skills",
   "spells",
   "templates",
   "status_bindings"
 ];
-const functionalPacks = [
-  "efeitos",
-  "conditions",
-  "regras"
-];
-
 test("content-only packs are no longer distributed by the system", () => {
   const manifest = JSON.parse(fs.readFileSync("system.json", "utf8"));
   const declaredNames = new Set(manifest.packs.map(pack => pack.name));
 
   for (const packName of removedPacks) {
     assert.equal(declaredNames.has(packName), false, `${packName} should not be declared`);
-    if (packName === "status_bindings") {
-      assert.equal(fs.existsSync(`packs/${packName}/.gitkeep`), false, `${packName} should not contain distributed files`);
-    } else {
-      assert.equal(fs.existsSync(`packs/${packName}`), false, `${packName} directory should not exist`);
-    }
+    assert.equal(fs.existsSync(`packs/${packName}/.gitkeep`), false, `${packName} should not contain distributed files`);
   }
 });
 
-test("only core mechanical packs remain declared and distributed", () => {
+test("the system does not declare or distribute compendium packs", () => {
   const manifest = JSON.parse(fs.readFileSync("system.json", "utf8"));
-  const declaredNames = new Set(manifest.packs.map(pack => pack.name));
-
-  for (const packName of functionalPacks) {
-    assert.equal(declaredNames.has(packName), true, `${packName} should remain declared`);
-    assert.equal(fs.existsSync(`packs/${packName}`), true, `${packName} directory should remain available`);
-  }
+  assert.deepEqual(manifest.packs, []);
 });
 
-test("distributed pack labels use localization keys", () => {
+test("the manifest contains no obsolete pack labels", () => {
   const manifest = JSON.parse(fs.readFileSync("system.json", "utf8"));
-  for (const pack of manifest.packs) assert.match(pack.label, /^GUM\.Packs\./);
+  assert.equal(manifest.packs.some(pack => /^GUM\.Packs\./.test(pack.label)), false);
 });

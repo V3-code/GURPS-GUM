@@ -39,8 +39,15 @@ test("favorite spells and powers keep rolls, details, menus, and drag support", 
 test("favorite cards use two columns and expanded magic cards span the group", () => {
   assert.match(styles, /combat-favorites-root-content > \.attack-group-details > \.group-content \{\s*display:grid;\s*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(styles, /combat-favorite-card\.is-expanded \{ grid-column:1 \/ -1; \}/);
-  assert.match(styles, /combat-favorite-card__main \{ width:100%; grid-template-columns:28px minmax\(0,1fr\) 30px minmax\(0,58px\) 16px 16px; \}/);
+  assert.match(styles, /combat-favorite-card__main \{ width:100%; grid-template-columns:28px minmax\(0,1fr\) 30px minmax\(0,58px\) 16px auto; \}/);
   assert.match(styles, /max-width:760px[^}]+combat-favorites-root-content > \.attack-group-details > \.group-content \{ grid-template-columns:1fr;/);
+});
+
+test("effect-use switches receive intrinsic space inside every favorite card", () => {
+  assert.match(actorSheet, /controls\.prepend\(cluster\)/);
+  assert.match(styles, /combat-favorite-card:not\(\.combat-favorite-card--magic\)[\s\S]*?grid-template-columns:28px minmax\(0,1fr\) 32px 16px auto/);
+  assert.match(styles, /combat-favorite-card__controls \{ display:flex; width:auto; min-width:16px; height:24px; gap:3px;/);
+  assert.match(styles, /combat-favorite-card__controls \.state-effect-automation \{ margin-right:0; \}/);
 });
 
 test("combat actions and favorites use a subtle persistent view switcher", () => {

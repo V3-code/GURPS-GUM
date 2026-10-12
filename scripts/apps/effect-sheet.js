@@ -9,6 +9,7 @@ import {
     ATTRIBUTE_CHAT_VISIBILITIES,
     normalizeAttributeChatVisibility
 } from "../../module/utils/effect-chat-visibility.mjs";
+import { buildStatusCatalog, resolveStatusCatalogEntry } from "../../module/utils/status-catalog.mjs";
 
 
 const { ItemSheet } = foundry.appv1.sheets;
@@ -178,7 +179,7 @@ const DEFAULT_EFFECT_ACTION = {
     source: "",
     hidden: false,
     exists_policy: "ignore",
-    statusId: "dead"
+    statusId: ""
 };
 
 const normalizeRollModifierEntryValue = (value) => {
@@ -319,9 +320,7 @@ export class EffectSheet extends ItemSheet {
             { id: "stack", label: "Acumular normalmente" },
             { id: "unique", label: "Não acumular entre condições" }
         ];
-        context.statusEffects = CONFIG.statusEffects
-            .map(s => ({ id: s.id, label: s.name }))
-            .sort((a, b) => a.label.localeCompare(b.label, "pt-BR", { sensitivity: "base" }));
+        context.statusEffects = buildStatusCatalog(CONFIG.statusEffects);
         context.macros = game.macros.map(m => m.name);
         context.enrichedChatDescription = await TextEditorImpl.enrichHTML(this.item.system.chat_description || "", { async: true });
         context.enrichedDescription = await TextEditorImpl.enrichHTML(this.item.system.description || "", { async: true });
@@ -385,6 +384,8 @@ export class EffectSheet extends ItemSheet {
                 typeClass: presentation.className,
                 typeIcon: presentation.icon,
                 statusLabel: statusLabels.get(action.statusId),
+                statusSearchValue: statusLabels.get(action.statusId) || action.statusId || "",
+                statusReferenceInvalid: Boolean(action.statusId && !statusLabels.has(action.statusId)),
                 entryCount: entries.length,
                 entryCountLabel: formatEntryCount(entries.length),
                 rollModifierPrimaryContext: contextLabels.get(firstContext) || firstContext,
@@ -510,6 +511,19 @@ activateListeners(html) {
     html.on("change", '[name$=".skill_scope"], [name$=".combat_scope"], [name$=".modifier_application_side"]', (event) => refreshSpecializedFields(event.currentTarget.closest(".effect-premium-action")));
     html.find(".effect-premium-action").each((_index, element) => refreshSpecializedFields(element));
     if (!this.isEditable) return; // Adicionando uma verificação de segurança
+
+    html.on("input change", ".effect-status-search", event => {
+        const searchInput = event.currentTarget;
+        const hiddenInput = this.form?.querySelector(`[name="${searchInput.dataset.statusInput}"]`);
+        if (!hiddenInput) return;
+        const match = resolveStatusCatalogEntry(searchInput.value, CONFIG.statusEffects);
+        const initialValue = searchInput.dataset.initialValue || "";
+        const initialStatusId = searchInput.dataset.initialStatusId || "";
+        hiddenInput.value = match?.id || (searchInput.value === initialValue ? initialStatusId : "");
+        searchInput.setCustomValidity(searchInput.value && !hiddenInput.value
+            ? game.i18n.localize("GUM.StatusAutomations.SearchInvalid")
+            : "");
+    });
 
     html.on('click', '.open-reference-link', this._onOpenReferenceLink.bind(this));
 

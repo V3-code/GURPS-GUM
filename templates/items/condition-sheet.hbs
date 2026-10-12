@@ -120,12 +120,23 @@
                     <div class="effect-row-grid effect-duration-grid is-two-col-rows" style="margin-bottom: 8px;">
                         <div class="effect-field effect-field-row">
                             <label class="effect-label">{{localize "GUM.StatusAutomations.LinkedStatus"}}</label>
-                            <select name="system.statusBinding.statusId">
-                                <option value="">— Selecionar —</option>
+                            <input type="hidden" name="system.statusBinding.statusId" value="{{system.statusBinding.statusId}}" />
+                            <input
+                                type="text"
+                                class="condition-status-search"
+                                list="condition-status-options"
+                                value="{{statusBindingSearchValue}}"
+                                data-initial-value="{{statusBindingSearchValue}}"
+                                data-initial-status-id="{{system.statusBinding.statusId}}"
+                                placeholder="{{localize 'GUM.StatusAutomations.SearchPlaceholder'}}"
+                                autocomplete="off"
+                            />
+                            <datalist id="condition-status-options">
                                 {{#each statusEffects as |status|}}
-                                <option value="{{status.id}}" {{#if (eq ../system.statusBinding.statusId status.id)}}selected{{/if}}>{{status.label}}</option>
+                                <option value="{{status.label}}" data-status-id="{{status.id}}">{{status.id}}</option>
                                 {{/each}}
-                            </select>
+                            </datalist>
+                            {{#if statusBindingReferenceInvalid}}<small>{{localize "GUM.StatusAutomations.ReferenceInvalid"}}</small>{{/if}}
                         </div>
                         <div class="effect-field effect-field-row">
                             <label class="effect-label">Empilhamento</label>

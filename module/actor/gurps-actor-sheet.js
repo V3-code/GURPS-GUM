@@ -184,7 +184,18 @@ async getData(options) {
 
         myMods.forEach((mod) => {
             const groupName = mod.system.group || "Geral";
-            getGroup(groupName).items.push(mod);
+            const rawValue = String(mod.system?.modifier ?? "").trim() || "0";
+            const modifierIsNumeric = /^[+-]?\d+(?:\.\d+)?$/.test(rawValue);
+            const numericValue = modifierIsNumeric ? Number(rawValue) : null;
+            getGroup(groupName).items.push({
+                ...mod.toObject(),
+                id: mod.id,
+                uuid: mod.uuid,
+                modifierDisplay: modifierIsNumeric ? `${numericValue > 0 ? "+" : ""}${numericValue}` : rawValue,
+                modifierCompactDisplay: modifierIsNumeric ? `${numericValue > 0 ? "+" : ""}${numericValue}` : "ƒ",
+                modifierIsNegative: modifierIsNumeric && numericValue < 0,
+                modifierIsExpression: !modifierIsNumeric
+            });
         });
 
         context.modifierGroups = Array.from(groupsMap.values())

@@ -1,16 +1,23 @@
+const localize = key => globalThis.game?.i18n?.localize?.(key) ?? ({
+  "GUM.RollRequest.Waiting": "Aguardando", "GUM.RollRequest.MasterModifier": "Modificador do Mestre",
+  "GUM.RollRequest.OtherModifiers": "Outros modificadores", "GUM.RollRequest.Success": "Sucesso",
+  "GUM.RollRequest.Failure": "Falha", "GUM.RollRequest.CriticalSuccess": "Sucesso Crítico", "GUM.RollRequest.CriticalFailure": "Falha Crítica"
+}[key] ?? key);
+
 export function formatTestRequestStatus(response) {
-  if (!response) return "Aguardando";
-  if (response.outcome === "critical-success" || response.outcome === "critical-failure") return response.resultLabel;
-  return `${response.resultLabel} (${Math.abs(Number(response.margin) || 0)})`;
+  if (!response) return localize("GUM.RollRequest.Waiting");
+  const label = localize({ success: "GUM.RollRequest.Success", failure: "GUM.RollRequest.Failure", "critical-success": "GUM.RollRequest.CriticalSuccess", "critical-failure": "GUM.RollRequest.CriticalFailure" }[response.outcome]) || response.resultLabel;
+  if (response.outcome === "critical-success" || response.outcome === "critical-failure") return label;
+  return `${label} (${Math.abs(Number(response.margin) || 0)})`;
 }
 
 export function prepareModifierBreakdown(response, fixedModifier = 0, fixedModifierLabel = "") {
   const total = Number(response?.totalModifier) || 0;
   const fixed = Number(fixedModifier) || 0;
   const entries = [];
-  if (fixed) entries.push({ label: fixedModifierLabel || "Modificador do Mestre", value: fixed, valueLabel: `${fixed > 0 ? "+" : ""}${fixed}` });
+  if (fixed) entries.push({ label: fixedModifierLabel || localize("GUM.RollRequest.MasterModifier"), value: fixed, valueLabel: `${fixed > 0 ? "+" : ""}${fixed}` });
   const remaining = total - fixed;
-  if (remaining || !entries.length) entries.push({ label: "Outros modificadores", value: remaining, valueLabel: `${remaining > 0 ? "+" : ""}${remaining}` });
+  if (remaining || !entries.length) entries.push({ label: localize("GUM.RollRequest.OtherModifiers"), value: remaining, valueLabel: `${remaining > 0 ? "+" : ""}${remaining}` });
   return entries;
 }
 

@@ -466,16 +466,28 @@
                                                         </label>
 
                                                         <div class="effect-premium-field-control">
-                                                            <select name="system.actions.{{action.index}}.statusId">
+                                                            <input type="hidden" name="system.actions.{{action.index}}.statusId" value="{{action.statusId}}" />
+                                                            <input
+                                                                type="text"
+                                                                class="effect-status-search"
+                                                                list="effect-status-options-{{action.index}}"
+                                                                value="{{action.statusSearchValue}}"
+                                                                data-status-input="system.actions.{{action.index}}.statusId"
+                                                                data-initial-value="{{action.statusSearchValue}}"
+                                                                data-initial-status-id="{{action.statusId}}"
+                                                                placeholder="{{localize 'GUM.StatusAutomations.SearchPlaceholder'}}"
+                                                                autocomplete="off"
+                                                            />
+                                                            <datalist id="effect-status-options-{{action.index}}">
                                                                 {{#each ../statusEffects as |status|}}
-                                                                    <option
-                                                                        value="{{status.id}}"
-                                                                        {{#if (eq ../statusId status.id)}}selected{{/if}}
-                                                                    >
-                                                                        {{status.label}}
-                                                                    </option>
+                                                                    <option value="{{status.label}}" data-status-id="{{status.id}}">{{status.id}}</option>
                                                                 {{/each}}
-                                                            </select>
+                                                            </datalist>
+                                                            {{#if action.statusReferenceInvalid}}
+                                                                <small class="effect-status-reference-warning">{{localize "GUM.StatusAutomations.ReferenceInvalid"}}</small>
+                                                            {{else}}
+                                                                <small>{{localize "GUM.StatusAutomations.SearchHint"}}</small>
+                                                            {{/if}}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1068,27 +1080,37 @@
                                                                 </div>
                                                             </div>
 
-                                                            <div class="effect-premium-field">
+                                                            <div class="effect-premium-field effect-chat-roll-value-field">
                                                                 <label class="effect-premium-field-label">
                                                                     <i class="fas fa-plus" aria-hidden="true"></i>
-                                                                    Modificador
+                                                                    Valor / expressão
+                                                                    <span
+                                                                        class="effect-field-help"
+                                                                        tabindex="0"
+                                                                        aria-label="Aceita número ou expressão JavaScript avaliada para o alvo."
+                                                                    >
+                                                                        <i class="fas fa-circle-info" aria-hidden="true"></i>
+                                                                        <span role="tooltip">Aceita número ou expressão JavaScript avaliada para o alvo.</span>
+                                                                    </span>
                                                                 </label>
 
                                                                 <div class="effect-premium-field-control">
                                                                     <input
                                                                         type="text"
+                                                                        class="effect-code-input effect-chat-roll-value-input"
                                                                         name="system.actions.{{action.index}}.roll_modifier"
                                                                         value="{{action.roll_modifier}}"
+                                                                        placeholder="-2 ou actor.system.attributes.ht.final - 10"
                                                                     />
                                                                 </div>
                                                             </div>
 </div>
-                                                        <div class="effect-premium-field effect-premium-field-full">
+                                                        <div class="effect-premium-field effect-premium-field-full effect-chat-purpose-field">
                                                             <label class="effect-premium-field-label"><i class="fas fa-bullseye" aria-hidden="true"></i> Finalidades</label>
-                                                            <div class="effect-purpose-control">
+                                                            <div class="effect-purpose-control effect-chat-purpose-control">
                                                                 <input type="hidden" name="system.actions.{{action.index}}.requestedPurposeIds" value="{{action.requestedPurposeIdsCsv}}" />
-                                                                <button type="button" class="open-purpose-picker" data-target-input="system.actions.{{action.index}}.requestedPurposeIds" data-attribute-input="system.actions.{{action.index}}.roll_attribute"><i class="fas fa-list-check"></i> Selecionar finalidades</button>
                                                                 <span class="effect-purpose-summary">{{action.purposeSelectionSummary}}</span>
+                                                                <button type="button" class="open-purpose-picker" data-target-input="system.actions.{{action.index}}.requestedPurposeIds" data-attribute-input="system.actions.{{action.index}}.roll_attribute"><i class="fas fa-list-check" aria-hidden="true"></i> Selecionar</button>
                                                             </div>
                                                         </div>
                                                     </div>

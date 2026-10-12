@@ -42,14 +42,17 @@ import { isUserAuthorizedForTarget } from "../module/utils/test-request-targets.
 import { getResistanceChatPrivacy } from "../module/utils/effect-chat-visibility.mjs";
 import { showDiceForMessageLessRoll } from "../module/utils/dice-so-nice.mjs";
 import { BASIC_DAMAGE_KEYS, normalizeBasicDamageData, prepareBasicDamageAttributes } from "../module/utils/basic-damage.mjs";
-import { resolveConditionalValue } from "../module/utils/effect-value-expression.mjs";
+import { evaluateJavaScriptNumericExpression, resolveConditionalValue } from "../module/utils/effect-value-expression.mjs";
 import { evaluateModifierRollFormulaSync, hasModifierRollFormula } from "../module/utils/modifier-roll-formula.mjs";
 import { resolveAttackDamageDisplay } from "../module/utils/attack-damage-display.mjs";
 import { formatDamageNature, resolveDamageNature } from "../module/utils/damage-nature.mjs";
 import { canUserCreateActors } from "../module/utils/actor-creation-permission.mjs";
 import { resolveRollReference } from "../module/utils/roll-reference-resolver.mjs";
-import { contentSourceService } from "../module/services/content-source-service.mjs";
-import { organizeGumCompendia } from "../module/utils/compendium-folder-organizer.mjs";
+import { CONTENT_SOURCE_PURPOSES, contentSourceService } from "../module/services/content-source-service.mjs";
+import { applyMagicConsumptionTrigger, prepareMagicConsumptionSession } from "../module/services/magic-consumption-service.mjs";
+import { ContentSourceConfig } from "../module/apps/content-source-config.js";
+import { WorldStatusConfig } from "../module/apps/world-status-config.js";
+import { installGumApi } from "../module/api/gum-api.mjs";
 
 import { getSkillDisplayName, setDirectoryEntryLabel } from "../module/utils/skill-display-name.mjs";
 import { installGumChatCommandInterceptor, normalizeGumLookup, resolveGumCommandActor, splitSkillModifier } from "../module/utils/gum-chat-command.mjs";
@@ -434,7 +437,7 @@ async function migrateEffectActionsSchema() {
             "system.chat_notice": Boolean(firstAction.chat_notice),
             "system.confirm_prompt": Boolean(firstAction.confirm_prompt),
             "system.variable_value": Boolean(firstAction.variable_value),
-            "system.statusId": firstAction.statusId ?? "dead"
+            "system.statusId": firstAction.statusId ?? ""
         }, { renderSheet: false }));
     };
 
@@ -1398,6 +1401,12 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     } else if (rollData.itemId && actor?.items) {
         sourceItem = actor.items.get(rollData.itemId) || null;
     }
+    let magicConsumptionSession = null;
+    if (sourceItem && ["spell", "power"].includes(sourceItem.type) && rollData.type === sourceItem.type) {
+        magicConsumptionSession = await prepareMagicConsumptionSession(sourceItem, actor);
+        if (magicConsumptionSession === null) return;
+        await applyMagicConsumptionTrigger(magicConsumptionSession, actor, "attempt");
+    }
     const sourceAttack = sourceItem?.system?.ranged_attacks?.[rollData.attackId];
     const showRapidFireHitCount = game.settings.get("gum", "showRapidFireHitCount") === true;
     const hasAmmunitionLinks = Boolean(sourceAttack?.ammunition_ids?.length);
@@ -1590,6 +1599,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     const evaluatedResult = evaluateGurpsRollResult(total, effectiveLevel);
     const { isSuccess, margin, resultLabel, statusClass, rollOutcome,
         isCriticalSuccess: isCritSuccess, isCriticalFailure: isCritFailure, outcome } = evaluatedResult;
+    await applyMagicConsumptionTrigger(magicConsumptionSession, actor, rollOutcome);
     const rapidFireResult = showRapidFireHitCount ? calculateRapidFireHits({
         isSuccess,
         isCriticalSuccess: isCritSuccess,
@@ -2441,6 +2451,9 @@ function _evaluateModifierValue(actor, rawValue, rollData = {}, { allowDice = tr
     const diceResult = evaluateModifierRollFormulaSync(source, actor?.getRollData?.() || {});
     if (Number.isFinite(diceResult)) return diceResult;
 
+    const javascriptResult = evaluateJavaScriptNumericExpression(source, { actor, game, rollData });
+    if (Number.isFinite(javascriptResult)) return javascriptResult;
+
     const evaluateArithmetic = (expression) => {
         const tokenRegex = /[A-Za-zÀ-ÿ_][A-Za-z0-9À-ÿ_]*(?:\.[A-Za-zÀ-ÿ_][A-Za-z0-9À-ÿ_]*)*/g;
         const reserved = new Set(["maior", "menor", "max", "min", "math"]);
@@ -2882,7 +2895,7 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
             }
             : {};
         const silentRequest = {
-            id: foundry.utils.randomID(), title: `Resistência: ${effectItem.name}`,
+            id: foundry.utils.randomID(), title: game.i18n.format("GUM.RollRequest.ResistanceTitle", { name: effectItem.name }),
             origin: { type: "effect-barrier", sourceActorUuid: sourceActor?.uuid, sourceItemUuid: originItem?.uuid, effectUuid: effectItem.uuid, effectLinkId },
             targets: [{ targetKey, actorUuid: targetToken.actor?.uuid, tokenUuid: targetToken.document?.uuid || targetToken.uuid || null, actorName: targetToken.actor?.name, recipientUserIds: [] }],
             test: { ...normalizedResistance.test, fixedModifier: evaluateNumericFormula(rollData.modifier, { actor: targetToken.actor }) || 0 }, consequence: normalizedResistance.consequence
@@ -2897,8 +2910,8 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
         }});
         return;
     }
-    const applyOnText = rollData.mode === 'conditional' ? 'Resultados condicionais' : (rollData.applyOn === 'success' ? 'Em sucesso' : 'Em falha');
-    const marginValue = rollData.mode === 'conditional' ? 'por resultado' : ((rollData.margin !== undefined && rollData.margin !== null && rollData.margin !== '') ? rollData.margin : '—');
+    const applyOnText = game.i18n.localize(rollData.mode === 'conditional' ? "GUM.RollRequest.ConditionalResults" : (rollData.applyOn === 'success' ? "GUM.RollRequest.OnSuccess" : "GUM.RollRequest.OnFailure"));
+    const marginValue = rollData.mode === 'conditional' ? game.i18n.localize("GUM.RollRequest.PerResult") : ((rollData.margin !== undefined && rollData.margin !== null && rollData.margin !== '') ? rollData.margin : '—');
     const rawModifier = (rollData.modifier ?? "").toString().trim();
     const previewModifier = evaluateNumericFormula(rawModifier, { actor: targetToken.actor });
     const previewModifierSigned = previewModifier > 0 ? `+${previewModifier}` : `${previewModifier}`;
@@ -2918,7 +2931,7 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
     };
  const targetKey = targetToken.document?.uuid || targetToken.uuid || targetToken.actor?.uuid;
  const request = {
-        version: 1, id: foundry.utils.randomID(), status: "pending", title: `Resistência: ${effectItem.name}`,
+        version: 1, id: foundry.utils.randomID(), status: "pending", title: game.i18n.format("GUM.RollRequest.ResistanceTitle", { name: effectItem.name }),
         origin: { type: "effect-barrier", sourceActorUuid: sourceActor?.uuid, sourceItemUuid: originItem?.uuid, effectUuid: effectItem.uuid, effectLinkId },
         targets: [{ targetKey, actorUuid: targetToken.actor?.uuid, tokenUuid: targetToken.document?.uuid || targetToken.uuid || null, actorName: targetToken.actor?.name, recipientUserIds: [] }],
         test: normalizedResistance.test, consequence: normalizedResistance.consequence, delivery: {}, responses: []
@@ -2929,7 +2942,7 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
         originLabel: sourceActor?.name || originItem?.name || "Origem desconhecida",
         targetName: targetToken.name || targetToken.actor?.name || "Alvo",
         targetImg: resolveCharacterImage(targetToken.actor, { token: targetToken }),
-        testLabel: `Teste de ${testLabel}`, modifierLabel: rawModifier ? `Barreira ${previewModifierSigned}` : "",
+        testLabel: game.i18n.format("GUM.RollRequest.TestOf", { test: testLabel }), modifierLabel: rawModifier ? game.i18n.format("GUM.RollRequest.BarrierModifier", { modifier: previewModifierSigned }) : "",
         applyOnLabel: applyOnText, marginLabel: marginValue,
         purposeLabels: getPurposeLabels(normalizedResistance.test.requestedPurposeIds),
         description: resistanceChatText
@@ -2992,17 +3005,35 @@ Hooks.once('init', async function() {
     console.log("GUM | Fase 'init': Registrando configurações e fichas."); 
     registerContextMenuCompatibilityHooks({ Hooks, generation: game.release?.generation });
     GumPreviewDialog.registerChatDetailsHandler();
-    game.gum = {};
-    game.gum.importFromGCS = importFromGCS;
-    game.gum.rollFromHotbar = rollFromHotbar;
-    game.gum.applyUseEventEffects = applyUseEventEffects;
-    game.gum.applySingleEffect = applySingleEffect;
-    game.gum.getEffectActions = getEffectActions;
-    game.gum.resolveCombatDamageFormula = resolveCombatDamageFormula;
-    game.gum.resolveCombatDamageProfile = resolveCombatDamageProfile;
-    game.gum.resolveTargetCombatDefenseRecalculationModifiers = resolveTargetCombatDefenseRecalculationModifiers;
-    game.gum.setStateEffectGroupActive = setStateEffectGroupActive;
-    game.gum.syncItemStateEffects = syncItemStateEffects;
+    installGumApi({
+        gameRef: game,
+        hooks: Hooks,
+        dependencies: {
+            importFromGCS,
+            rollFromHotbar,
+            performGURPSRoll,
+            executeRollRequest,
+            applyUseEventEffects,
+            applyEffectWithResistance,
+            applySingleEffect,
+            getEffectActions,
+            resolveCombatDamageFormula,
+            resolveCombatDamageProfile,
+            resolveTargetCombatDefenseRecalculationModifiers,
+            setStateEffectGroupActive,
+            syncItemStateEffects,
+            contentSourceService,
+            contentSourcePurposes: CONTENT_SOURCE_PURPOSES,
+            openTestRequestLauncher,
+            openGmScreen: () => {
+                game.gum.gmScreen ??= new GumGMScreen();
+                game.gum.gmScreen.render(true);
+                return game.gum.gmScreen;
+            },
+            openContentSourceConfig: () => new ContentSourceConfig().render(true),
+            openWorldStatusConfig: () => new WorldStatusConfig().render(true)
+        }
+    });
 
     CONFIG.Actor.documentClass = GurpsActor;
 
@@ -3452,10 +3483,6 @@ Hooks.once('ready', async function() {
     await migrateEffectActionsSchema();
     await migrateBasicDamageSchema();
 
-    if (game.user?.isGM) {
-        await organizeGumCompendia(game, Folder);
-    }
-
     $('body').on('click', '.apply-damage-button', (ev) => {
     ev.preventDefault();
     console.log("GUM | DEBUG: Botão 'Aplicar Dano' clicado.");
@@ -3654,7 +3681,8 @@ async function processResistanceSocketResult(payload) {
     const message = game.messages.get(payload.messageId);
     const request = message?.getFlag("gum", "rollRequest");
     const context = message?.getFlag("gum", "resistanceContext");
-    if (!message || !request || request.id !== payload.requestId || request.status !== "pending" || !context) return;
+    const isReroll = payload.reroll === true;
+    if (!message || !request || request.id !== payload.requestId || !["pending", ...(isReroll ? ["resolved"] : [])].includes(request.status) || !context) return;
     const target = request.targets?.find(entry => entry.targetKey === payload.targetKey);
     const actorDocument = target ? await fromUuid(target.tokenUuid || target.actorUuid).catch(() => null) : null;
     const actor = actorDocument?.actor || actorDocument;
@@ -3664,8 +3692,10 @@ async function processResistanceSocketResult(payload) {
     const canonical = evaluateGurpsRollResult(Number(payload.result.total), Number(payload.result.effectiveTarget));
     payload.result = { ...payload.result, margin: canonical.margin, outcome: canonical.outcome, resultLabel: canonical.resultLabel };
     const barrier = evaluateBarrierConsequence(payload.result, request.consequence);
+    const wasEffectApplied = (request.responses || []).some(response => response.effectApplied === true || response.consequence === "Efeito aplicado" || response.consequence === game.i18n.localize("GUM.RollRequest.EffectApplied"));
+    let effectApplied = wasEffectApplied;
     await message.update({ "flags.gum.rollRequest.status": "processing" });
-        let consequenceLabel = barrier.shouldApply ? (barrier.branchLabels?.length ? `Resultados: ${barrier.branchLabels.join(", ")}` : "Efeito aplicável") : "Efeito bloqueado";
+        let consequenceLabel = barrier.shouldApply ? (barrier.branchLabels?.length ? game.i18n.format("GUM.RollRequest.Results", { results: barrier.branchLabels.join(", ") }) : game.i18n.localize("GUM.RollRequest.EffectApplicable")) : game.i18n.localize("GUM.RollRequest.EffectBlocked");
     if (payload.type === "rollRequest:damageResult") {
         const application = game.gum?.damageApplications?.get(String(context.damageApplicationId));
         if (!isMatchingDamageResistance(application, { targetActorId: actor.id, effectLinkId: context.effectLinkId, effectUuid: request.origin?.effectUuid })) {
@@ -3674,8 +3704,8 @@ async function processResistanceSocketResult(payload) {
         }
         const effect = application.availableOnDamageEffects.find(entry => entry.id === context.effectLinkId);
         await application.updateEffectCard(context.effectLinkId, { isSuccess: barrier.success, shouldApply: barrier.shouldApply, branchId: barrier.branchId, branchLabel: barrier.branchLabel, branchIds: barrier.branchIds, branchLabels: barrier.branchLabels, actionIds: barrier.actionIds, resultText: `${payload.result.total} vs ${payload.result.effectiveTarget} — ${payload.result.resultLabel}`, rollRequestId: request.id, result: payload.result }, effect.item.system, { autoApply: false });
-        consequenceLabel = barrier.shouldApply ? "Aguardando aplicação do dano" : "Efeito bloqueado";
-    } else if (barrier.shouldApply) {
+        consequenceLabel = game.i18n.localize(barrier.shouldApply ? "GUM.RollRequest.AwaitingDamageApplication" : "GUM.RollRequest.EffectBlocked");
+    } else if (barrier.shouldApply && !wasEffectApplied) {
         const effectItem = request.origin?.effectUuid ? await fromUuid(request.origin.effectUuid).catch(() => null) : null;
         if (!effectItem) { await message.update({ "flags.gum.rollRequest.status": "pending" }); return; }
         const targetToken = target.tokenUuid ? await fromUuid(target.tokenUuid).catch(() => null) : null;
@@ -3684,10 +3714,13 @@ async function processResistanceSocketResult(payload) {
         const originActor = context.sourceActorId ? game.actors.get(context.sourceActorId) : null;
         const conditionContext = context.mode === "condition" && context.conditionId ? { conditionId: context.conditionId, conditionActivationMode: context.conditionActivationMode || null } : {};
                 await applySingleEffect(effectItem, targets, { actor: originActor, origin: originItem || effectItem, actionIds: barrier.actionIds, ...conditionContext });
-        consequenceLabel = "Efeito aplicado";
+        effectApplied = true;
+        consequenceLabel = game.i18n.localize("GUM.RollRequest.EffectApplied");
+    } else if (isReroll && wasEffectApplied) {
+        consequenceLabel = game.i18n.localize(barrier.shouldApply ? "GUM.RollRequest.EffectAlreadyAppliedReroll" : "GUM.RollRequest.RerollEffectAlreadyApplied");
     }
-    const updated = { ...request, status: "resolved", responses: [...(request.responses || []), { ...payload.result, consequence: consequenceLabel }] };
-    await message.update({ content: appendResistanceRequestResult(message.content, { result: payload.result, consequenceLabel, purposeLabels: getPurposeLabels(payload.result.purposeIds), userName: sender.name }), "flags.gum.rollRequest": updated });
+    const updated = { ...request, status: "resolved", responses: [...(request.responses || []), { ...payload.result, consequence: consequenceLabel, effectApplied }] };
+    await message.update({ content: appendResistanceRequestResult(message.content, { result: payload.result, consequenceLabel, purposeLabels: getPurposeLabels(payload.result.purposeIds), userName: sender.name, allowReroll: true, targetKey: payload.targetKey, rerollClass: "resistance-reroll-button" }), "flags.gum.rollRequest": updated });
 }
 
 function enqueueResistanceSocketResult(payload) {
@@ -3701,10 +3734,11 @@ function enqueueResistanceSocketResult(payload) {
 }
 
 
-$('body').on('click', '.resistance-roll-button', async ev => {
+$('body').on('click', '.resistance-roll-button, .resistance-reroll-button', async ev => {
     ev.preventDefault();
     ev.stopImmediatePropagation();
     const button = ev.currentTarget;
+    const isReroll = button.classList.contains('resistance-reroll-button');
     button.disabled = true;
     const messageElement = button.closest('.message, li.chat-message');
     const message = game.messages.get(messageElement?.dataset.messageId);
@@ -3731,8 +3765,8 @@ $('body').on('click', '.resistance-roll-button', async ev => {
         ...(storedRequest || {}),
         version: 1,
         id: storedRequest?.id || `resistance:${message.id}`,
-        status: storedRequest?.status || "pending",
-        title: storedRequest?.title || `Resistência: ${effectData.name}`,
+        status: isReroll ? "pending" : (storedRequest?.status || "pending"),
+        title: storedRequest?.title || game.i18n.format("GUM.RollRequest.ResistanceTitle", { name: effectData.name }),
         origin: storedRequest?.origin || { type: context.mode === "damage" ? "damage-barrier" : "effect-barrier", effectUuid: context.effectItemUuid, effectLinkId: context.effectLinkId },
         targets: storedRequest?.targets?.length ? storedRequest.targets : [{ targetKey, actorUuid: targetActor.uuid, tokenUuid: targetToken?.document?.uuid || null, actorName: targetActor.name, recipientUserIds: [] }],
         test: { ...(storedRequest?.test || normalized.test), fixedModifier: evaluatedModifier + dynamicModifier },
@@ -3741,7 +3775,7 @@ $('body').on('click', '.resistance-roll-button', async ev => {
     };
 
     const outcome = await executeRollRequest(request, request.targets[0].targetKey, { prompt: !ev.shiftKey, onResult: async result => {
-        const payload = { type: context.mode === "damage" ? "rollRequest:damageResult" : "rollRequest:barrierResult", messageId: message.id, requestId: request.id, targetKey: request.targets[0].targetKey, userId: game.user.id, result };
+        const payload = { type: context.mode === "damage" ? "rollRequest:damageResult" : "rollRequest:barrierResult", messageId: message.id, requestId: request.id, targetKey: request.targets[0].targetKey, userId: game.user.id, reroll: isReroll, result };
         if (game.user.isGM) await enqueueResistanceSocketResult(payload);
         else {
             game.socket.emit("system.gum", payload);

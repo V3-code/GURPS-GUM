@@ -119,3 +119,16 @@ test("encaminha o subtipo de defesa resolvido ao prompt", async () => {
   assert.equal(promptData.defenseType, "dodge");
   assert.equal(promptData.attributeKey, "dodge");
 });
+
+test("resolve o modificador fixo no ator que realiza o teste", async () => {
+  let received;
+  const { execute } = harness({
+    resolveFixedModifier: (_test, actor) => actor.id === "1" ? -3 : 0,
+    createPrompt: (_actor, rollData) => {
+      received = rollData;
+      return { render: () => {}, close: async () => {} };
+    }
+  });
+  await execute(request(), "actor-1");
+  assert.equal(received.fixedModifier, -3);
+});

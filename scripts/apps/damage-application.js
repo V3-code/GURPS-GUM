@@ -1036,7 +1036,7 @@ async _onNpcResistanceRoll(effectId) {
     const targetToken = this.targetToken || target?.getActiveTokens?.()[0] || null;
     const targetKey = targetToken?.document?.uuid || target?.uuid;
     const request = {
-        id: foundry.utils.randomID(), title: `Resistência: ${effect.item.name}`,
+        id: foundry.utils.randomID(), title: game.i18n.format("GUM.RollRequest.ResistanceTitle", { name: effect.item.name }),
         origin: { type: "damage-barrier", sourceActorUuid: this.attackerActor?.uuid, effectUuid: effect.item.uuid, effectLinkId: effectId },
         targets: [{ targetKey, actorUuid: target?.uuid, tokenUuid: targetToken?.document?.uuid || null, actorName: target?.name, recipientUserIds: [] }],
         test: { ...normalized.test, fixedModifier: totalModifier }, consequence: normalized.consequence
@@ -1411,8 +1411,8 @@ async _onNpcResistanceRoll(effectId) {
         const rollData = effect.item.system?.resistanceRoll || {};
         const target = this.targetActor;
         const targetToken = this.targetActor?.getActiveTokens?.()[0] || null;
-                const applyOnText = rollData.mode === 'conditional' ? 'Resultados condicionais' : (rollData.applyOn === 'success' ? 'Aplicar em Sucesso' : 'Aplicar em Falha');
-        const marginValue = rollData.mode === 'conditional' ? 'por resultado' : ((rollData.margin !== undefined && rollData.margin !== null && rollData.margin !== '') ? rollData.margin : '—');
+                const applyOnText = game.i18n.localize(rollData.mode === 'conditional' ? "GUM.RollRequest.ConditionalResults" : (rollData.applyOn === 'success' ? "GUM.RollRequest.OnSuccess" : "GUM.RollRequest.OnFailure"));
+        const marginValue = rollData.mode === 'conditional' ? game.i18n.localize("GUM.RollRequest.PerResult") : ((rollData.margin !== undefined && rollData.margin !== null && rollData.margin !== '') ? rollData.margin : '—');
         const rawModifier = (rollData.modifier ?? "").toString().trim();
         const resolvedModifier = evaluateNumericFormula(rawModifier, {
             actor: target,
@@ -1437,7 +1437,7 @@ async _onNpcResistanceRoll(effectId) {
         const normalized = normalizeResistanceRoll(rollData);
         const targetKey = targetToken?.document?.uuid || target?.uuid;
         const request = {
-            version: 1, id: foundry.utils.randomID(), status: "pending", title: `Resistência: ${effect.item.name}`,
+            version: 1, id: foundry.utils.randomID(), status: "pending", title: game.i18n.format("GUM.RollRequest.ResistanceTitle", { name: effect.item.name }),
             origin: { type: "damage-barrier", sourceActorUuid: this.attackerActor?.uuid, sourceItemUuid: effect.originItemUuid || null, effectUuid: effect.item.uuid, effectLinkId: effect.id },
             targets: [{ targetKey, actorUuid: target?.uuid, tokenUuid: targetToken?.document?.uuid || null, actorName: target?.name, recipientUserIds: [] }],
             test: normalized.test, consequence: normalized.consequence, delivery: {}, responses: []
@@ -1447,7 +1447,7 @@ async _onNpcResistanceRoll(effectId) {
             request, effectName: effect.item.name, effectImg: effect.item.img,
             originLabel: this.attackerActor?.name || "Aplicação de dano",
             targetName: target?.name || "Alvo", targetImg: resolveCharacterImage(target, { token: targetToken }),
-            testLabel: (rollData.attribute || "HT").toUpperCase(), modifierLabel: modifierValue !== "0" ? `Barreira ${modifierValue}` : "",
+            testLabel: (rollData.attribute || "HT").toUpperCase(), modifierLabel: modifierValue !== "0" ? game.i18n.format("GUM.RollRequest.BarrierModifier", { modifier: modifierValue }) : "",
             applyOnLabel: applyOnText, marginLabel: marginValue, purposeLabels: getPurposeLabels(normalized.test.requestedPurposeIds),
             description: resistanceChatText, buttonPayload: chatPayload
         });

@@ -1,5 +1,5 @@
 import { GurpsRollPrompt } from "../apps/roll-prompt.js";
-import { performGURPSRoll } from "../../scripts/main.js";
+import { evaluateNumericFormula, performGURPSRoll } from "../../scripts/main.js";
 import { normalizeSkillText, resolveSkillDefault } from "../utils/skill-default-resolver.mjs";
 import { normalizeRollRequest } from "../utils/roll-request-data.mjs";
 import { isUserAuthorizedForTarget } from "../utils/test-request-targets.mjs";
@@ -62,33 +62,42 @@ export const executeRollRequest = createRollRequestExecutor({
   performRoll: performGURPSRoll,
   serializeResult: serializeRollRequestResult,
   createPrompt: (actor, rollData, options) => new GurpsRollPrompt(actor, rollData, options),
-  getCurrentUser: () => game.user
+  getCurrentUser: () => game.user,
+  resolveFixedModifier: (test, actor) => test.fixedModifierFormula
+    ? evaluateNumericFormula(test.fixedModifierFormula, { actor })
+    : test.fixedModifier
 });
 
 export async function createSingleRollRequestMessage(data, chatData = {}) {
   const request = normalizeRollRequest(data, { id: foundry.utils.randomID(), userId: game.user.id });
-  const content = renderPendingChatRollRequest({ request, target: request.targets[0] ?? {}, purposeLabels: getPurposeLabels(request.test.requestedPurposeIds) });
+  const target = request.targets[0] ?? {};
+  const resolved = await resolveRollRequestTarget(target);
+  if (request.test.fixedModifierFormula) {
+    request.test.fixedModifier = evaluateNumericFormula(request.test.fixedModifierFormula, { actor: resolved?.actor });
+  }
+  const content = renderPendingChatRollRequest({ request, target, purposeLabels: getPurposeLabels(request.test.requestedPurposeIds) });
   return ChatMessage.create({ ...chatData, content, flags: { ...(chatData.flags ?? {}), gum: { ...(chatData.flags?.gum ?? {}), rollRequest: request } } });
 }
 
 export function activateRollRequestChatListeners(html) {
   const root = html?.querySelectorAll ? html : html?.[0];
-  root?.querySelectorAll?.(".gum-roll-request-button").forEach(button => button.addEventListener("click", async event => {
+  root?.querySelectorAll?.(".gum-roll-request-button, .gum-roll-request-reroll-button").forEach(button => button.addEventListener("click", async event => {
     event.preventDefault();
     const messageId = button.closest(".message, li.chat-message")?.dataset.messageId;
     const message = game.messages.get(messageId);
     const request = message?.getFlag("gum", "rollRequest");
-    if (!request || request.status !== "pending") return;
+    const reroll = button.classList.contains("gum-roll-request-reroll-button");
+    if (!request || (request.status !== "pending" && !(reroll && request.status === "resolved"))) return;
     button.disabled = true;
     const targetKey = decodeURIComponent(button.dataset.targetKey);
     const outcome = await executeRollRequest(request, targetKey, { onResult: async response => {
       if (!game.user.isGM) {
-        game.socket.emit("system.gum", { type: "rollRequest:chatResult", messageId: message.id, requestId: request.id, targetKey, userId: game.user.id, result: response });
+        game.socket.emit("system.gum", { type: "rollRequest:chatResult", messageId: message.id, requestId: request.id, targetKey, userId: game.user.id, reroll, result: response });
         ui.notifications.info("Resultado enviado ao Mestre.");
         return;
       }
       const updated = { ...request, status: "resolved", responses: [...(request.responses ?? []), response] };
-      const content = appendResistanceRequestResult(message.content, { result: response, consequenceLabel: "Resposta registrada", purposeLabels: getPurposeLabels(response.purposeIds), userName: game.users.get(response.userId)?.name });
+      const content = appendResistanceRequestResult(message.content, { result: response, consequenceLabel: game.i18n.localize(reroll ? "GUM.RollRequest.RerollRecorded" : "GUM.RollRequest.ResponseRecorded"), purposeLabels: getPurposeLabels(response.purposeIds), userName: game.users.get(response.userId)?.name, allowReroll: true, targetKey });
       await message.update({ content, "flags.gum.rollRequest": updated });
     }});
     if (!outcome.accepted) {
@@ -111,7 +120,8 @@ async function processChatRollResult(payload) {
   const message = game.messages.get(payload.messageId);
   if (!message || responsibleGM(message)?.id !== game.user.id) return false;
   const request = foundry.utils.duplicate(message.getFlag("gum", "rollRequest"));
-  if (!request || request.id !== payload.requestId || request.status !== "pending" || request.consequence?.type !== "chat-record") return false;
+  const reroll = payload.reroll === true;
+  if (!request || request.id !== payload.requestId || (request.status !== "pending" && !(reroll && request.status === "resolved")) || request.consequence?.type !== "chat-record") return false;
   const target = request.targets?.find(entry => entry.targetKey === payload.targetKey);
   const resolved = target && await resolveRollRequestTarget(target);
   const sender = game.users.get(payload.userId);
@@ -121,7 +131,7 @@ async function processChatRollResult(payload) {
   payload.result = { ...payload.result, margin: canonical.margin, outcome: canonical.outcome, resultLabel: canonical.resultLabel };
   await message.update({ "flags.gum.rollRequest.status": "processing" });
   const updated = { ...request, status: "resolved", responses: [...(request.responses ?? []), payload.result] };
-  const content = appendResistanceRequestResult(message.content, { result: payload.result, consequenceLabel: "Resposta registrada", purposeLabels: getPurposeLabels(payload.result.purposeIds), userName: sender.name });
+  const content = appendResistanceRequestResult(message.content, { result: payload.result, consequenceLabel: game.i18n.localize(reroll ? "GUM.RollRequest.RerollRecorded" : "GUM.RollRequest.ResponseRecorded"), purposeLabels: getPurposeLabels(payload.result.purposeIds), userName: sender.name, allowReroll: true, targetKey: payload.targetKey });
   await message.update({ content, "flags.gum.rollRequest": updated });
   return true;
 }

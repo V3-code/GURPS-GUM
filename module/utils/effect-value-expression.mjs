@@ -283,3 +283,29 @@ export function resolveConditionalValue(value, context = {}) {
         ? resolveConditionalValue(selected, context)
         : unquote(selected);
 }
+
+/**
+ * Evaluates the JavaScript-compatible numeric expressions supported by effect
+ * values. Returning null lets the caller continue with dice or named-reference
+ * resolution instead of confusing an invalid expression with a real zero.
+ */
+export function evaluateJavaScriptNumericExpression(value, {
+    actor = null,
+    game = globalThis.game,
+    rollData = null
+} = {}) {
+    const source = String(value ?? "").trim();
+    if (!source) return null;
+    try {
+        const result = Function(
+            "actor",
+            "game",
+            "rollData",
+            `"use strict"; return (${source});`
+        )(actor, game, rollData);
+        const numeric = Number(result);
+        return Number.isFinite(numeric) ? numeric : null;
+    } catch (_) {
+        return null;
+    }
+}

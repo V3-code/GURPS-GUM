@@ -21,7 +21,7 @@ test("converte entradas legadas do menu de contexto para a API do Foundry 14", (
   assert.equal("callback" in entries[0], false);
 
   const event = { type: "click" };
-  const target = { dataset: { entryId: "gum.conditions" } };
+  const target = { dataset: { entryId: "world.conditions" } };
   entries[0].onClick(event, target);
   assert.deepEqual(received, { target, event });
 });

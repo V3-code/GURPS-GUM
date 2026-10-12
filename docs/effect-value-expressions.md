@@ -1,6 +1,6 @@
-# Expressões de valor dos Itens Efeito
+# Expressões de valor do GUM
 
-Os campos numéricos de um **Item Efeito** aceitam valores fixos, fórmulas de dados e expressões condicionais. Este guia descreve a sintaxe disponível, o momento em que cada valor é avaliado e exemplos de composição.
+Os campos numéricos de um **Item Efeito** e o campo **Valor / expressão** das entradas de um **Modificador do Mestre** aceitam valores fixos, fórmulas de dados, JavaScript e expressões condicionais. Este guia descreve a sintaxe disponível, o momento em que cada valor é avaliado e exemplos de composição.
 
 ## Exemplo rápido
 
@@ -29,6 +29,26 @@ se(possui("A"), 2, se(possui("B"), 1, 0))
 Somente o ramo escolhido é encaminhado ao avaliador de fórmula ou rolagem.
 
 Em modificadores de rolagem, um ramo com dados — por exemplo `1d6` — é rolado quando o modificador é preparado para aquela rolagem. O total obtido é usado como modificador.
+
+## Expressões JavaScript
+
+Modificadores do Mestre também aceitam expressões JavaScript numéricas. Estão disponíveis `actor`, `game` e `rollData`, além dos recursos normais de `Math`:
+
+```text
+Math.floor(actor.system.attributes.dx.final / 2)
+```
+
+```text
+game.combat ? Math.max(game.combat.round - 1, 0) : 0
+```
+
+JavaScript pode ser usado dentro do ramo de uma condição:
+
+```text
+se(possui("Reflexos em Combate"), Math.max(actor.system.attributes.ht.final - 10, 1), -4)
+```
+
+O resultado precisa ser um número finito. Uma expressão inválida ou que não resulte em número é tratada como `0`.
 
 ## Consultas de itens
 
@@ -126,6 +146,7 @@ se(possui("Sorte"), {1d6,2d6}kh, {1d6,2d6}kl)
 | Modificador de atributo | Quando o efeito é aplicado. |
 | Override de dano básico | A condição é resolvida ao aplicar; a fórmula escolhida é preservada para a futura rolagem de dano. |
 | Modificador de rolagem | A cada rolagem compatível. |
+| Modificador do Mestre | A cada rolagem compatível, usando o ator que realizará o teste. |
 | Alteração de recurso | Quando a alteração é executada. Fórmulas comuns usam uma única rolagem para todos os alvos; condicionais são resolvidas para cada alvo. |
 | Criação de recurso | Quando o recurso é criado ou atualizado. |
 

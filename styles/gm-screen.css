@@ -1268,3 +1268,367 @@
     .gum.gm-screen .gm-screen-layout { gap: 2px; }
     .gum.gm-screen .monitor-column { border: 0; }
 }
+
+/* ================================================================== */
+/* LAYOUT OPERACIONAL RESPONSIVO                                      */
+/* A janela do Foundry pode ser estreita mesmo em uma tela ampla.     */
+/* Por isso, a responsividade abaixo observa a própria aplicação.      */
+/* ================================================================== */
+.gum.gm-screen .window-content {
+    container-name: gum-gm-screen;
+    container-type: inline-size;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* Keep Foundry's native resize grip above the utility dock. */
+.gum.gm-screen.window-app .window-resizable-handle {
+    display: flex !important;
+    z-index: 100;
+    pointer-events: auto;
+}
+
+.gum.gm-screen .gm-screen-layout {
+    grid-template-columns: minmax(230px, 280px) minmax(0, 1fr);
+}
+
+.gum.gm-screen .monitor-column {
+    min-width: 0;
+    max-height: none;
+}
+
+.gum.gm-screen .controls-column,
+.gum.gm-screen .gm-main-toolbar,
+.gum.gm-screen .gm-workspace-tabs,
+.gum.gm-screen .screen-body,
+.gum.gm-screen .gm-utility-dock {
+    min-width: 0;
+}
+
+.gum.gm-screen .gm-monitor-empty {
+    margin-top: 14px;
+    padding: 0 2px;
+    color: var(--gm-muted);
+}
+
+.gum.gm-screen .gm-sidebar-actions {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+    background: var(--gm-panel);
+}
+
+.gum.gm-screen .gm-sidebar-actions .combat-controls {
+    position: static;
+    margin: 0;
+}
+
+.gum.gm-screen .gm-sidebar-actions .gm-request-test {
+    width: 100%;
+    margin: 0;
+}
+
+.gum.gm-screen .gm-main-toolbar {
+    display: grid;
+    grid-template-columns: minmax(150px, 1fr) auto 32px auto;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px 7px;
+    background: var(--gm-panel);
+}
+
+.gum.gm-screen .gm-main-toolbar .search-wrapper {
+    min-width: 0;
+}
+
+.gum.gm-screen .gm-main-toolbar .mod-search {
+    height: 32px;
+}
+
+.gum.gm-screen .gm-selection-summary {
+    display: inline-flex;
+    min-height: 30px;
+    align-items: center;
+    gap: 5px;
+    padding: 0 9px;
+    border-radius: var(--gm-radius-small);
+    background: color-mix(in srgb, var(--gum-accent-gold) 13%, var(--gm-surface));
+    color: var(--gm-muted);
+    font-size: 0.72rem;
+    white-space: nowrap;
+}
+
+.gum.gm-screen .gm-selection-summary i,
+.gum.gm-screen .gm-selection-summary strong {
+    color: var(--gum-accent-gold);
+}
+
+.gum.gm-screen .gm-main-toolbar .clear-selection-btn,
+.gum.gm-screen .gm-main-toolbar .add-group-btn {
+    height: 32px;
+    margin: 0;
+    grid-column: auto;
+}
+
+.gum.gm-screen .gm-main-toolbar .add-group-btn { width: auto; }
+
+.gum.gm-screen .gm-main-toolbar .clear-selection-btn:disabled {
+    cursor: default;
+    opacity: 0.35;
+}
+
+.gum.gm-screen .gm-workspace-tabs {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 2px;
+    min-height: 34px;
+    margin: 0;
+    padding: 3px 12px 5px;
+    border-radius: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--gm-surface-raised) 78%, transparent);
+    background: var(--gm-panel);
+    grid-column: auto;
+    flex-wrap: nowrap;
+}
+
+.gum.gm-screen .gm-workspace-tabs .main-tab-btn {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 28px;
+    max-width: 68px;
+    min-height: 28px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    color: var(--gm-muted);
+}
+
+.gum.gm-screen .gm-workspace-tabs .main-tab-btn.active {
+    color: var(--gum-text-claro);
+    background: var(--gm-surface);
+    box-shadow: inset 0 -2px var(--gum-accent-gold);
+}
+
+.gum.gm-screen .screen-body {
+    padding: 10px 12px 12px;
+}
+
+.gum.gm-screen .modifier-group .group-header {
+    min-height: 31px;
+    gap: 5px;
+    padding: 4px 6px;
+}
+
+.gum.gm-screen .group-collapse-toggle,
+.gum.gm-screen .group-menu-trigger {
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+    margin: 0;
+}
+
+.gum.gm-screen .group-title {
+    display: -webkit-box;
+    color: var(--gum-text-claro);
+    font-size: 0.77rem;
+    line-height: 1.12;
+    letter-spacing: 0.025em;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.gum.gm-screen .group-content-area {
+    min-height: 30px;
+    padding: 5px;
+}
+
+.gum.gm-screen .palette-mod {
+    min-height: 28px;
+    padding: 4px 7px;
+    font-size: 0.82rem;
+}
+
+.gum.gm-screen .gm-utility-dock {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    border-top: 1px solid color-mix(in srgb, var(--gm-surface-raised) 78%, transparent);
+    background: var(--gm-panel);
+    box-shadow: 0 -7px 18px rgba(0, 0, 0, 0.18);
+}
+
+.gum.gm-screen .gm-utility-content {
+    display: none;
+    padding: 7px 10px 3px;
+}
+
+.gum.gm-screen .gm-utility-content.is-open {
+    display: block;
+}
+
+.gum.gm-screen .gm-utility-content .quick-rollers {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    padding: 7px;
+    border-radius: var(--gm-radius);
+}
+
+.gum.gm-screen .gm-utility-content .manual-mod-toolbar {
+    display: grid;
+    grid-template-columns: minmax(140px, 1fr) minmax(150px, 0.8fr);
+    align-items: center;
+    padding: 7px;
+    border-radius: var(--gm-radius);
+}
+
+.gum.gm-screen .gm-utility-content .manual-presets {
+    grid-column: 1 / -1;
+}
+
+.gum.gm-screen .gm-utility-toggle-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px;
+    padding: 6px 10px 8px;
+}
+
+.gum.gm-screen .gm-utility-toggle {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr) auto;
+    min-width: 0;
+    min-height: 32px;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 5px 9px;
+    border: 0;
+    border-radius: var(--gm-radius-small);
+    background: var(--gm-surface);
+    color: var(--gm-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.035em;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+.gum.gm-screen .gm-utility-toggle span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gum.gm-screen .gm-utility-toggle strong {
+    color: var(--gum-text-claro);
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.gum.gm-screen .gm-utility-toggle:hover,
+.gum.gm-screen .gm-utility-toggle.is-active {
+    background: var(--gm-surface-raised);
+    color: var(--gum-text-claro);
+}
+
+.gum.gm-screen .gm-utility-toggle.is-active {
+    box-shadow: inset 0 -2px var(--gum-accent-gold);
+}
+
+.gum.gm-screen .gm-utility-toggle.has-active-value {
+    color: var(--gum-accent-gold);
+}
+
+@container gum-gm-screen (max-width: 900px) {
+    .gum.gm-screen .gm-screen-layout {
+        grid-template-columns: 220px minmax(0, 1fr);
+    }
+
+    .gum.gm-screen .modifiers-dashboard .modular-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .gum.gm-screen .gm-main-toolbar {
+        grid-template-columns: minmax(100px, 1fr) auto 32px 32px;
+        padding-inline: 9px;
+    }
+
+    .gum.gm-screen .gm-main-toolbar .add-group-btn {
+        width: 32px;
+        min-width: 32px;
+        padding: 0;
+    }
+
+    .gum.gm-screen .toolbar-action-label {
+        display: none;
+    }
+
+    .gum.gm-screen .gm-workspace-tabs {
+        padding-inline: 9px;
+    }
+
+    .gum.gm-screen .screen-body {
+        padding: 9px;
+    }
+}
+
+@container gum-gm-screen (max-width: 700px) {
+    .gum.gm-screen .gum-monitor-tabs {
+        padding: 5px;
+    }
+
+    .gum.gm-screen .gum-monitor-tabs .item {
+        padding: 7px 4px;
+        font-size: 0.7rem;
+    }
+
+    .gum.gm-screen .monitor-list,
+    .gum.gm-screen .gm-sidebar-actions {
+        padding-inline: 5px;
+    }
+
+    .gum.gm-screen .actor-identity .vital-bars {
+        width: 122px;
+    }
+
+    .gum.gm-screen .passive-defenses {
+        gap: 5px;
+        overflow: hidden;
+    }
+
+    .gum.gm-screen .gm-selection-summary {
+        padding-inline: 6px;
+    }
+
+    .gum.gm-screen .gm-selection-summary i {
+        display: none;
+    }
+
+    .gum.gm-screen .gm-utility-content .quick-rollers {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .gum.gm-screen .gm-utility-content .manual-mod-toolbar {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .gum.gm-screen .gm-utility-content .manual-presets {
+        grid-column: auto;
+    }
+}
+
+@container gum-gm-screen (max-width: 540px) {
+    .gum.gm-screen .gm-main-toolbar {
+        grid-template-columns: minmax(0, 1fr) 32px 32px;
+    }
+
+    .gum.gm-screen .gm-selection-summary {
+        display: none;
+    }
+}

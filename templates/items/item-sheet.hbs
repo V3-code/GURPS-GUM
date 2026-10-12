@@ -570,6 +570,84 @@
     </div>
 {{/inline}}
 
+{{#*inline "magicConsumptionEditor"}}
+<div class="skill-dashboard-section magic-consumption-editor">
+    <div class="magic-consumption-editor__header">
+        <h4 class="skill-dashboard-section-title"><i class="fas fa-battery-quarter" aria-hidden="true"></i> {{localize "GUM.MagicConsumption.Title"}}</h4>
+        <button type="button" class="add-magic-consumption-group"><i class="fas fa-plus"></i> {{localize "GUM.MagicConsumption.AddGroup"}}</button>
+    </div>
+    <p class="magic-consumption-editor__hint">{{localize "GUM.MagicConsumption.EditorHint"}}</p>
+    <datalist id="magic-consumption-source-names">
+        {{#each magicConsumptionSourceOptions as |option|}}<option value="{{option.name}}">{{option.type}} · {{option.current}}</option>{{/each}}
+    </datalist>
+    {{#each consumptionGroups as |group|}}
+    <article class="magic-consumption-group" data-consumption-group-id="{{group.id}}">
+        <header class="magic-consumption-group__header">
+            <label class="magic-consumption-group__name">
+                <i class="fas fa-coins" aria-hidden="true"></i>
+                <input type="text" name="system.consumptionGroups.{{group.id}}.name" value="{{group.name}}" placeholder="{{localize 'GUM.MagicConsumption.GroupName'}}" aria-label="{{localize 'GUM.MagicConsumption.GroupName'}}"/>
+            </label>
+            <button type="button" class="delete-magic-consumption-group" title="{{localize 'GUM.MagicConsumption.DeleteGroup'}}"><i class="fas fa-trash"></i></button>
+        </header>
+        <div class="spell-power-core-grid magic-consumption-group__main">
+            <div class="skill-dashboard-card skill-dashboard-field-card">
+                <div class="skill-dashboard-card-heading"><i class="fas fa-flag-checkered" aria-hidden="true"></i><span>{{localize "GUM.MagicConsumption.Trigger"}}</span></div>
+                <div class="skill-dashboard-card-control">
+                    <select name="system.consumptionGroups.{{group.id}}.trigger" aria-label="{{localize 'GUM.MagicConsumption.Trigger'}}">
+                        <option value="attempt" {{#if (eq group.trigger "attempt")}}selected{{/if}}>{{localize "GUM.MagicConsumption.TriggerAttempt"}}</option>
+                        <option value="success" {{#if (eq group.trigger "success")}}selected{{/if}}>{{localize "GUM.MagicConsumption.TriggerSuccess"}}</option>
+                        <option value="failure" {{#if (eq group.trigger "failure")}}selected{{/if}}>{{localize "GUM.MagicConsumption.TriggerFailure"}}</option>
+                    </select>
+                </div>
+            </div>
+            <div class="skill-dashboard-card skill-dashboard-field-card">
+                <div class="skill-dashboard-card-heading"><i class="fas fa-hashtag" aria-hidden="true"></i><span>{{localize "GUM.MagicConsumption.Amount"}}</span></div>
+                <div class="skill-dashboard-card-control">
+                    <input type="number" min="0.000001" step="any" name="system.consumptionGroups.{{group.id}}.amount" value="{{group.amount}}" aria-label="{{localize 'GUM.MagicConsumption.Amount'}}"/>
+                </div>
+            </div>
+        </div>
+        <div class="skill-dashboard-toggles magic-consumption-group__options">
+            <label class="skill-dashboard-toggle-card">
+                <i class="fas fa-pen-to-square skill-dashboard-toggle-icon" aria-hidden="true"></i>
+                <span class="skill-dashboard-toggle-label">{{localize "GUM.MagicConsumption.VariableAmount"}}</span>
+                <input type="checkbox" name="system.consumptionGroups.{{group.id}}.variableAmount" {{checked group.variableAmount}}>
+            </label>
+            <label class="skill-dashboard-toggle-card">
+                <i class="fas fa-circle-question skill-dashboard-toggle-icon" aria-hidden="true"></i>
+                <span class="skill-dashboard-toggle-label">{{localize "GUM.MagicConsumption.Confirm"}}</span>
+                <input type="checkbox" name="system.consumptionGroups.{{group.id}}.confirm" {{checked group.confirm}}>
+            </label>
+        </div>
+        <div class="magic-consumption-sources">
+            <div class="magic-consumption-sources__header">
+                <strong><i class="fas fa-code-branch" aria-hidden="true"></i> {{localize "GUM.MagicConsumption.AlternativeSources"}}</strong>
+                <button type="button" class="add-magic-consumption-source" title="{{localize 'GUM.MagicConsumption.AlternativeSources'}}"><i class="fas fa-plus"></i></button>
+            </div>
+            {{#each group.sources as |source|}}
+            <div class="skill-dashboard-card magic-consumption-source" data-consumption-source-id="{{source.id}}">
+                <div class="skill-dashboard-card-control magic-consumption-source__controls">
+                    <select class="magic-consumption-source-type" name="system.consumptionGroups.{{group.id}}.sources.{{source.id}}.type" aria-label="{{localize 'GUM.MagicConsumption.PaymentSource'}}">
+                        <option value="hp" {{#if (eq source.type "hp")}}selected{{/if}}>{{localize "GUM.MagicConsumption.SourceHP"}}</option>
+                        <option value="fp" {{#if (eq source.type "fp")}}selected{{/if}}>{{localize "GUM.MagicConsumption.SourceFP"}}</option>
+                        <option value="spell_reserve" {{#if (eq source.type "spell_reserve")}}selected{{/if}}>{{localize "GUM.MagicConsumption.SourceSpellReserve"}}</option>
+                        <option value="power_reserve" {{#if (eq source.type "power_reserve")}}selected{{/if}}>{{localize "GUM.MagicConsumption.SourcePowerReserve"}}</option>
+                        <option value="combat_tracker" {{#if (eq source.type "combat_tracker")}}selected{{/if}}>{{localize "GUM.MagicConsumption.SourceCombatTracker"}}</option>
+                        <option value="item_quantity" {{#if (eq source.type "item_quantity")}}selected{{/if}}>{{localize "GUM.MagicConsumption.SourceItemQuantity"}}</option>
+                    </select>
+                    <input class="magic-consumption-source-name" type="text" list="magic-consumption-source-names" name="system.consumptionGroups.{{group.id}}.sources.{{source.id}}.name" value="{{source.name}}" placeholder="{{localize 'GUM.MagicConsumption.SourceNameHint'}}" aria-label="{{localize 'GUM.MagicConsumption.SourceNameHint'}}" {{#if (or (eq source.type "hp") (eq source.type "fp"))}}disabled{{/if}}/>
+                </div>
+                <button type="button" class="delete-magic-consumption-source" title="{{localize 'GUM.MagicConsumption.DeleteSource'}}"><i class="fas fa-times"></i></button>
+            </div>
+            {{/each}}
+        </div>
+    </article>
+    {{else}}
+    <p class="magic-consumption-editor__empty">{{localize "GUM.MagicConsumption.Empty"}}</p>
+    {{/each}}
+</div>
+{{/inline}}
+
 {{!-- ============================================= --}}
 {{!-- INÍCIO DA ESTRUTURA DAS FICHAS                --}}
 {{!-- ============================================= --}}
@@ -583,10 +661,10 @@
       <textarea name="name" rows="1" placeholder="{{localize 'GUM.Equipment.Header.ItemName'}}">{{item.name}}</textarea>
     </div>
     <div class="header-subline">
-      <span class="item-type-tag">{{#if (eq item.type "equipment")}}{{localize "GUM.Equipment.Header.Equipment"}}{{else if (eq item.type "eqp_modifier")}}{{localize "GUM.Equipment.Header.Modifier"}}{{else}}{{lookup (object
-        melee_weapon="Arma C.C." ranged_weapon="Arma L.D." 
-        equipment="Equipamento" skill="Perícia" spell="Magia"
-        advantage="Vantagem" disadvantage="Desvantagem" power="Poder" modifier="Modificador" eqp_modifier="Mod. Equip." gm_modifier="GM MOD") item.type}}{{/if}}</span>
+      <span class="item-type-tag">{{#if (eq item.type "equipment")}}{{localize "GUM.Equipment.Header.Equipment"}}{{else if (eq item.type "eqp_modifier")}}{{localize "GUM.Equipment.Header.Modifier"}}{{else if (eq item.type "spell")}}{{localize "GUM.SpellPower.ItemTypeSpell"}}{{else if (eq item.type "power")}}{{localize "GUM.SpellPower.ItemTypePower"}}{{else}}{{lookup (object
+        melee_weapon="Arma C.C." ranged_weapon="Arma L.D."
+        equipment="Equipamento" skill="Perícia"
+        advantage="Vantagem" disadvantage="Desvantagem" modifier="Modificador" eqp_modifier="Mod. Equip." gm_modifier="GM MOD") item.type}}{{/if}}</span>
     </div>
     <span class="header-divider" aria-hidden="true"></span>
   </div>
@@ -608,10 +686,10 @@
         {{/if}}
 
         {{#if (eq item.type "spell")}}
-        <a class="item" data-tab="casting">Conjuração</a>
+        <a class="item" data-tab="casting">{{localize "GUM.SpellPower.TabCasting"}}</a>
         {{/if}}
         {{#if (eq item.type "power")}}
-        <a class="item" data-tab="activation">Ativação</a>
+        <a class="item" data-tab="activation">{{localize "GUM.SpellPower.TabActivation"}}</a>
         {{/if}}
        
         {{!-- Bloco 2: Aba "Modos de Ataque" para Equipamentos --}}
@@ -821,16 +899,6 @@
                                 </div>
                             </div>
 
-                            <div class="effect-premium-field modifier-entry-field modifier-entry-field-value">
-                                <label class="effect-premium-field-label">
-                                    <i class="fas fa-plus" aria-hidden="true"></i>
-                                    Valor
-                                </label>
-                                <div class="effect-premium-field-control">
-                                    <input type="number" name="system.modifier_entries.{{entry.index}}.value" value="{{entry.value}}"/>
-                                </div>
-                            </div>
-
                             <div class="effect-premium-field modifier-entry-field modifier-entry-field-cap">
                                 <label class="effect-premium-field-label">
                                     <i class="fas fa-tachometer-alt" aria-hidden="true"></i>
@@ -839,6 +907,17 @@
                                 <div class="effect-premium-field-control">
                                     <input type="text" name="system.modifier_entries.{{entry.index}}.nh_cap" value="{{entry.nh_cap}}" placeholder="Opcional"/>
                                 </div>
+                            </div>
+                        </div>
+
+                        <div class="effect-premium-field modifier-entry-field gm-modifier-expression-field">
+                            <label class="effect-premium-field-label" title="{{localize 'GUM.GMModifier.ValueHint'}}">
+                                <i class="fas fa-code" aria-hidden="true"></i>
+                                {{localize "GUM.GMModifier.ValueExpression"}}
+                                <i class="fas fa-circle-info gm-modifier-expression-info" aria-hidden="true"></i>
+                            </label>
+                            <div class="effect-premium-field-control">
+                                <textarea class="gm-modifier-expression-input" rows="2" name="system.modifier_entries.{{entry.index}}.value" placeholder="{{localize 'GUM.GMModifier.ValuePlaceholder'}}" spellcheck="false">{{entry.value}}</textarea>
                             </div>
                         </div>
 
@@ -868,7 +947,7 @@
                 {{!-- ===================================================================== --}}
         {{!--           ABA DETALHES: ITEM VANTAGENS E DESVANTAGENS              --}}
         {{!-- ===================================================================== --}}
-                {{#if (or (eq item.type "advantage") (eq item.type "disadvantage"))}}
+        {{#if (or (eq item.type "advantage") (eq item.type "disadvantage"))}}
           <div class="skill-details-dashboard spell-power-dashboard characteristic-details-dashboard">
             <div class="characteristic-top-grid">
               <label class="skill-dashboard-toggle-card characteristic-favorite-card">
@@ -1136,71 +1215,72 @@
         <div class="skill-dashboard-toggles">
             <label class="skill-dashboard-toggle-card">
                 <span class="skill-dashboard-toggle-icon"><i class="fas fa-star" aria-hidden="true"></i></span>
-                <span class="skill-dashboard-toggle-label">Favorito</span>
+                <span class="skill-dashboard-toggle-label">{{localize "GUM.SpellPower.Favorite"}}</span>
                 <input type="checkbox" name="system.favorite_in_combat" {{checked system.favorite_in_combat}}/>
             </label>
         </div>
 
         <div class="skill-dashboard-section spell-dashboard-section">
-            <h4 class="skill-dashboard-section-title"><i class="fas fa-layer-group" aria-hidden="true"></i> Classificação</h4>
+            <h4 class="skill-dashboard-section-title"><i class="fas fa-layer-group" aria-hidden="true"></i> {{localize "GUM.SpellPower.Classification"}}</h4>
             <div class="spell-power-core-grid">
                 <div class="skill-dashboard-card skill-dashboard-field-card">
-                    <label class="skill-dashboard-card-heading"><i class="fas fa-users" aria-hidden="true"></i><span>Grupo</span></label>
-                    <div class="skill-dashboard-card-control"><input type="text" name="system.group" value="{{system.group}}" placeholder="Ex: Evocação"/></div>
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-users" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Group"}}</span></label>
+                    <div class="skill-dashboard-card-control"><input type="text" name="system.group" value="{{system.group}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderSpellGroup'}}"/></div>
                 </div>
                 <div class="skill-dashboard-card skill-dashboard-field-card">
-                    <label class="skill-dashboard-card-heading"><i class="fas fa-school" aria-hidden="true"></i><span>Escola</span></label>
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-school" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.School"}}</span></label>
                     <div class="skill-dashboard-card-control"><input type="text" name="system.spell_school" value="{{system.spell_school}}"/></div>
                 </div>
                 <div class="skill-dashboard-card skill-dashboard-field-card">
-                    <label class="skill-dashboard-card-heading"><i class="fas fa-book" aria-hidden="true"></i><span>Fonte</span></label>
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-book" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Source"}}</span></label>
                     <div class="skill-dashboard-card-control"><input type="text" name="system.source" value="{{system.source}}"/></div>
                 </div>
                 <div class="skill-dashboard-card skill-dashboard-field-card">
-                    <label class="skill-dashboard-card-heading"><i class="fas fa-tags" aria-hidden="true"></i><span>Classe</span></label>
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-tags" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Class"}}</span></label>
                     <div class="skill-dashboard-card-control"><input type="text" name="system.spell_class" value="{{system.spell_class}}"/></div>
                 </div>
             </div>
             <div class="spell-power-core-grid">
                 <div class="skill-dashboard-card skill-dashboard-field-card">
-                    <label class="skill-dashboard-card-heading"><i class="fas fa-hand-sparkles" aria-hidden="true"></i><span>Tipo de Uso</span></label>
-                    <div class="skill-dashboard-card-control"><input type="text" name="system.usage_type" value="{{system.usage_type}}" placeholder="Ex: Ataque, Defesa, Aura, Passivo ..."/></div>
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-hand-sparkles" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.UsageType"}}</span></label>
+                    <div class="skill-dashboard-card-control"><input type="text" name="system.usage_type" value="{{system.usage_type}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderUsageType'}}"/></div>
                 </div>
             </div>
         </div>
 
         <div class="skill-dashboard-section spell-dashboard-section">
-            <h4 class="skill-dashboard-section-title"><i class="fas fa-hourglass-half" aria-hidden="true"></i> Execução</h4>
+            <h4 class="skill-dashboard-section-title"><i class="fas fa-hourglass-half" aria-hidden="true"></i> {{localize "GUM.SpellPower.Execution"}}</h4>
             <div class="spell-power-result-grid">
                 <div class="skill-dashboard-card skill-dashboard-field-card">
-                    <label class="skill-dashboard-card-heading"><i class="fas fa-stopwatch" aria-hidden="true"></i><span>Tempo de Conjuração</span></label>
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-stopwatch" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.CastingTime"}}</span></label>
                     <div class="skill-dashboard-card-control"><input type="text" name="system.casting_time" value="{{system.casting_time}}"/></div>
                 </div>
                 <div class="skill-dashboard-card skill-dashboard-field-card">
-                    <label class="skill-dashboard-card-heading"><i class="fas fa-clock" aria-hidden="true"></i><span>Duração</span></label>
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-clock" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Duration"}}</span></label>
                     <div class="skill-dashboard-card-control"><input type="text" name="system.duration" value="{{system.duration}}"/></div>
                 </div>
                 <label class="skill-dashboard-toggle-card spell-power-inline-toggle">
                     <span class="skill-dashboard-toggle-icon"><i class="fas fa-brain" aria-hidden="true"></i></span>
-                    <span class="skill-dashboard-toggle-label">Requer Concentração</span>
+                    <span class="skill-dashboard-toggle-label">{{localize "GUM.SpellPower.RequiresConcentration"}}</span>
                     <input type="checkbox" name="system.requires_concentration" {{checked system.requires_concentration}}/>
                 </label>
             </div>
         </div>
 
         <div class="skill-dashboard-section spell-dashboard-section">
-            <h4 class="skill-dashboard-section-title"><i class="fas fa-fire" aria-hidden="true"></i> Custo de Mana</h4>
+            <h4 class="skill-dashboard-section-title"><i class="fas fa-fire" aria-hidden="true"></i> {{localize "GUM.SpellPower.ManaCostSection"}}</h4>
             <div class="spell-power-result-grid spell-power-two-grid">
                 <div class="skill-dashboard-card skill-dashboard-stat-card">
-                    <label class="skill-dashboard-card-heading"><i class="fas fa-bolt" aria-hidden="true"></i><span>Custo de Mana</span></label>
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-bolt" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.ManaCost"}}</span></label>
                     <div class="skill-dashboard-card-control"><input type="text" name="system.mana_cost" value="{{system.mana_cost}}"/></div>
                 </div>
                 <div class="skill-dashboard-card skill-dashboard-stat-card">
-                    <label class="skill-dashboard-card-heading"><i class="fas fa-sync-alt" aria-hidden="true"></i><span>Custo de Manutenção</span></label>
+                    <label class="skill-dashboard-card-heading"><i class="fas fa-sync-alt" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.MaintenanceCost"}}</span></label>
                     <div class="skill-dashboard-card-control"><input type="text" name="system.mana_maint" value="{{system.mana_maint}}"/></div>
                 </div>
             </div>
         </div>
+        {{> magicConsumptionEditor}}
     </div>
 {{/if}}
         
@@ -1212,47 +1292,48 @@
         <div class="skill-dashboard-toggles">
             <label class="skill-dashboard-toggle-card">
                 <span class="skill-dashboard-toggle-icon"><i class="fas fa-star" aria-hidden="true"></i></span>
-                <span class="skill-dashboard-toggle-label">Favorito</span>
+                <span class="skill-dashboard-toggle-label">{{localize "GUM.SpellPower.Favorite"}}</span>
                 <input type="checkbox" name="system.favorite_in_combat" {{checked system.favorite_in_combat}}/>
             </label>
         </div>
 
         <div class="skill-dashboard-section power-dashboard-section">
-            <h4 class="skill-dashboard-section-title"><i class="fas fa-layer-group" aria-hidden="true"></i> Classificação</h4>
+            <h4 class="skill-dashboard-section-title"><i class="fas fa-layer-group" aria-hidden="true"></i> {{localize "GUM.SpellPower.Classification"}}</h4>
             <div class="spell-power-core-grid">
-                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-book" aria-hidden="true"></i><span>Fonte</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.source" value="{{system.source}}"/></div></div>
-                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-users" aria-hidden="true"></i><span>Grupo</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.group" value="{{system.group}}" placeholder="Ex: Elemental, Psíquico..."/></div></div>
-                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-tags" aria-hidden="true"></i><span>Classe</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.spell_class" value="{{system.spell_class}}"/></div></div>
-                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-hand-sparkles" aria-hidden="true"></i><span>Tipo de Uso</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.usage_type" value="{{system.usage_type}}" placeholder="Ex: Ataque, Defesa, Aura, Passivo ..."/></div></div>
+                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-book" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Source"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.source" value="{{system.source}}"/></div></div>
+                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-users" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Group"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.group" value="{{system.group}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderPowerGroup'}}"/></div></div>
+                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-tags" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Class"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.spell_class" value="{{system.spell_class}}"/></div></div>
+                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-hand-sparkles" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.UsageType"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.usage_type" value="{{system.usage_type}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderUsageType'}}"/></div></div>
             </div>
         </div>
 
         <div class="skill-dashboard-section power-dashboard-section">
-            <h4 class="skill-dashboard-section-title"><i class="fas fa-gem" aria-hidden="true"></i> Custo do Poder</h4>
+            <h4 class="skill-dashboard-section-title"><i class="fas fa-gem" aria-hidden="true"></i> {{localize "GUM.SpellPower.PowerCost"}}</h4>
             <div class="spell-power-core-grid">
-                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-coins" aria-hidden="true"></i><span>Custo Integral</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.points" value="{{system.points}}"/></div></div>
-                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-receipt" aria-hidden="true"></i><span>Custo Alternativo</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.alternative_points" value="{{system.alternative_points}}"/></div></div>
-                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-wallet" aria-hidden="true"></i><span>Custo Pago</span></label><div class="skill-dashboard-card-control"><select name="system.cost_paid"><option value="full" {{#if (eq system.cost_paid "full")}}selected{{/if}}>Integral</option><option value="alternative" {{#if (eq system.cost_paid "alternative")}}selected{{/if}}>Alternativo</option></select></div></div>
-                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>Custo com Modificador</span></label><div class="skill-dashboard-card-control"><div class="calculated-cost value"><span>{{calculatedCost.finalPoints}}</span><small>{{#if (eq system.cost_paid "alternative")}}Alternativo{{else}}Integral{{/if}} · {{calculatedCost.description}}</small></div></div></div>
+                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-coins" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.FullCost"}}</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.points" value="{{system.points}}"/></div></div>
+                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-receipt" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.AlternativeCost"}}</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.alternative_points" value="{{system.alternative_points}}"/></div></div>
+                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-wallet" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.PaidCost"}}</span></label><div class="skill-dashboard-card-control"><select name="system.cost_paid"><option value="full" {{#if (eq system.cost_paid "full")}}selected{{/if}}>{{localize "GUM.SpellPower.Full"}}</option><option value="alternative" {{#if (eq system.cost_paid "alternative")}}selected{{/if}}>{{localize "GUM.SpellPower.Alternative"}}</option></select></div></div>
+                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.ModifiedCost"}}</span></label><div class="skill-dashboard-card-control"><div class="calculated-cost value"><span>{{calculatedCost.finalPoints}}</span><small>{{#if (eq system.cost_paid "alternative")}}{{localize "GUM.SpellPower.Alternative"}}{{else}}{{localize "GUM.SpellPower.Full"}}{{/if}} · {{calculatedCost.description}}</small></div></div></div>
             </div>
         </div>
 
         <div class="skill-dashboard-section power-dashboard-section">
-            <h4 class="skill-dashboard-section-title"><i class="fas fa-hourglass-half" aria-hidden="true"></i> Execução</h4>
+            <h4 class="skill-dashboard-section-title"><i class="fas fa-hourglass-half" aria-hidden="true"></i> {{localize "GUM.SpellPower.Execution"}}</h4>
             <div class="spell-power-result-grid">
-                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-stopwatch" aria-hidden="true"></i><span>Tempo de Ativação</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.activation_time" value="{{system.activation_time}}"/></div></div>
-                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-clock" aria-hidden="true"></i><span>Duração</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.duration" value="{{system.duration}}"/></div></div>
-                <label class="skill-dashboard-toggle-card spell-power-inline-toggle"><span class="skill-dashboard-toggle-icon"><i class="fas fa-brain" aria-hidden="true"></i></span><span class="skill-dashboard-toggle-label">Requer Concentração</span><input type="checkbox" name="system.requires_concentration" {{checked system.requires_concentration}}/></label>
+                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-stopwatch" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.ActivationTime"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.activation_time" value="{{system.activation_time}}"/></div></div>
+                <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-clock" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Duration"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.duration" value="{{system.duration}}"/></div></div>
+                <label class="skill-dashboard-toggle-card spell-power-inline-toggle"><span class="skill-dashboard-toggle-icon"><i class="fas fa-brain" aria-hidden="true"></i></span><span class="skill-dashboard-toggle-label">{{localize "GUM.SpellPower.RequiresConcentration"}}</span><input type="checkbox" name="system.requires_concentration" {{checked system.requires_concentration}}/></label>
             </div>
         </div>
 
         <div class="skill-dashboard-section power-dashboard-section">
-            <h4 class="skill-dashboard-section-title"><i class="fas fa-bolt" aria-hidden="true"></i> Custo de Energia</h4>
+            <h4 class="skill-dashboard-section-title"><i class="fas fa-bolt" aria-hidden="true"></i> {{localize "GUM.SpellPower.EnergyCost"}}</h4>
             <div class="spell-power-result-grid spell-power-two-grid">
-                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-battery-half" aria-hidden="true"></i><span>Custo de Ativação</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.activation_cost" value="{{system.activation_cost}}"/></div></div>
-                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-sync-alt" aria-hidden="true"></i><span>Custo de Manutenção</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.maint_cost" value="{{system.maint_cost}}"/></div></div>
+                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-battery-half" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.ActivationCost"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.activation_cost" value="{{system.activation_cost}}"/></div></div>
+                <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-sync-alt" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.MaintenanceCost"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.maint_cost" value="{{system.maint_cost}}"/></div></div>
             </div>
         </div>
+        {{> magicConsumptionEditor}}
     </div>
 {{/if}}
 
@@ -1262,18 +1343,18 @@
         {{#if (eq item.type "power")}}
         <div class="skill-details-dashboard spell-power-dashboard power-cost-dashboard">
           <section class="skill-dashboard-section power-dashboard-section">
-            <h4 class="skill-dashboard-section-title"><i class="fas fa-calculator" aria-hidden="true"></i> Cálculo do custo</h4>
+            <h4 class="skill-dashboard-section-title"><i class="fas fa-calculator" aria-hidden="true"></i> {{localize "GUM.SpellPower.CostCalculation"}}</h4>
             <div class="skill-dashboard-toggles power-cost-level-toggle">
-              <label class="skill-dashboard-toggle-card"><span class="skill-dashboard-toggle-icon"><i class="fas fa-chart-line" aria-hidden="true"></i></span><span class="skill-dashboard-toggle-label">Possui custo por nível</span><input type="checkbox" name="system.can_level" {{checked system.can_level}}/></label>
+              <label class="skill-dashboard-toggle-card"><span class="skill-dashboard-toggle-icon"><i class="fas fa-chart-line" aria-hidden="true"></i></span><span class="skill-dashboard-toggle-label">{{localize "GUM.SpellPower.HasLevelCost"}}</span><input type="checkbox" name="system.can_level" {{checked system.can_level}}/></label>
             </div>
             <div class="spell-power-result-grid power-cost-fields">
-              <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-layer-group" aria-hidden="true"></i><span>Nível da característica</span></label><div class="skill-dashboard-card-control"><input type="number" step="any" min="0" name="system.level" value="{{system.level}}"/></div></div>
-              <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-coins" aria-hidden="true"></i><span>Pontos por nível</span></label><div class="skill-dashboard-card-control"><input type="number" step="any" name="system.points_per_level" value="{{system.points_per_level}}"/></div></div>
-              <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-times" aria-hidden="true"></i><span>Multiplicador final</span></label><div class="skill-dashboard-card-control"><input type="number" step="any" min="0" name="system.cost_multiplier" value="{{system.cost_multiplier}}"/></div></div>
+              <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-layer-group" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.TraitLevel"}}</span></label><div class="skill-dashboard-card-control"><input type="number" step="any" min="0" name="system.level" value="{{system.level}}"/></div></div>
+              <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-coins" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.PointsPerLevel"}}</span></label><div class="skill-dashboard-card-control"><input type="number" step="any" name="system.points_per_level" value="{{system.points_per_level}}"/></div></div>
+              <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-times" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.FinalMultiplier"}}</span></label><div class="skill-dashboard-card-control"><input type="number" step="any" min="0" name="system.cost_multiplier" value="{{system.cost_multiplier}}"/></div></div>
             </div>
             <div class="skill-dashboard-toggles">
-              <label class="skill-dashboard-toggle-card"><span class="skill-dashboard-toggle-icon"><i class="fas fa-arrow-down" aria-hidden="true"></i></span><span class="skill-dashboard-toggle-label">Arredondar para baixo</span><input type="checkbox" name="system.round_down" {{checked system.round_down}}/></label>
-              <label class="skill-dashboard-toggle-card"><span class="skill-dashboard-toggle-icon"><i class="fas fa-code-branch" aria-hidden="true"></i></span><span class="skill-dashboard-toggle-label">Regra opcional de modificadores multiplicativos</span><input type="checkbox" name="system.multiplicative_modifiers" {{checked system.multiplicative_modifiers}}/></label>
+              <label class="skill-dashboard-toggle-card"><span class="skill-dashboard-toggle-icon"><i class="fas fa-arrow-down" aria-hidden="true"></i></span><span class="skill-dashboard-toggle-label">{{localize "GUM.SpellPower.RoundDown"}}</span><input type="checkbox" name="system.round_down" {{checked system.round_down}}/></label>
+              <label class="skill-dashboard-toggle-card"><span class="skill-dashboard-toggle-icon"><i class="fas fa-code-branch" aria-hidden="true"></i></span><span class="skill-dashboard-toggle-label">{{localize "GUM.SpellPower.MultiplicativeModifiers"}}</span><input type="checkbox" name="system.multiplicative_modifiers" {{checked system.multiplicative_modifiers}}/></label>
             </div>
           </section>
         </div>
@@ -1406,16 +1487,16 @@
             <div class="skill-dashboard-toggles">
                 <label class="skill-dashboard-toggle-card">
                     <span class="skill-dashboard-toggle-icon"><i class="fas fa-cog" aria-hidden="true"></i></span>
-                    <span class="skill-dashboard-toggle-label">Calcular Pontos Automaticamente</span>
+                    <span class="skill-dashboard-toggle-label">{{localize "GUM.SpellPower.AutoPoints"}}</span>
                     <input type="checkbox" name="system.auto_points" {{checked (ne system.auto_points false)}}/>
                 </label>
             </div>
 
             <div class="skill-dashboard-section spell-dashboard-section">
-                <h4 class="skill-dashboard-section-title"><i class="fas fa-magic" aria-hidden="true"></i> Conjuração</h4>
+                <h4 class="skill-dashboard-section-title"><i class="fas fa-magic" aria-hidden="true"></i> {{localize "GUM.SpellPower.Casting"}}</h4>
                 <div class="spell-power-core-grid">
                     <div class="skill-dashboard-card skill-dashboard-field-card">
-                        <label class="skill-dashboard-card-heading"><i class="fas fa-book-open" aria-hidden="true"></i><span>Atributo Base</span></label>
+                        <label class="skill-dashboard-card-heading"><i class="fas fa-book-open" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.BaseAttribute"}}</span></label>
                         <div class="skill-dashboard-card-control skill-dashboard-stacked-control">
                             <select name="system.base_attribute_select" class="skill-base-attribute-select spell-base-attribute-select" data-custom-target=".spell-base-attribute-custom">
                                 <option value="st" {{#if (eq spellBaseAttributeSelect "st")}}selected{{/if}}>ST</option>
@@ -1423,70 +1504,70 @@
                                 <option value="iq" {{#if (eq spellBaseAttributeSelect "iq")}}selected{{/if}}>IQ</option>
                                 <option value="ht" {{#if (eq spellBaseAttributeSelect "ht")}}selected{{/if}}>HT</option>
                                 <option value="per" {{#if (eq spellBaseAttributeSelect "per")}}selected{{/if}}>Per</option>
-                                <option value="vont" {{#if (or (eq spellBaseAttributeSelect "vont") (eq spellBaseAttributeSelect "will"))}}selected{{/if}}>Vont</option>
-                                <option value="skill" {{#if (eq spellBaseAttributeSelect "skill")}}selected{{/if}}>Perícia</option>
-                                <option value="spell" {{#if (eq spellBaseAttributeSelect "spell")}}selected{{/if}}>Magia</option>
-                                <option value="custom" {{#if (eq spellBaseAttributeSelect "custom")}}selected{{/if}}>Valor/Expressão</option>
+                                <option value="vont" {{#if (or (eq spellBaseAttributeSelect "vont") (eq spellBaseAttributeSelect "will"))}}selected{{/if}}>{{localize "GUM.SpellPower.Will"}}</option>
+                                <option value="skill" {{#if (eq spellBaseAttributeSelect "skill")}}selected{{/if}}>{{localize "GUM.SpellPower.Skill"}}</option>
+                                <option value="spell" {{#if (eq spellBaseAttributeSelect "spell")}}selected{{/if}}>{{localize "GUM.SpellPower.Spell"}}</option>
+                                <option value="custom" {{#if (eq spellBaseAttributeSelect "custom")}}selected{{/if}}>{{localize "GUM.SpellPower.CustomExpression"}}</option>
                             </select>
                             <input class="skill-base-attribute-custom spell-base-attribute-custom" type="text" name="system.base_attribute_custom" value="{{spellBaseAttributeCustom}}" placeholder="{{spellBaseAttributePlaceholder}}" {{#unless spellBaseAttributeCustomEnabled}}disabled{{/unless}}/>
                         </div>
                     </div>
 
                     <div class="skill-dashboard-card skill-dashboard-field-card">
-                        <label class="skill-dashboard-card-heading"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>Dificuldade</span></label>
+                        <label class="skill-dashboard-card-heading"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Difficulty"}}</span></label>
                         <div class="skill-dashboard-card-control skill-dashboard-stacked-control">
                             <select name="system.difficulty" class="spell-difficulty-select">{{selectOptions spellDifficultyOptions selected=spellDifficultySelected}}</select>
-                            <input class="spell-linear-points" type="number" step="1" min="0" name="system.cost_per_level" value="{{system.cost_per_level}}" placeholder="pts/nível" {{#unless spellUsesLinearCost}}disabled{{/unless}}/>
+                            <input class="spell-linear-points" type="number" step="1" min="0" name="system.cost_per_level" value="{{system.cost_per_level}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderPointsPerLevel'}}" {{#unless spellUsesLinearCost}}disabled{{/unless}}/>
                         </div>
                     </div>
                 </div>
                 <div class="spell-power-result-grid">
-                    <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-balance-scale" aria-hidden="true"></i><span>Nível Relativo</span></label><div class="skill-dashboard-card-control skill-dashboard-stepper counter-wrapper"><a class="adjust-value" data-action="decrease" data-target="system.skill_level"><i class="fas fa-minus" aria-hidden="true"></i></a><input type="number" name="system.skill_level" value="{{system.skill_level}}" data-dtype="Number"><a class="adjust-value" data-action="increase" data-target="system.skill_level"><i class="fas fa-plus" aria-hidden="true"></i></a></div></div>
-                    <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>Modificador Base</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.nh_mod" value="{{system.nh_mod}}" placeholder="+0"/></div></div>
-                    <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-gem" aria-hidden="true"></i><span>Pontos Totais</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.points" value="{{system.points}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/></div></div>
+                    <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-balance-scale" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.RelativeLevel"}}</span></label><div class="skill-dashboard-card-control skill-dashboard-stepper counter-wrapper"><a class="adjust-value" data-action="decrease" data-target="system.skill_level"><i class="fas fa-minus" aria-hidden="true"></i></a><input type="number" name="system.skill_level" value="{{system.skill_level}}" data-dtype="Number"><a class="adjust-value" data-action="increase" data-target="system.skill_level"><i class="fas fa-plus" aria-hidden="true"></i></a></div></div>
+                    <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.BaseModifier"}}</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.nh_mod" value="{{system.nh_mod}}" placeholder="+0"/></div></div>
+                    <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-gem" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.TotalPoints"}}</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.points" value="{{system.points}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/></div></div>
                 </div>
             </div>
 
             <div class="skill-dashboard-section spell-dashboard-section">
-                <h4 class="skill-dashboard-section-title"><i class="fas fa-crosshairs" aria-hidden="true"></i> Ataque Após Conjuração</h4>
+                <h4 class="skill-dashboard-section-title"><i class="fas fa-crosshairs" aria-hidden="true"></i> {{localize "GUM.SpellPower.AttackAfterCasting"}}</h4>
                 <div class="spell-power-result-grid spell-power-attack-grid">
-                    <label class="skill-dashboard-toggle-card spell-power-inline-toggle"><span class="skill-dashboard-toggle-icon"><i class="fas fa-dice-d20" aria-hidden="true"></i></span><span class="skill-dashboard-toggle-label">Exige rolagem de ataque</span><input type="checkbox" name="system.uses_attack" class="spell-uses-attack-toggle" {{checked system.uses_attack}}/></label>
+                    <label class="skill-dashboard-toggle-card spell-power-inline-toggle"><span class="skill-dashboard-toggle-icon"><i class="fas fa-dice-d20" aria-hidden="true"></i></span><span class="skill-dashboard-toggle-label">{{localize "GUM.SpellPower.RequiresAttackRoll"}}</span><input type="checkbox" name="system.uses_attack" class="spell-uses-attack-toggle" {{checked system.uses_attack}}/></label>
                     <div class="spell-power-attack-common-fields {{#unless system.uses_attack}}is-hidden{{/unless}}">
-                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-location-arrow" aria-hidden="true"></i><span>Tipo de Ataque</span></label><div class="skill-dashboard-card-control"><select name="system.attack_type" class="spell-power-attack-type" {{#unless system.uses_attack}}disabled{{/unless}}><option value="melee" {{#if (eq system.attack_type "melee")}}selected{{/if}}>Corpo a corpo</option><option value="ranged" {{#if (eq system.attack_type "ranged")}}selected{{/if}}>À distância</option></select></div></div>
-                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-link" aria-hidden="true"></i><span>Perícia de Ataque</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.skill_name" value="{{system.attack_roll.skill_name}}" placeholder="Ex: Ataque Inato (Projétil), DX, 14" {{#unless system.uses_attack}}disabled{{/unless}}/></div></div>
-                        <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>Modificador Base de Ataque</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.attack_roll.skill_level_mod" value="{{system.attack_roll.skill_level_mod}}" {{#unless system.uses_attack}}disabled{{/unless}}/></div></div>
-                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-dumbbell" aria-hidden="true"></i><span>ST Mínima</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.min_strength" value="{{attackMinStrength}}" placeholder="Ex: 10" {{#unless system.uses_attack}}disabled{{/unless}}/></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-location-arrow" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.AttackType"}}</span></label><div class="skill-dashboard-card-control"><select name="system.attack_type" class="spell-power-attack-type" {{#unless system.uses_attack}}disabled{{/unless}}><option value="melee" {{#if (eq system.attack_type "melee")}}selected{{/if}}>{{localize "GUM.SpellPower.Melee"}}</option><option value="ranged" {{#if (eq system.attack_type "ranged")}}selected{{/if}}>{{localize "GUM.SpellPower.Ranged"}}</option></select></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-link" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.AttackSkill"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.skill_name" value="{{system.attack_roll.skill_name}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderAttackSkill'}}" {{#unless system.uses_attack}}disabled{{/unless}}/></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.AttackBaseModifier"}}</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.attack_roll.skill_level_mod" value="{{system.attack_roll.skill_level_mod}}" {{#unless system.uses_attack}}disabled{{/unless}}/></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-dumbbell" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.MinimumStrength"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.min_strength" value="{{attackMinStrength}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderMinimumStrength'}}" {{#unless system.uses_attack}}disabled{{/unless}}/></div></div>
                     </div>
                     <div class="spell-power-attack-type-fields {{#unless system.uses_attack}}is-hidden{{/unless}} {{#unless (eq system.attack_type "melee")}}is-hidden{{/unless}}" data-attack-fields="melee">
-                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-ruler-horizontal" aria-hidden="true"></i><span>Alcance</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.reach" value="{{system.attack_roll.reach}}" placeholder="Ex: C, 1, C-2"/></div></div>
-                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>Aparar</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.parry" value="{{system.attack_roll.parry}}" placeholder="Ex: 0, -1, Não"/></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-ruler-horizontal" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Reach"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.reach" value="{{system.attack_roll.reach}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderReach'}}"/></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Parry"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.parry" value="{{system.attack_roll.parry}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderParry'}}"/></div></div>
                     </div>
                     <div class="spell-power-attack-type-fields {{#unless system.uses_attack}}is-hidden{{/unless}} {{#unless (eq system.attack_type "ranged")}}is-hidden{{/unless}}" data-attack-fields="ranged">
-                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-crosshairs" aria-hidden="true"></i><span>Precisão</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.attack_roll.accuracy" value="{{system.attack_roll.accuracy}}" placeholder="Ex: 3"/></div></div>
-                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-ruler-horizontal" aria-hidden="true"></i><span>Alcance</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.range" value="{{system.attack_roll.range}}" placeholder="Ex: 100/200"/></div></div>
-                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-burst" aria-hidden="true"></i><span>CdT</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.rof" value="{{system.attack_roll.rof}}" placeholder="Ex: 1, 3, 10x9"/></div></div>
-                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-layer-group" aria-hidden="true"></i><span>Tiros</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.shots" value="{{system.attack_roll.shots}}" placeholder="Ex: 10(3)"/></div></div>
-                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-weight-hanging" aria-hidden="true"></i><span>Magn.</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.bulk" value="{{system.attack_roll.bulk}}" placeholder="Ex: -4"/></div></div>
-                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-arrows-left-right" aria-hidden="true"></i><span>RCO</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.attack_roll.rcl" value="{{system.attack_roll.rcl}}" placeholder="Ex: 2"/></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-crosshairs" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Accuracy"}}</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.attack_roll.accuracy" value="{{system.attack_roll.accuracy}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderAccuracy'}}"/></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-ruler-horizontal" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Range"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.range" value="{{system.attack_roll.range}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderRange'}}"/></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-burst" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.RateOfFire"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.rof" value="{{system.attack_roll.rof}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderRateOfFire'}}"/></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-layer-group" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Shots"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.shots" value="{{system.attack_roll.shots}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderShots'}}"/></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-weight-hanging" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Bulk"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.bulk" value="{{system.attack_roll.bulk}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderBulk'}}"/></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-arrows-left-right" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Recoil"}}</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.attack_roll.rcl" value="{{system.attack_roll.rcl}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderRecoil'}}"/></div></div>
                     </div>
                 </div>
             </div>
 
             <div class="skill-dashboard-section spell-dashboard-section spell-power-damage-section">
-                <h4 class="skill-dashboard-section-title"><i class="fas fa-burst" aria-hidden="true"></i> Dano</h4>
+                <h4 class="skill-dashboard-section-title"><i class="fas fa-burst" aria-hidden="true"></i> {{localize "GUM.SpellPower.Damage"}}</h4>
                 <div class="item-damage-table spell-power-dashboard-damage">
-                    <div class="damage-table-spacer"></div><div class="damage-col-label">Fórmula</div><div class="damage-col-label">Tipo</div><div class="damage-col-label">Natureza</div><div class="damage-col-label">Div.</div><div class="damage-col-label">Escala</div>
-                    <label class="effect-label">Dano Primário</label><input type="text" name="system.damage.formula" value="{{system.damage.formula}}" placeholder="Ex: 3d6, 1d6-1"/><input type="text" name="system.damage.type" value="{{system.damage.type}}" placeholder="Ex: qmd, cont, cort"/><input type="text" name="system.damage.nature" value="{{system.damage.nature}}" placeholder="Ex: Fogo [FOG]"/><input type="number" step="0.1" name="system.damage.armor_divisor" value="{{system.damage.armor_divisor}}" title="Divisor de Armadura"/><input type="text" name="system.damage.scaling" value="{{system.damage.scaling}}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/>
-                    <label class="effect-label">Dano de Acompanhamento</label><input type="text" name="system.damage.follow_up_damage.formula" value="{{system.damage.follow_up_damage.formula}}"/><input type="text" name="system.damage.follow_up_damage.type" value="{{system.damage.follow_up_damage.type}}"/><input type="text" name="system.damage.follow_up_damage.nature" value="{{system.damage.follow_up_damage.nature}}" placeholder="Natureza"/><input type="number" step="0.1" name="system.damage.follow_up_damage.armor_divisor" value="{{system.damage.follow_up_damage.armor_divisor}}" title="Divisor"/><input type="text" name="system.damage.follow_up_damage.scaling" value="{{system.damage.follow_up_damage.scaling}}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/>
-                    <label class="effect-label">Dano de Fragmentação</label><input type="text" name="system.damage.fragmentation_damage.formula" value="{{system.damage.fragmentation_damage.formula}}"/><input type="text" name="system.damage.fragmentation_damage.type" value="{{system.damage.fragmentation_damage.type}}"/><input type="text" name="system.damage.fragmentation_damage.nature" value="{{system.damage.fragmentation_damage.nature}}" placeholder="Natureza"/><input type="number" step="0.1" name="system.damage.fragmentation_damage.armor_divisor" value="{{system.damage.fragmentation_damage.armor_divisor}}" title="Divisor"/><input type="text" name="system.damage.fragmentation_damage.scaling" value="{{system.damage.fragmentation_damage.scaling}}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/>
+                    <div class="damage-table-spacer"></div><div class="damage-col-label">{{localize "GUM.SpellPower.Formula"}}</div><div class="damage-col-label">{{localize "GUM.SpellPower.Type"}}</div><div class="damage-col-label">{{localize "GUM.SpellPower.Nature"}}</div><div class="damage-col-label">{{localize "GUM.SpellPower.ArmorDivisorShort"}}</div><div class="damage-col-label">{{localize "GUM.SpellPower.Scale"}}</div>
+                    <label class="effect-label">{{localize "GUM.SpellPower.PrimaryDamage"}}</label><input type="text" name="system.damage.formula" value="{{system.damage.formula}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderDamageFormula'}}"/><input type="text" name="system.damage.type" value="{{system.damage.type}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderDamageType'}}"/><input type="text" name="system.damage.nature" value="{{system.damage.nature}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderDamageNature'}}"/><input type="number" step="0.1" name="system.damage.armor_divisor" value="{{system.damage.armor_divisor}}" title="{{localize 'GUM.SpellPower.ArmorDivisor'}}"/><input type="text" name="system.damage.scaling" value="{{system.damage.scaling}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderDamageScaling'}}" title="{{localize 'GUM.SpellPower.DamageScalingHint'}}"/>
+                    <label class="effect-label">{{localize "GUM.SpellPower.FollowUpDamage"}}</label><input type="text" name="system.damage.follow_up_damage.formula" value="{{system.damage.follow_up_damage.formula}}"/><input type="text" name="system.damage.follow_up_damage.type" value="{{system.damage.follow_up_damage.type}}"/><input type="text" name="system.damage.follow_up_damage.nature" value="{{system.damage.follow_up_damage.nature}}" placeholder="{{localize 'GUM.SpellPower.Nature'}}"/><input type="number" step="0.1" name="system.damage.follow_up_damage.armor_divisor" value="{{system.damage.follow_up_damage.armor_divisor}}" title="{{localize 'GUM.SpellPower.ArmorDivisor'}}"/><input type="text" name="system.damage.follow_up_damage.scaling" value="{{system.damage.follow_up_damage.scaling}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderDamageScaling'}}" title="{{localize 'GUM.SpellPower.DamageScalingHint'}}"/>
+                    <label class="effect-label">{{localize "GUM.SpellPower.FragmentationDamage"}}</label><input type="text" name="system.damage.fragmentation_damage.formula" value="{{system.damage.fragmentation_damage.formula}}"/><input type="text" name="system.damage.fragmentation_damage.type" value="{{system.damage.fragmentation_damage.type}}"/><input type="text" name="system.damage.fragmentation_damage.nature" value="{{system.damage.fragmentation_damage.nature}}" placeholder="{{localize 'GUM.SpellPower.Nature'}}"/><input type="number" step="0.1" name="system.damage.fragmentation_damage.armor_divisor" value="{{system.damage.fragmentation_damage.armor_divisor}}" title="{{localize 'GUM.SpellPower.ArmorDivisor'}}"/><input type="text" name="system.damage.fragmentation_damage.scaling" value="{{system.damage.fragmentation_damage.scaling}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderDamageScaling'}}" title="{{localize 'GUM.SpellPower.DamageScalingHint'}}"/>
                 </div>
             </div>
 
             <div class="skill-dashboard-section spell-dashboard-section">
-                <h4 class="skill-dashboard-section-title"><i class="fas fa-clipboard-check" aria-hidden="true"></i> Resultado</h4>
+                <h4 class="skill-dashboard-section-title"><i class="fas fa-clipboard-check" aria-hidden="true"></i> {{localize "GUM.SpellPower.Result"}}</h4>
                 <div class="spell-power-result-grid spell-power-two-grid">
-                    <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>Resistido Por</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.resistance" value="{{system.resistance}}" placeholder="Ex: HT, Vontade, IQ-3"/></div></div>
-                    <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-scroll" aria-hidden="true"></i><span>Resumo do Efeito</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.effect" value="{{system.effect}}" placeholder="Resumo curto para consulta"/></div></div>
+                    <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.ResistedBy"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.resistance" value="{{system.resistance}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderResistance'}}"/></div></div>
+                    <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-scroll" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.EffectSummary"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.effect" value="{{system.effect}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderEffectSummary'}}"/></div></div>
                 </div>
             </div>
         </div>
@@ -1502,75 +1583,75 @@
             <div class="skill-dashboard-toggles">
                 <label class="skill-dashboard-toggle-card">
                     <span class="skill-dashboard-toggle-icon"><i class="fas fa-cog" aria-hidden="true"></i></span>
-                    <span class="skill-dashboard-toggle-label">Calcular Pontos Automaticamente</span>
+                    <span class="skill-dashboard-toggle-label">{{localize "GUM.SpellPower.AutoPoints"}}</span>
                     <input type="checkbox" name="system.auto_points" {{checked (ne system.auto_points false)}}/>
                 </label>
             </div>
 
             <div class="skill-dashboard-section power-dashboard-section">
-                <h4 class="skill-dashboard-section-title"><i class="fas fa-bolt" aria-hidden="true"></i> Ativação</h4>
+                <h4 class="skill-dashboard-section-title"><i class="fas fa-bolt" aria-hidden="true"></i> {{localize "GUM.SpellPower.Activation"}}</h4>
                 <div class="spell-power-core-grid">
                     <div class="skill-dashboard-card skill-dashboard-field-card">
-                        <label class="skill-dashboard-card-heading"><i class="fas fa-book-open" aria-hidden="true"></i><span>Atributo Base</span></label>
+                        <label class="skill-dashboard-card-heading"><i class="fas fa-book-open" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.BaseAttribute"}}</span></label>
                         <div class="skill-dashboard-card-control skill-dashboard-stacked-control">
                             <select name="system.base_attribute_select" class="skill-base-attribute-select power-base-attribute-select" data-custom-target=".power-base-attribute-custom">
-                                <option value="st" {{#if (eq powerBaseAttributeSelect "st")}}selected{{/if}}>ST</option><option value="dx" {{#if (eq powerBaseAttributeSelect "dx")}}selected{{/if}}>DX</option><option value="iq" {{#if (eq powerBaseAttributeSelect "iq")}}selected{{/if}}>IQ</option><option value="ht" {{#if (eq powerBaseAttributeSelect "ht")}}selected{{/if}}>HT</option><option value="per" {{#if (eq powerBaseAttributeSelect "per")}}selected{{/if}}>Per</option><option value="vont" {{#if (or (eq powerBaseAttributeSelect "vont") (eq powerBaseAttributeSelect "will"))}}selected{{/if}}>Vont</option><option value="skill" {{#if (eq powerBaseAttributeSelect "skill")}}selected{{/if}}>Perícia</option><option value="spell" {{#if (eq powerBaseAttributeSelect "spell")}}selected{{/if}}>Magia</option><option value="power" {{#if (eq powerBaseAttributeSelect "power")}}selected{{/if}}>Poder</option><option value="custom" {{#if (eq powerBaseAttributeSelect "custom")}}selected{{/if}}>Valor/Expressão</option>
+                                <option value="st" {{#if (eq powerBaseAttributeSelect "st")}}selected{{/if}}>ST</option><option value="dx" {{#if (eq powerBaseAttributeSelect "dx")}}selected{{/if}}>DX</option><option value="iq" {{#if (eq powerBaseAttributeSelect "iq")}}selected{{/if}}>IQ</option><option value="ht" {{#if (eq powerBaseAttributeSelect "ht")}}selected{{/if}}>HT</option><option value="per" {{#if (eq powerBaseAttributeSelect "per")}}selected{{/if}}>Per</option><option value="vont" {{#if (or (eq powerBaseAttributeSelect "vont") (eq powerBaseAttributeSelect "will"))}}selected{{/if}}>{{localize "GUM.SpellPower.Will"}}</option><option value="skill" {{#if (eq powerBaseAttributeSelect "skill")}}selected{{/if}}>{{localize "GUM.SpellPower.Skill"}}</option><option value="spell" {{#if (eq powerBaseAttributeSelect "spell")}}selected{{/if}}>{{localize "GUM.SpellPower.Spell"}}</option><option value="power" {{#if (eq powerBaseAttributeSelect "power")}}selected{{/if}}>{{localize "GUM.SpellPower.Power"}}</option><option value="custom" {{#if (eq powerBaseAttributeSelect "custom")}}selected{{/if}}>{{localize "GUM.SpellPower.CustomExpression"}}</option>
                             </select>
                             <input class="skill-base-attribute-custom power-base-attribute-custom" type="text" name="system.base_attribute_custom" value="{{powerBaseAttributeCustom}}" placeholder="{{powerBaseAttributePlaceholder}}" {{#unless powerBaseAttributeCustomEnabled}}disabled{{/unless}}/>
                         </div>
                     </div>
                     <div class="skill-dashboard-card skill-dashboard-field-card">
-                        <label class="skill-dashboard-card-heading"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>Dificuldade</span></label>
-                        <div class="skill-dashboard-card-control skill-dashboard-stacked-control"><select name="system.difficulty" class="power-difficulty-select">{{selectOptions powerDifficultyOptions selected=powerDifficultySelected}}</select><input class="power-linear-points" type="number" step="1" min="0" name="system.cost_per_level" value="{{system.cost_per_level}}" placeholder="pts/nível" {{#unless powerUsesLinearCost}}disabled{{/unless}}/></div>
+                        <label class="skill-dashboard-card-heading"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Difficulty"}}</span></label>
+                        <div class="skill-dashboard-card-control skill-dashboard-stacked-control"><select name="system.difficulty" class="power-difficulty-select">{{selectOptions powerDifficultyOptions selected=powerDifficultySelected}}</select><input class="power-linear-points" type="number" step="1" min="0" name="system.cost_per_level" value="{{system.cost_per_level}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderPointsPerLevel'}}" {{#unless powerUsesLinearCost}}disabled{{/unless}}/></div>
                     </div>
                 </div>
                 <div class="spell-power-result-grid">
-                    <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-balance-scale" aria-hidden="true"></i><span>Nível Relativo</span></label><div class="skill-dashboard-card-control skill-dashboard-stepper counter-wrapper"><a class="adjust-value" data-action="decrease" data-target="system.skill_level"><i class="fas fa-minus" aria-hidden="true"></i></a><input type="number" name="system.skill_level" value="{{system.skill_level}}" data-dtype="Number"><a class="adjust-value" data-action="increase" data-target="system.skill_level"><i class="fas fa-plus" aria-hidden="true"></i></a></div></div>
-                    <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>Modificador Base</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.nh_mod" value="{{system.nh_mod}}" placeholder="+0"/></div></div>
-                    <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-gem" aria-hidden="true"></i><span>Pontos da Habilidade</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.points_skill" value="{{system.points_skill}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/></div></div>
+                    <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-balance-scale" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.RelativeLevel"}}</span></label><div class="skill-dashboard-card-control skill-dashboard-stepper counter-wrapper"><a class="adjust-value" data-action="decrease" data-target="system.skill_level"><i class="fas fa-minus" aria-hidden="true"></i></a><input type="number" name="system.skill_level" value="{{system.skill_level}}" data-dtype="Number"><a class="adjust-value" data-action="increase" data-target="system.skill_level"><i class="fas fa-plus" aria-hidden="true"></i></a></div></div>
+                    <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.BaseModifier"}}</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.nh_mod" value="{{system.nh_mod}}" placeholder="+0"/></div></div>
+                    <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-gem" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.AbilityPoints"}}</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.points_skill" value="{{system.points_skill}}" {{#if (ne system.auto_points false)}}disabled{{/if}}/></div></div>
                 </div>
             </div>
 
             <div class="skill-dashboard-section power-dashboard-section">
-                <h4 class="skill-dashboard-section-title"><i class="fas fa-crosshairs" aria-hidden="true"></i> Ataque Após Ativação</h4>
+                <h4 class="skill-dashboard-section-title"><i class="fas fa-crosshairs" aria-hidden="true"></i> {{localize "GUM.SpellPower.AttackAfterActivation"}}</h4>
                 <div class="spell-power-result-grid spell-power-attack-grid">
-                    <label class="skill-dashboard-toggle-card spell-power-inline-toggle"><span class="skill-dashboard-toggle-icon"><i class="fas fa-dice-d20" aria-hidden="true"></i></span><span class="skill-dashboard-toggle-label">Exige rolagem de ataque</span><input type="checkbox" name="system.uses_attack" class="power-uses-attack-toggle" {{checked system.uses_attack}}/></label>
+                    <label class="skill-dashboard-toggle-card spell-power-inline-toggle"><span class="skill-dashboard-toggle-icon"><i class="fas fa-dice-d20" aria-hidden="true"></i></span><span class="skill-dashboard-toggle-label">{{localize "GUM.SpellPower.RequiresAttackRoll"}}</span><input type="checkbox" name="system.uses_attack" class="power-uses-attack-toggle" {{checked system.uses_attack}}/></label>
                     <div class="spell-power-attack-common-fields {{#unless system.uses_attack}}is-hidden{{/unless}}">
-                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-location-arrow" aria-hidden="true"></i><span>Tipo de Ataque</span></label><div class="skill-dashboard-card-control"><select name="system.attack_type" class="spell-power-attack-type" {{#unless system.uses_attack}}disabled{{/unless}}><option value="melee" {{#if (eq system.attack_type "melee")}}selected{{/if}}>Corpo a corpo</option><option value="ranged" {{#if (eq system.attack_type "ranged")}}selected{{/if}}>À distância</option></select></div></div>
-                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-link" aria-hidden="true"></i><span>Perícia de Ataque</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.skill_name" value="{{system.attack_roll.skill_name}}" placeholder="Ex: Ataque Inato (Projétil), DX, 14" {{#unless system.uses_attack}}disabled{{/unless}}/></div></div>
-                        <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>Modificador Base de Ataque</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.attack_roll.skill_level_mod" value="{{system.attack_roll.skill_level_mod}}" {{#unless system.uses_attack}}disabled{{/unless}}/></div></div>
-                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-dumbbell" aria-hidden="true"></i><span>ST Mínima</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.min_strength" value="{{attackMinStrength}}" placeholder="Ex: 10" {{#unless system.uses_attack}}disabled{{/unless}}/></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-location-arrow" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.AttackType"}}</span></label><div class="skill-dashboard-card-control"><select name="system.attack_type" class="spell-power-attack-type" {{#unless system.uses_attack}}disabled{{/unless}}><option value="melee" {{#if (eq system.attack_type "melee")}}selected{{/if}}>{{localize "GUM.SpellPower.Melee"}}</option><option value="ranged" {{#if (eq system.attack_type "ranged")}}selected{{/if}}>{{localize "GUM.SpellPower.Ranged"}}</option></select></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-link" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.AttackSkill"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.skill_name" value="{{system.attack_roll.skill_name}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderAttackSkill'}}" {{#unless system.uses_attack}}disabled{{/unless}}/></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-stat-card"><label class="skill-dashboard-card-heading"><i class="fas fa-calculator" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.AttackBaseModifier"}}</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.attack_roll.skill_level_mod" value="{{system.attack_roll.skill_level_mod}}" {{#unless system.uses_attack}}disabled{{/unless}}/></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-dumbbell" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.MinimumStrength"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.min_strength" value="{{attackMinStrength}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderMinimumStrength'}}" {{#unless system.uses_attack}}disabled{{/unless}}/></div></div>
                     </div>
                     <div class="spell-power-attack-type-fields {{#unless system.uses_attack}}is-hidden{{/unless}} {{#unless (eq system.attack_type "melee")}}is-hidden{{/unless}}" data-attack-fields="melee">
-                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-ruler-horizontal" aria-hidden="true"></i><span>Alcance</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.reach" value="{{system.attack_roll.reach}}" placeholder="Ex: C, 1, C-2"/></div></div>
-                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>Aparar</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.parry" value="{{system.attack_roll.parry}}" placeholder="Ex: 0, -1, Não"/></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-ruler-horizontal" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Reach"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.reach" value="{{system.attack_roll.reach}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderReach'}}"/></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Parry"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.parry" value="{{system.attack_roll.parry}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderParry'}}"/></div></div>
                     </div>
                     <div class="spell-power-attack-type-fields {{#unless system.uses_attack}}is-hidden{{/unless}} {{#unless (eq system.attack_type "ranged")}}is-hidden{{/unless}}" data-attack-fields="ranged">
-                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-crosshairs" aria-hidden="true"></i><span>Precisão</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.attack_roll.accuracy" value="{{system.attack_roll.accuracy}}" placeholder="Ex: 3"/></div></div>
-                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-ruler-horizontal" aria-hidden="true"></i><span>Alcance</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.range" value="{{system.attack_roll.range}}" placeholder="Ex: 100/200"/></div></div>
-                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-burst" aria-hidden="true"></i><span>CdT</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.rof" value="{{system.attack_roll.rof}}" placeholder="Ex: 1, 3, 10x9"/></div></div>
-                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-layer-group" aria-hidden="true"></i><span>Tiros</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.shots" value="{{system.attack_roll.shots}}" placeholder="Ex: 10(3)"/></div></div>
-                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-weight-hanging" aria-hidden="true"></i><span>Magn.</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.bulk" value="{{system.attack_roll.bulk}}" placeholder="Ex: -4"/></div></div>
-                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-arrows-left-right" aria-hidden="true"></i><span>RCO</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.attack_roll.rcl" value="{{system.attack_roll.rcl}}" placeholder="Ex: 2"/></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-crosshairs" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Accuracy"}}</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.attack_roll.accuracy" value="{{system.attack_roll.accuracy}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderAccuracy'}}"/></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-ruler-horizontal" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Range"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.range" value="{{system.attack_roll.range}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderRange'}}"/></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-burst" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.RateOfFire"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.rof" value="{{system.attack_roll.rof}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderRateOfFire'}}"/></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-layer-group" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Shots"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.shots" value="{{system.attack_roll.shots}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderShots'}}"/></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-weight-hanging" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Bulk"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.attack_roll.bulk" value="{{system.attack_roll.bulk}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderBulk'}}"/></div></div>
+                        <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-arrows-left-right" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.Recoil"}}</span></label><div class="skill-dashboard-card-control"><input type="number" name="system.attack_roll.rcl" value="{{system.attack_roll.rcl}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderRecoil'}}"/></div></div>
                     </div>
                 </div>
             </div>
 
             <div class="skill-dashboard-section power-dashboard-section spell-power-damage-section">
-                <h4 class="skill-dashboard-section-title"><i class="fas fa-burst" aria-hidden="true"></i> Dano</h4>
+                <h4 class="skill-dashboard-section-title"><i class="fas fa-burst" aria-hidden="true"></i> {{localize "GUM.SpellPower.Damage"}}</h4>
                 <div class="item-damage-table spell-power-dashboard-damage">
-                    <div class="damage-table-spacer"></div><div class="damage-col-label">Fórmula</div><div class="damage-col-label">Tipo</div><div class="damage-col-label">Natureza</div><div class="damage-col-label">Div.</div><div class="damage-col-label">Escala</div>
-                    <label class="effect-label">Dano Primário</label><input type="text" name="system.damage.formula" value="{{system.damage.formula}}" placeholder="Ex: 3d6, 1d6-1"/><input type="text" name="system.damage.type" value="{{system.damage.type}}" placeholder="Ex: qmd, cont, cort"/><input type="text" name="system.damage.nature" value="{{system.damage.nature}}" placeholder="Ex: Fogo [FOG]"/><input type="number" step="0.1" name="system.damage.armor_divisor" value="{{system.damage.armor_divisor}}" title="Divisor de Armadura"/><input type="text" name="system.damage.scaling" value="{{system.damage.scaling}}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/>
-                    <label class="effect-label">Dano de Acompanhamento</label><input type="text" name="system.damage.follow_up_damage.formula" value="{{system.damage.follow_up_damage.formula}}"/><input type="text" name="system.damage.follow_up_damage.type" value="{{system.damage.follow_up_damage.type}}"/><input type="text" name="system.damage.follow_up_damage.nature" value="{{system.damage.follow_up_damage.nature}}" placeholder="Natureza"/><input type="number" step="0.1" name="system.damage.follow_up_damage.armor_divisor" value="{{system.damage.follow_up_damage.armor_divisor}}" title="Divisor"/><input type="text" name="system.damage.follow_up_damage.scaling" value="{{system.damage.follow_up_damage.scaling}}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/>
-                    <label class="effect-label">Dano de Fragmentação</label><input type="text" name="system.damage.fragmentation_damage.formula" value="{{system.damage.fragmentation_damage.formula}}"/><input type="text" name="system.damage.fragmentation_damage.type" value="{{system.damage.fragmentation_damage.type}}"/><input type="text" name="system.damage.fragmentation_damage.nature" value="{{system.damage.fragmentation_damage.nature}}" placeholder="Natureza"/><input type="number" step="0.1" name="system.damage.fragmentation_damage.armor_divisor" value="{{system.damage.fragmentation_damage.armor_divisor}}" title="Divisor"/><input type="text" name="system.damage.fragmentation_damage.scaling" value="{{system.damage.fragmentation_damage.scaling}}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/>
+                    <div class="damage-table-spacer"></div><div class="damage-col-label">{{localize "GUM.SpellPower.Formula"}}</div><div class="damage-col-label">{{localize "GUM.SpellPower.Type"}}</div><div class="damage-col-label">{{localize "GUM.SpellPower.Nature"}}</div><div class="damage-col-label">{{localize "GUM.SpellPower.ArmorDivisorShort"}}</div><div class="damage-col-label">{{localize "GUM.SpellPower.Scale"}}</div>
+                    <label class="effect-label">{{localize "GUM.SpellPower.PrimaryDamage"}}</label><input type="text" name="system.damage.formula" value="{{system.damage.formula}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderDamageFormula'}}"/><input type="text" name="system.damage.type" value="{{system.damage.type}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderDamageType'}}"/><input type="text" name="system.damage.nature" value="{{system.damage.nature}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderDamageNature'}}"/><input type="number" step="0.1" name="system.damage.armor_divisor" value="{{system.damage.armor_divisor}}" title="{{localize 'GUM.SpellPower.ArmorDivisor'}}"/><input type="text" name="system.damage.scaling" value="{{system.damage.scaling}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderDamageScaling'}}" title="{{localize 'GUM.SpellPower.DamageScalingHint'}}"/>
+                    <label class="effect-label">{{localize "GUM.SpellPower.FollowUpDamage"}}</label><input type="text" name="system.damage.follow_up_damage.formula" value="{{system.damage.follow_up_damage.formula}}"/><input type="text" name="system.damage.follow_up_damage.type" value="{{system.damage.follow_up_damage.type}}"/><input type="text" name="system.damage.follow_up_damage.nature" value="{{system.damage.follow_up_damage.nature}}" placeholder="{{localize 'GUM.SpellPower.Nature'}}"/><input type="number" step="0.1" name="system.damage.follow_up_damage.armor_divisor" value="{{system.damage.follow_up_damage.armor_divisor}}" title="{{localize 'GUM.SpellPower.ArmorDivisor'}}"/><input type="text" name="system.damage.follow_up_damage.scaling" value="{{system.damage.follow_up_damage.scaling}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderDamageScaling'}}" title="{{localize 'GUM.SpellPower.DamageScalingHint'}}"/>
+                    <label class="effect-label">{{localize "GUM.SpellPower.FragmentationDamage"}}</label><input type="text" name="system.damage.fragmentation_damage.formula" value="{{system.damage.fragmentation_damage.formula}}"/><input type="text" name="system.damage.fragmentation_damage.type" value="{{system.damage.fragmentation_damage.type}}"/><input type="text" name="system.damage.fragmentation_damage.nature" value="{{system.damage.fragmentation_damage.nature}}" placeholder="{{localize 'GUM.SpellPower.Nature'}}"/><input type="number" step="0.1" name="system.damage.fragmentation_damage.armor_divisor" value="{{system.damage.fragmentation_damage.armor_divisor}}" title="{{localize 'GUM.SpellPower.ArmorDivisor'}}"/><input type="text" name="system.damage.fragmentation_damage.scaling" value="{{system.damage.fragmentation_damage.scaling}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderDamageScaling'}}" title="{{localize 'GUM.SpellPower.DamageScalingHint'}}"/>
                 </div>
             </div>
 
             <div class="skill-dashboard-section power-dashboard-section">
-                <h4 class="skill-dashboard-section-title"><i class="fas fa-clipboard-check" aria-hidden="true"></i> Resultado</h4>
+                <h4 class="skill-dashboard-section-title"><i class="fas fa-clipboard-check" aria-hidden="true"></i> {{localize "GUM.SpellPower.Result"}}</h4>
                 <div class="spell-power-result-grid spell-power-two-grid">
-                    <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>Resistido Por</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.resistance" value="{{system.resistance}}" placeholder="Ex: HT, Vontade, IQ-3"/></div></div>
-                    <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-scroll" aria-hidden="true"></i><span>Resumo do Efeito</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.effect" value="{{system.effect}}" placeholder="Resumo curto para consulta"/></div></div>
+                    <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.ResistedBy"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.resistance" value="{{system.resistance}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderResistance'}}"/></div></div>
+                    <div class="skill-dashboard-card skill-dashboard-field-card"><label class="skill-dashboard-card-heading"><i class="fas fa-scroll" aria-hidden="true"></i><span>{{localize "GUM.SpellPower.EffectSummary"}}</span></label><div class="skill-dashboard-card-control"><input type="text" name="system.effect" value="{{system.effect}}" placeholder="{{localize 'GUM.SpellPower.PlaceholderEffectSummary'}}"/></div></div>
                 </div>
             </div>
         </div>

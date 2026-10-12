@@ -18,7 +18,13 @@ test("normaliza Barreira antiga sem exigir migração", () => {
 test("normaliza ação de chat antiga e valor fixo", () => {
   const legacy = normalizeChatRoll({ has_roll: true, roll_label: "Teste", roll_attribute: "ht", roll_modifier: "2", whisperMode: "gm" });
   assert.equal(legacy.test.attributeKey, "ht"); assert.equal(legacy.test.fixedModifier, 2); assert.equal(legacy.whisperMode, "gm");
-  assert.deepEqual(normalizeRollTest({ attribute: "fixed", roll_fixed_value: "12" }), { type: "fixed", attributeKey: "ht", skillUuid: null, skillName: null, specialization: "", sourceId: null, customDefault: null, fixedValue: 12, requestedPurposeIds: [], fixedModifier: 0, fixedModifierLabel: "" });
+  assert.deepEqual(normalizeRollTest({ attribute: "fixed", roll_fixed_value: "12" }), { type: "fixed", attributeKey: "ht", skillUuid: null, skillName: null, specialization: "", sourceId: null, customDefault: null, fixedValue: 12, requestedPurposeIds: [], fixedModifier: 0, fixedModifierFormula: "", fixedModifierLabel: "" });
+});
+
+test("preserva uma fórmula de modificador para avaliação no alvo", () => {
+  const chat = normalizeChatRoll({ roll_attribute: "ht", roll_modifier: "actor.system.attributes.ht.final - 10" });
+  assert.equal(chat.test.fixedModifier, 0);
+  assert.equal(chat.test.fixedModifierFormula, "actor.system.attributes.ht.final - 10");
 });
 
 test("campos livres antigos distinguem atributos de nomes de perícia", () => {

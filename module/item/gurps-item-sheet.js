@@ -10,6 +10,7 @@ import { normalizeContextCsv, openContextPicker } from "../apps/context-picker.m
 import { getSkillDisplayName } from "../utils/skill-display-name.mjs";
 import { describeEquipmentAttackChanges, describeEquipmentPropertyChanges, describeEquipmentResolutionWarnings, describeEquipmentUseChanges, normalizeEquipmentModifier, parseEquipmentAdjustment, resolveEquipment } from "../utils/equipment-resolution.mjs";
 import { ammunitionLinkCandidates } from "../utils/ammunition.mjs";
+import { collectMagicConsumptionSources, normalizeMagicConsumptionGroups } from "../utils/magic-consumption.mjs";
  
 const { ItemSheet } = foundry.appv1.sheets; 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -226,6 +227,12 @@ _promptMultipleReferences(parsedList) {
         context.flags = itemData.flags;
         context.canUseItemAttachmentDrops = this._canUseItemAttachmentDrops();
         context.attackMinStrength = this._normalizeAttackMinStrength(itemData.system?.attack_roll?.min_strength);
+        if (["spell", "power"].includes(this.item.type)) {
+            context.consumptionGroups = normalizeMagicConsumptionGroups(itemData.system.consumptionGroups);
+            context.magicConsumptionSourceOptions = this.item.actor
+                ? collectMagicConsumptionSources(this.item.actor)
+                : [];
+        }
 
         context.socialCategories = Object.entries(SOCIAL_CATEGORIES).map(([type, config]) => ({ type, label: game.i18n.localize(config.label) }));
         context.socialContributions = Object.entries(itemData.system.social_contributions || {}).map(([id, contribution]) => {
@@ -300,9 +307,9 @@ _promptMultipleReferences(parsedList) {
             context.spellBaseAttributeCustom = spellBase.custom;
             context.spellBaseAttributeCustomEnabled = ["skill", "spell", "custom"].includes(spellBase.select);
             context.spellBaseAttributePlaceholder = ({
-                skill: "Nome da perícia base",
-                spell: "Nome da magia base",
-                custom: "Valor fixo ou expressão"
+                skill: game.i18n.localize("GUM.SpellPower.PlaceholderBaseSkill"),
+                spell: game.i18n.localize("GUM.SpellPower.PlaceholderBaseSpell"),
+                custom: game.i18n.localize("GUM.SpellPower.PlaceholderCustomValue")
             })[spellBase.select] || "";
 
             const normalizeSpellDifficulty = (difficulty) => ({
@@ -312,11 +319,11 @@ _promptMultipleReferences(parsedList) {
                 VH: "MD"
             })[(difficulty ?? "").toString()] || (difficulty || "D");
             context.spellDifficultyOptions = {
-                F: "Fácil",
-                M: "Média",
-                D: "Difícil",
-                MD: "Muito Difícil",
-                linear: "Linear"
+                F: game.i18n.localize("GUM.SpellPower.DifficultyEasy"),
+                M: game.i18n.localize("GUM.SpellPower.DifficultyAverage"),
+                D: game.i18n.localize("GUM.SpellPower.DifficultyHard"),
+                MD: game.i18n.localize("GUM.SpellPower.DifficultyVeryHard"),
+                linear: game.i18n.localize("GUM.SpellPower.DifficultyLinear")
             };
             context.spellUsesLinearCost = itemData.system.cost_mode === "linear" || itemData.system.difficulty === "linear";
             context.spellDifficultySelected = context.spellUsesLinearCost ? "linear" : normalizeSpellDifficulty(itemData.system.difficulty);
@@ -331,10 +338,10 @@ _promptMultipleReferences(parsedList) {
             context.powerBaseAttributeCustom = powerBase.custom;
             context.powerBaseAttributeCustomEnabled = ["skill", "spell", "power", "custom"].includes(powerBase.select);
             context.powerBaseAttributePlaceholder = ({
-                skill: "Nome da perícia base",
-                spell: "Nome da magia base",
-                power: "Nome do poder base",
-                custom: "Valor fixo ou expressão"
+                skill: game.i18n.localize("GUM.SpellPower.PlaceholderBaseSkill"),
+                spell: game.i18n.localize("GUM.SpellPower.PlaceholderBaseSpell"),
+                power: game.i18n.localize("GUM.SpellPower.PlaceholderBasePower"),
+                custom: game.i18n.localize("GUM.SpellPower.PlaceholderCustomValue")
             })[powerBase.select] || "";
 
             const normalizePowerDifficulty = (difficulty) => ({
@@ -344,11 +351,11 @@ _promptMultipleReferences(parsedList) {
                 VH: "MD"
             })[(difficulty ?? "").toString()] || (difficulty || "D");
             context.powerDifficultyOptions = {
-                F: "Fácil",
-                M: "Média",
-                D: "Difícil",
-                MD: "Muito Difícil",
-                linear: "Linear"
+                F: game.i18n.localize("GUM.SpellPower.DifficultyEasy"),
+                M: game.i18n.localize("GUM.SpellPower.DifficultyAverage"),
+                D: game.i18n.localize("GUM.SpellPower.DifficultyHard"),
+                MD: game.i18n.localize("GUM.SpellPower.DifficultyVeryHard"),
+                linear: game.i18n.localize("GUM.SpellPower.DifficultyLinear")
             };
             context.powerUsesLinearCost = itemData.system.cost_mode === "linear" || itemData.system.difficulty === "linear";
             context.powerDifficultySelected = context.powerUsesLinearCost ? "linear" : normalizePowerDifficulty(itemData.system.difficulty);
@@ -733,6 +740,49 @@ _promptMultipleReferences(parsedList) {
         html.on("click", ".add-item-social", this._onAddItemSocial.bind(this));
         html.on("click", ".delete-item-social", this._onDeleteItemSocial.bind(this));
         html.on("change", ".item-social-type", this._onChangeItemSocialType.bind(this));
+        html.on("click", ".add-magic-consumption-group", async event => {
+            event.preventDefault();
+            const groupId = foundry.utils.randomID();
+            const sourceId = foundry.utils.randomID();
+            await this.item.update({ [`system.consumptionGroups.${groupId}`]: {
+                id: groupId,
+                name: game.i18n.localize("GUM.MagicConsumption.DefaultGroup"),
+                trigger: "attempt",
+                amount: "1",
+                variableAmount: false,
+                confirm: true,
+                sources: { [sourceId]: { id: sourceId, type: "fp", name: "" } }
+            }});
+        });
+        html.on("click", ".delete-magic-consumption-group", async event => {
+            event.preventDefault();
+            const groupId = event.currentTarget.closest("[data-consumption-group-id]")?.dataset.consumptionGroupId;
+            if (groupId) await this.item.update({ [`system.consumptionGroups.-=${groupId}`]: null });
+        });
+        html.on("click", ".add-magic-consumption-source", async event => {
+            event.preventDefault();
+            const groupId = event.currentTarget.closest("[data-consumption-group-id]")?.dataset.consumptionGroupId;
+            if (!groupId) return;
+            const sourceId = foundry.utils.randomID();
+            await this.item.update({ [`system.consumptionGroups.${groupId}.sources.${sourceId}`]: { id: sourceId, type: "fp", name: "" } });
+        });
+        html.on("click", ".delete-magic-consumption-source", async event => {
+            event.preventDefault();
+            const groupId = event.currentTarget.closest("[data-consumption-group-id]")?.dataset.consumptionGroupId;
+            const sourceId = event.currentTarget.closest("[data-consumption-source-id]")?.dataset.consumptionSourceId;
+            if (groupId && sourceId) await this.item.update({ [`system.consumptionGroups.${groupId}.sources.-=${sourceId}`]: null });
+        });
+        const updateMagicConsumptionSourceNameState = sourceRow => {
+            const sourceType = String(sourceRow.find(".magic-consumption-source-type").val() || "");
+            const nameInput = sourceRow.find(".magic-consumption-source-name");
+            const acceptsName = !["hp", "fp"].includes(sourceType);
+            nameInput.prop("disabled", !acceptsName);
+            sourceRow.toggleClass("is-name-disabled", !acceptsName);
+        };
+        html.find(".magic-consumption-source").each((_index, element) => updateMagicConsumptionSourceNameState($(element)));
+        html.on("change", ".magic-consumption-source-type", event => {
+            updateMagicConsumptionSourceNameState($(event.currentTarget).closest(".magic-consumption-source"));
+        });
         html.find(".item-social-contribution").on("toggle", event => {
             const contribution = event.currentTarget;
             this._socialContributionOpenState ??= new Map();
@@ -748,10 +798,10 @@ _promptMultipleReferences(parsedList) {
             const selected = select.val();
             const usesCustomBase = ["skill", "spell", "power", "custom"].includes(selected);
             const placeholder = ({
-                skill: "Nome da perícia base",
-                spell: "Nome da magia base",
-                power: "Nome do poder base",
-                custom: "Valor fixo ou expressão"
+                skill: game.i18n.localize("GUM.SpellPower.PlaceholderBaseSkill"),
+                spell: game.i18n.localize("GUM.SpellPower.PlaceholderBaseSpell"),
+                power: game.i18n.localize("GUM.SpellPower.PlaceholderBasePower"),
+                custom: game.i18n.localize("GUM.SpellPower.PlaceholderCustomValue")
             })[selected] || "";
             customField.prop('disabled', !usesCustomBase);
             customField.toggleClass('is-disabled', !usesCustomBase);
@@ -970,7 +1020,7 @@ if (this.item?.type === "gm_modifier") {
             html.on("click", ".add-gm-mod-entry", async (ev) => { 
                 ev.preventDefault(); 
                 const entries = Array.isArray(this.item.system.modifier_entries) ? foundry.utils.deepClone(this.item.system.modifier_entries) : []; 
-                entries.push({ label: "", value: 0, nh_cap: "", contexts: "all" }); 
+                entries.push({ label: "", value: "0", nh_cap: "", contexts: "all" }); 
                 await this.item.update({ "system.modifier_entries": entries }); 
             }); 
  
@@ -980,7 +1030,7 @@ if (this.item?.type === "gm_modifier") {
                 const entries = Array.isArray(this.item.system.modifier_entries) ? foundry.utils.deepClone(this.item.system.modifier_entries) : []; 
                 if (Number.isNaN(index) || index < 0 || index >= entries.length) return; 
                 entries.splice(index, 1); 
-                await this.item.update({ "system.modifier_entries": entries.length ? entries : [{ label: "", value: 0, nh_cap: "", contexts: "all" }] }); 
+                await this.item.update({ "system.modifier_entries": entries.length ? entries : [{ label: "", value: "0", nh_cap: "", contexts: "all" }] }); 
             }); 
         } 
  
@@ -2432,7 +2482,7 @@ const rangedFields = `
                 if (!match) continue; 
                 const index = Number(match[1]); 
                 const field = match[2]; 
-                if (!entriesByIndex.has(index)) entriesByIndex.set(index, { label: "", value: 0, nh_cap: "", contexts: "all" }); 
+                if (!entriesByIndex.has(index)) entriesByIndex.set(index, { label: "", value: "0", nh_cap: "", contexts: "all" }); 
                 entriesByIndex.get(index)[field] = value; 
                 delete formData[key]; 
             } 
@@ -2441,7 +2491,7 @@ const rangedFields = `
                     .sort((a, b) => a[0] - b[0]) 
                     .map(([, entry]) => ({ 
                         label: (entry.label || "").toString().trim(), 
-                        value: Number(entry.value) || 0, 
+                        value: (entry.value ?? "").toString().trim() || "0", 
                         nh_cap: (entry.nh_cap ?? "").toString().trim(), 
                         contexts: (entry.contexts || "all").toString().trim() || "all" 
                     })); 

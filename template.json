@@ -673,6 +673,7 @@
       "duration": "1 min",
       "mana_cost": "1",
       "mana_maint": "1",
+      "consumptionGroups": {},
       "requires_concentration": false,
       "spell_class": "Comum",
       "usage_type": "",
@@ -746,6 +747,7 @@
       "duration": "1 min",
       "activation_cost": "1 PF",
       "maint_cost": "1 PF",
+      "consumptionGroups": {},
       "requires_concentration": false,
       "spell_class": "Comum",
       "usage_type": "",
@@ -866,7 +868,7 @@
       "templates": [
         "base"
       ],
-      "modifier": 0,
+      "modifier": "0",
       "modifier_entries": [],
       "nh_cap": "",
       "observation": "",
@@ -1026,7 +1028,7 @@
         "endMode": "turnEnd"
       },
       "tokenIconPolicy": "auto",
-      "statusId": "dead"
+      "statusId": ""
     }
   }
 }

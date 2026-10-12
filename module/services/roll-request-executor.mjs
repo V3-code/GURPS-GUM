@@ -10,7 +10,8 @@ export function createRollRequestExecutor({
   performRoll,
   serializeResult,
   createPrompt,
-  getCurrentUser
+  getCurrentUser,
+  resolveFixedModifier = test => test.fixedModifier
 }) {
   const processing = new Set();
 
@@ -28,6 +29,15 @@ export function createRollRequestExecutor({
     const resolution = await resolveTest(resolvedTarget.actor, request.test);
     if (!resolution.available) return { accepted: false, reason: resolution.reason };
 
+    processing.add(key);
+    const release = () => processing.delete(key);
+    let fixedModifier;
+    try {
+      fixedModifier = await resolveFixedModifier(request.test, resolvedTarget.actor, target);
+    } catch (error) {
+      release();
+      throw error;
+    }
     const rollData = {
       label: request.title,
       type: resolution.type,
@@ -38,15 +48,13 @@ export function createRollRequestExecutor({
       defenseType: resolution.defenseType,
       requestedPurposeIds: request.test.requestedPurposeIds,
       purposeIds: request.test.requestedPurposeIds,
-      fixedModifier: request.test.fixedModifier,
+      fixedModifier,
       fixedModifierLabel: request.test.fixedModifierLabel || "Modificador fixo",
       defaultLabel: resolution.label,
       initialBaseKey: resolution.type === "attribute" ? (resolution.attributeKey || "fixed") : "skill",
       img: resolvedTarget.actor.img
     };
 
-    processing.add(key);
-    const release = () => processing.delete(key);
     const run = async (actor, payload, options = {}) => {
       try {
         const result = await performRoll(actor, payload, { ...options, createChatMessage: false, returnResult: true });
@@ -58,7 +66,7 @@ export function createRollRequestExecutor({
       }
     };
 
-    if (!prompt) return run(resolvedTarget.actor, { ...rollData, modifier: request.test.fixedModifier });
+    if (!prompt) return run(resolvedTarget.actor, { ...rollData, modifier: fixedModifier });
 
     try {
       const promptApp = createPrompt(resolvedTarget.actor, rollData, { onRoll: run });

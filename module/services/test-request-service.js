@@ -29,7 +29,8 @@ function responsibleGM(message) {
 export async function renderTestRequestMessage(request) {
   const progress = getTestRequestProgress(request);
   const progressPercent = progress.total ? Math.round((progress.answered / progress.total) * 100) : 0;
-  const purposes = getPurposeLabels(request.test.requestedPurposeIds);
+  const purposeLabels = getPurposeLabels(request.test.requestedPurposeIds);
+  const purposes = purposeLabels.length ? purposeLabels : [game.i18n.localize("GUM.RollRequest.GeneralTest")];
   let canonicalSkill = null;
   if (request.test.type === "skill" && request.test.skillUuid) canonicalSkill = await fromUuid(request.test.skillUuid).catch(() => null);
   const targets = await Promise.all(request.targets.map(async target => {
@@ -47,9 +48,12 @@ export async function renderTestRequestMessage(request) {
     const response = getTestRequestResponse(request, target.targetKey);
     const user = response ? game.users.get(response.userId) : null;
     const history = prepareResponseHistory(response);
-    return { ...target, unavailableReason, response, status: response ? formatTestRequestStatus(response) : unavailableReason ? "Indisponível" : "Aguardando",
+    const status = response ? formatTestRequestStatus(response) : game.i18n.localize(unavailableReason ? "GUM.RollRequest.Unavailable" : "GUM.RollRequest.Waiting");
+    const historyLabel = game.i18n.format("GUM.RollRequest.PreviousAttempts", { count: history.historyCount });
+    const previousLabel = history.previous ? game.i18n.format("GUM.RollRequest.LastAttempt", { status: history.previous.status, total: history.previous.total, target: history.previous.effectiveTarget }) : "";
+    return { ...target, unavailableReason, response, status,
       hasResponse: Boolean(response), encodedKey: encodeURIComponent(target.targetKey), responseUserName: user?.name ?? response?.userId ?? "—",
-      submittedAtLabel: response?.submittedAt ? new Date(response.submittedAt).toLocaleString(game.i18n?.lang || "pt-BR") : "",
+      submittedAtLabel: response?.submittedAt ? new Date(response.submittedAt).toLocaleString(game.i18n?.lang || "pt-BR") : "", historyLabel, previousLabel,
       responsePurposeLabels: getPurposeLabels(response?.purposeIds), modifierBreakdown: prepareModifierBreakdown(response, request.test.fixedModifier, request.test.fixedModifierLabel), ...history };
   }));
   return renderTemplate("systems/gum/templates/chat/test-request-card.hbs", { request, progress, progressPercent, purposes, targets,

@@ -24,13 +24,12 @@ export class GumGMScreen extends Application {
         // Mantém a rolagem rápida durante as renderizações automáticas da tela.
         // O Escudo é renderizado novamente por várias interações e atualizações
         // de atores, portanto esses valores não podem ficar fixos no template.
-        this.quickRollCache = { formula: "1d6", type: "cont" };
+        this.quickRollCache = { nh: 10, formula: "1d6", type: "cont", private: true };
 
-        // Estado local de blocos colapsáveis da sidebar
-        this.sidebarState = {
-            quickRollCollapsed: false,
-            manualCollapsed: false
-        };
+        // Estado local da interface. Apenas uma ferramenta do rodapé fica
+        // expandida por vez para preservar o espaço vertical da paleta.
+        this.utilityPanel = null;
+        this.searchQuery = "";
 
         this._lastContextClick = {
             actorId: null,
@@ -53,10 +52,12 @@ export class GumGMScreen extends Application {
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
             id: "gum-gm-screen",
-            title: "Escudo do Mestre (GUM)",
+            title: game.i18n.localize("GUM.GMScreen.Title"),
             template: "systems/gum/templates/apps/gm-screen.hbs",
             width: 1200, 
             height: 750,
+            minWidth: 720,
+            minHeight: 420,
             resizable: true,
             classes: ["gum", "gm-screen"],
             // Preserva a posição das duas áreas roláveis quando uma seleção ou
@@ -131,6 +132,13 @@ async getData() {
                     const itemData = item.toObject();
                     itemData.uuid = itemUuid;
                     itemData.isSelected = this.selectedModifiers.has(itemUuid);
+                    if (itemData.type === "gm_modifier") {
+                        const presentation = this._formatModifierExpression(itemData.system?.modifier);
+                        itemData.modifierDisplay = presentation.text;
+                        itemData.modifierCompactDisplay = presentation.numeric ? presentation.text : "ƒ";
+                        itemData.modifierIsNegative = presentation.numeric && presentation.value < 0;
+                        itemData.modifierIsExpression = !presentation.numeric;
+                    }
                     return itemData;
                 } catch (e) {
                     return null;
@@ -140,6 +148,13 @@ async getData() {
                 .filter(item => item !== null)
                 .sort((a, b) => this._compareGroupedItems(a, b));
         }));
+
+        const selectionCount = this.selectedModifiers.size;
+        const selectionTotal = this._getTotalActiveModifier();
+        const selectionHasExpressions = Array.from(this.selectedModifiers.values()).some(mod =>
+            mod?.type === "gm_modifier" && !this._formatModifierExpression(mod.value).numeric
+        );
+        const signedValue = value => `${value > 0 ? "+" : ""}${value}`;
 
         return {
             actors: monitorData,
@@ -151,8 +166,13 @@ async getData() {
             isManualActive: this.selectedModifiers.has("manual"),
             manualCache: this.manualCache,
             quickRollCache: this.quickRollCache,
-            quickRollCollapsed: this.sidebarState.quickRollCollapsed,
-            manualCollapsed: this.sidebarState.manualCollapsed
+            searchQuery: this.searchQuery,
+            selectionCount,
+            selectionTotalText: selectionHasExpressions ? "ƒ" : signedValue(selectionTotal),
+            manualTotalText: signedValue(Number(this.manualCache.value) || 0),
+            utilityPanel: this.utilityPanel,
+            quickRollOpen: this.utilityPanel === "quick-roll",
+            manualOpen: this.utilityPanel === "manual-modifier"
         };
     }
 
@@ -161,7 +181,8 @@ async getData() {
      */
  _prepareActorData(actor, token = null) {
         const attr = actor.system.attributes;
-        const encumbranceNames = ["Nenhuma", "Leve", "Média", "Pesada", "Muito Pesada"];
+        const encumbranceNames = ["None", "Light", "Medium", "Heavy", "ExtraHeavy"]
+            .map(level => game.i18n.localize(`GUM.GMScreen.Encumbrance${level}`));
         const encumbranceLevel = Math.min(4, Math.max(0, Number(actor.system.encumbrance?.level_value) || 0));
         const getFinalValue = (attribute, fallback = 0) => {
             const value = attribute?.final ?? attribute?.final_computed ?? attribute?.value ?? fallback;
@@ -183,21 +204,19 @@ async getData() {
         const activeGMMods = [];
         const groupedMods = new Map();
 
-        const formatModifierValue = (value) => {
-            const numericValue = Number(value) || 0;
-            return `${numericValue > 0 ? "+" : ""}${numericValue}`;
-        };
+        const formatModifierValue = value => this._formatModifierExpression(value).text;
 
         for (const mod of activeGMModsRaw) {
             const groupId = mod?.applicationGroupId || null;
 
             if (!groupId) {
-                const numericValue = Number(mod?.value) || 0;
+                const presentation = this._formatModifierExpression(mod?.value);
                 activeGMMods.push({
                     ...mod,
-                    displayName: mod?.name || "Modificador",
-                    displayValue: numericValue,
-                    displayValueText: formatModifierValue(numericValue),
+                    displayName: mod?.name || game.i18n.localize("GUM.GMScreen.Modifier"),
+                    displayValue: presentation.numeric ? presentation.value : null,
+                    displayValueText: presentation.numeric ? presentation.text : "ƒ",
+                    displayExpression: presentation.numeric ? "" : presentation.text,
                     removalGroupId: null
                 });
                 continue;
@@ -205,19 +224,23 @@ async getData() {
 
             if (!groupedMods.has(groupId)) {
                 groupedMods.set(groupId, {
-                    displayName: mod?.sourceItemName || mod?.name || "Modificador",
+                    displayName: mod?.sourceItemName || mod?.name || game.i18n.localize("GUM.GMScreen.Modifier"),
                     displayValue: 0,
                     displayValues: [],
+                    displayExpressions: [],
                     displayValueText: "",
+                    displayExpression: "",
                     removalGroupId: groupId
                 });
             }
 
             const grouped = groupedMods.get(groupId);
-            const numericValue = Number(mod?.value) || 0;
-            grouped.displayValue += numericValue;
-            grouped.displayValues.push(formatModifierValue(numericValue));
+            const presentation = this._formatModifierExpression(mod?.value);
+            if (presentation.numeric) grouped.displayValue += presentation.value;
+            grouped.displayValues.push(presentation.numeric ? presentation.text : "ƒ");
+            if (!presentation.numeric) grouped.displayExpressions.push(presentation.text);
             grouped.displayValueText = grouped.displayValues.join(" | ");
+            grouped.displayExpression = grouped.displayExpressions.join(" | ");
         }
 
  activeGMMods.push(...groupedMods.values());
@@ -269,8 +292,19 @@ async getData() {
 
     _getGroupedItemModifierValue(item) {
         if (item?.type !== "gm_modifier") return null;
-        const value = Number(item.system?.modifier);
-        return Number.isFinite(value) ? value : null;
+        const presentation = this._formatModifierExpression(item.system?.modifier);
+        return presentation.numeric ? presentation.value : null;
+    }
+
+    _formatModifierExpression(value) {
+        const source = String(value ?? "").trim() || "0";
+        const numeric = /^[+-]?\d+(?:\.\d+)?$/.test(source);
+        const resolved = numeric ? Number(source) : null;
+        return {
+            numeric,
+            value: resolved,
+            text: numeric ? `${resolved > 0 ? "+" : ""}${resolved}` : source
+        };
     }
 
     _compareGroupedItems(a, b) {
@@ -286,9 +320,42 @@ async getData() {
         const nameB = String(b?.name || "");
         return nameA.localeCompare(nameB, game.i18n?.lang || undefined, { sensitivity: "base" });
     }
+
+    _t(key, data = null) {
+        return data ? game.i18n.format(key, data) : game.i18n.localize(key);
+    }
+
+    _applyModifierSearch(html) {
+        const normalize = value => String(value || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLocaleLowerCase(game.i18n?.lang || undefined)
+            .trim();
+        const query = normalize(this.searchQuery);
+
+        html.find('.modifier-group').each((index, element) => {
+            const group = $(element);
+            const groupMatches = normalize(group.find('.group-title').first().text()).includes(query);
+            let visibleItems = 0;
+
+            group.find('.palette-mod').each((itemIndex, itemElement) => {
+                const item = $(itemElement);
+                const matches = !query || groupMatches || normalize(item.find('.mod-name').text()).includes(query);
+                item.toggle(matches);
+                if (matches) visibleItems++;
+            });
+
+            group.toggle(!query || groupMatches || visibleItems > 0);
+        });
+    }
     
 activateListeners(html) {
         super.activateListeners(html);
+        html.find('.palette-mod, .monitor-card, .group-actions-menu a, .mod-quick-view, .delete-mod-btn').on('keydown', ev => {
+            if (!['Enter', ' '].includes(ev.key)) return;
+            ev.preventDefault();
+            $(ev.currentTarget).trigger('click');
+        });
         html.find('.gm-request-test').click(event => { event.preventDefault(); openTestRequestLauncher(); });
 
         html.find('.main-tab-btn').click(async ev => {
@@ -310,16 +377,14 @@ activateListeners(html) {
         html.find('.qr-type').on('input change', ev => {
             this.quickRollCache.type = ev.currentTarget.value;
         });
+        html.find('.qr-nh').on('input change', ev => {
+            this.quickRollCache.nh = Number(ev.currentTarget.value) || 0;
+        });
 
-        html.find('.collapse-toggle').click(ev => {
+        html.find('.gm-utility-toggle').click(ev => {
             ev.preventDefault();
-            const block = $(ev.currentTarget).data('block');
-            if (block === 'quick-roll') {
-                this.sidebarState.quickRollCollapsed = !this.sidebarState.quickRollCollapsed;
-            }
-            if (block === 'manual-modifier') {
-                this.sidebarState.manualCollapsed = !this.sidebarState.manualCollapsed;
-            }
+            const panel = $(ev.currentTarget).data('utility-panel');
+            this.utilityPanel = this.utilityPanel === panel ? null : panel;
             this.render(false);
         });
 
@@ -368,7 +433,7 @@ activateListeners(html) {
                 card.addClass('flash-success');
                 setTimeout(() => card.removeClass('flash-success'), 500);
             } else {
-                ui.notifications.warn("Ator não encontrado para aplicação.");
+                ui.notifications.warn(this._t("GUM.GMScreen.ActorNotFound"));
             }
         });
 
@@ -402,7 +467,7 @@ activateListeners(html) {
                 
                 // O Hook 'updateActor' no main.js vai cuidar de renderizar a tela
             } else {
- ui.notifications.warn("Não foi possível encontrar o ator para remover o modificador.");
+ ui.notifications.warn(this._t("GUM.GMScreen.ActorNotFoundForModifierRemoval"));
             }
         });
 
@@ -419,14 +484,14 @@ activateListeners(html) {
             const { actor } = this._resolveCardTarget(card);
 
             if (!actor || !effectId) {
-                return ui.notifications.warn("Não foi possível encontrar o efeito para remoção.");
+                return ui.notifications.warn(this._t("GUM.GMScreen.EffectNotFoundForRemoval"));
             }
 
             const effect = actor.effects.get(effectId);
             const source = foundry.utils.getProperty(effect, "flags.gum.source");
 
             if (!effect || source !== "GM Screen") {
-                return ui.notifications.warn("Apenas efeitos aplicados pelo Escudo do Mestre podem ser removidos aqui.");
+                return ui.notifications.warn(this._t("GUM.GMScreen.OnlyGMScreenEffectsCanBeRemoved"));
             }
 
             await actor.deleteEmbeddedDocuments("ActiveEffect", [effectId]);
@@ -498,6 +563,7 @@ activateListeners(html) {
         html.find('.manual-value').on('input', ev => { 
             this.manualCache.value = parseInt(ev.target.value) || 0; 
             if (this.selectedModifiers.has("manual")) this.selectedModifiers.get("manual").value = this.manualCache.value; 
+            this._updateManualDockTotal(html);
             this._updateQRDisplay(html); 
         });
 
@@ -512,6 +578,7 @@ activateListeners(html) {
             this.manualCache.value = current;
             html.find('.manual-value').val(current);
             if (this.selectedModifiers.has("manual")) this.selectedModifiers.get("manual").value = current;
+            this._updateManualDockTotal(html);
             this._updateQRDisplay(html);
         });
 
@@ -540,15 +607,11 @@ activateListeners(html) {
         });
 
         // Busca (Filtro)
-        html.find('.mod-search').on('keyup', ev => {
-            const query = ev.target.value.toLowerCase();
-            const items = html.find('.palette-mod');
-            items.each((i, el) => {
-                const name = $(el).find('.mod-name').text().toLowerCase();
-                if (name.includes(query)) $(el).show();
-                else $(el).hide();
-            });
+        html.find('.mod-search').on('input', ev => {
+            this.searchQuery = ev.target.value;
+            this._applyModifierSearch(html);
         });
+        this._applyModifierSearch(html);
 
         // ===========================================================
         // 4. GESTÃO DE GRUPOS (CRUD)
@@ -564,8 +627,8 @@ activateListeners(html) {
         
         html.find('.add-group-btn').click(async ev => {
             new Dialog({
-                title: "Novo Grupo", content: `<div class="form-group"><label>Nome:</label><input type="text" id="group-name" autofocus/></div>`,
-                buttons: { create: { label: "Criar", callback: async (html) => { const name = html.find('#group-name').val(); if(name) await this._addGroup(name); } } }, default: "create"
+                title: this._t("GUM.GMScreen.NewGroup"), content: `<div class="form-group"><label>${this._t("GUM.GMScreen.Name")}:</label><input type="text" id="group-name" autofocus/></div>`,
+                buttons: { create: { label: this._t("GUM.GMScreen.Create"), callback: async (html) => { const name = html.find('#group-name').val(); if(name) await this._addGroup(name); } } }, default: "create"
             }).render(true);
         });
 
@@ -583,7 +646,11 @@ activateListeners(html) {
             const isOpen = actions.hasClass('is-open');
 
             html.find('.group-actions.is-open').removeClass('is-open');
-            if (!isOpen) actions.addClass('is-open');
+            html.find('.group-menu-trigger').attr('aria-expanded', 'false');
+            if (!isOpen) {
+                actions.addClass('is-open');
+                trigger.attr('aria-expanded', 'true');
+            }
         });
 
         html.on('click', '.edit-group-name-btn', async ev => {
@@ -593,11 +660,11 @@ activateListeners(html) {
             const currentName = button.data('group-name') || '';
 
             new Dialog({
-                title: "Editar Nome do Grupo",
-                content: `<div class="form-group"><label>Nome:</label><input type="text" id="group-name" value="${currentName}" autofocus/></div>`,
+                title: this._t("GUM.GMScreen.RenameGroup"),
+                content: `<div class="form-group"><label>${this._t("GUM.GMScreen.Name")}:</label><input type="text" id="group-name" value="${currentName}" autofocus/></div>`,
                 buttons: {
                     save: {
-                        label: "Salvar",
+                        label: this._t("GUM.GMScreen.Save"),
                         callback: async dialogHtml => {
                             const newName = dialogHtml.find('#group-name').val()?.trim();
                             if (newName) await this._renameGroup(groupId, newName);
@@ -610,7 +677,7 @@ activateListeners(html) {
         
         html.find('.delete-group-btn').click(async ev => {
             const groupId = $(ev.currentTarget).data('group-id');
-            Dialog.confirm({ title: "Excluir Grupo", content: "<p>Tem certeza?</p>", yes: () => this._removeGroup(groupId) });
+            Dialog.confirm({ title: this._t("GUM.GMScreen.DeleteGroup"), content: `<p>${this._t("GUM.GMScreen.ConfirmDeleteGroup")}</p>`, yes: () => this._removeGroup(groupId) });
         });
         
         html.find('.add-mod-to-group-btn').click(ev => {
@@ -634,6 +701,7 @@ activateListeners(html) {
             const target = $(ev.target);
             if (!target.closest('.group-actions').length) {
                 html.find('.group-actions.is-open').removeClass('is-open');
+                html.find('.group-menu-trigger').attr('aria-expanded', 'false');
             }
         });
 
@@ -655,8 +723,8 @@ activateListeners(html) {
             ev.preventDefault();
             if (game.combat) {
                 Dialog.confirm({
-                    title: "Encerrar Combate",
-                    content: "<p>Deseja realmente encerrar este encontro?</p>",
+                    title: this._t("GUM.GMScreen.EndCombat"),
+                    content: `<p>${this._t("GUM.GMScreen.ConfirmEndCombat")}</p>`,
                     yes: () => game.combat.endCombat()
                 });
             }
@@ -670,13 +738,16 @@ activateListeners(html) {
             ev.preventDefault();
             const btn = $(ev.currentTarget);
             btn.toggleClass('active');
+            this.quickRollCache.private = btn.hasClass('active');
             const icon = btn.find('i');
             if (btn.hasClass('active')) {
                 icon.removeClass('fa-eye').addClass('fa-eye-slash');
-                btn.attr('title', 'Modo Privado (Apenas Local)');
+                const label = game.i18n.localize('GUM.GMScreen.PrivateMode');
+                btn.attr({ title: label, 'aria-label': label });
             } else {
                 icon.removeClass('fa-eye-slash').addClass('fa-eye');
-                btn.attr('title', 'Modo Público (Enviar ao Chat)');
+                const label = game.i18n.localize('GUM.GMScreen.PublicMode');
+                btn.attr({ title: label, 'aria-label': label });
             }
         });
 
@@ -705,13 +776,13 @@ activateListeners(html) {
             if (isPrivate) {
                 const resultBox = html.find('.qr-result-display');
                 const colorClass = isSuccess ? "success" : "failure";
-                const text = isSuccess ? "Sucesso" : "Falha";
+                const text = isSuccess ? this._t("GUM.GMScreen.Success") : this._t("GUM.GMScreen.Failure");
                 const resultHTML = `<div style="display:flex; justify-content:space-between; align-items:center;"><span><i class="fas fa-dice"></i> <strong>${total}</strong></span><span>vs <strong>${effectiveLevel}</strong> <small>(${activeModsTotal >= 0 ? '+' : ''}${activeModsTotal})</small></span><span class="${colorClass}" style="text-transform:uppercase; font-weight:bold;">${text} (${margin})</span></div>`;
                 resultBox.removeClass("success failure").addClass(colorClass).html(resultHTML).slideDown(100);
             } else {
-                const gmActor = { name: "Mestre", img: "icons/svg/mystery-man.svg", id: null };
+                const gmActor = { name: this._t("GUM.GMScreen.GameMaster"), img: "icons/svg/mystery-man.svg", id: null };
                 await performGURPSRoll(gmActor, {
-                    label: "Teste Rápido (EM)",
+                    label: this._t("GUM.GMScreen.QuickCheckLabel"),
                     value: effectiveLevel, 
                     originalValue: nhBase,
                     modifier: activeModsTotal,
@@ -730,11 +801,12 @@ activateListeners(html) {
             await roll.evaluate();
             const diceHtml = roll.dice.flatMap(d => d.results).map(r => `<span class="die-face" style="font-size:0.8em; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; border:1px solid #ccc; border-radius:2px; margin:0 1px;">${r.result}</span>`).join('');
             
-            const content = `<div class="gurps-damage-card"><header class="card-header"><h3>Dano Rápido</h3></header><div class="card-formula-container"><span class="formula-pill">${formula} ${type}</span></div><div class="card-content"><div class="card-main-flex"><div class="roll-column"><span class="column-label">Dados</span><div class="individual-dice-damage">${diceHtml}</div></div><div class="column-separator"></div><div class="target-column"><span class="column-label">Total</span><div class="damage-total"><span class="damage-value">${roll.total}</span><span class="damage-type" style="font-size:0.5em; vertical-align:middle;">${type}</span></div></div></div></div><footer class="card-actions"><button type="button" class="apply-damage-button" data-damage='${JSON.stringify({attackerId: null, sourceName: "Dano Rápido", main: { total: roll.total, type: type, armorDivisor: 1 }, onDamageEffects: {}, generalConditions: {}})}'><i class="fas fa-crosshairs"></i> Aplicar</button></footer></div>`;
+            const quickDamageLabel = this._t("GUM.GMScreen.QuickDamage");
+            const content = `<div class="gurps-damage-card"><header class="card-header"><h3>${quickDamageLabel}</h3></header><div class="card-formula-container"><span class="formula-pill">${formula} ${type}</span></div><div class="card-content"><div class="card-main-flex"><div class="roll-column"><span class="column-label">${this._t("GUM.GMScreen.Dice")}</span><div class="individual-dice-damage">${diceHtml}</div></div><div class="column-separator"></div><div class="target-column"><span class="column-label">${this._t("GUM.GMScreen.Total")}</span><div class="damage-total"><span class="damage-value">${roll.total}</span><span class="damage-type" style="font-size:0.5em; vertical-align:middle;">${type}</span></div></div></div></div><footer class="card-actions"><button type="button" class="apply-damage-button" data-damage='${JSON.stringify({attackerId: null, sourceName: quickDamageLabel, main: { total: roll.total, type: type, armorDivisor: 1 }, onDamageEffects: {}, generalConditions: {}})}'><i class="fas fa-crosshairs"></i> ${this._t("GUM.GMScreen.Apply")}</button></footer></div>`;
 
             const chatData = applyCurrentRollPrivacy({
                 user: game.user.id,
-                speaker: { alias: "Mestre" },
+                speaker: { alias: this._t("GUM.GMScreen.GameMaster") },
                 content,
                 rolls: [roll]
             });
@@ -905,7 +977,7 @@ activateListeners(html) {
         });
 
         if (Object.keys(attackGroups).length > 0) {
-            html += `<div class="gum-ctx-group"><div class="gum-ctx-group-title"><i class="fas fa-swords"></i> Ataques</div>`;
+            html += `<div class="gum-ctx-group"><div class="gum-ctx-group-title"><i class="fas fa-swords"></i> ${this._t("GUM.GMScreen.Attacks")}</div>`;
             for (const [itemId, group] of Object.entries(attackGroups)) {
                 html += `
                 <div class="gum-ctx-item has-submenu">
@@ -918,9 +990,9 @@ activateListeners(html) {
                                         <span>${mode.label}</span> <span class="gum-ctx-val skill">${mode.nh}</span>
                                     </div>
                                     <div class="ctx-actions-right">
-                                        ${mode.damage ? `<div class="damage-roll-btn roll-damage-ctx" data-damage="${mode.damage}" data-display-damage="${mode.damageDisplay}" data-type="${mode.type}" data-label="${mode.fullLabel}" title="Dano: ${mode.damageDisplay}"><i class="fas fa-skull"></i> ${mode.damageDisplay}</div>` : ''}
-                                        ${mode.parry ? `<div class="def-roll-btn-ctx roll-def" data-def="Aparar" data-val="${mode.parry}" data-item-id="${mode.itemId}" data-item-uuid="${mode.itemUuid}" data-attack-id="${mode.attackId}" title="Aparar"><i class="fas fa-swords"></i> ${mode.parry}</div>` : ''}
-                                        ${mode.block ? `<div class="def-roll-btn-ctx roll-def" data-def="Bloqueio" data-val="${mode.block}" data-item-id="${mode.itemId}" data-item-uuid="${mode.itemUuid}" data-attack-id="${mode.attackId}" title="Bloqueio"><i class="fas fa-shield-alt"></i> ${mode.block}</div>` : ''}
+                                        ${mode.damage ? `<div class="damage-roll-btn roll-damage-ctx" data-damage="${mode.damage}" data-display-damage="${mode.damageDisplay}" data-type="${mode.type}" data-label="${mode.fullLabel}" title="${this._t("GUM.GMScreen.Damage")}: ${mode.damageDisplay}"><i class="fas fa-skull"></i> ${mode.damageDisplay}</div>` : ''}
+                                        ${mode.parry ? `<div class="def-roll-btn-ctx roll-def" data-def="${this._t("GUM.GMScreen.Parry")}" data-val="${mode.parry}" data-item-id="${mode.itemId}" data-item-uuid="${mode.itemUuid}" data-attack-id="${mode.attackId}" title="${this._t("GUM.GMScreen.Parry")}"><i class="fas fa-swords"></i> ${mode.parry}</div>` : ''}
+                                        ${mode.block ? `<div class="def-roll-btn-ctx roll-def" data-def="${this._t("GUM.GMScreen.Block")}" data-val="${mode.block}" data-item-id="${mode.itemId}" data-item-uuid="${mode.itemUuid}" data-attack-id="${mode.attackId}" title="${this._t("GUM.GMScreen.Block")}"><i class="fas fa-shield-alt"></i> ${mode.block}</div>` : ''}
                                     </div>
                                 </div>
                             </div>
@@ -941,13 +1013,13 @@ activateListeners(html) {
             const typedGroup = String(item.system?.group || "").trim();
             if (typedGroup) return typedGroup;
 
-            if (item.type === "advantage") return "Vantagens";
-            if (item.type === "disadvantage") return "Desvantagens";
-            if (item.type === "skill") return "Perícias";
-            if (item.type === "spell") return "Magias";
-            if (item.type === "power") return "Poderes";
+            if (item.type === "advantage") return this._t("GUM.GMScreen.Advantages");
+            if (item.type === "disadvantage") return this._t("GUM.GMScreen.Disadvantages");
+            if (item.type === "skill") return this._t("GUM.GMScreen.Skills");
+            if (item.type === "spell") return this._t("GUM.GMScreen.Spells");
+            if (item.type === "power") return this._t("GUM.GMScreen.Powers");
 
-            return "Geral";
+            return this._t("GUM.GMScreen.General");
         };
 
         const extractFavoriteLevel = (item) => {
@@ -1014,13 +1086,14 @@ activateListeners(html) {
         });
 
         const favoriteGroupEntries = Object.entries(favoriteGroups).sort((a, b) => {
-            if (a[0] === "Geral") return -1;
-            if (b[0] === "Geral") return 1;
+            const generalLabel = this._t("GUM.GMScreen.General");
+            if (a[0] === generalLabel) return -1;
+            if (b[0] === generalLabel) return 1;
             return a[0].localeCompare(b[0]);
         });
 
         if (favoriteGroupEntries.length > 0) {
-            html += `<div class="gum-ctx-group"><div class="gum-ctx-group-title"><i class="fas fa-star"></i> Favoritos</div>`;
+            html += `<div class="gum-ctx-group"><div class="gum-ctx-group-title"><i class="fas fa-star"></i> ${this._t("GUM.GMScreen.Favorites")}</div>`;
             for (const [groupName, entries] of favoriteGroupEntries) {
                 const sortedEntries = entries.sort((a, b) => a.name.localeCompare(b.name));
                 html += `
@@ -1034,7 +1107,7 @@ activateListeners(html) {
                                         <span>${entry.name}</span> <span class="gum-ctx-val skill">${entry.nh}</span>
                                     </div>
                                     <div class="ctx-actions-right">
-                                        ${entry.damage ? `<div class="damage-roll-btn roll-damage-ctx" data-damage="${entry.damage.resolved}" data-display-damage="${entry.damage.raw}" data-type="${entry.damage.type}" data-label="${entry.name}" title="Dano: ${entry.damage.raw}"><i class="fas fa-bolt"></i> ${entry.damage.raw}</div>` : ''}
+                                        ${entry.damage ? `<div class="damage-roll-btn roll-damage-ctx" data-damage="${entry.damage.resolved}" data-display-damage="${entry.damage.raw}" data-type="${entry.damage.type}" data-label="${entry.name}" title="${this._t("GUM.GMScreen.Damage")}: ${entry.damage.raw}"><i class="fas fa-bolt"></i> ${entry.damage.raw}</div>` : ''}
                                     </div>
                                 </div>
                             </div>
@@ -1120,7 +1193,7 @@ activateListeners(html) {
             const mainAdditional = String(promptResult.mainAdditional || "").trim();
             const finalFormula = maybeNormalizeDamageFormula(`${resolvedFormula}${mainAdditional}`.trim());
             if (!finalFormula) {
-                ui.notifications.warn("Fórmula de dano inválida.");
+                ui.notifications.warn(this._t("GUM.GMScreen.InvalidDamageFormula"));
                 menu.remove();
                 return;
             }
@@ -1129,7 +1202,7 @@ activateListeners(html) {
             await roll.evaluate();
 
             const diceHtml = roll.dice.flatMap(d => d.results).map(r => `<span class="die-damage">${r.result}</span>`).join('');
-            const content = `<div class="gurps-damage-card"><header class="card-header"><h3>${label}</h3></header><div class="card-formula-container"><span class="formula-pill">${finalFormula} ${dmgType}</span></div><div class="card-content"><div class="card-main-flex"><div class="roll-column"><span class="column-label">Dados</span><div class="individual-dice-damage">${diceHtml}</div></div><div class="column-separator"></div><div class="target-column"><span class="column-label">Total</span><div class="damage-total"><span class="damage-value">${roll.total}</span><span class="damage-type">${dmgType}</span></div></div></div></div><footer class="card-actions"><button type="button" class="apply-damage-button" data-damage='${JSON.stringify({attackerId: actor.id, sourceName: label, main: { total: roll.total, type: dmgType, armorDivisor: 1 }, onDamageEffects: {}, generalConditions: {}})}'><i class="fas fa-crosshairs"></i> Aplicar</button></footer></div>`;
+            const content = `<div class="gurps-damage-card"><header class="card-header"><h3>${label}</h3></header><div class="card-formula-container"><span class="formula-pill">${finalFormula} ${dmgType}</span></div><div class="card-content"><div class="card-main-flex"><div class="roll-column"><span class="column-label">${this._t("GUM.GMScreen.Dice")}</span><div class="individual-dice-damage">${diceHtml}</div></div><div class="column-separator"></div><div class="target-column"><span class="column-label">${this._t("GUM.GMScreen.Total")}</span><div class="damage-total"><span class="damage-value">${roll.total}</span><span class="damage-type">${dmgType}</span></div></div></div></div><footer class="card-actions"><button type="button" class="apply-damage-button" data-damage='${JSON.stringify({attackerId: actor.id, sourceName: label, main: { total: roll.total, type: dmgType, armorDivisor: 1 }, onDamageEffects: {}, generalConditions: {}})}'><i class="fas fa-crosshairs"></i> ${this._t("GUM.GMScreen.Apply")}</button></footer></div>`;
 
             ChatMessage.create({ user: game.user.id, speaker: { alias: actor.name }, content: content, rolls: [roll] });
             menu.remove();
@@ -1164,7 +1237,7 @@ activateListeners(html) {
                 originalValue: targetValue,
                 modifier: 0,
                 fixedModifier: selectedModsTotal,
-                fixedModifierLabel: "Escudo do Mestre",
+                fixedModifierLabel: this._t("GUM.GMScreen.Title"),
                 type: rollType,
                 itemId,
                 itemUuid,
@@ -1219,6 +1292,7 @@ activateListeners(html) {
         // Formata o texto (+2, -5, 0)
         const sign = total > 0 ? '+' : '';
         display.text(`${sign}${total}`);
+        root.find('.qr-dock-total').text(`${sign}${total}`);
         
         // Remove classes antigas
         display.removeClass('pos neg');
@@ -1226,6 +1300,12 @@ activateListeners(html) {
         // Adiciona cor
         if (total > 0) display.addClass('pos');
         if (total < 0) display.addClass('neg');
+    }
+
+    _updateManualDockTotal(html) {
+        const value = Number(this.manualCache.value) || 0;
+        const sign = value > 0 ? '+' : '';
+        (html || this.element).find('.manual-dock-total').text(`${sign}${value}`);
     }
     /**
      * Helper: Soma todos os modificadores atualmente selecionados no EM
@@ -1242,7 +1322,8 @@ activateListeners(html) {
         const configuredUuids = this._getConfiguredItemUuids();
         this.selectedModifiers.forEach((mod, key) => {
             if (key !== "manual" && configuredUuids.has(key) && mod?.type !== "effect") {
-                total += parseInt(mod.value) || 0;
+                const presentation = this._formatModifierExpression(mod.value);
+                if (presentation.numeric) total += presentation.value;
             }
         });
 
@@ -1311,7 +1392,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
                     entryList.forEach((entry) => {
                         currentMods.push({
                             name: entry?.label ? `${sourceItem.name} — ${entry.label}` : sourceItem.name,
-                            value: parseInt(entry?.value) || 0,
+                            value: String(entry?.value ?? "").trim() || "0",
                             cap: entry?.nh_cap ?? entry?.cap ?? mod.cap,
                             contexts: (entry?.contexts || "all").toString().trim() || "all",
                             id: foundry.utils.randomID(),
@@ -1328,7 +1409,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
 
             currentMods.push({
                 name: mod.name,
-                value: mod.value,
+                value: mod?.isManual ? (Number(mod.value) || 0) : (String(mod.value ?? "").trim() || "0"),
                 cap: mod.cap, // ✅ AGORA SALVAMOS O TETO NA FLAG DO ATOR
                 contexts: mod.contexts || "all",
                 id: foundry.utils.randomID(),
@@ -1364,8 +1445,15 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
 
         // Garante atualização visual imediata das badges do card no Escudo do Mestre,
         // mesmo quando a criação de ActiveEffect não dispara updateActor instantaneamente.
-        const resistanceSummary = countResistanceRequests ? `; ${countResistanceRequests} resistência(s) solicitada(s)` : "";
-        ui.notifications.info(`Aplicado em ${actor.name}: ${countMods} modificador(es) e ${countEffects} efeito(s)${resistanceSummary}.`);
+        const resistanceSummary = countResistanceRequests
+            ? this._t("GUM.GMScreen.ResistanceRequestSummary", { count: countResistanceRequests })
+            : "";
+        ui.notifications.info(this._t("GUM.GMScreen.AppliedSummary", {
+            actor: actor.name,
+            modifiers: countMods,
+            effects: countEffects,
+            resistances: resistanceSummary
+        }));
     }
     
        async _showQuickView(item) {
@@ -1373,7 +1461,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
         return GumPreviewDialog.showItem(item, {
             actor: null,
             sendToChat: true,
-            speaker: { alias: "Escudo do Mestre" }
+            speaker: { alias: this._t("GUM.GMScreen.Title") }
         });
  }
     
@@ -1404,7 +1492,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
                     name: existing.name || baseTab.name,
                     groups: this._extractGroupsFromConfig(existing).map(group => ({
                         id: group.id || foundry.utils.randomID(),
-                        name: group.name || "Grupo",
+                        name: group.name || this._t("GUM.GMScreen.Group"),
                         items: Array.isArray(group.items) ? group.items : [],
                         collapsed: group.collapsed === true
                     }))
@@ -1422,7 +1510,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
             const tabs = this._createDefaultTabs();
             tabs[0].groups = config.groups.map(group => ({
                 id: group.id || foundry.utils.randomID(),
-                name: group.name || "Grupo",
+                name: group.name || this._t("GUM.GMScreen.Group"),
                 items: Array.isArray(group.items) ? group.items : [],
                 collapsed: group.collapsed === true
             }));
@@ -1433,7 +1521,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
 
         const groups = this._extractGroupsFromConfig(config).map(group => ({
             id: group.id || foundry.utils.randomID(),
-            name: group.name || "Grupo",
+            name: group.name || this._t("GUM.GMScreen.Group"),
             items: Array.isArray(group.items) ? group.items : [],
             collapsed: group.collapsed === true
         }));
@@ -1522,7 +1610,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
         const groupId = $(dropTarget).closest('.modifier-group').data('group-id');
         const item = await fromUuid(data.uuid);
         if (!item || !["gm_modifier", "effect"].includes(item.type)) {
-            return ui.notifications.warn("Apenas Modificadores e Efeitos.");
+            return ui.notifications.warn(this._t("GUM.GMScreen.OnlyModifiersAndEffects"));
         }
         await this._addItemsToGroup(groupId, [item]);
     }
@@ -1535,7 +1623,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
         
         // Botão Exportar
         buttons.unshift({
-            label: "Exportar Layout",
+            label: this._t("GUM.GMScreen.ExportLayout"),
             class: "export-config",
             icon: "fas fa-download",
             onclick: () => this._exportConfig()
@@ -1543,7 +1631,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
 
         // Botão Importar
         buttons.unshift({
-            label: "Importar Layout",
+            label: this._t("GUM.GMScreen.ImportLayout"),
             class: "import-config",
             icon: "fas fa-upload",
             onclick: () => this._importConfig()
@@ -1565,21 +1653,21 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
      */
     async _importConfig() {
         new Dialog({
-            title: "Importar Layout do Escudo",
+            title: this._t("GUM.GMScreen.ImportScreenLayout"),
             content: `
                 <div class="form-group">
-                    <p class="notes">Isso substituirá todo o layout atual do seu escudo.</p>
-                    <label>Arquivo JSON:</label>
+                    <p class="notes">${this._t("GUM.GMScreen.ImportReplacesLayout")}</p>
+                    <label>${this._t("GUM.GMScreen.JsonFile")}:</label>
                     <input type="file" name="import-file" accept=".json">
                 </div>
             `,
             buttons: {
                 import: {
-                    label: "Importar",
+                    label: this._t("GUM.GMScreen.Import"),
                     icon: "<i class='fas fa-file-import'></i>",
                     callback: async (html) => {
                         const input = html.find('[name="import-file"]')[0];
-                        if (!input.files[0]) return ui.notifications.warn("Selecione um arquivo.");
+                        if (!input.files[0]) return ui.notifications.warn(this._t("GUM.GMScreen.SelectFile"));
                         
                         const file = input.files[0];
                         const text = await file.text();
@@ -1588,7 +1676,7 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
                             const json = JSON.parse(text);
                             const groups = this._extractGroupsFromConfig(json).map(group => ({
                                 id: group.id || foundry.utils.randomID(),
-                                name: group.name || "Grupo",
+                                name: group.name || this._t("GUM.GMScreen.Group"),
                                 items: Array.isArray(group.items) ? group.items : [],
                                 collapsed: group.collapsed === true
                             }));
@@ -1596,10 +1684,10 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
                             tabs[0].groups = groups;
                             await game.settings.set("gum", "gmScreenConfig", { tabs, activeTabId: tabs[0].id });
                             this.render(true);
-                            ui.notifications.info("Layout do Escudo importado com sucesso!");
+                            ui.notifications.info(this._t("GUM.GMScreen.LayoutImported"));
                         } catch (err) {
                             console.error(err);
-                            ui.notifications.error("Erro ao ler o arquivo JSON.");
+                            ui.notifications.error(this._t("GUM.GMScreen.LayoutImportError"));
                         }
                     }
                 }

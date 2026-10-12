@@ -4,6 +4,31 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.4.2-beta] - 2026-10-12
+
+### Added
+
+- API pública JavaScript `game.gum.api` v1, organizada por domínio, com resolução de documentos, erros estáveis, permissões, compatibilidade com macros antigas, documentação em português e inglês e declarações TypeScript.
+- Fluxo nativo de consumo em magias e poderes, com fontes alternativas, confirmação de quantidade, custos por tentativa, sucesso ou falha e suporte a PV, PF, itens, reservas e registros de combate.
+- Controles de `+` e `−` na confirmação de consumo e expressões de valor para o Modificador do Mestre.
+- Solicitações de teste e barreiras de resistência agora oferecem rerrolagem diretamente no card de chat.
+
+### Changed
+
+- Fichas de magia e poder, consumo de recursos, mensagens de efeito e cartões de teste foram reorganizados e internacionalizados em português e inglês.
+- Escudo do Mestre passou a ter um layout responsivo, com coluna de personagens fixa, solicitação de teste dedicada e controles rápidos compactos no rodapé da área principal.
+- Seletor de status dos efeitos agora pesquisa os status configurados pelo mundo e privilegia o nome visível em vez do identificador interno.
+- Entradas de Modificador do Mestre agora preservam valores como expressões e aceitam fórmulas de dados, JavaScript e a linguagem condicional compartilhada com Itens Efeito.
+
+### Removed
+
+- Compêndios inerentes do sistema; mesas passam a usar apenas compêndios criados e configurados pelo próprio usuário, preservados nas atualizações.
+
+### Fixed
+
+- Reimportações do GCS agora reconciliam os modos de ataque existentes, sem duplicá-los ao atualizar uma ficha.
+- Alternativas de consumo, cartões de favoritos com efeitos de uso, solicitações de teste e cards de resistência receberam correções de contraste, alinhamento e comportamento.
+
 ## [1.4.1-beta] - 2026-10-10
 
 ### Added

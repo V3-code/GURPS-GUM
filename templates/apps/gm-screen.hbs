@@ -1,11 +1,10 @@
 <div class="gm-screen-layout">
     
-{{!-- COLUNA ESQUERDA: MONITOR + MANUAL --}}
+{{!-- COLUNA ESQUERDA: MONITOR DE ALVOS --}}
 <aside class="screen-sidebar monitor-column">
-        {{!-- NAVEGAÇÃO RENOMEADA --}}
-        <nav class="gum-monitor-tabs monitor-tabs tabs" data-group="monitor">
-            <a class="item" data-tab="characters"><i class="fas fa-users"></i> PJs</a>
-            <a class="item" data-tab="combat"><i class="fas fa-swords"></i> Combate</a>
+        <nav class="gum-monitor-tabs monitor-tabs tabs" data-group="monitor" aria-label="{{localize 'GUM.GMScreen.TargetNavigation'}}">
+            <a class="item" data-tab="characters"><i class="fas fa-users"></i> {{localize "GUM.GMScreen.Characters"}}</a>
+            <a class="item" data-tab="combat"><i class="fas fa-swords"></i> {{localize "GUM.GMScreen.Combat"}}</a>
         </nav>
 
         {{!-- CONTEÚDO --}}
@@ -25,12 +24,11 @@
                 <div class="monitor-list">
                     {{#if hasCombat}}
                         {{#each combatants}}
-                            {{!-- Passamos o objeto inteiro pois ele já tem as props do actor + combat data --}}
                             {{> monitorCard actor=this}}
                         {{/each}}
                     {{else}}
-                        <div class="placeholder-text" style="margin-top:20px;">
-                            <p>Nenhum combate ativo.</p>
+                        <div class="placeholder-text gm-monitor-empty">
+                            <p>{{localize "GUM.GMScreen.NoActiveCombat"}}</p>
                         </div>
                     {{/if}}
                 </div>
@@ -38,77 +36,15 @@
 
             </div>   
         </section>
-           <section class="sidebar-collapsible-stack">
-            <button type="button" class="gm-request-test"><i class="fas fa-dice"></i> Solicitar Teste</button>
-                            {{!-- NOVO: CONTROLES DE COMBATE (RODAPÉ) --}}
-                {{#if hasCombat}}
-                <div class="combat-controls">
-                    <button class="combat-btn prev-turn" title="Turno Anterior"><i class="fas fa-backward"></i></button>
-                    <button class="combat-btn end-combat" title="Encerrar Combate"><i class="fas fa-stop"></i></button>
-                    <button class="combat-btn next-turn" title="Próximo Turno"><i class="fas fa-forward"></i></button>
-                </div>
-                {{/if}}
-            <div class="collapsible-block {{#unless quickRollCollapsed}}is-open{{/unless}}" data-block="quick-roll">
-                <button type="button" class="collapse-toggle" data-action="toggle-block" data-block="quick-roll">
-                    <span class="dashboard-caption">
-                        <i class="fas fa-dice"></i> Rolagem Rápida
-                    </span>
-                    <i class="fas fa-chevron-down collapse-icon"></i>
-                </button>
-                <div class="collapse-content">
-                    <div class="quick-rollers">
-
-                        <div class="roller-section test-section">
-                            <div class="roller-row">
-                                <span class="roller-label">NH</span>
-                                <input type="number" class="qr-nh" placeholder="10" value="10" title="Nível de Habilidade Base">
-                                <div class="qr-mod-display" title="Total de Modificadores Ativos">+0</div>
-                                <button class="qr-toggle-mode active" title="Modo: Apenas para mim"><i class="fas fa-eye-slash"></i></button>
-                                <button class="qr-btn roll-test" title="Rolar Teste"><i class="fas fa-dice"></i></button>
-                            </div>
-                            <div class="qr-result-display" style="display:none;"></div>
-                        </div>
-                        <div class="roller-section damage-section">
-                            <div class="roller-row">
-                                <span class="roller-label"><i class="fas fa-skull"></i></span>
-                                <input type="text" class="qr-formula" placeholder="Dano (ex: 2d6+1)" value="{{quickRollCache.formula}}">
-                                <input type="text" class="qr-type" placeholder="Tipo (ex: cort)" value="{{quickRollCache.type}}">
-                                <button class="qr-btn roll-damage" title="Rolar Dano"><i class="fas fa-bolt"></i></button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <section class="gm-sidebar-actions">
+            {{#if hasCombat}}
+            <div class="combat-controls">
+                <button type="button" class="combat-btn prev-turn" title="{{localize 'GUM.GMScreen.PreviousTurn'}}" aria-label="{{localize 'GUM.GMScreen.PreviousTurn'}}"><i class="fas fa-backward"></i></button>
+                <button type="button" class="combat-btn end-combat" title="{{localize 'GUM.GMScreen.EndCombat'}}" aria-label="{{localize 'GUM.GMScreen.EndCombat'}}"><i class="fas fa-stop"></i></button>
+                <button type="button" class="combat-btn next-turn" title="{{localize 'GUM.GMScreen.NextTurn'}}" aria-label="{{localize 'GUM.GMScreen.NextTurn'}}"><i class="fas fa-forward"></i></button>
             </div>
-
-            <div class="collapsible-block {{#unless manualCollapsed}}is-open{{/unless}}" data-block="manual-modifier">
-                <button type="button" class="collapse-toggle" data-action="toggle-block" data-block="manual-modifier">
-                    <span class="dashboard-caption">
-                        <i class="fas fa-sliders-h"></i> Modificador Manual
-                    </span>
-                    <i class="fas fa-chevron-down collapse-icon"></i>
-                </button>
-                <div class="collapse-content">
-                    <div class="manual-mod-toolbar {{#if isManualActive}}active{{/if}}">
-                            <input type="text" class="manual-name" placeholder="Motivo" value="{{manualCache.name}}">
-                            <div class="manual-row-middle">
-                                <div class="value-controls">
-                                    <button class="step-btn" data-action="dec"><i class="fas fa-minus"></i></button>
-                                    <input type="number" class="manual-value" value="{{manualCache.value}}">
-                                    <button class="step-btn" data-action="inc"><i class="fas fa-plus"></i></button>
-                                </div>
-                                <button class="activate-manual-btn" title="Ativar Manual"><i class="fas fa-crosshairs"></i></button>
-                            </div>
-                            <div class="manual-presets">
-                                <button class="preset-btn" data-val="-4">-4</button>
-                                <button class="preset-btn" data-val="-2">-2</button>
-                                <button class="preset-btn" data-val="-1">-1</button>
-                                <button class="preset-btn" data-val="1">+1</button>
-                                <button class="preset-btn" data-val="2">+2</button>
-                                <button class="preset-btn" data-val="4">+4</button>
-                            </div>
-                        </div>
-                </div>
-            </div>
+            {{/if}}
+            <button type="button" class="gm-request-test"><i class="fas fa-dice"></i> {{localize "GUM.GMScreen.RequestTest"}}</button>
         </section>
 
     </aside>
@@ -116,28 +52,30 @@
     {{!-- COLUNA DIREITA: DASHBOARD (LIMPA) --}}
     <section class="screen-main controls-column">
         
-        {{!-- Barra de Ferramentas da Paleta --}}
-        <div class="manual-mod-section">
-            <div class="palette-actions">
-                <div class="main-tab-selector">
-                    {{#each mainTabs}}
-                        <button class="main-tab-btn {{#if (eq this.id ../activeMainTab)}}active{{/if}}" data-tab-id="{{this.id}}" title="{{this.name}}">
-                            {{this.name}}
-                        </button>
-                    {{/each}}
-                </div>
-                <div class="search-wrapper">
-                    <i class="fas fa-search"></i>
-                    <input type="text" class="mod-search" placeholder="Filtrar..." autocomplete="off">
-                </div>
-                <button class="clear-selection-btn" title="Desmarcar Todos">
-                    <i class="fas fa-eraser"></i>
-                </button>
-                <button class="add-group-btn" title="Criar Grupo">
-                    <i class="fas fa-plus"></i> Grupo
-                </button>
+        <header class="gm-main-toolbar">
+            <div class="search-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="search" class="mod-search" value="{{searchQuery}}" placeholder="{{localize 'GUM.GMScreen.Filter'}}" autocomplete="off" aria-label="{{localize 'GUM.GMScreen.FilterModifiers'}}">
             </div>
-        </div>
+            <div class="gm-selection-summary" title="{{localize 'GUM.GMScreen.SelectionSummaryTitle'}}">
+                <i class="fas fa-layer-group"></i>
+                <span>{{selectionCount}}</span>
+                <strong>{{selectionTotalText}}</strong>
+            </div>
+            <button type="button" class="clear-selection-btn" title="{{localize 'GUM.GMScreen.ClearSelection'}}" aria-label="{{localize 'GUM.GMScreen.ClearSelection'}}" {{#unless selectionCount}}disabled{{/unless}}>
+                <i class="fas fa-eraser"></i>
+            </button>
+            <button type="button" class="add-group-btn" title="{{localize 'GUM.GMScreen.CreateGroup'}}">
+                <i class="fas fa-plus"></i><span class="toolbar-action-label">{{localize "GUM.GMScreen.Group"}}</span>
+            </button>
+        </header>
+        <nav class="main-tab-selector gm-workspace-tabs" aria-label="{{localize 'GUM.GMScreen.Workspaces'}}">
+            {{#each mainTabs}}
+                <button type="button" class="main-tab-btn {{#if (eq this.id ../activeMainTab)}}active{{/if}}" data-tab-id="{{this.id}}" title="{{localize 'GUM.GMScreen.WorkspaceTitle' name=this.name}}" {{#if (eq this.id ../activeMainTab)}}aria-current="page"{{/if}}>
+                    {{this.name}}
+                </button>
+            {{/each}}
+        </nav>
         <section class="screen-body">
             <div class="tab modifiers-dashboard">
                 <div class="modular-grid">
@@ -145,77 +83,133 @@
                         {{#each groups as |group|}}
                         <div class="modifier-group {{#if group.collapsed}}is-collapsed{{/if}}" data-group-id="{{group.id}}">
                             <div class="group-header">
-                                <button type="button" class="group-collapse-toggle" data-group-id="{{group.id}}" title="Expandir/Recolher">
+                                <button type="button" class="group-collapse-toggle" data-group-id="{{group.id}}" title="{{localize 'GUM.GMScreen.ToggleGroup'}}" aria-expanded="{{#unless group.collapsed}}true{{else}}false{{/unless}}">
                                     <i class="fas fa-chevron-down"></i>
                                 </button>
-                                <span class="group-title">{{group.name}}</span>
+                                <span class="group-title" title="{{group.name}}">{{group.name}}</span>
                                 <div class="group-actions">
-                                    <button type="button" class="group-menu-trigger" data-group-id="{{group.id}}" title="Opções do grupo">
+                                    <button type="button" class="group-menu-trigger" data-group-id="{{group.id}}" title="{{localize 'GUM.GMScreen.GroupOptions'}}" aria-label="{{localize 'GUM.GMScreen.GroupOptions'}}" aria-expanded="false">
                                         <i class="fas fa-ellipsis-v"></i>
                                     </button>
                                     <div class="group-actions-menu" data-group-id="{{group.id}}">
-                                        <a class="add-mod-to-group-btn" data-group-id="{{group.id}}"><i class="fas fa-search-plus"></i> Adicionar Modificador</a>
-                                        <a class="add-effect-to-group-btn" data-group-id="{{group.id}}" title="Adicionar efeito"><i class="fas fa-sparkles"></i> Adicionar Efeito</a>
-                                        <a class="edit-group-name-btn" data-group-id="{{group.id}}" data-group-name="{{group.name}}"><i class="fas fa-pen"></i> Editar Nome do Grupo</a>
-                                        <a class="delete-group-btn" data-group-id="{{group.id}}"><i class="fas fa-trash"></i> Excluir Grupo</a>
+                                        <a class="add-mod-to-group-btn" role="button" tabindex="0" data-group-id="{{group.id}}"><i class="fas fa-search-plus"></i> {{localize "GUM.GMScreen.AddModifier"}}</a>
+                                        <a class="add-effect-to-group-btn" role="button" tabindex="0" data-group-id="{{group.id}}"><i class="fas fa-sparkles"></i> {{localize "GUM.GMScreen.AddEffect"}}</a>
+                                        <a class="edit-group-name-btn" role="button" tabindex="0" data-group-id="{{group.id}}" data-group-name="{{group.name}}"><i class="fas fa-pen"></i> {{localize "GUM.GMScreen.RenameGroup"}}</a>
+                                        <a class="delete-group-btn" role="button" tabindex="0" data-group-id="{{group.id}}"><i class="fas fa-trash"></i> {{localize "GUM.GMScreen.DeleteGroup"}}</a>
                                     </div>
                                 </div>
                             </div>
                             <div class="group-content-area">
                                 {{#each group.enrichedItems}}
-                                <div class="palette-mod {{#if this.isSelected}}active{{/if}}" data-uuid="{{this.uuid}}" data-item-type="{{this.type}}" data-value="{{this.system.modifier}}" data-cap="{{this.system.nh_cap}}">
+                                <div class="palette-mod {{#if this.isSelected}}active{{/if}}" role="button" tabindex="0" aria-pressed="{{#if this.isSelected}}true{{else}}false{{/if}}" data-uuid="{{this.uuid}}" data-item-type="{{this.type}}" data-value="{{this.system.modifier}}" data-cap="{{this.system.nh_cap}}">
                                     <div class="mod-left">
                                         <img src="{{this.img}}" class="mod-icon"/>
                                         <span class="mod-name">{{this.name}}</span>
                                     </div>
                                     <div class="mod-right">
                                         {{#if (eq this.type "gm_modifier")}}
-                                            <span class="mod-val {{#if (lt this.system.modifier 0)}}neg{{/if}}">
-                                                {{numberFormat this.system.modifier sign=true}}
+                                            <span class="mod-val {{#if this.modifierIsNegative}}neg{{/if}} {{#if this.modifierIsExpression}}is-expression{{/if}}" title="{{this.modifierDisplay}}">
+                                                {{this.modifierCompactDisplay}}
                                             </span>
                                         {{/if}}
                                         {{#if (eq this.type "effect")}}
                                             <span class="mod-val">EF</span>
                                         {{/if}}
                                         <div class="mod-hover-controls">
-                                            <a class="mod-quick-view"><i class="fas fa-eye"></i></a>
-                                            <a class="delete-mod-btn"><i class="fas fa-times"></i></a>
+                                            <a class="mod-quick-view" role="button" tabindex="0" aria-label="{{localize 'GUM.GMScreen.QuickView'}}"><i class="fas fa-eye"></i></a>
+                                            <a class="delete-mod-btn" role="button" tabindex="0" aria-label="{{localize 'GUM.GMScreen.RemoveFromGroup'}}"><i class="fas fa-times"></i></a>
                                         </div>
                                     </div>
                                 </div>
                                 {{/each}}
-                                {{#unless group.enrichedItems}}<div class="empty-group-hint">Vazio</div>{{/unless}}
+                                {{#unless group.enrichedItems}}<div class="empty-group-hint">{{localize "GUM.GMScreen.Empty"}}</div>{{/unless}}
                             </div>
                         </div>
                         {{/each}}
                     {{else}}
-                        <div class="empty-group-hint">Nenhum grupo criado ainda.</div>
+                        <div class="empty-group-hint">{{localize "GUM.GMScreen.NoGroups"}}</div>
                     {{/if}}
                 </div>
             </div>
         </section>
+
+        <footer class="gm-utility-dock {{#if utilityPanel}}has-open-panel{{/if}}">
+            <div class="gm-utility-content {{#if quickRollOpen}}is-open{{/if}}" data-utility-content="quick-roll">
+                <div class="quick-rollers">
+                    <div class="roller-section test-section">
+                        <div class="roller-row">
+                            <span class="roller-label">{{localize "GUM.GMScreen.SkillLevelShort"}}</span>
+                            <input type="number" class="qr-nh" placeholder="10" value="{{quickRollCache.nh}}" title="{{localize 'GUM.GMScreen.BaseSkillLevel'}}">
+                            <div class="qr-mod-display" title="{{localize 'GUM.GMScreen.ActiveModifierTotal'}}">+0</div>
+                            <button type="button" class="qr-toggle-mode {{#if quickRollCache.private}}active{{/if}}" title="{{#if quickRollCache.private}}{{localize 'GUM.GMScreen.PrivateMode'}}{{else}}{{localize 'GUM.GMScreen.PublicMode'}}{{/if}}" aria-label="{{#if quickRollCache.private}}{{localize 'GUM.GMScreen.PrivateMode'}}{{else}}{{localize 'GUM.GMScreen.PublicMode'}}{{/if}}"><i class="fas {{#if quickRollCache.private}}fa-eye-slash{{else}}fa-eye{{/if}}"></i></button>
+                            <button type="button" class="qr-btn roll-test" title="{{localize 'GUM.GMScreen.RollTest'}}" aria-label="{{localize 'GUM.GMScreen.RollTest'}}"><i class="fas fa-dice"></i></button>
+                        </div>
+                        <div class="qr-result-display" style="display:none;"></div>
+                    </div>
+                    <div class="roller-section damage-section">
+                        <div class="roller-row">
+                            <span class="roller-label"><i class="fas fa-skull"></i></span>
+                            <input type="text" class="qr-formula" placeholder="{{localize 'GUM.GMScreen.DamagePlaceholder'}}" value="{{quickRollCache.formula}}">
+                            <input type="text" class="qr-type" placeholder="{{localize 'GUM.GMScreen.DamageTypePlaceholder'}}" value="{{quickRollCache.type}}">
+                            <button type="button" class="qr-btn roll-damage" title="{{localize 'GUM.GMScreen.RollDamage'}}" aria-label="{{localize 'GUM.GMScreen.RollDamage'}}"><i class="fas fa-bolt"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="gm-utility-content {{#if manualOpen}}is-open{{/if}}" data-utility-content="manual-modifier">
+                <div class="manual-mod-toolbar {{#if isManualActive}}active{{/if}}">
+                    <input type="text" class="manual-name" placeholder="{{localize 'GUM.GMScreen.Reason'}}" value="{{manualCache.name}}">
+                    <div class="manual-row-middle">
+                        <div class="value-controls">
+                            <button type="button" class="step-btn" data-action="dec" aria-label="{{localize 'GUM.GMScreen.Decrease'}}"><i class="fas fa-minus"></i></button>
+                            <input type="number" class="manual-value" value="{{manualCache.value}}" aria-label="{{localize 'GUM.GMScreen.ManualModifierValue'}}">
+                            <button type="button" class="step-btn" data-action="inc" aria-label="{{localize 'GUM.GMScreen.Increase'}}"><i class="fas fa-plus"></i></button>
+                        </div>
+                        <button type="button" class="activate-manual-btn" title="{{localize 'GUM.GMScreen.ToggleManual'}}" aria-label="{{localize 'GUM.GMScreen.ToggleManual'}}" aria-pressed="{{#if isManualActive}}true{{else}}false{{/if}}"><i class="fas fa-crosshairs"></i></button>
+                    </div>
+                    <div class="manual-presets">
+                        <button type="button" class="preset-btn" data-val="-4">-4</button>
+                        <button type="button" class="preset-btn" data-val="-2">-2</button>
+                        <button type="button" class="preset-btn" data-val="-1">-1</button>
+                        <button type="button" class="preset-btn" data-val="1">+1</button>
+                        <button type="button" class="preset-btn" data-val="2">+2</button>
+                        <button type="button" class="preset-btn" data-val="4">+4</button>
+                    </div>
+                </div>
+            </div>
+            <div class="gm-utility-toggle-row">
+                <button type="button" class="gm-utility-toggle {{#if quickRollOpen}}is-active{{/if}}" data-utility-panel="quick-roll" aria-expanded="{{#if quickRollOpen}}true{{else}}false{{/if}}">
+                    <i class="fas fa-dice"></i><span>{{localize "GUM.GMScreen.QuickRoll"}}</span><strong class="qr-dock-total">{{selectionTotalText}}</strong>
+                </button>
+                <button type="button" class="gm-utility-toggle {{#if manualOpen}}is-active{{/if}} {{#if isManualActive}}has-active-value{{/if}}" data-utility-panel="manual-modifier" aria-expanded="{{#if manualOpen}}true{{else}}false{{/if}}">
+                    <i class="fas fa-sliders-h"></i><span>{{localize "GUM.GMScreen.ManualModifier"}}</span><strong class="manual-dock-total">{{manualTotalText}}</strong>
+                </button>
+            </div>
+        </footer>
     </section>
 </div>
 
 {{!-- PARTIAL ATUALIZADO: INICIATIVA DENTRO DO CARD --}}
 {{#*inline "monitorCard"}}
 <div class="monitor-card {{#if actor.isTurn}}active-turn{{/if}} {{#if actor.isDefeated}}defeated{{/if}}"
+     role="button"
+     tabindex="0"
      data-actor-id="{{actor.id}}"
      data-token-id="{{actor.tokenId}}"
      data-combatant-id="{{actor.combatantId}}"
-     title="Clique para aplicar a seleção. Segure Shift para manter toda a seleção.">
+     title="{{localize 'GUM.GMScreen.ApplySelectionHint'}}">
 
     <div class="actor-identity">
         <div class="card-top">
-            <img src="{{actor.img}}" alt="Retrato de {{actor.name}}" />
+            <img src="{{actor.img}}" alt="{{localize 'GUM.GMScreen.PortraitAlt' name=actor.name}}" />
             <div class="vital-bars">
-                <div class="vital-row" title="Pontos de Vida: {{actor.hp.value}} de {{actor.hp.max}}">
-                    <span class="vital-label">PV</span>
+                <div class="vital-row" title="{{localize 'GUM.GMScreen.HitPointsTitle' value=actor.hp.value max=actor.hp.max}}">
+                    <span class="vital-label">{{localize "GUM.GMScreen.HitPointsShort"}}</span>
                     <div class="mini-bar hp"><div class="fill" style="width: {{actor.hp.percent}}%;"></div></div>
                     <span class="vital-value">{{actor.hp.value}}/{{actor.hp.max}}</span>
                 </div>
-                <div class="vital-row" title="Pontos de Fadiga: {{actor.fp.value}} de {{actor.fp.max}}">
-                    <span class="vital-label">PF</span>
+                <div class="vital-row" title="{{localize 'GUM.GMScreen.FatiguePointsTitle' value=actor.fp.value max=actor.fp.max}}">
+                    <span class="vital-label">{{localize "GUM.GMScreen.FatiguePointsShort"}}</span>
                     <div class="mini-bar fp"><div class="fill" style="width: {{actor.fp.percent}}%;"></div></div>
                     <span class="vital-value">{{actor.fp.value}}/{{actor.fp.max}}</span>
                 </div>
@@ -230,20 +224,20 @@
     <div class="passive-defenses">
         {{!-- Só mostra iniciativa se existir (ou seja, se estiver na aba de combate) --}}
         {{#if actor.initiative}}
-            <span class="def-tag init" title="Iniciativa"><i class="fas fa-bolt"></i> {{actor.initiative}}</span>
+            <span class="def-tag init" title="{{localize 'GUM.GMScreen.Initiative'}}"><i class="fas fa-bolt"></i> {{actor.initiative}}</span>
             <span class="sep">|</span>
         {{/if}}
         
-        <span class="def-tag" title="Deslocamento atual"><i class="fas fa-shoe-prints"></i> {{actor.move}}</span>
-        <span class="def-tag encumbrance-tag" title="Nível de carga"><i class="fas fa-weight-hanging"></i> {{actor.encumbrance}}</span>
-        <span class="def-tag" title="Modificador de Tamanho">MT {{actor.sizeModifier}}</span>
-        <span class="def-tag" title="Esquiva atual"><i class="fas fa-running"></i> {{actor.defenses.dodge}}</span>
+        <span class="def-tag" title="{{localize 'GUM.GMScreen.CurrentMove'}}"><i class="fas fa-shoe-prints"></i> {{actor.move}}</span>
+        <span class="def-tag encumbrance-tag" title="{{localize 'GUM.GMScreen.Encumbrance'}}"><i class="fas fa-weight-hanging"></i> {{actor.encumbrance}}</span>
+        <span class="def-tag" title="{{localize 'GUM.GMScreen.SizeModifier'}}">{{localize "GUM.GMScreen.SizeModifierShort"}} {{actor.sizeModifier}}</span>
+        <span class="def-tag" title="{{localize 'GUM.GMScreen.CurrentDodge'}}"><i class="fas fa-running"></i> {{actor.defenses.dodge}}</span>
     </div>
 
     <div class="active-mods-zone">
         {{#if actor.activeGMMods.length}}
             {{#each actor.activeGMMods}}
-            <span class="active-mod-tag" data-index="{{@index}}" {{#if this.removalGroupId}}data-group-id="{{this.removalGroupId}}"{{/if}}>
+            <span class="active-mod-tag" data-index="{{@index}}" {{#if this.removalGroupId}}data-group-id="{{this.removalGroupId}}"{{/if}} {{#if this.displayExpression}}title="{{this.displayExpression}}"{{/if}}>
                 {{this.displayName}} <strong>{{this.displayValueText}}</strong>
                 <i class="fas fa-times remove-mod"></i>
             </span>
@@ -254,9 +248,9 @@
             {{#each actor.activeGMEffects}}
             <span class="active-mod-tag {{#if this.isPending}}pending-effect{{/if}}"
                   data-effect-id="{{this.id}}"
-                  {{#if this.isPending}}title="Efeito aplicado: {{this.statusLabel}}"{{/if}}>
+                  {{#if this.isPending}}title="{{localize 'GUM.GMScreen.AppliedEffectStatus' status=this.statusLabel}}"{{/if}}>
                 <i class="fas {{#if this.isPending}}fa-clock{{else}}fa-sparkles{{/if}}"></i> {{this.name}}
-                {{#if this.isPending}}<small>(Pendente)</small>{{/if}}
+                {{#if this.isPending}}<small>({{localize "GUM.GMScreen.Pending"}})</small>{{/if}}
                 <i class="fas fa-times remove-effect"></i>
             </span>
             {{/each}}
