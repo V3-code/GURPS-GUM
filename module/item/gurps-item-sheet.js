@@ -5,6 +5,7 @@ import { EqpModifierBrowser } from "../apps/eqp-modifier-browser.js";
 import { ModifierBrowser } from "../apps/modifier-browser.js";
 import { GM_MODIFIER_CATEGORY_OPTIONS } from "../utils/gm-modifier-categories.js"; 
 import { listBodyLocations } from "../config/body-profiles.js";
+import { bilingualLocationOptions } from "../utils/equipment-location-aliases.mjs";
 import { SOCIAL_CATEGORIES } from "../config/social-aspects.mjs";
 import { normalizeContextCsv, openContextPicker } from "../apps/context-picker.mjs";
 import { getSkillDisplayName } from "../utils/skill-display-name.mjs";
@@ -27,7 +28,7 @@ function localizeEquipmentLocation(option) {
     const name = `${match[1] ? "Extra " : ""}${root}${side}${number ? (side ? number : ` ${number}`) : ""}`;
     return { ...option, name, label: name };
 }
- 
+
 const ROLL_CONTEXT_OPTIONS = [ 
     { id: "all", label: "Qualquer rolagem" }, 
     { id: "attack", label: "Ataque (qualquer)" }, 
@@ -603,7 +604,7 @@ _promptMultipleReferences(parsedList) {
             const bodyLocationOptions = listBodyLocations().map(localizeEquipmentLocation);
             const locationLookup = new Map(bodyLocationOptions.map(option => [option.id, option])); 
  
-            context.bodyLocationOptions = bodyLocationOptions; 
+            context.bodyLocationOptions = bilingualLocationOptions(listBodyLocations(), bodyLocationOptions, game.i18n.lang);
             context.drLocationRows = Object.entries(drLocations)
                 .filter(([, drObject]) => this._hasVisibleDR(drObject))
                 .map(([key, drObject]) => {
@@ -1907,7 +1908,7 @@ _onAddAttack(ev) {
                 formula: "", 
                 type: "",
                 scaling: "",  
-                armor_divisor: null 
+                armor_divisor: null
             }, 
             fragmentation_damage: { 
                 formula: "", 
@@ -2114,7 +2115,6 @@ new Dialog({
                     <input type="text" data-name="${basePath}.follow_up_damage.nature" value="${safe(followUp.nature)}" placeholder="Natureza"/>
                     <input type="number" step="0.1" data-name="${basePath}.follow_up_damage.armor_divisor" value="${safe(followUp.armor_divisor)}" title="Divisor"/>
                     <input type="text" data-name="${basePath}.follow_up_damage.scaling" value="${safe(followUp.scaling)}" placeholder="Ex: +1d6/point" title="Progressão de dano importada/editável. Ex: +1d6/point"/>
-
                     <div class="row-label">Dano de Fragmentação</div>
                     <input type="text" data-name="${basePath}.fragmentation_damage.formula" value="${safe(fragmentation.formula)}"/>
                     <input type="text" data-name="${basePath}.fragmentation_damage.type" value="${safe(fragmentation.type)}"/>
@@ -2735,14 +2735,14 @@ const rangedFields = `
                 <div class="attack-display-card"> 
                     <div class="attack-line"> 
                         <div class="attack-cell"> 
-                            <input class="dr-location-label" type="text" list="gum-body-location-options" value="${label}" placeholder="Ex: Braço E"/> 
+                            <input class="dr-location-label" type="text" list="gum-body-location-options" value="${label}" placeholder="${game.i18n.localize("GUM.Equipment.Protection.LocationExample")}"/>
                             <input class="dr-location-key" type="hidden" value="${key}"/> 
                         </div> 
                         <div class="attack-cell"> 
                             <input class="dr-location-value" type="text" value="${dr}" placeholder="0"/> 
                         </div> 
                         <div class="attack-cell"> 
-                            <button class="dr-location-delete" type="button" title="Remover"><i class="fas fa-trash"></i></button> 
+                            <button class="dr-location-delete" type="button" title="${game.i18n.localize("GUM.Equipment.Protection.RemoveDR")}"><i class="fas fa-trash"></i></button>
                         </div> 
                     </div> 
                 </div> 

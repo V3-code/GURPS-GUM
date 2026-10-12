@@ -19,6 +19,7 @@ O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com
 - Escudo do Mestre passou a ter um layout responsivo, com coluna de personagens fixa, solicitação de teste dedicada e controles rápidos compactos no rodapé da área principal.
 - Seletor de status dos efeitos agora pesquisa os status configurados pelo mundo e privilegia o nome visível em vez do identificador interno.
 - Entradas de Modificador do Mestre agora preservam valores como expressões e aceitam fórmulas de dados, JavaScript e a linguagem condicional compartilhada com Itens Efeito.
+- Cards de resultado de testes e dano, além da janela de aplicação de dano, agora exibem seus controles e resultados em português ou inglês; a busca de localizações de proteção aceita nomes nos dois idiomas.
 
 ### Removed
 
@@ -28,6 +29,7 @@ O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com
 
 - Reimportações do GCS agora reconciliam os modos de ataque existentes, sem duplicá-los ao atualizar uma ficha.
 - Alternativas de consumo, cartões de favoritos com efeitos de uso, solicitações de teste e cards de resistência receberam correções de contraste, alinhamento e comportamento.
+- A rolagem de dano básico pela barra lateral agora inclui os danos secundários configurados; o dano de acompanhamento mantém sua aplicação independente.
 
 ## [1.4.1-beta] - 2026-10-10
 

@@ -197,25 +197,32 @@
     gap: 2px;
 }
 .damage-application-dialog .wounding-row {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
     padding: 4px 6px;
     border-radius: 2px;
 }
 .damage-application-dialog .wounding-row label.custom-radio {
-    display: flex;
-    align-items: baseline;
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr) auto;
+    align-items: center;
     gap: 8px;
     width: 100%;
     cursor: pointer;
 }
 .damage-application-dialog .wounding-row .dots {
-    flex-grow: 1;
-    border-bottom: 1px dotted rgba(255,255,255,0.2);
-    margin-bottom: 4px;
+    display: none;
 }
 .damage-application-dialog .wounding-row .mult {
     font-weight: bold;
     color: var(--c-accent-gold, #c5a05b);
+    justify-self: end;
+    text-align: right;
+    min-width: 38px;
 }
+.damage-application-dialog .wounding-row label.custom-radio .type { min-width: 0; }
+.damage-application-dialog .wounding-row label.custom-radio input[type="radio"] { margin: 0; }
 .damage-application-dialog .custom-mod-input {
     width: 60px;
     background: rgba(0,0,0,0.5);
@@ -408,6 +415,7 @@
 .damage-app-footer .action-buttons {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
   justify-content: flex-end;
@@ -416,6 +424,7 @@
 
 /* Estilo dos botões */
 .damage-app-footer .action-buttons button {
+  flex: 1 1 155px;
   background: var(--color-button-background, #c5a05b); 
   color: #000;
   border: 1px solid #999;

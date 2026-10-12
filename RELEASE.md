@@ -13,6 +13,17 @@ Este documento padroniza publicação e atualização do sistema no Foundry VTT.
 
 Gerar um zip com o conteúdo do sistema para distribuição no Foundry.
 
+Na pasta do repositório, depois de confirmar todas as alterações na `master`, execute:
+
+```powershell
+git archive --format=zip --output=gum.zip HEAD
+```
+
+O manifesto `system.json` deve estar na raiz do ZIP, sem uma pasta `gum` adicional.
+Esse método inclui apenas arquivos versionados: não leva `.git`, resíduos locais de
+compêndios em `packs/` nem outros dados temporários do mundo. Não use um ZIP da
+pasta inteira do Foundry para a publicação.
+
 Nome do arquivo esperado no release:
 
 - `gum.zip`

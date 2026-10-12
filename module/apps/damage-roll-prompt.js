@@ -1,5 +1,7 @@
 import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
 import { buildDamageNatureSearchOptions, formatDamageNature, resolveDamageNature } from "../utils/damage-nature.mjs";
+
+const formatDamageNatureAbbreviation = (value) => resolveDamageNature(value)?.abbreviation || String(value || "").trim();
 export class GurpsDamageRollPrompt extends FormApplication {
     constructor(options = {}) {
         super(options);
@@ -66,7 +68,15 @@ export class GurpsDamageRollPrompt extends FormApplication {
             }
         ].filter((card) => card.formula).map(card => ({
             ...card,
-            meta: [card.type, card.armorDivisor && Number(card.armorDivisor) !== 1 ? `Div. ${card.armorDivisor}` : "", card.nature ? formatDamageNature(card.nature) : ""].filter(Boolean).join(" · ")
+            labelKey: `GUM.Damage.Roll.${card.key === "main" ? "Standard" : card.key === "followUp" ? "FollowUp" : "Fragmentation"}`,
+            type: card.type || game.i18n.localize("GUM.Damage.NotSpecified"),
+            nature: card.nature ? formatDamageNature(card.nature) : game.i18n.localize("GUM.Damage.NatureNone"),
+            armorDivisor: card.armorDivisor || 1,
+            details: [
+                card.type || game.i18n.localize("GUM.Damage.NotSpecified"),
+                card.nature ? formatDamageNatureAbbreviation(card.nature) : "",
+                Number(card.armorDivisor) > 0 && Number(card.armorDivisor) !== 1 ? `(${card.armorDivisor})` : ""
+            ].filter(Boolean).join(" ")
         }));
 
         return {
@@ -98,6 +108,7 @@ export class GurpsDamageRollPrompt extends FormApplication {
             this._validateForm(html);
             this._refreshVisualCards(html);
         });
+        html.find("input[name$='Nature']").on("input change", () => this._refreshVisualCards(html));
         html.find("button[data-action='cancel']").on("click", (ev) => { ev.preventDefault(); this.close(); });
         this._validateForm(html);
         this._refreshVisualCards(html);
@@ -186,14 +197,15 @@ export class GurpsDamageRollPrompt extends FormApplication {
         const fragFormula = this._composeCardFormula(this.damageData.fragmentation?.displayFormula || this.damageData.fragmentation?.formula, fragAdd);
         const fuFormula = this._composeCardFormula(this.damageData.followUp?.displayFormula || this.damageData.followUp?.formula, fuAdd);
 
-        const divisor = (field, fallback) => {
+        const divisor = (field, fallback = 1) => {
             const value = Number(html.find(`input[name='${field}']`).val());
-            return Number.isFinite(value) && value > 0 ? value : fallback;
+            return Number.isFinite(value) && value > 0 ? value : (fallback || 1);
         };
+        const nature = (field) => String(html.find(`input[name='${field}']`).val() || "").trim();
         return [
-            { key: "main", label: "Dano Padrão", tone: "standard", formula: this._applyOptionalDiceNormalization(mainFormula), type: mainType, armorDivisor: divisor("mainArmorDivisor", this.damageData.main?.armorDivisor), nature: this.damageData.main?.natureDisplay },
-            { key: "followUp", label: "Dano de Acompanhamento", tone: "followup", formula: this._applyOptionalDiceNormalization(fuFormula), type: fuType, armorDivisor: divisor("followUpArmorDivisor", this.damageData.followUp?.armorDivisor), nature: this.damageData.followUp?.natureDisplay },
-            { key: "fragmentation", label: "Dano de Fragmentação", tone: "fragmentation", formula: this._applyOptionalDiceNormalization(fragFormula), type: fragType, armorDivisor: divisor("fragmentationArmorDivisor", this.damageData.fragmentation?.armorDivisor), nature: this.damageData.fragmentation?.natureDisplay }
+            { key: "main", label: "Dano Padrão", tone: "standard", formula: this._applyOptionalDiceNormalization(mainFormula), type: mainType, armorDivisor: divisor("mainArmorDivisor", this.damageData.main?.armorDivisor), nature: nature("mainNature") },
+            { key: "followUp", label: "Dano de Acompanhamento", tone: "followup", formula: this._applyOptionalDiceNormalization(fuFormula), type: fuType, armorDivisor: divisor("followUpArmorDivisor", this.damageData.followUp?.armorDivisor), nature: nature("followUpNature") },
+            { key: "fragmentation", label: "Dano de Fragmentação", tone: "fragmentation", formula: this._applyOptionalDiceNormalization(fragFormula), type: fragType, armorDivisor: divisor("fragmentationArmorDivisor", this.damageData.fragmentation?.armorDivisor), nature: nature("fragmentationNature") }
         ].filter((card) => card.formula);
     }
 
@@ -202,10 +214,17 @@ export class GurpsDamageRollPrompt extends FormApplication {
         const box = html.find(".damage-visual-box");
         if (!box.length) return;
         const esc = (value) => foundry.utils.escapeHTML(String(value || ""));
+        const t = (key) => esc(game.i18n.localize(key));
+        const labelKey = (card) => `GUM.Damage.Roll.${card.key === "main" ? "Standard" : card.key === "followUp" ? "FollowUp" : "Fragmentation"}`;
         const markup = cards.map((card) => `
             <div class="damage-visual-card tone-${card.tone}">
-              <div class="damage-card-formula">${esc(card.formula)}</div>
-              <div class="damage-card-meta">${esc([card.type, card.armorDivisor && Number(card.armorDivisor) !== 1 ? `Div. ${card.armorDivisor}` : "", card.nature ? formatDamageNature(card.nature) : ""].filter(Boolean).join(" · "))}</div>
+              <div class="damage-card-title">${t(labelKey(card))}</div>
+              <div class="damage-card-field damage-card-formula"><span>${t("GUM.Damage.Formula")}</span><strong>${esc(card.formula)}</strong></div>
+              <div class="damage-card-meta">${esc([
+                  card.type || game.i18n.localize("GUM.Damage.NotSpecified"),
+                  card.nature ? formatDamageNatureAbbreviation(card.nature) : "",
+                  Number(card.armorDivisor) !== 1 ? `(${card.armorDivisor})` : ""
+              ].filter(Boolean).join(" "))}</div>
             </div>
         `).join("");
         box.html(markup);

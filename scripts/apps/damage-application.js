@@ -31,7 +31,19 @@ this.damageData = damageData;
             activeDamageKey: 'main'
         };
 
- this.options.title = `Aplicar Dano em ${this.targetActor?.name || "Alvo"}`;
+ this.options.title = game.i18n.format("GUM.DamageApplication.Title", { name: this.targetActor?.name || game.i18n.localize("GUM.DamageApplication.Target") });
+    }
+
+    _t(key) { return game.i18n.localize(`GUM.DamageApplication.${key}`); }
+    _f(key, data) { return game.i18n.format(`GUM.DamageApplication.${key}`, data); }
+
+    _localizedLocationLabel(key, fallback) {
+        const base = String(key || "").replace(/_\d+$/, "");
+        const translationKey = `GUM.Combat.DR.BodyParts.${base}`;
+        const translated = game.i18n.localize(translationKey);
+        if (translated === translationKey) return fallback;
+        const suffix = String(key).match(/_(\d+)$/)?.[1];
+        return `${translated}${suffix ? ` ${suffix}` : ""}`;
     }
 
     _attackerImage() {
@@ -189,34 +201,34 @@ async _resolveOnDamageEffects() {
 
         if (!attackWeight || !defenseWeight || !basicLift) {
             advisor.dataset.status = "incomplete";
-            if (summaryEl) summaryEl.innerHTML = `<strong>Dados incompletos.</strong> Informe peso do ataque, peso da defesa e BC do alvo para avaliar Aparar/Bloquear armas pesadas.`;
+            if (summaryEl) summaryEl.textContent = this._t("HeavyIncomplete");
             return null;
         }
 
         const result = this._evaluateHeavyWeaponDefense({ attackWeight, defenseWeight, basicLift, defenseMode, quality });
         const ratioText = Number.isFinite(result.ratio) ? result.ratio.toFixed(2).replace(".", ",") : "∞";
         let status = "ok";
-        let headline = "Defesa dentro do limite de peso.";
+        let headline = this._t("HeavyOK");
         const details = [
-            `Ataque ${this._formatWeight(attackWeight)} kg × defesa ${this._formatWeight(defenseWeight)} kg = ${ratioText}×.`,
-            `BC ${this._formatWeight(basicLift)} kg; limite absoluto ${this._formatWeight(result.absoluteLimit)} kg.`
+            this._f("HeavyRatio", { attack: this._formatWeight(attackWeight), defense: this._formatWeight(defenseWeight), ratio: ratioText }),
+            this._f("HeavyLimit", { lift: this._formatWeight(basicLift), limit: this._formatWeight(result.absoluteLimit) })
         ];
 
         if (result.exceedsAbsoluteLimit) {
             status = "danger";
-            headline = "Tentativa excede o limite absoluto.";
-            details.push("Pela regra, a tentativa falha automaticamente; o ataque acerta, e a arma aparadora pode ser derrubada se não quebrar.");
+            headline = this._t("HeavyExceeded");
+            details.push(this._t("HeavyExceededDetail"));
         } else if (result.offersNoResistance) {
             status = "danger";
-            headline = "Chance de quebra acima de 6 em 6.";
-            details.push(`Chance ajustada: ${result.adjustedBreakChance} em 6. A tentativa não oferece resistência; o ataque acerta.`);
+            headline = this._t("HeavyNoResistance");
+            details.push(this._f("HeavyNoResistanceDetail", { chance: result.adjustedBreakChance }));
         } else if (result.adjustedBreakChance > 0) {
             status = "warning";
-            headline = "Há risco de quebra da arma/escudo defensor.";
-            details.push(`Chance ajustada de quebra: ${result.adjustedBreakChance} em 6${result.adjustedBreakChance !== result.baseBreakChance ? ` (base ${result.baseBreakChance} em 6)` : ""}.`);
-            details.push("Se a defesa for bem-sucedida, normalmente ela ainda detém o ataque mesmo que a arma quebre.");
+            headline = this._t("HeavyRisk");
+            details.push(this._f("HeavyRiskDetail", { chance: result.adjustedBreakChance, base: result.adjustedBreakChance !== result.baseBreakChance ? this._f("HeavyBaseChance", { chance: result.baseBreakChance }) : "" }));
+            details.push(this._t("HeavyRiskDefense"));
         } else {
-            details.push("A proporção é menor que 3×; sem risco de quebra por peso nesta regra.");
+            details.push(this._t("HeavyNoRisk"));
         }
 
         advisor.dataset.status = status;
@@ -289,18 +301,18 @@ async _resolveOnDamageEffects() {
         let status = result.distance > 0 ? "warning" : "ok";
         if (!result.eligible) status = "incomplete";
         const typeReason = result.eligible
-            ? (onlyKnockbackInput?.checked ? "Ataque marcado como Apenas Projeção." : result.isCrushing ? "Contusão pode projetar mesmo sem penetrar a RD." : "Corte só projeta porque não penetrou a RD.")
-            : "Somente contusão projeta sempre; corte projeta apenas quando não penetra a RD.";
+            ? this._t(onlyKnockbackInput?.checked ? "KnockbackOnlyReason" : result.isCrushing ? "KnockbackCrushingReason" : "KnockbackCuttingReason")
+            : this._t("KnockbackIneligible");
         const details = [
             typeReason,
-            `Distância: ${Math.floor(this._toNumber(basicDamage, 0))} ÷ ${result.threshold} = ${result.distance} m (múltiplos completos).`,
+            this._f("KnockbackDistance", { damage: Math.floor(this._toNumber(basicDamage, 0)), threshold: result.threshold, distance: result.distance }),
             result.distance > 0
-                ? `Teste para não cair: maior entre DX ${result.dx}, Acrobacia ${result.acrobatics || "—"} ou Judô ${result.judo || "—"}; penalidade ${result.fallPenalty}. ${result.balanceBonus ? "Equilíbrio Perfeito +4. " : ""}Alvo efetivo: ${result.targetNumber}.`
-                : "Sem metros completos de projeção."
+                ? this._f("KnockbackFall", { dx: result.dx, acrobatics: result.acrobatics || "—", judo: result.judo || "—", penalty: result.fallPenalty, balance: result.balanceBonus ? `${this._t("PerfectBalance")}. ` : "", target: result.targetNumber })
+                : this._t("KnockbackNoDistance")
         ];
-        if (result.distance > 0) details.push("Se atingir obstáculo, trate como colisão com velocidade igual à distância projetada.");
+        if (result.distance > 0) details.push(this._t("KnockbackCollision"));
         advisor.dataset.status = status;
-        if (summaryEl) summaryEl.innerHTML = `<strong>${result.distance} m de projeção estimada.</strong><ul>${details.map(detail => `<li>${detail}</li>`).join("")}</ul>`;
+        if (summaryEl) summaryEl.innerHTML = `<strong>${this._f("KnockbackEstimated", { distance: result.distance })}</strong><ul>${details.map(detail => `<li>${detail}</li>`).join("")}</ul>`;
         return { ...result, status };
     }
 
@@ -378,7 +390,7 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
 
             items.push({
                 key,
-                label: data.label ?? data.name ?? key,
+                label: this._localizedLocationLabel(key, data.label ?? data.name ?? key),
                 roll: data.roll ?? "--",
                 totalDR: baseDR,
                 groupKey: data.groupKey,
@@ -407,10 +419,12 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
 
             const labelBase = groupItems[0].groupPlural || groupItems[0].groupLabel || groupKey;
             const rollLabel = groupItems.map(member => member.roll).filter(Boolean).join(", ");
+            const groupTranslationKey = `GUM.Combat.DR.BodyPartPlurals.${groupKey}`;
+            const groupTranslation = game.i18n.localize(groupTranslationKey);
             groupSummaries.set(groupKey, {
                 key: groupItems[0].key,
                 isGroup: true,
-                label: `${labelBase} (${groupItems.length})`,
+                label: `${groupTranslation === groupTranslationKey ? labelBase : groupTranslation} (${groupItems.length})`,
                 roll: rollLabel || "--",
                 totalDR: groupItems[0].totalDR
             });
@@ -440,7 +454,7 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
 
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
-            title: `Aplicar Dano`,
+            title: game.i18n.localize("GUM.DamageApplication.ApplyDamage"),
             template: "systems/gum/templates/apps/damage-application.hbs",
             classes: ["dialog", "gurps", "damage-application-dialog"],
             width: 760,
@@ -487,8 +501,8 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
         };
 
         const damageablePools = [];
-        damageablePools.push({ path: 'system.attributes.hp.value', label: `Pontos de Vida (PV)` });
-        damageablePools.push({ path: 'system.attributes.fp.value', label: `Pontos de Fadiga (PF)` });
+        damageablePools.push({ path: 'system.attributes.hp.value', label: this._t("HP") });
+        damageablePools.push({ path: 'system.attributes.fp.value', label: this._t("FP") });
                const combatMeters = this.targetActor.system.combat.combat_meters || {};
         for (const [key, meter] of Object.entries(combatMeters)) {
             const meterPath = `system.combat.combat_meters.${key}.${meter.current !== undefined ? "current" : "value"}`;
@@ -526,7 +540,7 @@ const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
 
         context.locations = this._buildLocationRows(profile, totalDrLocations);
 
-        context.locations.push({ key: "custom", label: "Outro", roll: "--", totalDR: 0, custom: true });
+        context.locations.push({ key: "custom", label: this._t("OtherLocation"), roll: "--", totalDR: 0, custom: true });
 
         const hasNumericRoll = context.locations.some(loc => {
             const firstRoll = parseInt(loc.roll.split(/[,-]/)[0]);
@@ -543,7 +557,7 @@ const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
             });
         }
         const mainDamageType = this.damageData.main?.type?.toLowerCase() || '';
-        const woundingModifiersList = [ { type: "Queimadura", abrev: "qmd", mult: 1 }, { type: "Corrosão", abrev: "cor", mult: 1 }, { type: "Toxina", abrev: "tox", mult: 1 }, { type: "Contusão", abrev: "cont", mult: 1 }, { type: "Corte", abrev: "cort", mult: 1.5 }, { type: "Perfuração", abrev: "perf", mult: 2 }, { type: "Perfurante", abrev: "pi", mult: 1 }, { type: "Pouco Perfurante", abrev: "pi-", mult: 0.5 }, { type: "Muito Perfurante", abrev: "pi+", mult: 1.5 }, { type: "Ext. Perfurante", abrev: "pi++", mult: 2 } ];
+        const woundingModifiersList = ["qmd", "cor", "tox", "cont", "cort", "perf", "pi", "pi-", "pi+", "pi++"].map(abrev => ({ type: this._t(`Wounding.${abrev}`), abrev, mult: { cort: 1.5, perf: 2, "pi-": 0.5, "pi+": 1.5, "pi++": 2 }[abrev] ?? 1 }));
         let defaultModFound = false;
         context.woundingModifiers = woundingModifiersList.map(mod => { mod.checked = (mod.abrev === mainDamageType); if (mod.checked) defaultModFound = true; return mod; });
         context.noModChecked = !defaultModFound;
@@ -572,7 +586,8 @@ const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
             card.addEventListener('click', ev => {
                 form.querySelectorAll('.damage-card.active').forEach(c => c.classList.remove('active'));
                 ev.currentTarget.classList.add('active');
-                const damageType = ev.currentTarget.querySelector('.damage-label')?.textContent?.match(/[a-zA-Z+]+/)?.[0]?.toLowerCase();
+                const newDamage = this.damageData[ev.currentTarget.dataset.damageKey];
+                const damageType = String(newDamage?.type || '').trim().toLowerCase();
                 this.damageTypeAbrev = damageType || this.damageTypeAbrev;
                 const applyAsHealCheckbox = form.querySelector('[name="special_apply_as_heal"]');
                 if (damageType) {
@@ -582,7 +597,7 @@ const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
                         const abrev = r.closest('.wounding-row')?.dataset?.abrev?.toLowerCase() || '';
                         if (abrev === damageType) { r.checked = true; matched = true; }
                     });
-                    if (!matched) { const noModRadio = form.querySelector('input[name="wounding_mod_type"][value="1"]'); if (noModRadio) noModRadio.checked = true; }
+                    if (!matched) { const noModRadio = form.querySelector('.wounding-row[data-wounding-kind="none"] input[name="wounding_mod_type"]'); if (noModRadio) noModRadio.checked = true; }
 
                     if (damageType === 'cura') {
                         const customRadio = form.querySelector('input[name="wounding_mod_type"][value="custom"]');
@@ -596,9 +611,8 @@ const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
                     }
                 } else {
                     const allRadios = form.querySelectorAll('input[name="wounding_mod_type"]');
-                    for (let r of allRadios) { const label = r.closest('.wounding-row')?.textContent?.toLowerCase() || ''; if (r.value === '1' && label.includes("sem modificador")) { r.checked = true; break; } }
+                    for (const r of allRadios) { if (r.closest('.wounding-row')?.dataset.woundingKind === 'none') { r.checked = true; break; } }
                 }
-                const newDamage = this.damageData[ev.currentTarget.dataset.damageKey];
                 const damageInput = form.querySelector('[name="damage_rolled"]');
                 const armorInput = form.querySelector('[name="armor_divisor"]');
                 const natureInput = form.querySelector('[name="damage_nature"]');
@@ -662,20 +676,20 @@ const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
                     htmlContent += `<hr style="margin-top: 6px; margin-bottom: 6px;">`;
 
                     htmlContent += `
-                        <div class="wounding-row">
+                        <div class="wounding-row" data-wounding-kind="none">
                             <label class="custom-radio">
                                 <input type="radio" name="wounding_mod_type" value="1" ${selectedAbrev === '' ? 'checked' : ''}/>
-                                <span>Sem Modificador</span>
+                                <span>${this._t("Wounding.None")}</span>
                                 <span class="dots"></span>
                                 <span class="mult">x1</span>
                             </label>
                         </div>`;
 
                     htmlContent += `
-                        <div class="wounding-row">
+                        <div class="wounding-row" data-wounding-kind="custom">
                             <label class="custom-radio">
                                 <input type="radio" name="wounding_mod_type" value="custom"/>
-                                <span>Outros Mod.:</span>
+                                <span>${this._t("Wounding.Custom")}:</span>
                                 <input type="number" name="custom_wounding_mod" value="1" step="0.5" class="custom-mod-input"/>
                             </label>
                         </div>`;
@@ -743,6 +757,7 @@ const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
         html.find('button[data-action="applyAndPublish"]').on('click', () => this._onApplyDamage(form, true, true));
         html.find('button[data-action="applyAndClose"]').on('click', () => this._onApplyDamage(form, true, false));
         html.find('button[data-action="applyAndKeepOpen"]').on('click', () => this._onApplyDamage(form, false, false));
+        html.find('button[data-action="publishAndKeepOpen"]').on('click', () => this._onApplyDamage(form, false, true));
         
         // --- Disparo Inicial (Preservando sua lógica de "Torso") ---
         const torsoRow = form.querySelector('.location-row[data-location-key="torso"]');
@@ -782,8 +797,8 @@ async _updateDamageCalculation(form) {
     const effects = [];
     let originalBase = damageRolled;
     let modifiedBase = damageRolled;
-    if (halfDamageChecked) { modifiedBase = Math.floor(modifiedBase / 2); effects.push(`🟡 Dano reduzido pela metade (1/2D): ${originalBase} ➜ ${modifiedBase}`); originalBase = modifiedBase; }
-    if (explosionChecked && explosionDistance > 0) { const divisor = Math.max(1, 3 * explosionDistance); const preExplosion = modifiedBase; modifiedBase = Math.floor(modifiedBase / divisor); effects.push(`🔴 Explosão: ${preExplosion} ➜ ${modifiedBase} (÷${divisor})`); }
+    if (halfDamageChecked) { modifiedBase = Math.floor(modifiedBase / 2); effects.push(`🟡 ${this._f("HalfDamageEffect", { before: originalBase, after: modifiedBase })}`); originalBase = modifiedBase; }
+    if (explosionChecked && explosionDistance > 0) { const divisor = Math.max(1, 3 * explosionDistance); const preExplosion = modifiedBase; modifiedBase = Math.floor(modifiedBase / divisor); effects.push(`🔴 ${this._f("ExplosionEffect", { before: preExplosion, after: modifiedBase, divisor })}`); }
     damageRolled = modifiedBase;
     const selectedModRadio = form.querySelector('input[name="wounding_mod_type"]:checked');
     const selectedRowForMod = selectedModRadio?.closest('.wounding-row');
@@ -811,32 +826,32 @@ async _updateDamageCalculation(form) {
     if (largeAreaInjury) {
         largeAreaDRData = this._getLargeAreaInjuryDR(form, damageTypeKey);
         selectedLocationDR = largeAreaDRData.effectiveDR;
-        effects.push(`🟠 Lesão em Larga Escala: RD efetiva ${selectedLocationDR} = ⌈(${largeAreaDRData.torsoDR} torso + ${largeAreaDRData.markedDR} ${largeAreaDRData.markedLabel}) ÷ 2⌉`);
+        effects.push(`🟠 ${this._f("LargeAreaEffect", { effective: selectedLocationDR, torso: largeAreaDRData.torsoDR, marked: largeAreaDRData.markedDR, location: largeAreaDRData.markedLabel })}`);
     }
     const ignoreDR = form.querySelector('[name="ignore_dr"]')?.checked;
-    
     const effectiveDR = ignoreDR ? 0 : Math.floor(selectedLocationDR / armorDivisor);
     let penetratingDamage = Math.max(0, damageRolled - effectiveDR);
+    this.currentPenetratingDamage = penetratingDamage;
     let woundingMod = 1;
     if (selectedModRadio) { if (selectedModRadio.value === 'custom') { woundingMod = parseFloat(form.querySelector('[name="custom_wounding_mod"]')?.value) || 1; } else { woundingMod = parseFloat(selectedModRadio.value) || 1; } }
-    if (toleranceType === "nao-vivo") { const table = { "perf": 1, "pi": 1 / 3, "pi-": 0.2, "pi+": 0.5, "pi++": 1 }; if (table[damageAbrev] !== undefined) { woundingMod = table[damageAbrev]; effects.push("⚙️ Tolerância: Não Vivo (mod. ajustado)"); } }
-    if (toleranceType === "homogeneo") { const table = { "perf": 0.5, "pi": 0.2, "pi-": 0.1, "pi+": 1 / 3, "pi++": 0.5 }; if (table[damageAbrev] !== undefined) { woundingMod = table[damageAbrev]; effects.push("⚙️ Tolerância: Homogêneo (mod. ajustado)"); } }
-    if (toleranceType === "difuso") { woundingMod = 1; effects.push("⚙️ Tolerância: Difuso (lesão máx. = 1)"); }
+    if (toleranceType === "nao-vivo") { const table = { "perf": 1, "pi": 1 / 3, "pi-": 0.2, "pi+": 0.5, "pi++": 1 }; if (table[damageAbrev] !== undefined) { woundingMod = table[damageAbrev]; effects.push(`⚙️ ${this._t("ToleranceUnlivingEffect")}`); } }
+    if (toleranceType === "homogeneo") { const table = { "perf": 0.5, "pi": 0.2, "pi-": 0.1, "pi+": 1 / 3, "pi++": 0.5 }; if (table[damageAbrev] !== undefined) { woundingMod = table[damageAbrev]; effects.push(`⚙️ ${this._t("ToleranceHomogeneousEffect")}`); } }
+    if (toleranceType === "difuso") { woundingMod = 1; effects.push(`⚙️ ${this._t("ToleranceDiffuseEffect")}`); }
     let finalInjury = Math.floor(penetratingDamage * woundingMod);
     if (toleranceType === "difuso") finalInjury = Math.min(1, finalInjury);
     if (damageReductionEnabled) {
         const preReductionInjury = finalInjury;
         finalInjury = Math.floor(finalInjury / damageReductionValue);
-        effects.push(`🛡️ Redução de Dano: ${preReductionInjury} ➜ ${finalInjury} (÷${damageReductionValue}, após RD + mod. ferimento)`);
+        effects.push(`🛡️ ${this._f("ReductionEffect", { before: preReductionInjury, after: finalInjury, divisor: damageReductionValue })}`);
     }
     if (effectsOnlyChecked) { finalInjury = 0; } // Zera a lesão se a opção estiver marcada
     if (effectsOnlyChecked || onlyKnockbackChecked) { finalInjury = 0; } // Zera a lesão se a opção estiver marcada
 
-    const selectedLocationLabel = form.querySelector('.location-row.active .label')?.textContent || '(Selecione)';
+    const selectedLocationLabel = form.querySelector('.location-row.active .label')?.textContent || this._t("SelectedLocation");
     const drLabel = ignoreDR
-        ? 'Ignorar RD'
+        ? this._t("IgnoreDRLabel")
         : largeAreaInjury
-            ? `Larga Escala: torso ${largeAreaDRData?.torsoDR ?? 0} + ${largeAreaDRData?.markedLabel ?? 'marcado'} ${largeAreaDRData?.markedDR ?? 0}`
+            ? this._f("LargeAreaDRLabel", { torso: largeAreaDRData?.torsoDR ?? 0, location: largeAreaDRData?.markedLabel ?? this._t("SelectedLocation"), marked: largeAreaDRData?.markedDR ?? 0 })
             : selectedLocationLabel;
     const drDisplay = ignoreDR
         ? '0'
@@ -846,16 +861,14 @@ async _updateDamageCalculation(form) {
     let modName = '';
         if (selectedModRadio) {
             // Pega o texto da linha inteira do radio button selecionado
-            const selectedRowText = selectedModRadio.closest('.wounding-row')?.textContent || '';
+            const selectedRow = selectedModRadio.closest('.wounding-row');
 
             if (selectedModRadio.value === 'custom') {
-                modName = 'outros mod.';
-            } else if (selectedRowText.includes('Sem Modificador')) {
-                // Agora checamos pelo texto, que é único para esta opção
-                modName = 'sem mod.';
+                modName = this._t("WoundingCustomShort");
+            } else if (selectedRow?.dataset.woundingKind === 'none') {
+                modName = this._t("WoundingNoneShort");
             } else {
-                // Para todos os outros, extrai a abreviação dos parênteses
-                modName = selectedRowText.match(/\(([^)]+)\)/)?.[1] || 'mod';
+                modName = selectedRow?.dataset.abrev || 'mod';
             }
         }
     const field = (sel) => form.querySelector(`[data-field="${sel}"]`);
@@ -878,44 +891,44 @@ async _updateDamageCalculation(form) {
     let notesHtml = "";
 
     if (effectsOnlyChecked) {
-        notesHtml += `<li class="feedback-note">Apenas efeitos serão aplicados.</li>`;
+        notesHtml += `<li class="feedback-note">${this._t("NoteEffectsOnly")}</li>`;
     }
 
     if (onlyKnockbackChecked) {
-        notesHtml += `<li class="feedback-note">Apenas Projeção: dano direto zerado, mas a distância usa o dano básico.</li>`;
+        notesHtml += `<li class="feedback-note">${this._t("NoteKnockbackOnly")}</li>`;
     }
 
     if (applyAsHeal) {
-    notesHtml += `<li class="feedback-note">O valor final será aplicada como restauração.</li>`;
+    notesHtml += `<li class="feedback-note">${this._t("NoteHealing")}</li>`;
     if (injuryLabel) {
-        injuryLabel.textContent = "Restauração";
+        injuryLabel.textContent = this._t("Restoration");
         injuryLabel.style.color = "#3b7d3b"; // ✅ Cor do label adicionada
     }
     if (injuryValue) injuryValue.style.color = "#3b7d3b"; // Verde
     } else {
     // Garante que volta ao normal se a caixa for desmarcada
     if (injuryLabel) {
-        injuryLabel.textContent = "Lesão";
+        injuryLabel.textContent = this._t("Injury");
         injuryLabel.style.color = "#c53434"; // ✅ Cor do label resetada
     }
     if (injuryValue) injuryValue.style.color = "#c53434"; // Vermelho
     }
 
-    if (halfDamageChecked) { notesHtml += `<li>1/2D: Dano base reduzido.</li>`; }
-    if (explosionChecked && explosionDistance > 0) { const divisor = Math.max(1, 3 * explosionDistance); notesHtml += `<li>Explosão: Dano dividido por ${divisor}.</li>`; }
-    if (largeAreaInjury) { notesHtml += `<li>Lesão em Larga Escala: usa a média arredondada para cima entre a RD do torso e a RD marcada em laranja.</li>`; }
-    if (ignoreDR) { notesHtml += `<li>Ignorar RD do Alvo: RD exibida e aplicada como 0.</li>`; }
-    if (toleranceType) { const toleranceName = { "nao-vivo": "Não Vivo", "homogeneo": "Homogêneo", "difuso": "Difuso"}[toleranceType]; notesHtml += `<li>Tolerância: ${toleranceName} aplicada.</li>`; }
-    if (damageReductionEnabled) { notesHtml += `<li>Redução de Dano aplicada por último: lesão ÷ ${damageReductionValue}.</li>`; }
+    if (halfDamageChecked) { notesHtml += `<li>${this._t("NoteHalfDamage")}</li>`; }
+    if (explosionChecked && explosionDistance > 0) { const divisor = Math.max(1, 3 * explosionDistance); notesHtml += `<li>${this._f("NoteExplosion", { divisor })}</li>`; }
+    if (largeAreaInjury) { notesHtml += `<li>${this._t("NoteLargeArea")}</li>`; }
+    if (ignoreDR) { notesHtml += `<li>${this._t("NoteIgnoreDR")}</li>`; }
+    if (toleranceType) { const toleranceName = this._t({ "nao-vivo": "Unliving", "homogeneo": "Homogeneous", "difuso": "Diffuse" }[toleranceType]); notesHtml += `<li>${this._f("NoteTolerance", { name: toleranceName })}</li>`; }
+    if (damageReductionEnabled) { notesHtml += `<li>${this._f("NoteReduction", { divisor: damageReductionValue })}</li>`; }
     const knockbackResult = this._updateKnockbackAdvisor(form, { basicDamage: damageRolled, damageTypeKey, penetratingDamage });
     if (knockbackResult?.distance > 0) {
-        notesHtml += `<li>Projeção: ${knockbackResult.distance} m; teste para não cair em ${knockbackResult.targetNumber} ou menos.</li>`;
+        notesHtml += `<li>${this._f("NoteKnockback", { distance: knockbackResult.distance, target: knockbackResult.targetNumber })}</li>`;
     }
     const heavyDefenseResult = this._updateHeavyWeaponDefenseAdvisor(form);
     if (heavyDefenseResult?.status === "warning") {
-        notesHtml += `<li>Aviso de peso da defesa: ${heavyDefenseResult.headline}</li>`;
+        notesHtml += `<li>${this._f("NoteDefenseWeight", { headline: heavyDefenseResult.headline })}</li>`;
     } else if (heavyDefenseResult?.status === "danger") {
-        notesHtml += `<li class="feedback-note">Atenção: ${heavyDefenseResult.headline}</li>`;
+        notesHtml += `<li class="feedback-note">${this._f("NoteAttention", { headline: heavyDefenseResult.headline })}</li>`;
     }
 
     if (notesContainer) { notesContainer.innerHTML = notesHtml ? `<ul>${notesHtml}</ul>` : ""; }
@@ -942,17 +955,17 @@ async _updateDamageCalculation(form) {
         const isChecked = effectState.checked && meetsRequirements;
         const resistanceData = effect.item?.system?.resistanceRoll;
         const requiresResistance = resistanceData?.isResisted;
-        const chanceText = effect.activationChance < 100 ? `Chance: ${effect.activationChance}%` : null;
+        const chanceText = effect.activationChance < 100 ? this._f("EffectChance", { chance: effect.activationChance }) : null;
         const reqTexts = [];
-        if (effect.minInjury) reqTexts.push(`Lesão mín. ${effect.minInjury}`);
-        if (requiredType) reqTexts.push(`Tipo: ${requiredType.toUpperCase()}`);
+        if (effect.minInjury) reqTexts.push(this._f("EffectMinInjury", { value: effect.minInjury }));
+        if (requiredType) reqTexts.push(this._f("EffectType", { type: requiredType.toUpperCase() }));
         const disabledAttr = meetsRequirements ? "" : "disabled";
-        const statusText = !meetsRequirements ? "Requisitos não atendidos" : requiresResistance ? "Requer teste de resistência" : "Aplicação direta";
+        const statusText = this._t(!meetsRequirements ? "EffectRequirementsMissing" : requiresResistance ? "EffectNeedsResistance" : "EffectDirect");
         const resistanceClass = requiresResistance ? "eff-type" : "eff-type muted";
         const resistanceStatus = effectState.resistanceResult
             ? effectState.resistanceResult.shouldApply
-                ? "(Aplicável)"
-                : "(Bloqueado)"
+                ? `(${this._t("EffectApplicable")})`
+                : `(${this._t("EffectBlocked")})`
             : statusText;
 
         if (isChecked && requiresResistance && !effectState.resistanceResult) {
@@ -967,38 +980,38 @@ async _updateDamageCalculation(form) {
         });
 
         const resistanceRollText = requiresResistance && resistanceData?.attribute
-            ? `(Teste de ${resistanceData.attribute.toUpperCase()})`
-            : "(Automático)";
+            ? `(${this._f("EffectTest", { attribute: resistanceData.attribute.toUpperCase() })})`
+            : `(${this._t("EffectAutomatic")})`;
 
         const resistanceResultText = effectState.resistanceResult?.resultText
             ? `<div class="eff-status">${effectState.resistanceResult.resultText}</div>`
             : "";
         const canPublishResistanceResult = requiresResistance && !!effectState.resistanceResult?.resultText;
         const publishedClass = effectState.resistanceResult?.publishedToChat ? "published" : "";
-        const publishTitle = effectState.resistanceResult?.publishedToChat ? "Resultado já publicado no chat" : "Publicar resultado do teste no chat";
+        const publishTitle = this._t(effectState.resistanceResult?.publishedToChat ? "EffectPublished" : "EffectPublish");
 
         potentialEffectsHTML += `
             <div class="effect-card ${meetsRequirements ? '' : 'disabled'}" data-effect-id="${effect.id}">
                 <label class="custom-checkbox">
                     <input type="checkbox" class="contingent-effect-toggle" ${isChecked ? 'checked' : ''} ${disabledAttr}>
-                    <span>${effect.item?.name || "Efeito desconhecido"}</span>
+                    <span>${effect.item?.name || this._t("EffectUnknown")}</span>
                 </label>
                 <div class="${resistanceClass}">
                     ${resistanceRollText} ${chanceText ? `• ${chanceText}` : ''}
                 </div>
                 ${reqTexts.length ? `<div class="eff-meta">${reqTexts.join(" • ")}</div>` : ''}
                 | ${resistanceResultText} <div class="eff-meta">${resistanceStatus}</div>
-                ${requiresResistance ? `<a class="npc-resistance-roll" data-effect-id="${effect.id}" title="Rolar para o alvo"><i class="fas fa-dice-d20"></i></a>` : ''} 
+                ${requiresResistance ? `<a class="npc-resistance-roll" data-effect-id="${effect.id}" title="${this._t("EffectRollTarget")}"><i class="fas fa-dice-d20"></i></a>` : ''}
                 ${canPublishResistanceResult ? `<a class="publish-resistance-result ${publishedClass}" data-effect-id="${effect.id}" title="${publishTitle}"><i class="fas fa-bullhorn"></i></a>` : ''}
             </div>
         `;
     }
 
-    effectsSummaryEl.innerHTML = hasPotentialEffects ? potentialEffectsHTML : `<div class="placeholder">Nenhum efeito adicional</div>`;
+    effectsSummaryEl.innerHTML = hasPotentialEffects ? potentialEffectsHTML : `<div class="placeholder">${this._t("NoAdditionalEffects")}</div>`;
     const proposeButton = actionButtonsEl.querySelector('button[data-action="proposeTests"]');
     if (proposeButton) {
         proposeButton.disabled = false;
-        proposeButton.textContent = "Propor Testes";
+        proposeButton.textContent = this._t("ProposeTests");
         if (needsResistanceRoll) { proposeButton.style.display = 'inline-block'; } else { proposeButton.style.display = 'none'; }
     }
 }
@@ -1010,7 +1023,7 @@ async _updateDamageCalculation(form) {
         });
 
         if (effectsNeedingRoll.length === 0) {
-            return ui.notifications.info("Nenhum efeito com resistência selecionado.");
+            return ui.notifications.info(this._t("NoResistanceSelected"));
         }
 
         ui.notifications.info("Enviando propostas de teste para o chat...");
@@ -1043,11 +1056,13 @@ async _onNpcResistanceRoll(effectId) {
     };
     const outcome = await executeRollRequest(request, targetKey, { prompt: false, onResult: async result => {
         const barrier = evaluateBarrierConsequence(result, normalized.consequence);
-        const simpleResultText = `${result.total} vs ${result.effectiveTarget} — ${result.resultLabel}`;
-        const chatResultText = `<div class="gurps-roll-card premium roll-result"><header class="card-header"><h3>Teste de Resistência</h3><small>${target?.name || "Alvo"}</small></header><div class="card-content"><p>${simpleResultText}</p><p>Margem ${result.margin}</p></div></div>`;
+        const outcomeKey = `GUM.RollCard.Outcome.${result.outcome}`;
+        const outcomeLabel = game.i18n.localize(outcomeKey);
+        const simpleResultText = `${result.total} vs ${result.effectiveTarget} — ${outcomeLabel !== outcomeKey ? outcomeLabel : result.resultLabel}`;
+        const chatResultText = `<div class="gurps-roll-card premium roll-result"><header class="card-header"><h3>${game.i18n.localize("GUM.RollCard.ResistanceTest")}</h3><small>${target?.name || game.i18n.localize("GUM.RollCard.Target")}</small></header><div class="card-content"><p>${simpleResultText}</p><p>${game.i18n.format("GUM.RollRequest.Margin", { value: result.margin })}</p></div></div>`;
         await this.updateEffectCard(effectId, { isSuccess: barrier.success, shouldApply: barrier.shouldApply, branchId: barrier.branchId, branchLabel: barrier.branchLabel, actionIds: barrier.actionIds, resultText: simpleResultText, chatResultText, result }, effect.item.system, { autoApply: false });
     }});
-    if (!outcome.accepted) ui.notifications.warn(outcome.reason || "Não foi possível realizar a resistência.");
+    if (!outcome.accepted) ui.notifications.warn(outcome.reason || this._t("ResistanceUnavailable"));
 }
     
     _publishResistanceResult(effectId) {
@@ -1087,7 +1102,7 @@ async _onNpcResistanceRoll(effectId) {
         const rollContext = ["check_dx", "skill_dx", "check_iq", "skill_iq", "attack_melee", "attack_ranged"].join(",");
 
         const effectPayload = {
-            name: `Choque (-${nextShockValue})`,
+            name: this._f("ShockApplied", { value: nextShockValue }),
             img: pendingShock?.img || "icons/svg/daze.svg",
             changes: [],
             statuses: [],
@@ -1126,21 +1141,21 @@ async _onNpcResistanceRoll(effectId) {
         return nextShockValue;
     }
 
-     _buildAttackSummaryContent({ finalInjury, poolLabel, applyAsHeal, effectsOnlyChecked, appliedEffectNames = [], contingentApplied = [], pendingEffectNames = [], preventedEffectNames = [] }) {
+     _buildAttackSummaryContent({ finalInjury, poolLabel, applyAsHeal, effectsOnlyChecked, damageKey = "main", penetrated = false, appliedEffectNames = [], contingentApplied = [], pendingEffectNames = [], preventedEffectNames = [] }) {
         let resultLine = '';
 
         if (applyAsHeal && finalInjury > 0) {
-            resultLine = `<p>${this.targetActor.name} Recuperou <strong>${finalInjury} em ${poolLabel}</strong>.</p>`;
+            resultLine = `<p>${this._f("SummaryHealed", { target: this.targetActor.name, value: finalInjury, pool: poolLabel })}</p>`;
         } else if (finalInjury > 0 && !effectsOnlyChecked) {
-            resultLine = `<p>${this.targetActor.name} Sofreu <strong>${finalInjury} de lesão</strong> em ${poolLabel}.</p>`;
+            resultLine = `<p>${this._f("SummaryInjured", { target: this.targetActor.name, value: finalInjury, pool: poolLabel })}</p>`;
         } else if (!applyAsHeal && finalInjury <= 0 && !effectsOnlyChecked) {
-            resultLine = `<p>O ataque não ultrapassou a resistência a dano do alvo.</p>`;
+            resultLine = `<p>${this._t(penetrated ? "SummaryNoInjury" : "SummaryStopped")}</p>`;
         }
 
         return `
             <div class="gurps-roll-card premium attack-summary-card">
                 <header class="card-header">
-                    <h3>Resumo do Ataque</h3>
+                    <h3>${this._t("SummaryTitle")} · ${this._t(`SummaryComponent.${damageKey}`)}</h3>
                 </header>
                 <div class="card-content">
                     <div class="summary-actors vertical">
@@ -1156,23 +1171,23 @@ async _onNpcResistanceRoll(effectId) {
                     </div>
                     ${resultLine ? `
                     <div class="summary-block result-card">
-                        <div class="minicard-title">Resultado</div>
+                        <div class="minicard-title">${this._t("SummaryResult")}</div>
                         ${resultLine}
                     </div>` : ''}
                     ${appliedEffectNames.length > 0 || contingentApplied.length > 0 ? `
                     <div class="summary-block effects-card">
-                        <div class="minicard-title">Efeitos Aplicados</div>
+                        <div class="minicard-title">${this._t("SummaryAppliedEffects")}</div>
                         ${[...appliedEffectNames, ...contingentApplied].map(name => `<p><strong>${name}</strong></p>`).join('')}
                     </div>` : ''}
                     ${pendingEffectNames.length > 0 ? `
                     <div class="summary-block pending-card">
-                        <div class="minicard-title">Efeitos Pendentes</div>
-                        <p>Aguardando teste de resistência:</p>
+                        <div class="minicard-title">${this._t("SummaryPendingEffects")}</div>
+                        <p>${this._t("SummaryAwaitResistance")}</p>
                         ${pendingEffectNames.map(name => `<p><strong>${name}</strong></p>`).join('')}
                     </div>` : ''}
                     ${preventedEffectNames.length > 0 ? `
                     <div class="summary-block prevented-card">
-                        <div class="minicard-title">Efeitos Impedidos</div>
+                        <div class="minicard-title">${this._t("SummaryPreventedEffects")}</div>
                         ${preventedEffectNames.map(name => `<p><strong>${name}</strong></p>`).join('')}
                     </div>` : ''}
                 </div>
@@ -1182,20 +1197,23 @@ async _onNpcResistanceRoll(effectId) {
     async _onApplyDamage(form, shouldClose, shouldPublish) {
         const effectsOnlyChecked = form.querySelector('[name="special_apply_effects_only"]')?.checked;
         if (this.isApplying) return;
+        const activeDamageKey = form.querySelector('.damage-card.active')?.dataset.damageKey || 'main';
+        await this._updateDamageCalculation(form);
         this.isApplying = true;
         try {
             const finalInjury = this.finalInjury || 0;
+            const primaryPenetrated = this.currentPenetratingDamage > 0;
             const applyAsHeal = form.querySelector('[name="special_apply_as_heal"]')?.checked;
             const ignoreShockSources = getActiveEffectFlagSources(this.targetActor, "ignoreShock");
             const targetIgnoresShock = ignoreShockSources.length > 0;
             const applyShock = !targetIgnoresShock && (form.querySelector('[name="special_apply_shock"]')?.checked ?? true);
             const selectedPoolPath = form.querySelector('[name="damage_target_pool"]').value;
-            if (!selectedPoolPath) { this.isApplying = false; return ui.notifications.error("Nenhum alvo para o dano foi selecionado."); }
+            if (!selectedPoolPath) { this.isApplying = false; return ui.notifications.error(this._t("NoTargetPool")); }
             const linkedEquipment = selectedPoolPath.startsWith("equipment:")
                 ? this.targetActor.items.get(selectedPoolPath.slice("equipment:".length))
                 : null;
             const linkedReserve = linkedEquipment ? equipmentLinkedReserve(linkedEquipment, linkedEquipment.system?.equipmentResolution) : null;
-            if (selectedPoolPath.startsWith("equipment:") && !linkedReserve) { this.isApplying = false; return ui.notifications.error("A reserva do equipamento não está mais disponível."); }
+            if (selectedPoolPath.startsWith("equipment:") && !linkedReserve) { this.isApplying = false; return ui.notifications.error(this._t("MissingEquipmentReserve")); }
             const currentPoolValue = linkedReserve?.current ?? foundry.utils.getProperty(this.targetActor, selectedPoolPath);
             const updatePool = (value, options = {}) => linkedReserve
                 ? linkedEquipment.update(equipmentReserveBalanceUpdate(linkedEquipment, value, linkedEquipment.system?.equipmentResolution), options)
@@ -1203,7 +1221,7 @@ async _onNpcResistanceRoll(effectId) {
             const poolLabel = form.querySelector('[name="damage_target_pool"] option:checked').textContent;            
             const natureRaw = form.querySelector('[name="damage_nature"]')?.value || "";
             const damageNature = natureRaw ? resolveDamageNature(natureRaw) : null;
-            if (natureRaw && !damageNature) { this.isApplying = false; return ui.notifications.error("Natureza do dano inválida."); }
+            if (natureRaw && !damageNature) { this.isApplying = false; return ui.notifications.error(this._t("InvalidNature")); }
             let summaryMessage = null;
             let eventData = null;
             
@@ -1212,7 +1230,7 @@ async _onNpcResistanceRoll(effectId) {
             if (shouldPublish) {
                 const summaryChatData = applyCurrentRollPrivacy({
                     speaker: ChatMessage.getSpeaker({ actor: this.attackerActor }),
-                    content: this._buildAttackSummaryContent({ finalInjury, poolLabel, applyAsHeal, effectsOnlyChecked })
+                    content: this._buildAttackSummaryContent({ finalInjury, poolLabel, applyAsHeal, effectsOnlyChecked, damageKey: activeDamageKey, penetrated: primaryPenetrated })
                 });
                 summaryMessage = await ChatMessage.create(summaryChatData);
             }
@@ -1248,7 +1266,7 @@ async _onNpcResistanceRoll(effectId) {
             const preventedEffectNames = [];
             if (targetIgnoresShock && game.combat && !applyAsHeal && finalInjury > 0 && !effectsOnlyChecked) {
                 const sourceNames = ignoreShockSources.map(effect => effect.name).filter(Boolean).join(", ");
-                preventedEffectNames.push(sourceNames ? `Choque ignorado: ${sourceNames}` : "Choque ignorado por efeito ativo");
+                preventedEffectNames.push(sourceNames ? this._f("ShockIgnoredFrom", { sources: sourceNames }) : this._t("ShockIgnored"));
             }
             let shockAppliedValue = 0;
             const pendingResistanceQueue = [];
@@ -1291,7 +1309,7 @@ async _onNpcResistanceRoll(effectId) {
                 if (applyShock && !applyAsHeal && finalInjury > 0 && !effectsOnlyChecked) {
                 shockAppliedValue = await this._applyShockEffect(finalInjury);
                 if (shockAppliedValue > 0) {
-                    appliedEffectNames.push(`Choque (-${shockAppliedValue})`);
+                    appliedEffectNames.push(this._f("ShockApplied", { value: shockAppliedValue }));
                 }
             }
 
@@ -1312,7 +1330,7 @@ async _onNpcResistanceRoll(effectId) {
             }
 
             if (pendingResistance) {
-                ui.notifications.info("Efeitos com resistência precisam de teste antes de serem aplicados. As solicitações foram enviadas para o chat.");
+                ui.notifications.info(this._t("PendingResistance"));
             }
 
             if (summaryMessage) {
@@ -1322,6 +1340,8 @@ async _onNpcResistanceRoll(effectId) {
                         poolLabel,
                         applyAsHeal,
                         effectsOnlyChecked,
+                        damageKey: activeDamageKey,
+                        penetrated: primaryPenetrated,
                         appliedEffectNames,
                         contingentApplied,
                         pendingEffectNames,
@@ -1334,7 +1354,7 @@ async _onNpcResistanceRoll(effectId) {
                 await this._promptResistanceRoll(effect);
             }
 
-            if (shouldClose) { this.close(); }
+            if (shouldClose) this.close();
         } finally {
             this.isApplying = false;
         }
@@ -1382,7 +1402,7 @@ async _onNpcResistanceRoll(effectId) {
         if (card) {
             const statusEl = card.querySelector('.eff-status');
             if (statusEl) {
-                statusEl.textContent = rollResult.resultText || (shouldApply ? "Aplicável" : "Bloqueado");
+                statusEl.textContent = rollResult.resultText || this._t(shouldApply ? "EffectApplicable" : "EffectBlocked");
             }
         }
 
@@ -1403,7 +1423,7 @@ async _onNpcResistanceRoll(effectId) {
         if (effectTargets.length === 0) return;
                 await applySingleEffect(effect.item, effectTargets, { actor: this.attackerActor, origin: effect.item, actionIds: state.resistanceResult?.actionIds ?? null });
         state.applied = true;
-        ui.notifications.info(`Efeito aplicado: ${effect.item.name}`);
+        ui.notifications.info(this._f("EffectApplied", { name: effect.item.name }));
     }
 
     async _promptResistanceRoll(effect) {
@@ -1445,8 +1465,8 @@ async _onNpcResistanceRoll(effectId) {
 
         const content = renderPendingResistanceRequest({
             request, effectName: effect.item.name, effectImg: effect.item.img,
-            originLabel: this.attackerActor?.name || "Aplicação de dano",
-            targetName: target?.name || "Alvo", targetImg: resolveCharacterImage(target, { token: targetToken }),
+            originLabel: this.attackerActor?.name || this._t("ApplyDamage"),
+            targetName: target?.name || this._t("Target"), targetImg: resolveCharacterImage(target, { token: targetToken }),
             testLabel: (rollData.attribute || "HT").toUpperCase(), modifierLabel: modifierValue !== "0" ? game.i18n.format("GUM.RollRequest.BarrierModifier", { modifier: modifierValue }) : "",
             applyOnLabel: applyOnText, marginLabel: marginValue, purposeLabels: getPurposeLabels(normalized.test.requestedPurposeIds),
             description: resistanceChatText, buttonPayload: chatPayload
@@ -1459,7 +1479,11 @@ async _onNpcResistanceRoll(effectId) {
     
     _getAdjustedWoundingModifiers(locationKey) {
         // ... (Seu método _getAdjustedWoundingModifiers, sem alterações)
-        const baseMods = [ { group: 1, type: "Corte", abrev: "cort", mult: 1.5 }, { group: 1, type: "Perfuração", abrev: "perf", mult: 2 }, { group: 1, type: "Contusão", abrev: "cont", mult: 1 }, { group: 2, type: "Queimadura", abrev: "qmd", mult: 1 }, { group: 2, type: "Corrosão", abrev: "cor", mult: 1 }, { group: 2, type: "Toxina", abrev: "tox", mult: 1 }, { group: 3, type: "Perfurante", abrev: "pi", mult: 1 }, { group: 3, type: "Pouco Perfurante", abrev: "pi-", mult: 0.5 }, { group: 3, type: "Muito Perfurante", abrev: "pi+", mult: 1.5 }, { group: 3, type: "Ext. Perfurante", abrev: "pi++", mult: 2 }, ];
+        const baseMods = [
+            [1, "cort", 1.5], [1, "perf", 2], [1, "cont", 1],
+            [2, "qmd", 1], [2, "cor", 1], [2, "tox", 1],
+            [3, "pi", 1], [3, "pi-", 0.5], [3, "pi+", 1.5], [3, "pi++", 2]
+        ].map(([group, abrev, mult]) => ({ group, type: this._t(`Wounding.${abrev}`), abrev, mult }));
         if (["head", "eyes"].includes(locationKey)) { return baseMods.map(mod => ({ ...mod, mult: mod.abrev === "tox" ? 1 : 4 })); }
         if (locationKey === "face") { return baseMods.map(mod => ({ ...mod, mult: mod.abrev === "cor" ? 1.5 : mod.mult })); }
         if (["arm", "leg", "hand", "foot"].includes(locationKey)) { return baseMods.map(mod => { if (["perf", "pi+", "pi++"].includes(mod.abrev)) return { ...mod, mult: 1 }; return mod; }); }

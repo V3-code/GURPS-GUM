@@ -1614,7 +1614,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     const modText = totalModifier !== 0 ? `${totalModifier > 0 ? '+' : ''}${totalModifier}` : '±0';
 
     const modBreakdown = `M ${promptMod >= 0 ? '+' : ''}${promptMod} | G ${globalModValue >= 0 ? '+' : ''}${globalModValue}${activeDefenseBonus ? ` | BD ${activeDefenseBonus >= 0 ? '+' : ''}${activeDefenseBonus}` : ""}`;
-    const targetPill = isCapped ? `Alvo ${effectiveLevel} (Cap ${lowestCap})` : `Alvo ${effectiveLevel}`;
+    const displayResultLabel = game.i18n.localize(`GUM.RollCard.Outcome.${outcome}`);
 
     const damageActionData = _buildDamageActionData(actor, sourceItem, rollData);
     const damageActionAttr = damageActionData
@@ -1624,7 +1624,7 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
     const purposeLabels = getPurposeLabels(rollData.purposeIds);
     const purposeHtml = purposeLabels.length ? `
         <details class="roll-purposes">
-            <summary>Finalidades</summary>
+            <summary>${game.i18n.localize("GUM.RollCard.Purposes")}</summary>
             <div class="roll-purpose-list">
                 ${purposeLabels.map(label => `<span>${foundry.utils.escapeHTML(label)}</span>`).join("")}
             </div>
@@ -1666,14 +1666,14 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
             </header>
 
             <div class="card-formula-container">
-                <span class="formula-pill">NH ${baseValue}</span>
+                <span class="formula-pill">${game.i18n.localize("GUM.RollCard.SkillLevel")} ${baseValue}</span>
                 <span class="formula-pill">${modText} (${modBreakdown})</span>
             </div>
 
             <div class="card-content">
                 <div class="card-main-flex">
                     <div class="roll-column">
-                        <span class="column-label">Dados</span>
+                        <span class="column-label">${game.i18n.localize("GUM.RollCard.Dice")}</span>
                         <div class="roll-total">${total}</div>
                         <div class="individual-dice">${diceFaces}</div>
                     </div>
@@ -1681,24 +1681,24 @@ export async function performGURPSRoll(actor, rollData, extraOptions = {}) {
                     <div class="column-separator"></div>
 
                     <div class="target-column">
-                        <span class="column-label">Alvo</span>
+                        <span class="column-label">${game.i18n.localize("GUM.RollCard.Target")}</span>
                         <div class="target-value">${effectiveLevel}</div>
-                        <div class="target-note">${isCapped ? `Cap ${lowestCap}` : 'Final'}</div>
+                        <div class="target-note">${isCapped ? `${game.i18n.localize("GUM.RollCard.Cap")} ${lowestCap}` : game.i18n.localize("GUM.RollCard.Final")}</div>
                     </div>
                 </div>
             </div>
 
             <footer class="card-footer">
                 <div class="result-block ${statusClass}">
-                    <span class="result-label">${resultLabel}</span>
-                    <span class="result-margin">Margem ${margin}</span>
+                    <span class="result-label">${displayResultLabel}</span>
+                    <span class="result-margin">${game.i18n.format("GUM.RollRequest.Margin", { value: margin })}</span>
                 </div>
                 ${defenseBonusNoticeHtml}
                 ${rapidFireNoticeHtml}
                 ${damageActionData ? `
                     <div class="roll-chat-actions">
                         <button type="button" class="chat-roll-damage-button" data-damage-action="${damageActionAttr}">
-                            <i class="fas fa-burst"></i> Rolar Dano
+                            <i class="fas fa-burst"></i> ${game.i18n.localize("GUM.RollCard.RollDamage")}
                         </button>
                     </div>
                 ` : ""}
@@ -2060,12 +2060,12 @@ async function _rollDamageFromChatAction(payload) {
         <div class="card-content">
           <div class="card-main-flex">
             <div class="roll-column">
-              <span class="column-label">Dados</span>
+              <span class="column-label">${game.i18n.localize("GUM.RollCard.Dice")}</span>
               <div class="individual-dice-damage">${mainDiceHtml || `<span class="die-damage">–</span>`}</div>
             </div>
             <div class="column-separator"></div>
             <div class="target-column">
-              <span class="column-label">Dano Total</span>
+              <span class="column-label">${game.i18n.localize("GUM.RollCard.TotalDamage")}</span>
               <div class="damage-total">
                 <span class="damage-value">${mainRoll.total}</span>
                 <span class="damage-type">${normalizedAttack.type || ""}</span>
@@ -2077,7 +2077,7 @@ async function _rollDamageFromChatAction(payload) {
           <footer class="card-footer">
             ${followUpRoll ? `
               <div class="extra-damage-block">
-                <div class="extra-damage-label">Acompanhamento</div>
+                <div class="extra-damage-label">${game.i18n.localize("GUM.Spells.FollowUpDamage")}</div>
                 <div class="extra-damage-roll">
                   <div class="extra-total">
                     <span class="damage-value">${followUpRoll.total}</span>
@@ -2088,7 +2088,7 @@ async function _rollDamageFromChatAction(payload) {
             ` : ""}
             ${fragRoll ? `
               <div class="extra-damage-block">
-                <div class="extra-damage-label">Fragmentação</div>
+                <div class="extra-damage-label">${game.i18n.localize("GUM.Spells.FragmentationDamage")}</div>
                 <div class="extra-damage-roll">
                   <div class="extra-total">
                     <span class="damage-value">${fragRoll.total}</span>
@@ -2101,7 +2101,7 @@ async function _rollDamageFromChatAction(payload) {
         ` : ""}
         <footer class="card-actions">
           <button class="apply-damage-button" data-damage='${JSON.stringify(damagePackage)}'>
-            <i class="fas fa-crosshairs"></i> Aplicar ao Alvo
+            <i class="fas fa-crosshairs"></i> ${game.i18n.localize("GUM.RollCard.ApplyToTarget")}
           </button>
         </footer>
       </div>
@@ -2155,8 +2155,8 @@ async function _rollGumManualDamage(actor, formula, damageType) {
     const escapedType = foundry.utils.escapeHTML(damageType);
     const damagePackage = {
         attackerId: actor?.id ?? null,
-        attackerName: actor?.name || "Mestre",
-        sourceName: "Dano via comando",
+        attackerName: actor?.name || game.i18n.localize("GUM.RollCard.GM"),
+        sourceName: game.i18n.localize("GUM.RollCard.CommandDamage"),
         main: { total: roll.total, type: damageType, armorDivisor: 1 },
         onDamageEffects: {},
         generalConditions: {}
@@ -2164,18 +2164,18 @@ async function _rollGumManualDamage(actor, formula, damageType) {
     const encodedDamage = foundry.utils.escapeHTML(JSON.stringify(damagePackage));
     const content = `
       <div class="gurps-damage-card">
-        <header class="card-header"><h3>Dano via comando</h3></header>
+        <header class="card-header"><h3>${game.i18n.localize("GUM.RollCard.CommandDamage")}</h3></header>
         <div class="card-formula-container"><span class="formula-pill">${escapedFormula} ${escapedType}</span></div>
         <div class="card-content"><div class="card-main-flex">
-          <div class="roll-column"><span class="column-label">Dados</span><div class="individual-dice-damage">${diceHtml}</div></div>
+          <div class="roll-column"><span class="column-label">${game.i18n.localize("GUM.RollCard.Dice")}</span><div class="individual-dice-damage">${diceHtml}</div></div>
           <div class="column-separator"></div>
-          <div class="target-column"><span class="column-label">Dano Total</span><div class="damage-total"><span class="damage-value">${roll.total}</span><span class="damage-type">${escapedType}</span></div></div>
+          <div class="target-column"><span class="column-label">${game.i18n.localize("GUM.RollCard.TotalDamage")}</span><div class="damage-total"><span class="damage-value">${roll.total}</span><span class="damage-type">${escapedType}</span></div></div>
         </div></div>
-        <footer class="card-actions"><button type="button" class="apply-damage-button" data-damage='${encodedDamage}'><i class="fas fa-crosshairs"></i> Aplicar ao Alvo</button></footer>
+        <footer class="card-actions"><button type="button" class="apply-damage-button" data-damage='${encodedDamage}'><i class="fas fa-crosshairs"></i> ${game.i18n.localize("GUM.RollCard.ApplyToTarget")}</button></footer>
       </div>`;
     const chatData = applyCurrentRollPrivacy({
         user: game.user.id,
-        speaker: actor?.id ? ChatMessage.getSpeaker({ actor }) : { alias: "Mestre" },
+        speaker: actor?.id ? ChatMessage.getSpeaker({ actor }) : { alias: game.i18n.localize("GUM.RollCard.GM") },
         content,
         rolls: [roll]
     });
@@ -3703,7 +3703,7 @@ async function processResistanceSocketResult(payload) {
             return;
         }
         const effect = application.availableOnDamageEffects.find(entry => entry.id === context.effectLinkId);
-        await application.updateEffectCard(context.effectLinkId, { isSuccess: barrier.success, shouldApply: barrier.shouldApply, branchId: barrier.branchId, branchLabel: barrier.branchLabel, branchIds: barrier.branchIds, branchLabels: barrier.branchLabels, actionIds: barrier.actionIds, resultText: `${payload.result.total} vs ${payload.result.effectiveTarget} — ${payload.result.resultLabel}`, rollRequestId: request.id, result: payload.result }, effect.item.system, { autoApply: false });
+        await application.updateEffectCard(context.effectLinkId, { isSuccess: barrier.success, shouldApply: barrier.shouldApply, branchId: barrier.branchId, branchLabel: barrier.branchLabel, branchIds: barrier.branchIds, branchLabels: barrier.branchLabels, actionIds: barrier.actionIds, resultText: `${payload.result.total} vs ${payload.result.effectiveTarget} — ${game.i18n.localize(`GUM.RollCard.Outcome.${payload.result.outcome}`)}`, rollRequestId: request.id, result: payload.result }, effect.item.system, { autoApply: false });
         consequenceLabel = game.i18n.localize(barrier.shouldApply ? "GUM.RollRequest.AwaitingDamageApplication" : "GUM.RollRequest.EffectBlocked");
     } else if (barrier.shouldApply && !wasEffectApplied) {
         const effectItem = request.origin?.effectUuid ? await fromUuid(request.origin.effectUuid).catch(() => null) : null;

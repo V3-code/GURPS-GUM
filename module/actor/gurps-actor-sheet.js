@@ -3720,14 +3720,14 @@ html.on("click", ".rollable-damage", async (ev) => {
         <div class="card-content">
           <div class="card-main-flex">
             <div class="roll-column">
-              <span class="column-label">Dados</span>
+              <span class="column-label">${game.i18n.localize("GUM.RollCard.Dice")}</span>
               <div class="individual-dice-damage">${mainDiceHtml || `<span class="die-damage">–</span>`}</div>
             </div>
 
             <div class="column-separator"></div>
 
             <div class="target-column">
-              <span class="column-label">Dano Total</span>
+              <span class="column-label">${game.i18n.localize("GUM.RollCard.TotalDamage")}</span>
               <div class="damage-total">
                 <span class="damage-value">${mainRoll.total}</span>
                 <span class="damage-type">${normalizedAttack.type || ""}</span>
@@ -3740,7 +3740,7 @@ html.on("click", ".rollable-damage", async (ev) => {
           <footer class="card-footer">
             ${followUpRoll ? `
               <div class="extra-damage-block">
-                <div class="extra-damage-label">Acompanhamento</div>
+                <div class="extra-damage-label">${game.i18n.localize("GUM.Spells.FollowUpDamage")}</div>
                 <div class="extra-damage-roll">
                   <div class="extra-total">
                     <span class="damage-value">${followUpRoll.total}</span>
@@ -3752,7 +3752,7 @@ html.on("click", ".rollable-damage", async (ev) => {
 
             ${fragRoll ? `
               <div class="extra-damage-block">
-                <div class="extra-damage-label">Fragmentação</div>
+                <div class="extra-damage-label">${game.i18n.localize("GUM.Spells.FragmentationDamage")}</div>
                 <div class="extra-damage-roll">
                   <div class="extra-total">
                     <span class="damage-value">${fragRoll.total}</span>
@@ -3766,7 +3766,7 @@ html.on("click", ".rollable-damage", async (ev) => {
 
         <footer class="card-actions">
           <button class="apply-damage-button" data-damage='${JSON.stringify(damagePackage)}'>
-            <i class="fas fa-crosshairs"></i> Aplicar ao Alvo
+            <i class="fas fa-crosshairs"></i> ${game.i18n.localize("GUM.RollCard.ApplyToTarget")}
           </button>
         </footer>
       </div>
@@ -3822,7 +3822,7 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
   const label =
     element.dataset.label ||
     element.getAttribute("data-label") ||
-    "Dano Básico";
+    game.i18n.localize("GUM.RollCard.BasicDamage");
   const basicDamageType = "indef.";
 
   const resolveBaseDamage = (f) => resolveAttackDamageDisplay(f, actor.system.attributes);
@@ -3854,30 +3854,70 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
   if (!promptResult) return;
 
   const finalFormula = maybeNormalizeDamageFormula(`${cleaned}${promptResult.mainAdditional || ""}`);
+  const followUpFormula = promptResult.followUpAdditional
+    ? maybeNormalizeDamageFormula(String(promptResult.followUpAdditional).replace(/^\+/, ""))
+    : "";
+  const fragmentationFormula = promptResult.fragmentationAdditional
+    ? maybeNormalizeDamageFormula(String(promptResult.fragmentationAdditional).replace(/^\+/, ""))
+    : "";
 
   const performBasicRoll = async () => {
 
     const roll = new Roll(finalFormula);
     await roll.evaluate();
 
-      const damagePackage = {
+    let followUpRoll = null;
+    if (followUpFormula) {
+      followUpRoll = new Roll(followUpFormula);
+      await followUpRoll.evaluate();
+    }
+
+    let fragmentationRoll = null;
+    if (fragmentationFormula) {
+      fragmentationRoll = new Roll(fragmentationFormula);
+      await fragmentationRoll.evaluate();
+    }
+
+    const damagePackage = {
       attackerId: actor.id,
       attackerTokenId: actor.token?.id || null,
       attackerTokenImg: resolveCharacterImage(actor),
       sourceName: label,
-      main: { total: roll.total, type: basicDamageType, armorDivisor: 1 },
+      main: {
+        total: roll.total,
+        type: basicDamageType,
+        nature: promptResult.mainNature || null,
+        armorDivisor: promptResult.mainArmorDivisor || 1
+      },
       onDamageEffects: {},
       generalConditions: {}
     };
 
- const mainDiceHtml = roll.dice.flatMap((d) => d.results).map((r) => `<span class="die-damage">${r.result}</span>`).join("");
-    const formulaPill = `${finalFormula}`.trim();
+    if (followUpRoll) {
+      damagePackage.followUp = {
+        total: followUpRoll.total,
+        type: promptResult.followUpType || "",
+        nature: promptResult.followUpNature || null,
+        armorDivisor: promptResult.followUpArmorDivisor || 1
+      };
+    }
+    if (fragmentationRoll) {
+      damagePackage.fragmentation = {
+        total: fragmentationRoll.total,
+        type: promptResult.fragmentationType || "",
+        nature: promptResult.fragmentationNature || null,
+        armorDivisor: promptResult.fragmentationArmorDivisor || 1
+      };
+    }
+
+    const mainDiceHtml = roll.dice.flatMap((d) => d.results).map((r) => `<span class="die-damage">${r.result}</span>`).join("");
+    const formulaPill = [finalFormula, followUpFormula, fragmentationFormula].filter(Boolean).join(" • ");
 
     const content = `
       <div class="gurps-damage-card">
         <header class="card-header">
           <h3>${label}</h3>
-          <div class="card-subtitle">Dano Básico</div>
+          <div class="card-subtitle">${game.i18n.localize("GUM.RollCard.BasicDamage")}</div>
         </header>
 
         <div class="card-formula-container">
@@ -3887,14 +3927,14 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
         <div class="card-content">
           <div class="card-main-flex">
             <div class="roll-column">
-              <span class="column-label">Dados</span>
+              <span class="column-label">${game.i18n.localize("GUM.RollCard.Dice")}</span>
               <div class="individual-dice-damage">${mainDiceHtml || `<span class="die-damage">–</span>`}</div>
             </div>
 
             <div class="column-separator"></div>
 
             <div class="target-column">
-              <span class="column-label">Dano Total</span>
+              <span class="column-label">${game.i18n.localize("GUM.RollCard.TotalDamage")}</span>
               <div class="damage-total">
                 <span class="damage-value">${roll.total}</span>
               </div>
@@ -3902,9 +3942,26 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
           </div>
         </div>
 
+        ${(followUpRoll || fragmentationRoll) ? `
+          <footer class="card-footer">
+            ${followUpRoll ? `
+              <div class="extra-damage-block">
+                <div class="extra-damage-label">${game.i18n.localize("GUM.Spells.FollowUpDamage")}</div>
+                <div class="extra-damage-roll"><div class="extra-total"><span class="damage-value">${followUpRoll.total}</span><span class="damage-type">${promptResult.followUpType || ""}</span></div></div>
+              </div>
+            ` : ""}
+            ${fragmentationRoll ? `
+              <div class="extra-damage-block">
+                <div class="extra-damage-label">${game.i18n.localize("GUM.Spells.FragmentationDamage")}</div>
+                <div class="extra-damage-roll"><div class="extra-total"><span class="damage-value">${fragmentationRoll.total}</span><span class="damage-type">${promptResult.fragmentationType || ""}</span></div></div>
+              </div>
+            ` : ""}
+          </footer>
+        ` : ""}
+
         <footer class="card-actions">
           <button class="apply-damage-button" data-damage='${JSON.stringify(damagePackage)}'>
-            <i class="fas fa-crosshairs"></i> Aplicar ao Alvo
+            <i class="fas fa-crosshairs"></i> ${game.i18n.localize("GUM.RollCard.ApplyToTarget")}
           </button>
         </footer>
       </div>
@@ -3913,7 +3970,7 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
     await ChatMessage.create({
       speaker: ChatMessage.getSpeaker({ actor }),
       content,
-      rolls: [roll]
+      rolls: [roll, followUpRoll, fragmentationRoll].filter(Boolean)
     });
   };
 

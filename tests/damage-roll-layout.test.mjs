@@ -27,6 +27,26 @@ test("every damage modifier row contains label, formula, type, and nature", () =
   }
 });
 
+test("damage prompt labels columns and keeps its preview cards focused on the formula", () => {
+  const headings = promptTemplate.match(/<div class="damage-column-headings"[\s\S]*?<\/div>/)?.[0] ?? "";
+  const headingOrder = ["GUM.Damage.Formula", "GUM.Damage.Type", "GUM.Damage.FieldNature", "GUM.Damage.Divisor"];
+  let previous = -1;
+  for (const key of headingOrder) {
+    const index = headings.indexOf(key);
+    assert.ok(index > previous, `expected ${key} after the preceding heading`);
+    previous = index;
+  }
+
+  assert.match(promptTemplate, /damage-card-formula[\s\S]*GUM\.Damage\.Formula/);
+  assert.match(promptTemplate, /damage-card-meta[^>]*>\{\{card\.details\}\}/);
+  assert.doesNotMatch(promptTemplate, /damage-card-field[^>]*>\s*<span>\{\{localize "GUM\.Damage\.Type"\}\}/);
+  assert.match(promptSource, /damage-card-formula[\s\S]*GUM\.Damage\.Formula/);
+  assert.match(promptSource, /filter\(Boolean\)\.join\(" "\)/);
+  assert.match(promptSource, /input\[name\$='Nature'\]/);
+  assert.match(promptSource, /fallback \|\| 1/);
+  assert.match(promptSource, /formatDamageNatureAbbreviation/);
+});
+
 test("damage prompt orders standard, follow-up, and fragmentation damage", () => {
   for (const source of [promptSource, promptTemplate]) {
     const standard = source.indexOf("Dano Padrão");

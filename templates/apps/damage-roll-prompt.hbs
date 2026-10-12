@@ -9,8 +9,9 @@
   <section class="damage-visual-box">
     {{#each visualCards as |card|}}
       <div class="damage-visual-card tone-{{card.tone}}">
-        <div class="damage-card-formula">{{card.formula}}</div>
-	        <div class="damage-card-meta">{{card.meta}}</div>
+        <div class="damage-card-title">{{localize card.labelKey}}</div>
+        <div class="damage-card-field damage-card-formula"><span>{{localize "GUM.Damage.Formula"}}</span><strong>{{card.formula}}</strong></div>
+        <div class="damage-card-meta">{{card.details}}</div>
       </div>
     {{/each}}
   </section>
@@ -19,6 +20,14 @@
       {{#each natureOptions}}<option value="{{this.value}}" label="{{this.label}}"></option>{{/each}}
     </datalist>
     <h4>Modificadores de Dano Situacionais</h4>
+
+    <div class="damage-column-headings" aria-hidden="true">
+      <span></span>
+      <span>{{localize "GUM.Damage.Formula"}}</span>
+      <span>{{localize "GUM.Damage.Type"}}</span>
+      <span>{{localize "GUM.Damage.FieldNature"}}</span>
+      <span>{{localize "GUM.Damage.Divisor"}}</span>
+    </div>
 
     <div class="damage-row">
       <label>Dano Padrão</label>
