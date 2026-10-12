@@ -7,7 +7,7 @@ const main = fs.readFileSync(new URL("../scripts/main.js", import.meta.url), "ut
 const engine = fs.readFileSync(new URL("../scripts/effects-engine.js", import.meta.url), "utf8");
 
 test("prompt resolve modificadores condicionais antes de ignorar os globais", () => {
-    assert.match(prompt, /import \{ resolveConditionalValue \} from "\.\.\/utils\/effect-value-expression\.mjs"/);
+    assert.match(prompt, /import \{[^}]*resolveConditionalValue[^}]*\} from "\.\.\/utils\/effect-value-expression\.mjs"/);
     assert.match(prompt, /value: this\._evaluateModifierEntryValue\(entry\)/);
     assert.match(prompt, /resolveConditionalValue\(rawValue, \{ actor, rollData: this\.rollData \}\)/);
     assert.match(prompt, /defer_value_evaluation[\s\S]*?value_mode !== "per_origin_level"/);

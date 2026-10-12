@@ -8,7 +8,7 @@ import { resolveRollPromptImage } from "../utils/roll-prompt-image.mjs";
 import { measureGridDistance } from "../utils/grid-distance.mjs";
 import { AUTO_SIZE_MODIFIER_MODES, calculateAttackSizeModifier } from "../utils/size-modifier.mjs";
 import { contentSourceService } from "../services/content-source-service.mjs";
-import { resolveConditionalValue } from "../utils/effect-value-expression.mjs";
+import { evaluateJavaScriptNumericExpression, resolveConditionalValue } from "../utils/effect-value-expression.mjs";
 import { evaluateModifierRollFormulaSync } from "../utils/modifier-roll-formula.mjs";
 import { getSkillDisplayName } from "../utils/skill-display-name.mjs";
 import { matchesEquipmentGrantedEffectScope } from "../utils/equipment-granted-effects.mjs";
@@ -645,6 +645,13 @@ export class GurpsRollPrompt extends FormApplication {
         const diceResult = evaluateModifierRollFormulaSync(source, actor?.getRollData?.() || {});
         if (Number.isFinite(diceResult)) return diceResult;
 
+        const javascriptResult = evaluateJavaScriptNumericExpression(source, {
+            actor,
+            game,
+            rollData: this.rollData
+        });
+        if (Number.isFinite(javascriptResult)) return javascriptResult;
+
         const evaluateArithmetic = (expression) => {
             const tokenRegex = /[A-Za-zÀ-ÿ_][A-Za-z0-9À-ÿ_]*(?:\.[A-Za-zÀ-ÿ_][A-Za-z0-9À-ÿ_]*)*/g;
             const reserved = new Set(["maior", "menor", "max", "min", "math"]);
@@ -1092,7 +1099,7 @@ return 'default';
                     block.items.push({
                         id: entryId,
                         label: entry?.label ? `${item.name} — ${entry.label}` : item.name,
-                        value: parseInt(entry?.value) || 0,
+                        value: this._evaluateModifierValue(entry?.value),
                         desc: item.system.description || "",
                         nh_cap: entry?.nh_cap ?? entry?.cap ?? "",
                         duration: item.system.duration,
@@ -1111,7 +1118,7 @@ return 'default';
             block.items.push({
                 id: item.id,
                 label: item.name,
-                value: item.system.modifier,
+                value: this._evaluateModifierValue(item.system.modifier),
                 desc: item.system.description || "",
                 nh_cap: item.system.nh_cap,
                 duration: item.system.duration,
@@ -1346,7 +1353,7 @@ return 'default';
             const btn = $(ev.currentTarget);
             const modData = {
                 id: btn.data('id'),
-                value: parseInt(btn.data('value')),
+                value: Number(btn.data('value')) || 0,
                 label: btn.data('label'),
                 nh_cap: btn.data('cap')
             };

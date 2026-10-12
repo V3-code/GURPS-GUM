@@ -6,6 +6,26 @@ function cloneDocument(document) {
   return structuredClone(document?.toObject ? document.toObject() : document || {});
 }
 
+function markReplacedAttackModesForDeletion(update, existing) {
+  if (existing?.type !== "equipment" || update?.type !== "equipment") return update;
+
+  for (const field of ["melee_attacks", "ranged_attacks"]) {
+    if (!Object.hasOwn(update.system || {}, field)) continue;
+
+    const previousModes = existing?.system?.[field] || {};
+    const importedModes = update.system?.[field] || {};
+    for (const attackId of Object.keys(previousModes)) {
+      if (!Object.hasOwn(importedModes, attackId)) {
+        // Foundry merges embedded object updates. Its deletion syntax is required
+        // to remove random IDs created by a previous GCS import.
+        update[`system.${field}.-=${attackId}`] = null;
+      }
+    }
+  }
+
+  return update;
+}
+
 /**
  * Prepares selected GCS actor item changes without breaking container references.
  * New ancestors are automatically included when one of their descendants is selected.
@@ -57,7 +77,7 @@ export function prepareGCSActorItemChanges(plan, selection, { randomID }) {
   const updates = selectedUpdates.map(({ existing, incoming }) => {
     const update = cloneDocument(incoming);
     update._id = documentId(existing);
-    return rewriteParent(update);
+    return markReplacedAttackModesForDeletion(rewriteParent(update), existing);
   });
   const removals = plan.removals
     .filter((_entry, index) => selection.removals.has(index))

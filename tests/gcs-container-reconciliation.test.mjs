@@ -54,3 +54,32 @@ test("remapeia o pai ao atualizar um item incorporado", () => {
   assert.equal(result.updates[1]._id, "existing-child");
   assert.equal(result.updates[1].system.parent_container_id, "existing-parent");
 });
+
+test("substitui modos de ataque importados em vez de acumulá-los", () => {
+  const existing = {
+    ...item("existing-sword", "Espada"),
+    system: {
+      melee_attacks: { "old-slash": { mode: "Corte" } },
+      ranged_attacks: { "old-throw": { mode: "Arremesso" } }
+    }
+  };
+  const incoming = {
+    ...item("temporary-sword", "Espada"),
+    system: {
+      melee_attacks: { "new-slash": { mode: "Corte", damage_formula: "1d6+2" } },
+      ranged_attacks: {}
+    }
+  };
+  const plan = { additions: [], updates: [{ existing, incoming }], unchanged: [], removals: [] };
+
+  const result = prepareGCSActorItemChanges(plan, {
+    additions: new Set(), updates: new Set([0]), removals: new Set()
+  }, { randomID: () => "unused" });
+
+  const [update] = result.updates;
+  assert.equal(update._id, "existing-sword");
+  assert.deepEqual(update.system.melee_attacks, incoming.system.melee_attacks);
+  assert.deepEqual(update.system.ranged_attacks, {});
+  assert.equal(update["system.melee_attacks.-=old-slash"], null);
+  assert.equal(update["system.ranged_attacks.-=old-throw"], null);
+});

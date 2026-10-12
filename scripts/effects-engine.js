@@ -1,5 +1,7 @@
 import { createSingleRollRequestMessage } from "../module/services/roll-request-service.js";
 import { normalizeChatRoll } from "../module/utils/roll-request-data.mjs";
+import { recipientUserIdsForActor } from "../module/utils/test-request-targets.mjs";
+import { findConfiguredStatus } from "../module/utils/status-catalog.mjs";
 import { equipmentLinkedReserve, equipmentReserveBalanceUpdate } from "../module/utils/equipment-resolution.mjs";
 import {
     getAttributeRollMessageOptions,
@@ -222,7 +224,7 @@ const DEFAULT_EFFECT_ACTION = {
     source: "",
     hidden: false,
     exists_policy: "ignore",
-    statusId: "dead"
+    statusId: ""
 };
 
 // Regra explícita de prioridade do ícone carrier.
@@ -508,6 +510,9 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
         try {
             if (persistentTypes.has(action.type)) {
                 if (context.skipPersistentEffects) continue;
+                if (action.type === "status" && !findConfiguredStatus(action.statusId, CONFIG.statusEffects)) {
+                    throw new Error(`Status configurado não encontrado: "${action.statusId || "vazio"}".`);
+                }
                 for (const targetToken of targets) {
                     const targetActor = targetToken.actor;
                     if (uniqueAcrossConditions) {
@@ -727,14 +732,19 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                         foundry.utils.setProperty(activeEffectData, "flags.core.statusId", fallbackCoreStatusId);
                     }
                     if (action.type === "status" && action.statusId) {
-                        const statusEffect = (CONFIG.statusEffects || []).find((status) => status.id === action.statusId);
+                        const statusEffect = findConfiguredStatus(action.statusId, CONFIG.statusEffects);
                         activeEffectData.img = statusEffect?.icon ?? statusEffect?.img ?? activeEffectData.img;
                         activeEffectData.showIcon = getActiveEffectShowIconMode(effectSystem, gumDuration);
                         activeEffectData.statuses.push(action.statusId);
                         foundry.utils.setProperty(activeEffectData, "flags.core.statusId", action.statusId);
                     }
                     if (effectSystem.attachedStatusId && isIconCarrier && action.type !== "status") {
-                        activeEffectData.statuses.push(effectSystem.attachedStatusId);
+                        const attachedStatus = findConfiguredStatus(effectSystem.attachedStatusId, CONFIG.statusEffects);
+                        if (attachedStatus) {
+                            activeEffectData.statuses.push(effectSystem.attachedStatusId);
+                        } else {
+                            console.warn(`[GUM] Status anexado configurado não encontrado: "${effectSystem.attachedStatusId}".`);
+                        }
                     }
                     activeEffectData.statuses = [...new Set(activeEffectData.statuses.filter(Boolean))];
 
@@ -952,7 +962,14 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     else if (action.whisperMode === "blind") chatData.blind = true;
                     if (action.has_roll) {
                         const normalized = normalizeChatRoll(action);
-                        await createSingleRollRequestMessage({ title: normalized.label, description: chatBody, origin: { type: "effect-chat", effectUuid: effectItem.uuid }, targets: [{ targetKey: targetActor.uuid, actorUuid: targetActor.uuid, tokenUuid: null, actorName: targetActor.name, actorImg: targetActor.img, recipientUserIds: [] }], test: normalized.test, consequence: { type: "chat-record" }, delivery: { rollMode: normalized.whisperMode } }, chatData);
+                        const recipients = recipientUserIdsForActor(targetActor, Array.from(game.users || []));
+                        if (action.whisperMode === "gm") {
+                            chatData.whisper = [...new Set([...ChatMessage.getWhisperRecipients("GM").map(user => user.id), ...recipients])];
+                        } else if (action.whisperMode === "blind") {
+                            chatData.whisper = recipients;
+                            delete chatData.blind;
+                        }
+                        await createSingleRollRequestMessage({ title: normalized.label, description: chatBody, origin: { type: "effect-chat", effectUuid: effectItem.uuid, effectName: effectItem.name }, targets: [{ targetKey: targetActor.uuid, actorUuid: targetActor.uuid, tokenUuid: null, actorName: targetActor.name, actorImg: targetActor.img, recipientUserIds: recipients }], test: normalized.test, consequence: { type: "chat-record" }, delivery: { rollMode: normalized.whisperMode } }, chatData);
                     } else ChatMessage.create(chatData);
                 }
             }

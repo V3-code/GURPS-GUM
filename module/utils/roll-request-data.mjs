@@ -20,6 +20,10 @@ export function normalizeRollTest(test = {}) {
   if (!type) type = normalizedLegacyKey === "fixed" ? "fixed" : attributeKeys.has(normalizedLegacyKey) ? "attribute" : "skill";
   if (type === "custom-skill") type = "customSkill";
   const skillName = test.skillName ?? (type === "skill" && !test.skillUuid ? legacyKey : null);
+  const rawFixedModifier = test.fixedModifierFormula ?? test.modifierFormula ?? test.fixedModifier ?? test.modifier ?? test.roll_modifier;
+  const fixedModifierFormula = typeof rawFixedModifier === "string" && !/^[+-]?\d+(?:\.\d+)?$/.test(rawFixedModifier.trim())
+    ? rawFixedModifier.trim()
+    : "";
   return {
     type,
     attributeKey: String(test.attributeKey ?? (legacyKey !== "fixed" ? legacyKey : "ht")).toLowerCase(),
@@ -30,7 +34,8 @@ export function normalizeRollTest(test = {}) {
     customDefault: test.customDefault ?? null,
     fixedValue: type === "fixed" ? numberOr(test.fixedValue ?? test.roll_fixed_value, 10) : null,
     requestedPurposeIds: normalizePurposeIds(test.requestedPurposeIds ?? test.purposeIds),
-    fixedModifier: numberOr(test.fixedModifier ?? test.modifier ?? test.roll_modifier, 0),
+    fixedModifier: numberOr(rawFixedModifier, 0),
+    fixedModifierFormula,
     fixedModifierLabel: String(test.fixedModifierLabel ?? test.modifierLabel ?? "")
   };
 }
@@ -93,7 +98,7 @@ export function normalizeChatRoll(action = {}) {
       customDefault: action.roll_custom_default,
       fixedValue: action.roll_fixed_value,
       requestedPurposeIds: action.requestedPurposeIds ?? action.roll_requested_purpose_ids,
-      fixedModifier: action.roll_modifier,
+      fixedModifierFormula: action.roll_modifier,
       fixedModifierLabel: action.roll_modifier_label
     }),
     label: String(action.roll_label || "Rolar Teste"),

@@ -1,0 +1,58 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import test from "node:test";
+
+const template = fs.readFileSync(new URL("../templates/apps/gm-screen.hbs", import.meta.url), "utf8");
+const styles = fs.readFileSync(new URL("../styles/gm-screen.css", import.meta.url), "utf8");
+const application = fs.readFileSync(new URL("../module/apps/gm-screen.js", import.meta.url), "utf8");
+const pt = JSON.parse(fs.readFileSync(new URL("../lang/pt-BR.json", import.meta.url), "utf8"));
+const en = JSON.parse(fs.readFileSync(new URL("../lang/en.json", import.meta.url), "utf8"));
+
+test("GM Screen separates target actions, workspace navigation, and utility tools", () => {
+    const sidebarEnd = template.indexOf("</aside>");
+    const requestIndex = template.indexOf('class="gm-request-test"');
+    const quickRollIndex = template.indexOf('data-utility-content="quick-roll"');
+    const manualIndex = template.indexOf('data-utility-content="manual-modifier"');
+
+    assert.ok(requestIndex > 0 && requestIndex < sidebarEnd);
+    assert.ok(quickRollIndex > sidebarEnd);
+    assert.ok(manualIndex > sidebarEnd);
+    assert.match(template, /gm-main-toolbar[\s\S]*?gm-workspace-tabs[\s\S]*?screen-body[\s\S]*?gm-utility-dock/);
+    assert.match(template, /data-utility-panel="quick-roll"/);
+    assert.match(template, /data-utility-panel="manual-modifier"/);
+});
+
+test("GM Screen compact mode follows the application width and keeps one utility panel open", () => {
+    assert.match(application, /width:\s*1200,[\s\S]*?minWidth:\s*720,[\s\S]*?minHeight:\s*420,[\s\S]*?resizable:\s*true/);
+    assert.match(styles, /container-name:\s*gum-gm-screen/);
+    assert.match(styles, /gm-screen \.window-content\s*\{[\s\S]*?min-width:\s*0;/);
+    assert.match(styles, /gm-screen\.window-app \.window-resizable-handle\s*\{[\s\S]*?display:\s*flex\s*!important;[\s\S]*?z-index:\s*100;[\s\S]*?pointer-events:\s*auto;/);
+    assert.match(styles, /@container gum-gm-screen \(max-width:\s*900px\)/);
+    assert.match(styles, /@container gum-gm-screen \(max-width:\s*700px\)/);
+    assert.doesNotMatch(styles, /@container gum-gm-screen \(max-width:\s*540px\)\s*\{[\s\S]*?gm-screen-layout/);
+    assert.match(styles, /gm-utility-toggle-row[\s\S]*?grid-template-columns:\s*repeat\(2,/);
+    assert.match(application, /this\.utilityPanel = this\.utilityPanel === panel \? null : panel/);
+    assert.match(application, /quickRollOpen:\s*this\.utilityPanel === "quick-roll"/);
+    assert.match(application, /manualOpen:\s*this\.utilityPanel === "manual-modifier"/);
+});
+
+test("GM Screen preserves and reapplies its modifier search across renders", () => {
+    assert.match(application, /this\.searchQuery = ""/);
+    assert.match(template, /class="mod-search" value="\{\{searchQuery\}\}"/);
+    assert.match(application, /html\.find\('\.mod-search'\)\.on\('input'/);
+    assert.match(application, /this\._applyModifierSearch\(html\)/);
+    assert.match(application, /normalize\("NFD"\)/);
+});
+
+test("all GM Screen localization keys exist in English and Portuguese", () => {
+    const templateKeys = [...template.matchAll(/localize\s+["']([^"']+)["']/g)].map(match => match[1]);
+    const applicationKeys = [...application.matchAll(/["'](GUM\.GMScreen\.[A-Za-z0-9]+)["']/g)].map(match => match[1]);
+    const keys = [...templateKeys, ...applicationKeys];
+    assert.ok(keys.length > 60);
+
+    for (const key of new Set(keys)) {
+        assert.equal(typeof pt[key], "string", `missing pt-BR key ${key}`);
+        assert.equal(typeof en[key], "string", `missing en key ${key}`);
+    }
+});
+

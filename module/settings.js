@@ -49,14 +49,18 @@ import { buildPassiveConditionSyncOperations } from "./utils/passive-condition-s
 import { WORLD_STATUS_SETTING, applyWorldStatusConfiguration, normalizeWorldStatusConfiguration } from "./utils/world-status-config.mjs";
 
 const STATUS_BINDINGS_MIGRATION_SETTING = "contentSourcesStatusBindingsMigrationV1";
-const RETIRED_BUNDLED_SOURCES_MIGRATION_SETTING = "contentSourcesRetiredBundledSourcesMigrationV1";
+const RETIRED_BUNDLED_SOURCES_MIGRATION_SETTING = "contentSourcesRetiredBundledSourcesMigrationV2";
 const RETIRED_BUNDLED_SOURCES = Object.freeze({
+    conditions: "gum.conditions",
     modifiers: "gum.modifiers",
     templates: "gum.templates",
     equipmentModifiers: "gum.eqp_modifiers",
     rollModifiers: "gum.gm_modifiers",
     skills: "gum.skills",
-    triggers: "gum.gatilhos"
+    passiveConditions: "gum.regras",
+    effects: "gum.efeitos",
+    triggers: "gum.gatilhos",
+    statusBindings: "gum.conditions"
 });
 
 export async function migrateRetiredBundledSources() {
@@ -91,7 +95,8 @@ export async function migrateLegacyStatusBindingSource() {
     const configuredSources = contentSourceService.getSettings();
     if (!Object.hasOwn(configuredSources, "statusBindings")) {
         const legacyId = `${game.settings.get("gum", "statusBindingsCompendium") || ""}`.trim();
-        await contentSourceService.setSourceIds("statusBindings", [legacyId || "gum.conditions"]);
+        const sourceIds = legacyId && legacyId !== "gum.conditions" ? [legacyId] : [];
+        await contentSourceService.setSourceIds("statusBindings", sourceIds);
     }
 
     await game.settings.set("gum", STATUS_BINDINGS_MIGRATION_SETTING, true);

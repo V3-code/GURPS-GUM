@@ -441,8 +441,8 @@
                                             <img src="{{this.img}}"/>
                                             <span class="mod-name item-quick-view" style="cursor: pointer;">{{this.name}}</span>
                                         </div>
-                                        <span class="mod-val {{#if (lt this.system.modifier 0)}}neg{{/if}}">
-                                            {{numberFormat this.system.modifier sign=true}}
+                                        <span class="mod-val {{#if this.modifierIsNegative}}neg{{/if}} {{#if this.modifierIsExpression}}is-expression{{/if}}" title="{{this.modifierDisplay}}">
+                                            {{this.modifierCompactDisplay}}
                                         </span>
                                         <div class="mod-controls">
                                             <a class="item-edit"><i class="fas fa-edit"></i></a>

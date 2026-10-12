@@ -35,7 +35,10 @@ export class GMModifierBrowser extends FormApplication {
         service: contentSourceService
     });
     this.allModifiers = records.map(item => {
-            const formattedVal = (item.system.modifier > 0 ? '+' : '') + item.system.modifier;
+            const rawValue = String(item.system.modifier ?? "").trim() || "0";
+            const isNumeric = /^[+-]?\d+(?:\.\d+)?$/.test(rawValue);
+            const numericValue = isNumeric ? Number(rawValue) : null;
+            const formattedVal = isNumeric ? `${numericValue > 0 ? "+" : ""}${numericValue}` : rawValue;
                         const category = normalizeGMModifierCategory(item.system.ui_category || "situation");
             const categoryLabel = getGMModifierCategoryLabel(category);
             const displayGroup = String(item.system.group || "").trim() || categoryLabel;
@@ -49,7 +52,8 @@ export class GMModifierBrowser extends FormApplication {
                                 category,
                 categoryLabel,
                 displayGroup,
-                isBonus: item.system.modifier >= 0,
+                isBonus: isNumeric && numericValue >= 0,
+                isExpression: !isNumeric,
                 formattedVal,
                 modifierSubtitle: subtitleParts.join(" • ")
             };

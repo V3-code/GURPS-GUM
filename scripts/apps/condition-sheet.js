@@ -3,6 +3,7 @@
 import { EffectBuilder } from "./effect-builder.js";
 import { TriggerBrowser } from "../../module/apps/trigger-browser.js";
 import { WORLD_STATUS_SETTING, normalizeWorldStatusConfiguration } from "../../module/utils/world-status-config.mjs";
+import { buildStatusCatalog, resolveStatusCatalogEntry } from "../../module/utils/status-catalog.mjs";
 
 const { ItemSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -47,9 +48,10 @@ export class ConditionSheet extends ItemSheet {
         if (context.system.statusBinding.enabled === undefined) {
             context.system.statusBinding.enabled = true;
         }
-        context.statusEffects = (CONFIG.statusEffects || [])
-            .map((status) => ({ id: status.id, label: status.name }))
-            .sort((a, b) => a.label.localeCompare(b.label, "pt-BR", { sensitivity: "base" }));
+        context.statusEffects = buildStatusCatalog(CONFIG.statusEffects);
+        const selectedStatus = context.statusEffects.find(status => status.id === context.system.statusBinding.statusId);
+        context.statusBindingSearchValue = selectedStatus?.label || context.system.statusBinding.statusId || "";
+        context.statusBindingReferenceInvalid = Boolean(context.system.statusBinding.statusId && !selectedStatus);
         const worldStatusConfiguration = normalizeWorldStatusConfiguration(game.settings.get("gum", WORLD_STATUS_SETTING));
         context.showLegacyStatusBindingMode = !worldStatusConfiguration.bindingsMigrated || context.system.bindingMode === "status-link";
         context.enrichedDescription = await TextEditorImpl.enrichHTML(this.item.system.description, { async: true });
@@ -112,6 +114,19 @@ export class ConditionSheet extends ItemSheet {
         super.activateListeners(html);
         html.on('click', '.open-reference-link', this._onOpenReferenceLink.bind(this));
         if (!this.isEditable) return;
+
+        html.on("input change", ".condition-status-search", event => {
+            const searchInput = event.currentTarget;
+            const hiddenInput = this.form?.querySelector('[name="system.statusBinding.statusId"]');
+            if (!hiddenInput) return;
+            const match = resolveStatusCatalogEntry(searchInput.value, CONFIG.statusEffects);
+            const initialValue = searchInput.dataset.initialValue || "";
+            const initialStatusId = searchInput.dataset.initialStatusId || "";
+            hiddenInput.value = match?.id || (searchInput.value === initialValue ? initialStatusId : "");
+            searchInput.setCustomValidity(searchInput.value && !hiddenInput.value
+                ? game.i18n.localize("GUM.StatusAutomations.SearchInvalid")
+                : "");
+        });
 
         html.find('select[name="system.bindingMode"]').on('change', async (ev) => {
             const nextMode = ev.currentTarget.value;

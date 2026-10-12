@@ -4525,10 +4525,31 @@ color:#121114;
   .characteristic-details-dashboard
   .characteristic-top-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(150px, 0.55fr) minmax(260px, 1fr);
+  align-items: stretch;
   gap: 8px;
   width: 100%;
   min-width: 0;
+}
+
+.gum.sheet.item
+  .characteristic-details-dashboard
+  .characteristic-top-grid
+  > .characteristic-favorite-card,
+.gum.sheet.item
+  .characteristic-details-dashboard
+  .characteristic-top-grid
+  > .characteristic-organization-card {
+  min-height: 64px;
+  height: auto;
+}
+
+.gum.sheet.item
+  .characteristic-details-dashboard
+  .characteristic-top-grid
+  > .characteristic-organization-card {
+  gap: 5px;
+  padding: 7px 9px;
 }
 
 .gum.sheet.item .skill-details-dashboard .skill-dashboard-toggles,
@@ -4801,6 +4822,12 @@ color:#121114;
 @media (max-width: 520px) {
   .gum.sheet.item .item-description-reference,
   .gum.sheet.item .skill-details-dashboard .skill-dashboard-toggles {
+    grid-template-columns: 1fr;
+  }
+
+  .gum.sheet.item
+    .characteristic-details-dashboard
+    .characteristic-top-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -6139,7 +6166,104 @@ color:#121114;
 }
 
 .gum.sheet.item.effect-sheet .effect-premium-grid-chat-roll {
-  grid-template-columns: minmax(180px, 1fr) minmax(190px, 1fr) minmax(100px, 0.55fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gum.sheet.item.effect-sheet .effect-chat-roll-value-field {
+  grid-column: 1 / -1;
+}
+
+.gum.sheet.item.effect-sheet .effect-chat-roll-value-input {
+  min-height: 38px;
+}
+
+.gum.sheet.item.effect-sheet .effect-field-help {
+  position: relative;
+  display: inline-grid;
+  width: 18px;
+  height: 18px;
+  margin-left: 2px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--item-accent);
+  cursor: help;
+  font-size: 11px;
+}
+
+.gum.sheet.item.effect-sheet .effect-premium-field-label .effect-field-help > i {
+  display: inline-block;
+}
+
+.gum.sheet.item.effect-sheet .effect-field-help [role="tooltip"] {
+  position: absolute;
+  z-index: 20;
+  left: 50%;
+  bottom: calc(100% + 7px);
+  display: none;
+  width: min(310px, 65vw);
+  padding: 8px 10px;
+  border: 1px solid rgba(201, 161, 94, 0.48);
+  border-radius: 6px;
+  background: #0f0e12;
+  color: var(--item-text);
+  font-family: var(--item-font-base);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.35;
+  text-align: left;
+  text-transform: none;
+  transform: translateX(-50%);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.42);
+}
+
+.gum.sheet.item.effect-sheet .effect-field-help:hover [role="tooltip"],
+.gum.sheet.item.effect-sheet .effect-field-help:focus [role="tooltip"] {
+  display: block;
+}
+
+.gum.sheet.item.effect-sheet .effect-chat-purpose-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.gum.sheet.item.effect-sheet .effect-chat-purpose-control .effect-purpose-summary {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 7px;
+  background: linear-gradient(180deg, rgba(9, 9, 12, 0.94), rgba(16, 15, 19, 0.96));
+  color: var(--item-text-soft);
+  font-size: 0.74rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.gum.sheet.item.effect-sheet .effect-chat-purpose-control .open-purpose-picker {
+  width: auto;
+  min-width: 108px;
+  min-height: 34px;
+  margin: 0;
+  padding: 6px 11px;
+  border: 1px solid rgba(201, 161, 94, 0.28);
+  border-radius: 7px;
+  background: rgba(201, 161, 94, 0.09);
+  color: var(--item-accent);
+  font-family: var(--item-font-condensed);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item.effect-sheet .effect-chat-purpose-control .open-purpose-picker:hover {
+  border-color: rgba(201, 161, 94, 0.5);
+  background: rgba(201, 161, 94, 0.16);
 }
 
 .gum.sheet.item.effect-sheet .effect-premium-grid-flag {
@@ -6946,7 +7070,7 @@ color:#121114;
 }
 
 .gum.sheet.item .gm-modifier-roll-workspace .effect-premium-grid-entry-primary {
-  grid-template-columns: minmax(210px, 1.25fr) minmax(120px, 0.55fr) minmax(120px, 0.55fr);
+  grid-template-columns: minmax(210px, 1.4fr) minmax(120px, 0.6fr);
 }
 
 .gum.sheet.item .gm-modifier-roll-workspace .effect-premium-grid-entry-context {
@@ -7011,6 +7135,29 @@ color:#121114;
   flex: 1 1 auto;
 }
 
+.gum.sheet.item .gm-modifier-roll-workspace .gm-modifier-expression-field {
+  border-color: rgba(201, 161, 94, 0.18);
+  background: linear-gradient(180deg, rgba(201, 161, 94, 0.07), rgba(0, 0, 0, 0.13));
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .gm-modifier-expression-info {
+  display: inline-block;
+  margin-left: auto;
+  color: rgba(201, 161, 94, 0.82);
+  cursor: help;
+}
+
+.gum.sheet.item .gm-modifier-roll-workspace .gm-modifier-expression-input {
+  min-height: 48px;
+  padding: 9px 11px;
+  resize: vertical;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  text-align: left;
+  white-space: pre-wrap;
+}
+
 .gum.sheet.item .gm-modifier-roll-workspace .effect-premium-icon-button {
   width: 27px;
   height: 27px;
@@ -7036,7 +7183,7 @@ color:#121114;
 
 @container (max-width: 620px) {
   .gum.sheet.item .gm-modifier-roll-workspace .effect-premium-grid-entry-primary {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.55fr);
   }
 
   .gum.sheet.item .gm-modifier-roll-workspace .effect-premium-toolbar {
@@ -7363,10 +7510,23 @@ color:#121114;
 .gum-roll-tag-picker .roll-tag-picker-empty strong { color: var(--gum-accent-gold, #b59753); }
 .gum-purpose-picker .gum-purpose-picker-title { display: flex; align-items: center; gap: 7px; min-width: 0; }
 .gum-purpose-picker .gum-purpose-suggested { display: inline-flex; flex: 0 0 auto; padding: 1px 6px; border: 1px solid rgba(181,151,83,.55); border-radius: 999px; background: rgba(181,151,83,.14); color: var(--gum-accent-gold, #b59753); font: 700 .68em/1.4 sans-serif; letter-spacing: .04em; text-transform: uppercase; }
+.gum-purpose-picker .gum-purpose-picker-intro { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; align-items: center; padding: 9px 10px; border: 1px solid rgba(181,151,83,.2); border-radius: 7px; background: linear-gradient(135deg, rgba(181,151,83,.11), rgba(255,255,255,.025)); }
+.gum-purpose-picker .gum-purpose-picker-intro-icon { display: grid; width: 32px; height: 32px; place-items: center; border-radius: 7px; background: rgba(181,151,83,.15); color: var(--gum-accent-gold, #b59753); }
+.gum-purpose-picker .gum-purpose-picker-intro > span:last-child { display: grid; gap: 2px; min-width: 0; }
+.gum-purpose-picker .gum-purpose-picker-intro strong { color: var(--gum-text-claro, #eee); font-family: var(--item-font-condensed, "Roboto Condensed", sans-serif); font-size: .78rem; letter-spacing: .045em; text-transform: uppercase; }
+.gum-purpose-picker .gum-purpose-picker-intro small { color: var(--gum-text-medio, #aaa); font-size: .7rem; line-height: 1.3; }
+.gum-purpose-picker .roll-tag-picker-tools { padding: 6px 8px; border-radius: 6px; background: rgba(255,255,255,.028); }
+.gum-purpose-picker .roll-tag-selected-summary { padding: 3px 7px; border-radius: 999px; background: rgba(181,151,83,.1); }
+.gum-purpose-picker .roll-tag-picker-option input[name="roll-purpose"] { position: absolute; opacity: 0; pointer-events: none; }
+.gum-purpose-picker .gum-purpose-picker-check { display: grid; width: 18px; height: 18px; place-items: center; border: 1px solid #555d6b; border-radius: 5px; background: #181b22; color: transparent; font-size: 9px; transition: border-color .15s, background .15s, color .15s; }
+.gum-purpose-picker .roll-tag-picker-option.is-selected .gum-purpose-picker-check { border-color: var(--gum-accent-gold, #b59753); background: var(--gum-accent-gold, #b59753); color: #17150f; }
+.gum-purpose-picker .roll-tag-picker-option:focus-within .gum-purpose-picker-check { outline: 2px solid rgba(181,151,83,.75); outline-offset: 2px; }
 @media (max-width: 620px) {
   .gum-roll-tag-picker .roll-tag-picker-option label { align-items: flex-start; flex-direction: column; gap: 4px; }
   .gum-roll-tag-picker .roll-tag-picker-option code { max-width: 100%; }
   .gum-roll-tag-picker .roll-tag-result-count { margin-left: 0; }
+  .gum.sheet.item.effect-sheet .effect-chat-purpose-control { grid-template-columns: minmax(0, 1fr); }
+  .gum.sheet.item.effect-sheet .effect-chat-purpose-control .open-purpose-picker { width: 100%; }
 }
 
 /* CHARACTERISTICS — SOCIAL CONTRIBUTION CARDS */
@@ -8143,4 +8303,196 @@ color:#121114;
   color:rgba(240,215,159,.82);
   font-size:.9rem;
   letter-spacing:0;
+}
+
+/* Consumo configurável de magias e poderes. */
+.gum.sheet.item .magic-consumption-editor {
+  gap: 10px;
+  border-color: rgba(201, 161, 94, 0.34);
+  background:
+    radial-gradient(110% 150% at 0% 0%, rgba(201, 161, 94, 0.08), transparent 52%),
+    linear-gradient(135deg, rgba(17, 16, 20, 0.88), rgba(25, 23, 30, 0.94)),
+    var(--item-panel-texture) repeat;
+}
+
+.gum.sheet.item .magic-consumption-editor__header,
+.gum.sheet.item .magic-consumption-sources__header,
+.gum.sheet.item .magic-consumption-group__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.gum.sheet.item .magic-consumption-editor__header .skill-dashboard-section-title { margin: 0; }
+
+.gum.sheet.item .magic-consumption-editor__header button,
+.gum.sheet.item .magic-consumption-sources__header button,
+.gum.sheet.item .magic-consumption-group button {
+  display: inline-grid;
+  width: auto;
+  min-width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0 9px;
+  place-items: center;
+  border: 1px solid rgba(201, 161, 94, 0.28);
+  border-radius: 6px;
+  background: rgba(201, 161, 94, 0.08);
+  color: var(--item-text-muted);
+  box-shadow: none;
+}
+
+.gum.sheet.item .magic-consumption-editor__header button {
+  display: inline-flex;
+  gap: 6px;
+  color: var(--item-text);
+  font-family: var(--item-font-condensed);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item .magic-consumption-sources__header button,
+.gum.sheet.item .magic-consumption-group button {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+}
+
+.gum.sheet.item .magic-consumption-editor__header button:hover,
+.gum.sheet.item .magic-consumption-sources__header button:hover {
+  border-color: rgba(201, 161, 94, 0.52);
+  background: rgba(201, 161, 94, 0.15);
+  color: var(--item-text);
+}
+
+.gum.sheet.item .magic-consumption-group .delete-magic-consumption-group:hover,
+.gum.sheet.item .magic-consumption-group .delete-magic-consumption-source:hover {
+  border-color: rgba(199, 103, 94, 0.48);
+  background: rgba(157, 62, 57, 0.14);
+  color: #dfa29a;
+}
+
+.gum.sheet.item .magic-consumption-editor__hint,
+.gum.sheet.item .magic-consumption-editor__empty {
+  margin: 0;
+  color: var(--item-text-muted);
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.gum.sheet.item .magic-consumption-editor__empty {
+  padding: 14px;
+  border: 1px dashed rgba(201, 161, 94, 0.2);
+  border-radius: 7px;
+  text-align: center;
+}
+
+.gum.sheet.item .magic-consumption-group {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid rgba(201, 161, 94, 0.22);
+  border-radius: 8px;
+  background:
+    linear-gradient(145deg, rgba(12, 12, 15, 0.58), rgba(25, 23, 29, 0.72)),
+    var(--item-panel-texture-contrast) repeat;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.gum.sheet.item .magic-consumption-group__header {
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(201, 161, 94, 0.14);
+}
+
+.gum.sheet.item .magic-consumption-group__name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.gum.sheet.item .magic-consumption-group__name i { color: var(--item-accent); }
+
+.gum.sheet.item .magic-consumption-group__name input {
+  min-width: 0;
+  height: 30px;
+  border: 0;
+  border-bottom: 1px solid rgba(201, 161, 94, 0.22);
+  border-radius: 0;
+  background: transparent;
+  color: var(--item-text);
+  font-family: var(--item-font-condensed);
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.gum.sheet.item .magic-consumption-group__name input:focus {
+  border-bottom-color: var(--item-accent);
+  box-shadow: 0 1px 0 rgba(201, 161, 94, 0.28);
+}
+
+.gum.sheet.item .spell-power-dashboard .magic-consumption-group__main {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gum.sheet.item .magic-consumption-group__main .skill-dashboard-field-card { min-height: 72px; }
+.gum.sheet.item .spell-power-dashboard .magic-consumption-group__options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+.gum.sheet.item .magic-consumption-sources {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.gum.sheet.item .magic-consumption-sources__header {
+  min-height: 30px;
+  color: var(--item-text-muted);
+  font-family: var(--item-font-condensed);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item .magic-consumption-sources__header strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.gum.sheet.item .magic-consumption-sources__header strong i { color: var(--item-accent); }
+
+.gum.sheet.item .skill-details-dashboard .magic-consumption-source {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 7px;
+  min-height: 0;
+  padding: 7px;
+}
+
+.gum.sheet.item .skill-details-dashboard .magic-consumption-source__controls {
+  display: grid;
+  grid-template-columns: minmax(145px, 0.8fr) minmax(170px, 1.2fr);
+}
+
+.gum.sheet.item .magic-consumption-source__controls input { text-align: left; }
+
+.gum.sheet.item .magic-consumption-source.is-name-disabled .magic-consumption-source-name {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+@media (max-width: 620px) {
+  .gum.sheet.item .spell-power-dashboard .magic-consumption-group__main,
+  .gum.sheet.item .skill-details-dashboard .magic-consumption-source__controls { grid-template-columns: 1fr; }
 }

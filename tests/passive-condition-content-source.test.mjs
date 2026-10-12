@@ -23,7 +23,7 @@ test("passive condition copies retain their exact source UUID", () => {
 
 test("synchronization updates existing passive conditions and adds newly configured ones", () => {
   const existingSource = {
-    uuid: "Compendium.gum.regras.Item.existing",
+    uuid: "Compendium.world.passive.Item.existing",
     system: { value: 2 },
     toObject: () => ({ name: "Atualizada", type: "condition", img: "updated.webp", system: { value: 2 } })
   };
@@ -33,7 +33,7 @@ test("synchronization updates existing passive conditions and adds newly configu
     toObject: () => ({ _id: "pack-id", name: "Nova", type: "condition", img: "new.webp", system: { value: 1 } })
   };
   const statusBinding = {
-    uuid: "Compendium.gum.regras.Item.status",
+    uuid: "Compendium.world.passive.Item.status",
     system: { bindingMode: "status-link" },
     toObject: () => ({ name: "Não copiar", type: "condition", system: {} })
   };

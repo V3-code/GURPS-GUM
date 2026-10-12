@@ -14,8 +14,11 @@ test("seletor usa a interface completa de busca agrupada", () => {
   const html = buildRollPurposePickerContent({ selectedIds: ["resist_poison"], attributeKey: "ht", idPrefix: "test-purpose" });
 
   assert.match(html, /gum-roll-tag-picker gum-purpose-picker/);
+  assert.match(html, /gum-purpose-picker-intro/);
+  assert.match(html, /Contexto do teste/);
   assert.match(html, /roll-tag-selected-only/);
   assert.match(html, /roll-tag-picker-info/);
+  assert.match(html, /gum-purpose-picker-check/);
   assert.match(html, /data-search=/);
   assert.match(html, /name="roll-purpose" value="resist_poison" checked/);
   assert.match(html, /gum-purpose-suggested/);

@@ -1,7 +1,7 @@
 {
   "title": "GURPS GUM (Não Oficial)",
   "id": "gum",
-  "version": "1.4.1-beta",
+  "version": "1.4.2-beta",
   "description": "Ferramenta não oficial e gratuita para uso de GURPS no Foundry VTT. Criada por fã, sem fins lucrativos e sem conteúdo de publicações de GURPS.",
   "authors": [
     {
@@ -69,32 +69,7 @@
     "styles/conditions.css",
     "styles/condition-builder.css"
   ],
-  "packs": [
-    {
-      "name": "efeitos",
-      "label": "GUM.Packs.Effects",
-      "system": "gum",
-      "path": "./packs/efeitos",
-      "type": "Item",
-      "private": false
-    },
-    {
-      "name": "conditions",
-      "label": "GUM.Packs.Conditions",
-      "system": "gum",
-      "path": "./packs/conditions",
-      "type": "Item",
-      "private": false
-    },
-    {
-      "name": "regras",
-      "label": "GUM.Packs.PassiveConditions",
-      "system": "gum",
-      "path": "./packs/regras",
-      "type": "Item",
-      "private": false
-    }
-  ],
+  "packs": [],
   "license": "https://raw.githubusercontent.com/V3-code/GURPS-GUM/master/LICENSE.md",
   "url": "https://github.com/V3-code/GURPS-GUM",
   "manifest": "https://raw.githubusercontent.com/V3-code/GURPS-GUM/master/system.json",

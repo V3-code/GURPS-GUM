@@ -5,7 +5,7 @@ export const CONTENT_SOURCE_PURPOSES = Object.freeze({
     id: "conditions",
     label: "GUM.ContentSources.Purposes.Conditions.Name",
     description: "GUM.ContentSources.Purposes.Conditions.Description",
-    defaults: Object.freeze(["gum.conditions"]),
+    defaults: Object.freeze([]),
     documentName: "Item",
     itemTypes: Object.freeze(["condition"])
   }),
@@ -53,7 +53,7 @@ export const CONTENT_SOURCE_PURPOSES = Object.freeze({
     id: "passiveConditions",
     label: "GUM.ContentSources.Purposes.PassiveConditions.Name",
     description: "GUM.ContentSources.Purposes.PassiveConditions.Description",
-    defaults: Object.freeze(["gum.regras"]),
+    defaults: Object.freeze([]),
     documentName: "Item",
     itemTypes: Object.freeze(["condition"])
   }),
@@ -77,7 +77,7 @@ export const CONTENT_SOURCE_PURPOSES = Object.freeze({
     id: "effects",
     label: "GUM.ContentSources.Purposes.Effects.Name",
     description: "GUM.ContentSources.Purposes.Effects.Description",
-    defaults: Object.freeze(["gum.efeitos"]),
+    defaults: Object.freeze([]),
     documentName: "Item",
     itemTypes: Object.freeze(["effect"])
   }),

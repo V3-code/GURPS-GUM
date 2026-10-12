@@ -45,7 +45,7 @@ test("legacy status binding setting is migrated without replacing an explicit so
   const settings = fs.readFileSync("module/settings.js", "utf8");
 
   assert.match(settings, /Object\.hasOwn\(configuredSources, "statusBindings"\)/);
-  assert.match(settings, /legacyId \|\| "gum\.conditions"/);
+  assert.match(settings, /legacyId && legacyId !== "gum\.conditions" \? \[legacyId\] : \[\]/);
   assert.match(settings, /contentSourceService\.setSourceIds\("statusBindings"/);
   assert.match(settings, /"statusBindingsCompendium"[\s\S]*?config: false/);
   assert.match(settings, /worldStatuses\.bindingsMigrated/);
@@ -57,9 +57,10 @@ test("retired bundled sources are removed without discarding user libraries", ()
   const settings = fs.readFileSync("module/settings.js", "utf8");
   const main = fs.readFileSync("scripts/main.js", "utf8");
 
-  for (const sourceId of ["gum.modifiers", "gum.templates", "gum.eqp_modifiers", "gum.gm_modifiers", "gum.skills", "gum.gatilhos"]) {
+  for (const sourceId of ["gum.conditions", "gum.modifiers", "gum.templates", "gum.eqp_modifiers", "gum.gm_modifiers", "gum.skills", "gum.regras", "gum.efeitos", "gum.gatilhos"]) {
     assert.match(settings, new RegExp(sourceId.replace(".", "\\.")));
   }
+  assert.match(settings, /contentSourcesRetiredBundledSourcesMigrationV2/);
   assert.match(settings, /filter\(id => id !== retiredId\)/);
   assert.match(main, /await migrateRetiredBundledSources\(\)/);
 });

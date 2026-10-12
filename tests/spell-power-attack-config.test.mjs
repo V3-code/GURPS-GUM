@@ -8,6 +8,8 @@ const itemSheet = readFileSync(new URL("../module/item/gurps-item-sheet.js", imp
 const rollPrompt = readFileSync(new URL("../module/apps/roll-prompt.js", import.meta.url), "utf8");
 const itemStyles = readFileSync(new URL("../styles/item-sheet.css", import.meta.url), "utf8");
 const systemTemplate = JSON.parse(readFileSync(new URL("../template.json", import.meta.url), "utf8"));
+const ptBr = JSON.parse(readFileSync(new URL("../lang/pt-BR.json", import.meta.url), "utf8"));
+const en = JSON.parse(readFileSync(new URL("../lang/en.json", import.meta.url), "utf8"));
 
 test("spell and power attack rolls expose the configured attack base to the prompt", () => {
   const attackLinks = characterTemplate.match(/<a class="rollable(?: [^"]*)?"[^>]+data-type="attack"[^>]+>/g) || [];
@@ -48,4 +50,25 @@ test("attack cards share one complete three-column grid", () => {
   assert.match(itemStyles, /spell-power-result-grid\.spell-power-attack-grid \{[\s\S]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(itemStyles, /spell-power-attack-type-fields \{[\s\S]*display: contents/);
   assert.match(itemStyles, /@media \(max-width: 520px\)[\s\S]*spell-power-result-grid\.spell-power-attack-grid \{[\s\S]*grid-template-columns: minmax\(0, 1fr\)/);
+});
+
+test("spell and power item sheets localize their dedicated interface in both languages", () => {
+  const sources = `${itemTemplate}\n${itemSheet}`;
+  const keys = [...new Set(sources.match(/GUM\.SpellPower\.[A-Za-z0-9]+/g) || [])];
+
+  assert.ok(keys.length > 80, "the complete spell/power editor should use its localization namespace");
+  for (const key of keys) {
+    assert.equal(typeof ptBr[key], "string", `missing PT-BR localization: ${key}`);
+    assert.equal(typeof en[key], "string", `missing EN localization: ${key}`);
+    assert.ok(ptBr[key].trim().length > 0, `empty PT-BR localization: ${key}`);
+    assert.ok(en[key].trim().length > 0, `empty EN localization: ${key}`);
+  }
+
+  for (const key of [
+    "GUM.SpellPower.TabCasting",
+    "GUM.SpellPower.TabActivation",
+    "GUM.SpellPower.AttackAfterCasting",
+    "GUM.SpellPower.AttackAfterActivation",
+    "GUM.SpellPower.DamageScalingHint"
+  ]) assert.match(itemTemplate, new RegExp(key.replaceAll(".", "\\.")));
 });

@@ -19,6 +19,7 @@ export function buildRollPurposePickerContent({ selectedIds = [], attributeKey =
         const search = normalizePurposeSearch(`${purpose.label} ${purpose.id} ${purpose.description} ${(purpose.keywords ?? []).join(" ")}`);
         return `<div class="roll-tag-picker-option${purpose.selected ? " is-selected" : ""}" data-search="${escapeHtml(search)}" tabindex="0">
           <input id="${checkboxId}" type="checkbox" name="roll-purpose" value="${escapeHtml(purpose.id)}" ${purpose.selected ? "checked" : ""}>
+          <span class="gum-purpose-picker-check" aria-hidden="true"><i class="fas fa-check"></i></span>
           <label for="${checkboxId}"><span class="gum-purpose-picker-title"><strong>${escapeHtml(purpose.label)}</strong>${purpose.suggested ? '<span class="gum-purpose-suggested">Sugerida</span>' : ""}</span><code>${escapeHtml(purpose.id)}</code></label>
           <button type="button" class="roll-tag-picker-info" aria-label="Informações sobre ${escapeHtml(purpose.label)}" aria-expanded="false"><i class="fas fa-info-circle" aria-hidden="true"></i><span role="tooltip">${escapeHtml(purpose.description)}</span></button>
         </div>`;
@@ -28,6 +29,7 @@ export function buildRollPurposePickerContent({ selectedIds = [], attributeKey =
     }).join("");
 
   return `<div class="gum-roll-tag-picker gum-purpose-picker">
+    <div class="gum-purpose-picker-intro"><span class="gum-purpose-picker-intro-icon"><i class="fas fa-bullseye" aria-hidden="true"></i></span><span><strong>Contexto do teste</strong><small>Escolha as finalidades que descrevem quando este teste está sendo realizado.</small></span></div>
     <div class="roll-tag-picker-searchbox"><i class="fas fa-search" aria-hidden="true"></i><input type="search" class="roll-tag-picker-search" placeholder="Buscar finalidade por nome, chave ou descrição..." aria-label="Buscar finalidades"><button type="button" class="roll-tag-search-clear" aria-label="Limpar pesquisa"><i class="fas fa-times" aria-hidden="true"></i></button></div>
     <div class="roll-tag-picker-tools"><strong class="roll-tag-selected-summary"></strong><button type="button" class="roll-tag-clear-selection">Limpar</button><label><input type="checkbox" class="roll-tag-selected-only"> Mostrar somente selecionadas</label><span class="roll-tag-result-count" aria-live="polite"></span></div>
     <div class="roll-tag-picker-results">${groups}<div class="roll-tag-picker-empty" hidden><strong>Nenhuma finalidade encontrada.</strong><span>Tente outro termo ou desative o filtro de selecionadas.</span></div></div>

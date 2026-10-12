@@ -27,7 +27,7 @@ test('advantage and disadvantage cost controls share one dashboard section', () 
 });
 
 test('the dedicated power cost dashboard remains limited to powers', () => {
-  assert.match(template, /\{\{#if \(eq item\.type "power"\)\}\}\s*<div class="skill-details-dashboard spell-power-dashboard power-cost-dashboard">[\s\S]*?Cálculo do custo/);
+  assert.match(template, /\{\{#if \(eq item\.type "power"\)\}\}\s*<div class="skill-details-dashboard spell-power-dashboard power-cost-dashboard">[\s\S]*?GUM\.SpellPower\.CostCalculation/);
   assert.doesNotMatch(template, /\{\{#if \(or \(eq item\.type "advantage"\) \(eq item\.type "disadvantage"\) \(eq item\.type "power"\)\)\)\}\}\s*<div class="skill-details-dashboard spell-power-dashboard power-cost-dashboard">/);
 });
 
@@ -62,4 +62,10 @@ test('cost workspaces provide responsive grids and a distinct result card', () =
   assert.match(styles, /\.is-cost-disabled/);
   assert.match(styles, /@media \(max-width: 520px\)/);
   assert.match(styles, /\.characteristic-cost-result small[\s\S]*?white-space: pre-line/);
+});
+
+test('the favorite and organization row stays compact and gives organization more room', () => {
+  assert.match(template, /class="characteristic-top-grid"[\s\S]*?characteristic-favorite-card[\s\S]*?characteristic-organization-card/);
+  assert.match(styles, /characteristic-top-grid\s*\{[\s\S]*?grid-template-columns:\s*minmax\(150px, 0\.55fr\) minmax\(260px, 1fr\)/);
+  assert.match(styles, /characteristic-top-grid[\s\S]*?> \.characteristic-favorite-card,[\s\S]*?> \.characteristic-organization-card\s*\{[\s\S]*?min-height:\s*64px/);
 });
