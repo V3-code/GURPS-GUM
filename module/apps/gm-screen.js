@@ -11,6 +11,7 @@ import { getGMScreenEffectState } from "../utils/gm-screen-effect-state.mjs";
 import { openTestRequestLauncher } from "./test-request-launcher.js";
 import { resolveCharacterImage } from "../utils/character-image.mjs";
 import { clampFloatingPanelPosition } from "../utils/floating-panel-position.mjs";
+import { resolveDefenseRollType } from "../utils/defense-roll-type.mjs";
 
 export class GumGMScreen extends Application {
     
@@ -918,7 +919,7 @@ activateListeners(html) {
                  </div>`;
                  
         // Esquiva
-        html += `<div class="gum-ctx-stat-box roll-def" data-def="Esquiva" data-val="${dodgeVal}">
+        html += `<div class="gum-ctx-stat-box roll-def" data-def="Esquiva" data-defense-type="dodge" data-val="${dodgeVal}" data-defense-bonus-included="true">
                     <span class="stat-label">ESQ</span>
                     <span class="stat-value">${dodgeVal}</span>
                  </div>`;
@@ -964,6 +965,8 @@ activateListeners(html) {
                 type: atk.damage_type || "",
                 parry: parry,
                 block: block,
+                parryDefenseBonusIncluded: atk.final_parry !== null && atk.final_parry !== undefined,
+                blockDefenseBonusIncluded: atk.final_block !== null && atk.final_block !== undefined,
                 fullLabel: `${item.name} (${atk.mode})`,
                 itemId: item.id,
                 itemUuid: item.uuid,
@@ -992,8 +995,8 @@ activateListeners(html) {
                                     </div>
                                     <div class="ctx-actions-right">
                                         ${mode.damage ? `<div class="damage-roll-btn roll-damage-ctx" data-damage="${mode.damage}" data-display-damage="${mode.damageDisplay}" data-type="${mode.type}" data-label="${mode.fullLabel}" title="${this._t("GUM.GMScreen.Damage")}: ${mode.damageDisplay}"><i class="fas fa-skull"></i> ${mode.damageDisplay}</div>` : ''}
-                                        ${mode.parry ? `<div class="def-roll-btn-ctx roll-def" data-def="${this._t("GUM.GMScreen.Parry")}" data-val="${mode.parry}" data-item-id="${mode.itemId}" data-item-uuid="${mode.itemUuid}" data-attack-id="${mode.attackId}" title="${this._t("GUM.GMScreen.Parry")}"><i class="fas fa-swords"></i> ${mode.parry}</div>` : ''}
-                                        ${mode.block ? `<div class="def-roll-btn-ctx roll-def" data-def="${this._t("GUM.GMScreen.Block")}" data-val="${mode.block}" data-item-id="${mode.itemId}" data-item-uuid="${mode.itemUuid}" data-attack-id="${mode.attackId}" title="${this._t("GUM.GMScreen.Block")}"><i class="fas fa-shield-alt"></i> ${mode.block}</div>` : ''}
+                                        ${mode.parry ? `<div class="def-roll-btn-ctx roll-def" data-def="${this._t("GUM.GMScreen.Parry")}" data-defense-type="parry" data-val="${mode.parry}" data-defense-bonus-included="${mode.parryDefenseBonusIncluded}" data-item-id="${mode.itemId}" data-item-uuid="${mode.itemUuid}" data-attack-id="${mode.attackId}" data-attack-type="${mode.attackType}" title="${this._t("GUM.GMScreen.Parry")}"><i class="fas fa-swords"></i> ${mode.parry}</div>` : ''}
+                                        ${mode.block ? `<div class="def-roll-btn-ctx roll-def" data-def="${this._t("GUM.GMScreen.Block")}" data-defense-type="block" data-val="${mode.block}" data-defense-bonus-included="${mode.blockDefenseBonusIncluded}" data-item-id="${mode.itemId}" data-item-uuid="${mode.itemUuid}" data-attack-id="${mode.attackId}" data-attack-type="${mode.attackType}" title="${this._t("GUM.GMScreen.Block")}"><i class="fas fa-shield-alt"></i> ${mode.block}</div>` : ''}
                                     </div>
                                 </div>
                             </div>
@@ -1175,10 +1178,13 @@ activateListeners(html) {
             const el = $(ev.currentTarget);
             this._performContextRoll(actor, el.data('def'), parseInt(el.data('val')), {
                 quick: ev.ctrlKey,
-                                rollType: 'defense',
+                rollType: 'defense',
+                 defenseType: el.data('defenseType') || null,
+                defenseBonusIncluded: el.data('defenseBonusIncluded') === true || String(el.data('defenseBonusIncluded')) === 'true',
                 itemId: el.data('itemId') || null,
                 itemUuid: el.data('itemUuid') || null,
-                attackId: el.data('attackId') || null
+                 attackId: el.data('attackId') || null,
+                 attackType: el.data('attackType') || null
             });
             menu.remove();
         });
@@ -1248,7 +1254,10 @@ activateListeners(html) {
      * Executa a rolagem do menu somando Modificadores E aplicando Tetos (Caps)
      */
      _performContextRoll(actor, label, targetValue, options = {}) {
-        const { quick = false, rollType = 'skill', itemId = null, itemUuid = null, attackId = null, attackType = null, attributeKey = null } = options;
+        const { quick = false, rollType = 'skill', itemId = null, itemUuid = null, attackId = null, attackType = null, attributeKey = null, defenseBonusIncluded = false } = options;
+        const defenseType = rollType === 'defense'
+            ? resolveDefenseRollType(options.defenseType, label)
+            : null;
         
         let selectedModsTotal = 0;
         let lowestCap = Infinity; // Começa infinito (sem teto))
@@ -1278,15 +1287,10 @@ activateListeners(html) {
                 itemUuid,
                                 attackId,
                 attackType,
-                attributeKey
+                attributeKey,
+                defenseType,
+                defenseBonusIncluded
             };
-
-            if (rollType === 'defense') {
-                const normalized = String(label || '').toLowerCase();
-                if (normalized.includes('esquiva')) promptRollData.defenseType = 'dodge';
-                else if (normalized.includes('apar')) promptRollData.defenseType = 'parry';
-                else if (normalized.includes('bloq')) promptRollData.defenseType = 'block';
-            }
 
             new GurpsRollPrompt(actor, promptRollData).render(true);
             return;
@@ -1304,6 +1308,8 @@ activateListeners(html) {
             attackId,
                         attackType,
             attributeKey,
+            defenseType,
+            defenseBonusIncluded,
             img: actor.img || "icons/svg/d20.svg"
         }, {
             effectiveCap: lowestCap

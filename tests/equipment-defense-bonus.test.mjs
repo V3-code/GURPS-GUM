@@ -13,6 +13,8 @@ const equipment = (id, name, system) => ({ id, name, type: "equipment", _source:
 const main = fs.readFileSync("scripts/main.js", "utf8");
 const actorSheet = fs.readFileSync("module/actor/gurps-actor-sheet.js", "utf8");
 const actorTemplate = fs.readFileSync("templates/actors/characters.hbs", "utf8");
+const gmScreen = fs.readFileSync("module/apps/gm-screen.js", "utf8");
+const rollRequestExecutor = fs.readFileSync("module/services/roll-request-executor.mjs", "utf8");
 
 test("collects only equipped equipment with an explicitly active Defense Bonus", () => {
   const items = [
@@ -73,4 +75,11 @@ test("actor defense displays and inventory cards share the active equipment togg
   assert.match(actorTemplate, /item-toggle-defense-bonus/);
   assert.match(actorSheet, /system\.defense_bonus_active/);
   assert.match(actorSheet, /defenseBonusIncluded: dataset\.defenseBonusIncluded === "true"/);
+});
+
+test("prepared defenses do not add equipment BD again outside the actor sheet", () => {
+  assert.match(gmScreen, /data-defense-bonus-included="true"/);
+  assert.match(gmScreen, /defenseBonusIncluded: el\.data\('defenseBonusIncluded'\)/);
+  assert.match(gmScreen, /defenseBonusIncluded,\s*img:/);
+  assert.match(rollRequestExecutor, /defenseBonusIncluded: resolution\.defenseBonusIncluded === true/);
 });

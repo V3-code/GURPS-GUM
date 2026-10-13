@@ -18,7 +18,7 @@ import { canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
 import { contentSourceService } from "../services/content-source-service.mjs";
 import { attachSheetItemOrganizer } from "../services/sheet-item-organizer.mjs";
 import { buildEquipmentSortUpdates, resolveEquipmentDrop } from "../utils/equipment-drop.mjs";
-import { buildEquipmentConsumptionUpdate, equipmentLinkedReserve, equipmentReserveBalanceUpdate, resolveEquipment } from "../utils/equipment-resolution.mjs";
+import { buildEquipmentConsumptionUpdate, equipmentIntegrityCurrentUpdate, equipmentIntegrityRecord, equipmentLinkedReserve, equipmentReserveBalanceUpdate, resolveEquipment } from "../utils/equipment-resolution.mjs";
 import { UNGROUPED_ORGANIZER_ID, addItemOrganizationGroup, buildItemCategoryGroupPlan, createGroupsFromItemCategories, moveOrganizedItem, normalizeItemOrganization, removeItemOrganizationGroup, renameItemOrganizationGroup } from "../utils/item-organization.mjs";
 
 const WOUND_NATURE_ICONS = Object.freeze({
@@ -1190,6 +1190,13 @@ async getData(options) {
                     .filter(Boolean);
                 for (const reserve of linkedEquipmentReserves.filter(entry => entry.type === "combat")) {
                     preparedCombatMeters.push({ id: `equipment-${reserve.equipmentId}`, meter: reserve });
+                }
+                const linkedIntegrityRecords = this.actor.items
+                    .filter(item => item.type === "equipment")
+                    .map(item => equipmentIntegrityRecord(item, item.system?.equipmentResolution))
+                    .filter(Boolean);
+                for (const record of linkedIntegrityRecords) {
+                    preparedCombatMeters.push({ id: `integrity-${record.equipmentId}`, meter: record });
                 }
                 preparedCombatMeters.sort((a, b) => a.meter.name.localeCompare(b.meter.name));
 
@@ -5379,6 +5386,8 @@ async _onAdjustCombatMeter(ev) {
   ev.preventDefault();
   ev.stopPropagation();
   const equipmentId = ev.currentTarget.closest(".meter-card")?.dataset?.equipmentId;
+  const integrityRecord = ev.currentTarget.closest(".meter-card")?.dataset?.integrityRecord === "true";
+  if (equipmentId && integrityRecord) return this._adjustEquipmentIntegrity(equipmentId, Number(ev.currentTarget.dataset.adjustment) || 0);
   if (equipmentId) return this._adjustEquipmentReserve(equipmentId, Number(ev.currentTarget.dataset.adjustment) || 0);
   const meterId = ev.currentTarget.closest(".meter-card")?.dataset?.meterId;
   const meter = this.actor.system.combat.combat_meters?.[meterId];
@@ -5563,6 +5572,16 @@ async _adjustEquipmentReserve(equipmentId, adjustment) {
   const nextCurrent = Math.max(0, Math.min(reserve.max, reserve.current + adjustment));
   if (nextCurrent === reserve.current) return;
   await item.update(equipmentReserveBalanceUpdate(item, nextCurrent, item.system?.equipmentResolution));
+}
+
+async _adjustEquipmentIntegrity(equipmentId, adjustment) {
+  const item = this.actor.items.get(equipmentId);
+  if (!item || !adjustment) return;
+  const record = equipmentIntegrityRecord(item, item.system?.equipmentResolution);
+  if (!record) return;
+  const nextCurrent = Math.max(0, Math.min(record.max, record.current + adjustment));
+  if (nextCurrent === record.current) return;
+  await item.update(equipmentIntegrityCurrentUpdate(item, nextCurrent, item.system?.equipmentResolution));
 }
 
 async _promptEnergyReserveData(reserveType, initialData = {}, { isEdit = false } = {}) {

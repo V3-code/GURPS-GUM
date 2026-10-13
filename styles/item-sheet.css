@@ -5610,6 +5610,15 @@ color:#121114;
   gap: 14px;
 }
 
+.gum.sheet.item .equipment-details-layout .equipment-integrity-toggle {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  gap: 14px;
+}
+
 .gum.sheet.item .equipment-details-layout .equipment-defense-bonus-toggle {
   grid-column: 1 / -1;
   flex-direction: row;
@@ -5626,6 +5635,11 @@ color:#121114;
 
 .gum.sheet.item .equipment-details-layout .equipment-consume-toggle .equipment-stat-heading,
 .gum.sheet.item .equipment-details-layout .equipment-consume-toggle .equipment-toggle-pill {
+  white-space: nowrap;
+}
+
+.gum.sheet.item .equipment-details-layout .equipment-integrity-toggle .equipment-stat-heading,
+.gum.sheet.item .equipment-details-layout .equipment-integrity-toggle .equipment-toggle-pill {
   white-space: nowrap;
 }
 

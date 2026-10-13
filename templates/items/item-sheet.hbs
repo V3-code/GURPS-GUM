@@ -131,12 +131,17 @@
                 </div>
 
                 <div class="equipment-stat-card">
-                    <label class="equipment-stat-heading" title="{{localize 'GUM.Equipment.Label.ItemHP'}}"><i class="fas fa-heart"></i><span>{{localize "GUM.Equipment.Label.ItemHP"}}</span></label>
+                    <label class="equipment-stat-heading" title="{{localize 'GUM.Equipment.Label.ItemHPMax'}}"><i class="fas fa-heart"></i><span>{{localize "GUM.Equipment.Label.ItemHPMax"}}</span></label>
                     <div class="equipment-stat-control">
                         <div class="equipment-calculated-value"><input type="number" name="system.item_hp" value="{{system.item_hp}}" title="{{localize 'GUM.Equipment.Label.BaseValue'}}"/>
                             {{#if equipmentPropertyChanges.item_hp.changed}}<div class="equipment-final-value" title="{{localize 'GUM.Equipment.Label.FinalValue'}}"><i class="fas fa-arrow-right"></i><span>{{equipmentPropertyChanges.item_hp.final}}</span></div>{{/if}}
                         </div>
                     </div>
+                </div>
+
+                <div class="equipment-stat-card">
+                    <label class="equipment-stat-heading" title="{{localize 'GUM.Equipment.Label.ItemHPCurrent'}}"><i class="fas fa-heart-pulse"></i><span>{{localize "GUM.Equipment.Label.ItemHPCurrent"}}</span></label>
+                    <div class="equipment-stat-control"><input type="number" min="0" name="system.item_hp_current" value="{{system.item_hp_current}}"/></div>
                 </div>
 
                 <div class="equipment-stat-card">
@@ -148,6 +153,10 @@
                     </div>
                 </div>
             </div>
+            <label class="equipment-stat-card equipment-integrity-toggle" title="{{localize 'GUM.Equipment.Label.IntegrityRecordHint'}}">
+                <span class="equipment-stat-heading"><i class="fas fa-shield-heart"></i><span>{{localize "GUM.Equipment.Label.IntegrityRecord"}}</span></span>
+                <span class="equipment-toggle-pill"><input type="checkbox" name="system.integrity_record_enabled" {{checked system.integrity_record_enabled}}/><span>{{localize "GUM.Equipment.Label.Enabled"}}</span></span>
+            </label>
         </div>
 
         <div class="form-section skill-details-compact equipment-details-form">

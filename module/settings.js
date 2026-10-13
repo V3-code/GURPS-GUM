@@ -344,6 +344,17 @@ export const registerSystemSettings = function() {
         default: "3d6"
     });
 
+    game.settings.register("gum", "tacticalHexOccupancyEnabled", {
+        name: "GUM.Settings.HexOccupancy.Name",
+        hint: "GUM.Settings.HexOccupancy.Hint",
+        scope: "world",
+        config: true,
+        restricted: true,
+        type: Boolean,
+        default: false,
+        onChange: enabled => Hooks.callAll("gumHexOccupancySettingChanged", { enabled })
+    });
+
     game.settings.register("gum", "autoDistanceModifierEnabled", {
         name: "GUM.Settings.AutoDistanceModifier.Name",
         hint: "GUM.Settings.AutoDistanceModifier.Hint",
