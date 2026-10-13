@@ -16,12 +16,12 @@
                 <textarea
                     name="name"
                     rows="1"
-                    placeholder="Nome do Item"
+                    placeholder="{{localize 'GUM.EffectSheet.ItemName'}}"
                 >{{item.name}}</textarea>
             </div>
 
             <div class="header-subline">
-                <span class="item-type-tag">Efeito</span>
+                <span class="item-type-tag">{{localize "GUM.EffectSheet.Effect"}}</span>
             </div>
 
             <span class="header-divider" aria-hidden="true"></span>
@@ -32,9 +32,9 @@
     {{!-- ABAS                                                       --}}
     {{!-- ========================================================= --}}
     <nav class="sheet-tabs tabs" data-group="primary">
-        <a class="item active" data-tab="description">Descrição</a>
-        <a class="item" data-tab="configuracao">Configuração</a>
-        <a class="item" data-tab="efeitos-ativos">Efeitos Ativos</a>
+        <a class="item active" data-tab="description">{{localize "GUM.EffectSheet.Description"}}</a>
+        <a class="item" data-tab="configuracao">{{localize "GUM.EffectSheet.Configuration"}}</a>
+        <a class="item" data-tab="efeitos-ativos">{{localize "GUM.EffectSheet.ActiveEffects"}}</a>
     </nav>
 
     <main class="sheet-body">
@@ -50,9 +50,9 @@
                         <div class="effect-premium-toolbar-title">
 
                             <div class="effect-premium-toolbar-copy">
-                                <h4>Ações do Efeito</h4>
+                                <h4>{{localize "GUM.EffectSheet.EffectActions"}}</h4>
                                 <span class="effect-premium-toolbar-subtitle">
-                                    Configure os resultados aplicados por este efeito
+                                    {{localize "GUM.EffectSheet.EffectActionsHint"}}
                                 </span>
                             </div>
 
@@ -66,7 +66,7 @@
                             class="add-effect-action effect-premium-add-action"
                         >
                             <i class="fas fa-plus" aria-hidden="true"></i>
-                            Adicionar Ação
+                            {{localize "GUM.EffectSheet.AddAction"}}
                         </button>
                     </div>
 
@@ -106,8 +106,8 @@
                                                 type="button"
                                                 class="remove-effect-action js-summary-action effect-premium-icon-button"
                                                 data-index="{{action.index}}"
-                                                title="Remover ação"
-                                                aria-label="Remover ação {{action.displayIndex}}"
+                                                title="{{localize 'GUM.EffectSheet.RemoveAction'}}"
+                                                aria-label="{{localize 'GUM.EffectSheet.RemoveAction'}} {{action.displayIndex}}"
                                             >
                                                 <i class="fas fa-trash" aria-hidden="true"></i>
                                             </button>
@@ -128,7 +128,7 @@
                                             <div class="effect-premium-field">
                                                 <label class="effect-premium-field-label">
                                                     <i class="fas fa-tag" aria-hidden="true"></i>
-                                                    Nome do efeito aplicado
+                                                    {{localize "GUM.EffectSheet.AppliedEffectName"}}
                                                 </label>
 
                                                 <div class="effect-premium-field-control">
@@ -136,10 +136,10 @@
                                                         type="text"
                                                         name="system.actions.{{action.index}}.label"
                                                         value="{{action.label}}"
-                                                         placeholder="Ex: Penalidade em ST"
+                                                         placeholder="{{localize 'GUM.EffectSheet.ExampleStPenalty'}}"
                                                     />
                                                     <p class="effect-premium-field-hint">
-                                                        Nome exibido na ficha do personagem.
+                                                        {{localize "GUM.EffectSheet.AppliedEffectNameHint"}}
                                                     </p>
                                                 </div>
                                             </div>
@@ -147,7 +147,7 @@
                                             <div class="effect-premium-field">
                                                 <label class="effect-premium-field-label">
                                                     <i class="fas fa-layer-group" aria-hidden="true"></i>
-                                                    Tipo
+                                                    {{localize "GUM.EffectSheet.Type"}}
                                                 </label>
 
                                                 <div class="effect-premium-field-control">
@@ -156,64 +156,64 @@
                                                             value="attribute"
                                                             {{#if (eq action.type "attribute")}}selected{{/if}}
                                                         >
-                                                            Modificador de Atributo
+                                                            {{localize "GUM.EffectSheet.AttributeModifier"}}
                                                         </option>
 
                                                         <option
                                                             value="status"
                                                             {{#if (eq action.type "status")}}selected{{/if}}
                                                         >
-                                                            Status
+                                                            {{localize "GUM.EffectSheet.Status"}}
                                                         </option>
 
                                                         <option
                                                             value="resource_change"
                                                             {{#if (eq action.type "resource_change")}}selected{{/if}}
                                                         >
-                                                            Alteração de Recurso
+                                                            {{localize "GUM.EffectSheet.ResourceChange"}}
                                                         </option>
 
                                                         <option
                                                             value="resource_create"
                                                             {{#if (eq action.type "resource_create")}}selected{{/if}}
                                                         >
-                                                            Criar Recurso
+                                                            {{localize "GUM.EffectSheet.CreateResource"}}
                                                         </option>
 
                                                         <option
                                                             value="roll_modifier"
                                                             {{#if (eq action.type "roll_modifier")}}selected{{/if}}
                                                         >
-                                                            Modificador de Rolagem
+                                                            {{localize "GUM.EffectSheet.RollModifier"}}
                                                         </option>
 
                                                         <option value="skill_modifier" {{#if (eq action.type "skill_modifier")}}selected{{/if}}>
-                                                            Modificar Rolagem de Perícia
+                                                            {{localize "GUM.EffectSheet.SkillRollModifier"}}
                                                         </option>
 
                                                         <option value="combat_modifier" {{#if (eq action.type "combat_modifier")}}selected{{/if}}>
-                                                            Modificar Modo de Combate
+                                                            {{localize "GUM.EffectSheet.CombatModeModifier"}}
                                                         </option>
 
                                                         <option
                                                             value="chat"
                                                             {{#if (eq action.type "chat")}}selected{{/if}}
                                                         >
-                                                            Mensagem de Chat
+                                                            {{localize "GUM.EffectSheet.ChatMessage"}}
                                                         </option>
 
                                                         <option
                                                             value="macro"
                                                             {{#if (eq action.type "macro")}}selected{{/if}}
                                                         >
-                                                            Macro
+                                                            {{localize "GUM.EffectSheet.Macro"}}
                                                         </option>
 
                                                         <option
                                                             value="flag"
                                                             {{#if (eq action.type "flag")}}selected{{/if}}
                                                         >
-                                                            Flag
+                                                            {{localize "GUM.EffectSheet.Flag"}}
                                                         </option>
                                                     </select>
                                                 </div>
@@ -238,7 +238,7 @@
                                                     <div class="effect-premium-field is-primary">
                                                         <label class="effect-premium-field-label">
                                                             <i class="fas fa-code-branch" aria-hidden="true"></i>
-                                                            Caminho
+                                                            {{localize "GUM.EffectSheet.Path"}}
                                                         </label>
 
                                                         <div class="effect-premium-field-control">
@@ -248,18 +248,18 @@
                                                                     class="effect-code-input"
                                                                     name="system.actions.{{action.index}}.path"
                                                                     value="{{action.path}}"
-                                                                    placeholder="Ex: system.attributes.dx.passive"
+                                                                    placeholder="{{localize 'GUM.EffectSheet.ExampleAttributePath'}}"
                                                                 />
-                                                                <button type="button" class="open-effect-path-picker effect-premium-icon-button" data-target-input="system.actions.{{action.index}}.path" data-operation-input="system.actions.{{action.index}}.operation" title="Selecionar um caminho suportado" aria-label="Selecionar caminho"><i class="fas fa-sitemap" aria-hidden="true"></i></button>
+                                                                <button type="button" class="open-effect-path-picker effect-premium-icon-button" data-target-input="system.actions.{{action.index}}.path" data-operation-input="system.actions.{{action.index}}.operation" title="{{localize 'GUM.EffectSheet.SelectSupportedPath'}}" aria-label="{{localize 'GUM.EffectSheet.SelectPath'}}"><i class="fas fa-sitemap" aria-hidden="true"></i></button>
                                                             </div>
-                                                            <p class="effect-premium-field-hint">Selecione um destino do sistema ou informe um caminho personalizado.</p>
+                                                            <p class="effect-premium-field-hint">{{localize "GUM.EffectSheet.PathHint"}}</p>
                                                         </div>
                                                     </div>
 
                                                     <div class="effect-premium-field">
                                                         <label class="effect-premium-field-label">
                                                             <i class="fas fa-calculator" aria-hidden="true"></i>
-                                                            Operação
+                                                            {{localize "GUM.EffectSheet.Operation"}}
                                                         </label>
 
                                                         <div class="effect-premium-field-control">
@@ -275,7 +275,7 @@
                                                                     value="OVERRIDE"
                                                                     {{#if (eq action.operation "OVERRIDE")}}selected{{/if}}
                                                                 >
-                                                                    Definir
+                                                                    {{localize "GUM.EffectSheet.Set"}}
                                                                 </option>
                                                             </select>
                                                         </div>
@@ -286,7 +286,7 @@
                                                     <div class="effect-premium-field effect-premium-expression-card">
                                                         <label class="effect-premium-field-label">
                                                             <i class="fas fa-code" aria-hidden="true"></i>
-                                                              {{#if (eq action.value_mode "per_origin_level")}}Valor por nível{{else}}Valor ou expressão{{/if}}
+                                                              {{#if (eq action.value_mode "per_origin_level")}}{{localize "GUM.EffectSheet.ValuePerLevel"}}{{else}}{{localize "GUM.EffectSheet.ValueOrExpression"}}{{/if}}
                                                         </label>
 
                                                         <div class="effect-premium-field-control">
@@ -295,8 +295,8 @@
                                                                 class="effect-code-input effect-expression-input"
                                                                 name="system.actions.{{action.index}}.value"
                                                                 value="{{action.value}}"
-                                                                placeholder="Ex: 2, -1, 1d6+2 ou expressão"
-                                                                title="Aceita valor fixo, fórmula ou rolagem de dados, conforme o interpretador do sistema."
+                                                                placeholder="{{localize 'GUM.EffectSheet.ExampleValueExpression'}}"
+                                                                title="{{localize 'GUM.EffectSheet.ValueFormulaDiceHint'}}"
                                                                 aria-describedby="effect-attribute-value-help-{{action.index}}"
                                                             />
 
@@ -304,18 +304,18 @@
                                                                 id="effect-attribute-value-help-{{action.index}}"
                                                                 class="effect-premium-field-hint"
                                                             >
-                                                                Avaliado ao aplicar. Aceita fórmula, dados e condições como <code>se(possui("Item"), 2, 1)</code>, <code>nivel("Item")</code>, <code>quantidade("Item")</code>, <code>equipado("Item")</code> e <code>status("id")</code>.
+                                                                {{localize "GUM.EffectSheet.EvaluatedOnApplyPrefix"}} <code>se(possui("Item"), 2, 1)</code>, <code>nivel("Item")</code>, <code>quantidade("Item")</code>, <code>equipado("Item")</code> {{localize "GUM.EffectSheet.And"}} <code>status("id")</code>.
                                                             </p>
                                                         </div>
                                                     </div>
                                                 </div>
                                                  <div class="effect-premium-grid effect-premium-grid-single">
                                                     <div class="effect-premium-field">
-                                                        <label class="effect-premium-field-label">Escalonamento do valor</label>
+                                                        <label class="effect-premium-field-label">{{localize "GUM.EffectSheet.ValueScaling"}}</label>
                                                         <div class="effect-premium-field-control">
                                                             <select name="system.actions.{{action.index}}.value_mode">
-                                                                <option value="fixed" {{#if (eq action.value_mode "fixed")}}selected{{/if}}>Valor fixo</option>
-                                                                <option value="per_origin_level" {{#if (eq action.value_mode "per_origin_level")}}selected{{/if}}>Por nível do item de origem</option>
+                                                                <option value="fixed" {{#if (eq action.value_mode "fixed")}}selected{{/if}}>{{localize "GUM.EffectSheet.FixedValue"}}</option>
+                                                                <option value="per_origin_level" {{#if (eq action.value_mode "per_origin_level")}}selected{{/if}}>{{localize "GUM.EffectSheet.PerSourceItemLevel"}}</option>
                                                             </select>
                                                         </div>
                                                     </div>
@@ -324,16 +324,16 @@
                                                     <div class="effect-premium-field">
                                                         <label class="effect-premium-field-label">
                                                             <i class="fas fa-message" aria-hidden="true"></i>
-                                                            Exibição do valor no chat
+                                                            {{localize "GUM.EffectSheet.ChatValueDisplay"}}
                                                         </label>
                                                         <div class="effect-premium-field-control">
                                                             <select name="system.actions.{{action.index}}.attribute_chat_visibility">
-                                                                <option value="public" {{#if (eq action.attribute_chat_visibility "public")}}selected{{/if}}>Público</option>
-                                                                <option value="owners" {{#if (eq action.attribute_chat_visibility "owners")}}selected{{/if}}>Privado para donos e Mestre</option>
-                                                                <option value="gm" {{#if (eq action.attribute_chat_visibility "gm")}}selected{{/if}}>Somente Mestre (rolagem oculta)</option>
-                                                                <option value="none" {{#if (eq action.attribute_chat_visibility "none")}}selected{{/if}}>Não mostrar</option>
+                                                                <option value="public" {{#if (eq action.attribute_chat_visibility "public")}}selected{{/if}}>{{localize "GUM.EffectSheet.Public"}}</option>
+                                                                <option value="owners" {{#if (eq action.attribute_chat_visibility "owners")}}selected{{/if}}>{{localize "GUM.EffectSheet.PrivateOwnersGM"}}</option>
+                                                                <option value="gm" {{#if (eq action.attribute_chat_visibility "gm")}}selected{{/if}}>{{localize "GUM.EffectSheet.GMOnlyBlind"}}</option>
+                                                                <option value="none" {{#if (eq action.attribute_chat_visibility "none")}}selected{{/if}}>{{localize "GUM.EffectSheet.DoNotShow"}}</option>
                                                             </select>
-                                                            <p class="effect-premium-field-hint">Define quem vê o valor calculado. Não altera a aplicação do efeito.</p>
+                                                            <p class="effect-premium-field-hint">{{localize "GUM.EffectSheet.VisibilityHint"}}</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -344,48 +344,48 @@
                                                 <div class="effect-premium-roll-compact effect-specialized-action">
                                                     <div class="effect-specialized-grid effect-specialized-grid-two">
                                                         <div class="effect-premium-field">
-                                                            <label class="effect-premium-field-label">Afetar</label>
+                                                            <label class="effect-premium-field-label">{{localize "GUM.EffectSheet.Affect"}}</label>
                                                             <div class="effect-premium-field-control">
                                                                 <select name="system.actions.{{action.index}}.skill_scope">
-                                                                    <option value="all" {{#if (eq action.skill_scope "all")}}selected{{/if}}>Todas as perícias</option>
-                                                                    <option value="specific" {{#if (eq action.skill_scope "specific")}}selected{{/if}}>Perícias específicas</option>
-                                                                    <option value="attribute" {{#if (eq action.skill_scope "attribute")}}selected{{/if}}>Perícias baseadas em atributo</option>
+                                                                    <option value="all" {{#if (eq action.skill_scope "all")}}selected{{/if}}>{{localize "GUM.EffectSheet.AllSkills"}}</option>
+                                                                    <option value="specific" {{#if (eq action.skill_scope "specific")}}selected{{/if}}>{{localize "GUM.EffectSheet.SpecificSkills"}}</option>
+                                                                    <option value="attribute" {{#if (eq action.skill_scope "attribute")}}selected{{/if}}>{{localize "GUM.EffectSheet.AttributeBasedSkills"}}</option>
                                                                 </select>
                                                             </div>
                                                         </div>
                                                         <div class="effect-premium-field">
-                                                            <label class="effect-premium-field-label">Aplicar em</label>
+                                                            <label class="effect-premium-field-label">{{localize "GUM.EffectSheet.ApplyTo"}}</label>
                                                             <div class="effect-premium-field-control"><select name="system.actions.{{action.index}}.modifier_application_side">{{#each ../rollModifierApplicationOptions as |opt|}}<option value="{{opt.id}}" {{#if (eq opt.id ../modifier_application_side)}}selected{{/if}}>{{opt.label}}</option>{{/each}}</select></div>
                                                         </div>
                                                     </div>
 
                                                     <div class="effect-specialized-grid effect-specialized-grid-three">
                                                         <div class="effect-premium-field {{#unless (eq action.skill_scope "specific")}}is-disabled{{/unless}}">
-                                                            <label class="effect-premium-field-label">Perícias específicas</label>
+                                                            <label class="effect-premium-field-label">{{localize "GUM.EffectSheet.SpecificSkills"}}</label>
                                                             <div class="effect-premium-field-control">
-                                                                <input type="text" name="system.actions.{{action.index}}.skill_targets" value="{{action.skill_targets}}" placeholder="Furtividade, Acrobacia" {{#unless (eq action.skill_scope "specific")}}disabled{{/unless}}/>
+                                                                <input type="text" name="system.actions.{{action.index}}.skill_targets" value="{{action.skill_targets}}" placeholder="{{localize 'GUM.EffectSheet.ExampleSkills'}}" {{#unless (eq action.skill_scope "specific")}}disabled{{/unless}}/>
                                                             </div>
                                                         </div>
                                                         <div class="effect-premium-field {{#unless (eq action.skill_scope "attribute")}}is-disabled{{/unless}}">
-                                                            <label class="effect-premium-field-label">Atributo base</label>
+                                                            <label class="effect-premium-field-label">{{localize "GUM.EffectSheet.BaseAttribute"}}</label>
                                                             <div class="effect-premium-field-control">
                                                                 <select name="system.actions.{{action.index}}.skill_attribute" {{#unless (eq action.skill_scope "attribute")}}disabled{{/unless}}><option value="st" {{#if (eq action.skill_attribute "st")}}selected{{/if}}>ST</option><option value="dx" {{#if (eq action.skill_attribute "dx")}}selected{{/if}}>DX</option><option value="iq" {{#if (eq action.skill_attribute "iq")}}selected{{/if}}>IQ</option><option value="ht" {{#if (eq action.skill_attribute "ht")}}selected{{/if}}>HT</option><option value="per" {{#if (eq action.skill_attribute "per")}}selected{{/if}}>Per</option><option value="vont" {{#if (eq action.skill_attribute "vont")}}selected{{/if}}>Vont</option></select>
                                                             </div>
                                                         </div>
                                                         <div class="effect-premium-field">
-                                                            <label class="effect-premium-field-label">Exibição</label>
-                                                            <div class="effect-premium-field-control"><select name="system.actions.{{action.index}}.modifier_nh_display_mode"><option value="roll_only" {{#if (eq action.modifier_nh_display_mode "roll_only")}}selected{{/if}}>Apenas rolagem</option><option value="include_in_nh" {{#if (eq action.modifier_nh_display_mode "include_in_nh")}}selected{{/if}}>Incluir no NH</option></select></div>
+                                                            <label class="effect-premium-field-label">{{localize "GUM.EffectSheet.Display"}}</label>
+                                                            <div class="effect-premium-field-control"><select name="system.actions.{{action.index}}.modifier_nh_display_mode"><option value="roll_only" {{#if (eq action.modifier_nh_display_mode "roll_only")}}selected{{/if}}>{{localize "GUM.EffectSheet.RollOnly"}}</option><option value="include_in_nh" {{#if (eq action.modifier_nh_display_mode "include_in_nh")}}selected{{/if}}>{{localize "GUM.EffectSheet.IncludeInNh"}}</option></select></div>
                                                         </div>
                                                     </div>
 
                                                     <div class="effect-specialized-grid effect-specialized-grid-value">
                                                         <div class="effect-premium-field effect-specialized-value-field">
-                                                            <label class="effect-premium-field-label"><i class="fas fa-plus"></i> Valor</label>
-                                                            <div class="effect-premium-field-control"><input type="text" class="effect-code-input" name="system.actions.{{action.index}}.modifier_value" value="{{action.modifier_value}}" placeholder='Ex: 1 ou se(status("abençoado"), 2, 0)'/><p class="effect-premium-field-hint">Aceita número, fórmula, dados ou expressão condicional.</p></div>
+                                                            <label class="effect-premium-field-label"><i class="fas fa-plus"></i> {{localize "GUM.EffectSheet.Value"}}</label>
+                                                            <div class="effect-premium-field-control"><input type="text" class="effect-code-input" name="system.actions.{{action.index}}.modifier_value" value="{{action.modifier_value}}" placeholder="{{localize 'GUM.EffectSheet.ExampleConditionalBonus'}}"/><p class="effect-premium-field-hint">{{localize "GUM.EffectSheet.ConditionalValueHint"}}</p></div>
                                                         </div>
                                                         <div class="effect-premium-field">
-                                                            <label class="effect-premium-field-label">Escalonamento</label>
-                                                            <div class="effect-premium-field-control"><select name="system.actions.{{action.index}}.modifier_value_mode"><option value="fixed" {{#if (eq action.modifier_value_mode "fixed")}}selected{{/if}}>Valor fixo</option><option value="per_origin_level" {{#if (eq action.modifier_value_mode "per_origin_level")}}selected{{/if}}>Por nível do item de origem</option></select></div>
+                                                            <label class="effect-premium-field-label">{{localize "GUM.EffectSheet.Scaling"}}</label>
+                                                            <div class="effect-premium-field-control"><select name="system.actions.{{action.index}}.modifier_value_mode"><option value="fixed" {{#if (eq action.modifier_value_mode "fixed")}}selected{{/if}}>{{localize "GUM.EffectSheet.FixedValue"}}</option><option value="per_origin_level" {{#if (eq action.modifier_value_mode "per_origin_level")}}selected{{/if}}>{{localize "GUM.EffectSheet.PerSourceItemLevel"}}</option></select></div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -395,60 +395,60 @@
                                             {{#if (eq action.type "combat_modifier")}}
                                                 <div class="effect-premium-roll-compact effect-specialized-action">
                                                     <div class="effect-specialized-grid effect-specialized-grid-two">
-                                                        <div class="effect-premium-field"><label class="effect-premium-field-label">Modos afetados</label><div class="effect-premium-field-control"><select name="system.actions.{{action.index}}.combat_scope"><option value="all" {{#if (eq action.combat_scope "all")}}selected{{/if}}>Todos os modos</option><option value="melee" {{#if (eq action.combat_scope "melee")}}selected{{/if}}>Corpo a corpo</option><option value="ranged" {{#if (eq action.combat_scope "ranged")}}selected{{/if}}>À distância</option><option value="specific" {{#if (eq action.combat_scope "specific")}}selected{{/if}}>Itens ou modos específicos</option></select></div></div>
-                                                        <div class="effect-premium-field"><label class="effect-premium-field-label">Aplicar em</label><div class="effect-premium-field-control"><select name="system.actions.{{action.index}}.modifier_application_side">{{#each ../rollModifierApplicationOptions as |opt|}}<option value="{{opt.id}}" {{#if (eq opt.id ../modifier_application_side)}}selected{{/if}}>{{opt.label}}</option>{{/each}}</select></div></div>
+                                                        <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.AffectedModes"}}</label><div class="effect-premium-field-control"><select name="system.actions.{{action.index}}.combat_scope"><option value="all" {{#if (eq action.combat_scope "all")}}selected{{/if}}>{{localize "GUM.EffectSheet.AllModes"}}</option><option value="melee" {{#if (eq action.combat_scope "melee")}}selected{{/if}}>{{localize "GUM.EffectSheet.Melee"}}</option><option value="ranged" {{#if (eq action.combat_scope "ranged")}}selected{{/if}}>{{localize "GUM.EffectSheet.Ranged"}}</option><option value="specific" {{#if (eq action.combat_scope "specific")}}selected{{/if}}>{{localize "GUM.EffectSheet.SpecificItemsModes"}}</option></select></div></div>
+                                                        <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.ApplyTo"}}</label><div class="effect-premium-field-control"><select name="system.actions.{{action.index}}.modifier_application_side">{{#each ../rollModifierApplicationOptions as |opt|}}<option value="{{opt.id}}" {{#if (eq opt.id ../modifier_application_side)}}selected{{/if}}>{{opt.label}}</option>{{/each}}</select></div></div>
                                                     </div>
 
                                                     <div class="effect-specialized-grid effect-specialized-grid-three">
-                                                        <div class="effect-premium-field {{#unless (eq action.combat_scope "specific")}}is-disabled{{/unless}}"><label class="effect-premium-field-label">Item/arma</label><div class="effect-premium-field-control"><input type="text" name="system.actions.{{action.index}}.combat_source_item_ids" value="{{action.combat_source_item_ids}}" placeholder="Espada Longa, Item.xxxxx" {{#unless (eq action.combat_scope "specific")}}disabled{{/unless}}/></div></div>
-                                                        <div class="effect-premium-field {{#unless (eq action.combat_scope "specific")}}is-disabled{{/unless}}"><label class="effect-premium-field-label">Modo de uso</label><div class="effect-premium-field-control"><input type="text" name="system.actions.{{action.index}}.combat_source_attack_ids" value="{{action.combat_source_attack_ids}}" placeholder="Corte, Estocada" {{#unless (eq action.combat_scope "specific")}}disabled{{/unless}}/></div></div>
-                                                        <div class="effect-premium-field"><label class="effect-premium-field-label">Exibição</label><div class="effect-premium-field-control"><select name="system.actions.{{action.index}}.modifier_nh_display_mode"><option value="roll_only" {{#if (eq action.modifier_nh_display_mode "roll_only")}}selected{{/if}}>Apenas rolagem</option><option value="include_in_nh" {{#if (eq action.modifier_nh_display_mode "include_in_nh")}}selected{{/if}}>Incluir na ficha</option></select></div></div>
+                                                        <div class="effect-premium-field {{#unless (eq action.combat_scope "specific")}}is-disabled{{/unless}}"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.ItemWeapon"}}</label><div class="effect-premium-field-control"><input type="text" name="system.actions.{{action.index}}.combat_source_item_ids" value="{{action.combat_source_item_ids}}" placeholder="{{localize 'GUM.EffectSheet.ExampleItemWeapon'}}" {{#unless (eq action.combat_scope "specific")}}disabled{{/unless}}/></div></div>
+                                                        <div class="effect-premium-field {{#unless (eq action.combat_scope "specific")}}is-disabled{{/unless}}"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.UsageMode"}}</label><div class="effect-premium-field-control"><input type="text" name="system.actions.{{action.index}}.combat_source_attack_ids" value="{{action.combat_source_attack_ids}}" placeholder="{{localize 'GUM.EffectSheet.ExampleAttackModes'}}" {{#unless (eq action.combat_scope "specific")}}disabled{{/unless}}/></div></div>
+                                                        <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.Display"}}</label><div class="effect-premium-field-control"><select name="system.actions.{{action.index}}.modifier_nh_display_mode"><option value="roll_only" {{#if (eq action.modifier_nh_display_mode "roll_only")}}selected{{/if}}>{{localize "GUM.EffectSheet.RollOnly"}}</option><option value="include_in_nh" {{#if (eq action.modifier_nh_display_mode "include_in_nh")}}selected{{/if}}>{{localize "GUM.EffectSheet.IncludeOnSheet"}}</option></select></div></div>
                                                     </div>
 
                                                     <div class="effect-combat-change-list">
-                                                        <section class="effect-combat-change-block" title="Aceita número, fórmula, dados ou expressão do motor de condições de valor.">
-                                                            <header class="effect-combat-change-header"><label class="effect-premium-checkbox"><input type="checkbox" name="system.actions.{{action.index}}.combat_attack_enabled" {{checked action.combat_attack_enabled}}/><span>NH de ataque</span></label></header>
-                                                            <div class="effect-specialized-grid effect-specialized-grid-value"><div class="effect-premium-field effect-specialized-value-field"><label class="effect-premium-field-label">Valor</label><div class="effect-premium-field-control"><input type="text" class="effect-code-input" name="system.actions.{{action.index}}.combat_attack_value" value="{{action.combat_attack_value}}" placeholder='Ex: 1 ou se(status("abençoado"), 2, 0)'/></div></div><div class="effect-premium-field"><label class="effect-premium-field-label">Escalonamento</label><div class="effect-premium-field-control"><select name="system.actions.{{action.index}}.combat_attack_value_mode"><option value="fixed" {{#if (eq action.combat_attack_value_mode "fixed")}}selected{{/if}}>Valor fixo</option><option value="per_origin_level" {{#if (eq action.combat_attack_value_mode "per_origin_level")}}selected{{/if}}>Por nível</option></select></div></div></div>
+                                                        <section class="effect-combat-change-block" title="{{localize 'GUM.EffectSheet.ValueEngineHint'}}">
+                                                            <header class="effect-combat-change-header"><label class="effect-premium-checkbox"><input type="checkbox" name="system.actions.{{action.index}}.combat_attack_enabled" {{checked action.combat_attack_enabled}}/><span>{{localize "GUM.EffectSheet.AttackSkill"}}</span></label></header>
+                                                            <div class="effect-specialized-grid effect-specialized-grid-value"><div class="effect-premium-field effect-specialized-value-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.Value"}}</label><div class="effect-premium-field-control"><input type="text" class="effect-code-input" name="system.actions.{{action.index}}.combat_attack_value" value="{{action.combat_attack_value}}" placeholder="{{localize 'GUM.EffectSheet.ExampleConditionalBonus'}}"/></div></div><div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.Scaling"}}</label><div class="effect-premium-field-control"><select name="system.actions.{{action.index}}.combat_attack_value_mode"><option value="fixed" {{#if (eq action.combat_attack_value_mode "fixed")}}selected{{/if}}>{{localize "GUM.EffectSheet.FixedValue"}}</option><option value="per_origin_level" {{#if (eq action.combat_attack_value_mode "per_origin_level")}}selected{{/if}}>{{localize "GUM.EffectSheet.PerLevel"}}</option></select></div></div></div>
                                                         </section>
-                                                        <section class="effect-combat-change-block" title="Aceita número, fórmula, dados ou expressão do motor de condições de valor.">
-                                                            <header class="effect-combat-change-header"><label class="effect-premium-checkbox"><input type="checkbox" name="system.actions.{{action.index}}.combat_parry_enabled" {{checked action.combat_parry_enabled}}/><span>Aparar</span></label></header>
-                                                            <div class="effect-specialized-grid effect-specialized-grid-value"><div class="effect-premium-field effect-specialized-value-field"><label class="effect-premium-field-label">Valor</label><div class="effect-premium-field-control"><input type="text" class="effect-code-input" name="system.actions.{{action.index}}.combat_parry_value" value="{{action.combat_parry_value}}" placeholder='Ex: 1 ou se(status("abençoado"), 2, 0)'/></div></div><div class="effect-premium-field"><label class="effect-premium-field-label">Escalonamento</label><div class="effect-premium-field-control"><select name="system.actions.{{action.index}}.combat_parry_value_mode"><option value="fixed" {{#if (eq action.combat_parry_value_mode "fixed")}}selected{{/if}}>Valor fixo</option><option value="per_origin_level" {{#if (eq action.combat_parry_value_mode "per_origin_level")}}selected{{/if}}>Por nível</option></select></div></div></div>
+                                                        <section class="effect-combat-change-block" title="{{localize 'GUM.EffectSheet.ValueEngineHint'}}">
+                                                            <header class="effect-combat-change-header"><label class="effect-premium-checkbox"><input type="checkbox" name="system.actions.{{action.index}}.combat_parry_enabled" {{checked action.combat_parry_enabled}}/><span>{{localize "GUM.EffectSheet.Parry"}}</span></label></header>
+                                                            <div class="effect-specialized-grid effect-specialized-grid-value"><div class="effect-premium-field effect-specialized-value-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.Value"}}</label><div class="effect-premium-field-control"><input type="text" class="effect-code-input" name="system.actions.{{action.index}}.combat_parry_value" value="{{action.combat_parry_value}}" placeholder="{{localize 'GUM.EffectSheet.ExampleConditionalBonus'}}"/></div></div><div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.Scaling"}}</label><div class="effect-premium-field-control"><select name="system.actions.{{action.index}}.combat_parry_value_mode"><option value="fixed" {{#if (eq action.combat_parry_value_mode "fixed")}}selected{{/if}}>{{localize "GUM.EffectSheet.FixedValue"}}</option><option value="per_origin_level" {{#if (eq action.combat_parry_value_mode "per_origin_level")}}selected{{/if}}>{{localize "GUM.EffectSheet.PerLevel"}}</option></select></div></div></div>
                                                         </section>
-                                                        <section class="effect-combat-change-block" title="Aceita número, fórmula, dados ou expressão do motor de condições de valor.">
-                                                            <header class="effect-combat-change-header"><label class="effect-premium-checkbox"><input type="checkbox" name="system.actions.{{action.index}}.combat_block_enabled" {{checked action.combat_block_enabled}}/><span>Bloqueio</span></label></header>
-                                                            <div class="effect-specialized-grid effect-specialized-grid-value"><div class="effect-premium-field effect-specialized-value-field"><label class="effect-premium-field-label">Valor</label><div class="effect-premium-field-control"><input type="text" class="effect-code-input" name="system.actions.{{action.index}}.combat_block_value" value="{{action.combat_block_value}}" placeholder='Ex: 1 ou se(status("abençoado"), 2, 0)'/></div></div><div class="effect-premium-field"><label class="effect-premium-field-label">Escalonamento</label><div class="effect-premium-field-control"><select name="system.actions.{{action.index}}.combat_block_value_mode"><option value="fixed" {{#if (eq action.combat_block_value_mode "fixed")}}selected{{/if}}>Valor fixo</option><option value="per_origin_level" {{#if (eq action.combat_block_value_mode "per_origin_level")}}selected{{/if}}>Por nível</option></select></div></div></div>
+                                                        <section class="effect-combat-change-block" title="{{localize 'GUM.EffectSheet.ValueEngineHint'}}">
+                                                            <header class="effect-combat-change-header"><label class="effect-premium-checkbox"><input type="checkbox" name="system.actions.{{action.index}}.combat_block_enabled" {{checked action.combat_block_enabled}}/><span>{{localize "GUM.EffectSheet.Block"}}</span></label></header>
+                                                            <div class="effect-specialized-grid effect-specialized-grid-value"><div class="effect-premium-field effect-specialized-value-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.Value"}}</label><div class="effect-premium-field-control"><input type="text" class="effect-code-input" name="system.actions.{{action.index}}.combat_block_value" value="{{action.combat_block_value}}" placeholder="{{localize 'GUM.EffectSheet.ExampleConditionalBonus'}}"/></div></div><div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.Scaling"}}</label><div class="effect-premium-field-control"><select name="system.actions.{{action.index}}.combat_block_value_mode"><option value="fixed" {{#if (eq action.combat_block_value_mode "fixed")}}selected{{/if}}>{{localize "GUM.EffectSheet.FixedValue"}}</option><option value="per_origin_level" {{#if (eq action.combat_block_value_mode "per_origin_level")}}selected{{/if}}>{{localize "GUM.EffectSheet.PerLevel"}}</option></select></div></div></div>
                                                         </section>
                                                     </div>
 
                                                     <div class="effect-specialized-grid effect-specialized-grid-two effect-combat-recalculation-row">
-                                                        <label class="effect-premium-checkbox"><input type="checkbox" name="system.actions.{{action.index}}.combat_recalculate_parry" {{checked action.combat_recalculate_parry}}/><span>Recalcular Aparar a partir do NH modificado</span></label>
-                                                        <label class="effect-premium-checkbox"><input type="checkbox" name="system.actions.{{action.index}}.combat_recalculate_block" {{checked action.combat_recalculate_block}}/><span>Recalcular Bloqueio a partir do NH modificado</span></label>
+                                                        <label class="effect-premium-checkbox"><input type="checkbox" name="system.actions.{{action.index}}.combat_recalculate_parry" {{checked action.combat_recalculate_parry}}/><span>{{localize "GUM.EffectSheet.RecalculateParry"}}</span></label>
+                                                        <label class="effect-premium-checkbox"><input type="checkbox" name="system.actions.{{action.index}}.combat_recalculate_block" {{checked action.combat_recalculate_block}}/><span>{{localize "GUM.EffectSheet.RecalculateBlock"}}</span></label>
                                                     </div>
 
-                                                    <section class="effect-combat-change-block effect-combat-damage-card" title="O valor e o bônus máximo aceitam o motor de condições de valor.">
-                                                        <header class="effect-combat-change-header"><label class="effect-premium-checkbox"><input type="checkbox" name="system.actions.{{action.index}}.combat_damage_enabled" {{checked action.combat_damage_enabled}}/><span>Dano</span></label></header>
+                                                    <section class="effect-combat-change-block effect-combat-damage-card" title="{{localize 'GUM.EffectSheet.ValueCapEngineHint'}}">
+                                                        <header class="effect-combat-change-header"><label class="effect-premium-checkbox"><input type="checkbox" name="system.actions.{{action.index}}.combat_damage_enabled" {{checked action.combat_damage_enabled}}/><span>{{localize "GUM.EffectSheet.Damage"}}</span></label></header>
                                                         <div class="effect-combat-damage-changes">
                                                             {{#each action.combatDamageChanges as |change|}}
                                                             <div class="effect-combat-damage-change">
                                                                 <div class="effect-combat-damage-change-header">
-                                                                    <div class="effect-premium-field"><label class="effect-premium-field-label">Componente</label><div class="effect-premium-field-control"><select name="system.actions.{{../index}}.combat_damage_changes.{{change.index}}.component"><option value="main" {{#if (eq change.component "main")}}selected{{/if}}>Principal</option><option value="follow_up" {{#if (eq change.component "follow_up")}}selected{{/if}}>Acompanhamento</option><option value="fragmentation" {{#if (eq change.component "fragmentation")}}selected{{/if}}>Fragmentação</option></select></div></div>
-                                                                    <div class="effect-premium-field"><label class="effect-premium-field-label">Escalonamento</label><div class="effect-premium-field-control"><select name="system.actions.{{../index}}.combat_damage_changes.{{change.index}}.value_mode"><option value="fixed" {{#if (eq change.value_mode "fixed")}}selected{{/if}}>Valor fixo</option><option value="per_origin_level" {{#if (eq change.value_mode "per_origin_level")}}selected{{/if}}>Por nível</option></select></div></div>
-                                                                    <button type="button" class="remove-combat-damage-change effect-premium-icon-button" data-action-index="{{../index}}" data-change-index="{{change.index}}" title="Remover alteração"><i class="fas fa-trash"></i></button>
+                                                                    <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.Component"}}</label><div class="effect-premium-field-control"><select name="system.actions.{{../index}}.combat_damage_changes.{{change.index}}.component"><option value="main" {{#if (eq change.component "main")}}selected{{/if}}>{{localize "GUM.EffectSheet.Main"}}</option><option value="follow_up" {{#if (eq change.component "follow_up")}}selected{{/if}}>{{localize "GUM.EffectSheet.Tracking"}}</option><option value="fragmentation" {{#if (eq change.component "fragmentation")}}selected{{/if}}>{{localize "GUM.EffectSheet.Fragmentation"}}</option></select></div></div>
+                                                                    <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.Scaling"}}</label><div class="effect-premium-field-control"><select name="system.actions.{{../index}}.combat_damage_changes.{{change.index}}.value_mode"><option value="fixed" {{#if (eq change.value_mode "fixed")}}selected{{/if}}>{{localize "GUM.EffectSheet.FixedValue"}}</option><option value="per_origin_level" {{#if (eq change.value_mode "per_origin_level")}}selected{{/if}}>{{localize "GUM.EffectSheet.PerLevel"}}</option></select></div></div>
+                                                                    <button type="button" class="remove-combat-damage-change effect-premium-icon-button" data-action-index="{{../index}}" data-change-index="{{change.index}}" title="{{localize 'GUM.EffectSheet.RemoveDamageChange'}}"><i class="fas fa-trash"></i></button>
                                                                 </div>
                                                                 <div class="effect-combat-damage-formula-row">
-                                                                    <div class="effect-premium-field"><label class="effect-premium-field-label">Valor</label><div class="effect-premium-field-control"><input type="text" class="effect-code-input" name="system.actions.{{../index}}.combat_damage_changes.{{change.index}}.value" value="{{change.value}}" placeholder='Ex: 2, 1d6 ou se(status("furioso"), 2, 0)'/></div></div>
-                                                                    <div class="effect-premium-field"><label class="effect-premium-field-label">Operação</label><div class="effect-premium-field-control"><select name="system.actions.{{../index}}.combat_damage_changes.{{change.index}}.operation"><option value="fixed" {{#if (eq change.operation "fixed")}}selected{{/if}}>Bônus fixo</option><option value="per_die" {{#if (eq change.operation "per_die")}}selected{{/if}}>Bônus por dado</option><option value="extra_dice" {{#if (eq change.operation "extra_dice")}}selected{{/if}}>Dados adicionais</option><option value="override" {{#if (eq change.operation "override")}}selected{{/if}}>Substituir fórmula</option></select></div></div>
-                                                                    <div class="effect-premium-field"><label class="effect-premium-field-label">Bônus máximo</label><div class="effect-premium-field-control"><input type="text" name="system.actions.{{../index}}.combat_damage_changes.{{change.index}}.cap" value="{{change.cap}}" placeholder="Sem limite"/></div></div>
+                                                                    <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.Value"}}</label><div class="effect-premium-field-control"><input type="text" class="effect-code-input" name="system.actions.{{../index}}.combat_damage_changes.{{change.index}}.value" value="{{change.value}}" placeholder="{{localize 'GUM.EffectSheet.ExampleDamageValue'}}"/></div></div>
+                                                                    <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.Operation"}}</label><div class="effect-premium-field-control"><select name="system.actions.{{../index}}.combat_damage_changes.{{change.index}}.operation"><option value="fixed" {{#if (eq change.operation "fixed")}}selected{{/if}}>{{localize "GUM.EffectSheet.FixedBonus"}}</option><option value="per_die" {{#if (eq change.operation "per_die")}}selected{{/if}}>{{localize "GUM.EffectSheet.BonusPerDie"}}</option><option value="extra_dice" {{#if (eq change.operation "extra_dice")}}selected{{/if}}>{{localize "GUM.EffectSheet.ExtraDice"}}</option><option value="override" {{#if (eq change.operation "override")}}selected{{/if}}>{{localize "GUM.EffectSheet.ReplaceFormula"}}</option></select></div></div>
+                                                                    <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.MaximumBonus"}}</label><div class="effect-premium-field-control"><input type="text" name="system.actions.{{../index}}.combat_damage_changes.{{change.index}}.cap" value="{{change.cap}}" placeholder="{{localize 'GUM.EffectSheet.NoLimit'}}"/></div></div>
                                                                 </div>
                                                                 <div class="effect-specialized-grid effect-specialized-grid-three effect-combat-damage-replacements">
-                                                                    <div class="effect-premium-field"><label class="effect-premium-field-label">Substituir Divisor</label><div class="effect-premium-field-control"><input type="text" name="system.actions.{{../index}}.combat_damage_changes.{{change.index}}.replace_armor_divisor" value="{{change.replace_armor_divisor}}" placeholder="Manter atual"/></div></div>
-                                                                    <div class="effect-premium-field"><label class="effect-premium-field-label">Substituir Tipo</label><div class="effect-premium-field-control"><input type="text" name="system.actions.{{../index}}.combat_damage_changes.{{change.index}}.replace_type" value="{{change.replace_type}}" placeholder="Manter atual"/></div></div>
-                                                                    <div class="effect-premium-field"><label class="effect-premium-field-label">Substituir Natureza</label><div class="effect-premium-field-control"><input type="text" name="system.actions.{{../index}}.combat_damage_changes.{{change.index}}.replace_nature" value="{{change.replace_nature}}" placeholder="Manter atual"/></div></div>
+                                                                    <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.ReplaceDivisor"}}</label><div class="effect-premium-field-control"><input type="text" name="system.actions.{{../index}}.combat_damage_changes.{{change.index}}.replace_armor_divisor" value="{{change.replace_armor_divisor}}" placeholder="{{localize 'GUM.EffectSheet.KeepCurrent'}}"/></div></div>
+                                                                    <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.ReplaceType"}}</label><div class="effect-premium-field-control"><input type="text" name="system.actions.{{../index}}.combat_damage_changes.{{change.index}}.replace_type" value="{{change.replace_type}}" placeholder="{{localize 'GUM.EffectSheet.KeepCurrent'}}"/></div></div>
+                                                                    <div class="effect-premium-field"><label class="effect-premium-field-label">{{localize "GUM.EffectSheet.ReplaceNature"}}</label><div class="effect-premium-field-control"><input type="text" name="system.actions.{{../index}}.combat_damage_changes.{{change.index}}.replace_nature" value="{{change.replace_nature}}" placeholder="{{localize 'GUM.EffectSheet.KeepCurrent'}}"/></div></div>
                                                                 </div>
                                                             </div>
                                                             {{/each}}
                                                         </div>
-                                                        <button type="button" class="add-combat-damage-change effect-premium-add-action" data-action-index="{{action.index}}"><i class="fas fa-plus"></i> Adicionar alteração de dano</button>
+                                                        <button type="button" class="add-combat-damage-change effect-premium-add-action" data-action-index="{{action.index}}"><i class="fas fa-plus"></i> {{localize "GUM.EffectSheet.AddDamageChange"}}</button>
                                                     </section>
                                                 </div>
                                             {{/if}}
@@ -462,7 +462,7 @@
                                                     <div class="effect-premium-field">
                                                         <label class="effect-premium-field-label">
                                                             <i class="fas fa-heartbeat" aria-hidden="true"></i>
-                                                            Ícone de Status
+                                                            {{localize "GUM.EffectSheet.StatusIcon"}}
                                                         </label>
 
                                                         <div class="effect-premium-field-control">
@@ -502,7 +502,7 @@
                                                     <div class="effect-premium-field">
                                                         <label class="effect-premium-field-label">
                                                             <i class="fas fa-bullseye" aria-hidden="true"></i>
-                                                            Alvo
+                                                            {{localize "GUM.EffectSheet.Target"}}
                                                         </label>
 
                                                         <div class="effect-premium-field-control">
@@ -511,35 +511,35 @@
                                                                     value="hp"
                                                                     {{#if (eq action.category "hp")}}selected{{/if}}
                                                                 >
-                                                                    Pontos de Vida
+                                                                    {{localize "GUM.EffectSheet.HitPoints"}}
                                                                 </option>
 
                                                                 <option
                                                                     value="fp"
                                                                     {{#if (eq action.category "fp")}}selected{{/if}}
                                                                 >
-                                                                    Pontos de Fadiga
+                                                                    {{localize "GUM.EffectSheet.FatiguePoints"}}
                                                                 </option>
 
                                                                 <option
                                                                     value="energy_reserve"
                                                                     {{#if (eq action.category "energy_reserve")}}selected{{/if}}
                                                                 >
-                                                                    Reserva de Energia
+                                                                    {{localize "GUM.EffectSheet.EnergyReserve"}}
                                                                 </option>
 
                                                                 <option
                                                                     value="combat_tracker"
                                                                     {{#if (eq action.category "combat_tracker")}}selected{{/if}}
                                                                 >
-                                                                    Registro de Combate
+                                                                    {{localize "GUM.EffectSheet.CombatTracker"}}
                                                                 </option>
 
                                                                 <option
                                                                     value="item_quantity"
                                                                     {{#if (eq action.category "item_quantity")}}selected{{/if}}
                                                                 >
-                                                                    Quantidade de Equipamento
+                                                                    {{localize "GUM.EffectSheet.EquipmentQuantity"}}
                                                                 </option>
                                                             </select>
                                                         </div>
@@ -548,7 +548,7 @@
                                                     <div class="effect-premium-field">
                                                         <label class="effect-premium-field-label">
                                                             <i class="fas fa-signature" aria-hidden="true"></i>
-                                                            Nome específico
+                                                            {{localize "GUM.EffectSheet.SpecificName"}}
                                                         </label>
 
                                                         <div class="effect-premium-field-control">
@@ -563,7 +563,7 @@
                                                     <div class="effect-premium-field">
                                                         <label class="effect-premium-field-label">
                                                             <i class="fas fa-hashtag" aria-hidden="true"></i>
-                                                            Valor
+                                                            {{localize "GUM.EffectSheet.Value"}}
                                                         </label>
 
                                                         <div class="effect-premium-field-control">
@@ -572,8 +572,8 @@
                                                                 class="effect-compact-value"
                                                                 name="system.actions.{{action.index}}.value"
                                                                 value="{{action.value}}"
-                                                                placeholder='Ex: -2 ou se(possui("Treinado por um Mestre"), -2, -4)'
-                                                                title="Avaliado quando a alteração é executada."
+                                                                placeholder="{{localize 'GUM.EffectSheet.ExampleConditionalPenalty'}}"
+                                                                title="{{localize 'GUM.EffectSheet.EvaluatedOnChange'}}"
                                                             />
                                                         </div>
                                                     </div>
@@ -587,7 +587,7 @@
                                                             name="system.actions.{{action.index}}.chat_notice"
                                                             {{checked action.chat_notice}}
                                                         />
-                                                        <span>Aviso no chat</span>
+                                                        <span>{{localize "GUM.EffectSheet.ChatNotice"}}</span>
                                                     </label>
 
                                                     <label class="effect-premium-checkbox">
@@ -596,7 +596,7 @@
                                                             name="system.actions.{{action.index}}.confirm_prompt"
                                                             {{checked action.confirm_prompt}}
                                                         />
-                                                        <span>Pedir confirmação</span>
+                                                        <span>{{localize "GUM.EffectSheet.AskForConfirmation"}}</span>
                                                     </label>
 
                                                     <label class="effect-premium-checkbox">
@@ -605,7 +605,7 @@
                                                             name="system.actions.{{action.index}}.variable_value"
                                                             {{checked action.variable_value}}
                                                         />
-                                                        <span>Valor variável</span>
+                                                        <span>{{localize "GUM.EffectSheet.VariableValue"}}</span>
                                                     </label>
                                                 </div>
                                             {{/if}}
@@ -616,56 +616,56 @@
                                             {{#if (eq action.type "resource_create")}}
                                                 <div class="effect-premium-grid effect-premium-grid-resource">
                                                     <div class="effect-premium-field">
-                                                        <label class="effect-premium-field-label"><i class="fas fa-bullseye" aria-hidden="true"></i>Tipo</label>
+                                                        <label class="effect-premium-field-label"><i class="fas fa-bullseye" aria-hidden="true"></i>{{localize "GUM.EffectSheet.Type"}}</label>
                                                         <div class="effect-premium-field-control">
                                                             <select name="system.actions.{{action.index}}.category">
-                                                                <option value="spell_reserve" {{#if (eq action.category "spell_reserve")}}selected{{/if}}>Reserva de Magia</option>
-                                                                <option value="power_reserve" {{#if (eq action.category "power_reserve")}}selected{{/if}}>Reserva de Poder</option>
-                                                                <option value="combat_tracker" {{#if (eq action.category "combat_tracker")}}selected{{/if}}>Registro de Combate</option>
+                                                                <option value="spell_reserve" {{#if (eq action.category "spell_reserve")}}selected{{/if}}>{{localize "GUM.EffectSheet.MagicReserve"}}</option>
+                                                                <option value="power_reserve" {{#if (eq action.category "power_reserve")}}selected{{/if}}>{{localize "GUM.EffectSheet.PowerReserve"}}</option>
+                                                                <option value="combat_tracker" {{#if (eq action.category "combat_tracker")}}selected{{/if}}>{{localize "GUM.EffectSheet.CombatTracker"}}</option>
                                                             </select>
                                                         </div>
                                                     </div>
 
                                                     <div class="effect-premium-field">
-                                                        <label class="effect-premium-field-label"><i class="fas fa-signature" aria-hidden="true"></i>Nome</label>
+                                                        <label class="effect-premium-field-label"><i class="fas fa-signature" aria-hidden="true"></i>{{localize "GUM.EffectSheet.Name"}}</label>
                                                         <div class="effect-premium-field-control">
-                                                            <input type="text" name="system.actions.{{action.index}}.name" value="{{action.name}}" placeholder="Ex: Bateria, Mana, Tensão" />
+                                                            <input type="text" name="system.actions.{{action.index}}.name" value="{{action.name}}" placeholder="{{localize 'GUM.EffectSheet.ExampleResourceName'}}" />
                                                         </div>
                                                     </div>
 
                                                     <div class="effect-premium-field">
-                                                        <label class="effect-premium-field-label"><i class="fas fa-hashtag" aria-hidden="true"></i>Valor inicial</label>
+                                                        <label class="effect-premium-field-label"><i class="fas fa-hashtag" aria-hidden="true"></i>{{localize "GUM.EffectSheet.InitialValue"}}</label>
                                                         <div class="effect-premium-field-control">
-                                                            <input type="text" class="effect-compact-value" name="system.actions.{{action.index}}.value" value="{{action.value}}" placeholder='Ex: 10 ou se(possui("Item"), 15, 10)' />
-                                                            <p class="effect-premium-field-hint">Avaliado quando o recurso é criado.</p>
+                                                            <input type="text" class="effect-compact-value" name="system.actions.{{action.index}}.value" value="{{action.value}}" placeholder="{{localize 'GUM.EffectSheet.ExampleResourceValue'}}" />
+                                                            <p class="effect-premium-field-hint">{{localize "GUM.EffectSheet.EvaluatedOnCreate"}}</p>
                                                         </div>
                                                     </div>
 
                                                     <div class="effect-premium-field">
-                                                        <label class="effect-premium-field-label"><i class="fas fa-repeat" aria-hidden="true"></i>Se já existir</label>
+                                                        <label class="effect-premium-field-label"><i class="fas fa-repeat" aria-hidden="true"></i>{{localize "GUM.EffectSheet.IfAlreadyExists"}}</label>
                                                         <div class="effect-premium-field-control">
                                                             <select name="system.actions.{{action.index}}.exists_policy">
-                                                                <option value="ignore" {{#if (eq action.exists_policy "ignore")}}selected{{/if}}>Ignorar</option>
-                                                                <option value="update_max" {{#if (eq action.exists_policy "update_max")}}selected{{/if}}>Atualizar máximo</option>
-                                                                <option value="sum_max" {{#if (eq action.exists_policy "sum_max")}}selected{{/if}}>Somar ao máximo</option>
-                                                                <option value="replace" {{#if (eq action.exists_policy "replace")}}selected{{/if}}>Substituir</option>
-                                                                <option value="restore" {{#if (eq action.exists_policy "restore")}}selected{{/if}}>Restaurar atual até o máximo</option>
+                                                                <option value="ignore" {{#if (eq action.exists_policy "ignore")}}selected{{/if}}>{{localize "GUM.EffectSheet.Ignore"}}</option>
+                                                                <option value="update_max" {{#if (eq action.exists_policy "update_max")}}selected{{/if}}>{{localize "GUM.EffectSheet.UpdateMaximum"}}</option>
+                                                                <option value="sum_max" {{#if (eq action.exists_policy "sum_max")}}selected{{/if}}>{{localize "GUM.EffectSheet.AddToMaximum"}}</option>
+                                                                <option value="replace" {{#if (eq action.exists_policy "replace")}}selected{{/if}}>{{localize "GUM.EffectSheet.Replace"}}</option>
+                                                                <option value="restore" {{#if (eq action.exists_policy "restore")}}selected{{/if}}>{{localize "GUM.EffectSheet.RestoreCurrentToMaximum"}}</option>
                                                             </select>
                                                         </div>
                                                     </div>
 
                                                     <div class="effect-premium-field">
-                                                        <label class="effect-premium-field-label"><i class="fas fa-link" aria-hidden="true"></i>Fonte / origem</label>
+                                                        <label class="effect-premium-field-label"><i class="fas fa-link" aria-hidden="true"></i>{{localize "GUM.EffectSheet.SourceOrigin"}}</label>
                                                         <div class="effect-premium-field-control">
-                                                            <input type="text" name="system.actions.{{action.index}}.source" value="{{action.source}}" placeholder="Opcional" />
+                                                            <input type="text" name="system.actions.{{action.index}}.source" value="{{action.source}}" placeholder="{{localize 'GUM.EffectSheet.Optional'}}" />
                                                         </div>
                                                     </div>
 
                                                     <div class="effect-premium-field">
-                                                        <label class="effect-premium-field-label"><i class="fas fa-gauge-high" aria-hidden="true"></i>Máximo</label>
+                                                        <label class="effect-premium-field-label"><i class="fas fa-gauge-high" aria-hidden="true"></i>{{localize "GUM.EffectSheet.Maximum"}}</label>
                                                         <div class="effect-premium-field-control">
                                                             <input type="text" class="effect-compact-value" name="system.actions.{{action.index}}.max" value="{{action.max}}" />
-                                                            <p class="effect-premium-field-hint">Aceita a mesma expressão condicional do valor inicial.</p>
+                                                            <p class="effect-premium-field-hint">{{localize "GUM.EffectSheet.SameInitialExpressionHint"}}</p>
                                                         </div>
                                                     </div>
 
@@ -674,7 +674,7 @@
                                                 <div class="effect-premium-options-row">
                                                     <label class="effect-premium-checkbox">
                                                         <input type="checkbox" name="system.actions.{{action.index}}.chat_notice" {{checked action.chat_notice}} />
-                                                        <span>Aviso no chat</span>
+                                                        <span>{{localize "GUM.EffectSheet.ChatNotice"}}</span>
                                                     </label>
  
                                                 </div>
@@ -699,11 +699,11 @@
                                                                 <div class="effect-premium-roll-extra-header">
                                                                     <div>
                                                                         <span class="effect-premium-roll-extra-title">
-                                                                            Entrada adicional {{entry.displayIndex}}
+                                                                            {{localize "GUM.EffectSheet.AdditionalEntry"}} {{entry.displayIndex}}
                                                                         </span>
 
                                                                         <span class="effect-premium-roll-extra-meta">
-                                                                            Registro antigo com múltiplas entradas
+                                                                            {{localize "GUM.EffectSheet.LegacyMultipleEntries"}}
                                                                         </span>
                                                                     </div>
 
@@ -712,8 +712,8 @@
                                                                         class="remove-roll-mod-entry effect-premium-icon-button"
                                                                         data-action-index="{{../index}}"
                                                                         data-entry-index="{{entry.index}}"
-                                                                        title="Remover entrada adicional"
-                                                                        aria-label="Remover entrada adicional {{entry.displayIndex}}"
+                                                                        title="{{localize 'GUM.EffectSheet.RemoveAdditionalEntry'}}"
+                                                                        aria-label="{{localize 'GUM.EffectSheet.RemoveAdditionalEntry'}} {{entry.displayIndex}}"
                                                                     >
                                                                         <i class="fas fa-trash" aria-hidden="true"></i>
                                                                     </button>
@@ -725,7 +725,7 @@
                                                                 <div class="effect-premium-field">
                                                                     <label class="effect-premium-field-label">
                                                                         <i class="fas fa-tag" aria-hidden="true"></i>
-                                                                        Descrição na Janela de Rolagem
+                                                                        {{localize "GUM.EffectSheet.RollWindowDescription"}}
                                                                     </label>
 
                                                                     <div class="effect-premium-field-control">
@@ -733,10 +733,10 @@
                                                                             type="text"
                                                                             name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.label"
                                                                             value="{{entry.label}}"
-                                                                            placeholder="Ex: Penalidade em ataques"
+                                                                            placeholder="{{localize 'GUM.EffectSheet.ExampleAttackPenalty'}}"
                                                                         />
                                                                         <p class="effect-premium-field-hint">
-                                                                            Nome mostrado na janela de rolagem. Deixe vazio para usar o nome do efeito aplicado.
+                                                                            {{localize "GUM.EffectSheet.RollLabelHint"}}
                                                                         </p>
                                                                     </div>
                                                                 </div>
@@ -744,7 +744,7 @@
                                                                 <div class="effect-premium-field">
                                                                     <label class="effect-premium-field-label">
                                                                         <i class="fas fa-tachometer-alt" aria-hidden="true"></i>
-                                                                        Cap NH
+                                                                        {{localize "GUM.EffectSheet.SkillCap"}}
                                                                     </label>
 
                                                                     <div class="effect-premium-field-control">
@@ -753,7 +753,7 @@
                                                                             class="effect-compact-value"
                                                                             name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.cap"
                                                                             value="{{entry.cap}}"
-                                                                            placeholder="Opcional"
+                                                                            placeholder="{{localize 'GUM.EffectSheet.Optional'}}"
                                                                         />
                                                                     </div>
                                                                 </div>
@@ -761,7 +761,7 @@
                                                                 <div class="effect-premium-field effect-roll-modifier-value-field">
                                                                     <label class="effect-premium-field-label">
                                                                         <i class="fas fa-plus" aria-hidden="true"></i>
-                                                                        {{#if entry.isPerOriginLevel}}Valor por nível{{else}}Valor{{/if}}
+                                                                        {{#if entry.isPerOriginLevel}}{{localize "GUM.EffectSheet.ValuePerLevel"}}{{else}}{{localize "GUM.EffectSheet.Value"}}{{/if}}
                                                                     </label>
 
                                                                     <div class="effect-premium-field-control">
@@ -770,10 +770,10 @@
                                                                             class="effect-code-input effect-roll-modifier-value-input"
                                                                             name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.value"
                                                                             value="{{entry.value}}"
-                                                                            placeholder='Ex: -2, 1d6 ou se(possui("Treinado por um Mestre"), -2, -4)'
-                                                                            title="Aceita valor fixo, fórmula, rolagem de dados ou expressão condicional."
+                                                                            placeholder="{{localize 'GUM.EffectSheet.ExampleRollModifierValue'}}"
+                                                                            title="{{localize 'GUM.EffectSheet.RollValueHint'}}"
                                                                         />
-                                                                        <p class="effect-premium-field-hint">Avaliado a cada rolagem. Use <code>possui</code>, <code>naopossui</code>, <code>possuiAlgum</code>, <code>possuiTodos</code>, <code>equipado</code>, <code>condicaoAtiva</code> ou <code>status</code>. Comparações aceitam <code>nivel</code>, <code>quantidade</code> e <code>atributo</code>.</p>
+                                                                        <p class="effect-premium-field-hint">{{localize "GUM.EffectSheet.EvaluatedEachRollPrefix"}} <code>possui</code>, <code>naopossui</code>, <code>possuiAlgum</code>, <code>possuiTodos</code>, <code>equipado</code>, <code>condicaoAtiva</code> {{localize "GUM.EffectSheet.Or"}} <code>status</code>. {{localize "GUM.EffectSheet.ComparisonsAccept"}} <code>nivel</code>, <code>quantidade</code> {{localize "GUM.EffectSheet.And"}} <code>atributo</code>.</p>
                                                                     </div>
                                                                 </div>
                                                                  </div>
@@ -781,11 +781,11 @@
                                                             <div class="effect-premium-grid effect-premium-grid-entry-settings">
 
                                                                 <div class="effect-premium-field">
-                                                                    <label class="effect-premium-field-label">Escalonamento do valor</label>
+                                                                    <label class="effect-premium-field-label">{{localize "GUM.EffectSheet.ValueScaling"}}</label>
                                                                     <div class="effect-premium-field-control">
                                                                         <select name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.value_mode">
-                                                                            <option value="fixed" {{#if (eq entry.value_mode "fixed")}}selected{{/if}}>Valor fixo</option>
-                                                                            <option value="per_origin_level" {{#if (eq entry.value_mode "per_origin_level")}}selected{{/if}}>Por nível do item de origem</option>
+                                                                            <option value="fixed" {{#if (eq entry.value_mode "fixed")}}selected{{/if}}>{{localize "GUM.EffectSheet.FixedValue"}}</option>
+                                                                            <option value="per_origin_level" {{#if (eq entry.value_mode "per_origin_level")}}selected{{/if}}>{{localize "GUM.EffectSheet.PerSourceItemLevel"}}</option>
                                                                         </select>
                                                                     </div>
                                                                 </div>
@@ -793,7 +793,7 @@
                                                                 <div class="effect-premium-field">
                                                                     <label class="effect-premium-field-label">
                                                                         <i class="fas fa-location-arrow" aria-hidden="true"></i>
-                                                                        Aplicar o modificador em
+                                                                        {{localize "GUM.EffectSheet.ApplyModifierTo"}}
                                                                     </label>
 
                                                                     <div class="effect-premium-field-control">
@@ -818,7 +818,7 @@
                                                                 <div class="effect-premium-field">
                                                                     <label class="effect-premium-field-label">
                                                                         <i class="fas fa-crosshairs" aria-hidden="true"></i>
-                                                                        Contextos
+                                                                        {{localize "GUM.EffectSheet.Contexts"}}
                                                                     </label>
 
                                                                     <div class="effect-premium-field-control">
@@ -829,14 +829,14 @@
                                                                                 list="roll-mod-context-options"
                                                                                 name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.contexts"
                                                                                 value="{{entry.contexts}}"
-                                                                                placeholder="Ex: all, attack, defense"
+                                                                                placeholder="{{localize 'GUM.EffectSheet.ExampleContexts'}}"
                                                                             />
                                                                             <button
                                                                                 type="button"
                                                                                 class="open-context-picker effect-premium-icon-button"
                                                                                 data-target-input="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.contexts"
-                                                                                title="Selecionar contextos"
-                                                                                aria-label="Selecionar contextos"
+                                                                                title="{{localize 'GUM.EffectSheet.SelectContexts'}}"
+                                                                                aria-label="{{localize 'GUM.EffectSheet.SelectContexts'}}"
                                                                             >
                                                                                 <i class="fas fa-search" aria-hidden="true"></i>
                                                                             </button>
@@ -844,30 +844,30 @@
 
 
                                                                         <p class="effect-premium-field-hint">
-                                                                            Separe múltiplos contextos por vírgula.
+                                                                            {{localize "GUM.EffectSheet.ContextsHint"}}
                                                                         </p>
                                                                     </div>
                                                                 </div>
                                                                         <div class="effect-premium-field">
-                                                                            <label class="effect-premium-field-label"><i class="fas fa-tags"></i> Marcadores de finalidade da rolagem</label>
+                                                                            <label class="effect-premium-field-label"><i class="fas fa-tags"></i> {{localize "GUM.EffectSheet.RollPurposeTags"}}</label>
                                                                             <div class="effect-premium-field-control">
                                                                                <div class="modifier-entry-label-line">
                                                                                     <input type="text" name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.roll_tags"
-                                                                                        value="{{entry.roll_tags}}" placeholder="Ex: resistance.poison, source.magic" />
+                                                                                        value="{{entry.roll_tags}}" placeholder="{{localize 'GUM.EffectSheet.ExampleRollTags'}}" />
                                                                                     <button type="button" class="open-roll-tag-picker effect-premium-icon-button"
                                                                                         data-target-input="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.roll_tags"
-                                                                                        title="Selecionar marcadores" aria-label="Selecionar marcadores"><i class="fas fa-tags" aria-hidden="true"></i></button>
+                                                                                        title="{{localize 'GUM.EffectSheet.SelectTags'}}" aria-label="{{localize 'GUM.EffectSheet.SelectTags'}}"><i class="fas fa-tags" aria-hidden="true"></i></button>
                                                                                 </div>
-                                                                                <p class="effect-premium-field-hint">Separe por vírgula. Tags personalizadas são aceitas. Use “Pelo menos um” para qualquer tag ou “Todos” para exigir todas.</p>
+                                                                                <p class="effect-premium-field-hint">{{localize "GUM.EffectSheet.TagCsvHint"}}</p>
                                                                             </div>
                                                                         </div>
 
                                                                         <div class="effect-premium-field">
-                                                                            <label class="effect-premium-field-label"><i class="fas fa-filter"></i> Correspondência com os marcadores de finalidade</label>
+                                                                            <label class="effect-premium-field-label"><i class="fas fa-filter"></i> {{localize "GUM.EffectSheet.TagMatch"}}</label>
                                                                             <div class="effect-premium-field-control">
                                                                                 <select name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.roll_tag_match">
-                                                                                    <option value="any" {{#if (eq entry.roll_tag_match "any")}}selected{{/if}}>Pelo menos um</option>
-                                                                                    <option value="all" {{#if (eq entry.roll_tag_match "all")}}selected{{/if}}>Todos</option>
+                                                                                    <option value="any" {{#if (eq entry.roll_tag_match "any")}}selected{{/if}}>{{localize "GUM.EffectSheet.AtLeastOne"}}</option>
+                                                                                    <option value="all" {{#if (eq entry.roll_tag_match "all")}}selected{{/if}}>{{localize "GUM.EffectSheet.All"}}</option>
                                                                                 </select>
                                                                             </div>
                                                                         </div>
@@ -882,7 +882,7 @@
                                                                 <summary class="effect-premium-advanced-header">
                                                                     <span>
                                                                         <i class="fas fa-shield-alt" aria-hidden="true"></i>
-                                                                        Restrições específicas
+                                                                        {{localize "GUM.EffectSheet.SpecificRestrictions"}}
                                                                     </span>
 
                                                                     <i
@@ -893,9 +893,7 @@
 
                                                                 <div class="effect-premium-advanced-body">
                                                                     <p class="effect-premium-field-hint">
-                                                                        Use estas opções apenas quando o modificador
-                                                                        precisar ser limitado a habilidades, itens ou
-                                                                        modos específicos.
+                                                                        {{localize "GUM.EffectSheet.RestrictionsHint"}}
                                                                     </p>
 
                                                                     <div class="effect-premium-grid effect-premium-grid-advanced">
@@ -903,7 +901,7 @@
                                                                         <div class="effect-premium-field">
                                                                             <label class="effect-premium-field-label">
                                                                                 <i class="fas fa-bullseye" aria-hidden="true"></i>
-                                                                                Habilidade(s) alvo (CSV)
+                                                                                {{localize "GUM.EffectSheet.TargetSkillsCsv"}}
                                                                             </label>
 
                                                                             <div class="effect-premium-field-control">
@@ -911,7 +909,7 @@
                                                                                     type="text"
                                                                                     name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.target_values"
                                                                                     value="{{entry.target_values}}"
-                                                                                    placeholder="Ex: Furtividade,Acrobacia"
+                                                                                    placeholder="{{localize 'GUM.EffectSheet.ExampleSkillsCompact'}}"
                                                                                 />
                                                                             </div>
                                                                         </div>
@@ -919,7 +917,7 @@
                                                                         <div class="effect-premium-field">
                                                                             <label class="effect-premium-field-label">
                                                                                 <i class="fas fa-archive" aria-hidden="true"></i>
-                                                                                Item/grupo de origem (ID, UUID ou nome; CSV)
+                                                                                {{localize "GUM.EffectSheet.SourceItemGroupCsv"}}
                                                                             </label>
 
                                                                             <div class="effect-premium-field-control">
@@ -927,7 +925,7 @@
                                                                                     type="text"
                                                                                     name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.source_item_ids"
                                                                                     value="{{entry.source_item_ids}}"
-                                                                                    placeholder="Ex: Alabarda, abc123 ou Item.xxxxx"
+                                                                                    placeholder="{{localize 'GUM.EffectSheet.ExampleSourceItems'}}"
                                                                                 />
                                                                             </div>
                                                                         </div>
@@ -935,7 +933,7 @@
                                                                         <div class="effect-premium-field">
                                                                             <label class="effect-premium-field-label">
                                                                                 <i class="fas fa-gavel" aria-hidden="true"></i>
-                                                                                Modo(s) de ataque (ID ou nome; CSV)
+                                                                                {{localize "GUM.EffectSheet.AttackModesCsv"}}
                                                                             </label>
 
                                                                             <div class="effect-premium-field-control">
@@ -943,7 +941,7 @@
                                                                                     type="text"
                                                                                     name="system.actions.{{../index}}.roll_modifier_entries.{{entry.index}}.source_attack_ids"
                                                                                     value="{{entry.source_attack_ids}}"
-                                                                                    placeholder="Ex: Corte, Estocada ou atkA"
+                                                                                    placeholder="{{localize 'GUM.EffectSheet.ExampleSourceAttacks'}}"
                                                                                 />
                                                                             </div>
                                                                         </div>
@@ -951,7 +949,7 @@
                                                                         <div class="effect-premium-field">
                                                                             <label class="effect-premium-field-label">
                                                                                 <i class="fas fa-eye" aria-hidden="true"></i>
-                                                                                Exibição NH
+                                                                                {{localize "GUM.EffectSheet.NhDisplay"}}
                                                                             </label>
 
                                                                             <div class="effect-premium-field-control">
@@ -962,14 +960,14 @@
                                                                                         value="roll_only"
                                                                                         {{#if (eq entry.nh_display_mode "roll_only")}}selected{{/if}}
                                                                                     >
-                                                                                        Apenas rolagem
+                                                                                        {{localize "GUM.EffectSheet.RollOnly"}}
                                                                                     </option>
 
                                                                                     <option
                                                                                         value="include_in_nh"
                                                                                         {{#if (eq entry.nh_display_mode "include_in_nh")}}selected{{/if}}
                                                                                     >
-                                                                                        Incluir no NH
+                                                                                        {{localize "GUM.EffectSheet.IncludeInNh"}}
                                                                                     </option>
                                                                                 </select>
                                                                             </div>
@@ -980,8 +978,7 @@
                                                         </div>
                                                     {{else}}
                                                         <p class="effect-premium-empty">
-                                                            Esta ação não possui uma entrada de modificador válida.
-                                                            Remova a ação e crie uma nova.
+                                                            {{localize "GUM.EffectSheet.InvalidModifierEntry"}}
                                                         </p>
                                                     {{/each}}
                                                 </div>
@@ -996,7 +993,7 @@
                                                     <div class="effect-premium-field">
                                                         <label class="effect-premium-field-label">
                                                             <i class="fas fa-code" aria-hidden="true"></i>
-                                                            Nome da Macro
+                                                            {{localize "GUM.EffectSheet.MacroName"}}
                                                         </label>
 
                                                         <div class="effect-premium-field-control">
@@ -1021,7 +1018,7 @@
                                                     <div class="effect-premium-field">
                                                         <label class="effect-premium-field-label">
                                                             <i class="fas fa-comment" aria-hidden="true"></i>
-                                                            Texto
+                                                            {{localize "GUM.EffectSheet.Text"}}
                                                         </label>
 
                                                         <div class="effect-premium-field-control">
@@ -1029,7 +1026,7 @@
                                                                 class="effect-chat-textarea"
                                                                 name="system.actions.{{action.index}}.chat_text"
                                                                 rows="3"
-                                                                placeholder="Texto publicado no chat"
+                                                                placeholder="{{localize 'GUM.EffectSheet.PublishedChatText'}}"
                                                             >{{action.chat_text}}</textarea>
                                                         </div>
                                                     </div>
@@ -1040,20 +1037,20 @@
                                                             name="system.actions.{{action.index}}.has_roll"
                                                             {{checked action.has_roll}}
                                                         />
-                                                        <span>Incluir teste?</span>
+                                                        <span>{{localize "GUM.EffectSheet.IncludeTest"}}</span>
                                                     </label>
                                                 </div>
 
                                                 {{#if action.has_roll}}
                                                     <div class="effect-premium-roll-config">
-                                                        <h6>Configuração do Teste</h6>
+                                                        <h6>{{localize "GUM.EffectSheet.TestConfiguration"}}</h6>
 
                                                         <div class="effect-premium-grid effect-premium-grid-chat-roll">
 
                                                             <div class="effect-premium-field">
                                                                 <label class="effect-premium-field-label">
                                                                     <i class="fas fa-tag" aria-hidden="true"></i>
-                                                                    Rótulo
+                                                                    {{localize "GUM.EffectSheet.Label"}}
                                                                 </label>
 
                                                                 <div class="effect-premium-field-control">
@@ -1068,7 +1065,7 @@
                                                             <div class="effect-premium-field">
                                                                 <label class="effect-premium-field-label">
                                                                     <i class="fas fa-dice-d20" aria-hidden="true"></i>
-                                                                    Atributo/Perícia
+                                                                    {{localize "GUM.EffectSheet.AttributeSkill"}}
                                                                 </label>
 
                                                                 <div class="effect-premium-field-control">
@@ -1083,14 +1080,14 @@
                                                             <div class="effect-premium-field effect-chat-roll-value-field">
                                                                 <label class="effect-premium-field-label">
                                                                     <i class="fas fa-plus" aria-hidden="true"></i>
-                                                                    Valor / expressão
+                                                                    {{localize "GUM.EffectSheet.ValueExpression"}}
                                                                     <span
                                                                         class="effect-field-help"
                                                                         tabindex="0"
-                                                                        aria-label="Aceita número ou expressão JavaScript avaliada para o alvo."
+                                                                        aria-label="{{localize 'GUM.EffectSheet.TargetExpressionHint'}}"
                                                                     >
                                                                         <i class="fas fa-circle-info" aria-hidden="true"></i>
-                                                                        <span role="tooltip">Aceita número ou expressão JavaScript avaliada para o alvo.</span>
+                                                                        <span role="tooltip">{{localize "GUM.EffectSheet.TargetExpressionHint"}}</span>
                                                                     </span>
                                                                 </label>
 
@@ -1106,11 +1103,11 @@
                                                             </div>
 </div>
                                                         <div class="effect-premium-field effect-premium-field-full effect-chat-purpose-field">
-                                                            <label class="effect-premium-field-label"><i class="fas fa-bullseye" aria-hidden="true"></i> Finalidades</label>
+                                                            <label class="effect-premium-field-label"><i class="fas fa-bullseye" aria-hidden="true"></i> {{localize "GUM.EffectSheet.Purposes"}}</label>
                                                             <div class="effect-purpose-control effect-chat-purpose-control">
                                                                 <input type="hidden" name="system.actions.{{action.index}}.requestedPurposeIds" value="{{action.requestedPurposeIdsCsv}}" />
                                                                 <span class="effect-purpose-summary">{{action.purposeSelectionSummary}}</span>
-                                                                <button type="button" class="open-purpose-picker" data-target-input="system.actions.{{action.index}}.requestedPurposeIds" data-attribute-input="system.actions.{{action.index}}.roll_attribute"><i class="fas fa-list-check" aria-hidden="true"></i> Selecionar</button>
+                                                                <button type="button" class="open-purpose-picker" data-target-input="system.actions.{{action.index}}.requestedPurposeIds" data-attribute-input="system.actions.{{action.index}}.roll_attribute"><i class="fas fa-list-check" aria-hidden="true"></i> {{localize "GUM.EffectSheet.Select"}}</button>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1126,7 +1123,7 @@
                                                     <div class="effect-premium-field">
                                                         <label class="effect-premium-field-label">
                                                             <i class="fas fa-key" aria-hidden="true"></i>
-                                                            Chave
+                                                            {{localize "GUM.EffectSheet.Key"}}
                                                         </label>
 
                                                         <div class="effect-premium-field-control">
@@ -1141,7 +1138,7 @@
                                                     <div class="effect-premium-field">
                                                         <label class="effect-premium-field-label">
                                                             <i class="fas fa-toggle-on" aria-hidden="true"></i>
-                                                            Valor
+                                                            {{localize "GUM.EffectSheet.Value"}}
                                                         </label>
 
                                                         <div class="effect-premium-field-control">
@@ -1162,8 +1159,8 @@
 
                     {{else}}
                         <p class="hint effect-premium-empty">
-                            Nenhuma ação configurada. Clique em
-                            <strong>Adicionar Ação</strong>.
+                            {{localize "GUM.EffectSheet.NoActionsPrefix"}}
+                            <strong>{{localize "GUM.EffectSheet.AddAction"}}</strong>.
                         </p>
                     {{/if}}
 
@@ -1192,8 +1189,8 @@
                             class="form-group"
                             style="flex-direction: row; text-align: center;"
                         >
-                            <label title="Livro e Página de Referência">
-                                <a class="open-reference-link" title="Abrir Referência">
+                            <label title="{{localize 'GUM.EffectSheet.BookPageReference'}}">
+                                <a class="open-reference-link" title="{{localize 'GUM.EffectSheet.OpenReference'}}">
                                     <i class="fas fa-book-open"></i>
                                 </a>
                                 REF
@@ -1204,7 +1201,7 @@
                                     type="text"
                                     name="system.ref"
                                     value="{{system.ref}}"
-                                    placeholder="Ex: BA23, MA45"
+                                    placeholder="{{localize 'GUM.EffectSheet.ExampleReference'}}"
                                 />
                             </div>
                         </div>
@@ -1213,7 +1210,7 @@
                             <details class="itemdesc-panel" open>
                                 <summary class="itemdesc-block-header">
                                     <h4 class="itemdesc-block-title">
-                                        Descrição Resumida (Chat)
+                                        {{localize "GUM.EffectSheet.ChatSummary"}}
                                     </h4>
                                 </summary>
 
@@ -1253,7 +1250,7 @@
                                                 data-field="system.chat_description"
                                             >
                                                 <i class="fas fa-save"></i>
-                                                Salvar
+                                                {{localize "GUM.EffectSheet.Save"}}
                                             </button>
 
                                             <button
@@ -1262,7 +1259,7 @@
                                                 data-expanded="false"
                                             >
                                                 <i class="fas fa-expand"></i>
-                                                Expandir
+                                                {{localize "GUM.EffectSheet.Expand"}}
                                             </button>
 
                                             <button
@@ -1270,7 +1267,7 @@
                                                 class="cancel-description"
                                             >
                                                 <i class="fas fa-times"></i>
-                                                Cancelar
+                                                {{localize "GUM.EffectSheet.Cancel"}}
                                             </button>
                                         </div>
                                     </div>
@@ -1282,7 +1279,7 @@
                             <details class="itemdesc-panel" open>
                                 <summary class="itemdesc-block-header">
                                     <h4 class="itemdesc-block-title">
-                                        Descrição Completa
+                                        {{localize "GUM.EffectSheet.FullDescription"}}
                                     </h4>
                                 </summary>
 
@@ -1322,7 +1319,7 @@
                                                 data-field="system.description"
                                             >
                                                 <i class="fas fa-save"></i>
-                                                Salvar
+                                                {{localize "GUM.EffectSheet.Save"}}
                                             </button>
 
                                             <button
@@ -1331,7 +1328,7 @@
                                                 data-expanded="false"
                                             >
                                                 <i class="fas fa-expand"></i>
-                                                Expandir
+                                                {{localize "GUM.EffectSheet.Expand"}}
                                             </button>
 
                                             <button
@@ -1339,7 +1336,7 @@
                                                 class="cancel-description"
                                             >
                                                 <i class="fas fa-times"></i>
-                                                Cancelar
+                                                {{localize "GUM.EffectSheet.Cancel"}}
                                             </button>
                                         </div>
                                     </div>
@@ -1360,7 +1357,7 @@
                     style="margin: 5px;"
                 >
                     <div class="effect-field effect-field-row">
-                        <div class="effect-label">Ícone no Token</div>
+                        <div class="effect-label">{{localize "GUM.EffectSheet.TokenIcon"}}</div>
 
                         <select name="system.tokenIconPolicy">
                             {{#each tokenIconPolicyOptions as |policy|}}
@@ -1375,11 +1372,11 @@
                     </div>
 
                  <div class="effect-field effect-field-row">
-                        <div class="effect-label">Acúmulo por Condições</div>
+                        <div class="effect-label">{{localize "GUM.EffectSheet.ConditionStacking"}}</div>
 
                         <select
                             name="system.conditionStackingMode"
-                            title="Define se este mesmo Item Efeito pode ser acumulado quando condições diferentes estiverem ativas."
+                            title="{{localize 'GUM.EffectSheet.ConditionStackingHint'}}"
                         >
                             {{#each conditionStackingModeOptions as |mode|}}
                                 <option
@@ -1395,7 +1392,7 @@
 
                 {{#if (eq system.conditionStackingMode "unique")}}
                     <p class="hint" style="margin: 0 10px 10px;">
-                        Enquanto duas ou mais condições vincularem este mesmo Item Efeito, somente uma cópia de cada ação persistente será aplicada ao personagem. O efeito permanece ativo até a última dessas condições ser desligada.
+                        {{localize "GUM.EffectSheet.ConditionStackingExplanation"}}
                     </p>
                 {{/if}}
 
@@ -1404,7 +1401,7 @@
                     <section class="effect-card effect-section">
                         <div class="effect-section-header">
                             <h4 class="effect-section-title">
-                                Duração do Efeito
+                                {{localize "GUM.EffectSheet.EffectDuration"}}
                             </h4>
 
                             <div class="effect-section-select">
@@ -1416,14 +1413,14 @@
                                         value="permanent"
                                         {{#if system.duration.isPermanent}}selected{{/if}}
                                     >
-                                        Permanente
+                                        {{localize "GUM.EffectSheet.Permanent"}}
                                     </option>
 
                                     <option
                                         value="combat"
                                         {{#if (and (not system.duration.isPermanent) system.duration.inCombat)}}selected{{/if}}
                                     >
-                                        Temporária/Combate
+                                        {{localize "GUM.EffectSheet.TemporaryCombat"}}
                                     </option>
                                 </select>
                             </div>
@@ -1447,8 +1444,7 @@
 
                             {{#if system.duration.isPermanent}}
                                 <p class="hint">
-                                    O efeito aparecerá no campo "Efeitos Passivos"
-                                    da ficha do personagem.
+                                    {{localize "GUM.EffectSheet.PassiveEffectHint"}}
                                 </p>
                             {{/if}}
 
@@ -1458,7 +1454,7 @@
 
                                         <div class="effect-field effect-field-row">
                                             <div class="effect-label">
-                                                Início da contagem
+                                                {{localize "GUM.EffectSheet.CountStart"}}
                                             </div>
 
                                             <select
@@ -1469,21 +1465,21 @@
                                                     value="apply"
                                                     {{#if (eq system.duration.startMode "apply")}}selected{{/if}}
                                                 >
-                                                    Ao aplicar
+                                                    {{localize "GUM.EffectSheet.OnApply"}}
                                                 </option>
 
                                                 <option
                                                     value="nextTurnStart"
                                                     {{#if (eq system.duration.startMode "nextTurnStart")}}selected{{/if}}
                                                 >
-                                                    No início do próximo turno
+                                                    {{localize "GUM.EffectSheet.NextTurnStart"}}
                                                 </option>
                                             </select>
                                         </div>
 
                                         <div class="effect-field effect-field-row">
                                             <div class="effect-label">
-                                                Rodadas (seg)
+                                                {{localize "GUM.EffectSheet.RoundsSeconds"}}
                                             </div>
 
                                             <input
@@ -1496,7 +1492,7 @@
 
                                         <div class="effect-field effect-field-row">
                                             <div class="effect-label">
-                                                Fim da contagem
+                                                {{localize "GUM.EffectSheet.CountEnd"}}
                                             </div>
 
                                             <select name="system.duration.endMode">
@@ -1504,14 +1500,14 @@
                                                     value="turnStart"
                                                     {{#if (eq system.duration.endMode "turnStart")}}selected{{/if}}
                                                 >
-                                                    No início do turno final
+                                                    {{localize "GUM.EffectSheet.FinalTurnStart"}}
                                                 </option>
 
                                                 <option
                                                     value="turnEnd"
                                                     {{#if (eq system.duration.endMode "turnEnd")}}selected{{/if}}
                                                 >
-                                                    No fim do turno final
+                                                    {{localize "GUM.EffectSheet.FinalTurnEnd"}}
                                                 </option>
                                             </select>
                                         </div>
@@ -1526,12 +1522,12 @@
                 <section class="effect-card effect-section effect-resistance-section">
                     <div class="effect-section-header">
                         <h4 class="effect-section-title">
-                            Barreira de Resistência
+                            {{localize "GUM.EffectSheet.ResistanceBarrier"}}
                         </h4>
 
                         <label
                             class="effect-section-toggle"
-                            title="Ativar registro de barreira"
+                            title="{{localize 'GUM.EffectSheet.EnableBarrier'}}"
                         >
                             <input
                                 type="checkbox"
@@ -1553,32 +1549,32 @@
                             style="margin-bottom: 10px;"
                         >
                             <div class="effect-label">
-                                Texto no card de resistência
+                                {{localize "GUM.EffectSheet.ResistanceCardText"}}
                             </div>
 
                             <textarea
                                 name="system.resistanceRoll.chatText"
                                 rows="2"
-                                placeholder="Opcional"
+                                placeholder="{{localize 'GUM.EffectSheet.Optional'}}"
                                 {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}
                             >{{system.resistanceRoll.chatText}}</textarea>
                         </div>
 
                         <div class="effect-row-grid resistance-settings-row">
                             <div class="effect-field resistance-setting-card resistance-mode-field">
-                                <div class="effect-label">Modo de aplicação</div>
+                                <div class="effect-label">{{localize "GUM.EffectSheet.ApplicationMode"}}</div>
                                 <select name="system.resistanceRoll.mode" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}>
-                                    <option value="simple" {{#unless isConditionalResistance}}selected{{/unless}}>Simples — aplicar todas as ações</option>
-                                    <option value="conditional" {{#if isConditionalResistance}}selected{{/if}}>Resultados condicionais</option>
+                                    <option value="simple" {{#unless isConditionalResistance}}selected{{/unless}}>{{localize "GUM.EffectSheet.SimpleApplyAll"}}</option>
+                                    <option value="conditional" {{#if isConditionalResistance}}selected{{/if}}>{{localize "GUM.EffectSheet.ConditionalResults"}}</option>
                                 </select>
                             </div>
 
                             <div class="effect-field resistance-setting-card resistance-visibility-field">
-                                <div class="effect-label">Visibilidade do teste</div>
+                                <div class="effect-label">{{localize "GUM.EffectSheet.TestVisibility"}}</div>
                                 <select name="system.resistanceRoll.chatVisibility" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}>
-                                    <option value="public" {{#if (eq system.resistanceRoll.chatVisibility "public")}}selected{{/if}}>Público (todos)</option>
-                                    <option value="owners" {{#unless (or (eq system.resistanceRoll.chatVisibility "public") (eq system.resistanceRoll.chatVisibility "target"))}}selected{{/unless}}>Alvo e Mestre</option>
-                                    <option value="target" {{#if (eq system.resistanceRoll.chatVisibility "target")}}selected{{/if}}>Somente o alvo</option>
+                                    <option value="public" {{#if (eq system.resistanceRoll.chatVisibility "public")}}selected{{/if}}>{{localize "GUM.EffectSheet.PublicEveryone"}}</option>
+                                    <option value="owners" {{#unless (or (eq system.resistanceRoll.chatVisibility "public") (eq system.resistanceRoll.chatVisibility "target"))}}selected{{/unless}}>{{localize "GUM.EffectSheet.TargetAndGM"}}</option>
+                                    <option value="target" {{#if (eq system.resistanceRoll.chatVisibility "target")}}selected{{/if}}>{{localize "GUM.EffectSheet.TargetOnly"}}</option>
                                 </select>
                             </div>
                         </div>
@@ -1587,7 +1583,7 @@
 
                             <div class="effect-field {{#if isConditionalResistance}}is-hidden{{/if}}">
                                 <div class="effect-label">
-                                    Aplicar efeito em
+                                    {{localize "GUM.EffectSheet.ApplyEffectTo"}}
                                 </div>
 
                                 <select
@@ -1598,20 +1594,20 @@
                                         value="failure"
                                         {{#if (eq system.resistanceRoll.applyOn "failure")}}selected{{/if}}
                                     >
-                                        Em Falha
+                                        {{localize "GUM.EffectSheet.OnFailure"}}
                                     </option>
 
                                     <option
                                         value="success"
                                         {{#if (eq system.resistanceRoll.applyOn "success")}}selected{{/if}}
                                     >
-                                        Em Sucesso
+                                        {{localize "GUM.EffectSheet.OnSuccess"}}
                                     </option>
                                 </select>
                             </div>
 
                             <div class="effect-field">
-                                <div class="effect-label">Atributo</div>
+                                <div class="effect-label">{{localize "GUM.EffectSheet.Attribute"}}</div>
 
                                 <input
                                     type="text"
@@ -1622,13 +1618,13 @@
                             </div>
 
                             <div class="effect-field {{#if isConditionalResistance}}is-hidden{{/if}}">
-                                <div class="effect-label">Margem Min</div>
+                                <div class="effect-label">{{localize "GUM.EffectSheet.MinimumMarginShort"}}</div>
 
                                 <input
                                     type="text"
                                     name="system.resistanceRoll.margin"
                                     value="{{system.resistanceRoll.margin}}"
-                                    placeholder="Opcional"
+                                    placeholder="{{localize 'GUM.EffectSheet.Optional'}}"
                                     {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}
                                 />
                             </div>
@@ -1638,7 +1634,7 @@
                             class="effect-field"
                             style="margin-bottom: 15px;"
                         >
-                            <div class="effect-label">Modificador</div>
+                            <div class="effect-label">{{localize "GUM.EffectSheet.Modifier"}}</div>
 
                             <input
                                 type="text"
@@ -1651,39 +1647,39 @@
                         {{#if isConditionalResistance}}
                             <div class="resistance-branches">
                                 <div class="resistance-branches-header">
-                                    <div>Resultados (todas as condições compatíveis serão aplicadas)</div>
-                                    <button type="button" class="add-resistance-branch"><i class="fas fa-plus"></i> Adicionar resultado</button>
+                                    <div>{{localize "GUM.EffectSheet.ResultsAllMatching"}}</div>
+                                    <button type="button" class="add-resistance-branch"><i class="fas fa-plus"></i> {{localize "GUM.EffectSheet.AddOutcome"}}</button>
                                 </div>
                                 {{#each resistanceBranches as |branch|}}
                                     <article class="resistance-branch" data-branch-index="{{branch.index}}">
                                         <input type="hidden" name="system.resistanceRoll.branches.{{branch.index}}.id" value="{{branch.id}}">
                                         <div class="resistance-branch-heading">
-                                            <input type="text" name="system.resistanceRoll.branches.{{branch.index}}.label" value="{{branch.label}}" aria-label="Nome do resultado">
-                                            <button type="button" class="move-resistance-branch" data-index="{{branch.index}}" data-direction="-1" title="Mover para cima"><i class="fas fa-arrow-up"></i></button>
-                                            <button type="button" class="move-resistance-branch" data-index="{{branch.index}}" data-direction="1" title="Mover para baixo"><i class="fas fa-arrow-down"></i></button>
-                                            <button type="button" class="remove-resistance-branch" data-index="{{branch.index}}" title="Remover resultado"><i class="fas fa-trash"></i></button>
+                                            <input type="text" name="system.resistanceRoll.branches.{{branch.index}}.label" value="{{branch.label}}" aria-label="{{localize 'GUM.EffectSheet.OutcomeName'}}">
+                                            <button type="button" class="move-resistance-branch" data-index="{{branch.index}}" data-direction="-1" title="{{localize 'GUM.EffectSheet.MoveUp'}}"><i class="fas fa-arrow-up"></i></button>
+                                            <button type="button" class="move-resistance-branch" data-index="{{branch.index}}" data-direction="1" title="{{localize 'GUM.EffectSheet.MoveDown'}}"><i class="fas fa-arrow-down"></i></button>
+                                            <button type="button" class="remove-resistance-branch" data-index="{{branch.index}}" title="{{localize 'GUM.EffectSheet.RemoveOutcome'}}"><i class="fas fa-trash"></i></button>
                                         </div>
                                         <div class="resistance-branch-condition">
-                                            <span class="resistance-condition-label">Condição</span>
-                                            <select name="system.resistanceRoll.branches.{{branch.index}}.condition.type" aria-label="Tipo de condição">
-                                                <option value="outcome" {{#unless branch.isOtherwise}}selected{{/unless}}>Resultado do teste</option>
-                                                <option value="otherwise" {{#if branch.isOtherwise}}selected{{/if}}>Nenhuma outra condição</option>
+                                            <span class="resistance-condition-label">{{localize "GUM.EffectSheet.Condition"}}</span>
+                                            <select name="system.resistanceRoll.branches.{{branch.index}}.condition.type" aria-label="{{localize 'GUM.EffectSheet.ConditionType'}}">
+                                                <option value="outcome" {{#unless branch.isOtherwise}}selected{{/unless}}>{{localize "GUM.EffectSheet.TestOutcome"}}</option>
+                                                <option value="otherwise" {{#if branch.isOtherwise}}selected{{/if}}>{{localize "GUM.EffectSheet.Otherwise"}}</option>
                                             </select>
-                                            <select name="system.resistanceRoll.branches.{{branch.index}}.condition.outcome" aria-label="Resultado do teste" {{#if branch.isOtherwise}}disabled{{/if}}>
-                                                <option value="failure" {{#unless branch.isSuccess}}selected{{/unless}}>Falha</option>
-                                                <option value="success" {{#if branch.isSuccess}}selected{{/if}}>Sucesso</option>
+                                            <select name="system.resistanceRoll.branches.{{branch.index}}.condition.outcome" aria-label="{{localize 'GUM.EffectSheet.TestOutcome'}}" {{#if branch.isOtherwise}}disabled{{/if}}>
+                                                <option value="failure" {{#unless branch.isSuccess}}selected{{/unless}}>{{localize "GUM.EffectSheet.Failure"}}</option>
+                                                <option value="success" {{#if branch.isSuccess}}selected{{/if}}>{{localize "GUM.EffectSheet.Success"}}</option>
                                             </select>
-                                            <label>Margem mín. <input type="number" min="0" step="1" name="system.resistanceRoll.branches.{{branch.index}}.condition.minimumMargin" value="{{branch.condition.minimumMargin}}" {{#if branch.isOtherwise}}disabled{{/if}}></label>
-                                            <label>Margem máx. <input type="number" min="0" step="1" name="system.resistanceRoll.branches.{{branch.index}}.condition.maximumMargin" value="{{branch.maximumMargin}}" placeholder="Sem limite" {{#if branch.isOtherwise}}disabled{{/if}}></label>
+                                            <label>{{localize "GUM.EffectSheet.MinimumMargin"}} <input type="number" min="0" step="1" name="system.resistanceRoll.branches.{{branch.index}}.condition.minimumMargin" value="{{branch.condition.minimumMargin}}" {{#if branch.isOtherwise}}disabled{{/if}}></label>
+                                            <label>{{localize "GUM.EffectSheet.MaximumMargin"}} <input type="number" min="0" step="1" name="system.resistanceRoll.branches.{{branch.index}}.condition.maximumMargin" value="{{branch.maximumMargin}}" placeholder="{{localize 'GUM.EffectSheet.NoLimit'}}" {{#if branch.isOtherwise}}disabled{{/if}}></label>
                                         </div>
                                         <input type="hidden" name="system.resistanceRoll.branches.{{branch.index}}.actionIds" value="{{branch.actionIdsCsv}}">
                                         <div class="resistance-branch-actions">
                                             <span class="resistance-action-summary">{{branch.actionSummary}}</span>
-                                            <button type="button" class="select-resistance-actions" data-index="{{branch.index}}"><i class="fas fa-search"></i> Selecionar ações</button>
+                                            <button type="button" class="select-resistance-actions" data-index="{{branch.index}}"><i class="fas fa-search"></i> {{localize "GUM.EffectSheet.SelectActions"}}</button>
                                         </div>
                                     </article>
                                 {{else}}
-                                    <p class="hint">Adicione um resultado e escolha quais ações ele deve aplicar.</p>
+                                    <p class="hint">{{localize "GUM.EffectSheet.AddOutcomeHint"}}</p>
                                 {{/each}}
                             </div>
                         {{/if}}
@@ -1697,7 +1693,7 @@
                             />
 
                             <span>
-                                Realizar o teste automaticamente, mas não publicar no chat.
+                                {{localize "GUM.EffectSheet.SkipPromptHint"}}
                             </span>
                         </label>
 
@@ -1705,14 +1701,14 @@
                             <div class="effect-purpose-control resistance-purpose-control">
                                 <input type="hidden" name="system.resistanceRoll.requestedPurposeIds" value="{{resistancePurposeIdsCsv}}" />
                                 <div class="resistance-purpose-heading">
-                                    <div class="effect-label">Finalidades do teste</div>
-                                    <button type="button" class="open-purpose-picker resistance-purpose-add" data-target-input="system.resistanceRoll.requestedPurposeIds" data-attribute-input="system.resistanceRoll.attribute" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}><i class="fas fa-pen-nib" aria-hidden="true"></i> Editar finalidades</button>
+                                    <div class="effect-label">{{localize "GUM.EffectSheet.TestPurposes"}}</div>
+                                    <button type="button" class="open-purpose-picker resistance-purpose-add" data-target-input="system.resistanceRoll.requestedPurposeIds" data-attribute-input="system.resistanceRoll.attribute" {{#unless system.resistanceRoll.isResisted}}disabled{{/unless}}><i class="fas fa-pen-nib" aria-hidden="true"></i> {{localize "GUM.EffectSheet.EditPurposes"}}</button>
                                 </div>
                                 <div class="resistance-purpose-list{{#unless resistancePurposeLabels.length}} is-empty{{/unless}}" aria-live="polite">
                                     {{#each resistancePurposeLabels as |purposeLabel|}}
                                         <span class="resistance-purpose-item">{{purposeLabel}}</span>
                                     {{else}}
-                                        <span class="resistance-purpose-empty">Nenhuma finalidade adicionada</span>
+                                        <span class="resistance-purpose-empty">{{localize "GUM.EffectSheet.NoPurposesAdded"}}</span>
                                     {{/each}}
                                 </div>
                             </div>

@@ -444,6 +444,11 @@ test("a location-specific DR feature may create a missing armor location", () =>
   assert.deepEqual(result.drLocations, { eyes: { base: 4 } });
 });
 
+test("keeps the all DR location available for character-wide protection", () => {
+  const result = resolveEquipment({ cost: 1, weight: 1, dr_locations: { all: { base: 3 } } }, []);
+  assert.deepEqual(result.drLocations, { all: { base: 3 } });
+});
+
 test("modifies attacks by group and combines formula and type changes deterministically", () => {
   const result = resolveEquipment({
     cost: 60, weight: 7,

@@ -25,6 +25,8 @@ test("collects wearer effects according to the equipment lifecycle", () => {
 test("detects only changes that can alter granted effects", () => {
   assert.equal(hasEquipmentGrantRelevantChange({ "system.eqp_modifiers.a.features_data.b.value": 2 }), true);
   assert.equal(hasEquipmentGrantRelevantChange({ "system.location": "equipped" }), true);
+  assert.equal(hasEquipmentGrantRelevantChange({ "system.level": 2 }), true);
+  assert.equal(hasEquipmentGrantRelevantChange({ system: { level: 2 } }), true);
   assert.equal(hasEquipmentGrantRelevantChange({ system: { active: true } }), true);
   assert.equal(hasEquipmentGrantRelevantChange({ name: "Novo nome" }), false);
 });

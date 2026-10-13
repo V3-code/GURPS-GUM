@@ -43,6 +43,9 @@ test("damage-type override is stored as a compatible delta but resolves to its a
 });
 
 test("effect paths support every DR input layer and default to base damage", () => {
+  assert.deepEqual(parseDamageResistanceEffectPath("system.combat.dr_passive_mods.all.base"), {
+    requestedLayer: "passive_mods", location: "all", damageType: "base"
+  });
   assert.deepEqual(parseDamageResistanceEffectPath("system.combat.dr_temp_mods.torso.qmd"), {
     requestedLayer: "temp_mods", location: "torso", damageType: "qmd"
   });
@@ -57,6 +60,8 @@ test("actor preparation exposes computed/final DR and rebuilds effect layers", (
   assert.match(source, /combat\.dr_temp_mods = \{\}/);
   assert.match(source, /combat\.dr_passive_mods = \{\}/);
   assert.match(source, /parseDamageResistanceEffectPath\(normalizedPath\)/);
+  assert.match(source, /mergeDamageResistance\(resolved, layer\?\.all\)/);
+  assert.match(source, /return \{ \.\.\.global, \.\.\.specific \}/);
   assert.match(source, /combat\.dr_final_computed = computedDr/);
   assert.match(source, /combat\.dr_locations = totalDr/);
 });

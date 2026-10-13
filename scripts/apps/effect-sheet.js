@@ -14,55 +14,49 @@ import { buildStatusCatalog, resolveStatusCatalogEntry } from "../../module/util
 
 const { ItemSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
+const localize = (key, fallback = key) => {
+    const value = globalThis.game?.i18n?.localize?.(key);
+    return value && value !== key ? value : fallback;
+};
+const format = (key, data, fallback = key) => {
+    const value = globalThis.game?.i18n?.format?.(key, data);
+    return value && value !== key ? value : fallback;
+};
 
 
 const ROLL_MODIFIER_CONTEXT_OPTIONS = [
-    { id: "all", label: "Qualquer rolagem de teste" },
-    { id: "attack", label: "Ataque (qualquer)" },
-    { id: "attack_melee", label: "Ataque corpo-a-corpo" },
-    { id: "attack_ranged", label: "Ataque à distância" },
-    { id: "defense", label: "Defesa (qualquer)" },
-    { id: "defense_dodge", label: "Esquiva" },
-    { id: "defense_parry", label: "Aparar" },
-    { id: "defense_block", label: "Bloqueio" },
-    { id: "skill", label: "Perícias (qualquer)" },
-    { id: "spell", label: "Magias" },
-    { id: "power", label: "Poderes" },
-    { id: "sense_vision", label: "Visão" },
-    { id: "sense_hearing", label: "Audição" },
-    { id: "sense_tastesmell", label: "Olfato/Paladar" },
-    { id: "sense_touch", label: "Tato" },
-    { id: "check_st", label: "Atributo Específico: ST" },
-    { id: "skill_st", label: "Perícias baseadas em ST" },
-    { id: "check_dx", label: "Atributo Específico: DX" },
-    { id: "skill_dx", label: "Perícias baseadas em DX" },
-    { id: "check_iq", label: "Atributo Específico: IQ" },
-    { id: "skill_iq", label: "Perícias baseadas em IQ" },
-    { id: "check_ht", label: "Atributo Específico: HT" },
-    { id: "skill_ht", label: "Perícias baseadas em HT" },
-    { id: "check_per", label: "Atributo Específico: Per" },
-    { id: "skill_per", label: "Perícias baseadas em Per" },
-    { id: "check_vont", label: "Atributo Específico: Vont" },
-      { id: "skill_vont", label: "Perícias baseadas em Vont" }
+    { id: "all", key: "All" }, { id: "attack", key: "Attack" },
+    { id: "attack_melee", key: "MeleeAttack" }, { id: "attack_ranged", key: "RangedAttack" },
+    { id: "defense", key: "Defense" }, { id: "defense_dodge", key: "Dodge" },
+    { id: "defense_parry", key: "Parry" }, { id: "defense_block", key: "Block" },
+    { id: "skill", key: "Skill" }, { id: "spell", key: "Spell" }, { id: "power", key: "Power" },
+    { id: "sense_vision", key: "Vision" }, { id: "sense_hearing", key: "Hearing" },
+    { id: "sense_tastesmell", key: "TasteSmell" }, { id: "sense_touch", key: "Touch" },
+    { id: "check_st", key: "CheckST" }, { id: "skill_st", key: "SkillST" },
+    { id: "check_dx", key: "CheckDX" }, { id: "skill_dx", key: "SkillDX" },
+    { id: "check_iq", key: "CheckIQ" }, { id: "skill_iq", key: "SkillIQ" },
+    { id: "check_ht", key: "CheckHT" }, { id: "skill_ht", key: "SkillHT" },
+    { id: "check_per", key: "CheckPer" }, { id: "skill_per", key: "SkillPer" },
+    { id: "check_vont", key: "CheckWill" }, { id: "skill_vont", key: "SkillWill" }
 ];
 
 const ROLL_MODIFIER_APPLICATION_OPTIONS = [
-    { id: "self", label: "No próprio portador do efeito" },
-    { id: "vs_targeter", label: "Em quem marcar este ator como alvo" }
+    { id: "self", key: "Self" },
+    { id: "vs_targeter", key: "VsTargeter" }
 ];
 
 
 const EFFECT_ACTION_TYPE_PRESENTATION = {
-    attribute: { label: "Modificador de Atributo", icon: "fas fa-chart-line", className: "is-attribute" },
-    status: { label: "Status", icon: "fas fa-heartbeat", className: "is-status" },
-    resource_change: { label: "Alteração de Recurso", icon: "fas fa-battery-half", className: "is-resource-change" },
-    resource_create: { label: "Criar Recurso", icon: "fas fa-plus-circle", className: "is-resource-create" },
-    roll_modifier: { label: "Modificador de Rolagem", icon: "fas fa-dice", className: "is-roll-modifier" },
-    skill_modifier: { label: "Modificar Rolagem de Perícia", icon: "fas fa-graduation-cap", className: "is-roll-modifier" },
-    combat_modifier: { label: "Modificar Modo de Combate", icon: "fas fa-swords", className: "is-roll-modifier" },
-    chat: { label: "Mensagem de Chat", icon: "fas fa-comment", className: "is-chat" },
-    macro: { label: "Macro", icon: "fas fa-code", className: "is-macro" },
-    flag: { label: "Flag", icon: "fas fa-flag", className: "is-flag" }
+    attribute: { key: "Attribute", icon: "fas fa-chart-line", className: "is-attribute" },
+    status: { key: "Status", icon: "fas fa-heartbeat", className: "is-status" },
+    resource_change: { key: "ResourceChange", icon: "fas fa-battery-half", className: "is-resource-change" },
+    resource_create: { key: "ResourceCreate", icon: "fas fa-plus-circle", className: "is-resource-create" },
+    roll_modifier: { key: "RollModifier", icon: "fas fa-dice", className: "is-roll-modifier" },
+    skill_modifier: { key: "SkillModifier", icon: "fas fa-graduation-cap", className: "is-roll-modifier" },
+    combat_modifier: { key: "CombatModifier", icon: "fas fa-swords", className: "is-roll-modifier" },
+    chat: { key: "Chat", icon: "fas fa-comment", className: "is-chat" },
+    macro: { key: "Macro", icon: "fas fa-code", className: "is-macro" },
+    flag: { key: "Flag", icon: "fas fa-flag", className: "is-flag" }
 };
 
 const RESOURCE_CATEGORY_LABELS = {
@@ -79,43 +73,46 @@ const compactParts = (...parts) => parts
     .map(part => (part ?? "").toString().trim())
     .filter(Boolean);
 
-const formatActionCount = (count) => `${count} ${count === 1 ? "ação" : "ações"}`;
-const formatEntryCount = (count) => `${count} ${count === 1 ? "entrada" : "entradas"}`;
+const formatActionCount = (count) => format(count === 1 ? "GUM.EffectSheet.Count.ActionOne" : "GUM.EffectSheet.Count.ActionMany", { count }, `${count} ${count === 1 ? "ação" : "ações"}`);
+const formatEntryCount = (count) => format(count === 1 ? "GUM.EffectSheet.Count.EntryOne" : "GUM.EffectSheet.Count.EntryMany", { count }, `${count} ${count === 1 ? "entrada" : "entradas"}`);
 
-const getApplicationSideLabel = (id) => ROLL_MODIFIER_APPLICATION_OPTIONS.find(opt => opt.id === id)?.label || id || "Próprio portador";
-const getShortApplicationSideLabel = (id) => id === "vs_targeter" ? "Quem mira o portador" : "Próprio portador";
+const getApplicationSideLabel = (id) => {
+    const option = ROLL_MODIFIER_APPLICATION_OPTIONS.find(opt => opt.id === id);
+    return option ? localize(`GUM.EffectSheet.Application.${option.key}`) : id || localize("GUM.EffectSheet.Application.SelfShort");
+};
+const getShortApplicationSideLabel = (id) => localize(id === "vs_targeter" ? "GUM.EffectSheet.Application.VsTargeterShort" : "GUM.EffectSheet.Application.SelfShort");
 
 const buildRollEntrySummary = (entry = {}) => {
     const parts = compactParts(entry.label, entry.value, entry.contexts || "all", getShortApplicationSideLabel(entry.application_side || "self"));
-    return parts.length ? parts.join(" · ") : "Modificador sem rótulo";
+    return parts.length ? parts.join(" · ") : localize("GUM.EffectSheet.Summary.UnlabeledModifier");
 };
 
 const buildActionSummary = (action = {}) => {
     switch (action.type) {
         case "attribute":
-            return compactParts(action.path, action.operation, action.value, ATTRIBUTE_CHAT_VISIBILITIES[action.attribute_chat_visibility]).join(" · ") || "Modificador de atributo";
+            return compactParts(action.path, action.operation, action.value, localize(`GUM.EffectSheet.ChatVisibility.${action.attribute_chat_visibility}`, ATTRIBUTE_CHAT_VISIBILITIES[action.attribute_chat_visibility])).join(" · ") || localize("GUM.EffectSheet.Summary.AttributeModifier");
         case "status":
-            return `Status: ${action.statusLabel || action.statusId || "não definido"}`;
+            return format("GUM.EffectSheet.Summary.Status", { status: action.statusLabel || action.statusId || localize("GUM.EffectSheet.Summary.NotDefined") });
         case "resource_change":
-            return compactParts(RESOURCE_CATEGORY_LABELS[action.category] || action.category, action.value).join(" · ") || "Alteração de recurso";
+            return compactParts(localize(`GUM.EffectSheet.Resource.${action.category}`, RESOURCE_CATEGORY_LABELS[action.category]) || action.category, action.value).join(" · ") || localize("GUM.EffectSheet.Summary.ResourceChange");
                 case "resource_create":
-            return compactParts(RESOURCE_CATEGORY_LABELS[action.category] || action.category, action.name, `${action.value || 0}/${action.max || 0}`).join(" · ") || "Criar recurso";
+            return compactParts(localize(`GUM.EffectSheet.Resource.${action.category}`, RESOURCE_CATEGORY_LABELS[action.category]) || action.category, action.name, `${action.value || 0}/${action.max || 0}`).join(" · ") || localize("GUM.EffectSheet.Summary.ResourceCreate");
         case "roll_modifier":
-            return compactParts(action.rollModifierPrimaryContext || "Qualquer rolagem", action.rollModifierPrimarySide || "Próprio portador", formatEntryCount(action.entryCount || 0)).join(" · ");
+            return compactParts(action.rollModifierPrimaryContext || localize("GUM.EffectSheet.Summary.AnyRoll"), action.rollModifierPrimarySide || localize("GUM.EffectSheet.Application.SelfShort"), formatEntryCount(action.entryCount || 0)).join(" · ");
         case "skill_modifier":
-            return compactParts("Perícias", action.skill_scope === "specific" ? action.skill_targets : action.skill_scope === "attribute" ? action.skill_attribute?.toUpperCase() : "Todas", action.modifier_value).join(" · ");
+            return compactParts(localize("GUM.EffectSheet.Summary.Skills"), action.skill_scope === "specific" ? action.skill_targets : action.skill_scope === "attribute" ? action.skill_attribute?.toUpperCase() : localize("GUM.EffectSheet.Summary.All"), action.modifier_value).join(" · ");
         case "combat_modifier": {
-            const changes = [action.combat_attack_enabled && "Ataque", action.combat_parry_enabled && "Aparar", action.combat_block_enabled && "Bloqueio", action.combat_damage_enabled && "Dano"].filter(Boolean);
-            return compactParts(action.combat_scope === "specific" ? "Modos específicos" : action.combat_scope, changes.join(", ")).join(" · ") || "Modificar modo de combate";
+            const changes = [action.combat_attack_enabled && localize("GUM.EffectSheet.Summary.Attack"), action.combat_parry_enabled && localize("GUM.EffectSheet.Summary.Parry"), action.combat_block_enabled && localize("GUM.EffectSheet.Summary.Block"), action.combat_damage_enabled && localize("GUM.EffectSheet.Summary.Damage")].filter(Boolean);
+            return compactParts(action.combat_scope === "specific" ? localize("GUM.EffectSheet.Summary.SpecificModes") : action.combat_scope, changes.join(", ")).join(" · ") || localize("GUM.EffectSheet.Summary.CombatModifier");
         }
         case "chat":
-            return action.chat_text ? "Mensagem no chat" : "Mensagem de chat";
+            return localize(action.chat_text ? "GUM.EffectSheet.Summary.ChatMessagePresent" : "GUM.EffectSheet.Summary.ChatMessage");
         case "macro":
             return compactParts("Macro:", action.value).join(" ") || "Macro";
         case "flag":
             return compactParts(action.key, action.flag_value).join(" · ") || "Flag";
         default:
-            return "Ação configurada";
+            return localize("GUM.EffectSheet.Summary.ConfiguredAction");
     }
 };
 
@@ -132,7 +129,7 @@ const DEFAULT_EFFECT_ACTION = {
     flag_value: "",
     chat_text: "",
     has_roll: false,
-    roll_label: "Rolar Teste",
+    roll_label: localize("GUM.EffectSheet.RollTest", "Rolar Teste"),
     roll_attribute: "ht",
     roll_modifier: "0",
     roll_modifier_value: "0",
@@ -312,13 +309,13 @@ export class EffectSheet extends ItemSheet {
         context.system.tokenIconPolicy = context.system.tokenIconPolicy || "auto";
         context.system.conditionStackingMode = context.system.conditionStackingMode || "stack";
         context.tokenIconPolicyOptions = [
-            { id: "auto", label: "Automático (temporário mostra / permanente oculta)" },
-            { id: "always", label: "Sempre mostrar no token" },
-            { id: "never", label: "Nunca mostrar no token" }
+            { id: "auto", label: localize("GUM.EffectSheet.TokenIconPolicyAuto") },
+            { id: "always", label: localize("GUM.EffectSheet.TokenIconPolicyAlways") },
+            { id: "never", label: localize("GUM.EffectSheet.TokenIconPolicyNever") }
         ];
         context.conditionStackingModeOptions = [
-            { id: "stack", label: "Acumular normalmente" },
-            { id: "unique", label: "Não acumular entre condições" }
+            { id: "stack", label: localize("GUM.EffectSheet.Stacking.Stack") },
+            { id: "unique", label: localize("GUM.EffectSheet.Stacking.Unique") }
         ];
         context.statusEffects = buildStatusCatalog(CONFIG.statusEffects);
         context.macros = game.macros.map(m => m.name);
@@ -339,11 +336,11 @@ export class EffectSheet extends ItemSheet {
                 context.system.duration._uiMode = context.system.duration._uiMode || "permanent";
             }
  }
-        context.rollModifierContextOptions = ROLL_MODIFIER_CONTEXT_OPTIONS;
-        context.rollModifierApplicationOptions = ROLL_MODIFIER_APPLICATION_OPTIONS;
+        context.rollModifierContextOptions = ROLL_MODIFIER_CONTEXT_OPTIONS.map(option => ({ ...option, label: localize(`GUM.EffectSheet.Context.${option.key}`) }));
+        context.rollModifierApplicationOptions = ROLL_MODIFIER_APPLICATION_OPTIONS.map(option => ({ ...option, label: localize(`GUM.EffectSheet.Application.${option.key}`) }));
         const actions = getEffectActionsFromSystem(context.system);
         const statusLabels = new Map(context.statusEffects.map(status => [status.id, status.label]));
-        const contextLabels = new Map(ROLL_MODIFIER_CONTEXT_OPTIONS.map(opt => [opt.id, opt.label]));
+        const contextLabels = new Map(context.rollModifierContextOptions.map(opt => [opt.id, opt.label]));
         context.effectActionsCountLabel = formatActionCount(actions.length);
         context.effectActions = actions.map((action, index) => {
             const entries = (action.roll_modifier_entries || []).map((entry, entryIndex) => {
@@ -379,8 +376,8 @@ export class EffectSheet extends ItemSheet {
                 ...action,
                 index,
                 displayIndex: index + 1,
-                titleText: action.label ? `Ação ${index + 1} — ${action.label}` : `Ação ${index + 1}`,
-                typeLabel: presentation.label,
+                titleText: action.label ? format("GUM.EffectSheet.Action.NumberedNamed", { number: index + 1, name: action.label }) : format("GUM.EffectSheet.Action.Numbered", { number: index + 1 }),
+                typeLabel: localize(`GUM.EffectSheet.ActionType.${presentation.key}`),
                 typeClass: presentation.className,
                 typeIcon: presentation.icon,
                 statusLabel: statusLabels.get(action.statusId),
@@ -411,12 +408,12 @@ export class EffectSheet extends ItemSheet {
         context.resistancePurposeLabels = getPurposeLabels(resistancePurposeIds);
         const barrierMode = context.system.resistanceRoll?.mode === "conditional" ? "conditional" : "simple";
         context.isConditionalResistance = barrierMode === "conditional";
-        const actionLabels = new Map(context.effectActions.map(action => [action.id, action.label || `Ação ${action.displayIndex}`]));
+        const actionLabels = new Map(context.effectActions.map(action => [action.id, action.label || format("GUM.EffectSheet.Action.Numbered", { number: action.displayIndex })]));
         context.resistanceBranches = normalizeBarrierBranches(context.system.resistanceRoll?.branches).map((branch, index) => ({
             ...branch, index, displayIndex: index + 1, isOtherwise: branch.condition.type === "otherwise",
             isSuccess: branch.condition.outcome === "success", actionIdsCsv: branch.actionIds.join(","),
             maximumMargin: branch.condition.maximumMargin ?? "",
-            actionSummary: branch.actionIds.map(id => actionLabels.get(id) || `Ação removida (${id})`).join(", ") || "Nenhuma ação selecionada"
+            actionSummary: branch.actionIds.map(id => actionLabels.get(id) || format("GUM.EffectSheet.Action.Removed", { id })).join(", ") || localize("GUM.EffectSheet.Action.NoneSelected")
         }));
 
         return context;
@@ -615,7 +612,7 @@ activateListeners(html) {
         ev.preventDefault();
         const resistanceRoll = foundry.utils.deepClone(this.item.system.resistanceRoll || {});
         const branches = normalizeBarrierBranches(resistanceRoll.branches);
-        branches.push({ id: foundry.utils.randomID(), label: `Resultado ${branches.length + 1}`, condition: { type: "outcome", outcome: "failure", minimumMargin: 0, maximumMargin: null }, actionIds: [] });
+        branches.push({ id: foundry.utils.randomID(), label: format("GUM.EffectSheet.Outcome.Numbered", { number: branches.length + 1 }, `Resultado ${branches.length + 1}`), condition: { type: "outcome", outcome: "failure", minimumMargin: 0, maximumMargin: null }, actionIds: [] });
         await this.item.update({ "system.resistanceRoll.mode": "conditional", "system.resistanceRoll.branches": branches });
     });
 
@@ -647,16 +644,19 @@ activateListeners(html) {
         const selected = new Set(String(input.value || "").split(",").map(value => value.trim()).filter(Boolean));
         const actions = getEffectActionsFromSystem(this.item.system);
         const escape = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
-        const options = actions.map((action, actionIndex) => `<label class="gum-resistance-action-option" data-search="${escape(action.label || `ação ${actionIndex + 1}`)}"><input type="checkbox" value="${escape(action.id)}" ${selected.has(action.id) ? "checked" : ""}> <span>${escape(action.label || `Ação ${actionIndex + 1}`)}</span></label>`).join("");
+        const options = actions.map((action, actionIndex) => {
+            const label = action.label || format("GUM.EffectSheet.Action.Numbered", { number: actionIndex + 1 });
+            return `<label class="gum-resistance-action-option" data-search="${escape(label)}"><input type="checkbox" value="${escape(action.id)}" ${selected.has(action.id) ? "checked" : ""}> <span>${escape(label)}</span></label>`;
+        }).join("");
         new Dialog({
-            title: "Selecionar ações do resultado",
-            content: `<div class="gum-resistance-action-picker"><input type="search" placeholder="Buscar ação..." class="resistance-action-search"><div class="gum-resistance-action-options">${options || "<p>Nenhuma ação disponível.</p>"}</div></div>`,
-            buttons: { apply: { icon: '<i class="fas fa-check"></i>', label: "Confirmar", callback: dialogHtml => {
+            title: localize("GUM.EffectSheet.ActionPicker.Title"),
+            content: `<div class="gum-resistance-action-picker"><input type="search" placeholder="${escape(localize("GUM.EffectSheet.ActionPicker.SearchPlaceholder"))}" class="resistance-action-search"><div class="gum-resistance-action-options">${options || `<p>${escape(localize("GUM.EffectSheet.ActionPicker.Empty"))}</p>`}</div></div>`,
+            buttons: { apply: { icon: '<i class="fas fa-check"></i>', label: localize("GUM.Common.Confirm"), callback: dialogHtml => {
                 const ids = dialogHtml.find('input[type="checkbox"]:checked').map((_, element) => element.value).get();
                 input.value = [...new Set(ids)].join(",");
                 input.dispatchEvent(new Event("change", { bubbles: true }));
                 const summary = ev.currentTarget.closest(".resistance-branch")?.querySelector(".resistance-action-summary");
-                if (summary) summary.textContent = actions.filter(action => ids.includes(action.id)).map((action, i) => action.label || `Ação ${i + 1}`).join(", ") || "Nenhuma ação selecionada";
+                if (summary) summary.textContent = actions.filter(action => ids.includes(action.id)).map((action, i) => action.label || format("GUM.EffectSheet.Action.Numbered", { number: i + 1 })).join(", ") || localize("GUM.EffectSheet.Action.NoneSelected");
             } } },
             render: dialogHtml => dialogHtml.find(".resistance-action-search").on("input", event => {
                 const query = event.currentTarget.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -676,7 +676,7 @@ activateListeners(html) {
         const targetInputName = ev.currentTarget.dataset.targetInput;
         const input = this.form?.querySelector(`[name="${targetInputName}"]`);
         if (!input) return;
-        openContextPicker({ input, options: ROLL_MODIFIER_CONTEXT_OPTIONS });
+        openContextPicker({ input, options: ROLL_MODIFIER_CONTEXT_OPTIONS.map(option => ({ ...option, label: localize(`GUM.EffectSheet.Context.${option.key}`) })) });
      });
     html.on("click", ".open-effect-path-picker", event => {
         event.preventDefault();
@@ -713,7 +713,7 @@ activateListeners(html) {
                     if (!labels.length) {
                         const empty = document.createElement("span");
                         empty.className = "resistance-purpose-empty";
-                        empty.textContent = "Nenhuma finalidade adicionada";
+                        empty.textContent = localize("GUM.EffectSheet.Purpose.NoneAdded");
                         purposeList.append(empty);
                     }
                 }
@@ -736,33 +736,34 @@ activateListeners(html) {
         let optionIndex = 0;
         const optionMarkup = (tag, isCustom = false) => {
             const checkboxId = `gum-roll-tag-${Date.now()}-${optionIndex++}`;
-            const description = isCustom ? "Tag personalizada (correspondência exata)." : tag.description;
+            const description = isCustom ? localize("GUM.EffectSheet.RollTag.CustomDescription") : tag.description;
             const search = fold(`${tag.label} ${tag.id} ${description} ${aliasText(tag.id)} ${(tag.keywords || []).join(" ")}`);
             return `<div class="roll-tag-picker-option${tag.selected ? " is-selected" : ""}" data-search="${esc(search)}" tabindex="0">
               <input id="${checkboxId}" type="checkbox" name="roll-tag" value="${esc(tag.id)}" ${tag.selected ? "checked" : ""}>
               <label for="${checkboxId}"><strong>${esc(tag.label)}</strong><code>${esc(tag.id)}</code></label>
-              <button type="button" class="roll-tag-picker-info" aria-label="Informações sobre ${esc(tag.label)}" aria-expanded="false"><i class="fas fa-info-circle" aria-hidden="true"></i><span role="tooltip">${esc(description)}</span></button>
+              <button type="button" class="roll-tag-picker-info" aria-label="${esc(format("GUM.RollPurpose.Picker.InformationAbout", { label: tag.label }))}" aria-expanded="false"><i class="fas fa-info-circle" aria-hidden="true"></i><span role="tooltip">${esc(description)}</span></button>
             </div>`;
         };
         const groups = getGroupedRollTags(selected).map(group => {
-            const label = group.id === "tests" ? "Categorias abrangentes" : group.label;
-            const help = group.id === "tests" ? `<span class="roll-tag-group-help" title="Categorias abrangentes alcançam todas as finalidades relacionadas." aria-label="Categorias abrangentes alcançam todas as finalidades relacionadas."><i class="fas fa-circle-info" aria-hidden="true"></i></span>` : "";
+            const label = group.id === "tests" ? localize("GUM.EffectSheet.RollTag.BroadCategories") : group.label;
+            const helpText = localize("GUM.EffectSheet.RollTag.BroadCategoriesHint");
+            const help = group.id === "tests" ? `<span class="roll-tag-group-help" title="${esc(helpText)}" aria-label="${esc(helpText)}"><i class="fas fa-circle-info" aria-hidden="true"></i></span>` : "";
             const selectedCount = group.tags.filter(tag => tag.selected).length;
             return `<details class="roll-tag-picker-group" data-group="${esc(group.id)}" ${selectedCount ? "open" : ""}><summary><span>${esc(label)} ${help}</span><span class="roll-tag-group-count"><b>${selectedCount}</b>/${group.tags.length}</span></summary><div class="roll-tag-group-options">${group.tags.map(tag => optionMarkup(tag)).join("")}</div></details>`;
         }).join("");
-        const customContent = custom.length ? `<details class="roll-tag-picker-group" data-group="custom" open><summary><span>Personalizadas e legadas</span><span class="roll-tag-group-count"><b>${custom.length}</b>/${custom.length}</span></summary><div class="roll-tag-group-options">${custom.map(id => optionMarkup({ id, label: id, selected: true }, true)).join("")}</div></details>` : "";
+        const customContent = custom.length ? `<details class="roll-tag-picker-group" data-group="custom" open><summary><span>${esc(localize("GUM.EffectSheet.RollTag.CustomLegacy"))}</span><span class="roll-tag-group-count"><b>${custom.length}</b>/${custom.length}</span></summary><div class="roll-tag-group-options">${custom.map(id => optionMarkup({ id, label: id, selected: true }, true)).join("")}</div></details>` : "";
         new Dialog({
-            title: "Selecionar marcadores de finalidade",
+            title: localize("GUM.EffectSheet.RollTag.Title"),
             content: `<div class="gum-roll-tag-picker">
-              <div class="roll-tag-picker-searchbox"><i class="fas fa-search" aria-hidden="true"></i><input type="search" class="roll-tag-picker-search" placeholder="Buscar marcador por nome, chave ou descrição..." aria-label="Buscar marcadores"><button type="button" class="roll-tag-search-clear" aria-label="Limpar pesquisa"><i class="fas fa-times" aria-hidden="true"></i></button></div>
-              <div class="roll-tag-picker-tools"><strong class="roll-tag-selected-summary"></strong><button type="button" class="roll-tag-clear-selection">Limpar</button><label><input type="checkbox" class="roll-tag-selected-only"> Mostrar somente selecionados</label><span class="roll-tag-result-count" aria-live="polite"></span></div>
-              <fieldset class="roll-tag-match"><legend>Correspondência</legend><label title="O modificador é aplicado quando ao menos um marcador corresponde."><input type="radio" name="picker-roll-tag-match" value="any" ${initialMatch === "any" ? "checked" : ""}> Pelo menos um</label><label title="O modificador só é aplicado quando todos os marcadores selecionados estão presentes na rolagem."><input type="radio" name="picker-roll-tag-match" value="all" ${initialMatch === "all" ? "checked" : ""}> Todas</label></fieldset>
-              <div class="roll-tag-picker-results">${customContent}${groups}<div class="roll-tag-picker-empty" hidden><strong>Nenhum marcador encontrado.</strong><span>Tente outro termo ou utilize uma tag personalizada no campo do efeito.</span></div></div>
+              <div class="roll-tag-picker-searchbox"><i class="fas fa-search" aria-hidden="true"></i><input type="search" class="roll-tag-picker-search" placeholder="${esc(localize("GUM.EffectSheet.RollTag.SearchPlaceholder"))}" aria-label="${esc(localize("GUM.EffectSheet.RollTag.SearchLabel"))}"><button type="button" class="roll-tag-search-clear" aria-label="${esc(localize("GUM.Common.ClearSearch"))}"><i class="fas fa-times" aria-hidden="true"></i></button></div>
+              <div class="roll-tag-picker-tools"><strong class="roll-tag-selected-summary"></strong><button type="button" class="roll-tag-clear-selection">${esc(localize("GUM.Common.Clear"))}</button><label><input type="checkbox" class="roll-tag-selected-only"> ${esc(localize("GUM.EffectSheet.RollTag.SelectedOnly"))}</label><span class="roll-tag-result-count" aria-live="polite"></span></div>
+              <fieldset class="roll-tag-match"><legend>${esc(localize("GUM.EffectSheet.RollTag.Match"))}</legend><label title="${esc(localize("GUM.EffectSheet.RollTag.AnyHint"))}"><input type="radio" name="picker-roll-tag-match" value="any" ${initialMatch === "any" ? "checked" : ""}> ${esc(localize("GUM.EffectSheet.RollTag.Any"))}</label><label title="${esc(localize("GUM.EffectSheet.RollTag.AllHint"))}"><input type="radio" name="picker-roll-tag-match" value="all" ${initialMatch === "all" ? "checked" : ""}> ${esc(localize("GUM.EffectSheet.RollTag.All"))}</label></fieldset>
+              <div class="roll-tag-picker-results">${customContent}${groups}<div class="roll-tag-picker-empty" hidden><strong>${esc(localize("GUM.EffectSheet.RollTag.Empty"))}</strong><span>${esc(localize("GUM.EffectSheet.RollTag.EmptyHint"))}</span></div></div>
             </div>`,
             render: dlgHtml => {
                 const root = dlgHtml.find('.gum-roll-tag-picker');
                 const windowElement = root.closest('.window-app').addClass('gum-roll-tag-picker-window');
-                windowElement.find('.window-header .close').attr({ title: 'Fechar', 'aria-label': 'Fechar' });
+                windowElement.find('.window-header .close').attr({ title: localize("GUM.Common.Close"), 'aria-label': localize("GUM.Common.Close") });
                 const search = root.find('.roll-tag-picker-search');
                 let expansionBeforeFilter = null;
                 const refresh = () => {
@@ -789,10 +790,11 @@ activateListeners(html) {
                         expansionBeforeFilter = null;
                     }
                     const count = root.find('input[name="roll-tag"]:checked').length;
-                    root.find('.roll-tag-selected-summary').text(`${count} ${count === 1 ? "marcador selecionado" : "marcadores selecionados"}`);
-                    root.find('.roll-tag-result-count').text(`${visibleCount} ${visibleCount === 1 ? "resultado" : "resultados"}`);
+                    root.find('.roll-tag-selected-summary').text(format(count === 1 ? "GUM.EffectSheet.RollTag.SelectedCountOne" : "GUM.EffectSheet.RollTag.SelectedCountMany", { count }));
+                    root.find('.roll-tag-result-count').text(format(visibleCount === 1 ? "GUM.Common.ResultCountOne" : "GUM.Common.ResultCountMany", { count: visibleCount }));
                     root.find('.roll-tag-picker-empty').prop('hidden', visibleCount !== 0);
-                    windowElement.find('[data-button="ok"]').html(`<i class="fas fa-check"></i> ${count ? `Aplicar ${count} ${count === 1 ? "marcador" : "marcadores"}` : "Aplicar"}`);
+                    const applyLabel = count ? format(count === 1 ? "GUM.EffectSheet.RollTag.ApplyCountOne" : "GUM.EffectSheet.RollTag.ApplyCountMany", { count }) : localize("GUM.Common.Apply");
+                    windowElement.find('[data-button="ok"]').html(`<i class="fas fa-check"></i> ${esc(applyLabel)}`);
                 };
                 root.on('change', 'input[name="roll-tag"]', event => { $(event.currentTarget).closest('.roll-tag-picker-option').toggleClass('is-selected', event.currentTarget.checked); refresh(); });
                 root.on('input', '.roll-tag-picker-search', refresh);
@@ -810,7 +812,7 @@ activateListeners(html) {
                 search.trigger('focus');
             },
             buttons: {
-                ok: { icon: '<i class="fas fa-check"></i>', label: 'Aplicar', callback: dlgHtml => {
+                ok: { icon: '<i class="fas fa-check"></i>', label: localize("GUM.Common.Apply"), callback: dlgHtml => {
                     input.value = normalizeRollTags(dlgHtml.find('input[name="roll-tag"]:checked').toArray().map(element => element.value)).join(', ');
                     input.dispatchEvent(new Event('input', { bubbles: true }));
                     input.dispatchEvent(new Event('change', { bubbles: true }));
@@ -820,7 +822,7 @@ activateListeners(html) {
                         matchInput.dispatchEvent(new Event('change', { bubbles: true }));
                     }
                 }},
-                cancel: { icon: '<i class="fas fa-times"></i>', label: 'Cancelar' }
+                cancel: { icon: '<i class="fas fa-times"></i>', label: localize("GUM.Common.Cancel") }
             }, default: 'ok'
         }, {
             width: 740
@@ -1033,7 +1035,7 @@ activateListeners(html) {
             buttons: {
                 save: {
                     icon: '<i class="fas fa-save"></i>',
-                    label: "Salvar",
+                    label: localize("GUM.EffectSheet.Save"),
                     callback: (html) => {
                         const newContent = html.find('textarea[name="content"]').val();
                         this.item.update({ [fieldName]: newContent });
@@ -1288,13 +1290,13 @@ activateListeners(html) {
         const rawRef = (refInput?.value ?? this.item.system?.ref ?? '').toString().trim();
 
         if (!rawRef) {
-            return ui.notifications.warn("Preencha o campo REF antes de abrir a referência.");
+            return ui.notifications.warn(localize("GUM.EffectSheet.Reference.FillRef"));
         }
 
         const parsedList = this._parseReferenceCodes(rawRef);
 
         if (!parsedList.length) {
-            return ui.notifications.warn("Formato de REF inválido. Use ex.: BA23 ou BA23, MA45.");
+            return ui.notifications.warn(localize("GUM.EffectSheet.Reference.InvalidFormat"));
         }
 
         if (parsedList.length === 1) {
@@ -1343,7 +1345,7 @@ activateListeners(html) {
     async _openSingleReference(parsed) {
         const match = this._findPdfPageByCode(parsed.code);
         if (!match) {
-            return ui.notifications.warn(`Nenhum PDF com código "${parsed.code}" foi encontrado nos periódicos.`);
+            return ui.notifications.warn(format("GUM.EffectSheet.Reference.PdfNotFound", { code: parsed.code }));
         }
 
         const pageNumber = Math.max(1, parsed.page + (Number(match.pageOffset) || 0));
@@ -1371,16 +1373,16 @@ activateListeners(html) {
         }
 
         if (!Object.keys(buttons).length) {
-            return ui.notifications.warn("Nenhuma das referências informadas foi encontrada nos periódicos.");
+            return ui.notifications.warn(localize("GUM.EffectSheet.Reference.NoneFound"));
         }
 
         const missingHtml = missing.length
-            ? `<p style="opacity:.8;margin-top:.5rem"><b>Não encontradas:</b> ${missing.join(", ")}</p>`
+            ? `<p style="opacity:.8;margin-top:.5rem"><b>${localize("GUM.EffectSheet.Reference.NotFound")}:</b> ${missing.join(", ")}</p>`
             : "";
 
         new Dialog({
-            title: "Múltiplas Referências",
-            content: `<p>Escolha qual referência deseja abrir:</p>${missingHtml}`,
+            title: localize("GUM.EffectSheet.Reference.Multiple"),
+            content: `<p>${localize("GUM.EffectSheet.Reference.Choose")}</p>${missingHtml}`,
             buttons,
             default: Object.keys(buttons)[0]
         }).render(true);
@@ -1493,7 +1495,7 @@ activateListeners(html) {
             }, { once: true });
         }
 
-        ui.notifications.warn("Não foi possível posicionar o PDF na página solicitada automaticamente.");
+        ui.notifications.warn(localize("GUM.EffectSheet.Reference.PagePositionFailed"));
     }
 
 }

@@ -3,7 +3,7 @@ import { applyEffectWithResistance, performGURPSRoll } from "/systems/gum/script
 import { GurpsRollPrompt } from "../apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../apps/damage-roll-prompt.js";
 import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
-import { getBodyProfile, getBodyLocationDefinition, listBodyProfiles, localizeBodyGroupLabel, localizeBodyLocationLabel, localizeBodyProfileLabel } from "../config/body-profiles.js";
+import { getBodyProfile, getBodyProfileLocationKeys, listBodyProfiles, localizeBodyGroupLabel, localizeBodyLocationLabel, localizeBodyProfileLabel } from "../config/body-profiles.js";
 import { TemplateBrowser } from "../apps/template-browser.js";
 import { templateEntryDisplayName } from "../utils/template-entry-display.mjs";
 import { GumPreviewDialog } from "../apps/preview-dialog.js";
@@ -1377,22 +1377,16 @@ _getSubmitData(updateData) {
 
  _buildDrDisplayRows(profile, drLocations) {
         const rows = [];
-        const order = profile.order ?? Object.keys(profile.locations || {});
         const locations = profile.locations || {};
         const items = [];
-        const extraKeys = Object.keys(drLocations || {})
-            .filter(key => !locations[key] && getBodyLocationDefinition(key))
-            .sort((a, b) => {
-                const aLabel = getBodyLocationDefinition(a)?.label ?? a;
-                const bLabel = getBodyLocationDefinition(b)?.label ?? b;
-                return aLabel.localeCompare(bLabel);
-            });
-        const combinedOrder = [...order, ...extraKeys];
 
-        for (const key of combinedOrder) {
-            const loc = locations[key] ?? getBodyLocationDefinition(key);
+        for (const key of getBodyProfileLocationKeys(profile)) {
+            const loc = locations[key];
             if (!loc) continue;
-            const drObject = drLocations?.[key] || {};
+            const rawDR = drLocations?.[key];
+            const drObject = rawDR && typeof rawDR === "object"
+                ? rawDR
+                : { base: Number(rawDR) || 0 };
             const base = Number(drObject?.base) || 0;
             const extraLine = this._formatDRExtraLine(drObject);
             items.push({
@@ -1471,7 +1465,10 @@ _getSubmitData(updateData) {
     }
 
     _getDRSignature(drObject) {
-        if (!drObject || typeof drObject !== "object") return "0";
+        if (!drObject || typeof drObject !== "object") {
+            const base = Number(drObject) || 0;
+            return base ? JSON.stringify([["base", base]]) : "[]";
+        }
         const normalized = {};
         for (const [key, value] of Object.entries(drObject)) {
             const numeric = Number(value) || 0;
@@ -3317,6 +3314,7 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
     html.find(".skill-tree-item").each((_, card) => {
         card.addEventListener("dragstart", ev => {
             if (ev.target.closest?.(".rollable")) return;
+            this._onDragStart(ev);
             this._setCardDragImage(ev, card);
         });
     });
@@ -5082,22 +5080,10 @@ async _onViewHitLocations(ev) {
   const actorDR_Total = actor.system.combat.dr_locations || {};
 
    let tableRows = "";
-   const baseOrder = sheetData.hitLocationOrder?.length
-    ? sheetData.hitLocationOrder
-    : Object.keys(sheetData.hitLocations || {});
-  const extraKeys = Object.keys(actor.system.combat?.dr_locations || {})
-    .filter(key => !sheetData.hitLocations?.[key] && getBodyLocationDefinition(key))
-    .sort((a, b) => {
-      const aLocation = getBodyLocationDefinition(a);
-      const bLocation = getBodyLocationDefinition(b);
-      const aLabel = localizeBodyLocationLabel(a, aLocation, t);
-      const bLabel = localizeBodyLocationLabel(b, bLocation, t);
-      return aLabel.localeCompare(bLabel);
-    });
-  const locationOrder = [...baseOrder, ...extraKeys];
+  const locationOrder = getBodyProfileLocationKeys(getBodyProfile(currentProfileId));
 
   for (const key of locationOrder) {
-    const loc = sheetData.hitLocations?.[key] ?? getBodyLocationDefinition(key);
+    const loc = sheetData.hitLocations?.[key];
     if (!loc) continue;
     const locationLabel = localizeBodyLocationLabel(key, loc, t);
     const armorDR_String  = this._formatDRObjectToString(actorDR_Armor[key]);

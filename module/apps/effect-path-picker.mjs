@@ -1,25 +1,30 @@
 import { listBodyLocations } from "../config/body-profiles.js";
 
+const localize = (key, fallback = key) => {
+  const value = globalThis.game?.i18n?.localize?.(key);
+  return value && value !== key ? value : fallback;
+};
+
 const ATTRIBUTE_GROUPS = Object.freeze([
-  { id: "primary", label: "Atributos primários", entries: [["st", "ST"], ["dx", "DX"], ["iq", "IQ"], ["ht", "HT"]] },
-  { id: "secondary", label: "Atributos secundários", entries: [["vont", "Vontade"], ["per", "Percepção"], ["hp", "Pontos de Vida"], ["fp", "Pontos de Fadiga"], ["mt", "Margem de Tolerância"]] },
-  { id: "movement", label: "Movimento e defesa", entries: [["basic_speed", "Velocidade Básica"], ["basic_move", "Deslocamento Básico"], ["enhanced_move", "Deslocamento Ampliado"], ["lifting_st", "ST de Levantamento"], ["dodge", "Esquiva"]] },
-  { id: "senses", label: "Sentidos", entries: [["vision", "Visão"], ["hearing", "Audição"], ["tastesmell", "Olfato/Paladar"], ["touch", "Tato"]] },
-  { id: "damage", label: "Dano básico", entries: [["thrust_damage", "GdP"], ["swing_damage", "GeB"], ["thrust_damage_alt", "GdPa"], ["swing_damage_alt", "GeBa"]] }
+  { id: "primary", label: localize("GUM.EffectSheet.PathPicker.Primary", "Atributos primários"), entries: [["st", "ST"], ["dx", "DX"], ["iq", "IQ"], ["ht", "HT"]] },
+  { id: "secondary", label: localize("GUM.EffectSheet.PathPicker.Secondary", "Atributos secundários"), entries: [["vont", localize("GUM.Attributes.Will", "Vontade")], ["per", localize("GUM.Attributes.Perception", "Percepção")], ["hp", localize("GUM.Attributes.HP", "Pontos de Vida")], ["fp", localize("GUM.Attributes.FP", "Pontos de Fadiga")], ["mt", localize("GUM.Attributes.ToleranceMargin", "Margem de Tolerância")]] },
+  { id: "movement", label: localize("GUM.EffectSheet.PathPicker.MovementDefense", "Movimento e defesa"), entries: [["basic_speed", localize("GUM.Attributes.BasicSpeed", "Velocidade Básica")], ["basic_move", localize("GUM.Attributes.BasicMove", "Deslocamento Básico")], ["enhanced_move", localize("GUM.Attributes.EnhancedMove", "Deslocamento Ampliado")], ["lifting_st", localize("GUM.Attributes.LiftingST", "ST de Levantamento")], ["dodge", localize("GUM.Attributes.Dodge", "Esquiva")]] },
+  { id: "senses", label: localize("GUM.EffectSheet.PathPicker.Senses", "Sentidos"), entries: [["vision", localize("GUM.Attributes.Vision", "Visão")], ["hearing", localize("GUM.Attributes.Hearing", "Audição")], ["tastesmell", localize("GUM.Attributes.TasteSmell", "Olfato/Paladar")], ["touch", localize("GUM.Attributes.Touch", "Tato")]] },
+  { id: "damage", label: localize("GUM.EffectSheet.PathPicker.BasicDamage", "Dano básico"), entries: [["thrust_damage", "GdP"], ["swing_damage", "GeB"], ["thrust_damage_alt", "GdPa"], ["swing_damage_alt", "GeBa"]] }
 ]);
 
 const ATTRIBUTE_LAYERS = Object.freeze([
-  { id: "passive", label: "Bônus passivo", operation: "ADD" },
-  { id: "temp", label: "Bônus temporário", operation: "ADD" },
-  { id: "override", label: "Definir valor", operation: "OVERRIDE" }
+  { id: "passive", label: localize("GUM.EffectSheet.PathPicker.PassiveBonus", "Bônus passivo"), operation: "ADD" },
+  { id: "temp", label: localize("GUM.EffectSheet.PathPicker.TemporaryBonus", "Bônus temporário"), operation: "ADD" },
+  { id: "override", label: localize("GUM.EffectSheet.PathPicker.SetValue", "Definir valor"), operation: "OVERRIDE" }
 ]);
 
 export const DAMAGE_RESISTANCE_TYPES = Object.freeze([
-  { id: "base", label: "RD base" }, { id: "cont", label: "Contusão" },
-  { id: "cort", label: "Corte" }, { id: "perf", label: "Perfuração" },
-  { id: "pi", label: "Perfurante" }, { id: "pi-", label: "Pouco perfurante" },
-  { id: "pi+", label: "Muito perfurante" }, { id: "pi++", label: "Extremamente perfurante" },
-  { id: "qmd", label: "Queimadura" }, { id: "cor", label: "Corrosão" }, { id: "tox", label: "Toxina" }
+  { id: "base", label: localize("GUM.EffectSheet.PathPicker.DrBase", "RD base") }, { id: "cont", label: localize("GUM.DamageType.cr", "Contusão") },
+  { id: "cort", label: localize("GUM.DamageType.cut", "Corte") }, { id: "perf", label: localize("GUM.DamageType.imp", "Perfuração") },
+  { id: "pi", label: localize("GUM.DamageType.pi", "Perfurante") }, { id: "pi-", label: localize("GUM.DamageType.piMinus", "Pouco perfurante") },
+  { id: "pi+", label: localize("GUM.DamageType.piPlus", "Muito perfurante") }, { id: "pi++", label: localize("GUM.DamageType.piPlusPlus", "Extremamente perfurante") },
+  { id: "qmd", label: localize("GUM.DamageType.burn", "Queimadura") }, { id: "cor", label: localize("GUM.DamageType.cor", "Corrosão") }, { id: "tox", label: localize("GUM.DamageType.tox", "Toxina") }
 ]);
 
 export function buildAttributeEffectPathOptions() {
@@ -61,14 +66,17 @@ const fold = value => String(value ?? "").normalize("NFD").replace(/[\u0300-\u03
 export function openEffectPathPicker({ pathInput, operationInput, durationMode = "permanent" } = {}) {
   if (!pathInput) return null;
   const groups = buildAttributeEffectPathOptions();
-  const locations = listBodyLocations();
+  const locations = [
+    { id: "all", label: localize("GUM.EffectSheet.PathPicker.AllLocations", "Todas as localizações") },
+    ...listBodyLocations()
+  ];
   const selected = findEffectPathOption(pathInput.value);
   const optionMarkup = groups.map(group => `<details class="effect-path-group" open><summary>${escapeHtml(group.label)}</summary><div class="effect-path-options">${group.options.map(option => `<label class="effect-path-option${selected?.path === option.path ? " is-selected" : ""}" data-search="${escapeHtml(fold(`${option.label} ${option.path}`))}"><input type="radio" name="effect-path" value="${escapeHtml(option.path)}" data-operation="${option.operation}" ${selected?.path === option.path ? "checked" : ""}><span><strong>${escapeHtml(option.label)}</strong><code>${escapeHtml(option.path)}</code></span></label>`).join("")}</div></details>`).join("");
   const selectOptions = (items, selectedId) => items.map(item => `<option value="${escapeHtml(item.id)}" ${item.id === selectedId ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("");
 
   const dialog = new Dialog({
-    title: "Selecionar caminho do modificador",
-    content: `<div class="gum-effect-path-picker"><p class="effect-path-intro">Escolha um destino suportado pelo sistema. A operação será ajustada automaticamente.</p><div class="effect-path-searchbox"><i class="fas fa-search" aria-hidden="true"></i><input type="search" placeholder="Buscar atributo ou caminho..." aria-label="Buscar caminho"></div><div class="effect-path-results">${optionMarkup}<details class="effect-path-group effect-path-dr"><summary>Resistência a Dano (RD)</summary><div class="effect-path-dr-grid"><label>Localização<select name="dr-location">${selectOptions(locations, "torso")}</select></label><label>Natureza<select name="dr-type">${selectOptions(DAMAGE_RESISTANCE_TYPES, "base")}</select></label><label>Aplicação<select name="dr-operation"><option value="ADD">Adicionar bônus</option><option value="OVERRIDE">Definir valor</option></select></label><button type="button" class="select-dr-path"><i class="fas fa-shield-halved"></i> Usar caminho de RD</button></div><code class="effect-path-dr-preview"></code></details><p class="effect-path-empty" hidden>Nenhum caminho encontrado.</p></div><p class="effect-path-custom-note"><i class="fas fa-code"></i> O campo continua editável para caminhos personalizados ou legados.</p></div>`,
+    title: localize("GUM.EffectSheet.PathPicker.Title", "Selecionar caminho do modificador"),
+    content: `<div class="gum-effect-path-picker"><p class="effect-path-intro">${escapeHtml(localize("GUM.EffectSheet.PathPicker.Intro", "Escolha um destino suportado pelo sistema. A operação será ajustada automaticamente."))}</p><div class="effect-path-searchbox"><i class="fas fa-search" aria-hidden="true"></i><input type="search" placeholder="${escapeHtml(localize("GUM.EffectSheet.PathPicker.SearchPlaceholder", "Buscar atributo ou caminho..."))}" aria-label="${escapeHtml(localize("GUM.EffectSheet.PathPicker.SearchLabel", "Buscar caminho"))}"></div><div class="effect-path-results">${optionMarkup}<details class="effect-path-group effect-path-dr"><summary>${escapeHtml(localize("GUM.EffectSheet.PathPicker.DamageResistance", "Resistência a Dano (RD)"))}</summary><div class="effect-path-dr-grid"><label>${escapeHtml(localize("GUM.EffectSheet.PathPicker.Location", "Localização"))}<select name="dr-location">${selectOptions(locations, "torso")}</select></label><label>${escapeHtml(localize("GUM.EffectSheet.PathPicker.Nature", "Natureza"))}<select name="dr-type">${selectOptions(DAMAGE_RESISTANCE_TYPES, "base")}</select></label><label>${escapeHtml(localize("GUM.EffectSheet.PathPicker.Application", "Aplicação"))}<select name="dr-operation"><option value="ADD">${escapeHtml(localize("GUM.EffectSheet.PathPicker.AddBonus", "Adicionar bônus"))}</option><option value="OVERRIDE">${escapeHtml(localize("GUM.EffectSheet.PathPicker.SetValue", "Definir valor"))}</option></select></label><button type="button" class="select-dr-path"><i class="fas fa-shield-halved"></i> ${escapeHtml(localize("GUM.EffectSheet.PathPicker.UseDrPath", "Usar caminho de RD"))}</button></div><code class="effect-path-dr-preview"></code></details><p class="effect-path-empty" hidden>${escapeHtml(localize("GUM.EffectSheet.PathPicker.Empty", "Nenhum caminho encontrado."))}</p></div><p class="effect-path-custom-note"><i class="fas fa-code"></i> ${escapeHtml(localize("GUM.EffectSheet.PathPicker.CustomHint", "O campo continua editável para caminhos personalizados ou legados."))}</p></div>`,
     render: dialogHtml => {
       const root = dialogHtml.find(".gum-effect-path-picker");
       const refreshDrPreview = () => root.find(".effect-path-dr-preview").text(buildDamageResistanceEffectPath({ location: root.find('[name="dr-location"]').val(), damageType: root.find('[name="dr-type"]').val(), operation: root.find('[name="dr-operation"]').val(), durationMode }));
@@ -87,13 +95,13 @@ export function openEffectPathPicker({ pathInput, operationInput, durationMode =
       root.find(".effect-path-searchbox input").trigger("focus");
     },
     buttons: {
-      apply: { icon: '<i class="fas fa-check"></i>', label: "Aplicar", callback: dialogHtml => {
+      apply: { icon: '<i class="fas fa-check"></i>', label: localize("GUM.Common.Apply", "Aplicar"), callback: dialogHtml => {
         const root = dialogHtml.find(".gum-effect-path-picker");
         const chosen = root.find('input[name="effect-path"]:checked')[0];
         if (root.data("drSelection")) return applyEffectPathSelection({ pathInput, operationInput, path: root.find(".effect-path-dr-preview").text(), operation: root.find('[name="dr-operation"]').val() });
         if (chosen) applyEffectPathSelection({ pathInput, operationInput, path: chosen.value, operation: chosen.dataset.operation });
       } },
-      cancel: { icon: '<i class="fas fa-times"></i>', label: "Cancelar" }
+      cancel: { icon: '<i class="fas fa-times"></i>', label: localize("GUM.Common.Cancel", "Cancelar") }
     }, default: "apply"
   }, { classes: ["gum-effect-path-picker-window"], width: 720 });
   return dialog.render(true);

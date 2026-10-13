@@ -15,9 +15,15 @@ test("oferece somente camadas de atributo processadas pelo motor", () => {
 });
 
 test("gera caminhos de RD conforme duração e operação", () => {
+  assert.equal(buildDamageResistanceEffectPath({ location: "all", damageType: "base" }), "system.combat.dr_passive_mods.all.base");
   assert.equal(buildDamageResistanceEffectPath({ location: "torso", damageType: "base" }), "system.combat.dr_passive_mods.torso.base");
   assert.equal(buildDamageResistanceEffectPath({ location: "head", damageType: "cort", durationMode: "combat" }), "system.combat.dr_temp_mods.head.cort");
   assert.equal(buildDamageResistanceEffectPath({ location: "arm_l", damageType: "qmd", operation: "OVERRIDE" }), "system.combat.dr_overrides.arm_l.qmd");
+});
+
+test("o seletor de caminhos oferece RD para todas as localizações", () => {
+  const source = readFileSync(new URL("../module/apps/effect-path-picker.mjs", import.meta.url), "utf8");
+  assert.match(source, /\{ id: "all", label: localize\("GUM\.EffectSheet\.PathPicker\.AllLocations", "Todas as localizações"\) \}/);
 });
 
 test("aplica caminho e operação notificando o formulário", () => {

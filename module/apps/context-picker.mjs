@@ -4,6 +4,17 @@ const escapeHtml = (value) => String(value ?? "")
   .replaceAll("<", "&lt;")
   .replaceAll(">", "&gt;");
 
+const FALLBACKS = {
+  "GUM.EffectSheet.ContextPicker.Title": "Selecionar Contextos",
+  "GUM.EffectSheet.ContextPicker.Intro": "Escolha onde este modificador deve ser aplicado.",
+  "GUM.Common.Apply": "Aplicar",
+  "GUM.Common.Cancel": "Cancelar"
+};
+const localize = (key) => {
+  const value = globalThis.game?.i18n?.localize?.(key);
+  return value && value !== key ? value : FALLBACKS[key] ?? key;
+};
+
 export function normalizeContextCsv(value, options = []) {
   const validIds = new Set(options.map(option => option.id));
   const parts = String(value ?? "").split(",").map(part => part.trim()).filter(Boolean);
@@ -33,11 +44,12 @@ export function applyContextsToInput(input, contexts, options = []) {
   input.dispatchEvent(new EventConstructor("change", { bubbles: true }));
 }
 
-export function openContextPicker({ input, options, title = "Selecionar Contextos" }) {
+export function openContextPicker({ input, options, title = null }) {
   if (!input) return null;
+  title ||= localize("GUM.EffectSheet.ContextPicker.Title");
   const selected = new Set(normalizeContextCsv(input.value, options).split(","));
   const content = `<div class="gum-context-picker">
-    <p class="gum-context-picker-intro">Escolha onde este modificador deve ser aplicado.</p>
+    <p class="gum-context-picker-intro">${escapeHtml(localize("GUM.EffectSheet.ContextPicker.Intro"))}</p>
     <div class="gum-context-picker-options">${options.map(option => `
       <label class="gum-context-picker-option${selected.has(option.id) ? " is-selected" : ""}">
         <input type="checkbox" name="ctx" value="${escapeHtml(option.id)}" ${selected.has(option.id) ? "checked" : ""}>
@@ -52,10 +64,10 @@ export function openContextPicker({ input, options, title = "Selecionar Contexto
     buttons: {
       apply: {
         icon: '<i class="fas fa-check"></i>',
-        label: "Aplicar",
+        label: localize("GUM.Common.Apply"),
         callback: dialogHtml => applyContextsToInput(input, readSelectedContexts(dialogHtml).join(","), options)
       },
-      cancel: { icon: '<i class="fas fa-times"></i>', label: "Cancelar" }
+      cancel: { icon: '<i class="fas fa-times"></i>', label: localize("GUM.Common.Cancel") }
     },
     default: "apply",
     render: dialogHtml => {

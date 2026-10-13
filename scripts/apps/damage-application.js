@@ -1,6 +1,6 @@
 import { applyContingentCondition, applyCurrentRollPrivacy, evaluateNumericFormula } from "../main.js";
 import { applySingleEffect } from "../effects-engine.js";
-import { getBodyLocationDefinition, getBodyProfile } from "../../module/config/body-profiles.js";
+import { getBodyProfile, getBodyProfileLocationKeys, localizeBodyLocationLabel } from "../../module/config/body-profiles.js";
 import { getActiveEffectFlagSources, hasActiveEffectFlag } from "../../module/utils/active-effect-flags.mjs";
 import { resolveCharacterImage } from "../../module/utils/character-image.mjs";
 import { evaluateBarrierConsequence, normalizeResistanceRoll } from "../../module/utils/roll-request-data.mjs";
@@ -36,15 +36,6 @@ this.damageData = damageData;
 
     _t(key) { return game.i18n.localize(`GUM.DamageApplication.${key}`); }
     _f(key, data) { return game.i18n.format(`GUM.DamageApplication.${key}`, data); }
-
-    _localizedLocationLabel(key, fallback) {
-        const base = String(key || "").replace(/_\d+$/, "");
-        const translationKey = `GUM.Combat.DR.BodyParts.${base}`;
-        const translated = game.i18n.localize(translationKey);
-        if (translated === translationKey) return fallback;
-        const suffix = String(key).match(/_(\d+)$/)?.[1];
-        return `${translated}${suffix ? ` ${suffix}` : ""}`;
-    }
 
     _attackerImage() {
         return resolveCharacterImage(this.attackerActor, {
@@ -335,7 +326,10 @@ async _resolveOnDamageEffects() {
     }
 
     _getDRSignature(drObject) {
-        if (!drObject || typeof drObject !== "object") return "0";
+        if (!drObject || typeof drObject !== "object") {
+            const base = Number(drObject) || 0;
+            return base ? JSON.stringify([["base", base]]) : "[]";
+        }
         const normalized = {};
         for (const [key, value] of Object.entries(drObject)) {
             const numeric = Number(value) || 0;
@@ -371,26 +365,17 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
 
     _buildLocationRows(profile, drLocations) {
         const locationsData = profile.locations || {};
-        const baseOrder = profile.order || Object.keys(locationsData);
-        const extraKeys = Object.keys(drLocations || {})
-            .filter(key => !locationsData[key] && getBodyLocationDefinition(key))
-            .sort((a, b) => {
-                const aLabel = getBodyLocationDefinition(a)?.label ?? a;
-                const bLabel = getBodyLocationDefinition(b)?.label ?? b;
-                return aLabel.localeCompare(bLabel);
-            });
-        const combinedOrder = [...baseOrder, ...extraKeys];
 
         const items = [];
-        for (const key of combinedOrder) {
-            const data = locationsData[key] ?? getBodyLocationDefinition(key);
+        for (const key of getBodyProfileLocationKeys(profile)) {
+            const data = locationsData[key];
             if (!data) continue;
             const drData = drLocations[key] || {};
             const baseDR = typeof drData === "object" ? (parseInt(drData.base) || 0) : (parseInt(drData) || 0);
 
             items.push({
                 key,
-                label: this._localizedLocationLabel(key, data.label ?? data.name ?? key),
+                label: localizeBodyLocationLabel(key, data, localizationKey => game.i18n.localize(localizationKey)),
                 roll: data.roll ?? "--",
                 totalDR: baseDR,
                 groupKey: data.groupKey,

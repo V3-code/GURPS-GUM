@@ -125,7 +125,24 @@ async function reconcileActiveGroup(item, group, activationId, resolved) {
   return { reconciled: true, created };
 }
 
-async function performItemStateEffectSync(item, { assumeInactive = false, forceActivationGroupIds = [] } = {}) {
+async function refreshActiveGroup(item, group, activationId, resolved) {
+  await deleteEffects(item.parent, stateEffects(item.parent, item.id, group.id));
+  let created = 0;
+  for (const link of resolved.links) {
+    const actionIds = link.actions
+      .filter(action => PERSISTENT_ACTION_TYPES.has(action.type))
+      .map(action => action.id);
+    if (!actionIds.length) continue;
+    await applyLinkActions(item, group, activationId, link, {
+      actionIds,
+      skipInstantEffects: true
+    });
+    created += actionIds.length;
+  }
+  return { refreshed: true, created };
+}
+
+async function performItemStateEffectSync(item, { assumeInactive = false, forceActivationGroupIds = [], refreshActive = false } = {}) {
   const actor = item?.parent;
   if (!actor || !item.id) return { groups: [], errors: [] };
   const report = { groups: [], errors: [] };
@@ -160,6 +177,8 @@ async function performItemStateEffectSync(item, { assumeInactive = false, forceA
     try {
       const result = !activationId || forcedActivations.has(String(group.id))
         ? await activateGroup(item, group, resolved)
+        : refreshActive
+          ? await refreshActiveGroup(item, group, activationId, resolved)
         : await reconcileActiveGroup(item, group, activationId, resolved);
       report.groups.push({ id: group.id, active: true, ...result });
     } catch (error) {
