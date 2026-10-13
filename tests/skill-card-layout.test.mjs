@@ -64,8 +64,15 @@ test("skill cards expose compact mechanics and a dedicated options footer", () =
 test("skill dragging uses only the selected card as its visual preview", () => {
   assert.match(actorSheet, /html\.find\("\.skill-tree-item"\)\.each/);
   assert.match(actorSheet, /card\.addEventListener\("dragstart"/);
+  assert.match(actorSheet, /html\.find\("\.skill-tree-item"\)[\s\S]*?this\._onDragStart\(ev\)[\s\S]*?this\._setCardDragImage\(ev, card\)/);
   assert.match(actorSheet, /this\._setCardDragImage\(ev, card\)/);
   assert.match(actorSheet, /dataTransfer\.setDragImage\(dragImage, offsetX, offsetY\)/);
+});
+
+test("skills, spells, and powers expose transferable Foundry item drags", () => {
+  assert.match(skillTab, /class="item skill-tree-item[\s\S]*?data-item-id="\{\{this\._id\}\}"[\s\S]*?draggable="true"/);
+  assert.match(template, /class="item-wrapper item magic-card[\s\S]*?data-item-id="\{\{this\.id\}\}" draggable="true"/);
+  assert.match(template, /class="item-wrapper item magic-card power-card[\s\S]*?data-item-id="\{\{this\.id\}\}" draggable="true"/);
 });
 
 test("the skills tab localizes toolbar, card copy, and action menu labels", () => {

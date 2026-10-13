@@ -47,6 +47,18 @@ const definitions = [
 
 export const ROLL_TAG_CATALOG = Object.freeze(definitions.map(([id,label,group,parents=[]]) => Object.freeze({ id, label, group, parents, selectable: true, description: `Rolagens relacionadas a ${label.toLowerCase()}.` })));
 const TAG_BY_ID = new Map(ROLL_TAG_CATALOG.map(tag => [tag.id, tag]));
+const localizeRollTagValue = (key, fallback, data = null) => {
+  const i18n = globalThis.game?.i18n;
+  if (!i18n) return fallback;
+  const value = data ? i18n.format?.(key, data) : i18n.localize?.(key);
+  return value && value !== key ? value : fallback;
+};
+const localizeRollTag = tag => {
+  const label = localizeRollTagValue(`GUM.RollTag.${tag.id}.Name`, tag.label);
+  const description = localizeRollTagValue(`GUM.RollTag.${tag.id}.Description`,
+    localizeRollTagValue("GUM.RollTag.RelatedDescription", tag.description, { label }));
+  return { ...tag, label, description };
+};
 export const ROLL_TAG_ALIASES = Object.freeze({
   knockdown:"injury.knockdown", stun:"injury.stun.physical", injury:"injury.knockdown_stun", unconsciousness:"injury.stay_conscious", death:"injury.avoid_death", survival:"test.survival",
   pain:"resistance.pain", resistance:"test.resistance", poison:"resistance.poison", disease:"resistance.disease", paralysis:"resistance.paralysis", incapacitation:"resistance.incapacitation",
@@ -71,8 +83,15 @@ export function matchesRollTags(filter, rollTags = []) {
   return String(filter?.roll_tag_match ?? filter?.rollTagMatch ?? "any").toLowerCase() === "all" ? required.every(tag => present.has(tag)) : required.some(tag => present.has(tag));
 }
 export const isKnownRollTag = id => TAG_BY_ID.has(normalizeRollTags([id])[0]);
-export const getRollTagLabel = id => TAG_BY_ID.get(normalizeRollTags([id])[0])?.label || String(id || "");
+export const getRollTagLabel = id => {
+  const tag = TAG_BY_ID.get(normalizeRollTags([id])[0]);
+  return tag ? localizeRollTag(tag).label : String(id || "");
+};
 export function getGroupedRollTags(selectedTags = []) {
   const selected = new Set(normalizeRollTags(selectedTags));
-  return ROLL_TAG_GROUPS.map(group => ({ ...group, tags: ROLL_TAG_CATALOG.filter(tag => tag.group === group.id && tag.selectable).map(tag => ({ ...tag, selected: selected.has(tag.id) })) }));
+  return ROLL_TAG_GROUPS.map(group => ({
+    ...group,
+    label: localizeRollTagValue(`GUM.RollTag.Group.${group.id}`, group.label),
+    tags: ROLL_TAG_CATALOG.filter(tag => tag.group === group.id && tag.selectable).map(tag => ({ ...localizeRollTag(tag), selected: selected.has(tag.id) }))
+  }));
 }

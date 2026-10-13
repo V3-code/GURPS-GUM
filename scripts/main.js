@@ -29,7 +29,7 @@ import { GurpsRollPrompt } from "../module/apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../module/apps/damage-roll-prompt.js";
 import { ammunitionAvailableUses, availableAmmunition, applyAmmunition, ammunitionRollModifier, calculateRapidFireHits, numericRateOfFire, reconcileAmmunitionModifier } from "../module/utils/ammunition.mjs";
 import { getPurposeLabels, matchesRollTags, resolveRollMetadata, shouldIncludeInPermanentNh } from "../module/utils/roll-purposes.mjs";
-import { getBodyProfile, getBodyLocationDefinition } from "../module/config/body-profiles.js";
+import { getBodyProfile, getBodyProfileLocationKeys } from "../module/config/body-profiles.js";
 import { calculateDamageResistance, mergeDamageResistance, parseDamageResistanceEffectPath } from "../module/utils/damage-resistance.mjs";
 import { openTestRequestLauncher } from "../module/apps/test-request-launcher.js";
 import { activateTestRequestChatListeners, registerTestRequestSocket } from "../module/services/test-request-service.js";
@@ -39,6 +39,7 @@ import { registerContextMenuCompatibilityHooks } from "../module/utils/context-m
 import { resolveCharacterImage } from "../module/utils/character-image.mjs";
 import { appendResistanceRequestResult, renderPendingResistanceRequest } from "../module/utils/roll-request-view.mjs";
 import { isUserAuthorizedForTarget } from "../module/utils/test-request-targets.mjs";
+import { resolveDamageApplicationTarget } from "../module/utils/damage-application-target.mjs";
 import { getResistanceChatPrivacy } from "../module/utils/effect-chat-visibility.mjs";
 import { showDiceForMessageLessRoll } from "../module/utils/dice-so-nice.mjs";
 import { BASIC_DAMAGE_KEYS, normalizeBasicDamageData, prepareBasicDamageAttributes } from "../module/utils/basic-damage.mjs";
@@ -910,34 +911,9 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
  
         const profileId = combat?.body_profile || "humanoid";
         const profile = getBodyProfile(profileId);
-         const baseLocationKeys = Object.keys(profile.locations || {});
-        const locationKeySet = new Set(baseLocationKeys);
-        const extraLocationKeys = new Set();
+        const locationKeys = getBodyProfileLocationKeys(profile);
+        const locationKeySet = new Set(locationKeys);
         const drFromArmor = {};
-
-        for (const source of [combat.dr_mods, combat.dr_temp_mods, combat.dr_passive_mods, combat.dr_overrides]) {
-            for (const loc of Object.keys(source || {})) {
-                if (!locationKeySet.has(loc) && getBodyLocationDefinition(loc)) extraLocationKeys.add(loc);
-            }
-        }
-
-        for (let i of this.items) { 
-            const hasArmorDR = (i.type === 'equipment')
-                && i.system.location === 'equipped'
-                && i.system.dr_locations;
-            if (hasArmorDR) {
-                const itemDrLocations = i.system.dr_locations || {};
-                for (const [loc, drObject] of Object.entries(itemDrLocations)) {
-                    if (!locationKeySet.has(loc)) {
-                        if (!getBodyLocationDefinition(loc)) continue;
-                        extraLocationKeys.add(loc);
-                    }
-                }
-            }
-        }
-
-        const locationKeys = [...baseLocationKeys, ...extraLocationKeys];
-        const allLocationKeySet = new Set(locationKeys);
 
         for (const key of locationKeys) {
             drFromArmor[key] = {};
@@ -950,7 +926,11 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
             if (hasArmorDR) {
                 const itemDrLocations = i.system.dr_locations || {};
                 for (const [loc, drObject] of Object.entries(itemDrLocations)) {
-                    if (!allLocationKeySet.has(loc)) continue;
+                    if (loc === "all") {
+                        for (const key of locationKeys) mergeDamageResistance(drFromArmor[key], drObject);
+                        continue;
+                    }
+                    if (!locationKeySet.has(loc)) continue;
                      mergeDamageResistance(drFromArmor[loc], drObject);
                 }
             }
@@ -961,14 +941,25 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
         const drTempMods = combat.dr_temp_mods || {};
         const drPassiveMods = combat.dr_passive_mods || {};
         const drOverrides = combat.dr_overrides || {};
+        const resolveGlobalDRLayer = (layer, location) => {
+            const resolved = {};
+            mergeDamageResistance(resolved, layer?.all);
+            mergeDamageResistance(resolved, layer?.[location]);
+            return resolved;
+        };
+        const resolveGlobalDROverride = (layer, location) => {
+            const global = layer?.all && typeof layer.all === "object" ? layer.all : {};
+            const specific = layer?.[location] && typeof layer[location] === "object" ? layer[location] : {};
+            return { ...global, ...specific };
+        };
         const computedDr = {}; 
         for (let key of locationKeys) {
             const result = calculateDamageResistance({
                 armor: drFromArmor[key],
-                mod: drMods[key],
-                temp: drTempMods[key],
-                passive: drPassiveMods[key],
-                override: drOverrides[key]
+                mod: resolveGlobalDRLayer(drMods, key),
+                temp: resolveGlobalDRLayer(drTempMods, key),
+                passive: resolveGlobalDRLayer(drPassiveMods, key),
+                override: resolveGlobalDROverride(drOverrides, key)
             });
             computedDr[key] = result.computed;
             totalDr[key] = result.final;
@@ -3239,7 +3230,9 @@ Hooks.on("createItem", async (item, options, userId) => {
         // Usamos hasOwnProperty para ser seguro, mas podemos checar 'item.system.passiveEffects'
                 const passiveEffectsChanged = foundry.utils.hasProperty(changes, "system.passiveEffects")
             || Object.keys(changes || {}).some(key => key.startsWith("system.passiveEffects"));
-        if (item.system.passiveEffects && passiveEffectsChanged) {
+        const originLevelChanged = foundry.utils.hasProperty(changes, "system.level")
+            || Object.prototype.hasOwnProperty.call(changes.system || {}, "level");
+        if (item.system.passiveEffects && (passiveEffectsChanged || originLevelChanged)) {
             
             // 1. Encontra e Deleta TODOS os ActiveEffects existentes originados deste item
             const updatedItemId = item.id;
@@ -3287,7 +3280,7 @@ const targets = buildActorEffectTargets(actor);
         if (!options.gumStateSync && !options.gumStateToggle) {
             const stateGroupsChanged = foundry.utils.hasProperty(changes, "system.stateEffectGroups")
                 || Object.keys(changes || {}).some(key => key.startsWith("system.stateEffectGroups"));
-            await syncItemStateEffects(item, { refreshActive: stateGroupsChanged });
+            await syncItemStateEffects(item, { refreshActive: stateGroupsChanged || originLevelChanged });
         }
         // =============================================================
         
@@ -3489,13 +3482,18 @@ Hooks.once('ready', async function() {
 
     const button = ev.currentTarget;
 
-    // 1. Pega o token alvo selecionado
-    const controlled = canvas.tokens.controlled;
-    if (controlled.length !== 1) {
-        console.error("GUM | DEBUG: Falha na Etapa 1. Nenhum token ou múltiplos tokens selecionados.");
-        return ui.notifications.warn("Por favor, selecione exatamente um token como alvo.");
+    // 1. Prioriza o alvo marcado pelo Foundry e usa o token selecionado como fallback.
+    const targetResolution = resolveDamageApplicationTarget({
+        targetedTokens: game.user.targets,
+        controlledTokens: canvas.tokens.controlled
+    });
+    if (!targetResolution.token) {
+        const key = targetResolution.reason === "multiple-targets"
+            ? "GUM.DamageApplication.MultipleTargets"
+            : "GUM.DamageApplication.SelectSingleTarget";
+        return ui.notifications.warn(game.i18n.localize(key));
     }
-        const targetToken = controlled[0];
+    const targetToken = targetResolution.token;
     const targetActor = targetToken.actor;
     console.log(`GUM | DEBUG: Etapa 1 OK. Alvo: ${targetActor.name}`);
 

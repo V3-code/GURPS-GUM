@@ -10,6 +10,7 @@ import { resolveGMScreenCardTarget } from "../utils/gm-screen-target.mjs";
 import { getGMScreenEffectState } from "../utils/gm-screen-effect-state.mjs";
 import { openTestRequestLauncher } from "./test-request-launcher.js";
 import { resolveCharacterImage } from "../utils/character-image.mjs";
+import { clampFloatingPanelPosition } from "../utils/floating-panel-position.mjs";
 
 export class GumGMScreen extends Application {
     
@@ -867,7 +868,7 @@ activateListeners(html) {
         const itemsArray = actor.items.contents || (Array.isArray(actor.items) ? actor.items : []);
 
         let html = `<div class="gum-ctx-menu" style="top:${y}px; left:${x}px;">`;
-        html += `<div class="gum-ctx-header">${actor.name}</div>`;
+        html += `<div class="gum-ctx-header" title="${this._t("GUM.GMScreen.DragQuickMenuHint")}"><i class="fas fa-grip-lines" aria-hidden="true"></i><span>${actor.name}</span></div>`;
         
         // ---------------------------------------------------------
         // 1. ATRIBUTOS (GRADE COMPACTA)
@@ -1122,7 +1123,41 @@ activateListeners(html) {
 
         $('body').append(html);
         const menu = $('.gum-ctx-menu');
-        
+
+        const positionMenu = (left, top) => {
+            const bounds = menu[0]?.getBoundingClientRect?.();
+            if (!bounds) return;
+            const position = clampFloatingPanelPosition({
+                left,
+                top,
+                width: bounds.width,
+                height: bounds.height,
+                viewportWidth: window.innerWidth,
+                viewportHeight: window.innerHeight
+            });
+            menu.css({ left: `${position.left}px`, top: `${position.top}px` });
+        };
+
+        positionMenu(x, y);
+        menu.find('.gum-ctx-header').on('pointerdown.gum-ctx-drag', ev => {
+            if (ev.button !== 0) return;
+            ev.preventDefault();
+            const start = menu[0].getBoundingClientRect();
+            const startX = ev.clientX;
+            const startY = ev.clientY;
+            const onMove = moveEvent => positionMenu(
+                start.left + moveEvent.clientX - startX,
+                start.top + moveEvent.clientY - startY
+            );
+            const stopDragging = () => {
+                $(document).off('.gum-ctx-drag');
+                menu.removeClass('is-dragging');
+            };
+            menu.addClass('is-dragging');
+            $(document).on('pointermove.gum-ctx-drag', onMove);
+            $(document).on('pointerup.gum-ctx-drag pointercancel.gum-ctx-drag', stopDragging);
+        });
+
         // --- LISTENERS ---
         
         menu.find('.roll-attr').click(ev => {

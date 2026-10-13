@@ -1,5 +1,5 @@
 import { calculateItemTraitCost, importGCSTraitCost, importGCSModifier } from "../utils/trait-cost.mjs";
-import { getBodyLocationDefinition, getBodyProfile } from "../config/body-profiles.js";
+import { getBodyProfile } from "../config/body-profiles.js";
 import { buildGCSActorReconciliation } from "../utils/gcs-actor-reconciliation.mjs";
 import { canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
 import { contentSourceService } from "../services/content-source-service.mjs";
@@ -542,7 +542,8 @@ export async function importFromGCS({ actor = null } = {}) {
             const gcsData = JSON.parse(fileContent); 
             const actorData = await parseGCSCharacter(gcsData, actor ? {
                 fallbackActorImage: actor.img,
-                fallbackTokenImage: actor.prototypeToken?.texture?.src
+                fallbackTokenImage: actor.prototypeToken?.texture?.src,
+                fallbackBodyProfileId: actor.system.combat?.body_profile || "humanoid"
             } : {});
             if (actor) {
                 const imported = await updateActorFromGCS(actor, actorData, file.name);
@@ -961,45 +962,65 @@ async function ensureCompendiumFolderPath(pack, folderPath = [], folderCache = n
 
 const GCS_ALL_DR_KEY = "all";
 
-const GCS_LOCATION_ID_MAP = {
-    skull: ["head"],
-    brain: ["head"],
-    head: ["head"],
-    eye: ["eyes"],
-    eyes: ["eyes"],
-    face: ["face"],
-    jaw: ["face"],
-    nose: ["face"],
-    ear: ["face"],
-    neck: ["neck"],
-    torso: ["torso"],
-    chest: ["torso"],
-    abdomen: ["torso"],
-    vitals: ["vitals"],
-    groin: ["groin"],
-    arm: ["arm_l", "arm_r"],
-    arms: ["arm_l", "arm_r"],
-    left_arm: ["arm_l"],
-    right_arm: ["arm_r"],
-    hand: ["hand_l", "hand_r"],
-    hands: ["hand_l", "hand_r"],
-    left_hand: ["hand_l"],
-    right_hand: ["hand_r"],
-    leg: ["leg_l", "leg_r"],
-    legs: ["leg_l", "leg_r"],
-    left_leg: ["leg_l"],
-    right_leg: ["leg_r"],
-    foot: ["foot_l", "foot_r"],
-    feet: ["foot_l", "foot_r"],
-    left_foot: ["foot_l"],
-    right_foot: ["foot_r"]
+const GCS_FIXED_LOCATION_ID_MAP = {
+    skull: "head",
+    brain: "head",
+    head: "head",
+    eye: "eyes",
+    eyes: "eyes",
+    face: "face",
+    jaw: "face",
+    nose: "face",
+    ear: "face",
+    neck: "neck",
+    torso: "torso",
+    chest: "torso",
+    abdomen: "torso",
+    vitals: "vitals",
+    groin: "groin"
+};
+
+const GCS_BODY_PROFILE_ALIASES = {
+    humanoid: "humanoid", humanoide: "humanoid",
+    quadruped: "quadruped", quadrupede: "quadruped",
+    hexapod: "hexapod", hexapode: "hexapod",
+    centauroid: "centauroid", centauroide: "centauroid",
+    avian: "avian", aviario: "avian",
+    vermiform: "vermiform", vermiforme: "vermiform",
+    octopod: "octopod", octopode: "octopod",
+    cancroid: "cancroid", cancroide: "cancroid",
+    ichthyoid: "ichthyoid", ictioide: "ichthyoid",
+    arachnid: "arachnid", aracnideo: "arachnid",
+    amorphous: "amorphous", amorfo: "amorphous"
 };
 
 function normalizeGCSLocationId(locationId) {
     return String(locationId || "")
         .trim()
         .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
         .replace(/[\s-]+/g, "_");
+}
+
+function inferGUMBodyProfileIdFromGCS(bodyType, fallbackProfileId = "humanoid") {
+    const candidates = typeof bodyType === "string"
+        ? [bodyType]
+        : [bodyType?.id, bodyType?.type, bodyType?.name, bodyType?.label, bodyType?.body_plan];
+
+    for (const candidate of candidates) {
+        const normalized = normalizeGCSLocationId(candidate).replace(/_/g, "");
+        if (GCS_BODY_PROFILE_ALIASES[normalized]) return GCS_BODY_PROFILE_ALIASES[normalized];
+    }
+    return getBodyProfile(fallbackProfileId).id;
+}
+
+function matchesProfileLocation(key, family, side = null, ordinal = null) {
+    const parts = key.split("_");
+    if (parts[0] !== family) return false;
+    if (side && !parts.includes(side)) return false;
+    if (ordinal && parts.at(-1) !== ordinal) return false;
+    return true;
 }
 
 function getGUMBodyLocationKeysForGCS(locationId, profileId = "humanoid") {
@@ -1008,25 +1029,32 @@ function getGUMBodyLocationKeysForGCS(locationId, profileId = "humanoid") {
     const profileKeys = Object.keys(profile?.locations || {});
 
     if (!normalized || normalized === GCS_ALL_DR_KEY) return profileKeys;
-    if (profile?.locations?.[normalized] || getBodyLocationDefinition(normalized)) return [normalized];
-    if (GCS_LOCATION_ID_MAP[normalized]) return GCS_LOCATION_ID_MAP[normalized];
+    if (profile?.locations?.[normalized]) return [normalized];
 
-    const numberedMatch = normalized.match(/^(arm|hand|leg|foot|wing|tail|tentacle|pincer|fin|horn|shoulder|chest|abdomen|joint|spine|artery|jaw|nose|ear)_(\d+)$/);
-    if (numberedMatch) {
-        const [, base, index] = numberedMatch;
-        const extraKey = `${base}_${index}`;
-        if (profile?.locations?.[extraKey] || getBodyLocationDefinition(extraKey)) return [extraKey];
-    }
+    const fixedLocation = GCS_FIXED_LOCATION_ID_MAP[normalized];
+    if (fixedLocation && profile?.locations?.[fixedLocation]) return [fixedLocation];
 
-    const sideMatch = normalized.match(/^(left|right)_(arm|hand|leg|foot)$/);
+    const sideMatch = normalized.match(/^(left|right)_(arm|hand|leg|foot|wing|tail|tentacle|pincer|fin|paw)$/);
     if (sideMatch) {
         const side = sideMatch[1] === "left" ? "l" : "r";
-        const base = sideMatch[2];
-        const exact = `${base}_${side}`;
-        const numbered = `${base}_${side}_1`;
-        if (profile?.locations?.[exact] || getBodyLocationDefinition(exact)) return [exact];
-        if (profile?.locations?.[numbered] || getBodyLocationDefinition(numbered)) return [numbered];
+        return profileKeys.filter(key => matchesProfileLocation(key, sideMatch[2], side));
     }
+
+    const limbPositionMatch = normalized.match(/^(fore|front|hind|rear)_?(leg|foot)$/);
+    if (limbPositionMatch) {
+        const ordinal = ["fore", "front"].includes(limbPositionMatch[1]) ? "1" : "2";
+        return profileKeys.filter(key => matchesProfileLocation(key, limbPositionMatch[2], null, ordinal));
+    }
+
+    const numberedMatch = normalized.match(/^(arm|hand|leg|foot|wing|tail|tentacle|pincer|fin|paw|horn|shoulder|chest|abdomen|joint|spine|artery|jaw|nose|ear)_(\d+)$/);
+    if (numberedMatch) {
+        const [, base, index] = numberedMatch;
+        return profileKeys.filter(key => matchesProfileLocation(key, base, null, index));
+    }
+
+    const family = ({ arms: "arm", hands: "hand", legs: "leg", feet: "foot", wings: "wing", tails: "tail", tentacles: "tentacle", pincers: "pincer", fins: "fin", paws: "paw" })[normalized] || normalized;
+    const familyKeys = profileKeys.filter(key => matchesProfileLocation(key, family));
+    if (familyKeys.length) return familyKeys;
 
     return [];
 }
@@ -1067,9 +1095,19 @@ function addGCSDrBonusToLocations(target, locations, amount, specialization = ""
 }
 
 function getGCSBodyLocationReferenceIds(location) {
-    const label = normalizeGCSLocationId(`${location?.table_name || ""} ${location?.choice_name || ""}`);
-    const sideMatch = label.match(/(?:^|_)(left|right)_(arm|hand|leg|foot)(?:_|$)/);
-    if (sideMatch) return [`${sideMatch[1]}_${sideMatch[2]}`];
+    const label = normalizeGCSLocationId(`${location?.table_name || ""} ${location?.choice_name || ""}`)
+        .replace(/foreleg/g, "fore_leg")
+        .replace(/hindleg/g, "hind_leg")
+        .replace(/forefoot/g, "fore_foot")
+        .replace(/hindfoot/g, "hind_foot");
+    const sideMatch = label.match(/(?:^|_)(left|right)_(?:(fore|front|hind|rear)_)?(arm|hand|leg|foot)(?:_|$)/);
+    if (sideMatch) {
+        const side = sideMatch[1] === "left" ? "l" : "r";
+        const ordinal = sideMatch[2] ? (["fore", "front"].includes(sideMatch[2]) ? "1" : "2") : null;
+        return [ordinal ? `${sideMatch[3]}_${side}_${ordinal}` : `${sideMatch[3]}_${side}`];
+    }
+    const limbPositionMatch = label.match(/(?:^|_)(fore|front|hind|rear)_(leg|foot)(?:_|$)/);
+    if (limbPositionMatch) return [`${limbPositionMatch[1]}_${limbPositionMatch[2]}`];
     return [location?.id];
 }
 
@@ -2772,7 +2810,7 @@ function parseGCSDamageParts(damage = {}) {
     return { formula, type, scaling };
 }
 
-function parseGCSLibraryEquipment(gcsEquip) {
+function parseGCSLibraryEquipment(gcsEquip, { bodyProfileId = "humanoid" } = {}) {
     if (!gcsEquip.description) return null; 
     
     let type, template;
@@ -2792,7 +2830,8 @@ function parseGCSLibraryEquipment(gcsEquip) {
                     template.dr_locations,
                     feature.locations || (feature.location ? [feature.location] : ["torso"]),
                     getGCSFeatureAmount(feature, gcsEquip),
-                    feature.specialization
+                    feature.specialization,
+                    bodyProfileId
                 );
             }
         }
@@ -3342,7 +3381,7 @@ function ensureImportedEmbeddedItemId(itemData) {
     return itemData._id;
 }
 
-async function buildGCSCharacterEquipmentItems(nodes, { location = "carried", path = [], parentContainerId = "" } = {}) {
+async function buildGCSCharacterEquipmentItems(nodes, { location = "carried", path = [], parentContainerId = "", bodyProfileId = "humanoid" } = {}) {
     const items = [];
 
     for (const node of nodes || []) {
@@ -3355,7 +3394,10 @@ async function buildGCSCharacterEquipmentItems(nodes, { location = "carried", pa
         // The originating inventory list determines placement for the entire tree.
         // GCS equipped flags can also be true in other_equipment.
         const resolvedLocation = location;
-        const item = await buildHybridActorItemFromGCS(node, parseGCSLibraryEquipment);
+        const item = await buildHybridActorItemFromGCS(
+            node,
+            source => parseGCSLibraryEquipment(source, { bodyProfileId })
+        );
         if (item) {
             item.system = item.system || {};
             item.system.location = resolvedLocation;
@@ -3385,7 +3427,8 @@ async function buildGCSCharacterEquipmentItems(nodes, { location = "carried", pa
             const childItems = await buildGCSCharacterEquipmentItems(children, {
                 location: resolvedLocation,
                 path: childPath,
-                parentContainerId: nextParentContainerId
+                parentContainerId: nextParentContainerId,
+                bodyProfileId
             });
             items.push(...childItems);
         }
@@ -3395,9 +3438,9 @@ async function buildGCSCharacterEquipmentItems(nodes, { location = "carried", pa
 }
 
 
-async function buildGCSCharacterInventoryItems(gcsData) {
-    const equipped = await buildGCSCharacterEquipmentItems(gcsData.equipment || [], { location: "equipped" });
-    const carried = await buildGCSCharacterEquipmentItems(gcsData.other_equipment || [], { location: "carried" });
+async function buildGCSCharacterInventoryItems(gcsData, bodyProfileId = "humanoid") {
+    const equipped = await buildGCSCharacterEquipmentItems(gcsData.equipment || [], { location: "equipped", bodyProfileId });
+    const carried = await buildGCSCharacterEquipmentItems(gcsData.other_equipment || [], { location: "carried", bodyProfileId });
     return [...equipped, ...carried];
 }
 
@@ -3659,7 +3702,11 @@ function formatGCSCharacterNotes(notes) {
     return String(notes || "");
 }
 
-async function parseGCSCharacter(gcsData, { fallbackActorImage = CONST.DEFAULT_TOKEN, fallbackTokenImage = CONST.DEFAULT_TOKEN } = {}) {
+async function parseGCSCharacter(gcsData, {
+    fallbackActorImage = CONST.DEFAULT_TOKEN,
+    fallbackTokenImage = CONST.DEFAULT_TOKEN,
+    fallbackBodyProfileId = "humanoid"
+} = {}) {
     ui.notifications.info("Lendo dados do GCS... Mapeando atributos.");
     
     const systemData = getSystemTemplate("Actor", "character");
@@ -3707,7 +3754,11 @@ async function parseGCSCharacter(gcsData, { fallbackActorImage = CONST.DEFAULT_T
     }
     systemData.points.total = gcsData.total_points || 0;
     systemData.points.unspent = gcsData.total_points || 0; 
-        const bodyProfileId = systemData.combat.body_profile || "humanoid";
+    const bodyProfileId = inferGUMBodyProfileIdFromGCS(
+        gcsData?.settings?.body_type || gcsData?.body_type,
+        fallbackBodyProfileId
+    );
+    systemData.combat.body_profile = bodyProfileId;
     const importedNativeDR = collectImportedGCSNativeDR(gcsData, bodyProfileId);
     if (Object.keys(importedNativeDR).length > 0) {
         systemData.combat.dr_mods = foundry.utils.mergeObject(systemData.combat.dr_mods || {}, importedNativeDR, {
@@ -3997,7 +4048,7 @@ for (const {
     // =============================================================
     ui.notifications.info("Mapeando Equipamentos...");
 
-    itemsToCreate.push(...await buildGCSCharacterInventoryItems(gcsData));
+    itemsToCreate.push(...await buildGCSCharacterInventoryItems(gcsData, bodyProfileId));
 
     // =============================================================
     // MAPEAMENTO DE MAGIAS (Spell)

@@ -17,7 +17,7 @@ test("finalidades encerram as opções da barreira", () => {
   const resistance = template.indexOf("BARREIRA DE RESISTÊNCIA");
   const branches = template.indexOf('class="resistance-branches"', resistance);
   const automaticTest = template.indexOf('name="system.resistanceRoll.skipPromptCard"', resistance);
-  const purposes = template.indexOf("Finalidades do teste", resistance);
+  const purposes = template.indexOf("GUM.EffectSheet.TestPurposes", resistance);
   const sectionEnd = template.indexOf("</section>", purposes);
 
   assert.ok(branches > resistance);
@@ -33,8 +33,8 @@ test("resultados condicionais usam cards sem bordas", () => {
 });
 
 test("finalidades da barreira usam seletor compacto e lista abaixo", () => {
-  assert.match(template, /class="resistance-purpose-heading"[\s\S]*?Finalidades do teste[\s\S]*?Editar finalidades[\s\S]*?<\/div>/);
-  assert.match(template, /class="open-purpose-picker resistance-purpose-add"[\s\S]*?>[\s\S]*?Editar finalidades<\/button>/);
+  assert.match(template, /class="resistance-purpose-heading"[\s\S]*?GUM\.EffectSheet\.TestPurposes[\s\S]*?GUM\.EffectSheet\.EditPurposes[\s\S]*?<\/div>/);
+  assert.match(template, /class="open-purpose-picker resistance-purpose-add"[\s\S]*?>[\s\S]*?GUM\.EffectSheet\.EditPurposes[\s\S]*?<\/button>/);
   assert.match(template, /class="resistance-purpose-list[\s\S]*?{{#each resistancePurposeLabels/);
   assert.match(styles, /\.resistance-purpose-control \{[\s\S]*?flex-direction: column;/);
   assert.match(styles, /\.resistance-purpose-heading \{[\s\S]*?justify-content: space-between;/);

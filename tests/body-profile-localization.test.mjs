@@ -14,6 +14,7 @@ const locales = {
   pt: JSON.parse(readFileSync(new URL("../lang/pt-BR.json", import.meta.url), "utf8")),
 };
 const actorSheet = readFileSync(new URL("../module/actor/gurps-actor-sheet.js", import.meta.url), "utf8");
+const damageApplication = readFileSync(new URL("../scripts/apps/damage-application.js", import.meta.url), "utf8");
 const translator = dictionary => key => dictionary[key] ?? key;
 
 test("body profiles and hit locations localize their semantic labels", () => {
@@ -50,10 +51,35 @@ test("every configured profile and body-part family has English and Portuguese c
   }
 });
 
+test("non-humanoid locations retain their family, side, and ordinal in both locales", () => {
+  const cases = [
+    ["quadruped", "leg_l_2", "Leg L2", "Perna E2"],
+    ["hexapod", "foot_r_3", "Foot R3", "Pé D3"],
+    ["avian", "wing_l_1", "Wing L1", "Asa E1"],
+    ["octopod", "tentacle_r_4", "Tentacle R4", "Tentáculo D4"],
+    ["cancroid", "pincer_l_1", "Pincer L1", "Pinça E1"],
+    ["ichthyoid", "fin_r_1", "Fin R1", "Nadadeira D1"],
+    ["arachnid", "paw_l_4", "Paw L4", "Pata E4"],
+  ];
+
+  for (const [profileId, locationId, english, portuguese] of cases) {
+    const location = BODY_PROFILES[profileId].locations[locationId];
+    assert.equal(localizeBodyLocationLabel(locationId, location, translator(locales.en)), english);
+    assert.equal(localizeBodyLocationLabel(locationId, location, translator(locales.pt)), portuguese);
+  }
+});
+
 test("the DR editor uses localized profiles, locations, field labels, and actions", () => {
   assert.match(actorSheet, /localizeBodyProfileLabel\(p, t\)/);
   assert.match(actorSheet, /localizeBodyLocationLabel\(key, loc, t\)/);
   assert.match(actorSheet, /GUM\.Combat\.DR\.ManualFor/);
   assert.match(actorSheet, /GUM\.Combat\.DR\.Cancel/);
   assert.doesNotMatch(actorSheet.slice(actorSheet.indexOf("async _onViewHitLocations"), actorSheet.indexOf("async _onEditWound")), /label: t\("GUM\.Skills\.Cancel"\)/);
+});
+
+test("damage application and character DR rows share localized labels and collapse only equal DR", () => {
+  assert.match(damageApplication, /localizeBodyLocationLabel\(key, data, localizationKey => game\.i18n\.localize\(localizationKey\)\)/);
+  assert.match(damageApplication, /const isUniform = groupItems\.every\(member => member\.drSignature === signature\)/);
+  assert.match(actorSheet, /const isUniform = groupItems\.every\(member => member\.drSignature === signature\)/);
+  assert.match(actorSheet, /const rawDR = drLocations\?\.\[key\];[\s\S]*?\{ base: Number\(rawDR\) \|\| 0 \}/);
 });

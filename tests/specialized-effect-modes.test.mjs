@@ -12,16 +12,16 @@ test("a ficha oferece modos especializados sem remover o modificador genérico",
   assert.match(sheet, /value="roll_modifier"/);
   assert.match(sheet, /value="skill_modifier"/);
   assert.match(sheet, /value="combat_modifier"/);
-  assert.match(sheet, /Restrições específicas/);
-  assert.match(sheetController, /Modificar Rolagem de Perícia/);
-  assert.match(sheetController, /Modificar Modo de Combate/);
+  assert.match(sheet, /GUM\.EffectSheet\.SpecificRestrictions/);
+  assert.match(sheetController, /key: "SkillModifier"/);
+  assert.match(sheetController, /key: "CombatModifier"/);
 });
 
 test("modificar perícia oferece escopos, NH e motor condicional", () => {
   for (const field of ["modifier_value", "modifier_value_mode", "skill_scope", "skill_targets", "skill_attribute", "modifier_nh_display_mode"]) {
     assert.match(sheet, new RegExp(`\\.${field}\\"`));
   }
-  assert.match(sheet, /Aceita número, fórmula, dados ou expressão condicional/);
+  assert.match(sheet, /GUM\.EffectSheet\.ConditionalValueHint/);
   assert.match(engine, /action\.skill_scope === "attribute" \? `skill_\$\{action\.skill_attribute/);
 });
 
@@ -31,7 +31,7 @@ test("modo de combate separa ataque, defesas, recálculo e dano", () => {
   }
   for (const field of ["component", "operation", "value", "value_mode", "cap", "replace_armor_divisor", "replace_type", "replace_nature"]) assert.match(sheet, new RegExp(`combat_damage_changes\\.\\{\\{change\\.index\\}\\}\\.${field}`));
   assert.doesNotMatch(sheet, /combat_damage_changes\.\{\{change\.index\}\}\.property/);
-  assert.match(sheet, />Acompanhamento</);
+  assert.match(sheet, /GUM\.EffectSheet\.Tracking/);
   assert.match(main, /shouldRecalculate \? attack\.final_nh \+ rollOnlyAttackDelta : attackSkillNh/);
   assert.match(main, /change\.operation === "per_die"/);
   assert.match(main, /change\.operation === "extra_dice"/);
@@ -91,7 +91,7 @@ test("NH, Aparar e Bloqueio preservam expressões condicionais", () => {
   assert.match(engine, /const deferValueEvaluation = hasConditionalValueExpression\(entry\.value\)/);
   assert.match(engine, /value: deferValueEvaluation \? entry\.value : scaling\.effectiveValue/);
   assert.match(main, /_evaluateCombatAttackValue/);
-  assert.match(sheet, /title="Aceita número, fórmula, dados ou expressão do motor de condições de valor\."/i);
+  assert.match(sheet, /title="{{localize 'GUM\.EffectSheet\.ValueEngineHint'}}"/i);
 });
 
 test("rolagens de modos específicos carregam item e attack id", () => {
@@ -132,7 +132,7 @@ test("NH em árvore usa o atributo base ativo para modificadores permanentes", (
 test("blocos de combate usam cabeçalhos minimalistas sem título Alterações", () => {
   assert.doesNotMatch(sheet, />\s*Alterações\s*</);
   assert.match(sheet, /effect-combat-change-header/);
-  assert.match(sheet, /Bônus máximo/);
+  assert.match(sheet, /GUM\.EffectSheet\.MaximumBonus/);
 });
 
 test("override condicional por nível mantém o escalonamento adiado", () => {

@@ -34,11 +34,13 @@ export function hasEquipmentGrantRelevantChange(changes = {}) {
     || key === "system.equipped"
     || key === "system.active"
     || key === "system.switched_on"
+    || key === "system.level"
   ) || Boolean(changes.system && (
     Object.prototype.hasOwnProperty.call(changes.system, "eqp_modifiers")
     || Object.prototype.hasOwnProperty.call(changes.system, "location")
     || Object.prototype.hasOwnProperty.call(changes.system, "equipped")
     || Object.prototype.hasOwnProperty.call(changes.system, "active")
     || Object.prototype.hasOwnProperty.call(changes.system, "switched_on")
+    || Object.prototype.hasOwnProperty.call(changes.system, "level")
   ));
 }

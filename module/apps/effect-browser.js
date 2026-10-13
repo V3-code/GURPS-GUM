@@ -8,19 +8,13 @@ import { loadContentSourceBrowserData } from "../utils/content-source-browser.mj
 // ✅ PASSO 1: Mudar o nome da classe de ModifierBrowser para EffectBrowser
 
 const EFFECT_TYPE_LABELS = {
-    attribute: "Atributo",
-    flag: "Flag",
-    roll_modifier: "Modificador de Rolagem",
-    skill_modifier: "Modificar Rolagem de Perícia",
-    combat_modifier: "Modificar Modo de Combate",
-    resource_change: "Alteração de Recurso",
-    resource_create: "Criação de Recurso",
-    chat: "Chat",
-    macro: "Macro",
-    status: "Status"
+    attribute: "Attribute", flag: "Flag", roll_modifier: "RollModifier",
+    skill_modifier: "SkillModifier", combat_modifier: "CombatModifier",
+    resource_change: "ResourceChange", resource_create: "ResourceCreate",
+    chat: "Chat", macro: "Macro", status: "Status"
 };
 
-const getEffectTypeLabel = (type) => EFFECT_TYPE_LABELS[type] || type || "-";
+const getEffectTypeLabel = (type) => EFFECT_TYPE_LABELS[type] ? game.i18n.localize(`GUM.EffectSheet.ActionType.${EFFECT_TYPE_LABELS[type]}`) : type || "-";
 
 const getPrimaryRollModifierValue = (system = {}) => {
     const first = Array.isArray(system.roll_modifier_entries) && system.roll_modifier_entries.length ? system.roll_modifier_entries[0] : null;
@@ -64,7 +58,7 @@ constructor(targetItem, options = {}) {
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
       // ✅ PASSO 1: Atualizar título, classes e arquivo de template
-      title: "Navegador de Efeitos",
+      title: game.i18n.localize("GUM.EffectBrowser.Title"),
       classes: ["gum", "effect-browser", "theme-dark"], // Classe CSS atualizada
       template: "systems/gum/templates/apps/effect-browser.hbs", // Arquivo .hbs atualizado
       width: 900, height: 700, resizable: true
@@ -184,16 +178,16 @@ _onFilterResults(event) {
       const effectRef = system.ref ?? system.reference;
       const quickDescriptionSource = (system.chat_description ?? "").toString().trim()
         ? system.chat_description
-        : (system.description || system.notes || "<i>Sem descrição.</i>");
+        : (system.description || system.notes || `<i>${game.i18n.localize("GUM.EffectBrowser.NoDescription")}</i>`);
 
       return GumPreviewDialog.show({
-        title: effect?.name || "Efeito",
-        type: "Efeito",
+        title: effect?.name || game.i18n.localize("GUM.EffectSheet.Effect"),
+        type: game.i18n.localize("GUM.EffectSheet.Effect"),
         img: effect?.img || "icons/svg/mystery-man.svg",
         description: await GumPreviewDialog.enrichDescription(quickDescriptionSource),
         tags: [
-          { label: "Tipo", value: getEffectActionTypes(system).map(getEffectTypeLabel).join(", ") || "-" },
-          { label: "Modificador", value: getPrimaryRollModifierValue(system) },
+          { label: game.i18n.localize("GUM.EffectSheet.Type"), value: getEffectActionTypes(system).map(getEffectTypeLabel).join(", ") || "-" },
+          { label: game.i18n.localize("GUM.EffectSheet.Modifier"), value: getPrimaryRollModifierValue(system) },
           { label: "REF", value: effectRef }
         ],
         sendToChat: true,
@@ -205,7 +199,7 @@ _onFilterResults(event) {
   // ✅ PASSO 3: Reescrever a lógica de salvamento
   async _updateObject(event, formData) {
       const selectedIds = Object.keys(formData).filter(key => formData[key] === true && key.startsWith("effectSelection-"));
-      if (selectedIds.length === 0) return ui.notifications.warn("Nenhum efeito foi selecionado.");
+      if (selectedIds.length === 0) return ui.notifications.warn(game.i18n.localize("GUM.EffectBrowser.NoneSelected"));
 
       const selectedEffects = selectedIds.map(id => this.allEffects.find(e => e.selectionKey === id)).filter(e => e);
 
@@ -221,7 +215,7 @@ _onFilterResults(event) {
             existingEffects.push(newEffectData);
           }
           await this.targetItem.update({ "system.effects": existingEffects });
-          ui.notifications.info(`${selectedEffects.length} efeito(s) adicionado(s).`);
+          ui.notifications.info(game.i18n.format("GUM.EffectBrowser.AddedCount", { count: selectedEffects.length }));
       }
   }
 }

@@ -56,3 +56,12 @@ test("all GM Screen localization keys exist in English and Portuguese", () => {
     }
 });
 
+test("the card quick-use menu is draggable and initially clamped to the viewport", () => {
+    assert.match(application, /gum-ctx-header[\s\S]*?DragQuickMenuHint/);
+    assert.match(application, /clampFloatingPanelPosition\(/);
+    assert.match(application, /pointerdown\.gum-ctx-drag/);
+    assert.match(application, /pointermove\.gum-ctx-drag/);
+    assert.match(styles, /\.gum-ctx-header\s*\{[\s\S]*?cursor:\s*grab;/);
+    assert.match(styles, /\.gum-ctx-menu\.is-dragging \.gum-ctx-header\s*\{ cursor:\s*grabbing; \}/);
+});
+

@@ -361,6 +361,14 @@ export function getBodyProfile(profileId) {
   };
 }
 
+export function getBodyProfileLocationKeys(profileOrId = "humanoid") {
+  const profile = typeof profileOrId === "string" ? getBodyProfile(profileOrId) : profileOrId;
+  const locations = profile?.locations || {};
+  const ordered = Array.isArray(profile?.order) ? profile.order : [];
+  return [...new Set([...ordered, ...Object.keys(locations)])]
+    .filter(key => Object.prototype.hasOwnProperty.call(locations, key));
+}
+
 export function getBodyLocationDefinition(locationId) {
   return LOCATION_INDEX[locationId];
 }

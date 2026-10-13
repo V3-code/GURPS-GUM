@@ -601,10 +601,15 @@ _promptMultipleReferences(parsedList) {
         if (this.item.type === "equipment") { 
             const drLocations = this.item._source?.system?.dr_locations || this.item.system.dr_locations || {};
             const resolvedDrLocations = context.equipmentResolution?.drLocations || drLocations;
-            const bodyLocationOptions = listBodyLocations().map(localizeEquipmentLocation);
+            const allLocationsOption = {
+                id: "all",
+                name: game.i18n.localize("GUM.Equipment.Protection.AllLocations")
+            };
+            const originalBodyLocationOptions = [allLocationsOption, ...listBodyLocations()];
+            const bodyLocationOptions = originalBodyLocationOptions.map(localizeEquipmentLocation);
             const locationLookup = new Map(bodyLocationOptions.map(option => [option.id, option])); 
  
-            context.bodyLocationOptions = bilingualLocationOptions(listBodyLocations(), bodyLocationOptions, game.i18n.lang);
+            context.bodyLocationOptions = bilingualLocationOptions(originalBodyLocationOptions, bodyLocationOptions, game.i18n.lang);
             context.drLocationRows = Object.entries(drLocations)
                 .filter(([, drObject]) => this._hasVisibleDR(drObject))
                 .map(([key, drObject]) => {
@@ -2769,6 +2774,10 @@ const rangedFields = `
     } 
  
     _getLocationKeyFromLabel(label) { 
+        const normalizedLabel = String(label || "").trim().toLocaleLowerCase();
+        const allLocationsLabel = game.i18n.localize("GUM.Equipment.Protection.AllLocations").toLocaleLowerCase();
+        if (["all", "todos", allLocationsLabel].includes(normalizedLabel)) return "all";
+
         const list = this.element?.[0]?.querySelector("#gum-body-location-options"); 
         if (!list) return label; 
  
