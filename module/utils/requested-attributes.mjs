@@ -23,7 +23,8 @@ export function resolveRequestedAttribute(attributes = {}, key) {
   const option = getRequestedAttributeOption(key);
   const attributeKey = option?.key ?? String(key ?? "").trim().toLowerCase();
   const attribute = attributes?.[attributeKey];
-  const value = Number(attribute?.final ?? attribute?.value);
+  const hasFinalValue = attribute?.final !== null && attribute?.final !== undefined && attribute?.final !== "";
+  const value = Number(hasFinalValue ? attribute.final : attribute?.value);
   if (!Number.isFinite(value)) return { available: false, reason: "O atributo solicitado não está disponível." };
   return {
     available: true,
@@ -31,6 +32,9 @@ export function resolveRequestedAttribute(attributes = {}, key) {
     label: option?.label ?? attributeKey.toUpperCase(),
     type: option?.rollType ?? "attribute",
     attributeKey,
-    ...(option?.defenseType ? { defenseType: option.defenseType } : {})
+    ...(option?.defenseType ? {
+      defenseType: option.defenseType,
+      defenseBonusIncluded: hasFinalValue
+    } : {})
   };
 }

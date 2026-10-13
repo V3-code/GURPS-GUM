@@ -17,8 +17,9 @@ test("resolve sentidos com contexto sensorial e esquiva com contexto de defesa",
     available: true, value: 13, label: "Visão", type: "skill", attributeKey: "vision"
   });
   assert.deepEqual(resolveRequestedAttribute(attributes, "dodge"), {
-    available: true, value: 9, label: "Esquiva", type: "defense", attributeKey: "dodge", defenseType: "dodge"
+    available: true, value: 9, label: "Esquiva", type: "defense", attributeKey: "dodge", defenseType: "dodge", defenseBonusIncluded: false
   });
+  assert.equal(resolveRequestedAttribute({ dodge: { final: 11, value: 9 } }, "dodge").defenseBonusIncluded, true);
 });
 
 test("normalização reconhece sentidos e esquiva como atributos em formatos legados", () => {

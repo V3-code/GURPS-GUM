@@ -763,6 +763,39 @@ export function equipmentLinkedReserve(item, resolution = null) {
   };
 }
 
+/** Present an equipment item's physical integrity as a linked combat record. */
+export function equipmentIntegrityRecord(item, resolution = null) {
+  if (!item || item.type !== "equipment") return null;
+  const system = item._source?.system || item.system || {};
+  if (system.integrity_record_enabled !== true) return null;
+  if (Math.max(0, number(system.quantity, 1)) <= 0) return null;
+  const resolved = resolution || resolveEquipment(system);
+  const max = Math.max(0, Math.floor(number(resolved.properties?.item_hp)));
+  if (max <= 0) return null;
+  const storedCurrent = system.item_hp_current;
+  const current = storedCurrent === null || storedCurrent === undefined || storedCurrent === ""
+    ? max
+    : Math.max(0, Math.min(max, Math.floor(number(storedCurrent))));
+  return {
+    equipmentId: item.id,
+    recordType: "integrity",
+    name: item.name,
+    source: item.name,
+    current,
+    max,
+    value: current,
+    dr: Math.max(0, number(resolved.properties?.item_dr))
+  };
+}
+
+/** Persist a linked integrity record without touching any charge-consumption state. */
+export function equipmentIntegrityCurrentUpdate(item, current, resolution = null) {
+  const record = equipmentIntegrityRecord(item, resolution);
+  if (!record) return null;
+  const nextCurrent = Math.max(0, Math.min(record.max, Math.floor(number(current))));
+  return { "system.item_hp_current": nextCurrent };
+}
+
 /** Convert a linked resource's available balance back to the equipment's spent-charge field. */
 export function equipmentReserveBalanceUpdate(item, available, resolution = null) {
   const reserve = equipmentLinkedReserve(item, resolution);

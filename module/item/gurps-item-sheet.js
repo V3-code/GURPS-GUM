@@ -2525,6 +2525,29 @@ const rangedFields = `
             const isNumericStringWithComma = typeof v === 'string' && /^[+-]?\d+(,\d+)?$/.test(v.trim()); 
             if (!isDescriptionField && isNumericStringWithComma && v.includes(',')) formData[k] = v.replace(',', '.'); 
         } 
+
+        if (this.item?.type === "equipment") {
+            const nextIntegrityEnabled = formData["system.integrity_record_enabled"] === true
+                || formData["system.integrity_record_enabled"] === "true"
+                || formData["system.integrity_record_enabled"] === "on";
+            const wasIntegrityEnabled = this.item.system?.integrity_record_enabled === true;
+            if (nextIntegrityEnabled) {
+                const pending = foundry.utils.mergeObject(
+                    foundry.utils.deepClone(this.item._source?.system || this.item.system || {}),
+                    foundry.utils.expandObject(formData).system || {},
+                    { inplace: false }
+                );
+                const maximum = Math.max(0, Math.floor(Number(resolveEquipment(pending).properties?.item_hp) || 0));
+                const rawCurrent = formData["system.item_hp_current"] ?? this.item.system?.item_hp_current;
+                const parsedCurrent = Number(rawCurrent);
+                // Enabling a fresh record starts the item undamaged. Afterwards,
+                // its current integrity is preserved and only clamped to its max.
+                const current = !wasIntegrityEnabled && (!Number.isFinite(parsedCurrent) || parsedCurrent <= 0)
+                    ? maximum
+                    : Math.max(0, Math.min(maximum, Number.isFinite(parsedCurrent) ? parsedCurrent : maximum));
+                formData["system.item_hp_current"] = current;
+            }
+        }
         const standardSkillAttrs = ["st", "dx", "iq", "ht", "per", "will", "vont"];
         if (formData["system.base_attribute_select"] !== undefined) { 
             const selected = formData["system.base_attribute_select"]; 

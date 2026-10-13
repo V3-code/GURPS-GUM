@@ -120,6 +120,27 @@ test("encaminha o subtipo de defesa resolvido ao prompt", async () => {
   assert.equal(promptData.attributeKey, "dodge");
 });
 
+test("preserva a informação de que a defesa solicitada já contém BD", async () => {
+  let promptData;
+  const { execute } = harness({
+    resolveTest: async () => ({
+      available: true,
+      type: "defense",
+      defenseType: "dodge",
+      defenseBonusIncluded: true,
+      attributeKey: "dodge",
+      value: 11,
+      label: "Esquiva"
+    }),
+    createPrompt: (_actor, rollData) => {
+      promptData = rollData;
+      return { render: () => {}, close: async () => {} };
+    }
+  });
+  await execute(request(), "actor-1");
+  assert.equal(promptData.defenseBonusIncluded, true);
+});
+
 test("resolve o modificador fixo no ator que realiza o teste", async () => {
   let received;
   const { execute } = harness({

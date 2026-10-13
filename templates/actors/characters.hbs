@@ -1723,7 +1723,7 @@
               <div class="group-content combat-meter-group-content">
                 <div class="combat-meter-grid">
                   {{#each preparedCombatMeters}}
-                    <article class="meter-card combat-meter-card" data-meter-id="{{this.id}}" {{#if this.meter.equipmentId}}data-equipment-id="{{this.meter.equipmentId}}"{{/if}} title="{{localize 'GUM.Combat.Meters.CardTitle' name=this.meter.name max=this.meter.max}}" aria-label="{{localize 'GUM.Combat.Meters.CardLabel' name=this.meter.name current=this.meter.current max=this.meter.max}}">
+                    <article class="meter-card combat-meter-card" data-meter-id="{{this.id}}" {{#if this.meter.equipmentId}}data-equipment-id="{{this.meter.equipmentId}}"{{/if}} {{#if (eq this.meter.recordType "integrity")}}data-integrity-record="true"{{/if}} title="{{localize 'GUM.Combat.Meters.CardTitle' name=this.meter.name max=this.meter.max}}" aria-label="{{localize 'GUM.Combat.Meters.CardLabel' name=this.meter.name current=this.meter.current max=this.meter.max}}">
                       <header class="combat-meter-card-header">
                         <i class="fas fa-clipboard-list combat-meter-icon" aria-hidden="true"></i>
                         <strong class="combat-meter-name">{{this.meter.name}}</strong>
@@ -1742,7 +1742,7 @@
                         <strong class="combat-meter-value" aria-label="{{localize 'GUM.Combat.Meters.Current' value=this.meter.current}}">{{this.meter.current}}</strong>
                         <button type="button" class="adjust-combat-meter combat-meter-adjust" data-adjustment="1" title="{{localize 'GUM.Combat.Meters.Increase'}}" aria-label="{{localize 'GUM.Combat.Meters.IncreaseNamed' name=this.meter.name}}"><i class="fas fa-plus" aria-hidden="true"></i></button>
                       </div>
-                      <div class="combat-meter-meta" aria-hidden="true"><span>{{localize "GUM.Combat.Meters.ReferenceAbbrev"}} <strong>{{this.meter.max}}</strong></span>{{#if this.meter.equipmentId}}<span class="combat-meter-meta-separator">·</span><span>{{this.meter.source}}</span>{{else}}<span class="combat-meter-meta-separator">·</span><span>{{localize "GUM.Combat.Meters.ResistanceAbbrev"}} <strong>{{this.meter.dr}}</strong></span>{{/if}}</div>
+                      <div class="combat-meter-meta" aria-hidden="true"><span>{{localize "GUM.Combat.Meters.ReferenceAbbrev"}} <strong>{{this.meter.max}}</strong></span>{{#if (eq this.meter.recordType "integrity")}}<span class="combat-meter-meta-separator">·</span><span>{{localize "GUM.Combat.Meters.ResistanceAbbrev"}} <strong>{{this.meter.dr}}</strong></span>{{else}}{{#if this.meter.equipmentId}}<span class="combat-meter-meta-separator">·</span><span>{{this.meter.source}}</span>{{else}}<span class="combat-meter-meta-separator">·</span><span>{{localize "GUM.Combat.Meters.ResistanceAbbrev"}} <strong>{{this.meter.dr}}</strong></span>{{/if}}{{/if}}</div>
                     </article>
                   {{else}}<div class="placeholder-text combat-meter-placeholder">{{localize "GUM.Combat.Meters.Empty"}}</div>{{/each}}
                 </div>

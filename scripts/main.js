@@ -60,6 +60,8 @@ import { installGumChatCommandInterceptor, normalizeGumLookup, resolveGumCommand
 import { buildEquipmentConsumptionUpdate, resolveEquipment } from "../module/utils/equipment-resolution.mjs";
 import { applyEquipmentDefenseBonus, collectActiveEquipmentDefenseBonuses, evaluateDecisiveDefenseBonus } from "../module/utils/equipment-defense-bonus.mjs";
 import { collectActiveEquipmentGrantedEffects, EQUIPMENT_GRANTED_EFFECT_SOURCE, hasEquipmentGrantRelevantChange, matchesEquipmentGrantedEffectScope } from "../module/utils/equipment-granted-effects.mjs";
+import { registerHexOccupancyCanvasHooks } from "../module/canvas/hex-occupancy-overlay.js";
+import { registerHexOccupancyCanvasLayer } from "../module/canvas/hex-occupancy-layer.mjs";
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
 
@@ -327,8 +329,10 @@ const normalizeEffectDurationFlags = (duration = {}) => {
 };
 
 // Foundry V13 replaced the jQuery-based hook with an HTMLElement-based hook.
-// Keep V12 support without registering the deprecated hook on newer versions.
-const testRequestChatRenderHook = Number(game.release?.generation ?? 12) >= 13
+// Prefer the modern hook whenever the version cannot be identified, so a missing
+// release descriptor never registers the deprecated listener on current Foundry.
+const foundryGeneration = Number(game.release?.generation ?? game.version?.split(".")?.[0] ?? 13);
+const testRequestChatRenderHook = foundryGeneration >= 13
     ? "renderChatMessageHTML"
     : "renderChatMessage";
 Hooks.on(testRequestChatRenderHook, (_message, html) => { activateTestRequestChatListeners(html); activateRollRequestChatListeners(html); });
@@ -2106,14 +2110,17 @@ async function _rollDamageFromChatAction(payload) {
     await ChatMessage.create(chatData);
 }
 
-const GUM_CHAT_HELP = `
-  <div class="gum-command-help">
-    <h3><i class="fas fa-dice" style="font-size: x-large; text-transform: uppercase;"></i> Comandos do GUM</h3>
-    <p><strong>NH informado:</strong> <code>/gum nh value+-mods</code></p>
-    <p><strong>Perícia da ficha:</strong> <code>/gum skill+-mods</code></p>
-    <p><strong>Dano:</strong> <code>/gum dmg dice+-mods type</code></p>
-    <p><small>Aliases: nh, n, niv, nível · dmg, d, damage, dano · /gum help</small></p>
-  </div>`;
+function _gumChatHelpContent() {
+    const localize = key => game.i18n.localize(key);
+    return `
+      <div class="gum-command-help">
+        <h3><i class="fas fa-dice" style="font-size: x-large; text-transform: uppercase;"></i> ${localize("GUM.ChatCommand.Help.Title")}</h3>
+        <p><strong>${localize("GUM.ChatCommand.Help.ManualSkill")}:</strong> <code>/gum nh value+-mods</code></p>
+        <p><strong>${localize("GUM.ChatCommand.Help.ActorSkill")}:</strong> <code>/gum skill+-mods</code></p>
+        <p><strong>${localize("GUM.ChatCommand.Help.Damage")}:</strong> <code>/gum dmg dice+-mods type</code></p>
+        <p><small>${localize("GUM.ChatCommand.Help.Aliases")}: nh, n, niv, nível · dmg, d, damage, dano · /gum help</small></p>
+      </div>`;
+}
 
 function _gumCommandActor() {
     return resolveGumCommandActor({
@@ -2131,8 +2138,8 @@ function _gumGmPresenter() {
 async function _showGumCommandHelp({ startup = false } = {}) {
     return ChatMessage.create({
         user: game.user.id,
-        speaker: { alias: "GURPS GUM" },
-        content: GUM_CHAT_HELP,
+        speaker: { alias: game.i18n.localize("GUM.ChatCommand.Help.Speaker") },
+        content: _gumChatHelpContent(),
         whisper: [game.user.id],
         flags: { gum: { commandHelp: true, startup } }
     });
@@ -2995,6 +3002,8 @@ Hooks.once('init', async function() {
     installItemCompendiumExportSourceCompatibility();
     console.log("GUM | Fase 'init': Registrando configurações e fichas."); 
     registerContextMenuCompatibilityHooks({ Hooks, generation: game.release?.generation });
+    registerHexOccupancyCanvasLayer(CONFIG);
+    registerHexOccupancyCanvasHooks(Hooks);
     GumPreviewDialog.registerChatDetailsHandler();
     installGumApi({
         gameRef: game,

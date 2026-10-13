@@ -87,3 +87,24 @@ test("wires the interceptor into Foundry startup and shows private help", async 
   assert.match(source, /await _showGumCommandHelp\(\{ startup: true \}\)\.catch/);
   assert.match(source, /whisper: \[game\.user\.id\]/);
 });
+
+test("uses localized help-card labels and the modern chat render hook by default", async () => {
+  const source = await readFile(new URL("../scripts/main.js", import.meta.url), "utf8");
+  assert.match(source, /function _gumChatHelpContent\(\)/);
+  assert.match(source, /GUM\.ChatCommand\.Help\.Title/);
+  assert.match(source, /GUM\.ChatCommand\.Help\.ActorSkill/);
+  assert.match(source, /game\.version\?\.split\("\."\)\?\.\[0\] \?\? 13/);
+  assert.match(source, /\? "renderChatMessageHTML"\s*:\s*"renderChatMessage"/);
+
+  for (const locale of ["pt-BR", "en"]) {
+    const translations = JSON.parse(await readFile(new URL(`../lang/${locale}.json`, import.meta.url), "utf8"));
+    for (const key of [
+      "GUM.ChatCommand.Help.Title",
+      "GUM.ChatCommand.Help.ManualSkill",
+      "GUM.ChatCommand.Help.ActorSkill",
+      "GUM.ChatCommand.Help.Damage",
+      "GUM.ChatCommand.Help.Aliases",
+      "GUM.ChatCommand.Help.Speaker"
+    ]) assert.ok(translations[key], `${locale} is missing ${key}`);
+  }
+});

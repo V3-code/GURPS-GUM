@@ -4,6 +4,27 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.4.3-beta] - 2026-10-13
+
+### Added
+
+- Ocupação tática de hexes do GURPS, opcional por configuração mundial: identifica tokens visíveis no mesmo hex e elevação, inclusive tokens de múltiplos hexes, com marcador no canvas e painel persistente para controlar, marcar como alvo, abrir a ficha ou configurar cada ocupante.
+- Registro vinculado de integridade para equipamentos: PV máximo, PV atual e RD próprios, independente de cargas e disponível na aba Combate e na aplicação de dano.
+- Caminho `all`/`todos` para modificadores de RD, aplicável a todas as localizações de proteção do personagem.
+
+### Changed
+
+- Tabela de RD, janela de dano e importação do GCS agora normalizam todos os perfis corporais, removendo localizações remanescentes e exibindo braços e pernas agrupados apenas quando seus valores de RD forem iguais.
+- Itens Efeito, seus navegadores de contexto e finalidade, o card de entrada do comando `/gum` e partes complementares do Escudo do Mestre receberam internacionalização em português e inglês.
+- A coluna de cards de personagens do Escudo do Mestre recebeu largura fixa um pouco maior, preservando o layout de duas colunas.
+
+### Fixed
+
+- Alternância de perfil corporal, especialmente após importação do GCS, volta corretamente ao conjunto de localizações humanoide padrão sem duplicar pernas, pés ou outras entradas.
+- Aplicação de dano prioriza o token marcado como alvo e usa o token selecionado apenas quando não houver alvo.
+- Efeitos com múltiplas ações de modificador de rolagem agora são todos considerados nas defesas ativas pelo Escudo do Mestre; o BD de equipamento não é duplicado.
+- Cards de chat do GUM usam o hook moderno de renderização do Foundry V13+, removendo o aviso de API depreciada.
+
 ## [1.4.2-beta] - 2026-10-12
 
 ### Added

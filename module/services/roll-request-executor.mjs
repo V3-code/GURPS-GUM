@@ -46,6 +46,7 @@ export function createRollRequestExecutor({
       itemId: resolution.itemId,
       itemUuid: resolution.itemUuid,
       defenseType: resolution.defenseType,
+      defenseBonusIncluded: resolution.defenseBonusIncluded === true,
       requestedPurposeIds: request.test.requestedPurposeIds,
       purposeIds: request.test.requestedPurposeIds,
       fixedModifier,

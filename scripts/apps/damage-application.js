@@ -8,7 +8,7 @@ import { executeRollRequest } from "../../module/services/roll-request-service.j
 import { getPurposeLabels } from "../../module/utils/roll-purposes.mjs";
 import { renderPendingResistanceRequest } from "../../module/utils/roll-request-view.mjs";
 import { buildDamageNatureSearchOptions, formatDamageNature, resolveDamageNature } from "../../module/utils/damage-nature.mjs";
-import { equipmentLinkedReserve, equipmentReserveBalanceUpdate } from "../../module/utils/equipment-resolution.mjs";
+import { equipmentIntegrityCurrentUpdate, equipmentIntegrityRecord, equipmentLinkedReserve, equipmentReserveBalanceUpdate } from "../../module/utils/equipment-resolution.mjs";
 
 export default class DamageApplicationWindow extends Application {
     
@@ -510,9 +510,12 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
         }
         for (const item of this.targetActor.items.filter(entry => entry.type === "equipment")) {
             const reserve = equipmentLinkedReserve(item, item.system?.equipmentResolution);
-            if (!reserve) continue;
-            const prefix = reserve.type === "spell" ? "RM" : reserve.type === "power" ? "RP" : "REG";
-            damageablePools.push({ path: `equipment:${item.id}`, label: `${prefix}:${reserve.name}`, type: reserve.type === "combat" ? "combat-meter" : "equipment-reserve", dr: 0 });
+            if (reserve) {
+                const prefix = reserve.type === "spell" ? "RM" : reserve.type === "power" ? "RP" : "REG";
+                damageablePools.push({ path: `equipment:${item.id}`, label: `${prefix}:${reserve.name}`, type: reserve.type === "combat" ? "combat-meter" : "equipment-reserve", dr: 0 });
+            }
+            const integrity = equipmentIntegrityRecord(item, item.system?.equipmentResolution);
+            if (integrity) damageablePools.push({ path: `equipment-integrity:${item.id}`, label: `INT:${integrity.name}`, type: "combat-meter", dr: integrity.dr });
         }
         context.damageablePools = damageablePools;
         this.preparedOnDamageEffects = await this._resolveOnDamageEffects();
@@ -1194,14 +1197,21 @@ async _onNpcResistanceRoll(effectId) {
             const applyShock = !targetIgnoresShock && (form.querySelector('[name="special_apply_shock"]')?.checked ?? true);
             const selectedPoolPath = form.querySelector('[name="damage_target_pool"]').value;
             if (!selectedPoolPath) { this.isApplying = false; return ui.notifications.error(this._t("NoTargetPool")); }
-            const linkedEquipment = selectedPoolPath.startsWith("equipment:")
-                ? this.targetActor.items.get(selectedPoolPath.slice("equipment:".length))
+            const isIntegrityRecord = selectedPoolPath.startsWith("equipment-integrity:");
+            const linkedEquipment = isIntegrityRecord
+                ? this.targetActor.items.get(selectedPoolPath.slice("equipment-integrity:".length))
+                : selectedPoolPath.startsWith("equipment:")
+                    ? this.targetActor.items.get(selectedPoolPath.slice("equipment:".length))
                 : null;
             const linkedReserve = linkedEquipment ? equipmentLinkedReserve(linkedEquipment, linkedEquipment.system?.equipmentResolution) : null;
+            const linkedIntegrity = isIntegrityRecord ? equipmentIntegrityRecord(linkedEquipment, linkedEquipment?.system?.equipmentResolution) : null;
+            if (isIntegrityRecord && !linkedIntegrity) { this.isApplying = false; return ui.notifications.error(this._t("MissingEquipmentReserve")); }
             if (selectedPoolPath.startsWith("equipment:") && !linkedReserve) { this.isApplying = false; return ui.notifications.error(this._t("MissingEquipmentReserve")); }
-            const currentPoolValue = linkedReserve?.current ?? foundry.utils.getProperty(this.targetActor, selectedPoolPath);
-            const updatePool = (value, options = {}) => linkedReserve
-                ? linkedEquipment.update(equipmentReserveBalanceUpdate(linkedEquipment, value, linkedEquipment.system?.equipmentResolution), options)
+            const currentPoolValue = linkedIntegrity?.current ?? linkedReserve?.current ?? foundry.utils.getProperty(this.targetActor, selectedPoolPath);
+            const updatePool = (value, options = {}) => linkedIntegrity
+                ? linkedEquipment.update(equipmentIntegrityCurrentUpdate(linkedEquipment, value, linkedEquipment.system?.equipmentResolution), options)
+                : linkedReserve
+                    ? linkedEquipment.update(equipmentReserveBalanceUpdate(linkedEquipment, value, linkedEquipment.system?.equipmentResolution), options)
                 : this.targetActor.update({ [selectedPoolPath]: value }, options);
             const poolLabel = form.querySelector('[name="damage_target_pool"] option:checked').textContent;            
             const natureRaw = form.querySelector('[name="damage_nature"]')?.value || "";
