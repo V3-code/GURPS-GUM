@@ -5,6 +5,7 @@ import { canUserImportIntoActor } from "../utils/actor-creation-permission.mjs";
 import { contentSourceService } from "../services/content-source-service.mjs";
 import { prepareGCSActorItemChanges } from "../utils/gcs-container-reconciliation.mjs";
 import { buildCompendiumLibraryExport, parseCompendiumLibraryExport, previewCompendiumJsonSynchronization, sortCompendiumFoldersParentFirst } from "../utils/compendium-library-json.mjs";
+import { GUM_ITEM_BUNDLE_VERSION, parseItemBundle, prepareItemBundle, previewItemBundleSynchronization, stableBundleDocumentId } from "../utils/item-bundle-json.mjs";
 
 const GCS_LIBRARY_TYPES_BY_EXTENSION = {
     skl: "skill", spl: "spell", eqp: "equipment", adq: "advantage",
@@ -68,13 +69,17 @@ export async function importFromJson({ pack: fixedPack = null } = {}) {
         let importEntries = [];
         let compendiumFolders = [];
         let portableLibrary = null;
+        let itemBundle = null;
         try {
-            portableLibrary = parseCompendiumLibraryExport(data);
+            itemBundle = parseItemBundle(data);
+            portableLibrary = itemBundle ? null : parseCompendiumLibraryExport(data);
         } catch (err) {
             return ui.notifications.error(err.message);
         }
 
-        if (portableLibrary) {
+        if (itemBundle) {
+            importEntries = Object.entries(itemBundle.documents).map(([key, itemData]) => ({ key, itemData, folderPath: [] }));
+        } else if (portableLibrary) {
             if (portableLibrary.documentType !== "Item") {
                 return ui.notifications.error(`O arquivo contém documentos do tipo "${portableLibrary.documentType}", mas este importador aceita apenas Itens.`);
             }
@@ -111,16 +116,16 @@ export async function importFromJson({ pack: fixedPack = null } = {}) {
             return ui.notifications.error("O formato do JSON não foi reconhecido. Esperando uma lista de itens ou um objeto GCS com uma propriedade 'rows'.");
         }
 
-        if (importEntries.length === 0 && !portableLibrary) {
+        if (importEntries.length === 0 && !portableLibrary && !itemBundle) {
             return ui.notifications.error("Nenhum item encontrado no arquivo.");
         }
 
-        const isCompendiumJson = Boolean(portableLibrary) || Boolean(data?.type && data?.system && data?.name) || (
+        const isCompendiumJson = !itemBundle && (Boolean(portableLibrary) || Boolean(data?.type && data?.system && data?.name) || (
             Array.isArray(data) && importEntries.some(entry =>
                 entry?.itemData && typeof entry.itemData === "object" &&
                 (entry.itemData._id || entry.itemData.system)
             )
-        );
+        ));
 
         if (isCompendiumJson) {
             const missingIds = importEntries.filter(entry => !entry.itemData._id);
@@ -157,6 +162,7 @@ export async function importFromJson({ pack: fixedPack = null } = {}) {
                 </select>
             </div>` : "";
         const canCreatePack = Boolean(game.user?.isGM && !fixedPack);
+        const preferNewBundlePack = Boolean(itemBundle && canCreatePack);
         const destinationFields = fixedPack ? `
             <div class="gum-import-destination-summary">
                 <i class="fas fa-book"></i>
@@ -164,15 +170,15 @@ export async function importFromJson({ pack: fixedPack = null } = {}) {
             </div>
         ` : `
             <div class="gum-import-mode-picker">
-                ${allItemPacks.length ? `<label><input type="radio" name="destination-mode" value="existing" checked>
+                ${allItemPacks.length ? `<label><input type="radio" name="destination-mode" value="existing" ${preferNewBundlePack ? "" : "checked"}>
                     <span><i class="fas fa-book"></i> ${t("UseExistingCompendium")}</span></label>` : ''}
-                ${canCreatePack ? `<label><input type="radio" name="destination-mode" value="new" ${allItemPacks.length ? '' : 'checked'}>
+                ${canCreatePack ? `<label><input type="radio" name="destination-mode" value="new" ${preferNewBundlePack || !allItemPacks.length ? "checked" : ""}>
                     <span><i class="fas fa-folder-plus"></i> ${t("CreateNewCompendium")}</span></label>` : ''}
             </div>
-            ${allItemPacks.length ? `<div class="form-group" data-destination="existing">
+            ${allItemPacks.length ? `<div class="form-group" data-destination="existing" ${preferNewBundlePack ? 'style="display:none"' : ''}>
                 <label>${t("TemplateDestination")}</label><select name="compendium-target">${packOptions}</select>
             </div>` : ""}
-            ${canCreatePack ? `<div class="form-group" data-destination="new" ${allItemPacks.length ? 'style="display:none"' : ''}>
+            ${canCreatePack ? `<div class="form-group" data-destination="new" ${allItemPacks.length && !preferNewBundlePack ? 'style="display:none"' : ''}>
                 <label>${t("NewCompendiumName")}</label><input type="text" name="new-compendium-name" value="${escapeImportHTML(file.name.replace(/\.[^.]+$/, ""))}">
             </div>` : ""}`;
 
@@ -186,8 +192,11 @@ export async function importFromJson({ pack: fixedPack = null } = {}) {
                     </div>
                     ${typeField}
                     ${destinationFields}
-                    ${isCompendiumJson ? `
+                    ${itemBundle ? `<p class="hint"><strong>${t("BundleTitle")}</strong> ${format("BundleHint", { root: itemBundle.documents[itemBundle.root].name })}</p>` : ""}
+                    ${(isCompendiumJson || itemBundle) ? `
                     <section class="gum-import-sync-preview" data-sync-preview aria-live="polite"></section>
+                    ` : ""}
+                    ${isCompendiumJson ? `
                     <div class="form-group gum-import-remove-missing" style="margin-top: 10px;">
                         <label>
                             <input type="checkbox" name="remove-missing">
@@ -214,16 +223,18 @@ export async function importFromJson({ pack: fixedPack = null } = {}) {
                             return ui.notifications.error(t("Errors.CompendiumNotFound"));
                         }
                         
-                        if (isCompendiumJson) {
-                           const removeMissing = Boolean(html.find('input[name="remove-missing"]').prop('checked'));
-                           await synchronizeCompendiumJson(pack, importEntries, {
-                               removeMissing,
-                               folders: portableLibrary ? compendiumFolders : null
-                           });
-                       } else {
-                           const selectedType = html.find('[name="library-item-type"]').val() || inferredType;
-                           await importToCompendium(pack, importEntries, { itemType: selectedType });
-                       }
+                        if (itemBundle) {
+                            await synchronizeItemBundle(pack, itemBundle);
+                        } else if (isCompendiumJson) {
+                            const removeMissing = Boolean(html.find('input[name="remove-missing"]').prop('checked'));
+                            await synchronizeCompendiumJson(pack, importEntries, {
+                                removeMissing,
+                                folders: portableLibrary ? compendiumFolders : null
+                            });
+                        } else {
+                            const selectedType = html.find('[name="library-item-type"]').val() || inferredType;
+                            await importToCompendium(pack, importEntries, { itemType: selectedType });
+                        }
                     }
                 },
                 cancel: {
@@ -239,13 +250,25 @@ export async function importFromJson({ pack: fixedPack = null } = {}) {
                     if (!pack) return preview.empty();
                     try {
                         const existingDocuments = await pack.getDocuments();
-                        const summary = previewCompendiumJsonSynchronization(existingDocuments, importEntries.map(entry => entry.itemData));
-                        const collision = summary.sameNameDifferentId
-                            ? `<p class="gum-import-sync-warning"><i class="fas fa-triangle-exclamation"></i> ${format("SameNameDifferentId", { count: summary.sameNameDifferentId })}</p>`
-                            : "";
-                        preview.html(`<strong>${t("SyncPreviewTitle")}</strong><p>${t("SyncMatchingRule")}</p><dl>
+                        const preparedBundle = itemBundle ? prepareItemBundle(itemBundle, pack.collection) : null;
+                        const summary = itemBundle
+                            ? previewItemBundleSynchronization(existingDocuments, preparedBundle)
+                            : previewCompendiumJsonSynchronization(existingDocuments, importEntries.map(entry => entry.itemData));
+                        const folderSummary = itemBundle
+                            ? previewItemBundleFolderSynchronization(pack.folders, prepareItemBundleFolders(preparedBundle), preparedBundle.id)
+                            : null;
+                        const collision = itemBundle
+                            ? (summary.collisions.length || folderSummary.collisions.length
+                                ? `<p class="gum-import-sync-warning"><i class="fas fa-triangle-exclamation"></i> ${format("BundleCollision", { count: summary.collisions.length + folderSummary.collisions.length })}</p>`
+                                : "")
+                            : (summary.sameNameDifferentId
+                                ? `<p class="gum-import-sync-warning"><i class="fas fa-triangle-exclamation"></i> ${format("SameNameDifferentId", { count: summary.sameNameDifferentId })}</p>`
+                                : "");
+                        preview.html(`<strong>${itemBundle ? t("BundlePreviewTitle") : t("SyncPreviewTitle")}</strong><p>${itemBundle ? t("BundleMatchingRule") : t("SyncMatchingRule")}</p><dl>
                             <div><dt>${t("SyncUpdates")}</dt><dd>${summary.updates}</dd></div>
                             <div><dt>${t("SyncCreates")}</dt><dd>${summary.creates}</dd></div>
+                            ${folderSummary ? `<div><dt>${t("BundleFoldersExisting")}</dt><dd>${folderSummary.existing}</dd></div>
+                            <div><dt>${t("BundleFoldersCreate")}</dt><dd>${folderSummary.creates}</dd></div>` : ""}
                         </dl>${collision}`);
                     } catch (error) {
                         console.warn("GUM | Unable to preview compendium synchronization:", error);
@@ -4381,6 +4404,198 @@ async function confirmAndClearCompendium(pack) {
         }));
     } finally {
         if (pack.locked !== originalLocked) await pack.configure({ locked: originalLocked });
+    }
+}
+
+const ITEM_BUNDLE_FOLDER_TYPES = new Set([
+    "advantage", "disadvantage", "skill", "equipment", "money_source", "spell", "power",
+    "modifier", "condition", "effect", "trigger", "eqp_modifier", "gm_modifier", "template"
+]);
+
+function getBundleFolderMarker(folder) {
+    return folder?.flags?.gum?.itemBundle ?? folder?._source?.flags?.gum?.itemBundle;
+}
+
+function prepareItemBundleFolders(prepared) {
+    const rootId = stableBundleDocumentId(prepared.id, "folder:bundle");
+    const rootKey = "folder:bundle";
+    const marker = key => ({ id: prepared.id, key, version: GUM_ITEM_BUNDLE_VERSION });
+    const root = {
+        key: rootKey,
+        id: rootId,
+        data: {
+            _id: rootId,
+            name: game.i18n.format("GUM.LibraryImport.BundleFolderName", { name: prepared.name }),
+            type: "Item",
+            folder: null,
+            flags: { gum: { itemBundle: marker(rootKey) } }
+        }
+    };
+    const types = [...new Set(prepared.documents.map(entry => (
+        ITEM_BUNDLE_FOLDER_TYPES.has(entry.data.type) ? entry.data.type : "other"
+    )))];
+    const typeFolders = types.map(type => {
+        const key = `folder:type:${type}`;
+        const id = stableBundleDocumentId(prepared.id, key);
+        return {
+            key,
+            type,
+            id,
+            data: {
+                _id: id,
+                name: game.i18n.localize(`GUM.LibraryImport.ItemType.${type}`),
+                type: "Item",
+                folder: rootId,
+                flags: { gum: { itemBundle: marker(key) } }
+            }
+        };
+    });
+    return {
+        folders: [root, ...typeFolders],
+        folderIdByType: new Map(typeFolders.map(folder => [folder.type, folder.id]))
+    };
+}
+
+function previewItemBundleFolderSynchronization(existingFolders, folderPlan, bundleId) {
+    const existingFolderById = new Map(Array.from(existingFolders ?? [], folder => [folder.id || folder._id, folder]));
+    const collisions = [];
+    let creates = 0;
+    let existing = 0;
+    for (const entry of folderPlan.folders) {
+        const folder = existingFolderById.get(entry.id);
+        if (!folder) {
+            creates += 1;
+            continue;
+        }
+        const marker = getBundleFolderMarker(folder);
+        if (marker?.id === bundleId && marker?.key === entry.key) existing += 1;
+        else collisions.push({ kind: "folder", key: entry.key, id: entry.id, existingName: folder.name || "" });
+    }
+    return { creates, existing, collisions };
+}
+
+function bundleFolderMarkerUpdate(existing, planned) {
+    const currentMarker = getBundleFolderMarker(existing);
+    const plannedMarker = planned.data.flags?.gum?.itemBundle;
+    if (currentMarker?.id === plannedMarker?.id
+        && currentMarker?.key === plannedMarker?.key
+        && currentMarker?.version === plannedMarker?.version) return null;
+    return { _id: planned.id, "flags.gum.itemBundle": plannedMarker };
+}
+
+/**
+ * Import a self-contained bundle into one Item compendium.
+ * Dependencies are synchronized before the root item and every local reference
+ * is converted to a destination UUID before the first write.
+ */
+export async function synchronizeItemBundle(pack, bundleData) {
+    const t = key => game.i18n.localize(`GUM.LibraryImport.${key}`);
+    const format = (key, data) => game.i18n.format(`GUM.LibraryImport.${key}`, data);
+    const originalLocked = Boolean(pack?.locked);
+    const createdIds = [];
+    const backups = [];
+    const createdFolderIds = [];
+    const folderBackups = [];
+
+    try {
+        if (!pack || pack.metadata?.type !== "Item") throw new Error(t("Errors.CompendiumNotFound"));
+        const prepared = prepareItemBundle(bundleData, pack.collection);
+        const existingDocuments = await pack.getDocuments();
+        const existingById = new Map(existingDocuments.map(document => [document.id, document]));
+        const preview = previewItemBundleSynchronization(existingDocuments, prepared);
+        if (preview.collisions.length) {
+            const details = preview.collisions.map(collision => `${collision.key} → ${collision.id}${collision.existingName ? ` (${collision.existingName})` : ""}`).join(", ");
+            throw new Error(format("BundleCollisionDetails", { details }));
+        }
+
+        const existingFolders = Array.from(pack.folders ?? []);
+        const existingFolderById = new Map(existingFolders.map(folder => [folder.id, folder]));
+        const folderPlan = prepareItemBundleFolders(prepared);
+        const folderPreview = previewItemBundleFolderSynchronization(existingFolders, folderPlan, prepared.id);
+        const folderCollisions = folderPreview.collisions;
+        if (folderCollisions.length) {
+            const details = folderCollisions.map(entry => `${entry.key} → ${entry.id}${entry.existingName ? ` (${entry.existingName})` : ""}`).join(", ");
+            throw new Error(format("BundleCollisionDetails", { details }));
+        }
+
+        if (originalLocked) await pack.configure({ locked: false });
+
+        for (const entry of folderPlan.folders) {
+            const existing = existingFolderById.get(entry.id);
+            if (existing) {
+                const markerUpdate = bundleFolderMarkerUpdate(existing, entry);
+                if (markerUpdate) {
+                    folderBackups.push(existing.toObject());
+                    await Folder.updateDocuments([markerUpdate], { pack: pack.collection });
+                }
+            } else {
+                await Folder.createDocuments([entry.data], { pack: pack.collection, keepId: true });
+                createdFolderIds.push(entry.id);
+            }
+        }
+
+        // prepareItemBundle deliberately places the root last.
+        for (const entry of prepared.documents) {
+            const existing = existingById.get(entry.data._id);
+            const folderType = ITEM_BUNDLE_FOLDER_TYPES.has(entry.data.type) ? entry.data.type : "other";
+            const desiredFolderId = folderPlan.folderIdByType.get(folderType);
+            if (existing) {
+                const currentFolderId = existing.folder?.id ?? existing.folder ?? null;
+                const currentFolder = existingFolderById.get(currentFolderId);
+                const currentFolderMarker = getBundleFolderMarker(currentFolder);
+                const isInManagedBundleFolder = currentFolderMarker?.id === prepared.id;
+                entry.data.folder = !currentFolder || isInManagedBundleFolder ? desiredFolderId : currentFolderId;
+                backups.push(existing.toObject());
+                await Item.updateDocuments([entry.data], { pack: pack.collection });
+            } else {
+                entry.data.folder = desiredFolderId;
+                await Item.createDocuments([entry.data], { pack: pack.collection, keepId: true });
+                createdIds.push(entry.data._id);
+            }
+        }
+
+        ui.notifications.info(format("BundleImportSuccess", {
+            count: prepared.documents.length,
+            root: bundleData.documents[bundleData.root]?.name || bundleData.root,
+            name: pack.title
+        }));
+        return {
+            created: createdIds.length,
+            updated: backups.length,
+            rootUuid: prepared.rootUuid,
+            documents: prepared.documents.map(entry => ({ key: entry.key, uuid: entry.uuid, root: entry.root })),
+            folders: folderPlan.folders.map(entry => ({ key: entry.key, id: entry.id }))
+        };
+    } catch (error) {
+        console.error("GUM | Item bundle import failed:", error);
+        if (createdIds.length || backups.length || createdFolderIds.length || folderBackups.length) {
+            const rollbackErrors = [];
+            const attemptRollback = async (label, operation) => {
+                try {
+                    await operation();
+                } catch (rollbackError) {
+                    rollbackErrors.push({ label, error: rollbackError });
+                    console.error(`GUM | Item bundle rollback step failed (${label}):`, rollbackError);
+                }
+            };
+            if (createdIds.length) await attemptRollback("delete-created-items", () => Item.deleteDocuments(createdIds, { pack: pack.collection }));
+            if (backups.length) await attemptRollback("restore-updated-items", () => Item.updateDocuments(backups, { pack: pack.collection }));
+            if (createdFolderIds.length) await attemptRollback("delete-created-folders", () => Folder.deleteDocuments([...createdFolderIds].reverse(), { pack: pack.collection }));
+            if (folderBackups.length) await attemptRollback("restore-updated-folders", () => Folder.updateDocuments(folderBackups, { pack: pack.collection }));
+            if (rollbackErrors.length) {
+                ui.notifications.error(t("BundleRollbackFailed"));
+            }
+        }
+        ui.notifications.error(format("BundleImportFailed", { error: error.message }));
+        return null;
+    } finally {
+        if (pack && pack.locked !== originalLocked) {
+            try {
+                await pack.configure({ locked: originalLocked });
+            } catch (lockError) {
+                console.error("GUM | Unable to restore compendium lock after item bundle import:", lockError);
+            }
+        }
     }
 }
 
