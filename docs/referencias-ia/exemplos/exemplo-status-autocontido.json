@@ -1,0 +1,113 @@
+{
+  "format": "gum-configuration-bundle",
+  "version": 1,
+  "id": "teste-status-autocontido-v1",
+  "name": "Teste — Status autocontidos",
+  "kind": "world-statuses",
+  "configuration": {
+    "version": 1,
+    "bindingsMigrated": true,
+    "disabledStatusIds": [],
+    "overrides": {
+      "burning": {
+        "name": "Em chamas — teste",
+        "effectUuids": [
+          { "effectRef": "efeito-dor-incendio" }
+        ],
+        "stackMode": "refresh",
+        "stackLimit": 1,
+        "removeOnStatusOff": true
+      },
+      "frightened": {
+        "effectUuids": [
+          { "effectRef": "efeito-alerta" }
+        ],
+        "stackMode": "replace",
+        "stackLimit": 1,
+        "removeOnStatusOff": true
+      }
+    },
+    "customStatuses": [
+      {
+        "id": "inspirado_teste",
+        "name": "Inspirado — teste",
+        "img": "icons/magic/holy/meditation-chi-focus-blue.webp",
+        "effectUuids": [
+          { "effectRef": "efeito-alerta" }
+        ],
+        "legacyRuleUuids": [],
+        "stackMode": "stack",
+        "stackLimit": 2,
+        "removeOnStatusOff": true,
+        "custom": true
+      }
+    ],
+    "order": [
+      "burning",
+      "frightened",
+      "inspirado_teste"
+    ]
+  },
+  "documents": {
+    "efeito-dor-incendio": {
+      "name": "Dor das chamas",
+      "type": "effect",
+      "img": "icons/magic/fire/flame-burning-hand-orange.webp",
+      "system": {
+        "description": "<p>A dor das queimaduras impõe -1 em testes baseados em DX.</p>",
+        "schemaVersion": 2,
+        "conditionStackingMode": "stack",
+        "duration": {
+          "value": 0,
+          "unit": "rounds",
+          "inCombat": false,
+          "isPermanent": true,
+          "startMode": "apply",
+          "endMode": "manual"
+        },
+        "actions": [
+          {
+            "id": "penalidade-dx-chamas",
+            "label": "Dor das chamas",
+            "type": "attribute",
+            "path": "system.attributes.dx.passive",
+            "operation": "ADD",
+            "value": "-1",
+            "value_mode": "fixed",
+            "attribute_chat_visibility": "owners"
+          }
+        ]
+      }
+    },
+    "efeito-alerta": {
+      "name": "Estado de alerta",
+      "type": "effect",
+      "img": "icons/magic/perception/eye-ringed-glow-angry-small-teal.webp",
+      "system": {
+        "description": "<p>Efeito compartilhado entre um status padrão e um status personalizado.</p>",
+        "schemaVersion": 2,
+        "conditionStackingMode": "unique",
+        "duration": {
+          "value": 0,
+          "unit": "rounds",
+          "inCombat": false,
+          "isPermanent": true,
+          "startMode": "apply",
+          "endMode": "manual"
+        },
+        "actions": [
+          {
+            "id": "bonus-percepcao-alerta",
+            "label": "Atenção ampliada",
+            "type": "attribute",
+            "path": "system.attributes.per.passive",
+            "operation": "ADD",
+            "value": "1",
+            "value_mode": "fixed",
+            "attribute_chat_visibility": "owners"
+          }
+        ]
+      }
+    }
+  }
+}

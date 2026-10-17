@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 
 import {
   buildConfigurationBundle,
@@ -117,4 +118,13 @@ test("exports effects linked indirectly by a GM modifier", async () => {
       .data.system.passiveEffects.aura.effectUuid,
     /^Compendium\.world\.gm-screen\.Item\./
   );
+});
+
+test("ships valid importable examples for GM Screen and world statuses", () => {
+  for (const filename of ["exemplo-escudo-mestre-autocontido.json", "exemplo-status-autocontido.json"]) {
+    const source = JSON.parse(fs.readFileSync(`docs/referencias-ia/exemplos/${filename}`, "utf8"));
+    const prepared = prepareConfigurationBundle(source, "world.configuration-examples");
+    assert.ok(prepared.itemBundle);
+    assert.ok(prepared.preparedItems.documents.length >= 2);
+  }
 });
