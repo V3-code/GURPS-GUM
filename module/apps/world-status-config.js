@@ -1,6 +1,8 @@
 import { GUM } from "../config.js";
 import { EffectBrowser } from "./effect-browser.js";
 import { contentSourceService } from "../services/content-source-service.mjs";
+import { buildConfigurationBundle, parseConfigurationBundle } from "../utils/configuration-bundle-json.mjs";
+import { importConfigurationBundle } from "./configuration-bundle-import.js";
 import {
   WORLD_STATUS_SCHEMA_VERSION,
   WORLD_STATUS_SETTING,
@@ -445,6 +447,23 @@ export class WorldStatusConfig extends FormApplication {
       if (!file) return;
       try {
         const parsed = JSON.parse(await file.text());
+        const bundle = parseConfigurationBundle(parsed);
+        if (bundle) {
+          const result = await importConfigurationBundle(bundle, {
+            expectedKind: "world-statuses",
+            getCurrentConfiguration: () => game.settings.get("gum", WORLD_STATUS_SETTING),
+            applyConfiguration: async configuration => {
+              const normalized = normalizeWorldStatusConfiguration(configuration);
+              await game.settings.set("gum", WORLD_STATUS_SETTING, normalized);
+              this.configuration = normalized;
+              this.rows = resolveWorldStatusRows(this.baseStatuses, normalized);
+              this.loadedLegacyBindings = false;
+              this.pendingCleanupIds.clear();
+            }
+          });
+          if (result) this.render();
+          return;
+        }
         if (parsed?.format && parsed.format !== EXPORT_FORMAT) throw new Error(game.i18n.localize("GUM.WorldStatus.InvalidFile"));
         if (Number(parsed?.version || WORLD_STATUS_SCHEMA_VERSION) > WORLD_STATUS_SCHEMA_VERSION) {
           throw new Error(game.i18n.localize("GUM.WorldStatus.UnsupportedVersion"));
@@ -461,11 +480,18 @@ export class WorldStatusConfig extends FormApplication {
     input.click();
   }
 
-  _exportConfiguration(event) {
+  async _exportConfiguration(event) {
     event.preventDefault();
     this._syncRowsFromForm();
     const configuration = buildWorldStatusConfiguration(this.baseStatuses, this.rows, { bindingsMigrated: true });
-    const data = JSON.stringify({ format: EXPORT_FORMAT, version: WORLD_STATUS_SCHEMA_VERSION, configuration }, null, 2);
+    const bundle = await buildConfigurationBundle({
+      id: `${game.world?.id || "world"}-world-statuses`,
+      name: `${game.world?.title || "GUM"} — ${game.i18n.localize("GUM.WorldStatus.Title")}`,
+      kind: "world-statuses",
+      configuration,
+      resolveUuid: uuid => fromUuid(uuid).catch(() => null)
+    });
+    const data = JSON.stringify(bundle, null, 2);
     saveDataToFile(data, "application/json", "gum-world-statuses.json");
   }
 

@@ -28,7 +28,7 @@ function slugifyCompendiumName(label) {
     return nativeSlug || `biblioteca-${Date.now()}`;
 }
 
-async function createWorldItemCompendium(label) {
+export async function createWorldItemCompendium(label) {
     let name = slugifyCompendiumName(label);
     let suffix = 2;
     while (game.packs.get(`world.${name}`)) name = `${slugifyCompendiumName(label)}-${suffix++}`;
@@ -4488,7 +4488,10 @@ function bundleFolderMarkerUpdate(existing, planned) {
  * Dependencies are synchronized before the root item and every local reference
  * is converted to a destination UUID before the first write.
  */
-export async function synchronizeItemBundle(pack, bundleData) {
+export async function synchronizeItemBundle(pack, bundleData, {
+    afterSynchronize = null,
+    notifySuccess = true
+} = {}) {
     const t = key => game.i18n.localize(`GUM.LibraryImport.${key}`);
     const format = (key, data) => game.i18n.format(`GUM.LibraryImport.${key}`, data);
     const originalLocked = Boolean(pack?.locked);
@@ -4554,11 +4557,17 @@ export async function synchronizeItemBundle(pack, bundleData) {
             }
         }
 
-        ui.notifications.info(format("BundleImportSuccess", {
-            count: prepared.documents.length,
-            root: bundleData.documents[bundleData.root]?.name || bundleData.root,
-            name: pack.title
-        }));
+        if (typeof afterSynchronize === "function") {
+            await afterSynchronize({ pack, prepared });
+        }
+
+        if (notifySuccess) {
+            ui.notifications.info(format("BundleImportSuccess", {
+                count: prepared.documents.length,
+                root: bundleData.documents[bundleData.root]?.name || bundleData.root,
+                name: pack.title
+            }));
+        }
         return {
             created: createdIds.length,
             updated: backups.length,

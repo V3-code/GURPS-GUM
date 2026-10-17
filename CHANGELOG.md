@@ -4,6 +4,16 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [Unreleased]
+
+### Added
+
+- Exportação e importação autocontidas das configurações do Escudo do Mestre e dos status mundiais, incluindo os Itens Efeito e Modificadores do Mestre utilizados direta ou indiretamente.
+
+### Changed
+
+- JSONs de configuração portáteis resolvem referências locais em UUIDs estáveis de compêndio, preservam dependências compartilhadas e participam do rollback da importação; os formatos antigos continuam compatíveis.
+
 ## [1.4.4-beta] - 2026-10-17
 
 ### Added
