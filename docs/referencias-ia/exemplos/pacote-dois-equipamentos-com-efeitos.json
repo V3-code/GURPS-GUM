@@ -1,0 +1,355 @@
+{
+  "format": "gum-item-bundle",
+  "version": 1,
+  "id": "teste-dois-equipamentos-com-efeitos-v1",
+  "name": "Demonstração de itens com efeitos",
+  "root": "espada-flamejante",
+  "documents": {
+    "efeito-em-chamas": {
+      "name": "Em chamas",
+      "type": "effect",
+      "img": "icons/magic/fire/flame-burning-creature-skeleton.webp",
+      "system": {
+        "description": "<p>O alvo foi incendiado pela espada.</p>",
+        "schemaVersion": 2,
+        "duration": {
+          "value": 3,
+          "unit": "rounds",
+          "inCombat": true,
+          "isPermanent": false,
+          "startMode": "apply",
+          "endMode": "turnEnd"
+        },
+        "actions": [
+          {
+            "id": "mensagem-chamas",
+            "label": "Mensagem das chamas",
+            "type": "chat",
+            "message": "<p><strong>Em chamas:</strong> o alvo foi incendiado.</p>"
+          }
+        ]
+      }
+    },
+    "efeito-protecao": {
+      "name": "Proteção do amuleto",
+      "type": "effect",
+      "img": "icons/magic/defensive/shield-barrier-glowing-triangle-blue.webp",
+      "system": {
+        "description": "<p>Concede +1 de Esquiva. Este mesmo efeito é compartilhado por diferentes tipos de Item.</p>",
+        "schemaVersion": 2,
+        "duration": {
+          "value": 0,
+          "unit": "rounds",
+          "inCombat": false,
+          "isPermanent": true,
+          "startMode": "apply",
+          "endMode": "manual"
+        },
+        "actions": [
+          {
+            "id": "bonus-esquiva",
+            "label": "Bônus de Esquiva",
+            "type": "attribute",
+            "path": "system.attributes.dodge.passive",
+            "operation": "ADD",
+            "value": "1",
+            "value_mode": "fixed",
+            "attribute_chat_visibility": "owners"
+          }
+        ]
+      }
+    },
+    "efeito-fragilidade": {
+      "name": "Fragilidade sobrenatural",
+      "type": "effect",
+      "img": "icons/magic/unholy/silhouette-robe-evil-power.webp",
+      "system": {
+        "description": "<p>Impõe -1 de HT.</p>",
+        "schemaVersion": 2,
+        "duration": {
+          "value": 0,
+          "unit": "rounds",
+          "inCombat": false,
+          "isPermanent": true,
+          "startMode": "apply",
+          "endMode": "manual"
+        },
+        "actions": [
+          {
+            "id": "penalidade-ht",
+            "label": "Penalidade de HT",
+            "type": "attribute",
+            "path": "system.attributes.ht.passive",
+            "operation": "ADD",
+            "value": "-1",
+            "value_mode": "fixed",
+            "attribute_chat_visibility": "owners"
+          }
+        ]
+      }
+    },
+    "ampliacao-area-ampliada": {
+      "name": "Área ampliada",
+      "type": "modifier",
+      "img": "icons/magic/light/explosion-star-glow-silhouette.webp",
+      "system": {
+        "description": "<p>Ampliação de demonstração que aumenta o custo em 50%.</p>",
+        "cost": "+50%",
+        "level": 1,
+        "affects": "total",
+        "use_level_from_trait": false,
+        "cost_ignores_level": true,
+        "disabled": false,
+        "ref": "",
+        "applied_effect": ""
+      }
+    },
+    "limitacao-requer-concentracao": {
+      "name": "Requer concentração",
+      "type": "modifier",
+      "img": "icons/magic/control/hypnosis-mesmerism-eye.webp",
+      "system": {
+        "description": "<p>Limitação de demonstração que reduz o custo em 15%.</p>",
+        "cost": "-15%",
+        "level": 1,
+        "affects": "total",
+        "use_level_from_trait": false,
+        "cost_ignores_level": true,
+        "disabled": false,
+        "ref": "",
+        "applied_effect": ""
+      }
+    },
+    "modificador-encantamento-protetor": {
+      "name": "Encantamento protetor",
+      "type": "eqp_modifier",
+      "img": "icons/magic/defensive/shield-barrier-glowing-triangle-blue.webp",
+      "system": {
+        "description": "<p>Aumenta o custo do equipamento e concede Proteção sobrenatural enquanto equipado.</p>",
+        "group": "Encantamentos",
+        "tech_level": "",
+        "enabled": true,
+        "level": 1,
+        "points": 0,
+        "adjustment_schema": 1,
+        "cost_adjustment": "+2 CF",
+        "cost_factor": 2,
+        "weight_mod": "x1",
+        "cost_adjustment_data": {
+          "expression": "+2 CF",
+          "stage": "base",
+          "per_level": false,
+          "per_weight": false,
+          "per_weight_unit": "kg"
+        },
+        "weight_adjustment_data": {
+          "expression": "x1",
+          "stage": "base",
+          "per_level": false
+        },
+        "features_data": {
+          "aura-protetora": {
+            "id": "aura-protetora",
+            "label": "Aura protetora",
+            "type": "granted_effect",
+            "enabled": true,
+            "effectRef": "efeito-protecao",
+            "effect_domain": "wearer",
+            "lifecycle": "while_equipped"
+          }
+        },
+        "gcs_features_unmapped": []
+      }
+    },
+    "vantagem-bencao-defensiva": {
+      "name": "Bênção Defensiva",
+      "type": "advantage",
+      "img": "icons/magic/holy/prayer-hands-glowing-yellow.webp",
+      "system": {
+        "description": "<p>Vantagem que utiliza o mesmo efeito de proteção do amuleto e do poder.</p>",
+        "points": 15,
+        "can_level": false,
+        "group": "Sobrenatural",
+        "modifiers": {
+          "area-ampliada": {
+            "traitModifierRef": "ampliacao-area-ampliada"
+          }
+        },
+        "activationEffects": { "success": {}, "failure": {} },
+        "onDamageEffects": {},
+        "generalConditions": {},
+        "passiveEffects": {
+          "protecao-compartilhada": {
+            "id": "protecao-compartilhada-vantagem",
+            "effectRef": "efeito-protecao",
+            "recipient": "self"
+          }
+        },
+        "useEventEffects": {},
+        "stateEffectGroups": {}
+      }
+    },
+    "desvantagem-maldicao": {
+      "name": "Maldição da Fragilidade",
+      "type": "disadvantage",
+      "img": "icons/magic/unholy/hand-claw-fire-blue.webp",
+      "system": {
+        "description": "<p>Desvantagem que concede permanentemente o efeito Fragilidade sobrenatural.</p>",
+        "points": -10,
+        "can_level": false,
+        "group": "Sobrenatural",
+        "activationEffects": { "success": {}, "failure": {} },
+        "onDamageEffects": {},
+        "generalConditions": {},
+        "passiveEffects": {
+          "fragilidade": {
+            "id": "fragilidade-desvantagem",
+            "effectRef": "efeito-fragilidade",
+            "recipient": "self"
+          }
+        },
+        "useEventEffects": {},
+        "stateEffectGroups": {}
+      }
+    },
+    "poder-aura-protetora": {
+      "name": "Aura Protetora",
+      "type": "power",
+      "img": "icons/magic/defensive/shield-barrier-flaming-diamond-blue.webp",
+      "system": {
+        "description": "<p>Poder que reutiliza o mesmo efeito de proteção da vantagem e do amuleto.</p>",
+        "points": 10,
+        "level": 1,
+        "group": "Sobrenatural",
+        "base_attribute": "IQ",
+        "difficulty": "M",
+        "modifiers": {
+          "area-ampliada": {
+            "traitModifierRef": "ampliacao-area-ampliada"
+          },
+          "requer-concentracao": {
+            "traitModifierRef": "limitacao-requer-concentracao"
+          }
+        },
+        "activationEffects": {
+          "success": {
+            "protecao-compartilhada": {
+              "id": "protecao-compartilhada-poder",
+              "effectRef": "efeito-protecao",
+              "recipient": "self"
+            }
+          },
+          "failure": {}
+        },
+        "onDamageEffects": {},
+        "generalConditions": {},
+        "passiveEffects": {},
+        "useEventEffects": {},
+        "stateEffectGroups": {}
+      }
+    },
+    "pericia-postura-defensiva": {
+      "name": "Postura Defensiva",
+      "type": "skill",
+      "img": "icons/skills/melee/shield-block-bash-blue.webp",
+      "system": {
+        "description": "<p>Perícia que demonstra o vínculo de efeito também disponível neste tipo de Item.</p>",
+        "points": 2,
+        "group": "Combate",
+        "base_attribute": "DX",
+        "difficulty": "M",
+        "activationEffects": { "success": {}, "failure": {} },
+        "onDamageEffects": {},
+        "generalConditions": {},
+        "passiveEffects": {
+          "protecao-compartilhada": {
+            "id": "protecao-compartilhada-pericia",
+            "effectRef": "efeito-protecao",
+            "recipient": "self"
+          }
+        },
+        "useEventEffects": {},
+        "stateEffectGroups": {}
+      }
+    },
+    "amuleto-protetor": {
+      "name": "Amuleto Protetor",
+      "type": "equipment",
+      "img": "icons/equipment/neck/amulet-round-blue.webp",
+      "system": {
+        "description": "<p>Um amuleto cujo modificador concede +1 de Esquiva enquanto estiver equipado.</p>",
+        "quantity": 1,
+        "cost": 500,
+        "weight": 0.1,
+        "location": "carried",
+        "melee_attacks": {},
+        "ranged_attacks": {},
+        "eqp_modifiers": {
+          "encantamento-protetor": {
+            "id": "encantamento-protetor",
+            "modifierRef": "modificador-encantamento-protetor",
+            "enabled": true,
+            "level": 1
+          }
+        },
+        "activationEffects": {
+          "success": {},
+          "failure": {}
+        },
+        "onDamageEffects": {},
+        "generalConditions": {},
+        "passiveEffects": {},
+        "useEventEffects": {},
+        "stateEffectGroups": {}
+      }
+    },
+    "espada-flamejante": {
+      "name": "Espada Flamejante",
+      "type": "equipment",
+      "img": "icons/weapons/swords/sword-flanged-lightning.webp",
+      "system": {
+        "description": "<p>Uma espada que aplica o efeito Em chamas quando causa dano.</p>",
+        "quantity": 1,
+        "cost": 700,
+        "weight": 1.5,
+        "location": "carried",
+        "melee_attacks": {
+          "golpe-flamejante": {
+            "id": "golpe-flamejante",
+            "mode": "Golpe flamejante",
+            "skill_name": "Espadas de Lâmina Larga",
+            "skill_level_mod": 0,
+            "damage_formula": "GdB+1",
+            "damage_type": "cort",
+            "armor_divisor": 1,
+            "reach": "1",
+            "parry": "0",
+            "block": "",
+            "min_strength": 10,
+            "onDamageEffects": {
+              "chamas": {
+                "id": "chamas",
+                "effectRef": "efeito-em-chamas",
+                "minInjury": 1,
+                "requiredDamageType": "",
+                "activationChance": 100,
+                "recipient": "target"
+              }
+            }
+          }
+        },
+        "ranged_attacks": {},
+        "eqp_modifiers": {},
+        "activationEffects": {
+          "success": {},
+          "failure": {}
+        },
+        "onDamageEffects": {},
+        "generalConditions": {},
+        "passiveEffects": {},
+        "useEventEffects": {},
+        "stateEffectGroups": {}
+      }
+    }
+  }
+}

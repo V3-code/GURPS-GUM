@@ -4,6 +4,21 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [Unreleased]
+
+### Added
+
+- Importação de pacotes JSON autocontidos (`gum-item-bundle`) que criam e sincronizam um Item raiz junto de seus Efeitos, Condições, Modificadores comuns e Modificadores de Equipamento, resolvendo referências locais em UUIDs do compêndio, organizando todos os tipos de Item em pastas próprias e revertendo gravações em caso de falha.
+- Referências técnicas em português e inglês para geração de pacotes autocontidos por IA.
+
+### Changed
+
+- A prévia de pacotes autocontidos agora inclui pastas existentes, pastas a criar e colisões de IDs de pastas; reimportações preservam nomes, posições e movimentações manuais válidas.
+
+### Fixed
+
+- Validação antecipada de tipos de Item, localização e exclusividade das referências locais em pacotes autocontidos, recuperação de referências para pastas removidas e rollback independente por etapa.
+
 ## [1.4.3-beta] - 2026-10-13
 
 ### Added
