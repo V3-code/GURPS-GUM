@@ -1,4 +1,8 @@
-import { prepareConfigurationBundle } from "../utils/configuration-bundle-json.mjs";
+import {
+  combineConfigurationImport,
+  prepareConfigurationBundle,
+  previewConfigurationImport
+} from "../utils/configuration-bundle-json.mjs";
 import { createWorldItemCompendium, synchronizeItemBundle } from "./importers.js";
 
 const clone = value => typeof structuredClone === "function"
@@ -69,23 +73,103 @@ async function chooseDestinationPack(bundle) {
   return createWorldItemCompendium(choice.label);
 }
 
-/** Import embedded Items first, then replace the owning setting as one transaction. */
+export async function chooseConfigurationImportMode(kind, currentConfiguration, incomingConfiguration, {
+  portability = null
+} = {}) {
+  const t = key => game.i18n.localize(`GUM.ConfigurationBundle.${key}`);
+  const summary = previewConfigurationImport(kind, currentConfiguration, incomingConfiguration);
+  const portabilityReferences = (portability?.unresolvedReferences?.length || 0)
+    + (portability?.unsupportedReferences?.length || 0);
+  const portabilityAssets = portability?.externalAssets?.length || 0;
+  const portabilityWarning = portability && portability.complete !== true
+    ? `<p class="gum-import-sync-warning"><i class="fas fa-link-slash"></i> ${game.i18n.format(
+      "GUM.ConfigurationBundle.ImportPortabilityWarning",
+      { references: portabilityReferences, assets: portabilityAssets }
+    )}</p>`
+    : "";
+  return new Promise(resolve => new Dialog({
+    title: t("ImportModeTitle"),
+    content: `<form class="gum-compendium-import-form gum-configuration-import-mode">
+      <p class="hint">${t("ImportModeHint")}</p>
+      ${portabilityWarning}
+      <div class="gum-import-sync-preview">
+        <strong>${t("PreviewTitle")}</strong>
+        <dl>
+          <div><dt>${t("PreviewCreates")}</dt><dd>${summary.creates}</dd></div>
+          <div><dt>${t("PreviewUpdates")}</dt><dd>${summary.updates}</dd></div>
+          <div><dt>${t("PreviewUnchanged")}</dt><dd>${summary.unchanged}</dd></div>
+          <div><dt>${t("PreviewRemoves")}</dt><dd>${summary.removes}</dd></div>
+        </dl>
+      </div>
+      <div class="gum-import-mode-picker gum-configuration-mode-picker">
+        <label><input type="radio" name="configuration-mode" value="add">
+          <span><i class="fas fa-plus"></i> ${t("ModeAdd")}</span></label>
+        <label><input type="radio" name="configuration-mode" value="merge" checked>
+          <span><i class="fas fa-code-merge"></i> ${t("ModeMerge")}</span></label>
+        <label><input type="radio" name="configuration-mode" value="replace">
+          <span><i class="fas fa-arrows-rotate"></i> ${t("ModeReplace")}</span></label>
+      </div>
+      <p class="hint" data-mode-description>${t("ModeMergeHint")}</p>
+      <p class="gum-import-sync-warning" data-replace-warning style="display:none">
+        <i class="fas fa-triangle-exclamation"></i> ${t("ReplaceWarning")}
+      </p>
+    </form>`,
+    buttons: {
+      import: {
+        icon: '<i class="fas fa-file-import"></i>',
+        label: t("Continue"),
+        callback: html => resolve(html.find('[name="configuration-mode"]:checked').val() || "merge")
+      },
+      cancel: { icon: '<i class="fas fa-times"></i>', label: t("Cancel"), callback: () => resolve(null) }
+    },
+    default: "import",
+    render: html => {
+      const updateDescription = mode => {
+        const suffix = mode === "add" ? "ModeAddHint" : mode === "replace" ? "ModeReplaceHint" : "ModeMergeHint";
+        html.find("[data-mode-description]").text(t(suffix));
+        html.find("[data-replace-warning]").toggle(mode === "replace" && summary.removes > 0);
+      };
+      html.find('[name="configuration-mode"]').on("change", event => updateDescription(event.currentTarget.value));
+      updateDescription("merge");
+    },
+    close: () => resolve(null)
+  }, {
+    classes: ["dialog", "gum", "gum-compendium-import-dialog", "gum-configuration-mode-dialog"],
+    width: 620
+  }).render(true));
+}
+
+/** Import embedded Items first, then apply the selected configuration mode as one transaction. */
 export async function importConfigurationBundle(bundle, {
   expectedKind,
   getCurrentConfiguration,
-  applyConfiguration
+  applyConfiguration,
+  importMode = null
 }) {
   const t = key => game.i18n.localize(`GUM.ConfigurationBundle.${key}`);
   if (bundle.kind !== expectedKind) throw new Error(t("WrongKind"));
   const previousConfiguration = clone(await getCurrentConfiguration());
+  const mode = importMode || await chooseConfigurationImportMode(
+    bundle.kind,
+    previousConfiguration,
+    bundle.configuration,
+    { portability: bundle.portability }
+  );
+  if (!mode) return null;
   const hasDocuments = Object.keys(bundle.documents || {}).length > 0;
   let configurationApplied = false;
 
   if (!hasDocuments) {
     const prepared = prepareConfigurationBundle(bundle);
-    await applyConfiguration(prepared.configuration);
+    const configuration = combineConfigurationImport(
+      bundle.kind,
+      previousConfiguration,
+      prepared.configuration,
+      mode
+    );
+    await applyConfiguration(configuration);
     ui.notifications.info(t("ImportSuccess"));
-    return { configuration: prepared.configuration, pack: null, documents: [] };
+    return { configuration, mode, pack: null, documents: [] };
   }
 
   // Validate every local reference before a new compendium can be created.
@@ -93,10 +177,16 @@ export async function importConfigurationBundle(bundle, {
   const pack = await chooseDestinationPack(bundle);
   if (!pack) return null;
   const prepared = prepareConfigurationBundle(bundle, pack.collection);
+  const configuration = combineConfigurationImport(
+    bundle.kind,
+    previousConfiguration,
+    prepared.configuration,
+    mode
+  );
   const result = await synchronizeItemBundle(pack, prepared.itemBundle, {
     notifySuccess: false,
     afterSynchronize: async () => {
-      await applyConfiguration(prepared.configuration);
+      await applyConfiguration(configuration);
       configurationApplied = true;
     }
   });
@@ -114,5 +204,5 @@ export async function importConfigurationBundle(bundle, {
   }
 
   ui.notifications.info(t("ImportSuccess"));
-  return { ...result, configuration: prepared.configuration, pack };
+  return { ...result, configuration, mode, pack };
 }

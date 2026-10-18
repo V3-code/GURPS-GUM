@@ -19,6 +19,163 @@ const clone = value => typeof structuredClone === "function"
   ? structuredClone(value)
   : JSON.parse(JSON.stringify(value));
 
+const uniqueValues = values => [...new Set(values)];
+
+function valueIdentity(value) {
+  return typeof value === "string" ? `string:${value}` : `json:${JSON.stringify(value)}`;
+}
+
+function mergeUniqueValues(current = [], incoming = []) {
+  const result = clone(Array.isArray(current) ? current : []);
+  const seen = new Set(result.map(valueIdentity));
+  for (const value of Array.isArray(incoming) ? incoming : []) {
+    const identity = valueIdentity(value);
+    if (seen.has(identity)) continue;
+    seen.add(identity);
+    result.push(clone(value));
+  }
+  return result;
+}
+
+function gmScreenTabs(configuration) {
+  if (Array.isArray(configuration?.tabs)) return clone(configuration.tabs);
+  const groups = Array.isArray(configuration?.groups)
+    ? configuration.groups
+    : (Array.isArray(configuration?.columns)
+      ? configuration.columns.flatMap(column => column?.groups || [])
+      : []);
+  return [{ id: "tab-1", name: "1", groups: clone(groups) }];
+}
+
+function mergeGMScreenConfiguration(current, incoming, mode) {
+  const currentTabs = gmScreenTabs(current);
+  const incomingTabs = gmScreenTabs(incoming);
+  const tabs = clone(currentTabs);
+  const tabById = new Map(tabs.map((tab, index) => [String(tab?.id || `tab-${index + 1}`), tab]));
+
+  for (const [tabIndex, incomingTab] of incomingTabs.entries()) {
+    const tabId = String(incomingTab?.id || `tab-${tabIndex + 1}`);
+    let targetTab = tabById.get(tabId);
+    if (!targetTab) {
+      targetTab = clone(incomingTab);
+      targetTab.id ||= tabId;
+      targetTab.groups = Array.isArray(targetTab.groups) ? targetTab.groups : [];
+      tabs.push(targetTab);
+      tabById.set(tabId, targetTab);
+      continue;
+    }
+    if (mode === "merge") {
+      const currentGroups = targetTab.groups;
+      Object.assign(targetTab, clone(incomingTab));
+      targetTab.groups = currentGroups;
+    }
+    targetTab.groups = Array.isArray(targetTab.groups) ? targetTab.groups : [];
+    const groupById = new Map(targetTab.groups.map((group, index) => [
+      String(group?.id || `legacy:${tabId}:${index}`), group
+    ]));
+    for (const [groupIndex, incomingGroup] of (incomingTab?.groups || []).entries()) {
+      const groupId = String(incomingGroup?.id || `legacy:${tabId}:${groupIndex}`);
+      const targetGroup = groupById.get(groupId);
+      if (!targetGroup) {
+        targetTab.groups.push(clone(incomingGroup));
+        continue;
+      }
+      const items = mergeUniqueValues(targetGroup.items, incomingGroup?.items);
+      if (mode === "merge") Object.assign(targetGroup, clone(incomingGroup));
+      targetGroup.items = items;
+    }
+  }
+
+  return {
+    ...clone(current || {}),
+    tabs,
+    activeTabId: current?.activeTabId || incoming?.activeTabId || tabs[0]?.id
+  };
+}
+
+function mergeStatusEntry(current, incoming, mode) {
+  const result = mode === "merge"
+    ? { ...clone(current || {}), ...clone(incoming || {}) }
+    : { ...clone(incoming || {}), ...clone(current || {}) };
+  result.effectUuids = mergeUniqueValues(current?.effectUuids, incoming?.effectUuids);
+  result.legacyRuleUuids = mergeUniqueValues(current?.legacyRuleUuids, incoming?.legacyRuleUuids);
+  return result;
+}
+
+function mergeWorldStatusConfiguration(current, incoming, mode) {
+  const currentOverrides = clone(current?.overrides || {});
+  for (const [id, incomingOverride] of Object.entries(incoming?.overrides || {})) {
+    currentOverrides[id] = currentOverrides[id]
+      ? mergeStatusEntry(currentOverrides[id], incomingOverride, mode)
+      : clone(incomingOverride);
+  }
+
+  const customStatuses = clone(Array.isArray(current?.customStatuses) ? current.customStatuses : []);
+  const customById = new Map(customStatuses.map(status => [String(status?.id || ""), status]));
+  for (const incomingStatus of incoming?.customStatuses || []) {
+    const id = String(incomingStatus?.id || "");
+    const existing = customById.get(id);
+    if (!existing) {
+      const added = clone(incomingStatus);
+      customStatuses.push(added);
+      customById.set(id, added);
+      continue;
+    }
+    Object.assign(existing, mergeStatusEntry(existing, incomingStatus, mode));
+  }
+
+  return {
+    ...clone(current || {}),
+    version: Math.max(Number(current?.version) || 1, Number(incoming?.version) || 1),
+    bindingsMigrated: current?.bindingsMigrated === true || incoming?.bindingsMigrated === true,
+    disabledStatusIds: mode === "merge"
+      ? uniqueValues([...(current?.disabledStatusIds || []), ...(incoming?.disabledStatusIds || [])])
+      : clone(current?.disabledStatusIds || []),
+    overrides: currentOverrides,
+    customStatuses,
+    order: mergeUniqueValues(current?.order, incoming?.order)
+  };
+}
+
+/** Combine an imported configuration with the current world state. */
+export function combineConfigurationImport(kind, current, incoming, mode = "merge") {
+  if (!KIND_SET.has(kind)) throw new Error(`Unsupported GUM configuration bundle kind: ${kind}.`);
+  if (!["add", "merge", "replace"].includes(mode)) throw new Error(`Unsupported configuration import mode: ${mode}.`);
+  if (mode === "replace") return clone(incoming || {});
+  return kind === "gm-screen"
+    ? mergeGMScreenConfiguration(current || {}, incoming || {}, mode)
+    : mergeWorldStatusConfiguration(current || {}, incoming || {}, mode);
+}
+
+function configurationEntries(kind, configuration) {
+  if (kind === "gm-screen") {
+    return new Map(gmScreenTabs(configuration).flatMap((tab, tabIndex) => (tab?.groups || []).map((group, groupIndex) => [
+      `group:${tab?.id || tabIndex}:${group?.id || groupIndex}`,
+      group
+    ])));
+  }
+  return new Map([
+    ...Object.entries(configuration?.overrides || {}).map(([id, value]) => [`status:${id}`, value]),
+    ...(configuration?.customStatuses || []).map((value, index) => [`status:${value?.id || `custom-${index}`}`, value])
+  ]);
+}
+
+/** Summarize configuration-level changes before importing a bundle. */
+export function previewConfigurationImport(kind, current, incoming) {
+  const currentEntries = configurationEntries(kind, current);
+  const incomingEntries = configurationEntries(kind, incoming);
+  let creates = 0;
+  let updates = 0;
+  let unchanged = 0;
+  for (const [key, value] of incomingEntries) {
+    if (!currentEntries.has(key)) creates += 1;
+    else if (JSON.stringify(currentEntries.get(key)) === JSON.stringify(value)) unchanged += 1;
+    else updates += 1;
+  }
+  const removes = [...currentEntries.keys()].filter(key => !incomingEntries.has(key)).length;
+  return { creates, updates, unchanged, removes };
+}
+
 function requiredText(value, label) {
   const text = String(value ?? "").trim();
   if (!text) throw new Error(`${label} is required.`);
@@ -63,7 +220,8 @@ export function parseConfigurationBundle(data) {
     kind,
     name: String(data.name ?? "").trim(),
     configuration: clone(data.configuration),
-    documents: validateDocuments(data.documents || {}, kind)
+    documents: validateDocuments(data.documents || {}, kind),
+    ...(isObject(data.portability) ? { portability: clone(data.portability) } : {})
   };
 }
 
@@ -213,6 +371,24 @@ function collectionValues(value) {
   return Array.isArray(value) ? value : Object.values(value || {});
 }
 
+function collectExternalAssetPaths(value, path = [], result = new Set()) {
+  if (Array.isArray(value)) {
+    value.forEach((entry, index) => collectExternalAssetPaths(entry, [...path, String(index)], result));
+    return result;
+  }
+  if (!isObject(value)) return result;
+  for (const [key, entry] of Object.entries(value)) {
+    const nextPath = [...path, key];
+    if (["img", "icon"].includes(key) && typeof entry === "string" && entry.trim()) {
+      const asset = entry.trim();
+      const bundled = asset.startsWith("icons/") || asset.startsWith("systems/gum/") || asset.startsWith("data:");
+      if (!bundled) result.add(asset);
+    }
+    collectExternalAssetPaths(entry, nextPath, result);
+  }
+  return result;
+}
+
 function effectLinks(document) {
   const system = document?.system || {};
   return [
@@ -228,7 +404,15 @@ function effectLinks(document) {
 }
 
 /** Build an exportable bundle by embedding every resolvable referenced Item once. */
-export async function buildConfigurationBundle({ id, name = "", kind, configuration, resolveUuid }) {
+export async function buildConfigurationBundle({
+  id,
+  name = "",
+  kind,
+  configuration,
+  resolveUuid,
+  systemVersion = "",
+  foundryVersion = ""
+}) {
   if (!KIND_SET.has(kind)) throw new Error(`Unsupported GUM configuration bundle kind: ${kind}.`);
   if (typeof resolveUuid !== "function") throw new Error("A UUID resolver is required.");
   const sourceConfiguration = clone(configuration || {});
@@ -237,13 +421,22 @@ export async function buildConfigurationBundle({ id, name = "", kind, configurat
   const usedKeys = new Set();
   const queuedUuids = referencedUuids(sourceConfiguration, kind);
   const resolvedByUuid = new Map();
+  const unresolvedReferences = new Set();
+  const unsupportedReferences = new Set();
 
   for (let index = 0; index < queuedUuids.length; index += 1) {
     const uuid = queuedUuids[index];
     if (resolvedByUuid.has(uuid)) continue;
     const document = await resolveUuid(uuid);
     resolvedByUuid.set(uuid, document || null);
-    if (!document || !ALLOWED_TYPES[kind].has(document.type)) continue;
+    if (!document) {
+      unresolvedReferences.add(uuid);
+      continue;
+    }
+    if (!ALLOWED_TYPES[kind].has(document.type)) {
+      unsupportedReferences.add(uuid);
+      continue;
+    }
     const base = `${document.type}-${document.id || "item"}`;
     let key = base;
     let suffix = 2;
@@ -289,6 +482,16 @@ export async function buildConfigurationBundle({ id, name = "", kind, configurat
     }
   }
 
+  const externalAssets = [...collectExternalAssetPaths({ configuration: sourceConfiguration, documents })].sort();
+  const portability = {
+    complete: unresolvedReferences.size === 0 && unsupportedReferences.size === 0 && externalAssets.length === 0,
+    unresolvedReferences: [...unresolvedReferences].sort(),
+    unsupportedReferences: [...unsupportedReferences].sort(),
+    externalAssets,
+    ...(systemVersion ? { systemVersion: String(systemVersion) } : {}),
+    ...(foundryVersion ? { foundryVersion: String(foundryVersion) } : {})
+  };
+
   return {
     format: GUM_CONFIGURATION_BUNDLE_FORMAT,
     version: GUM_CONFIGURATION_BUNDLE_VERSION,
@@ -296,6 +499,7 @@ export async function buildConfigurationBundle({ id, name = "", kind, configurat
     name: String(name || "").trim(),
     kind,
     configuration: sourceConfiguration,
-    documents
+    documents,
+    portability
   };
 }

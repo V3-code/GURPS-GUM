@@ -10843,6 +10843,26 @@ background-color: var(--gum-accent-gold);
   gap: 0.5rem;
 }
 
+.gum-configuration-mode-picker {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.gum-configuration-import-mode .gum-import-sync-warning {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(240, 191, 104, 0.35);
+  border-radius: 5px;
+  background: rgba(240, 191, 104, 0.08);
+  color: #f0bf68;
+  line-height: 1.35;
+}
+
+@media (max-width: 560px) {
+  .gum-configuration-mode-picker {
+    grid-template-columns: 1fr;
+  }
+}
+
 .gum-import-mode-picker input {
   position: absolute;
   opacity: 0;

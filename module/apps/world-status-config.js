@@ -1,8 +1,12 @@
 import { GUM } from "../config.js";
 import { EffectBrowser } from "./effect-browser.js";
 import { contentSourceService } from "../services/content-source-service.mjs";
-import { buildConfigurationBundle, parseConfigurationBundle } from "../utils/configuration-bundle-json.mjs";
-import { importConfigurationBundle } from "./configuration-bundle-import.js";
+import {
+  buildConfigurationBundle,
+  combineConfigurationImport,
+  parseConfigurationBundle
+} from "../utils/configuration-bundle-json.mjs";
+import { chooseConfigurationImportMode, importConfigurationBundle } from "./configuration-bundle-import.js";
 import {
   WORLD_STATUS_SCHEMA_VERSION,
   WORLD_STATUS_SETTING,
@@ -439,6 +443,8 @@ export class WorldStatusConfig extends FormApplication {
 
   async _importConfiguration(event) {
     event.preventDefault();
+    this._syncRowsFromForm();
+    const currentConfiguration = buildWorldStatusConfiguration(this.baseStatuses, this.rows, { bindingsMigrated: true });
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".json,application/json";
@@ -451,7 +457,7 @@ export class WorldStatusConfig extends FormApplication {
         if (bundle) {
           const result = await importConfigurationBundle(bundle, {
             expectedKind: "world-statuses",
-            getCurrentConfiguration: () => game.settings.get("gum", WORLD_STATUS_SETTING),
+            getCurrentConfiguration: () => currentConfiguration,
             applyConfiguration: async configuration => {
               const normalized = normalizeWorldStatusConfiguration(configuration);
               await game.settings.set("gum", WORLD_STATUS_SETTING, normalized);
@@ -468,7 +474,19 @@ export class WorldStatusConfig extends FormApplication {
         if (Number(parsed?.version || WORLD_STATUS_SCHEMA_VERSION) > WORLD_STATUS_SCHEMA_VERSION) {
           throw new Error(game.i18n.localize("GUM.WorldStatus.UnsupportedVersion"));
         }
-        this.configuration = normalizeWorldStatusConfiguration(parsed?.configuration ?? parsed);
+        const incomingConfiguration = normalizeWorldStatusConfiguration(parsed?.configuration ?? parsed);
+        const mode = await chooseConfigurationImportMode(
+          "world-statuses",
+          currentConfiguration,
+          incomingConfiguration
+        );
+        if (!mode) return;
+        this.configuration = normalizeWorldStatusConfiguration(combineConfigurationImport(
+          "world-statuses",
+          currentConfiguration,
+          incomingConfiguration,
+          mode
+        ));
         this.rows = resolveWorldStatusRows(this.baseStatuses, this.configuration);
         this.loadedLegacyBindings = false;
         this.pendingCleanupIds.clear();
@@ -489,8 +507,16 @@ export class WorldStatusConfig extends FormApplication {
       name: `${game.world?.title || "GUM"} — ${game.i18n.localize("GUM.WorldStatus.Title")}`,
       kind: "world-statuses",
       configuration,
-      resolveUuid: uuid => fromUuid(uuid).catch(() => null)
+      resolveUuid: uuid => fromUuid(uuid).catch(() => null),
+      systemVersion: game.system?.version,
+      foundryVersion: game.version
     });
+    if (!bundle.portability.complete) {
+      ui.notifications.warn(game.i18n.format("GUM.ConfigurationBundle.PortabilityWarning", {
+        references: bundle.portability.unresolvedReferences.length + bundle.portability.unsupportedReferences.length,
+        assets: bundle.portability.externalAssets.length
+      }));
+    }
     const data = JSON.stringify(bundle, null, 2);
     saveDataToFile(data, "application/json", "gum-world-statuses.json");
   }

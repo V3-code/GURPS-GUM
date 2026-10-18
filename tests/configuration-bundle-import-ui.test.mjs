@@ -22,3 +22,12 @@ test("a janela exibe somente os campos do destino selecionado", () => {
 test("falhas de importação preservam a mensagem técnica útil", () => {
   assert.match(gmScreen, /LayoutImportError[\s\S]*error: err\?\.message \|\| String\(err\)/);
 });
+
+test("a importação oferece acrescentar, mesclar e substituir com prévia", () => {
+  assert.match(importer, /previewConfigurationImport/);
+  assert.match(importer, /value="add"/);
+  assert.match(importer, /value="merge" checked/);
+  assert.match(importer, /value="replace"/);
+  assert.match(importer, /ReplaceWarning/);
+  assert.match(importer, /combineConfigurationImport/);
+});

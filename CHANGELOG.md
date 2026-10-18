@@ -9,6 +9,7 @@ O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com
 ### Added
 
 - Exportação e importação autocontidas das configurações do Escudo do Mestre e dos status mundiais, incluindo os Itens Efeito e Modificadores do Mestre utilizados direta ou indiretamente.
+- Importações de configuração agora oferecem prévia e os modos acrescentar, mesclar ou substituir; arquivos exportados registram referências não resolvidas e caminhos externos em um diagnóstico de portabilidade.
 
 ### Changed
 

@@ -4,8 +4,10 @@ import fs from "node:fs";
 
 import {
   buildConfigurationBundle,
+  combineConfigurationImport,
   parseConfigurationBundle,
-  prepareConfigurationBundle
+  prepareConfigurationBundle,
+  previewConfigurationImport
 } from "../module/utils/configuration-bundle-json.mjs";
 
 const effect = name => ({ name, type: "effect", system: { schemaVersion: 2, actions: [] } });
@@ -127,4 +129,87 @@ test("ships valid importable examples for GM Screen and world statuses", () => {
     assert.ok(prepared.itemBundle);
     assert.ok(prepared.preparedItems.documents.length >= 2);
   }
+});
+
+test("GM Screen imports support add, merge, and replace without duplicating item links", () => {
+  const current = {
+    activeTabId: "tab-1",
+    tabs: [{ id: "tab-1", name: "Current", groups: [
+      { id: "shared", name: "Old", collapsed: false, items: ["Item.a"] },
+      { id: "local", name: "Local", items: ["Item.local"] }
+    ] }]
+  };
+  const incoming = {
+    activeTabId: "tab-2",
+    tabs: [{ id: "tab-1", name: "Imported", groups: [
+      { id: "shared", name: "New", collapsed: true, items: ["Item.a", "Item.b"] },
+      { id: "added", name: "Added", items: ["Item.c"] }
+    ] }]
+  };
+
+  const added = combineConfigurationImport("gm-screen", current, incoming, "add");
+  assert.equal(added.tabs[0].name, "Current");
+  assert.equal(added.tabs[0].groups.find(group => group.id === "shared").name, "Old");
+  assert.deepEqual(added.tabs[0].groups.find(group => group.id === "shared").items, ["Item.a", "Item.b"]);
+
+  const merged = combineConfigurationImport("gm-screen", current, incoming, "merge");
+  assert.equal(merged.tabs[0].name, "Imported");
+  assert.equal(merged.tabs[0].groups.find(group => group.id === "shared").name, "New");
+  assert.ok(merged.tabs[0].groups.some(group => group.id === "local"));
+  assert.equal(merged.activeTabId, "tab-1");
+
+  const replaced = combineConfigurationImport("gm-screen", current, incoming, "replace");
+  assert.deepEqual(replaced, incoming);
+  assert.notStrictEqual(replaced, incoming);
+});
+
+test("world status imports merge by status id and preserve local-only entries", () => {
+  const current = {
+    version: 1,
+    bindingsMigrated: true,
+    disabledStatusIds: ["dead"],
+    overrides: { stunned: { name: "Local", effectUuids: ["Item.a"] } },
+    customStatuses: [{ id: "local", name: "Local status", effectUuids: [] }],
+    order: ["stunned", "local"]
+  };
+  const incoming = {
+    version: 1,
+    bindingsMigrated: true,
+    disabledStatusIds: ["prone"],
+    overrides: { stunned: { name: "Imported", effectUuids: ["Item.b"] } },
+    customStatuses: [{ id: "new", name: "New status", effectUuids: ["Item.c"] }],
+    order: ["stunned", "new"]
+  };
+
+  const added = combineConfigurationImport("world-statuses", current, incoming, "add");
+  assert.equal(added.overrides.stunned.name, "Local");
+  assert.deepEqual(added.overrides.stunned.effectUuids, ["Item.a", "Item.b"]);
+  assert.deepEqual(added.disabledStatusIds, ["dead"]);
+
+  const merged = combineConfigurationImport("world-statuses", current, incoming, "merge");
+  assert.equal(merged.overrides.stunned.name, "Imported");
+  assert.deepEqual(merged.disabledStatusIds, ["dead", "prone"]);
+  assert.deepEqual(merged.customStatuses.map(status => status.id), ["local", "new"]);
+  assert.deepEqual(merged.order, ["stunned", "local", "new"]);
+});
+
+test("configuration preview counts matching, changed, new, and current-only entries", () => {
+  const summary = previewConfigurationImport("gm-screen", {
+    groups: [{ id: "same", items: [] }, { id: "remove", items: [] }]
+  }, {
+    groups: [{ id: "same", items: ["Item.a"] }, { id: "create", items: [] }]
+  });
+  assert.deepEqual(summary, { creates: 1, updates: 1, unchanged: 0, removes: 1 });
+});
+
+test("exports a portability report for unresolved references and external assets", async () => {
+  const bundle = await buildConfigurationBundle({
+    id: "portability", kind: "gm-screen", systemVersion: "1.4.4-beta", foundryVersion: "13",
+    configuration: { groups: [{ items: ["Item.missing"] }] },
+    resolveUuid: async () => null
+  });
+  assert.equal(bundle.portability.complete, false);
+  assert.deepEqual(bundle.portability.unresolvedReferences, ["Item.missing"]);
+  assert.equal(bundle.portability.systemVersion, "1.4.4-beta");
+  assert.equal(bundle.portability.foundryVersion, "13");
 });

@@ -16,11 +16,21 @@
   "name": "Nome visível",
   "kind": "gm-screen",
   "configuration": {},
-  "documents": {}
+  "documents": {},
+  "portability": {
+    "complete": true,
+    "unresolvedReferences": [],
+    "unsupportedReferences": [],
+    "externalAssets": [],
+    "systemVersion": "1.4.4-beta",
+    "foundryVersion": "13"
+  }
 }
 ```
 
-`kind` aceita `gm-screen` ou `world-statuses`. `id` deve permanecer estável em reimportações. Os documentos são sincronizados em um compêndio de Item antes da configuração ser substituída. IDs, pastas e rollback seguem as mesmas garantias do [pacote autocontido de Itens](./pacote-itens-autocontido.md).
+`kind` aceita `gm-screen` ou `world-statuses`. `id` deve permanecer estável em reimportações. Os documentos são sincronizados em um compêndio de Item antes da configuração ser aplicada. IDs, pastas e rollback seguem as mesmas garantias do [pacote autocontido de Itens](./pacote-itens-autocontido.md).
+
+`portability` é gerado pelo exportador. Ele registra referências que não puderam ser incorporadas, tipos incompatíveis, caminhos externos de imagens e as versões de origem. Uma IA pode omitir esse objeto ao criar um arquivo manualmente; ele é diagnóstico, não parte da configuração.
 
 ## Escudo do Mestre
 
@@ -60,7 +70,10 @@ Também é aceita a forma auxiliar `effectRefs: ["efeito-atordoado"]`. O destino
 - Os exportadores do Escudo do Mestre e dos status geram este formato automaticamente.
 - JSONs antigos, contendo apenas a configuração, continuam aceitos.
 - UUIDs externos sem documento correspondente são preservados; isso permite referências deliberadas a conteúdo já instalado, mas elas continuarão dependentes do mundo de destino.
-- A importação substitui a configuração atual depois de sincronizar todos os documentos.
+- A importação apresenta uma prévia antes de gravar e oferece três modos: `Somente acrescentar`, `Mesclar e atualizar` e `Substituir tudo`.
+- `Somente acrescentar` preserva opções existentes e reúne novos grupos, vínculos e status. Ele não desativa status que já estão disponíveis no mundo.
+- `Mesclar e atualizar` é o padrão: dados importados atualizam entradas de mesmo ID, vínculos são reunidos sem duplicação e entradas exclusivamente locais permanecem.
+- `Substituir tudo` usa a configuração importada como fonte completa e remove dela grupos, alterações e status personalizados locais ausentes. Efeitos já aplicados a atores não são apagados.
 - Falhas na configuração revertem Itens e pastas criados ou atualizados durante a operação.
 - Imagens continuam sendo caminhos Foundry; os arquivos de imagem não são incorporados ao JSON.
 

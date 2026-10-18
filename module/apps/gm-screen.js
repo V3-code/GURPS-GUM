@@ -12,8 +12,12 @@ import { openTestRequestLauncher } from "./test-request-launcher.js";
 import { resolveCharacterImage } from "../utils/character-image.mjs";
 import { clampFloatingPanelPosition } from "../utils/floating-panel-position.mjs";
 import { resolveDefenseRollType } from "../utils/defense-roll-type.mjs";
-import { buildConfigurationBundle, parseConfigurationBundle } from "../utils/configuration-bundle-json.mjs";
-import { importConfigurationBundle } from "./configuration-bundle-import.js";
+import {
+    buildConfigurationBundle,
+    combineConfigurationImport,
+    parseConfigurationBundle
+} from "../utils/configuration-bundle-json.mjs";
+import { chooseConfigurationImportMode, importConfigurationBundle } from "./configuration-bundle-import.js";
 
 export class GumGMScreen extends Application {
     
@@ -1692,8 +1696,16 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
             name: `${game.world?.title || "GUM"} — ${this._t("GUM.GMScreen.Title")}`,
             kind: "gm-screen",
             configuration: config,
-            resolveUuid: uuid => fromUuid(uuid).catch(() => null)
+            resolveUuid: uuid => fromUuid(uuid).catch(() => null),
+            systemVersion: game.system?.version,
+            foundryVersion: game.version
         });
+        if (!bundle.portability.complete) {
+            ui.notifications.warn(this._t("GUM.ConfigurationBundle.PortabilityWarning", {
+                references: bundle.portability.unresolvedReferences.length + bundle.portability.unsupportedReferences.length,
+                assets: bundle.portability.externalAssets.length
+            }));
+        }
         const filename = `gum-gm-screen-config.json`;
         saveDataToFile(JSON.stringify(bundle, null, 2), "application/json", filename);
     }
@@ -1742,7 +1754,20 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
                             }));
                             const tabs = this._createDefaultTabs();
                             tabs[0].groups = groups;
-                            await game.settings.set("gum", "gmScreenConfig", { tabs, activeTabId: tabs[0].id });
+                            const incomingConfiguration = { tabs, activeTabId: tabs[0].id };
+                            const currentConfiguration = game.settings.get("gum", "gmScreenConfig") || {};
+                            const mode = await chooseConfigurationImportMode(
+                                "gm-screen",
+                                currentConfiguration,
+                                incomingConfiguration
+                            );
+                            if (!mode) return;
+                            await game.settings.set("gum", "gmScreenConfig", combineConfigurationImport(
+                                "gm-screen",
+                                currentConfiguration,
+                                incomingConfiguration,
+                                mode
+                            ));
                             this.render(true);
                             ui.notifications.info(this._t("GUM.GMScreen.LayoutImported"));
                         } catch (err) {
