@@ -15,6 +15,7 @@ O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com
 
 - JSONs de configuração portáteis resolvem referências locais em UUIDs estáveis de compêndio, preservam dependências compartilhadas e participam do rollback da importação; os formatos antigos continuam compatíveis.
 - A configuração mundial de status agora persiste uma lista completa e autoritativa; os padrões do sistema servem apenas como referência inicial ou restauração, e `Substituir tudo` aplica exatamente a lista importada.
+- Os quatro status de Choque agora usam ícones mais simples e legíveis, com identificação direta das penalidades de −1 a −4.
 
 ### Fixed
 
