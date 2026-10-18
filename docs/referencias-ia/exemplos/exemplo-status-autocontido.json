@@ -5,29 +5,36 @@
   "name": "Teste — Status autocontidos",
   "kind": "world-statuses",
   "configuration": {
-    "version": 1,
+    "version": 2,
+    "initialized": true,
     "bindingsMigrated": true,
-    "disabledStatusIds": [],
-    "overrides": {
-      "burning": {
+    "statuses": [
+      {
+        "id": "burning",
         "name": "Em chamas — teste",
+        "img": "systems/gum/icons/status/burning.png",
         "effectUuids": [
           { "effectRef": "efeito-dor-incendio" }
         ],
+        "legacyRuleUuids": [],
         "stackMode": "refresh",
         "stackLimit": 1,
-        "removeOnStatusOff": true
+        "removeOnStatusOff": true,
+        "custom": false
       },
-      "frightened": {
+      {
+        "id": "frightened",
+        "name": "Assustado — teste",
+        "img": "systems/gum/icons/status/frightened.png",
         "effectUuids": [
           { "effectRef": "efeito-alerta" }
         ],
+        "legacyRuleUuids": [],
         "stackMode": "replace",
         "stackLimit": 1,
-        "removeOnStatusOff": true
-      }
-    },
-    "customStatuses": [
+        "removeOnStatusOff": true,
+        "custom": false
+      },
       {
         "id": "inspirado_teste",
         "name": "Inspirado — teste",
@@ -41,11 +48,6 @@
         "removeOnStatusOff": true,
         "custom": true
       }
-    ],
-    "order": [
-      "burning",
-      "frightened",
-      "inspirado_teste"
     ]
   },
   "documents": {

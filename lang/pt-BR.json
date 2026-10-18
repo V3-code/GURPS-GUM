@@ -978,7 +978,7 @@
   "GUM.WorldStatus.Title": "Configuração de status do mundo",
   "GUM.WorldStatus.MenuLabel": "Configurar status",
   "GUM.WorldStatus.SettingHint": "Personalize os status exibidos na HUD dos tokens e vincule automações de Efeito.",
-  "GUM.WorldStatus.Introduction": "Esta lista controla os status exibidos na janela padrão do token. Alterações de nome, ícone, ordem e vínculos valem para todo o mundo.",
+  "GUM.WorldStatus.Introduction": "Esta lista define todos os status exibidos na janela padrão do token. Os padrões do GUM servem apenas como configuração inicial e podem ser removidos, reordenados ou substituídos.",
   "GUM.WorldStatus.Search": "Buscar status...",
   "GUM.WorldStatus.Import": "Importar",
   "GUM.WorldStatus.Export": "Exportar",

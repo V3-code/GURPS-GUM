@@ -53,15 +53,28 @@ Em `kind: "world-statuses"`, referências locais aparecem em `effectUuids`:
 
 ```json
 {
-  "overrides": {
-    "stunned": {
+  "version": 2,
+  "initialized": true,
+  "bindingsMigrated": true,
+  "statuses": [
+    {
+      "id": "stunned",
+      "name": "Atordoado",
+      "img": "systems/gum/icons/status/stunned.png",
       "effectUuids": [
         { "effectRef": "efeito-atordoado" }
-      ]
+      ],
+      "legacyRuleUuids": [],
+      "stackMode": "refresh",
+      "stackLimit": 1,
+      "removeOnStatusOff": true,
+      "custom": false
     }
-  }
+  ]
 }
 ```
+
+`statuses` é a lista completa e autoritativa, e sua ordem define a ordem exibida. Uma configuração inicializada com `statuses: []` representa intencionalmente um mundo sem status configurados. Os status padrão do sistema são apenas uma referência inicial ou uma opção de restauração; eles podem ser removidos e não reaparecem automaticamente.
 
 Também é aceita a forma auxiliar `effectRefs: ["efeito-atordoado"]`. O destino deve ser um Item `effect` presente em `documents`. Vários status podem apontar para a mesma chave, criando o Item Efeito apenas uma vez.
 
@@ -73,7 +86,7 @@ Também é aceita a forma auxiliar `effectRefs: ["efeito-atordoado"]`. O destino
 - A importação apresenta uma prévia antes de gravar e oferece três modos: `Somente acrescentar`, `Mesclar e atualizar` e `Substituir tudo`.
 - `Somente acrescentar` preserva opções existentes e reúne novos grupos, vínculos e status. Ele não desativa status que já estão disponíveis no mundo.
 - `Mesclar e atualizar` é o padrão: dados importados atualizam entradas de mesmo ID, vínculos são reunidos sem duplicação e entradas exclusivamente locais permanecem.
-- `Substituir tudo` usa a configuração importada como fonte completa e remove dela grupos, alterações e status personalizados locais ausentes. Efeitos já aplicados a atores não são apagados.
+- `Substituir tudo` usa a configuração importada como fonte completa. Para status, a lista importada substitui exatamente a lista mundial, inclusive quando está vazia. Efeitos já aplicados a atores não são apagados.
 - Falhas na configuração revertem Itens e pastas criados ou atualizados durante a operação.
 - Imagens continuam sendo caminhos Foundry; os arquivos de imagem não são incorporados ao JSON.
 

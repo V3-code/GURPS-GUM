@@ -978,7 +978,7 @@
   "GUM.WorldStatus.Title": "World status configuration",
   "GUM.WorldStatus.MenuLabel": "Configure statuses",
   "GUM.WorldStatus.SettingHint": "Customize the statuses shown in token HUDs and link Effect automations.",
-  "GUM.WorldStatus.Introduction": "This list controls the statuses shown in the standard token window. Name, icon, order, and linked-effect changes apply to the entire world.",
+  "GUM.WorldStatus.Introduction": "This list defines every status shown in the standard token window. GUM defaults are only an initial configuration and may be removed, reordered, or replaced.",
   "GUM.WorldStatus.Search": "Search statuses...",
   "GUM.WorldStatus.Import": "Import",
   "GUM.WorldStatus.Export": "Export",

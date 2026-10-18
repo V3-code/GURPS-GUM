@@ -16,6 +16,7 @@ import {
   collectInvalidWorldStatusReferences,
   collectWorldStatusDependencies,
   localizeBaseStatuses,
+  materializeWorldStatusConfiguration,
   normalizeWorldStatusConfiguration,
   normalizeWorldStatusId,
   resolveWorldStatusRows
@@ -76,7 +77,10 @@ export class WorldStatusConfig extends FormApplication {
   }
 
   async _loadRows() {
-    this.configuration = normalizeWorldStatusConfiguration(game.settings.get("gum", WORLD_STATUS_SETTING));
+    this.configuration = materializeWorldStatusConfiguration(
+      this.baseStatuses,
+      game.settings.get("gum", WORLD_STATUS_SETTING)
+    );
     this.rows = resolveWorldStatusRows(this.baseStatuses, this.configuration);
     if (!this.configuration.bindingsMigrated) await this._loadLegacyBindings();
   }
@@ -142,7 +146,9 @@ export class WorldStatusConfig extends FormApplication {
     for (const element of this.form.querySelectorAll("[data-status-id]")) {
       const row = this.rows.find(candidate => candidate.id === element.dataset.statusId);
       if (!row) continue;
-      row.name = String(element.querySelector("[data-field='name']")?.value || row.name).trim() || row.id;
+      const name = String(element.querySelector("[data-field='name']")?.value || row.name).trim() || row.id;
+      if (name !== row.name) row.nameKey = "";
+      row.name = name;
       row.img = String(element.querySelector("[data-field='img']")?.value || row.img).trim() || "icons/svg/aura.svg";
       const stackMode = element.querySelector("[data-field='stackMode']")?.value;
       row.stackMode = ["refresh", "replace", "stack"].includes(stackMode) ? stackMode : "refresh";
@@ -458,8 +464,9 @@ export class WorldStatusConfig extends FormApplication {
           const result = await importConfigurationBundle(bundle, {
             expectedKind: "world-statuses",
             getCurrentConfiguration: () => currentConfiguration,
+            normalizeConfiguration: configuration => materializeWorldStatusConfiguration(this.baseStatuses, configuration),
             applyConfiguration: async configuration => {
-              const normalized = normalizeWorldStatusConfiguration(configuration);
+              const normalized = materializeWorldStatusConfiguration(this.baseStatuses, configuration);
               await game.settings.set("gum", WORLD_STATUS_SETTING, normalized);
               this.configuration = normalized;
               this.rows = resolveWorldStatusRows(this.baseStatuses, normalized);
@@ -474,7 +481,10 @@ export class WorldStatusConfig extends FormApplication {
         if (Number(parsed?.version || WORLD_STATUS_SCHEMA_VERSION) > WORLD_STATUS_SCHEMA_VERSION) {
           throw new Error(game.i18n.localize("GUM.WorldStatus.UnsupportedVersion"));
         }
-        const incomingConfiguration = normalizeWorldStatusConfiguration(parsed?.configuration ?? parsed);
+        const incomingConfiguration = materializeWorldStatusConfiguration(
+          this.baseStatuses,
+          parsed?.configuration ?? parsed
+        );
         const mode = await chooseConfigurationImportMode(
           "world-statuses",
           currentConfiguration,
@@ -523,7 +533,7 @@ export class WorldStatusConfig extends FormApplication {
 
   _restoreDefaults(event) {
     event.preventDefault();
-    this.configuration = normalizeWorldStatusConfiguration({ bindingsMigrated: true });
+    this.configuration = materializeWorldStatusConfiguration(this.baseStatuses, {});
     this.rows = resolveWorldStatusRows(this.baseStatuses, this.configuration);
     this.loadedLegacyBindings = false;
     this.pendingCleanupIds.clear();

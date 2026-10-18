@@ -19,8 +19,6 @@ const clone = value => typeof structuredClone === "function"
   ? structuredClone(value)
   : JSON.parse(JSON.stringify(value));
 
-const uniqueValues = values => [...new Set(values)];
-
 function valueIdentity(value) {
   return typeof value === "string" ? `string:${value}` : `json:${JSON.stringify(value)}`;
 }
@@ -103,22 +101,15 @@ function mergeStatusEntry(current, incoming, mode) {
 }
 
 function mergeWorldStatusConfiguration(current, incoming, mode) {
-  const currentOverrides = clone(current?.overrides || {});
-  for (const [id, incomingOverride] of Object.entries(incoming?.overrides || {})) {
-    currentOverrides[id] = currentOverrides[id]
-      ? mergeStatusEntry(currentOverrides[id], incomingOverride, mode)
-      : clone(incomingOverride);
-  }
-
-  const customStatuses = clone(Array.isArray(current?.customStatuses) ? current.customStatuses : []);
-  const customById = new Map(customStatuses.map(status => [String(status?.id || ""), status]));
-  for (const incomingStatus of incoming?.customStatuses || []) {
+  const statuses = clone(Array.isArray(current?.statuses) ? current.statuses : []);
+  const statusById = new Map(statuses.map(status => [String(status?.id || ""), status]));
+  for (const incomingStatus of incoming?.statuses || []) {
     const id = String(incomingStatus?.id || "");
-    const existing = customById.get(id);
+    const existing = statusById.get(id);
     if (!existing) {
       const added = clone(incomingStatus);
-      customStatuses.push(added);
-      customById.set(id, added);
+      statuses.push(added);
+      statusById.set(id, added);
       continue;
     }
     Object.assign(existing, mergeStatusEntry(existing, incomingStatus, mode));
@@ -126,14 +117,10 @@ function mergeWorldStatusConfiguration(current, incoming, mode) {
 
   return {
     ...clone(current || {}),
-    version: Math.max(Number(current?.version) || 1, Number(incoming?.version) || 1),
+    version: Math.max(Number(current?.version) || 2, Number(incoming?.version) || 2),
+    initialized: true,
     bindingsMigrated: current?.bindingsMigrated === true || incoming?.bindingsMigrated === true,
-    disabledStatusIds: mode === "merge"
-      ? uniqueValues([...(current?.disabledStatusIds || []), ...(incoming?.disabledStatusIds || [])])
-      : clone(current?.disabledStatusIds || []),
-    overrides: currentOverrides,
-    customStatuses,
-    order: mergeUniqueValues(current?.order, incoming?.order)
+    statuses
   };
 }
 
@@ -155,8 +142,7 @@ function configurationEntries(kind, configuration) {
     ])));
   }
   return new Map([
-    ...Object.entries(configuration?.overrides || {}).map(([id, value]) => [`status:${id}`, value]),
-    ...(configuration?.customStatuses || []).map((value, index) => [`status:${value?.id || `custom-${index}`}`, value])
+    ...(configuration?.statuses || []).map((value, index) => [`status:${value?.id || `status-${index}`}`, value])
   ]);
 }
 
@@ -282,6 +268,9 @@ function resolveStatusEffectList(parsed, uuidByKey, row, location) {
 
 function resolveWorldStatusConfiguration(parsed, uuidByKey) {
   const configuration = clone(parsed.configuration);
+  for (const [index, status] of (configuration.statuses || []).entries()) {
+    if (isObject(status)) resolveStatusEffectList(parsed, uuidByKey, status, `configuration.statuses.${index}`);
+  }
   for (const [statusId, override] of Object.entries(configuration.overrides || {})) {
     if (isObject(override)) resolveStatusEffectList(parsed, uuidByKey, override, `configuration.overrides.${statusId}`);
   }
@@ -354,6 +343,7 @@ function referencedUuids(configuration, kind) {
     return [...new Set(groupsFromGMScreen(configuration).flatMap(group => group?.items || []).filter(value => typeof value === "string" && value))];
   }
   return [...new Set([
+    ...(configuration?.statuses || []).flatMap(row => row?.effectUuids || []),
     ...Object.values(configuration?.overrides || {}).flatMap(row => row?.effectUuids || []),
     ...(configuration?.customStatuses || []).flatMap(row => row?.effectUuids || [])
   ].filter(value => typeof value === "string" && value))];
@@ -473,6 +463,7 @@ export async function buildConfigurationBundle({
     }
   } else {
     const rows = [
+      ...(sourceConfiguration.statuses || []),
       ...Object.values(sourceConfiguration.overrides || {}),
       ...(sourceConfiguration.customStatuses || [])
     ];

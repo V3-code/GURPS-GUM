@@ -14,6 +14,7 @@ O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com
 ### Changed
 
 - JSONs de configuração portáteis resolvem referências locais em UUIDs estáveis de compêndio, preservam dependências compartilhadas e participam do rollback da importação; os formatos antigos continuam compatíveis.
+- A configuração mundial de status agora persiste uma lista completa e autoritativa; os padrões do sistema servem apenas como referência inicial ou restauração, e `Substituir tudo` aplica exatamente a lista importada.
 
 ### Fixed
 

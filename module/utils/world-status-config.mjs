@@ -1,5 +1,5 @@
 export const WORLD_STATUS_SETTING = "worldStatusConfiguration";
-export const WORLD_STATUS_SCHEMA_VERSION = 1;
+export const WORLD_STATUS_SCHEMA_VERSION = 2;
 
 const DEFAULT_ICON = "icons/svg/aura.svg";
 const DEFAULT_BINDING = Object.freeze({ stackMode: "refresh", stackLimit: 1, removeOnStatusOff: true });
@@ -31,44 +31,30 @@ function normalizeStatusEntry(entry = {}, { custom = false } = {}) {
   if (!id) return null;
   return {
     id,
-    name: String(entry.name ?? "").trim() || id,
+    name: String(entry.name ?? entry.nameKey ?? "").trim() || id,
+    nameKey: String(entry.nameKey ?? "").trim(),
     img: String(entry.img ?? entry.icon ?? "").trim() || DEFAULT_ICON,
     ...normalizeBinding(entry),
-    custom
+    custom: entry.custom === true || custom
   };
 }
 
 export function normalizeWorldStatusConfiguration(value) {
   const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
-  const overrides = {};
-  for (const [rawId, rawOverride] of Object.entries(source.overrides || {})) {
-    const id = normalizeWorldStatusId(rawId);
-    if (!id || !rawOverride || typeof rawOverride !== "object" || Array.isArray(rawOverride)) continue;
-    overrides[id] = {
-      ...(rawOverride.name !== undefined ? { name: String(rawOverride.name).trim() } : {}),
-      ...(rawOverride.img !== undefined || rawOverride.icon !== undefined
-        ? { img: String(rawOverride.img ?? rawOverride.icon ?? "").trim() || DEFAULT_ICON }
-        : {}),
-      ...normalizeBinding(rawOverride)
-    };
-  }
-
-  const customStatuses = [];
-  const seenCustom = new Set();
-  for (const rawEntry of Array.isArray(source.customStatuses) ? source.customStatuses : []) {
-    const entry = normalizeStatusEntry(rawEntry, { custom: true });
-    if (!entry || seenCustom.has(entry.id)) continue;
-    seenCustom.add(entry.id);
-    customStatuses.push(entry);
+  const statuses = [];
+  const seen = new Set();
+  for (const rawEntry of Array.isArray(source.statuses) ? source.statuses : []) {
+    const entry = normalizeStatusEntry(rawEntry, { custom: rawEntry?.custom === true });
+    if (!entry || seen.has(entry.id)) continue;
+    seen.add(entry.id);
+    statuses.push(entry);
   }
 
   return {
     version: WORLD_STATUS_SCHEMA_VERSION,
-    bindingsMigrated: source.bindingsMigrated === true,
-    disabledStatusIds: uniqueStrings(source.disabledStatusIds).map(id => normalizeWorldStatusId(id)).filter(Boolean),
-    overrides,
-    customStatuses,
-    order: uniqueStrings(source.order).map(id => normalizeWorldStatusId(id)).filter(Boolean)
+    initialized: source.initialized === true,
+    bindingsMigrated: source.bindingsMigrated !== false,
+    statuses
   };
 }
 
@@ -76,88 +62,97 @@ export function localizeBaseStatuses(baseStatuses, localize = value => value) {
   return Array.from(baseStatuses ?? [], status => ({
     id: normalizeWorldStatusId(status?.id),
     name: String(localize(status?.name ?? status?.label ?? status?.id ?? "")),
-    img: String(status?.img ?? status?.icon ?? DEFAULT_ICON)
+    nameKey: String(status?.name ?? status?.label ?? ""),
+    img: String(status?.img ?? status?.icon ?? DEFAULT_ICON),
+    custom: false
   })).filter(status => status.id);
 }
 
-export function resolveWorldStatusRows(baseStatuses, configuration, { includeDisabled = false } = {}) {
-  const config = normalizeWorldStatusConfiguration(configuration);
-  const disabled = new Set(config.disabledStatusIds);
-  const rows = [];
-  const ids = new Set();
+function isLegacyWorldStatusConfiguration(value) {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value) && (
+    value.overrides !== undefined
+    || value.customStatuses !== undefined
+    || value.disabledStatusIds !== undefined
+    || value.order !== undefined
+  ));
+}
 
-  for (const base of baseStatuses ?? []) {
-    const normalizedBase = normalizeStatusEntry(base);
-    if (!normalizedBase || ids.has(normalizedBase.id)) continue;
-    ids.add(normalizedBase.id);
-    const override = config.overrides[normalizedBase.id] || {};
-    const row = {
-      ...normalizedBase,
+/** Materialize defaults or a legacy overlay into the authoritative v2 status list. */
+export function materializeWorldStatusConfiguration(baseStatuses, value) {
+  const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  if (source.initialized === true && Array.isArray(source.statuses)) {
+    return normalizeWorldStatusConfiguration(source);
+  }
+
+  const base = Array.from(baseStatuses ?? [], entry => normalizeStatusEntry(entry, { custom: false })).filter(Boolean);
+  if (!isLegacyWorldStatusConfiguration(source)) {
+    return normalizeWorldStatusConfiguration({
+      initialized: true,
+      bindingsMigrated: true,
+      statuses: base
+    });
+  }
+
+  const disabled = new Set(uniqueStrings(source.disabledStatusIds).map(id => normalizeWorldStatusId(id)));
+  const overrides = source.overrides && typeof source.overrides === "object" ? source.overrides : {};
+  const entries = base.filter(entry => !disabled.has(entry.id)).map(entry => {
+    const override = overrides[entry.id];
+    if (!override || typeof override !== "object" || Array.isArray(override)) return entry;
+    return normalizeStatusEntry({
+      ...entry,
       ...override,
-      ...normalizeBinding({ ...normalizedBase, ...override }),
-      nameCustomized: override.name !== undefined,
-      custom: false,
-      enabled: !disabled.has(normalizedBase.id)
-    };
-    if (includeDisabled || row.enabled) rows.push(row);
+      ...(override.name !== undefined ? { nameKey: "" } : {}),
+      custom: false
+    });
+  });
+  for (const rawEntry of Array.isArray(source.customStatuses) ? source.customStatuses : []) {
+    const entry = normalizeStatusEntry(rawEntry, { custom: true });
+    if (entry && !entries.some(candidate => candidate.id === entry.id)) entries.push(entry);
   }
-
-  for (const custom of config.customStatuses) {
-    if (ids.has(custom.id)) continue;
-    ids.add(custom.id);
-    if (includeDisabled || !disabled.has(custom.id)) rows.push({ ...custom, nameCustomized: true, enabled: !disabled.has(custom.id) });
-  }
-
-  const orderIndex = new Map(config.order.map((id, index) => [id, index]));
-  rows.sort((left, right) => {
+  const order = uniqueStrings(source.order).map(id => normalizeWorldStatusId(id));
+  const orderIndex = new Map(order.map((id, index) => [id, index]));
+  entries.sort((left, right) => {
     const leftIndex = orderIndex.has(left.id) ? orderIndex.get(left.id) : Number.MAX_SAFE_INTEGER;
     const rightIndex = orderIndex.has(right.id) ? orderIndex.get(right.id) : Number.MAX_SAFE_INTEGER;
     return leftIndex - rightIndex;
   });
-  return rows;
+  return normalizeWorldStatusConfiguration({
+    initialized: true,
+    bindingsMigrated: source.bindingsMigrated === true,
+    statuses: entries
+  });
+}
+
+export function resolveWorldStatusRows(baseStatuses, configuration, { includeDisabled = false } = {}) {
+  void includeDisabled;
+  const config = materializeWorldStatusConfiguration(baseStatuses, configuration);
+  const baseById = new Map(Array.from(baseStatuses ?? [], entry => [normalizeWorldStatusId(entry?.id), entry]));
+  return config.statuses.map(status => {
+    const reference = baseById.get(status.id);
+    const usesReferenceName = Boolean(status.nameKey && reference?.nameKey === status.nameKey);
+    return {
+      ...status,
+      name: usesReferenceName ? reference.name : status.name,
+      nameCustomized: !usesReferenceName,
+      enabled: true
+    };
+  });
 }
 
 export function buildWorldStatusConfiguration(baseStatuses, rows, { bindingsMigrated = true } = {}) {
-  const normalizedRows = [];
+  void baseStatuses;
+  const statuses = [];
   const seen = new Set();
   for (const rawRow of rows ?? []) {
     const row = normalizeStatusEntry(rawRow, { custom: rawRow?.custom === true });
     if (!row || seen.has(row.id)) continue;
     seen.add(row.id);
-    normalizedRows.push(row);
+    statuses.push(row);
   }
-
-  const baseById = new Map((baseStatuses ?? []).map(base => {
-    const normalized = normalizeStatusEntry(base);
-    return [normalized?.id, normalized];
-  }).filter(([id]) => id));
-  const overrides = {};
-  const customStatuses = [];
-
-  for (const row of normalizedRows) {
-    const base = baseById.get(row.id);
-    if (!base) {
-      customStatuses.push({ ...row, custom: true });
-      continue;
-    }
-    const override = {};
-    if (row.name !== base.name) override.name = row.name;
-    if (row.img !== base.img) override.img = row.img;
-    if (row.effectUuids.length) override.effectUuids = row.effectUuids;
-    if (row.legacyRuleUuids.length) override.legacyRuleUuids = row.legacyRuleUuids;
-    if (row.stackMode !== DEFAULT_BINDING.stackMode) override.stackMode = row.stackMode;
-    if (row.stackLimit !== DEFAULT_BINDING.stackLimit) override.stackLimit = row.stackLimit;
-    if (row.removeOnStatusOff !== DEFAULT_BINDING.removeOnStatusOff) override.removeOnStatusOff = row.removeOnStatusOff;
-    if (Object.keys(override).length) overrides[row.id] = override;
-  }
-
   return normalizeWorldStatusConfiguration({
-    version: WORLD_STATUS_SCHEMA_VERSION,
+    initialized: true,
     bindingsMigrated,
-    disabledStatusIds: [...baseById.keys()].filter(id => !seen.has(id)),
-    overrides,
-    customStatuses,
-    order: normalizedRows.map(row => row.id)
+    statuses
   });
 }
 

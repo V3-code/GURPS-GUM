@@ -144,27 +144,33 @@ export async function importConfigurationBundle(bundle, {
   expectedKind,
   getCurrentConfiguration,
   applyConfiguration,
-  importMode = null
+  importMode = null,
+  normalizeConfiguration = configuration => configuration
 }) {
   const t = key => game.i18n.localize(`GUM.ConfigurationBundle.${key}`);
   if (bundle.kind !== expectedKind) throw new Error(t("WrongKind"));
-  const previousConfiguration = clone(await getCurrentConfiguration());
+  const previousConfiguration = clone(normalizeConfiguration(await getCurrentConfiguration()));
+  const hasDocuments = Object.keys(bundle.documents || {}).length > 0;
+  // Resolve local references against a harmless preview collection before showing any choices.
+  const previewPrepared = prepareConfigurationBundle(
+    bundle,
+    hasDocuments ? "world.configuration-preview" : ""
+  );
+  const previewConfiguration = normalizeConfiguration(previewPrepared.configuration);
   const mode = importMode || await chooseConfigurationImportMode(
     bundle.kind,
     previousConfiguration,
-    bundle.configuration,
+    previewConfiguration,
     { portability: bundle.portability }
   );
   if (!mode) return null;
-  const hasDocuments = Object.keys(bundle.documents || {}).length > 0;
   let configurationApplied = false;
 
   if (!hasDocuments) {
-    const prepared = prepareConfigurationBundle(bundle);
     const configuration = combineConfigurationImport(
       bundle.kind,
       previousConfiguration,
-      prepared.configuration,
+      previewConfiguration,
       mode
     );
     await applyConfiguration(configuration);
@@ -172,15 +178,14 @@ export async function importConfigurationBundle(bundle, {
     return { configuration, mode, pack: null, documents: [] };
   }
 
-  // Validate every local reference before a new compendium can be created.
-  prepareConfigurationBundle(bundle, "world.configuration-preview");
   const pack = await chooseDestinationPack(bundle);
   if (!pack) return null;
   const prepared = prepareConfigurationBundle(bundle, pack.collection);
+  const normalizedPreparedConfiguration = normalizeConfiguration(prepared.configuration);
   const configuration = combineConfigurationImport(
     bundle.kind,
     previousConfiguration,
-    prepared.configuration,
+    normalizedPreparedConfiguration,
     mode
   );
   const result = await synchronizeItemBundle(pack, prepared.itemBundle, {

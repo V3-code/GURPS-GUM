@@ -165,32 +165,42 @@ test("GM Screen imports support add, merge, and replace without duplicating item
 
 test("world status imports merge by status id and preserve local-only entries", () => {
   const current = {
-    version: 1,
+    version: 2,
+    initialized: true,
     bindingsMigrated: true,
-    disabledStatusIds: ["dead"],
-    overrides: { stunned: { name: "Local", effectUuids: ["Item.a"] } },
-    customStatuses: [{ id: "local", name: "Local status", effectUuids: [] }],
-    order: ["stunned", "local"]
+    statuses: [
+      { id: "stunned", name: "Local", effectUuids: ["Item.a"] },
+      { id: "local", name: "Local status", effectUuids: [], custom: true }
+    ]
   };
   const incoming = {
-    version: 1,
+    version: 2,
+    initialized: true,
     bindingsMigrated: true,
-    disabledStatusIds: ["prone"],
-    overrides: { stunned: { name: "Imported", effectUuids: ["Item.b"] } },
-    customStatuses: [{ id: "new", name: "New status", effectUuids: ["Item.c"] }],
-    order: ["stunned", "new"]
+    statuses: [
+      { id: "stunned", name: "Imported", effectUuids: ["Item.b"] },
+      { id: "new", name: "New status", effectUuids: ["Item.c"], custom: true }
+    ]
   };
 
   const added = combineConfigurationImport("world-statuses", current, incoming, "add");
-  assert.equal(added.overrides.stunned.name, "Local");
-  assert.deepEqual(added.overrides.stunned.effectUuids, ["Item.a", "Item.b"]);
-  assert.deepEqual(added.disabledStatusIds, ["dead"]);
+  assert.equal(added.statuses[0].name, "Local");
+  assert.deepEqual(added.statuses[0].effectUuids, ["Item.a", "Item.b"]);
 
   const merged = combineConfigurationImport("world-statuses", current, incoming, "merge");
-  assert.equal(merged.overrides.stunned.name, "Imported");
-  assert.deepEqual(merged.disabledStatusIds, ["dead", "prone"]);
-  assert.deepEqual(merged.customStatuses.map(status => status.id), ["local", "new"]);
-  assert.deepEqual(merged.order, ["stunned", "local", "new"]);
+  assert.equal(merged.statuses[0].name, "Imported");
+  assert.deepEqual(merged.statuses.map(status => status.id), ["stunned", "local", "new"]);
+
+  const replaced = combineConfigurationImport("world-statuses", current, incoming, "replace");
+  assert.deepEqual(replaced.statuses.map(status => status.id), ["stunned", "new"]);
+
+  const replacedWithEmpty = combineConfigurationImport("world-statuses", current, {
+    version: 2,
+    initialized: true,
+    bindingsMigrated: true,
+    statuses: []
+  }, "replace");
+  assert.deepEqual(replacedWithEmpty.statuses, []);
 });
 
 test("configuration preview counts matching, changed, new, and current-only entries", () => {

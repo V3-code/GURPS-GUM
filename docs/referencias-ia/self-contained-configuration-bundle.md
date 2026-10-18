@@ -53,15 +53,28 @@ With `kind: "world-statuses"`, local references appear in `effectUuids`:
 
 ```json
 {
-  "overrides": {
-    "stunned": {
+  "version": 2,
+  "initialized": true,
+  "bindingsMigrated": true,
+  "statuses": [
+    {
+      "id": "stunned",
+      "name": "Stunned",
+      "img": "systems/gum/icons/status/stunned.png",
       "effectUuids": [
         { "effectRef": "stunned-effect" }
-      ]
+      ],
+      "legacyRuleUuids": [],
+      "stackMode": "refresh",
+      "stackLimit": 1,
+      "removeOnStatusOff": true,
+      "custom": false
     }
-  }
+  ]
 }
 ```
+
+`statuses` is the complete authoritative list, and its array order is the display order. An initialized configuration with `statuses: []` intentionally represents a world with no configured statuses. System defaults are only an initial reference or a restore option; they may be removed and do not reappear automatically.
 
 The auxiliary form `effectRefs: ["stunned-effect"]` is also accepted. Each target must be an `effect` Item in `documents`. Multiple statuses may share one key, creating the Effect Item only once.
 
@@ -73,7 +86,7 @@ The auxiliary form `effectRefs: ["stunned-effect"]` is also accepted. Each targe
 - Import shows a preview before writing and offers three modes: `Add only`, `Merge and update`, and `Replace all`.
 - `Add only` preserves existing options while collecting new groups, links, and statuses. It does not disable statuses already available in the world.
 - `Merge and update` is the default: imported data updates entries with the same ID, links are combined without duplication, and local-only entries remain.
-- `Replace all` treats the imported configuration as complete and removes local groups, overrides, and custom statuses that are absent from it. Effects already applied to actors are not deleted.
+- `Replace all` treats the imported configuration as complete. For statuses, the imported list exactly replaces the world list, including when it is empty. Effects already applied to actors are not deleted.
 - A configuration failure rolls back Items and folders created or updated by the operation.
 - Images remain Foundry paths; image files are not embedded in the JSON.
 
