@@ -4,7 +4,7 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
-## [Unreleased]
+## [1.4.5-beta] - 2026-10-18
 
 ### Added
 
