@@ -1747,7 +1747,9 @@ async _applySelectionToActor(actor, targetToken = null, { keepSelection = false 
                             ui.notifications.info(this._t("GUM.GMScreen.LayoutImported"));
                         } catch (err) {
                             console.error(err);
-                            ui.notifications.error(this._t("GUM.GMScreen.LayoutImportError"));
+                            ui.notifications.error(this._t("GUM.GMScreen.LayoutImportError", {
+                                error: err?.message || String(err)
+                            }));
                         }
                     }
                 }

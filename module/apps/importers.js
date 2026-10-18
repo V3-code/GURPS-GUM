@@ -21,18 +21,15 @@ function inferGCSLibraryItemType(extension, importEntries, pack = null) {
     return packType || GCS_LIBRARY_TYPES_BY_EXTENSION[extension] || importEntries[0]?.itemData?.type || null;
 }
 
-function slugifyCompendiumName(label) {
-    const nativeSlug = typeof label.slugify === "function" ? label.slugify() : String(label)
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    return nativeSlug || `biblioteca-${Date.now()}`;
-}
-
 export async function createWorldItemCompendium(label) {
-    let name = slugifyCompendiumName(label);
-    let suffix = 2;
-    while (game.packs.get(`world.${name}`)) name = `${slugifyCompendiumName(label)}-${suffix++}`;
-    return CompendiumCollection.createCompendium({ label, name, type: "Item", package: "world" });
+    const CompendiumClass = globalThis.foundry?.documents?.collections?.CompendiumCollection
+        ?? globalThis.CompendiumCollection;
+    if (!CompendiumClass?.createCompendium) {
+        throw new Error("The Foundry CompendiumCollection API is not available.");
+    }
+    // Foundry generates the world pack name and package metadata server-side.
+    // Passing manifest-only fields such as `package` fails schema validation in V13+.
+    return CompendiumClass.createCompendium({ label, type: "Item" });
 }
 /**
  * Lida com a importação de um arquivo JSON (formato customizado) OU

@@ -22,12 +22,20 @@ async function chooseDestinationPack(bundle) {
 
   const choice = await new Promise(resolve => new Dialog({
     title: t("DestinationTitle"),
-    content: `<form class="gum-configuration-bundle-destination">
+    content: `<form class="gum-compendium-import-form gum-configuration-bundle-destination">
+      <div class="gum-import-file-summary">
+        <i class="fas fa-puzzle-piece"></i>
+        <span><strong>${escapeHtml(bundle.name || bundle.id)}</strong><small>${t("Dependencies")}</small></span>
+      </div>
       <p class="hint">${t("DestinationHint")}</p>
-      ${packs.length ? `<label><input type="radio" name="destination-mode" value="existing" ${canCreate ? "" : "checked"}> ${t("UseExisting")}</label>` : ""}
-      ${canCreate ? `<label><input type="radio" name="destination-mode" value="new" checked> ${t("CreateNew")}</label>` : ""}
-      ${packs.length ? `<div class="form-group"><label>${t("Compendium")}</label><select name="compendium-target">${packs.map(pack => `<option value="${escapeHtml(pack.collection)}">${escapeHtml(pack.title)}</option>`).join("")}</select></div>` : ""}
-      ${canCreate ? `<div class="form-group"><label>${t("NewCompendiumName")}</label><input type="text" name="new-compendium-name" value="${escapeHtml(defaultLabel)}"></div>` : ""}
+      <div class="gum-import-mode-picker">
+        ${packs.length ? `<label><input type="radio" name="destination-mode" value="existing" ${canCreate ? "" : "checked"}>
+          <span><i class="fas fa-book"></i> ${t("UseExisting")}</span></label>` : ""}
+        ${canCreate ? `<label><input type="radio" name="destination-mode" value="new" checked>
+          <span><i class="fas fa-folder-plus"></i> ${t("CreateNew")}</span></label>` : ""}
+      </div>
+      ${packs.length ? `<div class="form-group" data-destination="existing" ${canCreate ? 'style="display:none"' : ""}><label>${t("Compendium")}</label><select name="compendium-target">${packs.map(pack => `<option value="${escapeHtml(pack.collection)}">${escapeHtml(pack.title)}</option>`).join("")}</select></div>` : ""}
+      ${canCreate ? `<div class="form-group" data-destination="new"><label>${t("NewCompendiumName")}</label><input type="text" name="new-compendium-name" value="${escapeHtml(defaultLabel)}"></div>` : ""}
     </form>`,
     buttons: {
       import: {
@@ -42,7 +50,17 @@ async function chooseDestinationPack(bundle) {
       cancel: { icon: '<i class="fas fa-times"></i>', label: t("Cancel"), callback: () => resolve(null) }
     },
     default: "import",
+    render: html => {
+      html.find('[name="destination-mode"]').on("change", event => {
+        const mode = event.currentTarget.value;
+        html.find("[data-destination]").hide();
+        html.find(`[data-destination="${mode}"]`).show();
+      });
+    },
     close: () => resolve(null)
+  }, {
+    classes: ["dialog", "gum", "gum-compendium-import-dialog", "gum-configuration-bundle-dialog"],
+    width: 560
   }).render(true));
 
   if (!choice) return null;

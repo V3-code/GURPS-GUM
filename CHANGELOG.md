@@ -14,6 +14,10 @@ O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com
 
 - JSONs de configuração portáteis resolvem referências locais em UUIDs estáveis de compêndio, preservam dependências compartilhadas e participam do rollback da importação; os formatos antigos continuam compatíveis.
 
+### Fixed
+
+- Criação automática do compêndio de dependências usa a API namespaced e o esquema nativo do Foundry V13+, e sua janela de destino agora apresenta somente os campos pertinentes à opção selecionada.
+
 ## [1.4.4-beta] - 2026-10-17
 
 ### Added

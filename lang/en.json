@@ -2300,7 +2300,7 @@
   "GUM.GMScreen.Import": "Import",
   "GUM.GMScreen.SelectFile": "Select a file.",
   "GUM.GMScreen.LayoutImported": "GM Screen layout imported successfully!",
-  "GUM.GMScreen.LayoutImportError": "Could not read the JSON file.",
+  "GUM.GMScreen.LayoutImportError": "Could not import the GM Screen layout: {error}",
   "GUM.GMScreen.QuickView": "Quick view",
   "GUM.GMScreen.RemoveFromGroup": "Remove from group",
   "GUM.GMModifier.ValueExpression": "Value / expression",

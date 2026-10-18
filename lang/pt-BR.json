@@ -2300,7 +2300,7 @@
   "GUM.GMScreen.Import": "Importar",
   "GUM.GMScreen.SelectFile": "Selecione um arquivo.",
   "GUM.GMScreen.LayoutImported": "Layout do Escudo importado com sucesso!",
-  "GUM.GMScreen.LayoutImportError": "Erro ao ler o arquivo JSON.",
+  "GUM.GMScreen.LayoutImportError": "Não foi possível importar o layout do Escudo do Mestre: {error}",
   "GUM.GMScreen.QuickView": "Visualização rápida",
   "GUM.GMScreen.RemoveFromGroup": "Remover do grupo",
   "GUM.GMModifier.ValueExpression": "Valor / expressão",
