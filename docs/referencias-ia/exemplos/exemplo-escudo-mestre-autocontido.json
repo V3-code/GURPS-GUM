@@ -1,0 +1,134 @@
+{
+  "format": "gum-configuration-bundle",
+  "version": 1,
+  "id": "teste-escudo-mestre-autocontido-v1",
+  "name": "Teste — Escudo do Mestre autocontido",
+  "kind": "gm-screen",
+  "configuration": {
+    "activeTabId": "tab-1",
+    "tabs": [
+      {
+        "id": "tab-1",
+        "name": "Combate",
+        "groups": [
+          {
+            "id": "grupo-ambiente",
+            "name": "Ambiente",
+            "collapsed": false,
+            "items": [
+              { "itemRef": "modificador-escuridao" },
+              { "itemRef": "efeito-nevoa" }
+            ]
+          },
+          {
+            "id": "grupo-efeitos-rapidos",
+            "name": "Efeitos rápidos",
+            "collapsed": false,
+            "items": [
+              { "itemRef": "efeito-nevoa" },
+              { "itemRef": "efeito-atordoado" }
+            ]
+          }
+        ]
+      },
+      { "id": "tab-2", "name": "Exploração", "groups": [] },
+      { "id": "tab-3", "name": "Social", "groups": [] },
+      { "id": "tab-4", "name": "4", "groups": [] },
+      { "id": "tab-5", "name": "5", "groups": [] }
+    ]
+  },
+  "documents": {
+    "efeito-nevoa": {
+      "name": "Nevoeiro denso",
+      "type": "effect",
+      "img": "icons/magic/air/fog-gas-smoke-dense-white.webp",
+      "system": {
+        "description": "<p>A visibilidade reduzida dificulta ataques à distância.</p>",
+        "schemaVersion": 2,
+        "conditionStackingMode": "stack",
+        "duration": {
+          "value": 3,
+          "unit": "rounds",
+          "inCombat": true,
+          "isPermanent": false,
+          "startMode": "apply",
+          "endMode": "turnEnd"
+        },
+        "actions": [
+          {
+            "id": "penalidade-nevoa",
+            "label": "Visibilidade reduzida",
+            "type": "roll_modifier",
+            "roll_modifier_entries": [
+              {
+                "label": "Ataques à distância no nevoeiro",
+                "value": "-2",
+                "value_mode": "fixed",
+                "cap": "",
+                "contexts": "attack_ranged",
+                "application_side": "self",
+                "target_kind": "any",
+                "target_mode": "all",
+                "target_values": "",
+                "source_item_ids": "",
+                "source_attack_ids": "",
+                "roll_tags": "",
+                "roll_tag_match": "any",
+                "nh_display_mode": "roll_only"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "efeito-atordoado": {
+      "name": "Atordoado",
+      "type": "effect",
+      "img": "systems/gum/icons/status/stunned.png",
+      "system": {
+        "description": "<p>Aplica o status Atordoado.</p>",
+        "schemaVersion": 2,
+        "duration": {
+          "value": 1,
+          "unit": "rounds",
+          "inCombat": true,
+          "isPermanent": false,
+          "startMode": "apply",
+          "endMode": "turnEnd"
+        },
+        "actions": [
+          {
+            "id": "status-atordoado",
+            "label": "Atordoado",
+            "type": "status",
+            "statusId": "stunned"
+          }
+        ]
+      }
+    },
+    "modificador-escuridao": {
+      "name": "Escuridão intensa",
+      "type": "gm_modifier",
+      "img": "icons/magic/unholy/silhouette-light-fire-blue.webp",
+      "system": {
+        "description": "<p>Penalidade circunstancial geral usada para testar o Escudo do Mestre.</p>",
+        "modifier": "-2",
+        "modifier_entries": [],
+        "nh_cap": "",
+        "observation": "Ambiente muito escuro",
+        "duration": "Cena",
+        "ui_category": "environment",
+        "target_type": {
+          "global": true
+        },
+        "passiveEffects": {
+          "nevoa-vinculada": {
+            "id": "nevoa-vinculada",
+            "effectRef": "efeito-nevoa",
+            "recipient": "self"
+          }
+        }
+      }
+    }
+  }
+}

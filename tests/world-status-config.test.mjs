@@ -12,6 +12,7 @@ import {
   collectWorldStatusDependencies,
   getItemStatusReferences,
   itemReferencesStatus,
+  materializeWorldStatusConfiguration,
   normalizeWorldStatusConfiguration,
   resolveWorldStatusRows
 } from "../module/utils/world-status-config.mjs";
@@ -21,12 +22,14 @@ const base = [
   { id: "prone", name: "Prone", img: "prone.png" }
 ];
 
-test("world overrides customize, order, remove, and add statuses without mutating defaults", () => {
+test("an authoritative world list does not restore reference statuses that are absent", () => {
   const configuration = normalizeWorldStatusConfiguration({
-    disabledStatusIds: ["prone"],
-    overrides: { stunned: { name: "Dazed", img: "dazed.svg", effectUuids: ["Item.effect"] } },
-    customStatuses: [{ id: "blessed", name: "Blessed", img: "blessed.svg" }],
-    order: ["blessed", "stunned"]
+    version: 2,
+    initialized: true,
+    statuses: [
+      { id: "blessed", name: "Blessed", img: "blessed.svg", custom: true },
+      { id: "stunned", name: "Dazed", img: "dazed.svg", effectUuids: ["Item.effect"] }
+    ]
   });
   const rows = resolveWorldStatusRows(base, configuration);
 
@@ -36,31 +39,47 @@ test("world overrides customize, order, remove, and add statuses without mutatin
   assert.equal(base[0].name, "Stunned");
 });
 
-test("saving rows keeps system differences compact and records removed defaults", () => {
+test("saving rows stores the complete authoritative list", () => {
   const configuration = buildWorldStatusConfiguration(base, [
     { ...base[0], effectUuids: ["Item.effect"], stackMode: "stack", stackLimit: 3, removeOnStatusOff: false },
     { id: "blessed", name: "Blessed", img: "blessed.svg", effectUuids: [], custom: true }
   ]);
 
-  assert.deepEqual(configuration.disabledStatusIds, ["prone"]);
-  assert.deepEqual(configuration.overrides.stunned.effectUuids, ["Item.effect"]);
-  assert.equal(configuration.overrides.stunned.stackMode, "stack");
-  assert.equal(configuration.overrides.stunned.stackLimit, 3);
-  assert.equal(configuration.overrides.stunned.removeOnStatusOff, false);
-  assert.equal(configuration.customStatuses[0].id, "blessed");
+  assert.equal(configuration.version, 2);
+  assert.equal(configuration.initialized, true);
+  assert.deepEqual(configuration.statuses.map(status => status.id), ["stunned", "blessed"]);
+  assert.deepEqual(configuration.statuses[0].effectUuids, ["Item.effect"]);
+  assert.equal(configuration.statuses[0].stackMode, "stack");
+  assert.equal(configuration.statuses[0].stackLimit, 3);
+  assert.equal(configuration.statuses[0].removeOnStatusOff, false);
   assert.equal(configuration.bindingsMigrated, true);
+});
+
+test("reference statuses seed only an uninitialized configuration", () => {
+  const initial = materializeWorldStatusConfiguration(base, {});
+  const deliberatelyEmpty = materializeWorldStatusConfiguration(base, {
+    version: 2, initialized: true, statuses: []
+  });
+  assert.deepEqual(initial.statuses.map(status => status.id), ["stunned", "prone"]);
+  assert.deepEqual(deliberatelyEmpty.statuses, []);
 });
 
 test("world status effects become Foundry statuses and automation rules", () => {
   const target = {};
   const rows = applyWorldStatusConfiguration(base, {
+    version: 2,
+    initialized: true,
     bindingsMigrated: true,
-    overrides: { stunned: { effectUuids: ["Compendium.world.effects.Item.a"], legacyRuleUuids: ["Compendium.world.rules.Item.old"] } }
+    statuses: [{
+      id: "stunned", name: "Stunned", img: "stunned.png",
+      effectUuids: ["Compendium.world.effects.Item.a"],
+      legacyRuleUuids: ["Compendium.world.rules.Item.old"]
+    }]
   }, { target, localize: value => value });
   const rules = buildWorldStatusBindingRules(rows);
 
-  assert.deepEqual(target.statusEffects.map(status => status.id), ["stunned", "prone"]);
-  assert.deepEqual(target.statusEffects.map(status => status.order), [0, 1]);
+  assert.deepEqual(target.statusEffects.map(status => status.id), ["stunned"]);
+  assert.deepEqual(target.statusEffects.map(status => status.order), [0]);
   assert.equal(target.statusEffects[0].icon, "stunned.png");
   assert.equal(rules.length, 1);
   assert.equal(rules[0].system.statusBinding.statusId, "stunned");

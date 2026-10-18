@@ -26,7 +26,9 @@ test("o diretório oferece importação em lote de Modelos GCS para um compêndi
 
 test("a importação permite criar um compêndio mundial de Item", () => {
   assert.match(importer, /CreateNewCompendium/);
-  assert.match(importer, /CompendiumCollection\.createCompendium\(\{ label, name, type: "Item", package: "world" \}\)/);
+  assert.match(importer, /foundry\?\.documents\?\.collections\?\.CompendiumCollection/);
+  assert.match(importer, /CompendiumClass\.createCompendium\(\{ label, type: "Item" \}\)/);
+  assert.doesNotMatch(importer, /createCompendium\(\{[^}]*package:/);
 });
 
 test("a janela de importação é localizada e explica a sincronização por ID", () => {

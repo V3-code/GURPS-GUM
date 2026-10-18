@@ -4,6 +4,23 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [Unreleased]
+
+### Added
+
+- Exportação e importação autocontidas das configurações do Escudo do Mestre e dos status mundiais, incluindo os Itens Efeito e Modificadores do Mestre utilizados direta ou indiretamente.
+- Importações de configuração agora oferecem prévia e os modos acrescentar, mesclar ou substituir; arquivos exportados registram referências não resolvidas e caminhos externos em um diagnóstico de portabilidade.
+
+### Changed
+
+- JSONs de configuração portáteis resolvem referências locais em UUIDs estáveis de compêndio, preservam dependências compartilhadas e participam do rollback da importação; os formatos antigos continuam compatíveis.
+- A configuração mundial de status agora persiste uma lista completa e autoritativa; os padrões do sistema servem apenas como referência inicial ou restauração, e `Substituir tudo` aplica exatamente a lista importada.
+- Os quatro status de Choque agora usam ícones mais simples e legíveis, com identificação direta das penalidades de −1 a −4.
+
+### Fixed
+
+- Criação automática do compêndio de dependências usa a API namespaced e o esquema nativo do Foundry V13+, e sua janela de destino agora apresenta somente os campos pertinentes à opção selecionada.
+
 ## [1.4.4-beta] - 2026-10-17
 
 ### Added

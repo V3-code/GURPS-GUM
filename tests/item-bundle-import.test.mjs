@@ -194,3 +194,16 @@ test("continues later rollback stages after an earlier rollback failure", async 
   assert.equal(runtime.notifications.some(([, message]) => message === "GUM.LibraryImport.BundleRollbackFailed"), true);
   assert.equal(runtime.pack.locked, true);
 });
+
+test("rolls back synchronized documents when the owning configuration update fails", async () => {
+  const runtime = setupRuntime();
+  const result = await synchronizeItemBundle(runtime.pack, bundle(), {
+    notifySuccess: false,
+    afterSynchronize: async () => { throw new Error("setting failed"); }
+  });
+
+  assert.equal(result, null);
+  assert.equal(runtime.documents.size, 0);
+  assert.equal(runtime.folders.size, 0);
+  assert.equal(runtime.notifications.some(([type]) => type === "error"), true);
+});

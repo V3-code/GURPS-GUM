@@ -21,18 +21,15 @@ function inferGCSLibraryItemType(extension, importEntries, pack = null) {
     return packType || GCS_LIBRARY_TYPES_BY_EXTENSION[extension] || importEntries[0]?.itemData?.type || null;
 }
 
-function slugifyCompendiumName(label) {
-    const nativeSlug = typeof label.slugify === "function" ? label.slugify() : String(label)
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    return nativeSlug || `biblioteca-${Date.now()}`;
-}
-
-async function createWorldItemCompendium(label) {
-    let name = slugifyCompendiumName(label);
-    let suffix = 2;
-    while (game.packs.get(`world.${name}`)) name = `${slugifyCompendiumName(label)}-${suffix++}`;
-    return CompendiumCollection.createCompendium({ label, name, type: "Item", package: "world" });
+export async function createWorldItemCompendium(label) {
+    const CompendiumClass = globalThis.foundry?.documents?.collections?.CompendiumCollection
+        ?? globalThis.CompendiumCollection;
+    if (!CompendiumClass?.createCompendium) {
+        throw new Error("The Foundry CompendiumCollection API is not available.");
+    }
+    // Foundry generates the world pack name and package metadata server-side.
+    // Passing manifest-only fields such as `package` fails schema validation in V13+.
+    return CompendiumClass.createCompendium({ label, type: "Item" });
 }
 /**
  * Lida com a importação de um arquivo JSON (formato customizado) OU
@@ -4488,7 +4485,10 @@ function bundleFolderMarkerUpdate(existing, planned) {
  * Dependencies are synchronized before the root item and every local reference
  * is converted to a destination UUID before the first write.
  */
-export async function synchronizeItemBundle(pack, bundleData) {
+export async function synchronizeItemBundle(pack, bundleData, {
+    afterSynchronize = null,
+    notifySuccess = true
+} = {}) {
     const t = key => game.i18n.localize(`GUM.LibraryImport.${key}`);
     const format = (key, data) => game.i18n.format(`GUM.LibraryImport.${key}`, data);
     const originalLocked = Boolean(pack?.locked);
@@ -4554,11 +4554,17 @@ export async function synchronizeItemBundle(pack, bundleData) {
             }
         }
 
-        ui.notifications.info(format("BundleImportSuccess", {
-            count: prepared.documents.length,
-            root: bundleData.documents[bundleData.root]?.name || bundleData.root,
-            name: pack.title
-        }));
+        if (typeof afterSynchronize === "function") {
+            await afterSynchronize({ pack, prepared });
+        }
+
+        if (notifySuccess) {
+            ui.notifications.info(format("BundleImportSuccess", {
+                count: prepared.documents.length,
+                root: bundleData.documents[bundleData.root]?.name || bundleData.root,
+                name: pack.title
+            }));
+        }
         return {
             created: createdIds.length,
             updated: backups.length,
