@@ -4,6 +4,27 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.4.6-beta] - 2026-10-19
+
+### Added
+
+- A aplicação de dano agora emite um evento estruturado para condições passivas, com dano rolado, penetrante e lesão, tipo e natureza do dano, localização atingida, RD, recurso afetado, origem, alvo e contexto de combate.
+- Efeitos ativos e condições passivas da aba Condições receberam visualização rápida pelo ícone, nome ou menu, reutilizando os mesmos cards dos demais itens e oferecendo fallback para status sem Item Efeito de origem.
+- Testes criados pela ação Mensagem de Texto agora possuem controles de visibilidade para público, alvo e Mestre, somente alvo ou somente Mestre.
+
+### Changed
+
+- Atributos solicitados em testes aceitam aliases em português e inglês, incluindo `ST`, `DX`, `IQ`, `HT`, `Will`, `Per` e os sentidos correspondentes, em fichas, efeitos e Escudo do Mestre.
+- Condições passivas podem avaliar os dados concretos da aplicação de dano; gatilhos como Ferimento Grave podem distinguir uma lesão única aplicada a PV de alterações narrativas ou em outros recursos.
+- A janela de seleção de fontes de conteúdo ganhou dimensões estáveis e redimensionáveis, tratamento para nomes longos de compêndios, estilo integrado ao GUM e rodapé fixo para salvar.
+
+### Fixed
+
+- Operações assíncronas de status e efeitos ignoram com segurança atores sintéticos cujo token já foi removido, evitando travamentos de ficha, rolagens e erros de `EmbeddedCollection`.
+- Vínculos de status nos modos substituir e atualizar não recriam continuamente o mesmo efeito aplicado.
+- Cancelar um teste aberto por um card de Mensagem de Texto volta a liberar seu botão de rolagem.
+- Modificadores de barreiras de resistência originadas por dano preservam o valor calculado a partir do evento que as criou.
+
 ## [1.4.5-beta] - 2026-10-18
 
 ### Added
