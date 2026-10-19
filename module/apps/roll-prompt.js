@@ -13,6 +13,7 @@ import { evaluateModifierRollFormulaSync } from "../utils/modifier-roll-formula.
 import { getSkillDisplayName } from "../utils/skill-display-name.mjs";
 import { matchesEquipmentGrantedEffectScope } from "../utils/equipment-granted-effects.mjs";
 import { availableAmmunition, ammunitionRollModifier } from "../utils/ammunition.mjs";
+import { normalizeRequestedAttributeKey } from "../utils/requested-attributes.mjs";
 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
@@ -818,7 +819,7 @@ export class GurpsRollPrompt extends FormApplication {
     _determineContext() {
         const type = this.rollData.type;
         const itemId = this.rollData.itemId;
-        const attributeKey = this.rollData.attributeKey?.toLowerCase?.() || this.rollData.attribute?.toLowerCase?.();
+        const attributeKey = normalizeRequestedAttributeKey(this.rollData.attributeKey ?? this.rollData.attribute);
         const senseKeys = ["vision", "hearing", "tastesmell", "touch"];
         const attributeKeys = ["st", "dx", "iq", "ht", "per", "vont"];
         
@@ -874,9 +875,7 @@ return 'default';
 
     _normalizeAttributeKey(key) {
         if (!key) return null;
-        const normalized = key.toString().trim().toLowerCase();
-        if (normalized === "will") return "vont";
-        return normalized;
+        return normalizeRequestedAttributeKey(key);
     }
 
     _formatBaseLabelValue(key) {
@@ -913,7 +912,7 @@ return 'default';
     }
 
     _resolveOriginalBaseAttributeKey() {
-        const attributeKey = this.rollData.attributeKey?.toLowerCase?.() || this.rollData.attribute?.toLowerCase?.();
+        const attributeKey = normalizeRequestedAttributeKey(this.rollData.attributeKey ?? this.rollData.attribute);
         if (attributeKey) return attributeKey;
         if (this.rollData.itemId) {
             const item = this.actor.items.get(this.rollData.itemId);

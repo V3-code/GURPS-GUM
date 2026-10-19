@@ -18,7 +18,7 @@ import { ConditionSheet } from "./apps/condition-sheet.js";
 import { EffectSheet } from './apps/effect-sheet.js';
 import { TriggerSheet } from './apps/trigger-sheet.js';
 import { applySingleEffect, getEffectActions } from './effects-engine.js';
-import { buildActorEffectTarget, buildActorEffectTargets, getActorEvaluationKey, isActorContextAvailable } from '../module/utils/condition-actor-context.mjs';
+import { buildActorEffectTarget, buildActorEffectTargets, getActorEvaluationKey, isActorContextAvailable, isMissingSyntheticActorContextError } from '../module/utils/condition-actor-context.mjs';
 import { reconcileAllStateEffects, removeAllStateEffectsForItem, setStateEffectGroupActive, syncItemStateEffects } from '../module/services/state-effect-service.js';
 import { GUM } from '../module/config.js';
 import { installItemCompendiumExportSourceCompatibility } from '../module/utils/foundry-item-compat.mjs';
@@ -54,6 +54,7 @@ import { applyMagicConsumptionTrigger, prepareMagicConsumptionSession } from "..
 import { ContentSourceConfig } from "../module/apps/content-source-config.js";
 import { WorldStatusConfig } from "../module/apps/world-status-config.js";
 import { installGumApi } from "../module/api/gum-api.mjs";
+import { getRequestedAttributeOption, normalizeRequestedAttributeKey } from "../module/utils/requested-attributes.mjs";
 
 import { getSkillDisplayName, setDirectoryEntryLabel } from "../module/utils/skill-display-name.mjs";
 import { installGumChatCommandInterceptor, normalizeGumLookup, resolveGumCommandActor, splitSkillModifier } from "../module/utils/gum-chat-command.mjs";
@@ -436,6 +437,7 @@ async function migrateEffectActionsSchema() {
             "system.roll_modifier_source_item_ids": firstAction.roll_modifier_source_item_ids ?? "",
             "system.roll_modifier_source_attack_ids": firstAction.roll_modifier_source_attack_ids ?? "",
             "system.roll_modifier_entries": firstAction.roll_modifier_entries ?? [],
+            "system.roll_visibility": firstAction.roll_visibility ?? "owners",
             "system.whisperMode": firstAction.whisperMode ?? "public",
             "system.category": firstAction.category ?? "hp",
             "system.name": firstAction.name ?? "",
@@ -2253,7 +2255,7 @@ function _registerGumChatCommands() {
 function _determineRollContext(actor, rollData) {
     const type = rollData.type;
     const itemId = rollData.itemId;
-    const attributeKey = rollData.attributeKey?.toLowerCase?.() || rollData.attribute?.toLowerCase?.();
+    const attributeKey = normalizeRequestedAttributeKey(rollData.attributeKey ?? rollData.attribute);
     const senseKeys = ["vision", "hearing", "tastesmell", "touch"];
     const attributeKeys = ["st", "dx", "iq", "ht", "per", "vont"];
 
@@ -2883,6 +2885,14 @@ async function applyUseEventEffects(item, actor, trigger, options = {}) {
 async function _promptActivationResistance(effectItem, targetToken, sourceActor, originItem, effectLinkId, options = {}) {
     const rollData = effectItem.system?.resistanceRoll || {};
     const normalizedResistance = normalizeResistanceRoll(rollData);
+    const resistanceModifier = evaluateNumericFormula(rollData.modifier, {
+        actor: targetToken.actor,
+        eventData: options.eventData ?? null
+    }) || 0;
+    normalizedResistance.test.fixedModifier = resistanceModifier;
+    // O evento que originou a barreira pode ser efêmero (por exemplo, local de
+    // impacto de um dano). Grave o valor já resolvido no pedido de rolagem.
+    normalizedResistance.test.fixedModifierFormula = "";
     const suppressResistanceCard = rollData.skipPromptCard || options.suppressResistanceCard;
     if (suppressResistanceCard) {
         const targetKey = targetToken.document?.uuid || targetToken.uuid || targetToken.actor?.uuid;
@@ -2896,7 +2906,7 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
             id: foundry.utils.randomID(), title: game.i18n.format("GUM.RollRequest.ResistanceTitle", { name: effectItem.name }),
             origin: { type: "effect-barrier", sourceActorUuid: sourceActor?.uuid, sourceItemUuid: originItem?.uuid, effectUuid: effectItem.uuid, effectLinkId },
             targets: [{ targetKey, actorUuid: targetToken.actor?.uuid, tokenUuid: targetToken.document?.uuid || targetToken.uuid || null, actorName: targetToken.actor?.name, recipientUserIds: [] }],
-            test: { ...normalizedResistance.test, fixedModifier: evaluateNumericFormula(rollData.modifier, { actor: targetToken.actor }) || 0 }, consequence: normalizedResistance.consequence
+            test: normalizedResistance.test, consequence: normalizedResistance.consequence
         };
         await executeRollRequest(silentRequest, targetKey, { prompt: false, onResult: async result => {
             if (!game.user.isGM) {
@@ -2911,7 +2921,7 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
     const applyOnText = game.i18n.localize(rollData.mode === 'conditional' ? "GUM.RollRequest.ConditionalResults" : (rollData.applyOn === 'success' ? "GUM.RollRequest.OnSuccess" : "GUM.RollRequest.OnFailure"));
     const marginValue = rollData.mode === 'conditional' ? game.i18n.localize("GUM.RollRequest.PerResult") : ((rollData.margin !== undefined && rollData.margin !== null && rollData.margin !== '') ? rollData.margin : '—');
     const rawModifier = (rollData.modifier ?? "").toString().trim();
-    const previewModifier = evaluateNumericFormula(rawModifier, { actor: targetToken.actor });
+    const previewModifier = resistanceModifier;
     const previewModifierSigned = previewModifier > 0 ? `+${previewModifier}` : `${previewModifier}`;
     const testLabel = `${(rollData.attribute || 'HT').toUpperCase()}${rawModifier && previewModifier !== 0 ? ` ${previewModifierSigned}` : ''}`;
     const resistanceChatText = (rollData.chatText || "").toString().trim();
@@ -3549,7 +3559,8 @@ const resolveActorTestValue = (actor, rawKey) => {
     const numericKey = Number(key);
     if (!Number.isNaN(numericKey) && key !== "") return numericKey;
 
-    const attributeCandidates = [key, key.toLowerCase(), key.toUpperCase()];
+    const canonicalAttributeKey = normalizeRequestedAttributeKey(key);
+    const attributeCandidates = [canonicalAttributeKey, key, key.toLowerCase(), key.toUpperCase()];
     let attributeObject = null;
     for (const candidate of attributeCandidates) {
         attributeObject = foundry.utils.getProperty(actor.system?.attributes, candidate);
@@ -3574,11 +3585,8 @@ const resolveActorTestValue = (actor, rawKey) => {
 const formatTestLabel = (rawKey) => {
     if (!rawKey) return "HT";
     const key = rawKey.toString().trim();
-    const attributeKey = key.toLowerCase();
-    const standardAttributes = new Set(["st", "dx", "iq", "ht", "will", "per"]);
-    if (standardAttributes.has(attributeKey)) {
-        return attributeKey.toUpperCase();
-    }
+    const option = getRequestedAttributeOption(key);
+    if (option) return option.label;
     return key;
 };
 
@@ -3982,10 +3990,11 @@ const normalizeLookupKey = (value) => value
 const resolveRollBaseValue = (actor, rollAttribute) => {
     if (!actor || !rollAttribute) return null;
     const normalizedKey = normalizeLookupKey(rollAttribute);
-    if (!normalizedKey) return null;
+    const normalizedAttributeKey = normalizeRequestedAttributeKey(rollAttribute);
+    if (!normalizedKey || !normalizedAttributeKey) return null;
 
     const attributes = actor.system?.attributes || {};
-    const attrKey = Object.keys(attributes).find((key) => normalizeLookupKey(key) === normalizedKey);
+    const attrKey = Object.keys(attributes).find((key) => normalizeLookupKey(key) === normalizeLookupKey(normalizedAttributeKey));
     if (attrKey) {
         const attr = attributes[attrKey];
         const value = (attr?.override !== null && attr?.override !== undefined)
@@ -4136,6 +4145,7 @@ async function processStatusBindings(actor) {
     try {
         const activeStatuses = getActorActiveNativeStatusSet(actor);
         const statusRules = await loadStatusBindingRules();
+        if (!isActorContextAvailable(actor)) return;
         const effectsToDelete = [];
         for (const rule of statusRules) {
             const binding = rule.system?.statusBinding || {};
@@ -4168,18 +4178,19 @@ async function processStatusBindings(actor) {
                 .map(effect => effect.id));
 
             for (const link of effectLinks) {
+                if (!isActorContextAvailable(actor)) return;
                 const effectUuid = link?.uuid;
                 if (!effectUuid) continue;
                 const siblings = existingRuleEffects
                     .filter((effect) => foundry.utils.getProperty(effect, "flags.gum.effectUuid") === effectUuid)
                     .sort((a, b) => a.id.localeCompare(b.id));
 
-                if (stackMode === "replace" && siblings.length) {
-                    effectsToDelete.push(...siblings.map((effect) => effect.id));
-                } else if (stackMode === "refresh" && siblings.length) {
-                    // The linked effect is already authoritative while the native
-                    // status remains active. Rewriting it on every hook caused a
-                    // create/delete feedback loop on synthetic token actors.
+                if (["replace", "refresh"].includes(stackMode) && siblings.length) {
+                    // O efeito vinculado já é a representação autoritativa deste
+                    // status. Recriá-lo a cada hook (inclusive no modo replace)
+                    // forma um ciclo create/delete, especialmente em atores de
+                    // tokens não vinculados. Referências obsoletas já foram
+                    // adicionadas a effectsToDelete acima.
                     continue;
                 } else if (stackMode === "stack" && siblings.length >= stackLimit) {
                     continue;
@@ -4198,9 +4209,11 @@ await applySingleEffect(effectItem, buildActorEffectTargets(actor), {
         }
 
         const uniqueIds = [...new Set(effectsToDelete)];
-        if (uniqueIds.length) {
+        if (uniqueIds.length && isActorContextAvailable(actor)) {
             await actor.deleteEmbeddedDocuments("ActiveEffect", uniqueIds);
         }
+    } catch (error) {
+        if (!isMissingSyntheticActorContextError(error, actor)) throw error;
     } finally {
         processingStatusBindingActors.delete(evaluationKey);
     }
@@ -4229,6 +4242,7 @@ async function processConditions(actor, eventData = null) {
     // baseadas na MUDANÇA DE ESTADO desses ITENS.
     // **NÃO GERENCIA MAIS ÍCONES DE STATUS.**
     
+    if (!isActorContextAvailable(actor)) return;
     const evaluationKey = getActorEvaluationKey(actor);
     if (!evaluationKey || evaluatingActors.has(evaluationKey)) return;
     evaluatingActors.add(evaluationKey);
@@ -4325,7 +4339,8 @@ const conditionTarget = buildActorEffectTarget(actor);
                                 {
                                     mode: "condition",
                                     conditionId: condition.id,
-                                    conditionActivationMode
+                                    conditionActivationMode,
+                                    eventData
                                 }
                             );
                             continue;
@@ -4420,7 +4435,8 @@ await applySingleEffect(effectItem, [conditionTarget], {
         } // Fim do loop de Conditions
 
         // Nenhuma lógica de sincronização de ícones ('toggleStatusEffect') aqui.
-
+    } catch (error) {
+        if (!isMissingSyntheticActorContextError(error, actor)) throw error;
     } finally {
         evaluatingActors.delete(evaluationKey); // Libera este contexto de ator para a próxima avaliação
     }
@@ -4976,7 +4992,7 @@ Hooks.on("updateToken", (tokenDocument) => {
 // Mantemos somente a remoção aqui para evitar renders intermediários durante
 // aplicações em lote (ex.: 2+ efeitos no mesmo clique no Escudo do Mestre).
 const rebalanceEffectCarrier = async (actor, effectUuid) => {
-    if (!actor || !effectUuid) return;
+    if (!isActorContextAvailable(actor) || !effectUuid) return;
     try {
         const siblings = actor.effects
             .filter((candidate) =>
@@ -4992,6 +5008,7 @@ const rebalanceEffectCarrier = async (actor, effectUuid) => {
         if (siblings.length === 0) return;
 
         const effectItem = await fromUuid(effectUuid).catch(() => null);
+        if (!isActorContextAvailable(actor)) return;
         const statusIds = new Set((CONFIG.statusEffects || []).map((status) => status.id));
         const carrier = siblings.find((sibling) => foundry.utils.getProperty(sibling, "flags.gum.actionType") !== "status") || siblings[0];
         const updates = [];
@@ -5030,11 +5047,12 @@ const rebalanceEffectCarrier = async (actor, effectUuid) => {
             updates.push(updateData);
         }
 
-        if (updates.length) {
+        if (updates.length && isActorContextAvailable(actor)) {
             await actor.updateEmbeddedDocuments("ActiveEffect", updates);
-            actor.getActiveTokens().forEach((token) => token.drawEffects());
+            if (isActorContextAvailable(actor)) actor.getActiveTokens().forEach((token) => token.drawEffects());
         }
     } catch (error) {
+        if (isMissingSyntheticActorContextError(error, actor)) return;
         console.warn("GUM | Não foi possível reequilibrar ícone carrier após remover ActiveEffect.", error);
     }
 };
@@ -5051,6 +5069,7 @@ const refreshFromDeletedActiveEffect = async (effect) => {
             refreshGMScreen();
         }
     } catch (error) {
+        if (isMissingSyntheticActorContextError(error, actor)) return;
         console.warn("GUM | Falha ao sincronizar status após remover ActiveEffect.", error);
     }
 };
@@ -5070,6 +5089,7 @@ Hooks.on("updateActiveEffect", async (effect, changes) => {
         await processStatusBindings(actor);
         if (actor.hasPlayerOwner || game.combat) refreshGMScreen();
     } catch (error) {
+        if (isMissingSyntheticActorContextError(error, actor)) return;
         console.warn("GUM | Falha ao sincronizar status após atualizar ActiveEffect.", error);
     }
 });
@@ -5082,6 +5102,7 @@ Hooks.on("createActiveEffect", async (effect) => {
         await processStatusBindings(actor);
         if (actor.hasPlayerOwner || game.combat) refreshGMScreen();
     } catch (error) {
+        if (isMissingSyntheticActorContextError(error, actor)) return;
         console.warn("GUM | Falha ao sincronizar status após criar ActiveEffect.", error);
     }
 });

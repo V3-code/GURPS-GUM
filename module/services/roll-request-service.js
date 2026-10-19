@@ -90,18 +90,32 @@ export function activateRollRequestChatListeners(html) {
     if (!request || (request.status !== "pending" && !(reroll && request.status === "resolved"))) return;
     button.disabled = true;
     const targetKey = decodeURIComponent(button.dataset.targetKey);
-    const outcome = await executeRollRequest(request, targetKey, { onResult: async response => {
-      if (!game.user.isGM) {
-        game.socket.emit("system.gum", { type: "rollRequest:chatResult", messageId: message.id, requestId: request.id, targetKey, userId: game.user.id, reroll, result: response });
-        ui.notifications.info("Resultado enviado ao Mestre.");
-        return;
-      }
-      const updated = { ...request, status: "resolved", responses: [...(request.responses ?? []), response] };
-      const content = appendResistanceRequestResult(message.content, { result: response, consequenceLabel: game.i18n.localize(reroll ? "GUM.RollRequest.RerollRecorded" : "GUM.RollRequest.ResponseRecorded"), purposeLabels: getPurposeLabels(response.purposeIds), userName: game.users.get(response.userId)?.name, allowReroll: true, targetKey });
-      await message.update({ content, "flags.gum.rollRequest": updated });
-    }});
+    const restoreButton = () => {
+      if (button.isConnected) button.disabled = false;
+    };
+    let outcome;
+    try {
+      outcome = await executeRollRequest(request, targetKey, {
+        onPromptClose: restoreButton,
+        onResult: async response => {
+          if (!game.user.isGM) {
+            game.socket.emit("system.gum", { type: "rollRequest:chatResult", messageId: message.id, requestId: request.id, targetKey, userId: game.user.id, reroll, result: response });
+            ui.notifications.info("Resultado enviado ao Mestre.");
+            return;
+          }
+          const updated = { ...request, status: "resolved", responses: [...(request.responses ?? []), response] };
+          const content = appendResistanceRequestResult(message.content, { result: response, consequenceLabel: game.i18n.localize(reroll ? "GUM.RollRequest.RerollRecorded" : "GUM.RollRequest.ResponseRecorded"), purposeLabels: getPurposeLabels(response.purposeIds), userName: game.users.get(response.userId)?.name, allowReroll: true, targetKey });
+          await message.update({ content, "flags.gum.rollRequest": updated });
+        }
+      });
+    } catch (error) {
+      restoreButton();
+      console.error("GUM | Falha ao abrir ou executar teste do card de efeito:", error);
+      ui.notifications.error("Não foi possível realizar este teste.");
+      return;
+    }
     if (!outcome.accepted) {
-      button.disabled = false;
+      restoreButton();
       const reason = !outcome.reason || ["target", "permission", "processing"].includes(outcome.reason)
         ? "Não foi possível realizar este teste."
         : outcome.reason;

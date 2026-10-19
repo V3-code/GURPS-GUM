@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { resolveRollReference } from "../module/utils/roll-reference-resolver.mjs";
 
-const attributes = { dx: { final: 14 }, iq: { final: 12 } };
+const attributes = { dx: { final: 14 }, iq: { final: 12 }, vont: { final: 11 } };
 const skill = (name, nh, specialization = "") => ({ id: `${name}-${specialization}`, type: "skill", name, system: { final_nh: nh, specialization } });
 
 test("ignora perícia não possuída ao escolher o melhor valor", () => {
@@ -29,4 +29,7 @@ test("preserva maior, menor, números fixos e modificadores", () => {
   assert.equal(resolveRollReference("maior(DX-5, IQ-1)", attributes).value, 11);
   assert.equal(resolveRollReference("menor(DX-5, IQ-1)", attributes).value, 9);
   assert.equal(resolveRollReference("12+2", attributes).value, 14);
+});test("aceita aliases ingleses nas referências de rolagem", () => {
+  assert.equal(resolveRollReference("Will-2", attributes).value, 9);
+  assert.equal(resolveRollReference("Dexterity", attributes).value, 14);
 });

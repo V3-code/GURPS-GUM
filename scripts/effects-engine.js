@@ -4,9 +4,16 @@ import { recipientUserIdsForActor } from "../module/utils/test-request-targets.m
 import { findConfiguredStatus } from "../module/utils/status-catalog.mjs";
 import { equipmentLinkedReserve, equipmentReserveBalanceUpdate } from "../module/utils/equipment-resolution.mjs";
 import {
+    isActorContextAvailable,
+    isMissingSyntheticActorContextError
+} from "../module/utils/condition-actor-context.mjs";
+import {
+    getEffectTestChatPrivacy,
     getAttributeRollMessageOptions,
-    normalizeAttributeChatVisibility
+    normalizeAttributeChatVisibility,
+    normalizeEffectTestChatVisibility
 } from "../module/utils/effect-chat-visibility.mjs";
+import { normalizeRequestedAttributeKey } from "../module/utils/requested-attributes.mjs";
 
 /**
  * O "Motor de Efeitos" central do sistema. (Versão 5.0 - Rollback Controlado)
@@ -56,10 +63,11 @@ const buildActiveEffectChange = ({ key, operation, value }) => {
 const resolveRollBaseValue = (actor, rollAttribute) => {
     if (!actor || !rollAttribute) return null;
     const normalizedKey = normalizeLookupKey(rollAttribute);
-    if (!normalizedKey) return null;
+    const normalizedAttributeKey = normalizeRequestedAttributeKey(rollAttribute);
+    if (!normalizedKey || !normalizedAttributeKey) return null;
 
     const attributes = actor.system?.attributes || {};
-    const attrKey = Object.keys(attributes).find((key) => normalizeLookupKey(key) === normalizedKey);
+    const attrKey = Object.keys(attributes).find((key) => normalizeLookupKey(key) === normalizeLookupKey(normalizedAttributeKey));
     if (attrKey) {
         const attr = attributes[attrKey];
         const value = (attr?.override !== null && attr?.override !== undefined)
@@ -214,6 +222,7 @@ const DEFAULT_EFFECT_ACTION = {
     combat_damage_cap: "",
     combat_damage_value_mode: "fixed",
     combat_damage_changes: [],
+    roll_visibility: "owners",
     whisperMode: "public",
     category: "hp",
     name: "",
@@ -262,8 +271,11 @@ const normalizeControlledCsv = (value) => {
 };
 
 const normalizeEffectAction = (action = {}) => {
+    const configuredRollVisibility = action?.roll_visibility
+        ?? (action?.whisperMode === "blind" ? "target" : action?.whisperMode === "gm" ? "owners" : action?.whisperMode);
     const next = foundry.utils.mergeObject(foundry.utils.deepClone(DEFAULT_EFFECT_ACTION), action || {}, { inplace: false, overwrite: true });
     next.attribute_chat_visibility = normalizeAttributeChatVisibility(next.attribute_chat_visibility);
+    next.roll_visibility = normalizeEffectTestChatVisibility(configuredRollVisibility);
     if (!Array.isArray(next.roll_modifier_entries) || next.roll_modifier_entries.length === 0) {
         next.roll_modifier_entries = [{
             label: "",
@@ -386,6 +398,8 @@ const selectCarrierActionIndex = (actions = []) => {
 
 export async function applySingleEffect(effectItem, targets, context = {}) {
     if (!effectItem || targets.length === 0) return;
+    targets = targets.filter(target => isActorContextAvailable(target?.actor));
+    if (targets.length === 0) return;
 
     const effectSystem = effectItem.system;
     const allActions = getEffectActions(effectSystem);
@@ -515,6 +529,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                 }
                 for (const targetToken of targets) {
                     const targetActor = targetToken.actor;
+                    if (!isActorContextAvailable(targetActor)) continue;
                     if (uniqueAcrossConditions) {
                         const sharedEffect = Array.from(targetActor?.effects || []).find((effect) => {
                             const gumFlags = effect?.flags?.gum || {};
@@ -748,8 +763,14 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     }
                     activeEffectData.statuses = [...new Set(activeEffectData.statuses.filter(Boolean))];
 
-                    await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
-                    targetActor.sheet.render(false);
+                    if (!isActorContextAvailable(targetActor)) continue;
+                    try {
+                        await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
+                    } catch (error) {
+                        if (isMissingSyntheticActorContextError(error, targetActor)) continue;
+                        throw error;
+                    }
+                    if (isActorContextAvailable(targetActor)) targetActor.sheet?.render?.(false);
                 }
                 continue;
             }
@@ -958,22 +979,22 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     const chatBody = action.chat_text.replace(/{actor.name}/g, targetActor.name);
                     const content = `<div class="gurps-effect-chat-card"><div class="gum-effect-chat-header"><i class="fas fa-comment-dots"></i><span>Mensagem de Efeito</span><span class="gum-effect-chat-target">${targetActor.name}</span></div><div class="gum-effect-chat-body">${chatBody}</div></div>`;
                     const chatData = { speaker: ChatMessage.getSpeaker({ actor: targetActor }), content };
-                    if (action.whisperMode === "gm") chatData.whisper = ChatMessage.getWhisperRecipients("GM");
-                    else if (action.whisperMode === "blind") chatData.blind = true;
                     if (action.has_roll) {
                         const normalized = normalizeChatRoll(action);
                         const recipients = recipientUserIdsForActor(targetActor, Array.from(game.users || []));
-                        if (action.whisperMode === "gm") {
-                            chatData.whisper = [...new Set([...ChatMessage.getWhisperRecipients("GM").map(user => user.id), ...recipients])];
-                        } else if (action.whisperMode === "blind") {
-                            chatData.whisper = recipients;
-                            delete chatData.blind;
-                        }
-                        await createSingleRollRequestMessage({ title: normalized.label, description: chatBody, origin: { type: "effect-chat", effectUuid: effectItem.uuid, effectName: effectItem.name }, targets: [{ targetKey: targetActor.uuid, actorUuid: targetActor.uuid, tokenUuid: null, actorName: targetActor.name, actorImg: targetActor.img, recipientUserIds: recipients }], test: normalized.test, consequence: { type: "chat-record" }, delivery: { rollMode: normalized.whisperMode } }, chatData);
-                    } else ChatMessage.create(chatData);
+                        const privacy = getEffectTestChatPrivacy({ visibility: normalized.visibility, actor: targetActor, users: Array.from(game.users || []) });
+                        if (privacy.whisper.length) chatData.whisper = privacy.whisper;
+                        if (privacy.blind) chatData.blind = true;
+                        await createSingleRollRequestMessage({ title: normalized.label, description: chatBody, origin: { type: "effect-chat", effectUuid: effectItem.uuid, effectName: effectItem.name }, targets: [{ targetKey: targetActor.uuid, actorUuid: targetActor.uuid, tokenUuid: null, actorName: targetActor.name, actorImg: targetActor.img, recipientUserIds: recipients }], test: normalized.test, consequence: { type: "chat-record" }, delivery: { rollMode: privacy.mode, visibility: normalized.visibility } }, chatData);
+                    } else {
+                        if (action.whisperMode === "gm") chatData.whisper = ChatMessage.getWhisperRecipients("GM");
+                        else if (action.whisperMode === "blind") chatData.blind = true;
+                        ChatMessage.create(chatData);
+                    }
                 }
             }
         } catch (error) {
+            if (targets.some(target => isMissingSyntheticActorContextError(error, target?.actor))) continue;
             console.error(`GUM | Falha ao aplicar ação "${action.type}" do efeito "${effectItem.name}":`, error);
             ui.notifications.warn(`Efeito "${effectItem.name}": uma ação "${action.type}" falhou e foi ignorada.`);
         }

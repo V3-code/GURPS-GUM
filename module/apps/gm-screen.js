@@ -18,6 +18,7 @@ import {
     parseConfigurationBundle
 } from "../utils/configuration-bundle-json.mjs";
 import { chooseConfigurationImportMode, importConfigurationBundle } from "./configuration-bundle-import.js";
+import { normalizeRequestedAttributeKey } from "../utils/requested-attributes.mjs";
 
 export class GumGMScreen extends Application {
     
@@ -1322,9 +1323,7 @@ activateListeners(html) {
         });
     }
         _resolveContextAttributeKey(label) {
-        const normalized = String(label || "").trim().toLowerCase();
-        const aliases = { "percepção": "per", percepcao: "per", vontade: "vont" };
-        return aliases[normalized] || normalized;
+        return normalizeRequestedAttributeKey(label);
     }
 
     /**

@@ -29,7 +29,10 @@ test("all condition card types keep their controls in the side action menu", () 
   assert.equal((conditionsTab.match(/class="pill-card-content"/g) ?? []).length, 3);
   assert.equal((conditionsTab.match(/class="gum-action-menu js-action-menu"/g) ?? []).length, 3);
   assert.equal((conditionsTab.match(/class="effect-toggle"/g) ?? []).length, 2);
-  assert.equal((conditionsTab.match(/quick-view-origin/g) ?? []).length, 2);
+  assert.equal((conditionsTab.match(/effect-control effect-quick-view gum-action-menu__item/g) ?? []).length, 2);
+  assert.equal((conditionsTab.match(/item-control item-quick-view gum-action-menu__item/g) ?? []).length, 1);
+  assert.equal((conditionsTab.match(/pill-name effect-quick-view/g) ?? []).length, 2);
+  assert.equal((conditionsTab.match(/pill-name item-quick-view/g) ?? []).length, 1);
   assert.equal((conditionsTab.match(/data-action="delete-effect"/g) ?? []).length, 2);
   assert.match(conditionsTab, /class="manual-override-toggle"/);
   assert.equal((conditionsTab.match(/class="pill-card-visual"/g) ?? []).length, 3);
@@ -38,6 +41,14 @@ test("all condition card types keep their controls in the side action menu", () 
   assert.match(conditionsTab, /pill-card-visual">\s*<img src="\{\{item\.img\}\}"[\s\S]*?<div class="pill-switch-wrapper"/);
   assert.match(conditionsTab, /item-control item-edit gum-action-menu__item/);
   assert.match(conditionsTab, /item-control item-delete gum-action-menu__item is-danger/);
+});
+
+test("applied effects use the shared quick view and fall back to ActiveEffect details", () => {
+  assert.match(actorSheet, /html\.on\('click', '\.effect-quick-view'/);
+  assert.match(actorSheet, /effectItemUuid: card\?\.dataset\.effectItemUuid/);
+  assert.match(actorSheet, /const sourceItem = await resolveItem\(effectItemUuid\) \|\| await resolveItem\(originUuid\)/);
+  assert.match(actorSheet, /return GumPreviewDialog\.show\(\{/);
+  assert.match(actorSheet, /sourceUuid: effect\.uuid/);
 });
 
 test("condition cards rise above neighboring cards while their action menu is open", () => {

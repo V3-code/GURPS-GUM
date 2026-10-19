@@ -26,9 +26,20 @@ export function isActorContextAvailable(actor) {
   return true;
 }
 
+/** Identify Foundry backend failures caused by an unlinked Token Actor whose
+ * TokenDocument disappeared while an asynchronous embedded operation ran. */
+export function isMissingSyntheticActorContextError(error, actor) {
+  if (!actor?.isToken) return false;
+  if (!isActorContextAvailable(actor)) return true;
+  const message = String(error?.message ?? error ?? "");
+  const stack = String(error?.stack ?? "");
+  return /id \[[^\]]+\] does not exist in the EmbeddedCollection collection/i.test(message)
+    && /Scene\.getEmbeddedDocument/i.test(stack);
+}
+
 /** Adapt an Actor to the token-shaped target expected by the effects engine. */
 export function buildActorEffectTarget(actor) {
-  if (!actor) return null;
+  if (!actor || !isActorContextAvailable(actor)) return null;
 
   // Preserve the Token only when it is the context which owns this synthetic
   // Actor. Active Tokens of a world Actor must never replace that Actor as the

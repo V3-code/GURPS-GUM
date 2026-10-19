@@ -15,9 +15,10 @@ export class ContentSourceConfig extends FormApplication {
       id: "gum-content-source-config",
       title: "GUM.ContentSources.Title",
       template: "systems/gum/templates/apps/content-source-config.hbs",
-      classes: ["gum", "content-source-config"],
-      width: 650,
-      height: "auto",
+      classes: ["gum", "gum-dialog", "gum-sheet-edit-dialog", "content-source-config"],
+      width: 720,
+      height: 740,
+      resizable: true,
       closeOnSubmit: true
     });
   }

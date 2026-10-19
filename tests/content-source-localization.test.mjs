@@ -12,6 +12,7 @@ const contentSourceTemplate = fs.readFileSync("templates/apps/content-source-con
 const styles = fs.readFileSync("styles/styles.css", "utf8");
 const settingsSource = fs.readFileSync("module/settings.js", "utf8");
 const importerSource = fs.readFileSync("module/apps/importers.js", "utf8");
+const contentSourceApp = fs.readFileSync("module/apps/content-source-config.js", "utf8");
 
 test("content source names and descriptions are available in every supported language", () => {
   for (const definition of Object.values(CONTENT_SOURCE_PURPOSES)) {
@@ -53,6 +54,18 @@ test("content source groups use a compact header grid and distinct card styling"
   assert.match(styles, /grid-template-columns:\s*minmax\(0, 1fr\) minmax\(7\.5rem, 0\.25fr\)/);
   assert.match(styles, /border-left:\s*3px solid/);
   assert.match(styles, /content-source-purpose:nth-of-type\(3n \+ 2\)/);
+});
+
+test("content source window has a bounded scroll area and a fixed GUM footer", () => {
+  assert.match(contentSourceApp, /classes: \["gum", "gum-dialog", "gum-sheet-edit-dialog", "content-source-config"\]/);
+  assert.match(contentSourceApp, /width: 720/);
+  assert.match(contentSourceApp, /height: 740/);
+  assert.match(contentSourceTemplate, /class="content-source-scroll"/);
+  assert.match(contentSourceTemplate, /class="sheet-footer content-source-footer flexrow"/);
+  assert.match(styles, /#gum-content-source-config\.app\.window-app \.window-content[\s\S]*?overflow: hidden/);
+  assert.match(styles, /\.content-source-config \.content-source-scroll[\s\S]*?overflow-y: auto/);
+  assert.match(styles, /\.content-source-config \.sheet-footer[\s\S]*?flex: 0 0 auto/);
+  assert.match(styles, /\.source-details strong,[\s\S]*?text-overflow: ellipsis/);
 });
 
 test("system settings and compendium context actions have translations in every language", () => {

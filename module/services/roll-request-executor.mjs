@@ -15,7 +15,7 @@ export function createRollRequestExecutor({
 }) {
   const processing = new Set();
 
-  return async function execute(rawRequest, targetKey, { prompt = true, onResult } = {}) {
+  return async function execute(rawRequest, targetKey, { prompt = true, onResult, onPromptClose } = {}) {
     const request = normalizeRequest(rawRequest);
     const key = `${request.id}:${targetKey}`;
     if (processing.has(key)) return { accepted: false, reason: "processing" };
@@ -72,12 +72,23 @@ export function createRollRequestExecutor({
     try {
       const promptApp = createPrompt(resolvedTarget.actor, rollData, { onRoll: run });
       const originalClose = promptApp.close.bind(promptApp);
-      promptApp.close = async (...args) => {
+      let promptClosed = false;
+      const finishPrompt = async (reason = "closed") => {
         release();
+        if (promptClosed) return;
+        promptClosed = true;
+        try {
+          await onPromptClose?.({ reason, request, target, actor: resolvedTarget.actor, resolution });
+        } catch (error) {
+          console.warn("GUM | Falha ao finalizar a interface do pedido de rolagem.", error);
+        }
+      };
+      promptApp.close = async (...args) => {
+        await finishPrompt("closed");
         return originalClose(...args);
       };
       const rendering = promptApp.render(true);
-      if (rendering?.catch) rendering.catch(release);
+      if (rendering?.catch) rendering.catch(() => finishPrompt("render-error"));
       return { accepted: true, pending: true };
     } catch (error) {
       release();

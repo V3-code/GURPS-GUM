@@ -20,6 +20,7 @@ import { attachSheetItemOrganizer } from "../services/sheet-item-organizer.mjs";
 import { buildEquipmentSortUpdates, resolveEquipmentDrop } from "../utils/equipment-drop.mjs";
 import { buildEquipmentConsumptionUpdate, equipmentIntegrityCurrentUpdate, equipmentIntegrityRecord, equipmentLinkedReserve, equipmentReserveBalanceUpdate, resolveEquipment } from "../utils/equipment-resolution.mjs";
 import { UNGROUPED_ORGANIZER_ID, addItemOrganizationGroup, buildItemCategoryGroupPlan, createGroupsFromItemCategories, moveOrganizedItem, normalizeItemOrganization, removeItemOrganizationGroup, renameItemOrganizationGroup } from "../utils/item-organization.mjs";
+import { normalizeRequestedAttributeKey } from "../utils/requested-attributes.mjs";
 
 const WOUND_NATURE_ICONS = Object.freeze({
   fire: "fa-fire",
@@ -237,6 +238,7 @@ async getData(options) {
                         effectData.img = effectData.img || originalEffectItem.img;
                     }
                 }
+                effectData.effectItemUuid = originalEffectItem?.uuid || effectUuid || null;
 
                 const appliedStatuses = Array.isArray(effectData.statuses) ? effectData.statuses : [];
                 const mainStatusId = appliedStatuses.find((statusId) => CONFIG.statusEffects.some(status => status.id === statusId));
@@ -1605,15 +1607,7 @@ _getSubmitData(updateData) {
         .trim()
         .toLowerCase();
 
-    const aliasMap = {
-        forca: "st",
-        destreza: "dx",
-        inteligencia: "iq",
-        saude: "ht",
-        vontade: "vont",
-        percepcao: "per"
-    };
-    const attributeKey = aliasMap[normalizedInput] || normalizedInput;
+    const attributeKey = normalizeRequestedAttributeKey(normalizedInput);
     const actorAttributes = this.actor?.system?.attributes || {};
     const attributeValue = Number(actorAttributes?.[attributeKey]?.final);
 
@@ -4168,18 +4162,22 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
         }).render(true);
     });
 
-    // QUICK VIEW ORIGIN
-    html.find('.quick-view-origin').on('click', async (ev) => {
+    // QUICK VIEW DOS EFEITOS APLICADOS
+    html.on('click', '.effect-quick-view', async (ev) => {
         ev.preventDefault();
         ev.stopPropagation();
-        const originUuid = ev.currentTarget.dataset.originUuid;
-        if (!originUuid) return ui.notifications.warn("Sem origem rastreável.");
-        const item = await fromUuid(originUuid);
-        if (!item) return ui.notifications.error("Item não encontrado.");
-        
-        // ... Lógica de renderização do Quick View de Origem (Mantida igual) ...
-        // Para economizar espaço, use sua lógica existente aqui, ela estava correta.
-        this._renderQuickView(item); // Sugiro criar essa função auxiliar ou manter o código inline.
+        ev.stopImmediatePropagation();
+
+        const card = ev.currentTarget.closest('.effect-pill-enhanced');
+        const effectId = card?.dataset.effectId || ev.currentTarget.dataset.effectId;
+        if (!effectId) return;
+
+        await this._renderActiveEffectQuickView(effectId, {
+            effectItemUuid: card?.dataset.effectItemUuid || ev.currentTarget.dataset.effectItemUuid || "",
+            originUuid: card?.dataset.originUuid || ev.currentTarget.dataset.originUuid || "",
+            duration: card?.dataset.duration || "",
+            sourceName: card?.dataset.sourceName || ""
+        });
     });
 
     // ================================================================== //
@@ -4606,6 +4604,52 @@ _getSecondaryStatsHTML(attrs, vision, hearing, tastesmell, touch, fmt) {
 
     if (parsedList.length === 1) return this._openSingleReference(parsedList[0]);
     return this._promptMultipleReferences(parsedList);
+  }
+
+  async _renderActiveEffectQuickView(effectId, { effectItemUuid = "", originUuid = "", duration = "", sourceName = "" } = {}) {
+    const resolveItem = async (uuid) => {
+      if (!uuid) return null;
+      const document = await fromUuid(uuid).catch(() => null);
+      return document?.documentName === "Item" ? document : null;
+    };
+
+    // O Item Effect é a descrição canônica do efeito aplicado. A origem fica
+    // como compatibilidade para efeitos antigos que ainda não gravavam effectUuid.
+    const sourceItem = await resolveItem(effectItemUuid) || await resolveItem(originUuid);
+    if (sourceItem) return this._renderItemQuickView(sourceItem);
+
+    const effect = this.actor.effects?.get(effectId);
+    if (!effect) {
+      return ui.notifications.warn(game.i18n.localize("GUM.Conditions.EffectNotFound"));
+    }
+
+    const statuses = Array.from(effect.statuses || [])
+      .map((statusId) => CONFIG.statusEffects.find((entry) => entry.id === statusId)?.name || statusId)
+      .filter(Boolean)
+      .join(", ");
+    const descriptionSource = effect.description
+      || foundry.utils.getProperty(effect, "flags.gum.description")
+      || game.i18n.localize("GUM.Conditions.NoDescription");
+    const description = await GumPreviewDialog.enrichDescription(descriptionSource, { secrets: this.actor.isOwner });
+    const tags = [
+      { label: game.i18n.localize("GUM.Conditions.PreviewState"), value: game.i18n.localize(effect.disabled ? "GUM.Conditions.Disabled" : "GUM.Conditions.Active") },
+      { label: game.i18n.localize("GUM.Conditions.PreviewDuration"), value: duration },
+      { label: game.i18n.localize("GUM.Conditions.PreviewSource"), value: sourceName },
+      { label: game.i18n.localize("GUM.Conditions.PreviewStatuses"), value: statuses },
+      { label: game.i18n.localize("GUM.Conditions.PreviewChanges"), value: Array.from(effect.changes || []).length || null }
+    ];
+
+    return GumPreviewDialog.show({
+      title: effect.name,
+      type: GumPreviewDialog.typeLabel("effect"),
+      img: effect.img,
+      description,
+      tags,
+      actor: this.actor,
+      sourceUuid: effect.uuid,
+      sendToChat: true,
+      speaker: ChatMessage.getSpeaker({ actor: this.actor })
+    });
   }
 
   _parseReferenceCodes(rawRef) {

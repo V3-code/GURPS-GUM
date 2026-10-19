@@ -87,7 +87,7 @@ test("resolves effect references and embeds equipment modifier snapshots", () =>
   source.documents.condition = {
     name: "Burning condition",
     type: "condition",
-    system: {}
+    system: { effects: [{ effectRef: "burning" }] }
   };
   source.documents.sword.system.generalConditions = {
     burning: { conditionRef: "condition" }
@@ -105,6 +105,7 @@ test("resolves effect references and embeds equipment modifier snapshots", () =>
   assert.equal(equipment.onDamageEffects.burning.effectUuid, effectUuid);
   assert.equal(equipment.melee_attacks.slash.onDamageEffects.burning.effectUuid, effectUuid);
   assert.equal(equipment.generalConditions.burning.uuid, byKey.condition.uuid);
+  assert.equal(byKey.condition.data.system.effects[0].uuid, effectUuid);
   assert.equal(advantage.passiveEffects.burning.effectUuid, effectUuid);
   assert.equal(advantage.modifiers.area.name, "Area Effect");
   assert.equal(advantage.modifiers.area.cost, "+50%");

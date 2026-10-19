@@ -5,7 +5,8 @@ import {
   buildActorEffectTarget,
   buildActorEffectTargets,
   getActorEvaluationKey,
-  isActorContextAvailable
+  isActorContextAvailable,
+  isMissingSyntheticActorContextError
 } from "../module/utils/condition-actor-context.mjs";
 
 test("world actor remains the sole effect owner even when it has active tokens", () => {
@@ -29,7 +30,9 @@ test("world actor remains the sole effect owner even when it has active tokens",
 test("synthetic actor retains its own token as effect and visual context", () => {
   const actor = { id: "actor-1", uuid: "Scene.scene.Token.token.Actor.actor-1", isToken: true };
   const tokenObject = { id: "token", actor };
-  actor.token = { id: "token", actor, object: tokenObject };
+  const tokenDocument = { id: "token", actor, object: tokenObject };
+  tokenDocument.parent = { tokens: new Map([[tokenDocument.id, tokenDocument]]) };
+  actor.token = tokenDocument;
 
   assert.equal(buildActorEffectTarget(actor), tokenObject);
 });
@@ -61,4 +64,18 @@ test("status reconciliation skips orphaned synthetic token actors", () => {
   assert.equal(isActorContextAvailable({ isToken: true, token: liveToken }), false);
   assert.equal(isActorContextAvailable({ isToken: true, token: null }), false);
   assert.equal(isActorContextAvailable(null), false);
+});
+
+test("effect targets and backend race errors reject orphaned synthetic actors", () => {
+  const token = { id: "gone", parent: null };
+  const scene = { tokens: new Map() };
+  token.parent = scene;
+  const actor = { isToken: true, token };
+  const error = new Error("undefined id [gone] does not exist in the EmbeddedCollection collection.");
+  error.stack = `${error.message}\n    at Scene.getEmbeddedDocument (foundry.mjs:1:1)`;
+
+  assert.equal(buildActorEffectTarget(actor), null);
+  assert.deepEqual(buildActorEffectTargets(actor), []);
+  assert.equal(isMissingSyntheticActorContextError(error, actor), true);
+  assert.equal(isMissingSyntheticActorContextError(error, { isToken: false }), false);
 });

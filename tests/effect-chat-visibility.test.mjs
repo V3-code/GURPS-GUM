@@ -3,9 +3,11 @@ import fs from "node:fs";
 import test from "node:test";
 
 import {
+  getEffectTestChatPrivacy,
   getAttributeRollMessageOptions,
-    getResistanceChatPrivacy,
+  getResistanceChatPrivacy,
   normalizeAttributeChatVisibility,
+  normalizeEffectTestChatVisibility,
   normalizeResistanceChatVisibility
 } from "../module/utils/effect-chat-visibility.mjs";
 
@@ -54,6 +56,30 @@ test("Foundry 14 usa messageMode sem emitir o aviso legado de rollMode", () => {
 
 test("opção silenciosa não cria configuração de mensagem", () => {
   assert.equal(getAttributeRollMessageOptions({ visibility: "none", actor, users }), null);
+});
+
+test("teste da mensagem de efeito preserva público, alvo, mestres e combinações", () => {
+  const activeUsers = users.map(user => ({ ...user, active: true }));
+  assert.equal(normalizeEffectTestChatVisibility(undefined), "owners");
+  assert.equal(normalizeEffectTestChatVisibility("blind"), "target");
+  assert.deepEqual(getEffectTestChatPrivacy({ visibility: "public", actor, users: activeUsers }), { mode: "publicroll", whisper: [], blind: false });
+  assert.deepEqual(getEffectTestChatPrivacy({ visibility: "owners", actor, users: activeUsers }), { mode: null, whisper: ["owner", "gm"], blind: false });
+  assert.deepEqual(getEffectTestChatPrivacy({ visibility: "target", actor, users: activeUsers }), { mode: null, whisper: ["owner"], blind: false });
+  assert.deepEqual(getEffectTestChatPrivacy({ visibility: "gm", actor, users: activeUsers }), { mode: null, whisper: ["gm"], blind: true });
+});
+
+test("ação Mensagem de Texto oferece visibilidade para o teste", () => {
+  const template = fs.readFileSync(new URL("../templates/items/effect-sheet.hbs", import.meta.url), "utf8");
+  const chatPanel = template.slice(template.indexOf("TIPO: MENSAGEM DE CHAT"), template.indexOf("TIPO: FLAG"));
+  assert.match(chatPanel, /name="system\.actions\.\{\{action\.index\}\}\.roll_visibility"/);
+  for (const value of ["public", "owners", "target", "gm"]) assert.match(chatPanel, new RegExp(`option value="${value}"`));
+
+  const schema = JSON.parse(fs.readFileSync(new URL("../template.json", import.meta.url), "utf8"));
+  assert.equal(schema.Item.effect.roll_visibility, "owners");
+
+  const engine = fs.readFileSync(new URL("../scripts/effects-engine.js", import.meta.url), "utf8");
+  assert.match(engine, /getEffectTestChatPrivacy\(\{ visibility: normalized\.visibility, actor: targetActor/);
+  assert.match(engine, /if \(privacy\.whisper\.length\) chatData\.whisper = privacy\.whisper/);
 });
 
 test("ficha oferece todas as opções de exibição na ação de atributo", () => {

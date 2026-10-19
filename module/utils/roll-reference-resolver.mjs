@@ -1,10 +1,6 @@
 import { normalizeSkillText } from "./skill-default-resolver.mjs";
 import { getSkillDisplayName } from "./skill-display-name.mjs";
-
-const ATTRIBUTE_ALIASES = new Map([
-  ["st", "st"], ["dx", "dx"], ["iq", "iq"], ["ht", "ht"], ["per", "per"],
-  ["percepcao", "per"], ["vont", "vont"], ["vontade", "vont"], ["will", "vont"]
-]);
+import { REQUESTED_ATTRIBUTE_KEYS, normalizeRequestedAttributeKey } from "./requested-attributes.mjs";
 
 function splitTopLevel(source) {
   const parts = [];
@@ -51,7 +47,8 @@ function resolveSingleReference(rawReference, attributes, skills) {
     return { available: true, value: fixedNumber + modifier, label: reference, sourceType: "fixed" };
   }
 
-  const attributeKey = ATTRIBUTE_ALIASES.get(normalized);
+  const normalizedAttributeKey = normalizeRequestedAttributeKey(normalized);
+  const attributeKey = REQUESTED_ATTRIBUTE_KEYS.has(normalizedAttributeKey) ? normalizedAttributeKey : null;
   const baseAttribute = attributeKey ? attributeValue(attributes, attributeKey) : null;
   if (baseAttribute !== null) {
     return { available: true, value: baseAttribute + modifier, label: `${reference}${modifier ? (modifier > 0 ? `+${modifier}` : modifier) : ""}`, sourceType: "attribute" };

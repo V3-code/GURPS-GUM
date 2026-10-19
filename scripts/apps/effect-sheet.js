@@ -7,7 +7,8 @@ import { openEffectPathPicker } from "../../module/apps/effect-path-picker.mjs";
 import { normalizeBarrierBranches } from "../../module/utils/roll-request-data.mjs";
 import {
     ATTRIBUTE_CHAT_VISIBILITIES,
-    normalizeAttributeChatVisibility
+    normalizeAttributeChatVisibility,
+    normalizeEffectTestChatVisibility
 } from "../../module/utils/effect-chat-visibility.mjs";
 import { buildStatusCatalog, resolveStatusCatalogEntry } from "../../module/utils/status-catalog.mjs";
 
@@ -165,6 +166,7 @@ const DEFAULT_EFFECT_ACTION = {
     combat_damage_cap: "",
     combat_damage_value_mode: "fixed",
     combat_damage_changes: [],
+    roll_visibility: "owners",
     requestedPurposeIds: [],
     whisperMode: "public",
     category: "hp",
@@ -197,8 +199,11 @@ const normalizeControlledCsv = (value) => {
 };
 
 const normalizeAction = (action = {}) => {
+    const configuredRollVisibility = action?.roll_visibility
+        ?? (action?.whisperMode === "blind" ? "target" : action?.whisperMode === "gm" ? "owners" : action?.whisperMode);
     const next = foundry.utils.mergeObject(foundry.utils.deepClone(DEFAULT_EFFECT_ACTION), action || {}, { inplace: false, overwrite: true });
     next.attribute_chat_visibility = normalizeAttributeChatVisibility(next.attribute_chat_visibility);
+    next.roll_visibility = normalizeEffectTestChatVisibility(configuredRollVisibility);
     const rawEntries = Array.isArray(next.roll_modifier_entries) ? next.roll_modifier_entries : [];
     next.roll_modifier_entries = rawEntries.length
         ? rawEntries.map((entry) => ({
@@ -1260,6 +1265,7 @@ activateListeners(html) {
             formData["system.roll_modifier_application_side"] = firstAction.roll_modifier_application_side;
             formData["system.roll_modifier_entries"] = firstAction.roll_modifier_entries;
             formData["system.requestedPurposeIds"] = firstAction.requestedPurposeIds;
+            formData["system.roll_visibility"] = firstAction.roll_visibility;
             formData["system.whisperMode"] = firstAction.whisperMode;
             formData["system.category"] = firstAction.category;
             formData["system.name"] = firstAction.name;

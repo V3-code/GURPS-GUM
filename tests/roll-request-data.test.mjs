@@ -17,7 +17,9 @@ test("normaliza Barreira antiga sem exigir migração", () => {
 
 test("normaliza ação de chat antiga e valor fixo", () => {
   const legacy = normalizeChatRoll({ has_roll: true, roll_label: "Teste", roll_attribute: "ht", roll_modifier: "2", whisperMode: "gm" });
-  assert.equal(legacy.test.attributeKey, "ht"); assert.equal(legacy.test.fixedModifier, 2); assert.equal(legacy.whisperMode, "gm");
+  assert.equal(legacy.test.attributeKey, "ht"); assert.equal(legacy.test.fixedModifier, 2); assert.equal(legacy.visibility, "owners");
+  assert.equal(normalizeChatRoll({ roll_visibility: "target", whisperMode: "public" }).visibility, "target");
+  assert.equal(normalizeChatRoll({ whisperMode: "blind" }).visibility, "target");
   assert.deepEqual(normalizeRollTest({ attribute: "fixed", roll_fixed_value: "12" }), { type: "fixed", attributeKey: "ht", skillUuid: null, skillName: null, specialization: "", sourceId: null, customDefault: null, fixedValue: 12, requestedPurposeIds: [], fixedModifier: 0, fixedModifierFormula: "", fixedModifierLabel: "" });
 });
 
@@ -35,6 +37,14 @@ test("campos livres antigos distinguem atributos de nomes de perícia", () => {
   assert.equal(compendiumSkill.type, "skill");
   assert.equal(compendiumSkill.skillName, "Furtividade");
   assert.equal(normalizeResistanceRoll({ attribute: "HT" }).test.type, "attribute");
+});
+
+test("canonicaliza aliases ingleses antes de executar o teste", () => {
+  assert.deepEqual(
+    ["will", "willpower", "perception", "strength", "dexterity", "intelligence", "health"].map(attribute => normalizeRollTest({ attribute }).attributeKey),
+    ["vont", "vont", "per", "st", "dx", "iq", "ht"]
+  );
+  assert.equal(normalizeChatRoll({ roll_attribute: "WILL" }).test.attributeKey, "vont");
 });
 
 test("preserva perícia, perícia personalizada e finalidades", () => {

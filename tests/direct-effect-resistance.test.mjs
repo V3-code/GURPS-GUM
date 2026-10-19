@@ -27,4 +27,8 @@ test("aplicações vinculadas não ignoram testes silenciosos", () => {
     assert.match(match[1], /_promptActivationResistance/);
     assert.match(match[2], /applySingleEffect/);
   }
+});test("barreiras disparadas por condição resolvem o modificador com o evento original", () => {
+  assert.match(main, /evaluateNumericFormula\(rollData\.modifier, \{\s*actor: targetToken\.actor,\s*eventData: options\.eventData \?\? null/);
+  assert.match(main, /conditionActivationMode,\s*eventData\s*\}/);
+  assert.match(main, /normalizedResistance\.test\.fixedModifierFormula = ""/);
 });

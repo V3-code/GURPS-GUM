@@ -9,6 +9,7 @@ import { getPurposeLabels } from "../../module/utils/roll-purposes.mjs";
 import { renderPendingResistanceRequest } from "../../module/utils/roll-request-view.mjs";
 import { buildDamageNatureSearchOptions, formatDamageNature, resolveDamageNature } from "../../module/utils/damage-nature.mjs";
 import { equipmentIntegrityCurrentUpdate, equipmentIntegrityRecord, equipmentLinkedReserve, equipmentReserveBalanceUpdate } from "../../module/utils/equipment-resolution.mjs";
+import { buildDamageApplicationEvent, calculateShockPenalty, classifyDamageTargetPool } from "../../module/utils/damage-application-event.mjs";
 
 export default class DamageApplicationWindow extends Application {
     
@@ -358,6 +359,7 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
         return {
             torsoDR,
             markedDR,
+            markedLocationKey,
             markedLabel: markedRow?.querySelector(".label")?.textContent?.trim() || "Torso",
             effectiveDR: Math.ceil((torsoDR + markedDR) / 2)
         };
@@ -781,6 +783,7 @@ async _updateDamageCalculation(form) {
     const damageReductionValue = [2, 3, 4].includes(rawDamageReductionValue) ? rawDamageReductionValue : 2;
     const largeAreaInjury = form.querySelector('[name="large_area_injury"]')?.checked;
     if (isNaN(damageRolled)) { damageRolled = activeDamage.total; if (damageRolledInput) damageRolledInput.value = damageRolled; }
+    const rawRolledDamage = damageRolled;
     if (!armorDivisor || armorDivisor <= 0) { armorDivisor = activeDamage.armorDivisor || 1; if (armorDivisorInput) armorDivisorInput.value = armorDivisor; }
     const effects = [];
     let originalBase = damageRolled;
@@ -836,6 +839,11 @@ async _updateDamageCalculation(form) {
     if (effectsOnlyChecked || onlyKnockbackChecked) { finalInjury = 0; } // Zera a lesão se a opção estiver marcada
 
     const selectedLocationLabel = form.querySelector('.location-row.active .label')?.textContent || this._t("SelectedLocation");
+    const selectedLocationKey = activeRow?.dataset.locationKey || "torso";
+    const bodyProfileId = this.targetActor.system.combat?.body_profile || "humanoid";
+    const bodyProfile = getBodyProfile(bodyProfileId);
+    const selectedLocationData = bodyProfile.locations?.[selectedLocationKey] || {};
+    const selectedLocationRoll = activeRow?.querySelector(".roll")?.textContent?.trim() || selectedLocationData.roll || null;
     const drLabel = ignoreDR
         ? this._t("IgnoreDRLabel")
         : largeAreaInjury
@@ -871,6 +879,40 @@ async _updateDamageCalculation(form) {
     const effectsList = form.querySelector(".effects-list");
     if (effectsList) { effectsList.innerHTML = ""; for (let effect of effects) { effectsList.innerHTML += `<li>${effect}</li>`; } }
     this.finalInjury = finalInjury;
+    this.state.activeDamageKey = activeDamageKey;
+    this.state.calculation = {
+        rolled: rawRolledDamage,
+        modified: modifiedBase,
+        penetrating: penetratingDamage,
+        injury: finalInjury,
+        damageType: damageTypeKey,
+        armorDivisor,
+        woundingModifier: woundingMod,
+        rawDR: selectedLocationDR,
+        effectiveDR,
+        ignoreDR: ignoreDR === true,
+        hitLocation: {
+            profileId: bodyProfileId,
+            key: selectedLocationKey,
+            groupKey: selectedLocationData.groupKey || null,
+            label: selectedLocationLabel.trim(),
+            roll: selectedLocationRoll,
+            custom: selectedLocationKey === "custom",
+            grouped: activeRow?.classList.contains("is-group") === true,
+            largeArea: largeAreaInjury === true,
+            markedKey: largeAreaDRData?.markedLocationKey || null,
+            markedLabel: largeAreaDRData?.markedLabel || null
+        },
+        modifiers: {
+            halfDamage: halfDamageChecked === true,
+            explosion: explosionChecked === true,
+            explosionDistance,
+            tolerance: toleranceType,
+            damageReduction: damageReductionEnabled === true ? damageReductionValue : null,
+            effectsOnly: effectsOnlyChecked === true,
+            knockbackOnly: onlyKnockbackChecked === true
+        }
+    };
 
     // --- ✅ BLOCO DE FEEDBACK E NOTAS (VERSÃO UNIFICADA E CORRIGIDA) ---
     const notesContainer = form.querySelector(".calculation-notes");
@@ -1067,8 +1109,10 @@ async _onNpcResistanceRoll(effectId) {
         if (hasActiveEffectFlag(this.targetActor, "ignoreShock", true)) return 0;
         if (!this.targetActor || !game.combat) return 0;
 
-        const injuryAmount = Math.max(0, Math.floor(Number(injury) || 0));
-        const shockIncrement = Math.min(4, injuryAmount);
+        const shockIncrement = calculateShockPenalty(
+            injury,
+            this.targetActor.system.attributes.hp?.final
+        );
         if (shockIncrement <= 0) return 0;
 
         const allShockEffects = this.targetActor.effects.filter((effect) =>
@@ -1196,6 +1240,8 @@ async _onNpcResistanceRoll(effectId) {
             const targetIgnoresShock = ignoreShockSources.length > 0;
             const applyShock = !targetIgnoresShock && (form.querySelector('[name="special_apply_shock"]')?.checked ?? true);
             const selectedPoolPath = form.querySelector('[name="damage_target_pool"]').value;
+            const targetPoolKind = classifyDamageTargetPool(selectedPoolPath);
+            const appliedToHP = targetPoolKind === "hp";
             if (!selectedPoolPath) { this.isApplying = false; return ui.notifications.error(this._t("NoTargetPool")); }
             const isIntegrityRecord = selectedPoolPath.startsWith("equipment-integrity:");
             const linkedEquipment = isIntegrityRecord
@@ -1231,20 +1277,69 @@ async _onNpcResistanceRoll(effectId) {
             }
 
             if (!applyAsHeal && finalInjury > 0 && !effectsOnlyChecked) {
-                const damagePayload = {
-                    total: finalInjury,
-                    value: finalInjury,
-                    amount: finalInjury,
-                    valueOf() { return finalInjury; },
-                    toString() { return String(finalInjury); }
-                };
-                eventData = {
-                    type: "damage",
-                    damage: damagePayload,
-                    injury: finalInjury,
-                    damageType: this.damageTypeAbrev
-                };
                 const newPoolValue = currentPoolValue - finalInjury;
+                const calculation = this.state.calculation || {};
+                const attackerToken = this.attackerToken || this.attackerActor?.getActiveTokens?.()[0] || null;
+                const targetToken = this.targetToken || this.targetActor?.getActiveTokens?.()[0] || null;
+                const attackerTokenUuid = attackerToken?.document?.uuid || attackerToken?.uuid || null;
+                const targetTokenUuid = targetToken?.document?.uuid || targetToken?.uuid || null;
+                const targetPoolMaximum = targetPoolKind === "hp"
+                    ? this.targetActor.system.attributes.hp?.final
+                    : targetPoolKind === "fp"
+                        ? this.targetActor.system.attributes.fp?.final
+                        : null;
+                eventData = buildDamageApplicationEvent({
+                    eventId: foundry.utils.randomID(),
+                    applicationId: String(this.appId),
+                    damage: {
+                        rolled: calculation.rolled,
+                        modified: calculation.modified,
+                        penetrating: calculation.penetrating,
+                        injury: finalInjury,
+                        type: this.damageTypeAbrev,
+                        nature: damageNature?.id || null,
+                        natureLabel: damageNature?.label || null,
+                        armorDivisor: calculation.armorDivisor,
+                        woundingModifier: calculation.woundingModifier,
+                        component: activeDamageKey,
+                        shockPenalty: appliedToHP
+                            ? calculateShockPenalty(finalInjury, this.targetActor.system.attributes.hp?.final)
+                            : 0,
+                        modifiers: calculation.modifiers
+                    },
+                    targetPool: {
+                        kind: targetPoolKind,
+                        path: selectedPoolPath,
+                        label: poolLabel,
+                        before: currentPoolValue,
+                        after: newPoolValue,
+                        applied: finalInjury,
+                        maximum: targetPoolMaximum
+                    },
+                    hitLocation: calculation.hitLocation,
+                    protection: {
+                        rawDR: calculation.rawDR,
+                        effectiveDR: calculation.effectiveDR,
+                        ignored: calculation.ignoreDR
+                    },
+                    source: {
+                        actorUuid: this.attackerActor?.uuid || null,
+                        tokenUuid: attackerTokenUuid,
+                        itemUuid: this.damageData.sourceItemUuid || null,
+                        attackId: this.damageData.sourceAttackId || null,
+                        attackType: this.damageData.sourceAttackType || null,
+                        name: this.damageData.sourceName || null
+                    },
+                    target: {
+                        actorUuid: this.targetActor?.uuid || null,
+                        tokenUuid: targetTokenUuid
+                    },
+                    combat: game.combat ? {
+                        id: game.combat.id,
+                        round: game.combat.round,
+                        turn: game.combat.turn
+                    } : null
+                });
                 await updatePool(newPoolValue, { gumEventData: eventData });
             } else {
                 const sign = applyAsHeal ? 1 : -1;
@@ -1259,7 +1354,7 @@ async _onNpcResistanceRoll(effectId) {
             const appliedEffectNames = [];
             const pendingEffectNames = [];
             const preventedEffectNames = [];
-            if (targetIgnoresShock && game.combat && !applyAsHeal && finalInjury > 0 && !effectsOnlyChecked) {
+            if (targetIgnoresShock && game.combat && appliedToHP && !applyAsHeal && finalInjury > 0 && !effectsOnlyChecked) {
                 const sourceNames = ignoreShockSources.map(effect => effect.name).filter(Boolean).join(", ");
                 preventedEffectNames.push(sourceNames ? this._f("ShockIgnoredFrom", { sources: sourceNames }) : this._t("ShockIgnored"));
             }
@@ -1301,7 +1396,7 @@ async _onNpcResistanceRoll(effectId) {
                     this.pendingResistanceEffects.delete(effect.id);
                 }
             }
-                if (applyShock && !applyAsHeal && finalInjury > 0 && !effectsOnlyChecked) {
+                if (applyShock && appliedToHP && !applyAsHeal && finalInjury > 0 && !effectsOnlyChecked) {
                 shockAppliedValue = await this._applyShockEffect(finalInjury);
                 if (shockAppliedValue > 0) {
                     appliedEffectNames.push(this._f("ShockApplied", { value: shockAppliedValue }));

@@ -1101,6 +1101,20 @@
                                                                     />
                                                                 </div>
                                                             </div>
+                                                            <div class="effect-premium-field">
+                                                                <label class="effect-premium-field-label">
+                                                                    <i class="fas fa-eye" aria-hidden="true"></i>
+                                                                    {{localize "GUM.EffectSheet.TestVisibility"}}
+                                                                </label>
+                                                                <div class="effect-premium-field-control">
+                                                                    <select name="system.actions.{{action.index}}.roll_visibility">
+                                                                        <option value="public" {{#if (eq action.roll_visibility "public")}}selected{{/if}}>{{localize "GUM.EffectSheet.PublicEveryone"}}</option>
+                                                                        <option value="owners" {{#if (eq action.roll_visibility "owners")}}selected{{/if}}>{{localize "GUM.EffectSheet.TargetAndGM"}}</option>
+                                                                        <option value="target" {{#if (eq action.roll_visibility "target")}}selected{{/if}}>{{localize "GUM.EffectSheet.TargetOnly"}}</option>
+                                                                        <option value="gm" {{#if (eq action.roll_visibility "gm")}}selected{{/if}}>{{localize "GUM.EffectSheet.GMOnlyBlind"}}</option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
 </div>
                                                         <div class="effect-premium-field effect-premium-field-full effect-chat-purpose-field">
                                                             <label class="effect-premium-field-label"><i class="fas fa-bullseye" aria-hidden="true"></i> {{localize "GUM.EffectSheet.Purposes"}}</label>

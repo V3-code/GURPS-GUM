@@ -98,6 +98,16 @@ test("prompt recebe os dados atuais e fecha liberando a solicitação", async ()
   assert.equal((await closing.execute(request(), "actor-1")).accepted, true);
 });
 
+test("fechar o prompt notifica a interface uma única vez", async () => {
+  let app;
+  let closeNotifications = 0;
+  const { execute } = harness({ createPrompt: () => (app = { render: () => {}, close: async () => {} }) });
+  await execute(request(), "actor-1", { onPromptClose: () => { closeNotifications += 1; } });
+  await app.close();
+  await app.close();
+  assert.equal(closeNotifications, 1);
+});
+
 test("falha síncrona ao abrir o prompt não deixa o pedido travado", async () => {
   let shouldFail = true;
   const { execute } = harness({ createPrompt: () => ({ close: async () => {}, render: () => { if (shouldFail) { shouldFail = false; throw new Error("render"); } } }) });

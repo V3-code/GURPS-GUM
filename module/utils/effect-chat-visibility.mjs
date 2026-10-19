@@ -13,6 +13,13 @@ export const RESISTANCE_CHAT_VISIBILITIES = Object.freeze({
   target: "Somente o alvo"
 });
 
+export const EFFECT_TEST_CHAT_VISIBILITIES = Object.freeze({
+  public: "Público (todos)",
+  owners: "Alvo e Mestre",
+  target: "Somente o alvo",
+  gm: "Somente Mestre"
+});
+
 export const normalizeAttributeChatVisibility = (value) => (
   Object.hasOwn(ATTRIBUTE_CHAT_VISIBILITIES, value) ? value : "public"
 );
@@ -21,6 +28,33 @@ export const normalizeAttributeChatVisibility = (value) => (
 export const normalizeResistanceChatVisibility = (value) => (
   Object.hasOwn(RESISTANCE_CHAT_VISIBILITIES, value) ? value : "owners"
 );
+
+export const normalizeEffectTestChatVisibility = (value) => {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (Object.hasOwn(EFFECT_TEST_CHAT_VISIBILITIES, normalized)) return normalized;
+  if (normalized === "blind") return "target";
+  return "owners";
+};
+
+export const getEffectTestChatPrivacy = ({ visibility, actor, users = [] } = {}) => {
+  const normalized = normalizeEffectTestChatVisibility(visibility);
+  if (normalized === "public") return { mode: "publicroll", whisper: [], blind: false };
+
+  const activeUsers = Array.from(users).filter(user => user?.active);
+  const targetIds = new Set(recipientUserIdsForActor(actor, activeUsers));
+  const targets = activeUsers.filter(user => targetIds.has(user.id));
+  const gms = activeUsers.filter(user => user.isGM);
+  let recipients;
+  if (normalized === "gm") recipients = gms;
+  else if (normalized === "target") recipients = targets.length ? targets : gms;
+  else recipients = [...targets, ...gms];
+
+  return {
+    mode: null,
+    whisper: [...new Set(recipients.map(user => user.id).filter(Boolean))],
+    blind: normalized === "gm"
+  };
+};
 
 export const getResistanceChatPrivacy = ({ visibility, actor, users = [] } = {}) => {
   const normalized = normalizeResistanceChatVisibility(visibility);

@@ -11,11 +11,11 @@ test("status binding automation uses configured multi-pack sources", () => {
   assert.match(main, /buildWorldStatusBindingRules/);
 });
 
-test("refresh bindings are idempotent when their linked effect already exists", () => {
+test("refresh and replace bindings are idempotent when their linked effect already exists", () => {
   const main = fs.readFileSync("scripts/main.js", "utf8");
-  const refreshBranch = main.match(/else if \(stackMode === "refresh" && siblings\.length\) \{([\s\S]*?)\} else if \(stackMode === "stack"/);
+  const refreshBranch = main.match(/if \(\["replace", "refresh"\]\.includes\(stackMode\) && siblings\.length\) \{([\s\S]*?)\} else if \(stackMode === "stack"/);
 
-  assert.ok(refreshBranch, "refresh branch should remain explicit");
+  assert.ok(refreshBranch, "refresh/replace branch should remain explicitly idempotent");
   assert.doesNotMatch(refreshBranch[1], /updateEmbeddedDocuments|deleteEmbeddedDocuments|applySingleEffect/);
   assert.match(main, /isActorContextAvailable\(actor\)/);
 });

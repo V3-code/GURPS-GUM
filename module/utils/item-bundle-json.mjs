@@ -99,6 +99,7 @@ function pathEquals(path, ...parts) {
 }
 
 function isEffectReferencePath(documentType, value, path) {
+  if (documentType === "condition" && pathEquals(path, "system", "effects", "*")) return true;
   if (pathEquals(path, "system", "activationEffects", "success", "*")) return true;
   if (pathEquals(path, "system", "activationEffects", "failure", "*")) return true;
   if (pathEquals(path, "system", "onDamageEffects", "*")) return true;
@@ -235,7 +236,9 @@ function resolveLocalReferences(value, context, path = []) {
     const key = requiredText(value.effectRef, `effectRef at ${path.join(".")}`);
     const target = getReferenceTarget(context.bundle, key, "effect", path);
     const uuid = context.uuidByKey.get(key);
-    if (value.type === "granted_effect") {
+    if (context.documentType === "condition" && pathEquals(path, "system", "effects", "*")) {
+      resolved.uuid = uuid;
+    } else if (value.type === "granted_effect") {
       resolved.effect_uuid = uuid;
       resolved.effect_name ||= target.name;
       resolved.effect_img ||= target.img;

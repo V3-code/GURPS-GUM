@@ -1,5 +1,6 @@
 import { normalizePurposeIds } from "./roll-purposes.mjs";
-import { REQUESTED_ATTRIBUTE_KEYS } from "./requested-attributes.mjs";
+import { REQUESTED_ATTRIBUTE_KEYS, normalizeRequestedAttributeKey } from "./requested-attributes.mjs";
+import { normalizeEffectTestChatVisibility } from "./effect-chat-visibility.mjs";
 
 const numberOr = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -14,10 +15,9 @@ const optionalNonNegativeNumber = (value) => {
 
 export function normalizeRollTest(test = {}) {
   const legacyKey = String(test.attributeKey ?? test.attribute ?? test.roll_attribute ?? "ht").trim();
-  const normalizedLegacyKey = legacyKey.toLowerCase();
-  const attributeKeys = new Set([...REQUESTED_ATTRIBUTE_KEYS, "will", "vontade", "percepcao", "percepção"]);
+  const normalizedLegacyKey = normalizeRequestedAttributeKey(legacyKey);
   let type = test.type ?? test.testType;
-  if (!type) type = normalizedLegacyKey === "fixed" ? "fixed" : attributeKeys.has(normalizedLegacyKey) ? "attribute" : "skill";
+  if (!type) type = normalizedLegacyKey === "fixed" ? "fixed" : REQUESTED_ATTRIBUTE_KEYS.has(normalizedLegacyKey) ? "attribute" : "skill";
   if (type === "custom-skill") type = "customSkill";
   const skillName = test.skillName ?? (type === "skill" && !test.skillUuid ? legacyKey : null);
   const rawFixedModifier = test.fixedModifierFormula ?? test.modifierFormula ?? test.fixedModifier ?? test.modifier ?? test.roll_modifier;
@@ -26,7 +26,7 @@ export function normalizeRollTest(test = {}) {
     : "";
   return {
     type,
-    attributeKey: String(test.attributeKey ?? (legacyKey !== "fixed" ? legacyKey : "ht")).toLowerCase(),
+    attributeKey: normalizedLegacyKey !== "fixed" ? normalizedLegacyKey : "ht",
     skillUuid: test.skillUuid ?? null,
     skillName,
     specialization: test.specialization ?? "",
@@ -88,6 +88,7 @@ export function normalizeBarrierBranches(branches = []) {
 }
 
 export function normalizeChatRoll(action = {}) {
+  const legacyVisibility = action.whisperMode === "blind" ? "target" : action.whisperMode === "gm" ? "owners" : action.whisperMode;
   return {
     test: normalizeRollTest({
       ...action,
@@ -102,7 +103,7 @@ export function normalizeChatRoll(action = {}) {
       fixedModifierLabel: action.roll_modifier_label
     }),
     label: String(action.roll_label || "Rolar Teste"),
-    whisperMode: action.whisperMode || "public"
+    visibility: normalizeEffectTestChatVisibility(action.roll_visibility ?? legacyVisibility)
   };
 }
 

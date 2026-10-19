@@ -2150,14 +2150,14 @@
                 </summary>
                 <div class="effect-origin-list">
             {{#each group.effects as |effect|}}
-                <div class="effect-pill-enhanced temp-effect" data-effect-id="{{effect.id}}">
+                <div class="effect-pill-enhanced temp-effect" data-effect-id="{{effect.id}}" data-effect-item-uuid="{{effect.effectItemUuid}}" data-origin-uuid="{{effect.fonteUuid}}" data-duration="{{effect.durationString}}" data-source-name="{{effect.fonteNome}}">
                     <div class="pill-card-visual">
-                        <img src="{{effect.img}}" class="pill-icon" title="{{effect.name}}"/>
+                        <img src="{{effect.img}}" class="pill-icon effect-quick-view" title="{{localize 'GUM.Conditions.ViewDetails'}}"/>
                         <div class="pill-switch-wrapper"><label class="switch" title="{{localize 'GUM.Conditions.ToggleEffect'}}"><input type="checkbox" class="effect-toggle" data-effect-id="{{effect.id}}" {{checked effect.disabled}}><span class="slider round"></span></label></div>
                     </div>
                     <div class="pill-card-content">
                     <div class="pill-info">
-                        <span class="pill-name">{{effect.name}}</span>
+                        <span class="pill-name effect-quick-view" title="{{localize 'GUM.Conditions.ViewDetails'}}">{{effect.name}}</span>
                         <div class="pill-details">
                             <span class="pill-tag duration" title="{{localize 'GUM.Conditions.RemainingDuration'}}">
                                 <i class="fas fa-hourglass-half"></i> {{effect.durationString}}
@@ -2182,7 +2182,7 @@
                         <div class="gum-action-menu js-action-menu">
                           <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Inventory.Options'}}" aria-label="{{localize 'GUM.Inventory.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
                           <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Inventory.Options'}}">
-                            <a class="effect-control quick-view-origin gum-action-menu__item" role="menuitem" data-origin-uuid="{{effect.fonteUuid}}"><i class="fas fa-eye"></i><span>{{localize 'GUM.Conditions.ViewSource'}}</span></a>
+                            <a class="effect-control effect-quick-view gum-action-menu__item" role="menuitem"><i class="fas fa-eye"></i><span>{{localize 'GUM.Conditions.ViewDetails'}}</span></a>
                             <a class="effect-control delete gum-action-menu__item is-danger" role="menuitem" data-action="delete-effect" data-effect-id="{{effect.id}}"><i class="fas fa-trash"></i><span>{{localize 'GUM.Conditions.Remove'}}</span></a>
                           </div>
                         </div>
@@ -2222,14 +2222,14 @@
                 </summary>
                 <div class="effect-origin-list">
             {{#each group.effects as |effect|}}
-                <div class="effect-pill-enhanced perm-effect" data-effect-id="{{effect.id}}">
+                <div class="effect-pill-enhanced perm-effect" data-effect-id="{{effect.id}}" data-effect-item-uuid="{{effect.effectItemUuid}}" data-origin-uuid="{{effect.fonteUuid}}" data-duration="{{effect.durationString}}" data-source-name="{{effect.fonteNome}}">
                     <div class="pill-card-visual">
-                        <img src="{{effect.img}}" class="pill-icon" title="{{effect.name}}"/>
+                        <img src="{{effect.img}}" class="pill-icon effect-quick-view" title="{{localize 'GUM.Conditions.ViewDetails'}}"/>
                         <div class="pill-switch-wrapper"><label class="switch" title="{{localize 'GUM.Conditions.ToggleEffect'}}"><input type="checkbox" class="effect-toggle" data-effect-id="{{effect.id}}" {{checked effect.disabled}}><span class="slider round"></span></label></div>
                     </div>
                     <div class="pill-card-content">
                     <div class="pill-info">
-                        <span class="pill-name">{{effect.name}}</span>
+                        <span class="pill-name effect-quick-view" title="{{localize 'GUM.Conditions.ViewDetails'}}">{{effect.name}}</span>
                         <div class="pill-details">
                            {{#if effect.disabled}}
                                 <span class="pill-tag status off">{{localize 'GUM.Conditions.Disabled'}}</span>
@@ -2249,7 +2249,7 @@
                         <div class="gum-action-menu js-action-menu">
                           <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Inventory.Options'}}" aria-label="{{localize 'GUM.Inventory.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
                           <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Inventory.Options'}}">
-                            <a class="effect-control quick-view-origin gum-action-menu__item" role="menuitem" data-origin-uuid="{{effect.fonteUuid}}"><i class="fas fa-eye"></i><span>{{localize 'GUM.Conditions.ViewSource'}}</span></a>
+                            <a class="effect-control effect-quick-view gum-action-menu__item" role="menuitem"><i class="fas fa-eye"></i><span>{{localize 'GUM.Conditions.ViewDetails'}}</span></a>
                             <a class="effect-control delete gum-action-menu__item is-danger" role="menuitem" data-action="delete-effect" data-effect-id="{{effect.id}}"><i class="fas fa-trash"></i><span>{{localize 'GUM.Conditions.Remove'}}</span></a>
                           </div>
                         </div>
@@ -2283,12 +2283,12 @@
             {{#each installedConditions as |item|}}
                 <div class="item effect-pill-enhanced passive-rule" data-item-id="{{item.id}}">
                     <div class="pill-card-visual">
-                        <img src="{{item.img}}" class="pill-icon" alt="{{item.name}}"/>
+                        <img src="{{item.img}}" class="pill-icon item-quick-view" alt="{{item.name}}" title="{{localize 'GUM.Conditions.ViewDetails'}}"/>
                         <div class="pill-switch-wrapper"><label class="switch" title="{{localize 'GUM.Conditions.OverrideAutomation'}}"><input type="checkbox" class="manual-override-toggle" data-item-id="{{item.id}}" {{checked item.flags.gum.manual_override}}><span class="slider round"></span></label></div>
                     </div>
                     <div class="pill-card-content">
                     <div class="pill-info">
-                        <span class="pill-name">{{item.name}}</span>
+                        <span class="pill-name item-quick-view" title="{{localize 'GUM.Conditions.ViewDetails'}}">{{item.name}}</span>
                         <div class="pill-details">
                             {{#if item.flags.gum.manual_override}}
                                 <span class="pill-tag status off">{{localize 'GUM.Conditions.Disabled'}}</span>
@@ -2302,6 +2302,7 @@
                         <div class="gum-action-menu js-action-menu">
                           <a class="item-control gum-action-menu__toggle js-action-menu-toggle" title="{{localize 'GUM.Inventory.Options'}}" aria-label="{{localize 'GUM.Inventory.Options'}}" role="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></a>
                           <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Inventory.Options'}}">
+                            <a class="item-control item-quick-view gum-action-menu__item" role="menuitem"><i class="fas fa-eye"></i><span>{{localize 'GUM.Conditions.ViewDetails'}}</span></a>
                             <a class="item-control item-edit gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{localize 'GUM.Conditions.EditRule'}}</span></a>
                             <a class="item-control item-delete gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>{{localize 'GUM.Conditions.RemoveRule'}}</span></a>
                           </div>

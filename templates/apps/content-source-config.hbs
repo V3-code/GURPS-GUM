@@ -1,4 +1,5 @@
 <form class="gum-content-source-form">
+  <div class="content-source-scroll">
   <div class="content-source-intro">
     <h1>{{localize "GUM.ContentSources.Heading"}}</h1>
     <p>{{localize "GUM.ContentSources.Introduction"}}</p>
@@ -47,8 +48,9 @@
     </div>
   </section>
   {{/each}}
+  </div>
 
-  <footer class="sheet-footer flexrow">
+  <footer class="sheet-footer content-source-footer flexrow">
     <button type="submit"><i class="fas fa-save"></i> {{localize "GUM.ContentSources.Actions.Save"}}</button>
   </footer>
 </form>

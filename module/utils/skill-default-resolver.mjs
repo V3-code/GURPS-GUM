@@ -1,11 +1,8 @@
+import { normalizeRequestedAttributeKey } from "./requested-attributes.mjs";
+
 export function normalizeSkillText(value = "") {
   return String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().replace(/\s+/g, " ").toLowerCase();
 }
-
-const ATTRIBUTE_ALIASES = new Map([
-  ["st", "st"], ["dx", "dx"], ["iq", "iq"], ["ht", "ht"], ["per", "per"],
-  ["percepcao", "per"], ["vont", "vont"], ["vontade", "vont"], ["will", "vont"]
-]);
 
 function finalAttribute(actor, key) {
   const data = actor?.system?.attributes?.[key];
@@ -38,8 +35,8 @@ export function resolveSkillDefault(actor, definition = {}, { maxDepth = 8 } = {
   const owned = matchingSkill(actor, definition.skillName, definition.specialization);
   if (owned) return ownedResult(owned);
   if (definition.type === "customSkill") {
-    const key = ATTRIBUTE_ALIASES.get(normalizeSkillText(definition.customDefault?.attributeKey));
-    const base = key ? finalAttribute(actor, key) : null;
+    const key = normalizeRequestedAttributeKey(definition.customDefault?.attributeKey);
+    const base = finalAttribute(actor, key);
     const modifier = Number(definition.customDefault?.modifier);
     if (base !== null && Number.isFinite(modifier)) return { available: true, value: base + modifier, sourceType: "attribute", sourceName: key.toUpperCase(), modifier, label: `Pré-definido: ${key.toUpperCase()}${modifier >= 0 ? "+" : ""}${modifier} = ${base + modifier}` };
   }
@@ -50,10 +47,9 @@ export function resolveSkillDefault(actor, definition = {}, { maxDepth = 8 } = {
     const modifier = Number(entry.modifier ?? 0);
     if (!Number.isFinite(modifier)) return null;
     const normalized = normalizeSkillText(entry.name);
-    const attributeKey = ATTRIBUTE_ALIASES.get(normalized);
-    if (attributeKey) {
-      const base = finalAttribute(actor, attributeKey);
-      if (base === null) return null;
+    const attributeKey = normalizeRequestedAttributeKey(normalized);
+    const base = finalAttribute(actor, attributeKey);
+    if (base !== null) {
       return { available: true, value: base + modifier, sourceType: "attribute", sourceName: entry.name, modifier, label: `Pré-definido: ${entry.name}${modifier >= 0 ? "+" : ""}${modifier} = ${base + modifier}` };
     }
     const skill = matchingSkill(actor, entry.name, entry.specialization);
