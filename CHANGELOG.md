@@ -10,6 +10,7 @@ O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com
 
 - Exportação e importação autocontidas das configurações do Escudo do Mestre e dos status mundiais, incluindo os Itens Efeito e Modificadores do Mestre utilizados direta ou indiretamente.
 - Importações de configuração agora oferecem prévia e os modos acrescentar, mesclar ou substituir; arquivos exportados registram referências não resolvidas e caminhos externos em um diagnóstico de portabilidade.
+- Conjunto próprio de ícones distintos para condições, posturas, níveis de cobertura e demais status usados pelas configurações de GURPS.
 
 ### Changed
 
@@ -20,6 +21,8 @@ O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com
 ### Fixed
 
 - Criação automática do compêndio de dependências usa a API namespaced e o esquema nativo do Foundry V13+, e sua janela de destino agora apresenta somente os campos pertinentes à opção selecionada.
+- Vínculos de status no modo `refresh` não recriam mais efeitos continuamente em atores sintéticos, evitando travamento de tokens, fichas e rolagens.
+- A sincronização de status ignora atores sintéticos órfãos durante a exclusão do token, eliminando erros de documentos incorporados inexistentes.
 
 ## [1.4.4-beta] - 2026-10-17
 

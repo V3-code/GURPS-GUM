@@ -11,6 +11,15 @@ test("status binding automation uses configured multi-pack sources", () => {
   assert.match(main, /buildWorldStatusBindingRules/);
 });
 
+test("refresh bindings are idempotent when their linked effect already exists", () => {
+  const main = fs.readFileSync("scripts/main.js", "utf8");
+  const refreshBranch = main.match(/else if \(stackMode === "refresh" && siblings\.length\) \{([\s\S]*?)\} else if \(stackMode === "stack"/);
+
+  assert.ok(refreshBranch, "refresh branch should remain explicit");
+  assert.doesNotMatch(refreshBranch[1], /updateEmbeddedDocuments|deleteEmbeddedDocuments|applySingleEffect/);
+  assert.match(main, /isActorContextAvailable\(actor\)/);
+});
+
 test("world status configuration is registered as a restricted settings menu", () => {
   const settings = fs.readFileSync("module/settings.js", "utf8");
   const app = fs.readFileSync("module/apps/world-status-config.js", "utf8");

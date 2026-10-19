@@ -18,7 +18,7 @@ import { ConditionSheet } from "./apps/condition-sheet.js";
 import { EffectSheet } from './apps/effect-sheet.js';
 import { TriggerSheet } from './apps/trigger-sheet.js';
 import { applySingleEffect, getEffectActions } from './effects-engine.js';
-import { buildActorEffectTarget, buildActorEffectTargets, getActorEvaluationKey } from '../module/utils/condition-actor-context.mjs';
+import { buildActorEffectTarget, buildActorEffectTargets, getActorEvaluationKey, isActorContextAvailable } from '../module/utils/condition-actor-context.mjs';
 import { reconcileAllStateEffects, removeAllStateEffectsForItem, setStateEffectGroupActive, syncItemStateEffects } from '../module/services/state-effect-service.js';
 import { GUM } from '../module/config.js';
 import { installItemCompendiumExportSourceCompatibility } from '../module/utils/foundry-item-compat.mjs';
@@ -4128,6 +4128,7 @@ const isStatusBindingAuthority = (actor) => {
 };
 
 async function processStatusBindings(actor) {
+    if (!isActorContextAvailable(actor)) return;
     if (!isStatusBindingAuthority(actor)) return;
     const evaluationKey = getActorEvaluationKey(actor);
     if (!evaluationKey || processingStatusBindingActors.has(evaluationKey)) return;
@@ -4176,11 +4177,9 @@ async function processStatusBindings(actor) {
                 if (stackMode === "replace" && siblings.length) {
                     effectsToDelete.push(...siblings.map((effect) => effect.id));
                 } else if (stackMode === "refresh" && siblings.length) {
-                    const updates = siblings.map((effect) => ({
-                        _id: effect.id,
-                        duration: foundry.utils.duplicate(effect.duration || {})
-                    }));
-                    await actor.updateEmbeddedDocuments("ActiveEffect", updates);
+                    // The linked effect is already authoritative while the native
+                    // status remains active. Rewriting it on every hook caused a
+                    // create/delete feedback loop on synthetic token actors.
                     continue;
                 } else if (stackMode === "stack" && siblings.length >= stackLimit) {
                     continue;
@@ -5042,37 +5041,49 @@ const rebalanceEffectCarrier = async (actor, effectUuid) => {
 
 const refreshFromDeletedActiveEffect = async (effect) => {
     const actor = effect?.parent;
-    if (!actor) return;
-    const effectUuid = foundry.utils.getProperty(effect, "flags.gum.effectUuid");
-    if (effectUuid) await rebalanceEffectCarrier(actor, effectUuid);
-    await processStatusBindings(actor);
+    if (!isActorContextAvailable(actor)) return;
+    try {
+        const effectUuid = foundry.utils.getProperty(effect, "flags.gum.effectUuid");
+        if (effectUuid) await rebalanceEffectCarrier(actor, effectUuid);
+        await processStatusBindings(actor);
 
-    if (actor.hasPlayerOwner || game.combat) {
-        refreshGMScreen();
+        if (actor.hasPlayerOwner || game.combat) {
+            refreshGMScreen();
+        }
+    } catch (error) {
+        console.warn("GUM | Falha ao sincronizar status após remover ActiveEffect.", error);
     }
 };
 
 Hooks.on("deleteActiveEffect", refreshFromDeletedActiveEffect);
 Hooks.on("updateActiveEffect", async (effect, changes) => {
     const actor = effect?.parent;
-    if (!actor) return;
+    if (!isActorContextAvailable(actor)) return;
     const disabledChanged = Object.prototype.hasOwnProperty.call(changes || {}, "disabled");
     const statusesChanged = Object.prototype.hasOwnProperty.call(changes || {}, "statuses")
         || Object.prototype.hasOwnProperty.call(changes?.flags?.core || {}, "statusId");
     if (!disabledChanged && !statusesChanged) return;
 
-    const effectUuid = foundry.utils.getProperty(effect, "flags.gum.effectUuid");
-    if (effectUuid) await rebalanceEffectCarrier(actor, effectUuid);
-    await processStatusBindings(actor);
-    if (actor.hasPlayerOwner || game.combat) refreshGMScreen();
+    try {
+        const effectUuid = foundry.utils.getProperty(effect, "flags.gum.effectUuid");
+        if (effectUuid) await rebalanceEffectCarrier(actor, effectUuid);
+        await processStatusBindings(actor);
+        if (actor.hasPlayerOwner || game.combat) refreshGMScreen();
+    } catch (error) {
+        console.warn("GUM | Falha ao sincronizar status após atualizar ActiveEffect.", error);
+    }
 });
 
 
 Hooks.on("createActiveEffect", async (effect) => {
     const actor = effect?.parent;
-    if (!actor) return;
-    await processStatusBindings(actor);
-    if (actor.hasPlayerOwner || game.combat) refreshGMScreen();
+    if (!isActorContextAvailable(actor)) return;
+    try {
+        await processStatusBindings(actor);
+        if (actor.hasPlayerOwner || game.combat) refreshGMScreen();
+    } catch (error) {
+        console.warn("GUM | Falha ao sincronizar status após criar ActiveEffect.", error);
+    }
 });
 
 // 6. MUDANÇAS NA CENA (Adicionar/Remover tokens)

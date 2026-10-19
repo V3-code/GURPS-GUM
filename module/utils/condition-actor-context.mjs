@@ -5,6 +5,27 @@ export function getActorEvaluationKey(actor) {
   return actor?.uuid || actor?.id || null;
 }
 
+/**
+ * Return whether an Actor still has a writable document context.
+ *
+ * Foundry removes an unlinked TokenDocument from its Scene collection before
+ * every embedded ActiveEffect hook has necessarily finished. Late hooks must
+ * not reconcile effects on that now-orphaned synthetic Actor.
+ */
+export function isActorContextAvailable(actor) {
+  if (!actor) return false;
+  if (!actor.isToken) return true;
+
+  const token = actor.token;
+  if (!token || token.deleted === true || token._destroyed === true) return false;
+  const scene = token.parent;
+  if (!scene) return false;
+
+  if (typeof scene.tokens?.get === "function") return Boolean(scene.tokens.get(token.id));
+  if (typeof scene.tokens?.has === "function") return scene.tokens.has(token.id);
+  return true;
+}
+
 /** Adapt an Actor to the token-shaped target expected by the effects engine. */
 export function buildActorEffectTarget(actor) {
   if (!actor) return null;

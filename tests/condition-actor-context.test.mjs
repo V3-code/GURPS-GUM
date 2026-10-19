@@ -4,7 +4,8 @@ import test from "node:test";
 import {
   buildActorEffectTarget,
   buildActorEffectTargets,
-  getActorEvaluationKey
+  getActorEvaluationKey,
+  isActorContextAvailable
 } from "../module/utils/condition-actor-context.mjs";
 
 test("world actor remains the sole effect owner even when it has active tokens", () => {
@@ -46,4 +47,18 @@ test("missing actors do not produce effect targets or evaluation keys", () => {
   assert.equal(buildActorEffectTarget(null), null);
   assert.deepEqual(buildActorEffectTargets(null), []);
   assert.equal(getActorEvaluationKey(null), null);
+});
+
+test("status reconciliation skips orphaned synthetic token actors", () => {
+  const liveToken = { id: "live", parent: null };
+  const scene = { tokens: new Map([[liveToken.id, liveToken]]) };
+  liveToken.parent = scene;
+
+  assert.equal(isActorContextAvailable({ id: "world", isToken: false }), true);
+  assert.equal(isActorContextAvailable({ isToken: true, token: liveToken }), true);
+
+  scene.tokens.delete(liveToken.id);
+  assert.equal(isActorContextAvailable({ isToken: true, token: liveToken }), false);
+  assert.equal(isActorContextAvailable({ isToken: true, token: null }), false);
+  assert.equal(isActorContextAvailable(null), false);
 });
