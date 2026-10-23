@@ -195,6 +195,27 @@
 
 .gum.gm-screen .monitor-card.defeated { opacity: 0.5; filter: grayscale(1); }
 
+.gum.gm-screen .monitor-card.is-gm-target {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gum-accent-gold) 58%, transparent);
+}
+
+.gum.gm-screen .monitor-card-target-marker {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    z-index: 3;
+    display: inline-flex;
+    width: 18px;
+    height: 18px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--gum-accent-gold) 18%, var(--gm-surface));
+    color: var(--gum-accent-gold);
+    font-size: 0.65rem;
+    pointer-events: none;
+}
+
 /* Identidade */
 .gum.gm-screen .card-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .gum.gm-screen .actor-identity { display: flex; align-items: center; gap: 10px; cursor: pointer; flex-grow: 1; overflow: hidden; }
@@ -1298,7 +1319,7 @@
 }
 
 .gum.gm-screen .gm-screen-layout {
-    grid-template-columns: minmax(230px, 280px) minmax(0, 1fr);
+    grid-template-columns: 310px minmax(0, 1fr);
 }
 
 .gum.gm-screen .monitor-column {
@@ -1556,7 +1577,7 @@
 
 @container gum-gm-screen (max-width: 900px) {
     .gum.gm-screen .gm-screen-layout {
-        grid-template-columns: 220px minmax(0, 1fr);
+        grid-template-columns: 310px minmax(0, 1fr);
     }
 
     .gum.gm-screen .modifiers-dashboard .modular-grid {

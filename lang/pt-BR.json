@@ -2224,6 +2224,7 @@
   "GUM.GMScreen.Title": "Escudo do Mestre (GUM)",
   "GUM.GMScreen.DragQuickMenuHint": "Arraste para reposicionar este menu de uso rápido",
   "GUM.GMScreen.TargetNavigation": "Navegação de alvos",
+  "GUM.GMScreen.MasterTarget": "Alvo do Mestre",
   "GUM.GMScreen.Characters": "PJs",
   "GUM.GMScreen.Combat": "Combate",
   "GUM.GMScreen.NoActiveCombat": "Nenhum combate ativo.",

@@ -2224,6 +2224,7 @@
   "GUM.GMScreen.Title": "GM Screen (GUM)",
   "GUM.GMScreen.DragQuickMenuHint": "Drag to reposition this quick-use menu",
   "GUM.GMScreen.TargetNavigation": "Target navigation",
+  "GUM.GMScreen.MasterTarget": "GM target",
   "GUM.GMScreen.Characters": "PCs",
   "GUM.GMScreen.Combat": "Combat",
   "GUM.GMScreen.NoActiveCombat": "No active combat.",

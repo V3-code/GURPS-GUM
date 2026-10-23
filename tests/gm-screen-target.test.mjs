@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { resolveGMScreenCardTarget } from "../module/utils/gm-screen-target.mjs";
+import { isGMScreenCardTargeted, resolveGMScreenCardTarget } from "../module/utils/gm-screen-target.mjs";
 
 const collection = (entries) => new Map(entries);
 
@@ -66,4 +66,21 @@ test("token de outro ator não substitui o alvo do combatente", () => {
         ),
         { actor, token: null }
     );
+});
+
+test("card de combate só é marcado quando seu token específico é alvo", () => {
+    const actor = { id: "hero" };
+    const cardToken = { id: "card-token", actor };
+    const otherToken = { id: "other-token", actor };
+
+    assert.equal(isGMScreenCardTargeted({ actor, token: cardToken }, [otherToken]), false);
+    assert.equal(isGMScreenCardTargeted({ actor, token: cardToken }, [cardToken]), true);
+});
+
+test("card de personagem é marcado quando qualquer token do ator é alvo", () => {
+    const actor = { id: "hero" };
+    const target = { id: "token", actor };
+
+    assert.equal(isGMScreenCardTargeted({ actor }, [target]), true);
+    assert.equal(isGMScreenCardTargeted({ actor: { id: "other" } }, [target]), false);
 });

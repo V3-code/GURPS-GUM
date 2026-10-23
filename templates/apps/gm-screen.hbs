@@ -191,13 +191,19 @@
 
 {{!-- PARTIAL ATUALIZADO: INICIATIVA DENTRO DO CARD --}}
 {{#*inline "monitorCard"}}
-<div class="monitor-card {{#if actor.isTurn}}active-turn{{/if}} {{#if actor.isDefeated}}defeated{{/if}}"
+<div class="monitor-card {{#if actor.isTurn}}active-turn{{/if}} {{#if actor.isTargeted}}is-gm-target{{/if}} {{#if actor.isDefeated}}defeated{{/if}}"
      role="button"
      tabindex="0"
      data-actor-id="{{actor.id}}"
      data-token-id="{{actor.tokenId}}"
      data-combatant-id="{{actor.combatantId}}"
      title="{{localize 'GUM.GMScreen.ApplySelectionHint'}}">
+
+    {{#if actor.isTargeted}}
+        <span class="monitor-card-target-marker" role="img" aria-label="{{localize 'GUM.GMScreen.MasterTarget'}}" title="{{localize 'GUM.GMScreen.MasterTarget'}}">
+            <i class="fas fa-crosshairs" aria-hidden="true"></i>
+        </span>
+    {{/if}}
 
     <div class="actor-identity">
         <div class="card-top">
