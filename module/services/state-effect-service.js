@@ -69,6 +69,7 @@ async function applyLinkActions(item, group, activationId, link, options = {}) {
     actor: item.parent,
     origin: item,
     source: "stateItem",
+    stackingDomain: "managed",
     originItemId: item.id,
     stateEffectGroupId: group.id,
     stateEffectLinkId: link.linkId,

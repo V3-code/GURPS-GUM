@@ -1,4 +1,3 @@
-import { createSingleRollRequestMessage } from "../module/services/roll-request-service.js";
 import { normalizeChatRoll } from "../module/utils/roll-request-data.mjs";
 import { recipientUserIdsForActor } from "../module/utils/test-request-targets.mjs";
 import { findConfiguredStatus } from "../module/utils/status-catalog.mjs";
@@ -14,6 +13,14 @@ import {
     normalizeEffectTestChatVisibility
 } from "../module/utils/effect-chat-visibility.mjs";
 import { normalizeRequestedAttributeKey } from "../module/utils/requested-attributes.mjs";
+import {
+    collectConditionOwners,
+    INSTANT_EFFECT_ACTION_TYPES,
+    matchesStackedEffect,
+    normalizeEffectStackingMode,
+    PERSISTENT_EFFECT_ACTION_TYPES,
+    resolveEffectStackingDomain
+} from "../module/utils/effect-stacking.mjs";
 
 /**
  * O "Motor de Efeitos" central do sistema. (Versão 5.0 - Rollback Controlado)
@@ -247,6 +254,11 @@ const CARRIER_ACTION_PRIORITY = {
     status: 4
 };
 
+// Aplicações que precisam consultar uma cópia já existente são serializadas.
+// Isso evita que duas aplicações simultâneas de "único" ou "renovar" leiam o
+// mesmo estado antigo e criem duplicatas antes que a outra termine.
+let nonStackingApplicationQueue = Promise.resolve();
+
 const normalizeRollModifierEntryValue = (value) => {
     if (value === null || value === undefined) return 0;
     if (typeof value === "number") return Number.isFinite(value) ? value : 0;
@@ -402,14 +414,38 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
     if (targets.length === 0) return;
 
     const effectSystem = effectItem.system;
+    const stackingMode = normalizeEffectStackingMode(effectSystem);
+    const stackingDomain = resolveEffectStackingDomain(context);
+    const effectiveStackingMode = stackingDomain === "managed" ? "stack" : stackingMode;
+    const applicationId = context.applicationId || foundry.utils.randomID();
+
+    if (effectiveStackingMode !== "stack" && context._stackingQueueAcquired !== true) {
+        const previous = nonStackingApplicationQueue.catch(() => undefined);
+        let releaseQueue;
+        const gate = new Promise(resolve => { releaseQueue = resolve; });
+        nonStackingApplicationQueue = previous.then(() => gate);
+        await previous;
+        try {
+            return await applySingleEffect(effectItem, targets, {
+                ...context,
+                applicationId,
+                _stackingQueueAcquired: true
+            });
+        } finally {
+            releaseQueue();
+        }
+    }
+
     const allActions = getEffectActions(effectSystem);
     const selectedActionIds = Array.isArray(context.actionIds) ? new Set(context.actionIds.map(String)) : null;
-    const actions = selectedActionIds ? allActions.filter(action => selectedActionIds.has(action.id)) : allActions;
+    const actionEntries = allActions
+        .map((action, actionIndex) => ({ action, actionIndex }))
+        .filter(({ action }) => !selectedActionIds || selectedActionIds.has(action.id));
+    const actions = actionEntries.map(({ action }) => action);
     if (!actions.length) return;
     const conditionFlags = context.conditionId
         ? { conditionEffect: true, conditionId: context.conditionId, conditionIds: [context.conditionId] }
         : {};
-    const uniqueAcrossConditions = context.conditionId && effectSystem.conditionStackingMode === "unique";
     const evaluateEffectValue = async (value, actor) => {
         if (typeof value !== "string") {
             return { value, roll: null, formula: null };
@@ -447,10 +483,10 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
             }
         }
     };
-    const persistentTypes = new Set(["attribute", "flag", "roll_modifier", "skill_modifier", "combat_modifier", "status"]);
-    const instantTypes = new Set(["resource_change", "resource_create", "macro", "chat"]);
+    const persistentTypes = PERSISTENT_EFFECT_ACTION_TYPES;
+    const instantTypes = INSTANT_EFFECT_ACTION_TYPES;
 
-    const buildCommonActiveEffectData = (targetActor, actionIndex = 0) => {
+    const buildCommonActiveEffectData = (targetActor, actionIndex = 0, actionConditionFlags = conditionFlags) => {
         const gumDuration = normalizeEffectDurationFlags(context.durationOverride || effectSystem.duration || {});
         const startMode = gumDuration.startMode || "apply";
         const endMode = gumDuration.endMode || "turnEnd";
@@ -468,9 +504,21 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
             origin: context.origin ? context.origin.uuid : (context.actor ? context.actor.uuid : null),
             changes: [],
             statuses: [],
+            duration: {
+                startTime: null,
+                seconds: null,
+                combat: null,
+                rounds: null,
+                turns: null,
+                startRound: null,
+                startTurn: null
+            },
             flags: {
                 gum: {
                     effectUuid: effectItem.uuid,
+                    applicationId,
+                    stackingDomain,
+                    stackingMode,
                     source: context.source || null,
                     originItemId: context.originItemId ?? null,
                     stateEffectGroupId: context.stateEffectGroupId ?? null,
@@ -480,7 +528,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                     statusBindingRuleUuid: context.statusBindingRuleUuid ?? null,
                     statusBindingStatusId: context.statusBindingStatusId ?? null,
                     duration: gumDuration,
-                    ...conditionFlags,
+                    ...actionConditionFlags,
                     ...(context.gumFlags || {})
                 }
             },
@@ -488,7 +536,6 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
         };
 
  if (!isEffectDurationPermanent(gumDuration)) {
-            activeEffectData.duration = {};
             const value = parseInt(gumDuration.value) || 1;
             const unit = gumDuration.unit;
             const usesCombatDuration = gumDuration.inCombat && game.combat;
@@ -515,7 +562,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
 
     const baseIconCarrierIndex = selectCarrierActionIndex(actions);
 
-    for (const [actionIndex, action] of actions.entries()) {
+    for (const [selectedActionIndex, { action, actionIndex }] of actionEntries.entries()) {
         if (!persistentTypes.has(action.type) && !instantTypes.has(action.type)) {
             console.warn(`[GUM] Tipo de ação de efeito "${action.type}" não reconhecido.`);
             continue;
@@ -530,31 +577,46 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                 for (const targetToken of targets) {
                     const targetActor = targetToken.actor;
                     if (!isActorContextAvailable(targetActor)) continue;
-                    if (uniqueAcrossConditions) {
-                        const sharedEffect = Array.from(targetActor?.effects || []).find((effect) => {
-                            const gumFlags = effect?.flags?.gum || {};
-                            return gumFlags.conditionEffect === true
-                                && gumFlags.effectUuid === effectItem.uuid
-                                && Number(gumFlags.actionIndex ?? 0) === actionIndex;
-                        });
-                        if (sharedEffect) {
-                            const existingConditionIds = Array.isArray(sharedEffect.flags?.gum?.conditionIds)
-                                ? sharedEffect.flags.gum.conditionIds
-                                : [sharedEffect.flags?.gum?.conditionId].filter(Boolean);
-                            const conditionIds = [...new Set([...existingConditionIds, context.conditionId])];
-                            if (conditionIds.length !== existingConditionIds.length) {
-                                await sharedEffect.update({ "flags.gum.conditionIds": conditionIds });
+                    const matchingEffects = effectiveStackingMode === "stack"
+                        ? []
+                        : Array.from(targetActor?.effects || []).filter(effect => matchesStackedEffect(effect, {
+                            effectUuid: effectItem.uuid,
+                            action,
+                            actionIndex,
+                            domain: stackingDomain
+                        }));
+                    if (effectiveStackingMode === "unique" && matchingEffects.length) {
+                        const [primaryEffect, ...duplicateEffects] = matchingEffects;
+                        if (stackingDomain === "condition") {
+                            const previousOwners = collectConditionOwners(primaryEffect);
+                            const conditionIds = [...new Set(matchingEffects
+                                .flatMap(effect => collectConditionOwners(effect, context.conditionId)))];
+                            if (conditionIds.length !== previousOwners.length || duplicateEffects.length) {
+                                await primaryEffect.update({
+                                    "flags.gum.conditionIds": conditionIds,
+                                    "flags.gum.conditionId": conditionIds[0]
+                                });
                             }
-                            continue;
                         }
+                        const duplicateIds = duplicateEffects.map(effect => effect.id).filter(Boolean);
+                        if (duplicateIds.length) {
+                            await targetActor.deleteEmbeddedDocuments("ActiveEffect", duplicateIds);
+                        }
+                        continue;
                     }
-                    const { activeEffectData, gumDuration, fallbackCoreStatusId } = buildCommonActiveEffectData(targetActor, actionIndex);
+                    const refreshConditionIds = effectiveStackingMode === "refresh" && stackingDomain === "condition"
+                        ? [...new Set(matchingEffects.flatMap(effect => collectConditionOwners(effect, context.conditionId)))]
+                        : null;
+                    const actionConditionFlags = refreshConditionIds?.length
+                        ? { conditionEffect: true, conditionId: refreshConditionIds[0], conditionIds: refreshConditionIds }
+                        : conditionFlags;
+                    const { activeEffectData, gumDuration, fallbackCoreStatusId } = buildCommonActiveEffectData(targetActor, actionIndex, actionConditionFlags);
                     activeEffectData.name = (action.label || "").trim() || buildFallbackActionLabel(action) || effectItem.name;
                     activeEffectData.flags.gum.actionIndex = actionIndex;                    
                     activeEffectData.flags.gum.actionId = action.id;
                     activeEffectData.flags.gum.actionType = action.type;
                     activeEffectData.flags.gum.actionLabel = (action.label || "").trim();
-                    const isIconCarrier = shouldShowTokenIcon(effectSystem, gumDuration) && baseIconCarrierIndex === actionIndex;
+                    const isIconCarrier = shouldShowTokenIcon(effectSystem, gumDuration) && baseIconCarrierIndex === selectedActionIndex;
                     if (isIconCarrier) {
                         activeEffectData.img = resolveTokenIconImage(effectItem, effectSystem, gumDuration);
                         activeEffectData.showIcon = getActiveEffectShowIconMode(effectSystem, gumDuration);
@@ -765,7 +827,16 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
 
                     if (!isActorContextAvailable(targetActor)) continue;
                     try {
-                        await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
+                        if (effectiveStackingMode === "refresh" && matchingEffects.length) {
+                            const [primaryEffect, ...duplicateEffects] = matchingEffects;
+                            await primaryEffect.update(activeEffectData, { diff: false, recursive: false });
+                            const duplicateIds = duplicateEffects.map(effect => effect.id).filter(Boolean);
+                            if (duplicateIds.length) {
+                                await targetActor.deleteEmbeddedDocuments("ActiveEffect", duplicateIds);
+                            }
+                        } else {
+                            await targetActor.createEmbeddedDocuments("ActiveEffect", [activeEffectData]);
+                        }
                     } catch (error) {
                         if (isMissingSyntheticActorContextError(error, targetActor)) continue;
                         throw error;
@@ -985,6 +1056,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                         const privacy = getEffectTestChatPrivacy({ visibility: normalized.visibility, actor: targetActor, users: Array.from(game.users || []) });
                         if (privacy.whisper.length) chatData.whisper = privacy.whisper;
                         if (privacy.blind) chatData.blind = true;
+                        const { createSingleRollRequestMessage } = await import("../module/services/roll-request-service.js");
                         await createSingleRollRequestMessage({ title: normalized.label, description: chatBody, origin: { type: "effect-chat", effectUuid: effectItem.uuid, effectName: effectItem.name }, targets: [{ targetKey: targetActor.uuid, actorUuid: targetActor.uuid, tokenUuid: null, actorName: targetActor.name, actorImg: targetActor.img, recipientUserIds: recipients }], test: normalized.test, consequence: { type: "chat-record" }, delivery: { rollMode: privacy.mode, visibility: normalized.visibility } }, chatData);
                     } else {
                         if (action.whisperMode === "gm") chatData.whisper = ChatMessage.getWhisperRecipients("GM");

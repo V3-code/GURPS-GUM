@@ -1409,6 +1409,11 @@
                         {{localize "GUM.EffectSheet.ConditionStackingExplanation"}}
                     </p>
                 {{/if}}
+                {{#if (eq system.conditionStackingMode "refresh")}}
+                    <p class="hint" style="margin: 0 10px 10px;">
+                        {{localize "GUM.EffectSheet.StackingRefreshExplanation"}}
+                    </p>
+                {{/if}}
 
  {{!-- DURAÇÃO E EXPIRAÇÃO --}}
                 {{#if hasTimedActions}}

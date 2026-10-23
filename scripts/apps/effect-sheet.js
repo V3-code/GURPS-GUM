@@ -320,7 +320,8 @@ export class EffectSheet extends ItemSheet {
         ];
         context.conditionStackingModeOptions = [
             { id: "stack", label: localize("GUM.EffectSheet.Stacking.Stack") },
-            { id: "unique", label: localize("GUM.EffectSheet.Stacking.Unique") }
+            { id: "unique", label: localize("GUM.EffectSheet.Stacking.Unique") },
+            { id: "refresh", label: localize("GUM.EffectSheet.Stacking.Refresh") }
         ];
         context.statusEffects = buildStatusCatalog(CONFIG.statusEffects);
         context.macros = game.macros.map(m => m.name);

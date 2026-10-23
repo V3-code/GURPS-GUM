@@ -119,7 +119,7 @@ Vários documentos, independentemente de seus tipos, podem usar o mesmo `effectR
 
 Isso compartilha a **definição**, não necessariamente uma única aplicação no ator. Se um personagem possuir ao mesmo tempo quatro Itens com esse efeito passivo, cada Item poderá originar sua própria instância e os modificadores poderão se acumular. A IA deve decidir conscientemente se esse acúmulo é desejado; caso contrário, use apenas uma fonte ativa ou modele a exclusividade apropriada para a mecânica.
 
-Na versão atual, `conditionStackingMode` controla somente o compartilhamento do mesmo efeito entre Itens Condição. O importador preserva esse campo, mas não transforma essa opção numa regra geral para ativações, efeitos passivos, dano ou equipamento.
+`conditionStackingMode` também controla aplicações diretas do mesmo efeito, incluindo ativações e efeitos de dano: `stack` acumula, `unique` preserva uma única cópia e `refresh` recalcula essa cópia e reinicia sua duração. Aplicações por Condição formam um domínio separado. Efeitos passivos, concessões de equipamento, grupos de estado e automações de status continuam administrados por seus mecanismos próprios e não são deduplicados por essa regra.
 
 O recurso funciona em:
 

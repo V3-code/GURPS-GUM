@@ -83,7 +83,7 @@ Fields inherited from the base model (`activationEffects`, `onDamageEffects`, `g
 | `system.ref` | string | `""` | Book or rule reference. |
 | `system.schemaVersion` | number | `2` | Action structure version. |
 | `system.actions` | array | `[]` | Actions performed by the effect. |
-| `system.conditionStackingMode` | enum | `stack` | Stacking rule when applied by Condition Items. |
+| `system.conditionStackingMode` | enum | `stack` | Effect application stacking rule. The field name is retained for compatibility. |
 | `system.tokenIconPolicy` | enum | `auto` | Token icon policy. |
 | `system.duration` | object | — | Duration of persistent actions. |
 | `system.resistanceRoll` | object | — | Optional barrier before application. |
@@ -93,7 +93,12 @@ Fields inherited from the base model (`activationEffects`, `onDamageEffects`, `g
 | Value | Meaning |
 | --- | --- |
 | `stack` | Stacks normally. |
-| `unique` | Does not stack the same effect across conditions; uniqueness is only activated in a Condition context. |
+| `unique` | Keeps only one copy of each persistent action from the same Effect Item in the same application domain. The current copy and duration are preserved. |
+| `refresh` | Keeps only one copy, but recalculates persistent actions and restarts duration on every new application. |
+
+Instant actions (`resource_change`, `resource_create`, `macro`, and `chat`) always run. Direct and Condition applications use separate domains, so they never remove or reuse each other's copies. In the Condition domain, `unique` and `refresh` retain the owner-condition list until the last condition is disabled.
+
+System-managed effects — Item passives, equipment grants, state groups, and status automations — keep the lifecycle of their own mechanisms and do not participate in generic deduplication.
 
 ### `tokenIconPolicy`
 

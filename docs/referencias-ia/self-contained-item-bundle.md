@@ -92,7 +92,7 @@ Any number of documents, regardless of Item type, may use the same `effectRef`. 
 
 This shares the **definition**, not necessarily one runtime application on an Actor. If a character owns four Items with the same passive effect, each Item may create its own Active Effect and their modifiers may stack. An AI must decide whether that stacking is intentional; otherwise, keep only one source active or model exclusivity appropriate to the mechanic.
 
-In the current version, `conditionStackingMode` controls sharing only when the same Effect is linked by Condition Items. The importer preserves the field but does not turn it into a general stacking policy for activation, passive, damage, or equipment applications.
+`conditionStackingMode` also controls direct applications of the same effect, including activation and on-damage effects: `stack` accumulates, `unique` preserves one copy, and `refresh` recalculates that copy and restarts its duration. Condition applications use a separate domain. Passive effects, equipment grants, state groups, and status automations remain governed by their own lifecycle mechanisms and are not deduplicated by this rule.
 
 Inside an Equipment Modifier `granted_effect` feature, the importer writes `effect_uuid`, `effect_name`, and `effect_img` instead.
 

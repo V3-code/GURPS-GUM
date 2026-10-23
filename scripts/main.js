@@ -18,6 +18,7 @@ import { ConditionSheet } from "./apps/condition-sheet.js";
 import { EffectSheet } from './apps/effect-sheet.js';
 import { TriggerSheet } from './apps/trigger-sheet.js';
 import { applySingleEffect, getEffectActions } from './effects-engine.js';
+import { isPersistentEffectAction, normalizeEffectStackingMode } from '../module/utils/effect-stacking.mjs';
 import { buildActorEffectTarget, buildActorEffectTargets, getActorEvaluationKey, isActorContextAvailable, isMissingSyntheticActorContextError } from '../module/utils/condition-actor-context.mjs';
 import { reconcileAllStateEffects, removeAllStateEffectsForItem, setStateEffectGroupActive, syncItemStateEffects } from '../module/services/state-effect-service.js';
 import { GUM } from '../module/config.js';
@@ -102,6 +103,7 @@ async function syncEquipmentModifierGrantedEffects(item) {
                 actor,
                 origin: item,
                 source: EQUIPMENT_GRANTED_EFFECT_SOURCE,
+                stackingDomain: "managed",
                 originItemId: item.id,
                 skipInstantEffects: true,
                 durationOverride: { isPermanent: true, inCombat: false, _uiMode: "permanent" },
@@ -2882,6 +2884,28 @@ async function applyUseEventEffects(item, actor, trigger, options = {}) {
  * Cria uma mensagem de chat solicitando o teste de resistência de um efeito de ativação.
  * O teste usa os dados de barreira configurados no item efeito.
  */
+function buildEffectApplicationContext(options = {}) {
+    const allowedFields = [
+        "source",
+        "stackingDomain",
+        "conditionId",
+        "conditionActivationMode",
+        "originItemId",
+        "stateEffectGroupId",
+        "stateEffectLinkId",
+        "stateEffectActivationId",
+        "statusBindingRuleUuid",
+        "statusBindingStatusId",
+        "skipPersistentEffects",
+        "skipInstantEffects",
+        "durationOverride",
+        "gumFlags"
+    ];
+    return Object.fromEntries(allowedFields
+        .filter(field => options[field] !== undefined)
+        .map(field => [field, options[field]]));
+}
+
 async function _promptActivationResistance(effectItem, targetToken, sourceActor, originItem, effectLinkId, options = {}) {
     const rollData = effectItem.system?.resistanceRoll || {};
     const normalizedResistance = normalizeResistanceRoll(rollData);
@@ -2894,14 +2918,9 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
     // impacto de um dano). Grave o valor já resolvido no pedido de rolagem.
     normalizedResistance.test.fixedModifierFormula = "";
     const suppressResistanceCard = rollData.skipPromptCard || options.suppressResistanceCard;
+    const applicationContext = buildEffectApplicationContext(options);
     if (suppressResistanceCard) {
         const targetKey = targetToken.document?.uuid || targetToken.uuid || targetToken.actor?.uuid;
-        const conditionContext = options.conditionId
-            ? {
-                conditionId: options.conditionId,
-                conditionActivationMode: options.conditionActivationMode || null
-            }
-            : {};
         const silentRequest = {
             id: foundry.utils.randomID(), title: game.i18n.format("GUM.RollRequest.ResistanceTitle", { name: effectItem.name }),
             origin: { type: "effect-barrier", sourceActorUuid: sourceActor?.uuid, sourceItemUuid: originItem?.uuid, effectUuid: effectItem.uuid, effectLinkId },
@@ -2910,11 +2929,11 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
         };
         await executeRollRequest(silentRequest, targetKey, { prompt: false, onResult: async result => {
             if (!game.user.isGM) {
-                game.socket.emit("system.gum", { type: "rollRequest:silentBarrierResult", request: silentRequest, targetKey, userId: game.user.id, result, context: { conditionId: options.conditionId || null, conditionActivationMode: options.conditionActivationMode || null } });
+                game.socket.emit("system.gum", { type: "rollRequest:silentBarrierResult", request: silentRequest, targetKey, userId: game.user.id, result, context: { applicationContext } });
                 return;
             }
             const barrier = evaluateBarrierConsequence(result, normalizedResistance.consequence);
-            if (barrier.shouldApply) await applySingleEffect(effectItem, [targetToken], { actor: sourceActor, origin: originItem || effectItem, actionIds: barrier.actionIds, ...conditionContext });
+            if (barrier.shouldApply) await applySingleEffect(effectItem, [targetToken], { actor: sourceActor, origin: originItem || effectItem, actionIds: barrier.actionIds, ...applicationContext });
         }});
         return;
     }
@@ -2934,8 +2953,9 @@ async function _promptActivationResistance(effectItem, targetToken, sourceActor,
         sourceActorId: sourceActor?.id || null,
         originItemUuid: originItem?.uuid || null,
         effectLinkId: effectLinkId || null,
-                conditionId: options.conditionId || null,
-        conditionActivationMode: options.conditionActivationMode || null
+        conditionId: options.conditionId || null,
+        conditionActivationMode: options.conditionActivationMode || null,
+        applicationContext
     };
  const targetKey = targetToken.document?.uuid || targetToken.uuid || targetToken.actor?.uuid;
  const request = {
@@ -3210,6 +3230,7 @@ Hooks.on("createItem", async (item, options, userId) => {
                             actor,
                             origin: item,
                             source: "passiveItem",
+                            stackingDomain: "managed",
                             originItemId: item.id
                         });
                         console.log(` -> Efeito passivo "${effectItem.name}" aplicado.`);
@@ -3283,6 +3304,7 @@ const targets = buildActorEffectTargets(actor);
                                 actor,
                                 origin: item,
                                 source: "passiveItem",
+                                stackingDomain: "managed",
                                 originItemId: item.id,                                
                                 skipInstantEffects: true
                             });
@@ -3688,8 +3710,9 @@ async function processResistanceSocketResult(payload) {
         if (barrier.shouldApply) {
             const targetToken = target.tokenUuid ? await fromUuid(target.tokenUuid).catch(() => null) : null;
             const targets = targetToken ? [targetToken.object || targetToken] : (actor.getActiveTokens?.().length ? actor.getActiveTokens() : [{ actor, name: actor.name }]);
-            const conditionContext = payload.context?.conditionId ? { conditionId: payload.context.conditionId, conditionActivationMode: payload.context.conditionActivationMode || null } : {};
-            await applySingleEffect(effectItem, targets, { actor: request.origin.sourceActorUuid ? await fromUuid(request.origin.sourceActorUuid).catch(() => null) : null, origin: request.origin.sourceItemUuid ? await fromUuid(request.origin.sourceItemUuid).catch(() => effectItem) : effectItem, actionIds: barrier.actionIds, ...conditionContext });
+            const applicationContext = payload.context?.applicationContext
+                || (payload.context?.conditionId ? { conditionId: payload.context.conditionId, conditionActivationMode: payload.context.conditionActivationMode || null } : {});
+            await applySingleEffect(effectItem, targets, { actor: request.origin.sourceActorUuid ? await fromUuid(request.origin.sourceActorUuid).catch(() => null) : null, origin: request.origin.sourceItemUuid ? await fromUuid(request.origin.sourceItemUuid).catch(() => effectItem) : effectItem, actionIds: barrier.actionIds, ...applicationContext });
         }
         return;
     }
@@ -3727,8 +3750,9 @@ async function processResistanceSocketResult(payload) {
         const targets = targetToken ? [targetToken.object || targetToken] : (actor.getActiveTokens?.().length ? actor.getActiveTokens() : [{ actor, name: actor.name }]);
         const originItem = context.originItemUuid ? await fromUuid(context.originItemUuid).catch(() => null) : null;
         const originActor = context.sourceActorId ? game.actors.get(context.sourceActorId) : null;
-        const conditionContext = context.mode === "condition" && context.conditionId ? { conditionId: context.conditionId, conditionActivationMode: context.conditionActivationMode || null } : {};
-                await applySingleEffect(effectItem, targets, { actor: originActor, origin: originItem || effectItem, actionIds: barrier.actionIds, ...conditionContext });
+        const applicationContext = context.applicationContext
+            || (context.mode === "condition" && context.conditionId ? { conditionId: context.conditionId, conditionActivationMode: context.conditionActivationMode || null } : {});
+                await applySingleEffect(effectItem, targets, { actor: originActor, origin: originItem || effectItem, actionIds: barrier.actionIds, ...applicationContext });
         effectApplied = true;
         consequenceLabel = game.i18n.localize("GUM.RollRequest.EffectApplied");
     } else if (isReroll && wasEffectApplied) {
@@ -4202,6 +4226,7 @@ await applySingleEffect(effectItem, buildActorEffectTargets(actor), {
                     actor,
                     origin: rule,
                     source: "statusBinding",
+                    stackingDomain: "managed",
                     statusBindingRuleUuid: rule.uuid,
                     statusBindingStatusId: statusId
                 });
@@ -4338,6 +4363,8 @@ const conditionTarget = buildActorEffectTarget(actor);
                                 link.id || null,
                                 {
                                     mode: "condition",
+                                    source: "condition",
+                                    stackingDomain: "condition",
                                     conditionId: condition.id,
                                     conditionActivationMode,
                                     eventData
@@ -4347,9 +4374,10 @@ const conditionTarget = buildActorEffectTarget(actor);
                         }
 
                         const actions = getEffectActions(effectItem.system || {});
-                        const hasPersistentActions = actions.some((action) => ["attribute", "roll_modifier", "status", "flag"].includes(action.type));
+                        const hasPersistentActions = actions.some(isPersistentEffectAction);
                         const existingConditionEffect = actor.effects.find((effect) =>
-                            effect?.flags?.gum?.conditionId === condition.id
+                            (effect?.flags?.gum?.conditionId === condition.id
+                                || effect?.flags?.gum?.conditionIds?.includes(condition.id))
                             && effect?.flags?.gum?.effectUuid === effectItem.uuid
                         );
                         const skipPersistentEffects = Boolean(existingConditionEffect && !isPulseEvent);
@@ -4359,6 +4387,7 @@ await applySingleEffect(effectItem, [conditionTarget], {
                                 actor,
                                 origin: condition,
                                 source: "condition",
+                                stackingDomain: "condition",
                                 conditionId: condition.id,
                                 conditionActivationMode,
                                 skipPersistentEffects
@@ -4374,9 +4403,9 @@ await applySingleEffect(effectItem, [conditionTarget], {
                         if (!effectItem?.system) continue;
 
                         const actions = getEffectActions(effectItem.system || {});
-                        const uniqueAcrossConditions = effectItem.system.conditionStackingMode === "unique";
+                        const sharesAcrossConditions = ["unique", "refresh"].includes(normalizeEffectStackingMode(effectItem.system));
                         let hasRemainingOwner = false;
-                        if (actions.some((action) => ["attribute", "roll_modifier", "status", "flag"].includes(action.type))) {
+                        if (actions.some(isPersistentEffectAction)) {
                             const ownershipUpdates = [];
                             const effectsToRemove = actor.effects.filter((effect) => {
                                 const conditionIds = Array.isArray(effect?.flags?.gum?.conditionIds)
@@ -4386,7 +4415,7 @@ await applySingleEffect(effectItem, [conditionTarget], {
                                     && effect?.flags?.gum?.effectUuid === effectItem.uuid;
                                 if (!sameConditionSource) return false;
 
-                                if (uniqueAcrossConditions) {
+                                if (sharesAcrossConditions) {
                                     const remainingConditionIds = conditionIds.filter((id) => id !== condition.id);
                                     if (remainingConditionIds.length) {
                                         hasRemainingOwner = true;

@@ -83,7 +83,7 @@ Os campos herdados do modelo-base (`activationEffects`, `onDamageEffects`, `gene
 | `system.ref` | string | `""` | Referência bibliográfica ou de regra. |
 | `system.schemaVersion` | number | `2` | Versão da estrutura de ações. |
 | `system.actions` | array | `[]` | Ações executadas pelo efeito. |
-| `system.conditionStackingMode` | enum | `stack` | Regra de acúmulo quando aplicado por Itens Condição. |
+| `system.conditionStackingMode` | enum | `stack` | Regra de acúmulo das aplicações do efeito. O nome do campo é mantido por compatibilidade. |
 | `system.tokenIconPolicy` | enum | `auto` | Política de ícone no token. |
 | `system.duration` | object | — | Duração das ações persistentes. |
 | `system.resistanceRoll` | object | — | Barreira opcional antes da aplicação. |
@@ -93,7 +93,12 @@ Os campos herdados do modelo-base (`activationEffects`, `onDamageEffects`, `gene
 | Valor | Significado |
 | --- | --- |
 | `stack` | Acumula normalmente. |
-| `unique` | Não acumula o mesmo efeito entre condições; a unicidade só é acionada no contexto de uma Condição. |
+| `unique` | Mantém somente uma cópia de cada ação persistente do mesmo Item Efeito no mesmo domínio de aplicação. A cópia e a duração atuais são preservadas. |
+| `refresh` | Mantém somente uma cópia, mas recalcula as ações persistentes e reinicia a duração a cada nova aplicação. |
+
+As ações pontuais (`resource_change`, `resource_create`, `macro` e `chat`) sempre são executadas. Aplicações diretas e aplicações por Condição são domínios separados e não removem nem reaproveitam cópias umas das outras. Dentro do domínio de Condição, `unique` e `refresh` conservam a lista de condições proprietárias até a última delas ser desligada.
+
+Efeitos administrados pelo sistema — passivos de Item, concessões de equipamento, grupos de estado e automações de status — mantêm o ciclo de vida de seus próprios mecanismos e não participam da deduplicação genérica.
 
 ### `tokenIconPolicy`
 

@@ -21,6 +21,7 @@ import { buildEquipmentSortUpdates, resolveEquipmentDrop } from "../utils/equipm
 import { buildEquipmentConsumptionUpdate, equipmentIntegrityCurrentUpdate, equipmentIntegrityRecord, equipmentLinkedReserve, equipmentReserveBalanceUpdate, resolveEquipment } from "../utils/equipment-resolution.mjs";
 import { UNGROUPED_ORGANIZER_ID, addItemOrganizationGroup, buildItemCategoryGroupPlan, createGroupsFromItemCategories, moveOrganizedItem, normalizeItemOrganization, removeItemOrganizationGroup, renameItemOrganizationGroup } from "../utils/item-organization.mjs";
 import { normalizeRequestedAttributeKey } from "../utils/requested-attributes.mjs";
+import { resolveStoredEffectStackingDomain } from "../utils/effect-stacking.mjs";
 
 const WOUND_NATURE_ICONS = Object.freeze({
   fire: "fa-fire",
@@ -216,6 +217,17 @@ async getData(options) {
 
         // Processa todos os ActiveEffects no ator
         const activeEffects = Array.from(this.actor.effects ?? []);
+        const stackingKey = (effect) => {
+            const flags = effect?.flags?.gum || {};
+            if (!flags.effectUuid) return null;
+            const actionIdentity = flags.actionId != null ? `id:${flags.actionId}` : `index:${Number(flags.actionIndex ?? 0)}`;
+            return `${resolveStoredEffectStackingDomain(flags)}\u0000${flags.effectUuid}\u0000${actionIdentity}`;
+        };
+        const stackingCounts = activeEffects.reduce((counts, effect) => {
+            const key = stackingKey(effect);
+            if (key) counts.set(key, (counts.get(key) || 0) + 1);
+            return counts;
+        }, new Map());
         const activeEffectsPromises = activeEffects.map(async (effect) => {
             try {
                 const effectData = effect.toObject(); 
@@ -239,6 +251,8 @@ async getData(options) {
                     }
                 }
                 effectData.effectItemUuid = originalEffectItem?.uuid || effectUuid || null;
+                effectData.stackCount = stackingCounts.get(stackingKey(effect)) || 1;
+                effectData.hasStackCount = effectData.stackCount > 1;
 
                 const appliedStatuses = Array.isArray(effectData.statuses) ? effectData.statuses : [];
                 const mainStatusId = appliedStatuses.find((statusId) => CONFIG.statusEffects.some(status => status.id === statusId));

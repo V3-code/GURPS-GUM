@@ -2170,6 +2170,9 @@
                             {{#if effect.appliedStatusLabel}}
                                 <span class="pill-tag status-applied">{{localize 'GUM.Conditions.AppliedStatus' status=effect.appliedStatusLabel}}</span>
                             {{/if}}
+                            {{#if effect.hasStackCount}}
+                                <span class="pill-tag stack-count" title="{{localize 'GUM.Conditions.StackCountTitle'}}"><i class="fas fa-layer-group"></i> ×{{effect.stackCount}}</span>
+                            {{/if}}
                             {{#if effect.fonteNome}}
                             <span class="pill-tag source" title="{{localize 'GUM.Conditions.SourceLabel' source=effect.fonteNome}}">
                                 <i class="{{effect.fonteIcon}}"></i> {{effect.fonteRotulo}} · {{effect.fonteNome}}
@@ -2238,6 +2241,9 @@
                             {{/if}}
                             {{#if effect.appliedStatusLabel}}
                                 <span class="pill-tag status-applied">{{localize 'GUM.Conditions.AppliedStatus' status=effect.appliedStatusLabel}}</span>
+                            {{/if}}
+                            {{#if effect.hasStackCount}}
+                                <span class="pill-tag stack-count" title="{{localize 'GUM.Conditions.StackCountTitle'}}"><i class="fas fa-layer-group"></i> ×{{effect.stackCount}}</span>
                             {{/if}}
                             <span class="pill-tag source" title="{{localize 'GUM.Conditions.SourceLabel' source=effect.fonteNome}}">
                                 <i class="{{effect.fonteIcon}}"></i> {{effect.fonteRotulo}} · {{effect.fonteNome}}
