@@ -41,7 +41,7 @@ test("GM Screen keeps the monitor column at its fixed width and exposes the GM t
     assert.doesNotMatch(styles, /grid-template-columns:\s*(?:minmax\(230px, 280px\)|220px) minmax\(0, 1fr\)/);
     assert.match(template, /monitor-card[\s\S]*?is-gm-target[\s\S]*?monitor-card-target-marker/);
     assert.match(styles, /monitor-card-target-marker\s*\{[\s\S]*?left:\s*7px;/);
-    assert.match(styles, /passive-defenses\s*\{[\s\S]*?justify-content:\s*space-evenly;/);
+    assert.match(styles, /passive-defenses\s*\{\s*justify-content:\s*space-between;/);
     assert.match(application, /Hooks\.on\("targetToken", this\._onTargetToken\)/);
     assert.match(application, /Hooks\.off\("targetToken", this\._onTargetToken\)/);
 });
