@@ -4,6 +4,26 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.4.7-beta] - 2026-10-23
+
+### Added
+
+- O Escudo do Mestre agora identifica de forma sutil os alvos selecionados pelo Mestre e pelos jogadores, usando a cor individual de cada usuário para distinguir seus marcadores.
+- Itens Efeito podem controlar o acúmulo também em aplicações diretas: acumular normalmente, manter uma única aplicação ou renovar a aplicação existente, recalculando suas ações persistentes e reiniciando a duração.
+- A aba Condições da ficha mostra a quantidade de aplicações acumuladas de uma mesma ação persistente.
+
+### Changed
+
+- A coluna de cards do Escudo do Mestre mantém largura fixa de 290 px, e as defesas passivas distribuem seu conteúdo com espaçamento uniforme.
+- O marcador de alvo do Escudo do Mestre foi posicionado no canto superior esquerdo dos cards para não encobrir os valores de PV.
+- Aplicações diretas, condições e efeitos administrados pelo sistema usam domínios de acúmulo separados; passivos, concessões de equipamento, grupos de estado e automações de status preservam seus próprios ciclos de sincronização.
+
+### Fixed
+
+- Aplicações simultâneas de efeitos únicos ou renováveis são serializadas para impedir cópias persistentes duplicadas.
+- O contexto de acúmulo é preservado quando a aplicação do efeito passa por uma barreira de resistência.
+- Condições compartilham corretamente a propriedade de efeitos únicos ou renováveis até que a última condição vinculada seja desligada.
+
 ## [1.4.6-beta] - 2026-10-19
 
 ### Added
