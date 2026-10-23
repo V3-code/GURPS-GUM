@@ -40,6 +40,8 @@ test("GM Screen keeps the monitor column at its fixed width and exposes the GM t
     assert.match(styles, /gm-screen \.gm-screen-layout\s*\{[\s\S]*?grid-template-columns:\s*290px minmax\(0, 1fr\)/);
     assert.doesNotMatch(styles, /grid-template-columns:\s*(?:minmax\(230px, 280px\)|220px) minmax\(0, 1fr\)/);
     assert.match(template, /monitor-card[\s\S]*?is-gm-target[\s\S]*?monitor-card-target-marker/);
+    assert.match(template, /player-targeters[\s\S]*?player-target-dot/);
+    assert.match(styles, /player-target-dot\s*\{[\s\S]*?background:\s*var\(--gm-player-target-color/);
     assert.match(styles, /monitor-card-target-marker\s*\{[\s\S]*?left:\s*7px;/);
     assert.match(styles, /passive-defenses\s*\{\s*justify-content:\s*space-between;/);
     assert.match(application, /Hooks\.on\("targetToken", this\._onTargetToken\)/);

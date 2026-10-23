@@ -223,6 +223,13 @@
         </div>
         <div class="actor-name-row">
             <span class="actor-name">{{actor.name}}</span>
+            {{#if actor.playerTargeters.length}}
+                <span class="player-targeters" aria-label="{{localize 'GUM.GMScreen.PlayerTargets'}}">
+                    {{#each actor.playerTargeters}}
+                        <span class="player-target-dot" role="img" style="--gm-player-target-color: {{this.color}};" aria-label="{{localize 'GUM.GMScreen.PlayerTarget' name=this.name}}" title="{{localize 'GUM.GMScreen.PlayerTarget' name=this.name}}"></span>
+                    {{/each}}
+                </span>
+            {{/if}}
         </div>
     </div>
     

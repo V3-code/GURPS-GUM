@@ -2225,6 +2225,8 @@
   "GUM.GMScreen.DragQuickMenuHint": "Arraste para reposicionar este menu de uso rápido",
   "GUM.GMScreen.TargetNavigation": "Navegação de alvos",
   "GUM.GMScreen.MasterTarget": "Alvo do Mestre",
+  "GUM.GMScreen.PlayerTargets": "Alvos dos jogadores",
+  "GUM.GMScreen.PlayerTarget": "Mirado por {name}",
   "GUM.GMScreen.Characters": "PJs",
   "GUM.GMScreen.Combat": "Combate",
   "GUM.GMScreen.NoActiveCombat": "Nenhum combate ativo.",

@@ -31,3 +31,17 @@ export function isGMScreenCardTargeted({ actor = null, token = null } = {}, targ
         return Boolean(actor && targetActor?.id === actor.id);
     });
 }
+
+/** Return active non-GM users targeting the card, preserving their Foundry color. */
+export function getGMScreenPlayerTargeters(card = {}, users = []) {
+    return Array.from(users ?? [])
+        .filter(user => user?.active && !user?.isGM && isGMScreenCardTargeted(card, user.targets))
+        .map(user => {
+            const color = String(user.color ?? "").trim();
+            return {
+                id: user.id,
+                name: String(user.name || "?"),
+                color: /^#[0-9a-f]{3,8}$/i.test(color) ? color : "#9baec8"
+            };
+        });
+}

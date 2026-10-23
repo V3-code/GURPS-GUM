@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { isGMScreenCardTargeted, resolveGMScreenCardTarget } from "../module/utils/gm-screen-target.mjs";
+import { getGMScreenPlayerTargeters, isGMScreenCardTargeted, resolveGMScreenCardTarget } from "../module/utils/gm-screen-target.mjs";
 
 const collection = (entries) => new Map(entries);
 
@@ -83,4 +83,19 @@ test("card de personagem é marcado quando qualquer token do ator é alvo", () =
 
     assert.equal(isGMScreenCardTargeted({ actor }, [target]), true);
     assert.equal(isGMScreenCardTargeted({ actor: { id: "other" } }, [target]), false);
+});
+
+test("retorna somente jogadores ativos que miram o card com suas cores", () => {
+    const actor = { id: "hero" };
+    const token = { id: "token", actor };
+    const users = [
+        { id: "player", name: "Ana", active: true, isGM: false, color: "#3a7bd5", targets: new Set([token]) },
+        { id: "gm", name: "Mestre", active: true, isGM: true, color: "#ffffff", targets: new Set([token]) },
+        { id: "away", name: "Beto", active: false, isGM: false, color: "#ff0000", targets: new Set([token]) },
+        { id: "other", name: "Caio", active: true, isGM: false, color: "invalid", targets: new Set() }
+    ];
+
+    assert.deepEqual(getGMScreenPlayerTargeters({ actor, token }, users), [
+        { id: "player", name: "Ana", color: "#3a7bd5" }
+    ]);
 });

@@ -1055,13 +1055,17 @@
 }
 
 .gum.gm-screen .actor-name-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
     min-width: 0;
     padding: 0 2px;
 }
 
 .gum.gm-screen .actor-identity .actor-name {
     display: block;
-    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
     color: var(--gum-accent-gold);
     font-size: 9px;
     line-height: 1.25;
@@ -1069,6 +1073,22 @@
     overflow-wrap: anywhere;
     letter-spacing: 3px;
     text-transform: uppercase;
+}
+
+.gum.gm-screen .player-targeters {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 3px;
+}
+
+.gum.gm-screen .player-target-dot {
+    width: 8px;
+    height: 8px;
+    border: 1px solid color-mix(in srgb, var(--gm-panel) 58%, white);
+    border-radius: 50%;
+    background: var(--gm-player-target-color, #9baec8);
+    box-shadow: 0 0 4px color-mix(in srgb, var(--gm-player-target-color, #9baec8) 65%, transparent);
 }
 
 .gum.gm-screen .mini-bar {

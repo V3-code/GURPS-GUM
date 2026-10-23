@@ -6,7 +6,7 @@ import { GurpsDamageRollPrompt } from "./damage-roll-prompt.js";
 import { GumPreviewDialog } from "./preview-dialog.js";
 import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
 import { resolveAttackDamageDisplay } from "../utils/attack-damage-display.mjs";
-import { isGMScreenCardTargeted, resolveGMScreenCardTarget } from "../utils/gm-screen-target.mjs";
+import { getGMScreenPlayerTargeters, isGMScreenCardTargeted, resolveGMScreenCardTarget } from "../utils/gm-screen-target.mjs";
 import { getGMScreenEffectState } from "../utils/gm-screen-effect-state.mjs";
 import { openTestRequestLauncher } from "./test-request-launcher.js";
 import { resolveCharacterImage } from "../utils/character-image.mjs";
@@ -57,11 +57,9 @@ export class GumGMScreen extends Application {
             { id: "tab-5", name: "5" }
         ];
 
-        // A seleção de alvos é local ao usuário. Atualizamos somente a tela do
-        // Mestre que a alterou, sem depender de mudanças em atores ou combate.
-        this._onTargetToken = (user) => {
-            if (user?.id === game.user?.id) this.render(false);
-        };
+        // O Foundry transmite a alteração de alvo de cada usuário. Assim, o
+        // Escudo acompanha tanto o alvo do Mestre como os alvos dos jogadores.
+        this._onTargetToken = () => this.render(false);
         Hooks.on("targetToken", this._onTargetToken);
     }
 
@@ -96,7 +94,8 @@ async getData() {
         // Busca apenas atores de jogadores
         const actors = game.actors.filter(a => a.type === 'character' && a.hasPlayerOwner);
         const targetedTokens = Array.from(game.user?.targets ?? []);
-        const monitorData = actors.map(actor => this._prepareActorData(actor, null, targetedTokens));
+        const playerUsers = Array.from(game.users ?? []);
+        const monitorData = actors.map(actor => this._prepareActorData(actor, null, targetedTokens, playerUsers));
         monitorData.sort((a, b) => a.name.localeCompare(b.name));
 
         // 2. DADOS DO COMBATE (Iniciativa)
@@ -118,7 +117,7 @@ async getData() {
                 if (!actor) return null; 
                 
                 // Prepara os dados base (Lê HP, FP e Modificadores do ator correto)
-                const data = this._prepareActorData(actor, c.token, targetedTokens);
+                const data = this._prepareActorData(actor, c.token, targetedTokens, playerUsers);
                 
                 // Adiciona dados específicos do combate
                 data.combatantId = c.id;
@@ -201,7 +200,7 @@ async getData() {
     /**
      * Helper para extrair dados vitais de um ator (Reuso de código)
      */
- _prepareActorData(actor, token = null, targetedTokens = []) {
+ _prepareActorData(actor, token = null, targetedTokens = [], playerUsers = []) {
         const attr = actor.system.attributes;
         const encumbranceNames = ["None", "Light", "Medium", "Heavy", "ExtraHeavy"]
             .map(level => game.i18n.localize(`GUM.GMScreen.Encumbrance${level}`));
@@ -292,6 +291,7 @@ async getData() {
             encumbrance: encumbranceNames[encumbranceLevel],
             sizeModifier: formatSignedValue(getFinalValue(attr.mt)),
             isTargeted: isGMScreenCardTargeted({ actor, token }, targetedTokens),
+            playerTargeters: getGMScreenPlayerTargeters({ actor, token }, playerUsers),
             activeGMMods,
             activeGMEffects,
             hasActiveGMBadges: activeGMMods.length > 0 || activeGMEffects.length > 0
