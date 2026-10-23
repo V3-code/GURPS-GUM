@@ -202,7 +202,7 @@
 .gum.gm-screen .monitor-card-target-marker {
     position: absolute;
     top: 7px;
-    right: 7px;
+    left: 7px;
     z-index: 3;
     display: inline-flex;
     width: 18px;
@@ -234,7 +234,7 @@
 
 /* Defesas */
 .gum.gm-screen .passive-defenses {
-    display: flex; justify-content: space-between; align-items: center; gap: 6px;
+    display: flex; justify-content: space-evenly; align-items: center; gap: 6px;
     background: rgba(0,0,0,0.3); padding: 3px 6px; border-radius: 3px; border-top: 1px solid rgba(255,255,255,0.05);
 }
 .gum.gm-screen .def-tag { font-size: 0.75em; color: #ccc; font-weight: 500; white-space: nowrap; }
@@ -1319,7 +1319,7 @@
 }
 
 .gum.gm-screen .gm-screen-layout {
-    grid-template-columns: 310px minmax(0, 1fr);
+    grid-template-columns: 290px minmax(0, 1fr);
 }
 
 .gum.gm-screen .monitor-column {
@@ -1577,7 +1577,7 @@
 
 @container gum-gm-screen (max-width: 900px) {
     .gum.gm-screen .gm-screen-layout {
-        grid-template-columns: 310px minmax(0, 1fr);
+        grid-template-columns: 290px minmax(0, 1fr);
     }
 
     .gum.gm-screen .modifiers-dashboard .modular-grid {
