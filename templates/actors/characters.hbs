@@ -48,7 +48,7 @@
           {{!-- Lado Esquerdo --}}
           <div class="enc-col left-col">
             <a class="enc-label link edit-lifting-st" title="{{localize 'GUM.Character.Sidebar.EditLiftingStrength'}}">{{localize "GUM.Character.Sidebar.BasicLift"}}</a>
-            <span class="enc-val">{{actor.system.attributes.basic_lift.value}} kg</span>
+            <span class="enc-val">{{actor.system.attributes.basic_lift.final}} kg</span>
           </div>
 
           {{!-- Centro: Medalhão de Esquiva --}}
@@ -1604,10 +1604,16 @@
         {{! --- COLUNA DA ESQUERDA (ESTREITA) --- }}
         <div class="combat-left-column">
 
+          <div class="combat-filter-list combat-filter-list--sidebar" role="group" aria-label="{{localize 'GUM.Combat.Physical.SidebarFilters'}}">
+            <button type="button" class="combat-filter-chip {{#if combatSidebarFilterAll}}is-active{{/if}}" data-filter-scope="sidebar" data-filter-value="all" aria-pressed="{{#if combatSidebarFilterAll}}true{{else}}false{{/if}}">{{localize "GUM.Combat.Filters.All"}}</button>
+            <button type="button" class="combat-filter-chip {{#if combatDefenseFilterActive}}is-active{{/if}}" data-filter-scope="sidebar" data-filter-value="defense" aria-pressed="{{#if combatDefenseFilterActive}}true{{else}}false{{/if}}">{{localize "GUM.Combat.Physical.Defense"}}</button>
+            <button type="button" class="combat-filter-chip {{#if combatFeatsFilterActive}}is-active{{/if}}" data-filter-scope="sidebar" data-filter-value="feats" aria-pressed="{{#if combatFeatsFilterActive}}true{{else}}false{{/if}}">{{localize "GUM.Combat.Physical.Title"}}</button>
+          </div>
+
           {{! ================================================= }}
           {{!     PAINEL DE RD   }}
           {{! ================================================= }}
-          <div class="gum-block dr-location-block">
+          <div class="gum-block dr-location-block" data-combat-sidebar-group="defense" {{#unless combatDefenseVisible}}hidden{{/unless}}>
             <div class="block-header">
               <h4>
                 <span class="dr-header-title">{{localize "GUM.Combat.DR.Title"}}</span>
@@ -1662,6 +1668,54 @@
                 {{/if}}
               {{/each}}
             </ol>
+          </div>
+
+          <div class="gum-block physical-feats-block" data-combat-sidebar-group="feats" {{#unless combatFeatsVisible}}hidden{{/unless}}>
+            <div class="block-header">
+              <h4>
+                <span class="physical-feats-title">{{localize "GUM.Combat.Physical.Title"}}</span>
+                <span class="physical-feats-subtitle">{{localize "GUM.Combat.Physical.Subtitle"}}</span>
+              </h4>
+              <div class="header-controls">
+                <a class="edit-secondary-stats-btn" title="{{localize 'GUM.SecondaryEditor.DialogTitle'}}"><i class="fas fa-edit"></i></a>
+              </div>
+            </div>
+
+            <div class="physical-feats-content">
+              <section class="physical-feat-section">
+                <h5><i class="fas fa-route" aria-hidden="true"></i>{{localize "GUM.Combat.Physical.Movement"}}</h5>
+                <div class="physical-feat-grid">
+                  <div class="physical-feat-stat"><span>{{localize "GUM.Combat.Physical.Ground"}}</span><strong>{{actor.system.attributes.basic_move.final}}</strong></div>
+                  {{#if actor.system.attributes.enhanced_move.final}}<div class="physical-feat-stat"><span>{{localize "GUM.Combat.Physical.Enhanced"}}</span><strong>{{actor.system.attributes.enhanced_move.final}}</strong></div>{{/if}}
+                  {{#if actor.system.attributes.air_move.enabled}}<div class="physical-feat-stat"><span>{{localize "GUM.Combat.Physical.Air"}}</span><strong>{{actor.system.attributes.air_move.final}}</strong></div>{{/if}}
+                  {{#if actor.system.attributes.water_move.enabled}}<div class="physical-feat-stat"><span>{{localize "GUM.Combat.Physical.Water"}}</span><strong>{{actor.system.attributes.water_move.final}}</strong></div>{{/if}}
+                  {{#if actor.system.attributes.burrow_move.enabled}}<div class="physical-feat-stat"><span>{{localize "GUM.Combat.Physical.Burrow"}}</span><strong>{{actor.system.attributes.burrow_move.final}}</strong></div>{{/if}}
+                </div>
+              </section>
+
+              <section class="physical-feat-section">
+                <h5><i class="fas fa-person-arrow-up-from-line" aria-hidden="true"></i>{{localize "GUM.Combat.Physical.Jump"}}</h5>
+                <div class="physical-jump-legend"><span>{{localize "GUM.Combat.Physical.WithoutMomentum"}}</span><span>{{localize "GUM.Combat.Physical.WithMomentum"}}</span></div>
+                <div class="physical-jump-row">
+                  <span>{{localize "GUM.Combat.Physical.HorizontalJump"}}</span>
+                  <strong>{{actor.system.attributes.jump_horizontal_standing.final}} / {{actor.system.attributes.jump_horizontal_running.final}} <small>m</small></strong>
+                </div>
+                <div class="physical-jump-row">
+                  <span>{{localize "GUM.Combat.Physical.VerticalJump"}}</span>
+                  <strong>{{actor.system.attributes.jump_vertical_standing.final}} / {{actor.system.attributes.jump_vertical_running.final}} <small>m</small></strong>
+                </div>
+              </section>
+
+              <section class="physical-feat-section">
+                <h5><i class="fas fa-dumbbell" aria-hidden="true"></i>{{localize "GUM.Combat.Physical.Lifting"}}</h5>
+                <div class="physical-feat-grid">
+                  <div class="physical-feat-stat"><span>{{localize "GUM.Combat.Physical.LiftingST"}}</span><strong>{{actor.system.attributes.lifting_st.final}}</strong></div>
+                  <div class="physical-feat-stat"><span>{{localize "GUM.Combat.Physical.BasicLift"}}</span><strong>{{actor.system.attributes.basic_lift.final}} <small>kg</small></strong></div>
+                </div>
+              </section>
+
+              <button type="button" class="physical-throw-calculator"><i class="fas fa-bowling-ball" aria-hidden="true"></i><span>{{localize "GUM.Combat.Physical.ThrowCalculator"}}</span></button>
+            </div>
           </div>
 </div>
 

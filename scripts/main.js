@@ -64,6 +64,7 @@ import { applyEquipmentDefenseBonus, collectActiveEquipmentDefenseBonuses, evalu
 import { collectActiveEquipmentGrantedEffects, EQUIPMENT_GRANTED_EFFECT_SOURCE, hasEquipmentGrantRelevantChange, matchesEquipmentGrantedEffectScope } from "../module/utils/equipment-granted-effects.mjs";
 import { registerHexOccupancyCanvasHooks } from "../module/canvas/hex-occupancy-overlay.js";
 import { registerHexOccupancyCanvasLayer } from "../module/canvas/hex-occupancy-layer.mjs";
+import { PHYSICAL_FEAT_ATTRIBUTE_KEYS, prepareBasicLiftAttribute, preparePhysicalFeatAttributes } from "../module/utils/physical-feats.mjs";
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
 
@@ -600,7 +601,7 @@ _prepareCharacterItems() {
         // --- ETAPA 0: RESETAR VALORES ---
 prepareBasicDamageAttributes(attributes);
 const allAttributes = ['st', 'dx', 'iq', 'ht', 'vont', 'per', 'hp', 'fp', 'mt', 'basic_speed', 'basic_move', 'enhanced_move', 'lifting_st', 'dodge',
-            'vision', 'hearing', 'tastesmell', 'touch'];
+            'vision', 'hearing', 'tastesmell', 'touch', ...PHYSICAL_FEAT_ATTRIBUTE_KEYS];
         [...allAttributes, ...BASIC_DAMAGE_KEYS].forEach(attr => {
             if (attributes[attr]) {
                 attributes[attr].temp = 0;
@@ -779,9 +780,12 @@ const add_sub_modifiers = {};
         }
 
         // Carga e Levantamento
-        const liftingST = attributes.lifting_st.final_computed;
-        const basicLift = (liftingST * liftingST) / 10; 
-        attributes.basic_lift = { value: basicLift };
+        const pendingLiftingOverride = set_modifiers["system.attributes.lifting_st.override"];
+        const liftingST = pendingLiftingOverride ?? attributes.lifting_st.override ?? attributes.lifting_st.final_computed;
+        const pendingBasicLiftOverride = set_modifiers["system.attributes.basic_lift.override"];
+        prepareBasicLiftAttribute(attributes, { liftingStrength: liftingST });
+        if (pendingBasicLiftOverride !== undefined) attributes.basic_lift.override = pendingBasicLiftOverride;
+        const basicLift = prepareBasicLiftAttribute(attributes, { liftingStrength: liftingST }).final;
         
         let totalWeight = 0;
         const ignoreCarried = this.system.encumbrance.ignore_carried_weight;
@@ -903,6 +907,13 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
             foundry.utils.setProperty(this, path, set_modifiers[path]);
         }
         prepareBasicDamageAttributes(attributes);
+        const basicMoveForFeats = attributes.basic_move.override !== null && attributes.basic_move.override !== undefined
+            ? attributes.basic_move.override
+            : attributes.basic_move.final_computed;
+        const liftingStrengthForFeats = attributes.lifting_st.override !== null && attributes.lifting_st.override !== undefined
+            ? attributes.lifting_st.override
+            : attributes.lifting_st.final_computed;
+        preparePhysicalFeatAttributes(attributes, { basicMove: basicMoveForFeats, liftingStrength: liftingStrengthForFeats });
 
         // --- ETAPA 6: CÁLCULO FINALÍSSIMO ---
         for (const attr of allAttributes) {

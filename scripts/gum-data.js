@@ -24,6 +24,14 @@ export const GUM_DATA = {
         "attributes.basic_speed.temp": "Velocidade Básica (Mod. Temp.)",
         "attributes.basic_move.temp": "Deslocamento Básico (Mod. Temp.)",
         "attributes.enhanced_move.temp": "Deslocamento Ampliado (Mod. Temp.)",
+        "attributes.basic_lift.temp": "Levantamento Básico (Mod. Temp.)",
+        "attributes.air_move.temp": "Deslocamento Aéreo (Mod. Temp.)",
+        "attributes.water_move.temp": "Deslocamento Aquático (Mod. Temp.)",
+        "attributes.burrow_move.temp": "Deslocamento Subterrâneo (Mod. Temp.)",
+        "attributes.jump_horizontal_standing.temp": "Salto Horizontal sem Impulso (Mod. Temp.)",
+        "attributes.jump_horizontal_running.temp": "Salto Horizontal com Impulso (Mod. Temp.)",
+        "attributes.jump_vertical_standing.temp": "Salto Vertical sem Impulso (Mod. Temp.)",
+        "attributes.jump_vertical_running.temp": "Salto Vertical com Impulso (Mod. Temp.)",
         
         // Atributos Calculados (Modificadores Diretos)
         "attributes.final_dodge": "Esquiva Final",

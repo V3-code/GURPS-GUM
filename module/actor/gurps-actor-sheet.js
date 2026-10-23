@@ -22,6 +22,7 @@ import { buildEquipmentConsumptionUpdate, equipmentIntegrityCurrentUpdate, equip
 import { UNGROUPED_ORGANIZER_ID, addItemOrganizationGroup, buildItemCategoryGroupPlan, createGroupsFromItemCategories, moveOrganizedItem, normalizeItemOrganization, removeItemOrganizationGroup, renameItemOrganizationGroup } from "../utils/item-organization.mjs";
 import { normalizeRequestedAttributeKey } from "../utils/requested-attributes.mjs";
 import { resolveStoredEffectStackingDomain } from "../utils/effect-stacking.mjs";
+import { resolveThrowingDistance } from "../utils/physical-feats.mjs";
 
 const WOUND_NATURE_ICONS = Object.freeze({
   fire: "fa-fire",
@@ -129,6 +130,7 @@ async getData(options) {
         this._combatActionView ??= "actions";
         this._combatAttackFilters ??= new Set();
         this._combatControlFilters ??= new Set();
+        this._combatSidebarFilters ??= new Set();
         context.combatActionView = this._combatActionView;
         context.combatAttackFilterAll = this._combatAttackFilters.size === 0;
         context.combatControlFilterAll = this._combatControlFilters.size === 0;
@@ -136,6 +138,11 @@ async getData(options) {
         context.combatMetersFilterActive = this._combatControlFilters.has("meters");
         context.combatWoundsVisible = this._combatControlFilters.size === 0 || this._combatControlFilters.has("wounds");
         context.combatMetersVisible = this._combatControlFilters.size === 0 || this._combatControlFilters.has("meters");
+        context.combatSidebarFilterAll = this._combatSidebarFilters.size === 0;
+        context.combatDefenseFilterActive = this._combatSidebarFilters.has("defense");
+        context.combatFeatsFilterActive = this._combatSidebarFilters.has("feats");
+        context.combatDefenseVisible = this._combatSidebarFilters.size === 0 || this._combatSidebarFilters.has("defense");
+        context.combatFeatsVisible = this._combatSidebarFilters.size === 0 || this._combatSidebarFilters.has("feats");
         const encumbranceLevel = Math.min(4, Math.max(0, Number(this.actor.system.encumbrance?.level_value) || 0));
         context.encumbranceLevelLabel = game.i18n.localize(`GUM.Character.Sidebar.EncumbranceLevels.${encumbranceLevel}`);
         
@@ -2077,6 +2084,8 @@ activateListeners(html) {
             ? this._combatAttackFilters
             : scope === "control"
                 ? this._combatControlFilters
+                : scope === "sidebar"
+                    ? this._combatSidebarFilters
                 : null;
         if (!filters || !value) return;
 
@@ -2099,11 +2108,79 @@ activateListeners(html) {
             html.find('[data-combat-filter-group]').each((_index, group) => {
                 group.hidden = filters.size > 0 && !filters.has(String(group.dataset.combatFilterGroup));
             });
-        } else {
+        } else if (scope === "control") {
             html.find('[data-combat-control-group]').each((_index, group) => {
                 group.hidden = filters.size > 0 && !filters.has(String(group.dataset.combatControlGroup));
             });
+        } else if (scope === "sidebar") {
+            html.find('[data-combat-sidebar-group]').each((_index, group) => {
+                group.hidden = filters.size > 0 && !filters.has(String(group.dataset.combatSidebarGroup));
+            });
         }
+    });
+    html.on("click", ".physical-throw-calculator", ev => {
+        ev.preventDefault();
+        const t = key => game.i18n.localize(key);
+        const tf = (key, data) => game.i18n.format(key, data);
+        const attributes = this.actor.system.attributes || {};
+        const liftingStrength = Number(attributes.lifting_st?.final ?? attributes.lifting_st?.final_computed ?? 0);
+        const strikingStrength = Number(attributes.st?.final ?? attributes.st?.final_computed ?? 0);
+        const basicLiftKg = Number(attributes.basic_lift?.final ?? attributes.basic_lift?.value ?? 0);
+        const formatNumber = value => Number(value || 0).toLocaleString(game.i18n.lang, { maximumFractionDigits: 2 });
+        const content = `
+            <form class="physical-throw-dialog-form">
+                <p class="physical-throw-intro">${t("GUM.PhysicalThrow.Intro")}</p>
+                <div class="physical-throw-bases">
+                    <span>${t("GUM.Combat.Physical.LiftingST")} <strong>${formatNumber(liftingStrength)}</strong></span>
+                    <span>ST <strong>${formatNumber(strikingStrength)}</strong></span>
+                    <span>${t("GUM.Combat.Physical.BasicLift")} <strong>${formatNumber(basicLiftKg)} kg</strong></span>
+                </div>
+                <label class="physical-throw-weight">
+                    <span>${t("GUM.PhysicalThrow.Weight")}</span>
+                    <span class="physical-throw-input"><input type="number" name="object-weight" min="0" step="0.01" autofocus><em>kg</em></span>
+                </label>
+                <button type="button" class="physical-throw-calculate"><i class="fas fa-calculator"></i>${t("GUM.PhysicalThrow.Calculate")}</button>
+                <div class="physical-throw-result" aria-live="polite"><p>${t("GUM.PhysicalThrow.EnterWeight")}</p></div>
+            </form>`;
+        new Dialog({
+            title: t("GUM.PhysicalThrow.Title"),
+            content,
+            render: dialogHtml => {
+                const refresh = () => {
+                    const objectWeightKg = Number(dialogHtml.find('[name="object-weight"]').val());
+                    const resultRoot = dialogHtml.find('.physical-throw-result');
+                    const result = resolveThrowingDistance({ liftingStrength, strikingStrength, basicLiftKg, objectWeightKg });
+                    if (!result.valid) {
+                        resultRoot.html(`<p class="is-warning">${t("GUM.PhysicalThrow.InvalidWeight")}</p>`);
+                        return;
+                    }
+                    if (!result.throwable) {
+                        resultRoot.html(`<p class="is-warning">${tf("GUM.PhysicalThrow.Unthrowable", { maximum: formatNumber(result.maximumWeightKg) })}</p>`);
+                        return;
+                    }
+                    const handsLabel = t(`GUM.PhysicalThrow.Hands.${result.hands}`);
+                    resultRoot.html(`
+                        <div class="physical-throw-result-grid">
+                            <span>${t("GUM.PhysicalThrow.Ratio")}<strong>${formatNumber(result.ratio)} × BL</strong></span>
+                            <span>${t("GUM.PhysicalThrow.Hands.Label")}<strong>${handsLabel}</strong></span>
+                            <span class="physical-throw-range">${t("GUM.PhysicalThrow.Range")}<strong>${formatNumber(result.distanceMeters)} m</strong></span>
+                        </div>
+                        <small>${tf("GUM.PhysicalThrow.Maximum", { maximum: formatNumber(result.maximumWeightKg) })}</small>`);
+                };
+                dialogHtml.on('click', '.physical-throw-calculate', refresh);
+                dialogHtml.on('submit', '.physical-throw-dialog-form', submitEvent => {
+                    submitEvent.preventDefault();
+                    refresh();
+                });
+            },
+            buttons: {
+                close: { icon: '<i class="fas fa-times"></i>', label: t("GUM.PhysicalThrow.Close") }
+            },
+            default: "close"
+        }, {
+            classes: ["dialog", "gum", "physical-throw-dialog", "gum-sheet-edit-dialog"],
+            width: 420
+        }).render(true);
     });
     if (!this.isEditable) return;
 
@@ -4028,6 +4105,27 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                     <span class="final-display" title="${t("GUM.SecondaryEditor.CurrentFinal")}">${stat.final ?? 0}</span>
                 </div>`;
         };
+        const physicalStatRow = (key, label, { movementProfile = false } = {}) => {
+            const stat = getAttr(key, 0);
+            const automatic = stat.automatic !== false && !movementProfile;
+            const enabled = movementProfile ? stat.enabled === true : true;
+            return `
+                <div class="secondary-editor-row secondary-editor-row--physical" data-physical-attribute="${key}">
+                    <label for="secondary-${key}-value">
+                        ${movementProfile ? `<input type="checkbox" class="physical-enabled-toggle" name="${key}.enabled" ${enabled ? "checked" : ""} aria-label="${t("GUM.SecondaryEditor.Physical.Enabled")}">` : ""}
+                        <span>${label}</span>
+                    </label>
+                    <div class="physical-base-control">
+                        ${movementProfile ? "" : `<label class="physical-auto-control" title="${t("GUM.SecondaryEditor.Physical.AutomaticHint")}"><input type="checkbox" class="physical-auto-toggle" name="${key}.automatic" ${automatic ? "checked" : ""}><span>${t("GUM.SecondaryEditor.Physical.AutomaticShort")}</span></label>`}
+                        <input id="secondary-${key}-value" class="physical-base-input" type="number" name="${key}.value" value="${automatic ? (stat.calculated_base ?? stat.value ?? 0) : (stat.value ?? 0)}" step="0.01" ${automatic ? "disabled" : ""} />
+                    </div>
+                    <input type="number" name="${key}.mod" value="${stat.mod ?? 0}" step="0.01" aria-label="${tf("GUM.SecondaryEditor.FixedModifierFor", { attribute: label })}" />
+                    <span class="read-only" title="${t("GUM.SecondaryEditor.PassiveModifiersHint")}">${fmt(stat.passive)}</span>
+                    <span class="read-only" title="${t("GUM.SecondaryEditor.TemporaryEffectsHint")}">${fmt(stat.temp)}</span>
+                    <input type="number" name="${key}.points" value="${stat.points ?? 0}" aria-label="${tf("GUM.SecondaryEditor.PointsFor", { attribute: label })}" />
+                    <span class="final-display" title="${t("GUM.SecondaryEditor.CurrentFinal")}">${stat.final ?? 0}</span>
+                </div>`;
+        };
 
         const lifting = getAttr('lifting_st', 0);
         const dodge = getAttr('dodge');
@@ -4050,6 +4148,7 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                     <button type="button" class="secondary-editor-tab" data-panel="resources"><i class="fas fa-heartbeat"></i><span>${t("GUM.SecondaryEditor.Resources")}</span></button>
                     <button type="button" class="secondary-editor-tab" data-panel="senses"><i class="fas fa-eye"></i><span>${t("GUM.SecondaryEditor.Senses")}</span></button>
                     <button type="button" class="secondary-editor-tab" data-panel="damage"><i class="fas fa-dice-d6"></i><span>${t("GUM.SecondaryEditor.Damage")}</span></button>
+                    <button type="button" class="secondary-editor-tab" data-panel="physical"><i class="fas fa-person-running"></i><span>${t("GUM.SecondaryEditor.Physical.Tab")}</span></button>
                 </aside>
 
                 <div class="secondary-editor-workspace">
@@ -4127,6 +4226,35 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                                 </div>
                             </div>
                         </section>
+
+                        <section class="secondary-editor-panel" data-panel="physical">
+                            <div class="secondary-editor-card">
+                                <header><i class="fas fa-route"></i><div><h3>${t("GUM.SecondaryEditor.Physical.MovementTitle")}</h3><p>${t("GUM.SecondaryEditor.Physical.MovementHint")}</p></div></header>
+                                <div class="secondary-editor-table">
+                                    <div class="secondary-editor-columns" aria-hidden="true">${editorColumns(t("GUM.SecondaryEditor.Column.Attribute"))}</div>
+                                    ${physicalStatRow('air_move', t('GUM.SecondaryEditor.Attributes.AirMove'), { movementProfile: true })}
+                                    ${physicalStatRow('water_move', t('GUM.SecondaryEditor.Attributes.WaterMove'), { movementProfile: true })}
+                                    ${physicalStatRow('burrow_move', t('GUM.SecondaryEditor.Attributes.BurrowMove'), { movementProfile: true })}
+                                </div>
+                            </div>
+                            <div class="secondary-editor-card">
+                                <header><i class="fas fa-person-arrow-up-from-line"></i><div><h3>${t("GUM.SecondaryEditor.Physical.JumpTitle")}</h3><p>${t("GUM.SecondaryEditor.Physical.JumpHint")}</p></div></header>
+                                <div class="secondary-editor-table">
+                                    <div class="secondary-editor-columns" aria-hidden="true">${editorColumns(t("GUM.SecondaryEditor.Column.Attribute"))}</div>
+                                    ${physicalStatRow('jump_horizontal_standing', t('GUM.SecondaryEditor.Attributes.HorizontalJumpStanding'))}
+                                    ${physicalStatRow('jump_horizontal_running', t('GUM.SecondaryEditor.Attributes.HorizontalJumpRunning'))}
+                                    ${physicalStatRow('jump_vertical_standing', t('GUM.SecondaryEditor.Attributes.VerticalJumpStanding'))}
+                                    ${physicalStatRow('jump_vertical_running', t('GUM.SecondaryEditor.Attributes.VerticalJumpRunning'))}
+                                </div>
+                            </div>
+                            <div class="secondary-editor-card">
+                                <header><i class="fas fa-dumbbell"></i><div><h3>${t("GUM.SecondaryEditor.Physical.LiftingTitle")}</h3><p>${t("GUM.SecondaryEditor.Physical.LiftingHint")}</p></div></header>
+                                <div class="secondary-editor-table">
+                                    <div class="secondary-editor-columns" aria-hidden="true">${editorColumns(t("GUM.SecondaryEditor.Column.Attribute"))}</div>
+                                    ${physicalStatRow('basic_lift', t('GUM.SecondaryEditor.Attributes.BasicLift'))}
+                                </div>
+                            </div>
+                        </section>
                     </div>
                 </div>
           </form>`;
@@ -4142,6 +4270,11 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                     $(tabEvent.currentTarget).addClass('active').attr('aria-selected', 'true');
                     dialogHtml.find(`.secondary-editor-panel[data-panel="${panel}"]`).addClass('active');
                 });
+                dialogHtml.on('change', '.physical-auto-toggle', toggleEvent => {
+                    const row = toggleEvent.currentTarget.closest('[data-physical-attribute]');
+                    const baseInput = row?.querySelector('.physical-base-input');
+                    if (baseInput) baseInput.disabled = toggleEvent.currentTarget.checked;
+                });
             },
             buttons: {
                 save: {
@@ -4155,7 +4288,14 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                             "vision.value", "vision.mod", "vision.points", "hearing.value", "hearing.mod", "hearing.points",
                             "tastesmell.value", "tastesmell.mod", "tastesmell.points", "touch.value", "touch.mod", "touch.points",
                             "thrust_damage.mod", "thrust_damage.points", "swing_damage.mod", "swing_damage.points",
-                            "thrust_damage_alt.mod", "thrust_damage_alt.points", "swing_damage_alt.mod", "swing_damage_alt.points"
+                            "thrust_damage_alt.mod", "thrust_damage_alt.points", "swing_damage_alt.mod", "swing_damage_alt.points",
+                            "air_move.value", "air_move.mod", "air_move.points", "water_move.value", "water_move.mod", "water_move.points",
+                            "burrow_move.value", "burrow_move.mod", "burrow_move.points",
+                            "basic_lift.value", "basic_lift.mod", "basic_lift.points",
+                            "jump_horizontal_standing.value", "jump_horizontal_standing.mod", "jump_horizontal_standing.points",
+                            "jump_horizontal_running.value", "jump_horizontal_running.mod", "jump_horizontal_running.points",
+                            "jump_vertical_standing.value", "jump_vertical_standing.mod", "jump_vertical_standing.points",
+                            "jump_vertical_running.value", "jump_vertical_running.mod", "jump_vertical_running.points"
                         ];
                         const updateData = {};
                         for (const field of numericFields) {
@@ -4163,6 +4303,16 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                         }
                         for (const field of ["thrust_damage.value", "swing_damage.value", "thrust_damage_alt.value", "swing_damage_alt.value"]) {
                             if (formData[field] !== undefined) updateData[`system.attributes.${field}`] = String(formData[field]).trim();
+                        }
+                        for (const key of ["air_move", "water_move", "burrow_move"]) {
+                            updateData[`system.attributes.${key}.enabled`] = dialogHtml.find(`[name="${key}.enabled"]`).prop("checked") === true;
+                        }
+                        for (const key of ["basic_lift", "jump_horizontal_standing", "jump_horizontal_running", "jump_vertical_standing", "jump_vertical_running"]) {
+                            const automatic = dialogHtml.find(`[name="${key}.automatic"]`).prop("checked") === true;
+                            updateData[`system.attributes.${key}.automatic`] = automatic;
+                            if (!automatic) {
+                                updateData[`system.attributes.${key}.value`] = Number(dialogHtml.find(`[name="${key}.value"]`).val()) || 0;
+                            }
                         }
                         
                         return this.actor.update(updateData);
@@ -6665,7 +6815,10 @@ _calculatePointsSummary() {
   const secondaryKeys = [
     "hp", "fp", "basic_speed", "basic_move", "enhanced_move", "dodge",
     "vision", "hearing", "tastesmell", "touch", "mt",
-    "thrust_damage", "swing_damage", "thrust_damage_alt", "swing_damage_alt"
+    "thrust_damage", "swing_damage", "thrust_damage_alt", "swing_damage_alt",
+    "basic_lift", "air_move", "water_move", "burrow_move",
+    "jump_horizontal_standing", "jump_horizontal_running",
+    "jump_vertical_standing", "jump_vertical_running"
   ];
   const attrs = this.actor.system.attributes || {};
 
