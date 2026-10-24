@@ -5465,27 +5465,36 @@ const dlg = new Dialog({
   render: (dialogHtml) => {
     dialogHtml.on("click", ".gum-rd-add-location", async () => {
       const used = new Set(effectiveLocationOrder);
-      const presetOptions = listBodyLocations()
+      const availableLocationOptions = listBodyLocations()
         .filter(location => !used.has(location.id))
-        .map(location => `<option value="${escapeHtml(location.id)}">${escapeHtml(localizeBodyLocationLabel(location.id, getBodyLocationDefinition(location.id), t))}</option>`)
+        .map(location => ({
+          id: location.id,
+          label: localizeBodyLocationLabel(location.id, getBodyLocationDefinition(location.id), t)
+        }));
+      const locationSuggestions = availableLocationOptions
+        .map(location => `<option value="${escapeHtml(location.label)}"></option>`)
         .join("");
       new Dialog({
         title: t("GUM.Combat.DR.AddLocation"),
         content: `<form class="gum-rd-add-location-form">
-          <div class="form-group"><label>${t("GUM.Combat.DR.LocationPreset")}</label><select name="preset"><option value="">${t("GUM.Combat.DR.CustomLocation")}</option>${presetOptions}</select></div>
-          <div class="form-group"><label>${t("GUM.Combat.DR.CustomLocationName")}</label><input type="text" name="label"/></div>
+          <div class="form-group"><label>${t("GUM.Combat.DR.LocationSearch")}</label><input type="text" name="location" list="gum-rd-location-suggestions" placeholder="${t("GUM.Combat.DR.LocationSearchPlaceholder")}" autocomplete="off"/><datalist id="gum-rd-location-suggestions">${locationSuggestions}</datalist></div>
+          <p class="notes">${t("GUM.Combat.DR.LocationSearchHint")}</p>
           <div class="form-group"><label>${t("GUM.Combat.DR.CustomLocationRoll")}</label><input type="text" name="roll" placeholder="--"/></div>
         </form>`,
         buttons: {
           add: { icon: '<i class="fas fa-plus"></i>', label: t("GUM.Combat.DR.AddLocation"), callback: async html => {
             const form = html.find("form")[0];
             const data = new FormDataExtended(form).object;
-            const preset = String(data.preset || "").trim();
-            const customLabel = String(data.label || "").trim();
-            if (!preset && !customLabel) return ui.notifications.warn(t("GUM.Combat.DR.CustomLocationName"));
-            const key = preset || `custom_${foundry.utils.randomID(8)}`;
+            const requestedLocation = String(data.location || "").trim();
+            if (!requestedLocation) return ui.notifications.warn(t("GUM.Combat.DR.LocationRequired"));
+            const normalizeLocation = value => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLocaleLowerCase();
+            const normalizedRequestedLocation = normalizeLocation(requestedLocation);
+            const selectedLocation = availableLocationOptions.find(location =>
+              normalizeLocation(location.label) === normalizedRequestedLocation || normalizeLocation(location.id) === normalizedRequestedLocation
+            );
+            const key = selectedLocation?.id || `custom_${foundry.utils.randomID(8)}`;
             const definition = getBodyLocationDefinition(key);
-            const label = customLabel || definition?.label || definition?.name || key;
+            const label = selectedLocation?.label || definition?.label || definition?.name || requestedLocation;
             const next = foundry.utils.deepClone(additionalLocations);
             next[key] = { label, name: label, roll: String(data.roll || definition?.roll || "--").trim() || "--" };
             await actor.update({ "system.combat.additional_locations": next });

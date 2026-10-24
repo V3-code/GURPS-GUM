@@ -17,6 +17,8 @@ test("equipment protection exposes and normalizes the all-location path", () => 
   assert.match(itemSheet, /\["all", "todos", allLocationsLabel\]\.includes\(normalizedLabel\)/);
   for (const locale of [english, portuguese]) {
     assert.equal(typeof locale["GUM.Equipment.Protection.AllLocations"], "string");
+    assert.equal(typeof locale["GUM.Equipment.Protection.ProvidesLocation"], "string");
+    assert.equal(typeof locale["GUM.Combat.DR.LocationSearchHint"], "string");
   }
 });
 
