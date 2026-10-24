@@ -90,6 +90,20 @@ export function prepareBasicLiftAttribute(attributes = {}, { liftingStrength } =
   return attribute;
 }
 
+export function calculateLiftingCapacities(basicLift) {
+  const lift = Math.max(0, finiteNumber(basicLift));
+  return {
+    basicLiftKg: round(lift),
+    oneHandedKg: round(lift * 2),
+    twoHandedKg: round(lift * 8),
+    extraHeavyKg: round(lift * 10),
+    shoveKg: round(lift * 12),
+    carryOnBackKg: round(lift * 15),
+    runningShoveKg: round(lift * 24),
+    shiftSlightlyKg: round(lift * 50)
+  };
+}
+
 export function preparePhysicalFeatAttributes(attributes = {}, { basicMove, liftingStrength } = {}) {
   prepareBasicLiftAttribute(attributes, { liftingStrength });
   const jumpBases = calculateJumpBases(basicMove);

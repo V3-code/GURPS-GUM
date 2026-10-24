@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
+  calculateLiftingCapacities,
   calculateJumpBases,
   prepareBasicLiftAttribute,
   preparePhysicalFeatAttributes,
@@ -50,7 +51,7 @@ test("salto manual conserva sua base editada", () => {
   assert.equal(attributes.jump_horizontal_standing.final, 7);
 });
 
-test("Levantamento Básico pode ser automático, manual ou sobrescrito", () => {
+test("Carga Básica pode ser automática, manual ou sobrescrita", () => {
   const automatic = { basic_lift: attribute({ automatic: true, passive: 2 }) };
   assert.equal(prepareBasicLiftAttribute(automatic, { liftingStrength: 10 }).final, 12);
 
@@ -59,6 +60,19 @@ test("Levantamento Básico pode ser automático, manual ou sobrescrito", () => {
 
   manual.basic_lift.override = 25;
   assert.equal(prepareBasicLiftAttribute(manual, { liftingStrength: 10 }).final, 25);
+});
+
+test("calcula as capacidades padrão a partir da Carga Básica efetiva", () => {
+  assert.deepEqual(calculateLiftingCapacities(10), {
+    basicLiftKg: 10,
+    oneHandedKg: 20,
+    twoHandedKg: 80,
+    extraHeavyKg: 100,
+    shoveKg: 120,
+    carryOnBackKg: 150,
+    runningShoveKg: 240,
+    shiftSlightlyKg: 500
+  });
 });
 
 test("calculadora de arremesso usa BL efetivo e ST para o alcance", () => {
@@ -94,4 +108,6 @@ test("ficha, editor, efeitos e resumo de pontos expõem as proezas físicas", ()
   }
   assert.match(template, /class="[^"]*physical-feats-block[^"]*"/);
   assert.match(template, /class="[^"]*physical-throw-calculator[^"]*"/);
+  assert.match(template, /class="[^"]*physical-lifting-reference[^"]*"/);
+  assert.match(sheet, /physical-attribute-heading[\s\S]*physical-auto-control[\s\S]*physical-base-control/);
 });

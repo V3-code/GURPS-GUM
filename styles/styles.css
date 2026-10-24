@@ -9358,6 +9358,8 @@ background-color: var(--gum-accent-gold);
 .secondary-stats-unified-dialog .secondary-editor-table { display: grid; gap: 4px; min-width: 590px; }
 .secondary-stats-unified-dialog .secondary-editor-columns,
 .secondary-stats-unified-dialog .secondary-editor-row { display: grid; grid-template-columns: minmax(170px, 2fr) repeat(6, minmax(52px, .68fr)); align-items: center; gap: 5px; }
+.secondary-stats-unified-dialog .secondary-editor-table--physical .secondary-editor-columns,
+.secondary-stats-unified-dialog .secondary-editor-table--physical .secondary-editor-row { grid-template-columns:minmax(210px,2.35fr) repeat(6,minmax(48px,.6fr)); }
 .secondary-stats-unified-dialog .secondary-editor-columns { padding: 0 7px 3px; color: #777980; font-size: 8px; text-align: center; text-transform: uppercase; }
 .secondary-stats-unified-dialog .secondary-editor-columns span:first-child { text-align: left; }
 .secondary-stats-unified-dialog .secondary-editor-row { min-height: 35px; padding: 4px 7px; border-radius: 5px; background: var(--secondary-editor-card); }
@@ -9367,12 +9369,14 @@ background-color: var(--gum-accent-gold);
 .secondary-stats-unified-dialog .secondary-editor-row .read-only,
 .secondary-stats-unified-dialog .secondary-editor-row .final-display { display: grid; min-width: 0; height: 25px; place-items: center; border-radius: 4px; background: rgba(0,0,0,.1); color: #85868c; font-size: 10px; font-style: normal; }
 .secondary-stats-unified-dialog .secondary-editor-row .final-display { background: rgba(181,151,83,.09); color: #ddc582; font-weight: 700; }
-.secondary-stats-unified-dialog .secondary-editor-row--physical > label { display:flex; align-items:center; gap:6px; }
-.dialog.gum.secondary-stats-unified-dialog .secondary-editor-row--physical > label input[type="checkbox"] { flex:0 0 auto; width:13px; min-width:13px; height:13px; margin:0; padding:0; background:transparent; accent-color:var(--secondary-editor-gold); }
-.secondary-stats-unified-dialog .physical-base-control { position:relative; min-width:0; }
-.dialog.gum.secondary-stats-unified-dialog .physical-base-control .physical-base-input { width:100%; padding-right:30px; }
+.secondary-stats-unified-dialog .physical-attribute-heading { display:flex; min-width:0; align-items:center; justify-content:space-between; gap:7px; }
+.secondary-stats-unified-dialog .physical-attribute-heading > label:first-child { display:flex; min-width:0; align-items:center; gap:6px; }
+.secondary-stats-unified-dialog .physical-attribute-heading > label:first-child span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dialog.gum.secondary-stats-unified-dialog .physical-attribute-heading input[type="checkbox"] { flex:0 0 auto; width:13px; min-width:13px; height:13px; margin:0; padding:0; background:transparent; accent-color:var(--secondary-editor-gold); }
+.secondary-stats-unified-dialog .physical-base-control { min-width:0; }
+.dialog.gum.secondary-stats-unified-dialog .physical-base-control .physical-base-input { width:100%; }
 .dialog.gum.secondary-stats-unified-dialog .physical-base-control .physical-base-input:disabled { color:#8f8e94; opacity:.82; }
-.secondary-stats-unified-dialog .physical-auto-control { position:absolute; z-index:1; top:50%; right:4px; display:flex; align-items:center; gap:2px; overflow:visible; color:#bca66f; font-size:7px; transform:translateY(-50%); cursor:pointer; }
+.secondary-stats-unified-dialog .physical-auto-control { display:flex; flex:0 0 auto; align-items:center; gap:3px; padding:2px 5px; overflow:visible; border-radius:3px; background:rgba(181,151,83,.09); color:#c8ae70; font-size:7px; letter-spacing:.04em; text-transform:uppercase; cursor:pointer; }
 .dialog.gum.secondary-stats-unified-dialog .secondary-editor-row .physical-auto-control input { width:11px; min-width:11px; height:11px; margin:0; padding:0; background:transparent; accent-color:var(--secondary-editor-gold); }
 .secondary-stats-unified-dialog .secondary-damage-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
 .secondary-stats-unified-dialog .secondary-damage-fields label { display: grid; grid-template-columns: minmax(120px, 1fr) 115px; align-items: center; gap: 8px; padding: 8px 9px; border-radius: 5px; background: var(--secondary-editor-card); color: #cfced2; font-size: 10px; }
@@ -9401,6 +9405,23 @@ background-color: var(--gum-accent-gold);
 .dialog.gum.physical-throw-dialog .physical-throw-result small { display:block; margin-top:6px; color:#696b72; font-size:8px; }
 .dialog.gum.physical-throw-dialog .dialog-buttons { margin:0; padding:8px 16px 12px; border:0; background:#1b1d22; }
 .dialog.gum.physical-throw-dialog .dialog-buttons button { min-height:28px; border:0; background:#2b2e34; color:#aaa9ae; box-shadow:none; }
+.dialog.gum.physical-lifting-dialog .window-content { padding:0; background:#1b1d22; }
+.dialog.gum.physical-lifting-dialog .dialog-content { padding:14px 16px 10px; }
+.dialog.gum.physical-lifting-dialog .physical-lifting-reference-content { display:grid; gap:8px; }
+.dialog.gum.physical-lifting-dialog .physical-lifting-reference-header { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-radius:6px; background:rgba(181,151,83,.11); color:#b7b4b9; font-size:10px; }
+.dialog.gum.physical-lifting-dialog .physical-lifting-reference-header strong { color:#e2c87f; font-size:16px; }
+.dialog.gum.physical-lifting-dialog .physical-lifting-rule-list { display:grid; gap:4px; }
+.dialog.gum.physical-lifting-dialog .physical-lifting-rule-row { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:12px; padding:7px 9px; border-radius:5px; background:#25282e; }
+.dialog.gum.physical-lifting-dialog .physical-lifting-rule-row > span { display:grid; gap:2px; min-width:0; }
+.dialog.gum.physical-lifting-dialog .physical-lifting-rule-row strong { color:#d7d5da; font-size:10px; }
+.dialog.gum.physical-lifting-dialog .physical-lifting-rule-row small { color:#7f8087; font-size:8px; line-height:1.25; }
+.dialog.gum.physical-lifting-dialog .physical-lifting-rule-value { min-width:84px; text-align:right; }
+.dialog.gum.physical-lifting-dialog .physical-lifting-rule-value strong { color:#dec889; font-size:12px; }
+.dialog.gum.physical-lifting-dialog .physical-lifting-rule-value small { color:#9a8352; }
+.dialog.gum.physical-lifting-dialog .physical-lifting-reference-note { display:flex; gap:6px; margin:0; padding:7px 8px; color:#85868c; font-size:8px; line-height:1.35; }
+.dialog.gum.physical-lifting-dialog .physical-lifting-reference-note i { flex:0 0 auto; margin-top:1px; color:#7da1b7; }
+.dialog.gum.physical-lifting-dialog .dialog-buttons { margin:0; padding:8px 16px 12px; border:0; background:#1b1d22; }
+.dialog.gum.physical-lifting-dialog .dialog-buttons button { min-height:28px; border:0; background:#2b2e34; color:#aaa9ae; box-shadow:none; }
 @media (max-width: 720px) {
     .dialog.gum.secondary-stats-unified-dialog { min-width: 560px; }
     .dialog.gum.secondary-stats-unified-dialog .secondary-stats-editor--unified { grid-template-columns: 48px minmax(0, 1fr); }
@@ -11883,8 +11904,19 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .combat-tab .physical-jump-row { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:5px; min-height:24px; padding:3px 5px; border-radius:3px; background:rgba(0,0,0,.13); color:var(--combat-muted); font-family:var(--gum-font-condensed); font-size:9px; }
 .gum.sheet.actor .combat-tab .physical-jump-row + .physical-jump-row { margin-top:3px; }
 .gum.sheet.actor .combat-tab .physical-jump-row strong { color:#d9c082; font-size:10px; white-space:nowrap; }
-.gum.sheet.actor .combat-tab .physical-throw-calculator { display:flex; width:100%; min-height:27px; align-items:center; justify-content:center; gap:6px; margin:0; border:0; border-radius:3px; background:rgba(116,161,190,.11); box-shadow:none; color:rgba(190,218,234,.72); font-family:var(--gum-font-condensed); font-size:9px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
-.gum.sheet.actor .combat-tab .physical-throw-calculator:hover { background:rgba(116,161,190,.18); box-shadow:none; color:#d5e8f2; }
+.gum.sheet.actor .combat-tab .physical-lifting-base { display:flex; align-items:center; justify-content:space-between; gap:7px; padding:6px 7px; border-radius:3px; background:rgba(211,176,111,.08); color:rgba(235,226,231,.68); font-family:var(--gum-font-condensed); font-size:9px; }
+.gum.sheet.actor .combat-tab .physical-lifting-base > span { display:flex; min-width:0; flex-direction:column; gap:1px; }
+.gum.sheet.actor .combat-tab .physical-lifting-base > span > small { overflow:hidden; color:rgba(230,220,225,.36); font-size:7px; text-overflow:ellipsis; white-space:nowrap; }
+.gum.sheet.actor .combat-tab .physical-lifting-base > strong { flex:0 0 auto; color:#e1c679; font-size:13px; }
+.gum.sheet.actor .combat-tab .physical-capacity-list { display:grid; gap:2px; margin-top:4px; }
+.gum.sheet.actor .combat-tab .physical-capacity-row { display:flex; min-width:0; min-height:21px; align-items:center; justify-content:space-between; gap:6px; padding:3px 5px; border-radius:3px; background:rgba(0,0,0,.11); color:var(--combat-muted); font-family:var(--gum-font-condensed); font-size:8px; }
+.gum.sheet.actor .combat-tab .physical-capacity-row span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.gum.sheet.actor .combat-tab .physical-capacity-row strong { flex:0 0 auto; color:#cfc3a4; font-size:9px; white-space:nowrap; }
+.gum.sheet.actor .combat-tab .physical-capacity-row small { color:rgba(230,220,225,.4); font-size:7px; font-weight:500; }
+.gum.sheet.actor .combat-tab .physical-feat-actions { display:grid; grid-template-columns:1fr; gap:4px; }
+.gum.sheet.actor .combat-tab .physical-feat-actions button { display:flex; width:100%; min-width:0; min-height:29px; align-items:center; justify-content:center; gap:5px; margin:0; padding:4px 5px; border:0; border-radius:3px; background:rgba(116,161,190,.11); box-shadow:none; color:rgba(190,218,234,.72); font-family:var(--gum-font-condensed); font-size:8px; font-weight:700; letter-spacing:.035em; line-height:1.1; text-transform:uppercase; }
+.gum.sheet.actor .combat-tab .physical-feat-actions button span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.gum.sheet.actor .combat-tab .physical-feat-actions button:hover { background:rgba(116,161,190,.18); box-shadow:none; color:#d5e8f2; }
 .gum.sheet.actor .combat-tab .dr-location-block::before { display:none; }
 .gum.sheet.actor .combat-tab .dr-location-block .block-header {
   min-height:42px;

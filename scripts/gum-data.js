@@ -24,7 +24,7 @@ export const GUM_DATA = {
         "attributes.basic_speed.temp": "Velocidade Básica (Mod. Temp.)",
         "attributes.basic_move.temp": "Deslocamento Básico (Mod. Temp.)",
         "attributes.enhanced_move.temp": "Deslocamento Ampliado (Mod. Temp.)",
-        "attributes.basic_lift.temp": "Levantamento Básico (Mod. Temp.)",
+        "attributes.basic_lift.temp": "Carga Básica (Mod. Temp.)",
         "attributes.air_move.temp": "Deslocamento Aéreo (Mod. Temp.)",
         "attributes.water_move.temp": "Deslocamento Aquático (Mod. Temp.)",
         "attributes.burrow_move.temp": "Deslocamento Subterrâneo (Mod. Temp.)",

@@ -22,7 +22,7 @@ import { buildEquipmentConsumptionUpdate, equipmentIntegrityCurrentUpdate, equip
 import { UNGROUPED_ORGANIZER_ID, addItemOrganizationGroup, buildItemCategoryGroupPlan, createGroupsFromItemCategories, moveOrganizedItem, normalizeItemOrganization, removeItemOrganizationGroup, renameItemOrganizationGroup } from "../utils/item-organization.mjs";
 import { normalizeRequestedAttributeKey } from "../utils/requested-attributes.mjs";
 import { resolveStoredEffectStackingDomain } from "../utils/effect-stacking.mjs";
-import { resolveThrowingDistance } from "../utils/physical-feats.mjs";
+import { calculateLiftingCapacities, resolveThrowingDistance } from "../utils/physical-feats.mjs";
 
 const WOUND_NATURE_ICONS = Object.freeze({
   fire: "fa-fire",
@@ -143,6 +143,11 @@ async getData(options) {
         context.combatFeatsFilterActive = this._combatSidebarFilters.has("feats");
         context.combatDefenseVisible = this._combatSidebarFilters.size === 0 || this._combatSidebarFilters.has("defense");
         context.combatFeatsVisible = this._combatSidebarFilters.size === 0 || this._combatSidebarFilters.has("feats");
+        context.physicalLifting = calculateLiftingCapacities(
+            this.actor.system.attributes?.basic_lift?.final
+            ?? this.actor.system.attributes?.basic_lift?.value
+            ?? 0
+        );
         const encumbranceLevel = Math.min(4, Math.max(0, Number(this.actor.system.encumbrance?.level_value) || 0));
         context.encumbranceLevelLabel = game.i18n.localize(`GUM.Character.Sidebar.EncumbranceLevels.${encumbranceLevel}`);
         
@@ -2182,6 +2187,45 @@ activateListeners(html) {
             width: 420
         }).render(true);
     });
+    html.on("click", ".physical-lifting-reference", ev => {
+        ev.preventDefault();
+        const t = key => game.i18n.localize(key);
+        const attributes = this.actor.system.attributes || {};
+        const capacities = calculateLiftingCapacities(attributes.basic_lift?.final ?? attributes.basic_lift?.value ?? 0);
+        const formatNumber = value => Number(value || 0).toLocaleString(game.i18n.lang, { maximumFractionDigits: 2 });
+        const row = (labelKey, value, multiplier, noteKey) => `
+            <div class="physical-lifting-rule-row">
+                <span><strong>${t(labelKey)}</strong><small>${t(noteKey)}</small></span>
+                <span class="physical-lifting-rule-value"><strong>${formatNumber(value)} kg</strong><small>${multiplier}</small></span>
+            </div>`;
+        const content = `
+            <div class="physical-lifting-reference-content">
+                <header class="physical-lifting-reference-header">
+                    <span>${t("GUM.Combat.Physical.BasicLift")}</span>
+                    <strong>${formatNumber(capacities.basicLiftKg)} kg</strong>
+                </header>
+                <div class="physical-lifting-rule-list">
+                    ${row("GUM.PhysicalLifting.OneHanded", capacities.oneHandedKg, "2×", "GUM.PhysicalLifting.OneHandedNote")}
+                    ${row("GUM.PhysicalLifting.TwoHanded", capacities.twoHandedKg, "8×", "GUM.PhysicalLifting.TwoHandedNote")}
+                    ${row("GUM.PhysicalLifting.ExtraHeavy", capacities.extraHeavyKg, "10×", "GUM.PhysicalLifting.ExtraHeavyNote")}
+                    ${row("GUM.PhysicalLifting.CarryOnBack", capacities.carryOnBackKg, "15×", "GUM.PhysicalLifting.CarryOnBackNote")}
+                    ${row("GUM.PhysicalLifting.Shove", capacities.shoveKg, "12× / 24×", "GUM.PhysicalLifting.ShoveNote")}
+                    ${row("GUM.PhysicalLifting.ShiftSlightly", capacities.shiftSlightlyKg, "50×", "GUM.PhysicalLifting.ShiftSlightlyNote")}
+                </div>
+                <p class="physical-lifting-reference-note"><i class="fas fa-circle-info" aria-hidden="true"></i>${t("GUM.PhysicalLifting.NoAutomationNote")}</p>
+            </div>`;
+        new Dialog({
+            title: t("GUM.PhysicalLifting.Title"),
+            content,
+            buttons: {
+                close: { icon: '<i class="fas fa-times"></i>', label: t("GUM.PhysicalThrow.Close") }
+            },
+            default: "close"
+        }, {
+            classes: ["dialog", "gum", "physical-lifting-dialog", "gum-sheet-edit-dialog"],
+            width: 440
+        }).render(true);
+    });
     if (!this.isEditable) return;
 
     html.on('click keydown', '[data-action="edit-portrait"]', (ev) => {
@@ -4111,12 +4155,14 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
             const enabled = movementProfile ? stat.enabled === true : true;
             return `
                 <div class="secondary-editor-row secondary-editor-row--physical" data-physical-attribute="${key}">
-                    <label for="secondary-${key}-value">
-                        ${movementProfile ? `<input type="checkbox" class="physical-enabled-toggle" name="${key}.enabled" ${enabled ? "checked" : ""} aria-label="${t("GUM.SecondaryEditor.Physical.Enabled")}">` : ""}
-                        <span>${label}</span>
-                    </label>
-                    <div class="physical-base-control">
+                    <div class="physical-attribute-heading">
+                        <label for="secondary-${key}-value">
+                            ${movementProfile ? `<input type="checkbox" class="physical-enabled-toggle" name="${key}.enabled" ${enabled ? "checked" : ""} aria-label="${t("GUM.SecondaryEditor.Physical.Enabled")}">` : ""}
+                            <span>${label}</span>
+                        </label>
                         ${movementProfile ? "" : `<label class="physical-auto-control" title="${t("GUM.SecondaryEditor.Physical.AutomaticHint")}"><input type="checkbox" class="physical-auto-toggle" name="${key}.automatic" ${automatic ? "checked" : ""}><span>${t("GUM.SecondaryEditor.Physical.AutomaticShort")}</span></label>`}
+                    </div>
+                    <div class="physical-base-control">
                         <input id="secondary-${key}-value" class="physical-base-input" type="number" name="${key}.value" value="${automatic ? (stat.calculated_base ?? stat.value ?? 0) : (stat.value ?? 0)}" step="0.01" ${automatic ? "disabled" : ""} />
                     </div>
                     <input type="number" name="${key}.mod" value="${stat.mod ?? 0}" step="0.01" aria-label="${tf("GUM.SecondaryEditor.FixedModifierFor", { attribute: label })}" />
@@ -4230,7 +4276,7 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                         <section class="secondary-editor-panel" data-panel="physical">
                             <div class="secondary-editor-card">
                                 <header><i class="fas fa-route"></i><div><h3>${t("GUM.SecondaryEditor.Physical.MovementTitle")}</h3><p>${t("GUM.SecondaryEditor.Physical.MovementHint")}</p></div></header>
-                                <div class="secondary-editor-table">
+                                <div class="secondary-editor-table secondary-editor-table--physical">
                                     <div class="secondary-editor-columns" aria-hidden="true">${editorColumns(t("GUM.SecondaryEditor.Column.Attribute"))}</div>
                                     ${physicalStatRow('air_move', t('GUM.SecondaryEditor.Attributes.AirMove'), { movementProfile: true })}
                                     ${physicalStatRow('water_move', t('GUM.SecondaryEditor.Attributes.WaterMove'), { movementProfile: true })}
@@ -4239,7 +4285,7 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                             </div>
                             <div class="secondary-editor-card">
                                 <header><i class="fas fa-person-arrow-up-from-line"></i><div><h3>${t("GUM.SecondaryEditor.Physical.JumpTitle")}</h3><p>${t("GUM.SecondaryEditor.Physical.JumpHint")}</p></div></header>
-                                <div class="secondary-editor-table">
+                                <div class="secondary-editor-table secondary-editor-table--physical">
                                     <div class="secondary-editor-columns" aria-hidden="true">${editorColumns(t("GUM.SecondaryEditor.Column.Attribute"))}</div>
                                     ${physicalStatRow('jump_horizontal_standing', t('GUM.SecondaryEditor.Attributes.HorizontalJumpStanding'))}
                                     ${physicalStatRow('jump_horizontal_running', t('GUM.SecondaryEditor.Attributes.HorizontalJumpRunning'))}
@@ -4249,7 +4295,7 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                             </div>
                             <div class="secondary-editor-card">
                                 <header><i class="fas fa-dumbbell"></i><div><h3>${t("GUM.SecondaryEditor.Physical.LiftingTitle")}</h3><p>${t("GUM.SecondaryEditor.Physical.LiftingHint")}</p></div></header>
-                                <div class="secondary-editor-table">
+                                <div class="secondary-editor-table secondary-editor-table--physical">
                                     <div class="secondary-editor-columns" aria-hidden="true">${editorColumns(t("GUM.SecondaryEditor.Column.Attribute"))}</div>
                                     ${physicalStatRow('basic_lift', t('GUM.SecondaryEditor.Attributes.BasicLift'))}
                                 </div>
