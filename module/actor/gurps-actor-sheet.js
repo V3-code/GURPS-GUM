@@ -5501,10 +5501,8 @@ const dlg = new Dialog({
     dialogHtml.on("click", ".gum-rd-remove-location", async event => {
       const key = event.currentTarget.dataset.locationKey;
       if (!key || !Object.prototype.hasOwnProperty.call(additionalLocations, key)) return;
-      const next = foundry.utils.deepClone(additionalLocations);
-      delete next[key];
       await actor.update({
-        "system.combat.additional_locations": next,
+        [`system.combat.additional_locations.-=${key}`]: null,
         [`system.combat.dr_mods.-=${key}`]: null
       });
       dlg.close();

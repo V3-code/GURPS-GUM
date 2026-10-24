@@ -42,6 +42,7 @@ test("DR consumers use one effective location set without reviving stale profile
   assert.match(actorSheetSource, /effectiveBodyLocations\.definitions/);
   assert.match(actorSheetSource, /const locationOrder = effectiveBodyLocations\?\.order/);
   assert.match(damageApplicationSource, /effectiveLocations\?\.order/);
+  assert.match(actorSheetSource, /system\.combat\.additional_locations\.\-=\$\{key\}/);
 });
 
 test("GCS anatomy resolves only to locations belonging to the selected profile", () => {
