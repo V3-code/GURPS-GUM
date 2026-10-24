@@ -1634,6 +1634,8 @@
                         <i class="fas fa-chevron-right"></i>
                       </button>
                       <span class="location-name">{{row.label}}</span>
+                      {{#if row.isAdditional}}<i class="fas fa-plus-circle dr-location-origin" title="{{localize 'GUM.Combat.DR.AdditionalLocations'}}"></i>{{/if}}
+                      {{#each row.equipmentSources as |source|}}<i class="fas fa-toolbox dr-location-origin" title="{{localize 'GUM.Combat.DR.EquipmentSource'}}: {{source}}"></i>{{/each}}
                       </div>
                       <span class="location-dr-value">{{row.base}}</span>
                     </div>
@@ -1645,6 +1647,8 @@
                         <li class="dr-location-row is-child {{#if child.extraLine}}has-extra{{/if}}" data-location-key="{{child.key}}">
                           <div class="dr-row-main">
                             <span class="location-name">{{child.label}}</span>
+                            {{#if child.isAdditional}}<i class="fas fa-plus-circle dr-location-origin" title="{{localize 'GUM.Combat.DR.AdditionalLocations'}}"></i>{{/if}}
+                            {{#each child.equipmentSources as |source|}}<i class="fas fa-toolbox dr-location-origin" title="{{localize 'GUM.Combat.DR.EquipmentSource'}}: {{source}}"></i>{{/each}}
                             <span class="location-dr-value">{{child.base}}</span>
                           </div>
                           {{#if child.extraLine}}
@@ -1659,6 +1663,8 @@
                   <li class="dr-location-row {{#if row.extraLine}}has-extra{{/if}}" data-location-key="{{row.key}}">
                     <div class="dr-row-main">
                       <span class="location-name">{{row.label}}</span>
+                      {{#if row.isAdditional}}<i class="fas fa-plus-circle dr-location-origin" title="{{localize 'GUM.Combat.DR.AdditionalLocations'}}"></i>{{/if}}
+                      {{#each row.equipmentSources as |source|}}<i class="fas fa-toolbox dr-location-origin" title="{{localize 'GUM.Combat.DR.EquipmentSource'}}: {{source}}"></i>{{/each}}
                       <span class="location-dr-value">{{row.base}}</span>
                     </div>
                     {{#if row.extraLine}}

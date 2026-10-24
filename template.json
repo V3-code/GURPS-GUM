@@ -344,6 +344,7 @@
       },
       "combat": {
         "body_profile": "humanoid",
+          "additional_locations": {},
         "defense_bonus": 0,
         "dr_mods": {},
         "dr_temp_mods": {},
@@ -739,7 +740,8 @@
       "ranged_attacks": {},
       "defense_bonus": 0,
       "equip_time": 1,
-      "dr_locations": {}
+      "dr_locations": {},
+      "dr_location_options": {}
     },
     "money_source": {
       "templates": [

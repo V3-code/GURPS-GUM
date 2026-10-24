@@ -19,3 +19,10 @@ test("equipment protection exposes and normalizes the all-location path", () => 
     assert.equal(typeof locale["GUM.Equipment.Protection.AllLocations"], "string");
   }
 });
+
+test("equipment protection can explicitly provide a missing body location", () => {
+  assert.match(itemSheet, /dr_location_options/);
+  assert.match(itemSheet, /provides_location/);
+  assert.match(itemSheet, /dr-location-provides/);
+  assert.match(itemSheet, /normalize\("NFD"\)/);
+});

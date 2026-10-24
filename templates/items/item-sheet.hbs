@@ -1459,6 +1459,10 @@
                                     <input class="dr-location-value" type="text" value="{{row.dr}}" placeholder="0"/>
                                     {{#if row.changed}}<div class="equipment-final-value" title="{{localize 'GUM.Equipment.Protection.FinalDR'}}"><i class="fas fa-arrow-right"></i><span>{{row.finalDr}}</span></div>{{/if}}
                                 </div>
+                                <label class="attack-cell dr-location-provides-label" title="{{localize 'GUM.Equipment.Protection.ProvidesLocationHint'}}" {{#if (eq row.key "all")}}hidden{{/if}}>
+                                    <input class="dr-location-provides" type="checkbox" {{checked row.providesLocation}}/>
+                                    <span>{{localize "GUM.Equipment.Protection.ProvidesLocation"}}</span>
+                                </label>
                                 <div class="attack-cell">
                                     <button class="dr-location-delete" type="button" title="{{localize 'GUM.Equipment.Modifiers.Remove'}}"><i class="fas fa-trash"></i></button>
                                 </div>

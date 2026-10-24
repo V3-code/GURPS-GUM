@@ -600,12 +600,21 @@ _promptMultipleReferences(parsedList) {
  
         if (this.item.type === "equipment") { 
             const drLocations = this.item._source?.system?.dr_locations || this.item.system.dr_locations || {};
+            const drLocationOptions = this.item._source?.system?.dr_location_options || this.item.system.dr_location_options || {};
             const resolvedDrLocations = context.equipmentResolution?.drLocations || drLocations;
             const allLocationsOption = {
                 id: "all",
                 name: game.i18n.localize("GUM.Equipment.Protection.AllLocations")
             };
-            const originalBodyLocationOptions = [allLocationsOption, ...listBodyLocations()];
+            const actorAdditionalLocations = Object.entries(this.item.actor?.system?.combat?.additional_locations || {})
+                .map(([id, definition]) => ({ id, name: definition?.label || definition?.name || id, label: definition?.label || definition?.name || id }));
+            const seenLocationIds = new Set();
+            const originalBodyLocationOptions = [allLocationsOption, ...listBodyLocations(), ...actorAdditionalLocations]
+                .filter(option => {
+                    if (!option?.id || seenLocationIds.has(option.id)) return false;
+                    seenLocationIds.add(option.id);
+                    return true;
+                });
             const bodyLocationOptions = originalBodyLocationOptions.map(localizeEquipmentLocation);
             const locationLookup = new Map(bodyLocationOptions.map(option => [option.id, option])); 
  
@@ -618,6 +627,7 @@ _promptMultipleReferences(parsedList) {
                         key, 
                         label: option?.name ?? key, 
                         dr: this._formatDRObjectToString(drObject),
+                        providesLocation: drLocationOptions?.[key]?.provides_location !== false,
                         finalDr: this._formatDRObjectToString(resolvedDrLocations[key] || {}),
                         changed: JSON.stringify(drObject) !== JSON.stringify(resolvedDrLocations[key] || {})
                     };
@@ -1102,12 +1112,23 @@ if (this.item?.type === "equipment") {
                 ev.preventDefault(); 
                 ev.stopPropagation(); 
                 ev.currentTarget.closest("[data-dr-location-row]")?.remove(); 
-                await this.object.update(this._buildDRLocationsUpdate(this._collectDRLocationsFromForm())); 
+                const drLocations = this._collectDRLocationsFromForm();
+                await this.object.update({
+                    ...this._buildDRLocationsUpdate(drLocations),
+                    ...this._buildDRLocationOptionsUpdate(this._collectDRLocationOptionsFromForm(drLocations))
+                });
             }); 
  
             html.on("change", ".dr-location-label", (ev) => { 
                 this._syncDrLocationKey(ev.currentTarget); 
             }); 
+            html.on("change", ".dr-location-provides", async () => {
+                const drLocations = this._collectDRLocationsFromForm();
+                await this.object.update({
+                    ...this._buildDRLocationsUpdate(drLocations),
+                    ...this._buildDRLocationOptionsUpdate(this._collectDRLocationOptionsFromForm(drLocations))
+                });
+            });
         } 
  
         // Adicionar/Remover Ataques 
@@ -2461,13 +2482,15 @@ const rangedFields = `
  
         if (this.item?.type === "equipment") { 
             for (const key in data) { 
-                if (key.startsWith("system.dr_locations.")) { 
+                if (key.startsWith("system.dr_locations.") || key.startsWith("system.dr_location_options.")) {
                     delete data[key]; 
                 } 
             } 
  
             const drLocations = this._collectDRLocationsFromForm(); 
             Object.assign(data, this._buildDRLocationsUpdate(drLocations)); 
+            const drLocationOptions = this._collectDRLocationOptionsFromForm(drLocations);
+            Object.assign(data, this._buildDRLocationOptionsUpdate(drLocationOptions));
         } 
  
         return data; 
@@ -2738,6 +2761,18 @@ const rangedFields = `
  
         return drLocations; 
     } 
+
+    _collectDRLocationOptionsFromForm(drLocations = {}) {
+        const options = {};
+        const rows = this.element?.[0]?.querySelectorAll("[data-dr-location-row]") || [];
+        rows.forEach(row => {
+            const label = row.querySelector(".dr-location-label")?.value?.trim() || "";
+            const key = label ? this._getLocationKeyFromLabel(label) : (row.querySelector(".dr-location-key")?.value?.trim() || "");
+            if (!key || !(key in drLocations)) return;
+            options[key] = { provides_location: row.querySelector(".dr-location-provides")?.checked !== false };
+        });
+        return options;
+    }
  
     _buildDRLocationsUpdate(drLocations) { 
         const update = { 
@@ -2753,8 +2788,17 @@ const rangedFields = `
  
         return update; 
     } 
+
+    _buildDRLocationOptionsUpdate(options) {
+        const update = { "system.dr_location_options": options };
+        const existing = this.item.system.dr_location_options || {};
+        for (const key of Object.keys(existing)) {
+            if (!(key in options)) update[`system.dr_location_options.-=${key}`] = null;
+        }
+        return update;
+    }
  
-    _addDrLocationRow(html, { label = "", key = "", dr = "" } = {}) { 
+    _addDrLocationRow(html, { label = "", key = "", dr = "", providesLocation = true } = {}) {
         const container = html.find(".dr-locations-table"); 
         if (!container.length) return; 
  
@@ -2769,6 +2813,10 @@ const rangedFields = `
                         <div class="attack-cell"> 
                             <input class="dr-location-value" type="text" value="${dr}" placeholder="0"/> 
                         </div> 
+                        <label class="attack-cell dr-location-provides-label" title="${game.i18n.localize("GUM.Equipment.Protection.ProvidesLocationHint")}">
+                            <input class="dr-location-provides" type="checkbox" ${providesLocation ? "checked" : ""}/>
+                            <span>${game.i18n.localize("GUM.Equipment.Protection.ProvidesLocation")}</span>
+                        </label>
                         <div class="attack-cell"> 
                             <button class="dr-location-delete" type="button" title="${game.i18n.localize("GUM.Equipment.Protection.RemoveDR")}"><i class="fas fa-trash"></i></button>
                         </div> 
@@ -2790,10 +2838,14 @@ const rangedFields = `
         const label = input.value?.trim(); 
         if (!label) { 
             keyInput.value = ""; 
+            const providesLabel = row.querySelector(".dr-location-provides-label");
+            if (providesLabel) providesLabel.hidden = false;
             return; 
         } 
  
         keyInput.value = this._getLocationKeyFromLabel(label); 
+        const providesLabel = row.querySelector(".dr-location-provides-label");
+        if (providesLabel) providesLabel.hidden = keyInput.value === "all";
     } 
  
     _getLocationKeyFromLabel(label) { 
@@ -2806,6 +2858,11 @@ const rangedFields = `
  
         const escape = window.CSS?.escape || ((value) => value.replace(/["\\]/g, "\\$&")); 
         const option = list.querySelector(`option[value="${escape(label)}"]`); 
-        return option?.dataset?.key || label; 
+        if (option?.dataset?.key) return option.dataset.key;
+        const normalize = value => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLocaleLowerCase();
+        const normalized = normalize(label);
+        const normalizedOption = Array.from(list.querySelectorAll("option"))
+            .find(candidate => normalize(candidate.value) === normalized || normalize(candidate.dataset?.key) === normalized);
+        return normalizedOption?.dataset?.key || label;
     } 
 }

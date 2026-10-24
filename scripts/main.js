@@ -30,8 +30,9 @@ import { GurpsRollPrompt } from "../module/apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../module/apps/damage-roll-prompt.js";
 import { ammunitionAvailableUses, availableAmmunition, applyAmmunition, ammunitionRollModifier, calculateRapidFireHits, numericRateOfFire, reconcileAmmunitionModifier } from "../module/utils/ammunition.mjs";
 import { getPurposeLabels, matchesRollTags, resolveRollMetadata, shouldIncludeInPermanentNh } from "../module/utils/roll-purposes.mjs";
-import { getBodyProfile, getBodyProfileLocationKeys } from "../module/config/body-profiles.js";
+import { getBodyProfile } from "../module/config/body-profiles.js";
 import { calculateDamageResistance, mergeDamageResistance, parseDamageResistanceEffectPath } from "../module/utils/damage-resistance.mjs";
+import { buildEffectiveBodyLocations } from "../module/utils/damage-resistance-locations.mjs";
 import { openTestRequestLauncher } from "../module/apps/test-request-launcher.js";
 import { activateTestRequestChatListeners, registerTestRequestSocket } from "../module/services/test-request-service.js";
 import { activateRollRequestChatListeners, executeRollRequest, registerRollRequestSocket } from "../module/services/roll-request-service.js";
@@ -930,9 +931,19 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
  
         const profileId = combat?.body_profile || "humanoid";
         const profile = getBodyProfile(profileId);
-        const locationKeys = getBodyProfileLocationKeys(profile);
+        const effectiveBodyLocations = buildEffectiveBodyLocations({
+            profile,
+            additionalLocations: combat.additional_locations,
+            equipment: Array.from(this.items)
+        });
+        const locationKeys = effectiveBodyLocations.order;
         const locationKeySet = new Set(locationKeys);
         const drFromArmor = {};
+
+        combat.additional_locations = effectiveBodyLocations.additionalLocations;
+        combat.dr_location_order = locationKeys;
+        combat.dr_location_definitions = effectiveBodyLocations.definitions;
+        combat.dr_location_sources = effectiveBodyLocations.sources;
 
         for (const key of locationKeys) {
             drFromArmor[key] = {};

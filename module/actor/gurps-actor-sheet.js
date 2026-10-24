@@ -3,7 +3,7 @@ import { applyEffectWithResistance, performGURPSRoll } from "/systems/gum/script
 import { GurpsRollPrompt } from "../apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../apps/damage-roll-prompt.js";
 import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
-import { getBodyProfile, getBodyProfileLocationKeys, listBodyProfiles, localizeBodyGroupLabel, localizeBodyLocationLabel, localizeBodyProfileLabel } from "../config/body-profiles.js";
+import { getBodyLocationDefinition, getBodyProfile, getBodyProfileLocationKeys, listBodyLocations, listBodyProfiles, localizeBodyGroupLabel, localizeBodyLocationLabel, localizeBodyProfileLabel } from "../config/body-profiles.js";
 import { TemplateBrowser } from "../apps/template-browser.js";
 import { templateEntryDisplayName } from "../utils/template-entry-display.mjs";
 import { GumPreviewDialog } from "../apps/preview-dialog.js";
@@ -23,6 +23,7 @@ import { UNGROUPED_ORGANIZER_ID, addItemOrganizationGroup, buildItemCategoryGrou
 import { normalizeRequestedAttributeKey } from "../utils/requested-attributes.mjs";
 import { resolveStoredEffectStackingDomain } from "../utils/effect-stacking.mjs";
 import { calculateLiftingCapacities, resolveThrowingDistance } from "../utils/physical-feats.mjs";
+import { buildEffectiveBodyLocations, describeBodyLocationSources } from "../utils/damage-resistance-locations.mjs";
 
 const WOUND_NATURE_ICONS = Object.freeze({
   fire: "fa-fire",
@@ -153,6 +154,11 @@ async getData(options) {
         
         const profileId = this.actor.system.combat?.body_profile || "humanoid";
         const profile = getBodyProfile(profileId);
+        const effectiveBodyLocations = buildEffectiveBodyLocations({
+            profile,
+            additionalLocations: this.actor.system.combat?.additional_locations,
+            equipment: Array.from(this.actor.items)
+        });
 
         context.bodyProfileId = profileId;
         context.bodyProfileLabel = localizeBodyProfileLabel(profile, key => game.i18n.localize(key));
@@ -160,9 +166,9 @@ async getData(options) {
             ...bodyProfile,
             label: localizeBodyProfileLabel(bodyProfile, key => game.i18n.localize(key))
         }));
-        context.hitLocations = profile.locations;          // <- isso substitui o hardcoded
-        context.hitLocationOrder = profile.order || [];
-        context.drDisplayRows = this._buildDrDisplayRows(profile, this.actor.system.combat?.dr_locations || {});
+        context.hitLocations = effectiveBodyLocations.definitions;
+        context.hitLocationOrder = effectiveBodyLocations.order;
+        context.drDisplayRows = this._buildDrDisplayRows(profile, this.actor.system.combat?.dr_locations || {}, effectiveBodyLocations);
 
 
 
@@ -1410,12 +1416,14 @@ _getSubmitData(updateData) {
         return parts.join(", ") || "—";
     }
 
- _buildDrDisplayRows(profile, drLocations) {
+ _buildDrDisplayRows(profile, drLocations, effectiveBodyLocations = null) {
         const rows = [];
-        const locations = profile.locations || {};
+        const locations = effectiveBodyLocations?.definitions || profile.locations || {};
+        const locationOrder = effectiveBodyLocations?.order || getBodyProfileLocationKeys(profile);
+        const locationSources = effectiveBodyLocations?.sources || {};
         const items = [];
 
-        for (const key of getBodyProfileLocationKeys(profile)) {
+        for (const key of locationOrder) {
             const loc = locations[key];
             if (!loc) continue;
             const rawDR = drLocations?.[key];
@@ -1432,6 +1440,8 @@ _getSubmitData(updateData) {
                 groupPlural: loc.groupKey
                     ? localizeBodyGroupLabel(loc.groupKey, loc.groupPlural || loc.groupLabel, localizationKey => game.i18n.localize(localizationKey))
                     : loc.groupPlural,
+                equipmentSources: describeBodyLocationSources(locationSources[key]),
+                isAdditional: (locationSources[key] || []).some(source => source.type === "manual"),
                 base,
                 extraLine,
                 drSignature: this._getDRSignature(drObject)
@@ -1462,6 +1472,8 @@ _getSubmitData(updateData) {
                 label: `${labelBase} (${groupItems.length})`,
                 base: groupItems[0].base,
                 extraLine: groupItems[0].extraLine,
+                equipmentSources: [...new Set(groupItems.flatMap(member => member.equipmentSources || []))],
+                isAdditional: groupItems.some(member => member.isAdditional),
                 children: groupItems
             });
         }
@@ -5330,6 +5342,10 @@ async _onViewHitLocations(ev) {
   const profiles = listBodyProfiles();
   const currentProfileId = actor.system.combat?.body_profile || "humanoid";
   const sheetData = await this.getData();
+  const effectiveLocationOrder = sheetData.hitLocationOrder || getBodyProfileLocationKeys(getBodyProfile(currentProfileId));
+  const effectiveLocationSources = actor.system.combat?.dr_location_sources || {};
+  const additionalLocations = actor.system.combat?.additional_locations || {};
+  const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character]));
 
   // Pega todos os objetos de RD
   const actorDR_Armor = actor.system.combat.dr_from_armor || {};
@@ -5341,7 +5357,7 @@ async _onViewHitLocations(ev) {
   const actorDR_Total = actor.system.combat.dr_locations || {};
 
    let tableRows = "";
-  const locationOrder = getBodyProfileLocationKeys(getBodyProfile(currentProfileId));
+  const locationOrder = effectiveLocationOrder;
 
   for (const key of locationOrder) {
     const loc = sheetData.hitLocations?.[key];
@@ -5355,9 +5371,14 @@ async _onViewHitLocations(ev) {
     const computedDR_String = this._formatDRObjectToString(actorDR_Computed[key]);
     const totalDR_String  = this._formatDRObjectToString(actorDR_Total[key]);
 
+    const equipmentSources = describeBodyLocationSources(effectiveLocationSources[key]);
+    const sourceBadges = equipmentSources.map(source => `<span class="gum-rd-source-badge" title="${escapeHtml(tf("GUM.Combat.DR.ProvidedByEquipment", { source }))}"><i class="fas fa-toolbox"></i></span>`).join("");
+    const removeButton = Object.prototype.hasOwnProperty.call(additionalLocations, key)
+      ? `<button type="button" class="gum-rd-remove-location" data-location-key="${escapeHtml(key)}" title="${t("GUM.Combat.DR.RemoveAdditionalLocation")}"><i class="fas fa-times"></i></button>`
+      : "";
     tableRows += `
       <div class="table-row">
-        <div class="loc-label">${locationLabel}</div>
+        <div class="loc-label"><span>${escapeHtml(locationLabel)}</span>${sourceBadges}${removeButton}</div>
         <div class="loc-rd-armor" title="${t("GUM.Combat.DR.Armor")}">${armorDR_String}</div>
         <div class="loc-rd-temp" title="${t("GUM.Combat.DR.Temporary")}">${tempDR_String}</div>
         <div class="loc-rd-passive" title="${t("GUM.Combat.DR.Permanent")}">${passiveDR_String}</div>
@@ -5382,6 +5403,7 @@ const profileSelectorHtml = `
     <select id="gum-rd-body-profile" class="gum-body-profile-select" name="body_profile" aria-label="${t("GUM.Combat.DR.BodyType")}">
       ${profileOptionsHtml}
     </select>
+    <button type="button" class="gum-rd-add-location"><i class="fas fa-plus"></i> ${t("GUM.Combat.DR.AddLocation")}</button>
   </div>
 `;
 
@@ -5441,6 +5463,54 @@ const dlg = new Dialog({
 
   // ✅ AQUI é onde entra o "render" (fica DENTRO do primeiro objeto do Dialog)
   render: (dialogHtml) => {
+    dialogHtml.on("click", ".gum-rd-add-location", async () => {
+      const used = new Set(effectiveLocationOrder);
+      const presetOptions = listBodyLocations()
+        .filter(location => !used.has(location.id))
+        .map(location => `<option value="${escapeHtml(location.id)}">${escapeHtml(localizeBodyLocationLabel(location.id, getBodyLocationDefinition(location.id), t))}</option>`)
+        .join("");
+      new Dialog({
+        title: t("GUM.Combat.DR.AddLocation"),
+        content: `<form class="gum-rd-add-location-form">
+          <div class="form-group"><label>${t("GUM.Combat.DR.LocationPreset")}</label><select name="preset"><option value="">${t("GUM.Combat.DR.CustomLocation")}</option>${presetOptions}</select></div>
+          <div class="form-group"><label>${t("GUM.Combat.DR.CustomLocationName")}</label><input type="text" name="label"/></div>
+          <div class="form-group"><label>${t("GUM.Combat.DR.CustomLocationRoll")}</label><input type="text" name="roll" placeholder="--"/></div>
+        </form>`,
+        buttons: {
+          add: { icon: '<i class="fas fa-plus"></i>', label: t("GUM.Combat.DR.AddLocation"), callback: async html => {
+            const form = html.find("form")[0];
+            const data = new FormDataExtended(form).object;
+            const preset = String(data.preset || "").trim();
+            const customLabel = String(data.label || "").trim();
+            if (!preset && !customLabel) return ui.notifications.warn(t("GUM.Combat.DR.CustomLocationName"));
+            const key = preset || `custom_${foundry.utils.randomID(8)}`;
+            const definition = getBodyLocationDefinition(key);
+            const label = customLabel || definition?.label || definition?.name || key;
+            const next = foundry.utils.deepClone(additionalLocations);
+            next[key] = { label, name: label, roll: String(data.roll || definition?.roll || "--").trim() || "--" };
+            await actor.update({ "system.combat.additional_locations": next });
+            dlg.close();
+            await this._onViewHitLocations({ preventDefault() {}, stopPropagation() {} });
+          }},
+          cancel: { icon: '<i class="fas fa-times"></i>', label: t("GUM.Combat.DR.Cancel") }
+        },
+        default: "add"
+      }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog"], width: 420 }).render(true);
+    });
+
+    dialogHtml.on("click", ".gum-rd-remove-location", async event => {
+      const key = event.currentTarget.dataset.locationKey;
+      if (!key || !Object.prototype.hasOwnProperty.call(additionalLocations, key)) return;
+      const next = foundry.utils.deepClone(additionalLocations);
+      delete next[key];
+      await actor.update({
+        "system.combat.additional_locations": next,
+        [`system.combat.dr_mods.-=${key}`]: null
+      });
+      dlg.close();
+      await this._onViewHitLocations({ preventDefault() {}, stopPropagation() {} });
+    });
+
     // Quando trocar o tipo corporal:
     dialogHtml.on("change", ".gum-body-profile-select", async (e) => {
       const newProfileId = e.currentTarget.value;

@@ -7397,7 +7397,7 @@ background-color: var(--gum-accent-gold);
 .gum-rd-form .gum-rd-profile-card {
     flex: 0 0 auto;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(150px, 190px);
+    grid-template-columns: minmax(0, 1fr) minmax(150px, 190px) auto;
     align-items: center;
     gap: 14px;
     padding: 10px 12px;
@@ -7445,6 +7445,17 @@ background-color: var(--gum-accent-gold);
 .gum-rd-form .gum-body-profile-select option {
     color: var(--gum-text-claro);
     background: var(--gum-bg-body);
+}
+.gum-rd-form .gum-rd-add-location {
+    height: 29px;
+    margin: 0;
+    padding: 0 10px;
+    white-space: nowrap;
+    color: var(--gum-text-claro);
+    background: rgba(197, 160, 91, .12);
+    border: 1px solid rgba(197, 160, 91, .35);
+    border-radius: 5px;
+    font-size: 10px;
 }
 .gum-rd-form .gurps-rd-table {
     display: flex;
@@ -7494,9 +7505,35 @@ background-color: var(--gum-accent-gold);
 .gum-rd-form .gurps-rd-table .table-row:nth-child(even) { background: rgba(255, 255, 255, .025); }
 .gum-rd-form .gurps-rd-table .table-row:hover { background: rgba(197, 160, 91, .055); }
 .gum-rd-form .gurps-rd-table .table-row .loc-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+.gum-rd-form .gurps-rd-table .table-row .loc-label > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.gum-rd-source-badge { color: #8fb7cf; font-size: 9px; }
+.gum-rd-remove-location {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    padding: 0;
+    color: #c98b8b;
+    background: transparent;
+    border: 0;
+    font-size: 9px;
+}
+.gum.sheet.actor .dr-location-origin {
+    margin-left: 3px;
+    color: #8fb7cf;
+    font-size: 9px;
+    opacity: .85;
 }
 .gum-rd-form .gurps-rd-table .table-row > div:not(.loc-label) {
     color: var(--gum-text-label);
