@@ -35,12 +35,16 @@ test("body profile location keys never include locations left by another profile
   assert.equal(getBodyProfileLocationKeys("quadruped").includes("leg_l"), false);
 });
 
-test("every DR consumer is restricted to the active body profile", () => {
-  assert.match(actorPreparationSource, /const locationKeys = getBodyProfileLocationKeys\(profile\)/);
+test("DR consumers use one effective location set without reviving stale profile data", () => {
+  assert.match(actorPreparationSource, /buildEffectiveBodyLocations\(\{/);
+  assert.match(actorPreparationSource, /const locationKeys = effectiveBodyLocations\.order/);
   assert.doesNotMatch(actorPreparationSource, /extraLocationKeys/);
-  assert.match(actorSheetSource, /for \(const key of getBodyProfileLocationKeys\(profile\)\)/);
-  assert.match(actorSheetSource, /const locationOrder = getBodyProfileLocationKeys\(getBodyProfile\(currentProfileId\)\)/);
-  assert.match(damageApplicationSource, /for \(const key of getBodyProfileLocationKeys\(profile\)\)/);
+  assert.match(actorSheetSource, /effectiveBodyLocations\.definitions/);
+  assert.match(actorSheetSource, /const locationOrder = effectiveBodyLocations\?\.order/);
+  assert.match(damageApplicationSource, /effectiveLocations\?\.order/);
+  assert.match(actorSheetSource, /system\.combat\.additional_locations\.\-=\$\{key\}/);
+  assert.match(actorSheetSource, /name="location" list="gum-rd-location-suggestions"/);
+  assert.doesNotMatch(actorSheetSource, /name="preset"/);
 });
 
 test("GCS anatomy resolves only to locations belonging to the selected profile", () => {

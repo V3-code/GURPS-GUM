@@ -45,6 +45,8 @@ test("equipment sheet and damage flow expose the linked integrity record", () =>
   const template = fs.readFileSync(new URL("../templates/items/item-sheet.hbs", import.meta.url), "utf8");
   const actorSheet = fs.readFileSync(new URL("../module/actor/gurps-actor-sheet.js", import.meta.url), "utf8");
   const damageApplication = fs.readFileSync(new URL("../scripts/apps/damage-application.js", import.meta.url), "utf8");
+  const effectsEngine = fs.readFileSync(new URL("../scripts/effects-engine.js", import.meta.url), "utf8");
+  const magicConsumption = fs.readFileSync(new URL("../module/utils/magic-consumption.mjs", import.meta.url), "utf8");
   const schema = JSON.parse(fs.readFileSync(new URL("../template.json", import.meta.url), "utf8"));
 
   assert.equal(schema.Item.templates.equipment_base.item_hp_current, 0);
@@ -55,4 +57,8 @@ test("equipment sheet and damage flow expose the linked integrity record", () =>
   assert.match(actorSheet, /_adjustEquipmentIntegrity/);
   assert.match(damageApplication, /equipment-integrity:/);
   assert.match(damageApplication, /equipmentIntegrityCurrentUpdate/);
+  assert.match(effectsEngine, /equipmentIntegrityRecord/);
+  assert.match(effectsEngine, /equipmentIntegrityCurrentUpdate/);
+  assert.match(magicConsumption, /equipment_integrity:/);
+  assert.match(magicConsumption, /equipmentIntegrityCurrentUpdate/);
 });

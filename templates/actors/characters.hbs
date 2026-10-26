@@ -48,7 +48,7 @@
           {{!-- Lado Esquerdo --}}
           <div class="enc-col left-col">
             <a class="enc-label link edit-lifting-st" title="{{localize 'GUM.Character.Sidebar.EditLiftingStrength'}}">{{localize "GUM.Character.Sidebar.BasicLift"}}</a>
-            <span class="enc-val">{{actor.system.attributes.basic_lift.value}} kg</span>
+            <span class="enc-val">{{actor.system.attributes.basic_lift.final}} kg</span>
           </div>
 
           {{!-- Centro: Medalhão de Esquiva --}}
@@ -77,6 +77,7 @@
           <div class="cluster-header">
             <span class="cluster-title">{{localize "GUM.Character.Sidebar.SecondaryAttributes"}}</span>
             <div class="cluster-actions">
+              <a class="physical-feats-reference-btn" title="{{localize 'GUM.PhysicalFeats.Open'}}" aria-label="{{localize 'GUM.PhysicalFeats.Open'}}"><i class="fas fa-running"></i></a>
               <a class="recalc-secondary-stats-btn" title="{{localize 'GUM.Character.Sidebar.RecalculateSecondaries'}}" aria-label="{{localize 'GUM.Character.Sidebar.RecalculateSecondaries'}}"><i class="fas fa-sync-alt"></i></a>
               <a class="edit-secondary-stats-btn" title="{{localize 'GUM.Character.Sidebar.EditSecondaries'}}" aria-label="{{localize 'GUM.Character.Sidebar.EditSecondaries'}}"><i class="fas fa-cog"></i></a>
             </div>
@@ -107,6 +108,23 @@
               </div>
             </div>
           </div>
+
+          {{#if (or actor.system.attributes.air_move.enabled actor.system.attributes.water_move.enabled actor.system.attributes.burrow_move.enabled actor.system.attributes.teleport_range.enabled)}}
+          <div class="special-movement-strip" role="list" aria-label="{{localize 'GUM.Character.Sidebar.SpecialMovement'}}">
+            {{#if actor.system.attributes.air_move.enabled}}
+            <span class="special-movement-item" role="listitem" title="{{localize 'GUM.Combat.Physical.Air'}}: {{actor.system.attributes.air_move.final}}" aria-label="{{localize 'GUM.Combat.Physical.Air'}}: {{actor.system.attributes.air_move.final}}"><i class="fas fa-wind" aria-hidden="true"></i><strong>{{actor.system.attributes.air_move.final}}</strong></span>
+            {{/if}}
+            {{#if actor.system.attributes.water_move.enabled}}
+            <span class="special-movement-item" role="listitem" title="{{localize 'GUM.Combat.Physical.Water'}}: {{actor.system.attributes.water_move.final}}" aria-label="{{localize 'GUM.Combat.Physical.Water'}}: {{actor.system.attributes.water_move.final}}"><i class="fas fa-water" aria-hidden="true"></i><strong>{{actor.system.attributes.water_move.final}}</strong></span>
+            {{/if}}
+            {{#if actor.system.attributes.burrow_move.enabled}}
+            <span class="special-movement-item" role="listitem" title="{{localize 'GUM.Combat.Physical.Burrow'}}: {{actor.system.attributes.burrow_move.final}}" aria-label="{{localize 'GUM.Combat.Physical.Burrow'}}: {{actor.system.attributes.burrow_move.final}}"><i class="fas fa-mountain" aria-hidden="true"></i><strong>{{actor.system.attributes.burrow_move.final}}</strong></span>
+            {{/if}}
+            {{#if actor.system.attributes.teleport_range.enabled}}
+            <span class="special-movement-item" role="listitem" title="{{localize 'GUM.Combat.Physical.Teleport'}}: {{actor.system.attributes.teleport_range.final}} m" aria-label="{{localize 'GUM.Combat.Physical.Teleport'}}: {{actor.system.attributes.teleport_range.final}} m"><i class="fas fa-person-from-portal" aria-hidden="true"></i><strong>{{actor.system.attributes.teleport_range.final}}</strong></span>
+            {{/if}}
+          </div>
+          {{/if}}
 
           <div class="senses-container">
             <div class="sense-box">
@@ -1156,30 +1174,30 @@
   <div class="encumbrance-row encumbrance-row-top">
     <div class="encumbrance-inline-label">
       <i class="fas fa-weight-hanging"></i>
-      <span>Sumário de Carga</span>
+      <span>{{localize "GUM.Inventory.Encumbrance.Summary"}}</span>
     </div>
 
     <div class="encumbrance-inline-meter"
          role="img"
-         aria-label="Carga atual {{actor.system.encumbrance.total_weight}} de {{actor.system.encumbrance.max_capacity}} kg">
+         aria-label="{{encumbranceDisplay.ariaLabel}}">
 
       <div class="encumbrance-inline-fill"
            style="width: {{actor.system.encumbrance.progress_percent}}%;"></div>
 
-      {{#each actor.system.encumbrance.level_data}}
+      {{#each encumbranceDisplay.levels}}
       {{#if this.is_divider}}
         <span class="encumbrance-inline-marker
-              {{#if (eq this.name ../actor.system.encumbrance.level_name)}}active{{/if}}"
+              {{#if this.active}}active{{/if}}"
               style="left: {{this.marker_percent}}%;"
               title="{{this.barrier_tooltip}}">
         </span>
       {{/if}}
       {{/each}}
 
-      {{#each actor.system.encumbrance.segment_labels}}
+      {{#each encumbranceDisplay.segments}}
         <span class="encumbrance-inline-segment-label"
               style="left: {{this.midpoint_percent}}%;"
-              title="{{this.name}}">
+              title="{{this.label}}">
           {{this.short}}
         </span>
       {{/each}}
@@ -1191,31 +1209,37 @@
     </div>
 
     <div class="encumbrance-inline-state">
-      {{actor.system.encumbrance.level_name}}
+      {{encumbranceDisplay.levelLabel}}
     </div>
   </div>
 
   {{!-- LINHA 2 --}}
   <div class="encumbrance-row encumbrance-row-bottom">
-    <div class="encumbrance-inline-subtitle">
-      Ignorar:
+    <button type="button" class="physical-lifting-reference encumbrance-rules-button" title="{{localize 'GUM.PhysicalLifting.OpenReference'}}" aria-label="{{localize 'GUM.PhysicalLifting.OpenReference'}}"><i class="fas fa-scale-balanced" aria-hidden="true"></i>{{localize "GUM.PhysicalLifting.OpenReference"}}</button>
+
+    <div class="encumbrance-ignore-controls">
+      <div class="encumbrance-inline-subtitle">
+        {{localize "GUM.Inventory.Encumbrance.Ignore"}}
+      </div>
+
+      {{!-- Funcional (já existe no sistema) --}}
+      <label class="encumbrance-pill">
+        <input type="checkbox"
+               name="system.encumbrance.ignore_carried_weight"
+               {{checked actor.system.encumbrance.ignore_carried_weight}} />
+        <span>{{localize "GUM.Inventory.Carried"}}</span>
+      </label>
+
+      {{!-- Ignora o peso dos itens equipados/em uso no cálculo de carga --}}
+      <label class="encumbrance-pill">
+        <input type="checkbox"
+               name="system.encumbrance.ignore_equipped_weight"
+               {{checked actor.system.encumbrance.ignore_equipped_weight}} />
+        <span>{{localize "GUM.Inventory.InUse"}}</span>
+      </label>
     </div>
 
-    {{!-- Funcional (já existe no sistema) --}}
-    <label class="encumbrance-pill">
-      <input type="checkbox"
-             name="system.encumbrance.ignore_carried_weight"
-             {{checked actor.system.encumbrance.ignore_carried_weight}} />
-      <span>{{localize "GUM.Inventory.Carried"}}</span>
-    </label>
-
-    {{!-- Ignora o peso dos itens equipados/em uso no cálculo de carga --}}
-    <label class="encumbrance-pill">
-      <input type="checkbox"
-             name="system.encumbrance.ignore_equipped_weight"
-             {{checked actor.system.encumbrance.ignore_equipped_weight}} />
-      <span>{{localize "GUM.Inventory.InUse"}}</span>
-    </label>
+    <span class="encumbrance-row-balance" aria-hidden="true"></span>
   </div>
 
 </div>
@@ -1628,6 +1652,8 @@
                         <i class="fas fa-chevron-right"></i>
                       </button>
                       <span class="location-name">{{row.label}}</span>
+                      {{#if row.isAdditional}}<i class="fas fa-plus-circle dr-location-origin" title="{{localize 'GUM.Combat.DR.AdditionalLocations'}}"></i>{{/if}}
+                      {{#each row.equipmentSources as |source|}}<i class="fas fa-toolbox dr-location-origin" title="{{localize 'GUM.Combat.DR.EquipmentSource'}}: {{source}}"></i>{{/each}}
                       </div>
                       <span class="location-dr-value">{{row.base}}</span>
                     </div>
@@ -1639,6 +1665,8 @@
                         <li class="dr-location-row is-child {{#if child.extraLine}}has-extra{{/if}}" data-location-key="{{child.key}}">
                           <div class="dr-row-main">
                             <span class="location-name">{{child.label}}</span>
+                            {{#if child.isAdditional}}<i class="fas fa-plus-circle dr-location-origin" title="{{localize 'GUM.Combat.DR.AdditionalLocations'}}"></i>{{/if}}
+                            {{#each child.equipmentSources as |source|}}<i class="fas fa-toolbox dr-location-origin" title="{{localize 'GUM.Combat.DR.EquipmentSource'}}: {{source}}"></i>{{/each}}
                             <span class="location-dr-value">{{child.base}}</span>
                           </div>
                           {{#if child.extraLine}}
@@ -1653,6 +1681,8 @@
                   <li class="dr-location-row {{#if row.extraLine}}has-extra{{/if}}" data-location-key="{{row.key}}">
                     <div class="dr-row-main">
                       <span class="location-name">{{row.label}}</span>
+                      {{#if row.isAdditional}}<i class="fas fa-plus-circle dr-location-origin" title="{{localize 'GUM.Combat.DR.AdditionalLocations'}}"></i>{{/if}}
+                      {{#each row.equipmentSources as |source|}}<i class="fas fa-toolbox dr-location-origin" title="{{localize 'GUM.Combat.DR.EquipmentSource'}}: {{source}}"></i>{{/each}}
                       <span class="location-dr-value">{{row.base}}</span>
                     </div>
                     {{#if row.extraLine}}
@@ -1663,6 +1693,7 @@
               {{/each}}
             </ol>
           </div>
+
 </div>
 
         {{! --- COLUNA DA DIREITA (LARGA) --- }}

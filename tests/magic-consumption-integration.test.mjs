@@ -20,6 +20,7 @@ test("the item sheet exposes triggers, variable amounts, and alternative sources
   assert.match(sheet, /system\.consumptionGroups\.\{\{group\.id\}\}\.trigger/);
   assert.match(sheet, /system\.consumptionGroups\.\{\{group\.id\}\}\.variableAmount/);
   assert.match(sheet, /system\.consumptionGroups\.\{\{group\.id\}\}\.sources/);
+  assert.match(sheet, /sources\.\{\{source\.id\}\}\.sourceKey/);
   assert.match(sheet, /value="attempt"/);
   assert.match(sheet, /value="success"/);
   assert.match(sheet, /value="failure"/);

@@ -8,10 +8,10 @@ import { listBodyLocations } from "../config/body-profiles.js";
 import { bilingualLocationOptions } from "../utils/equipment-location-aliases.mjs";
 import { SOCIAL_CATEGORIES } from "../config/social-aspects.mjs";
 import { normalizeContextCsv, openContextPicker } from "../apps/context-picker.mjs";
-import { getSkillDisplayName } from "../utils/skill-display-name.mjs";
 import { describeEquipmentAttackChanges, describeEquipmentPropertyChanges, describeEquipmentResolutionWarnings, describeEquipmentUseChanges, normalizeEquipmentModifier, parseEquipmentAdjustment, resolveEquipment } from "../utils/equipment-resolution.mjs";
 import { ammunitionLinkCandidates } from "../utils/ammunition.mjs";
 import { collectMagicConsumptionSources, normalizeMagicConsumptionGroups } from "../utils/magic-consumption.mjs";
+import { canonicalSkillLinkTargetPath, collectSkillLinkCandidates, normalizeSkillLinkSearch } from "../utils/skill-link.mjs";
  
 const { ItemSheet } = foundry.appv1.sheets; 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -600,12 +600,21 @@ _promptMultipleReferences(parsedList) {
  
         if (this.item.type === "equipment") { 
             const drLocations = this.item._source?.system?.dr_locations || this.item.system.dr_locations || {};
+            const drLocationOptions = this.item._source?.system?.dr_location_options || this.item.system.dr_location_options || {};
             const resolvedDrLocations = context.equipmentResolution?.drLocations || drLocations;
             const allLocationsOption = {
                 id: "all",
                 name: game.i18n.localize("GUM.Equipment.Protection.AllLocations")
             };
-            const originalBodyLocationOptions = [allLocationsOption, ...listBodyLocations()];
+            const actorAdditionalLocations = Object.entries(this.item.actor?.system?.combat?.additional_locations || {})
+                .map(([id, definition]) => ({ id, name: definition?.label || definition?.name || id, label: definition?.label || definition?.name || id }));
+            const seenLocationIds = new Set();
+            const originalBodyLocationOptions = [allLocationsOption, ...listBodyLocations(), ...actorAdditionalLocations]
+                .filter(option => {
+                    if (!option?.id || seenLocationIds.has(option.id)) return false;
+                    seenLocationIds.add(option.id);
+                    return true;
+                });
             const bodyLocationOptions = originalBodyLocationOptions.map(localizeEquipmentLocation);
             const locationLookup = new Map(bodyLocationOptions.map(option => [option.id, option])); 
  
@@ -618,6 +627,7 @@ _promptMultipleReferences(parsedList) {
                         key, 
                         label: option?.name ?? key, 
                         dr: this._formatDRObjectToString(drObject),
+                        providesLocation: drLocationOptions?.[key]?.provides_location !== false,
                         finalDr: this._formatDRObjectToString(resolvedDrLocations[key] || {}),
                         changed: JSON.stringify(drObject) !== JSON.stringify(resolvedDrLocations[key] || {})
                     };
@@ -784,10 +794,35 @@ _promptMultipleReferences(parsedList) {
             const acceptsName = !["hp", "fp"].includes(sourceType);
             nameInput.prop("disabled", !acceptsName);
             sourceRow.toggleClass("is-name-disabled", !acceptsName);
+            if (!acceptsName) sourceRow.find(".magic-consumption-source-key").val("");
         };
-        html.find(".magic-consumption-source").each((_index, element) => updateMagicConsumptionSourceNameState($(element)));
+        const updateMagicConsumptionSourceKey = (sourceRow, { force = false } = {}) => {
+            const keyInput = sourceRow.find(".magic-consumption-source-key");
+            if (!force && String(keyInput.val() || "").trim()) return;
+            const sourceType = String(sourceRow.find(".magic-consumption-source-type").val() || "");
+            const sourceName = String(sourceRow.find(".magic-consumption-source-name").val() || "").trim();
+            if (["hp", "fp"].includes(sourceType) || !sourceName) {
+                keyInput.val("");
+                return;
+            }
+            const matches = html.find("#magic-consumption-source-names option").toArray().filter(option => (
+                String(option.dataset.sourceType || "") === sourceType
+                && String(option.value || "").trim() === sourceName
+            ));
+            keyInput.val(matches.length === 1 ? String(matches[0].dataset.sourceKey || "") : "");
+        };
+        html.find(".magic-consumption-source").each((_index, element) => {
+            const sourceRow = $(element);
+            updateMagicConsumptionSourceNameState(sourceRow);
+            updateMagicConsumptionSourceKey(sourceRow);
+        });
         html.on("change", ".magic-consumption-source-type", event => {
-            updateMagicConsumptionSourceNameState($(event.currentTarget).closest(".magic-consumption-source"));
+            const sourceRow = $(event.currentTarget).closest(".magic-consumption-source");
+            updateMagicConsumptionSourceNameState(sourceRow);
+            updateMagicConsumptionSourceKey(sourceRow, { force: true });
+        });
+        html.on("input change", ".magic-consumption-source-name", event => {
+            updateMagicConsumptionSourceKey($(event.currentTarget).closest(".magic-consumption-source"), { force: true });
         });
         html.find(".item-social-contribution").on("toggle", event => {
             const contribution = event.currentTarget;
@@ -1102,12 +1137,23 @@ if (this.item?.type === "equipment") {
                 ev.preventDefault(); 
                 ev.stopPropagation(); 
                 ev.currentTarget.closest("[data-dr-location-row]")?.remove(); 
-                await this.object.update(this._buildDRLocationsUpdate(this._collectDRLocationsFromForm())); 
+                const drLocations = this._collectDRLocationsFromForm();
+                await this.object.update({
+                    ...this._buildDRLocationsUpdate(drLocations),
+                    ...this._buildDRLocationOptionsUpdate(this._collectDRLocationOptionsFromForm(drLocations))
+                });
             }); 
  
             html.on("change", ".dr-location-label", (ev) => { 
                 this._syncDrLocationKey(ev.currentTarget); 
             }); 
+            html.on("change", ".dr-location-provides", async () => {
+                const drLocations = this._collectDRLocationsFromForm();
+                await this.object.update({
+                    ...this._buildDRLocationsUpdate(drLocations),
+                    ...this._buildDRLocationOptionsUpdate(this._collectDRLocationOptionsFromForm(drLocations))
+                });
+            });
         } 
  
         // Adicionar/Remover Ataques 
@@ -2277,50 +2323,88 @@ const rangedFields = `
         attackItem.find('.attack-display-mode').show(); 
     } 
  
- _onLinkSkill(ev) {
+ async _onLinkSkill(ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
         const trigger = $(ev.currentTarget);
         if (trigger.hasClass('disabled')) return; 
-        if (!this.item.isOwned) return ui.notifications.warn("Item precisa estar em um ator."); 
+        if (!this.item.isOwned) return ui.notifications.warn(game.i18n.localize("GUM.SkillLink.RequiresActor"));
         const actor = this.item.parent; 
-
-        const skillFilter = (trigger.data('skill-filter') || '').toString().trim(); 
-        let skills = actor.items.filter(i => i.type === 'skill'); 
- 
-        if (skillFilter) { 
-            const allowedTypes = new Set(skillFilter.split('|').map(type => type.trim()).filter(Boolean)); 
-            if (allowedTypes.size > 0) { 
-                skills = skills.filter(skill => allowedTypes.has(skill.system?.tree_hierarchy_type ?? skill.system?.hierarchy_type));
-            } 
-        } 
- 
-        skills = skills.sort((a,b) => a.name.localeCompare(b.name)); 
- 
+        const skillFilter = String(trigger.data('skill-filter') || '').trim();
+        const allowedHierarchyTypes = skillFilter.split('|').map(type => type.trim()).filter(Boolean);
         const explicitPath = trigger.data('link-target'); 
-        const scopedInput = trigger.closest('.form-group, .skill-hierarchy-card, .skill-compact-row').find('input[type="text"]').first();
+        const scopedInput = trigger.closest('.form-group, .skill-hierarchy-card, .skill-compact-row, .skill-dashboard-linked-input').find('input[type="text"]').first();
         const input = scopedInput.length ? scopedInput : trigger.closest('label').siblings('input[type="text"]').first(); 
-        let path = explicitPath || input.attr('name') || input.data('name'); 
+        const rawPath = explicitPath || input.attr('name') || input.data('name');
+        const path = canonicalSkillLinkTargetPath(rawPath);
         if (!path) return; 
  
-        if (!skills.length) { 
-            return ui.notifications.warn("Nenhuma perícia compatível foi encontrada neste ator."); 
-        } 
+        const inputValue = String(input.val() ?? "").trim();
+        const currentValue = inputValue || foundry.utils.getProperty(this.item, path) || "";
+        const candidates = collectSkillLinkCandidates(actor.items, { allowedHierarchyTypes, currentValue });
+        if (!candidates.length) return ui.notifications.warn(game.i18n.localize("GUM.SkillLink.NoCompatibleSkills"));
+
+        const escape = value => foundry.utils.escapeHTML(String(value ?? ""));
+        const rows = candidates.map(candidate => {
+            const details = [
+                candidate.group ? `${game.i18n.localize("GUM.SkillLink.Group")}: ${candidate.group}` : "",
+                candidate.baseAttribute ? `${game.i18n.localize("GUM.SkillLink.BaseAttribute")}: ${candidate.baseAttribute.toUpperCase()}` : "",
+                candidate.difficulty ? `${game.i18n.localize("GUM.SkillLink.Difficulty")}: ${candidate.difficulty}` : ""
+            ].filter(Boolean).join(" · ");
+            const finalNh = candidate.finalNh === "" ? game.i18n.localize("GUM.SkillLink.Unavailable") : candidate.finalNh;
+            return `<label class="skill-link-option${candidate.selected ? " is-selected" : ""}" data-search="${escape(candidate.searchText)}">
+                <input type="radio" name="skill_id" value="${escape(candidate.id)}" ${candidate.selected ? "checked" : ""}>
+                <span class="skill-link-option__image"><img src="${escape(candidate.image)}" alt=""></span>
+                <span class="skill-link-option__text"><strong>${escape(candidate.displayName)}</strong><small>${escape(details || game.i18n.localize("GUM.SkillLink.NoDetails"))}</small></span>
+                <span class="skill-link-option__level"><small>${escape(game.i18n.localize("GUM.SkillLink.FinalLevel"))}</small><strong>${escape(finalNh)}</strong></span>
+            </label>`;
+        }).join("");
  
-            let options = skills.map((skill) => {
-            const displayName = getSkillDisplayName(skill);
-            const safeName = foundry.utils.escapeHTML(displayName);
-            const safeNh = foundry.utils.escapeHTML(String(skill.system.final_nh ?? "N/A"));
-            return `<option value="${safeName}">${safeName} (NH ${safeNh})</option>`;
-        }).join('');
         new Dialog({ 
-            title: "Vincular Perícia", 
-            content: `<div class="form-group"><label>Escolha:</label><select name="skill_selector">${options}</select></div>`, 
+            title: game.i18n.localize("GUM.SkillLink.Title"),
+            content: `<form class="skill-link-picker" autocomplete="off">
+                <div class="skill-link-picker__intro"><span class="skill-link-picker__intro-icon"><i class="fas fa-link"></i></span><p>${escape(game.i18n.localize("GUM.SkillLink.Hint"))}</p></div>
+                <label class="skill-link-search" aria-label="${escape(game.i18n.localize("GUM.SkillLink.SearchLabel"))}"><i class="fas fa-search"></i><input type="search" placeholder="${escape(game.i18n.localize("GUM.SkillLink.SearchPlaceholder"))}"></label>
+                <div class="skill-link-options">${rows}</div>
+                <p class="skill-link-no-results" hidden>${escape(game.i18n.localize("GUM.SkillLink.NoResults"))}</p>
+            </form>`,
             buttons: { 
-                ok: { 
-                    label: "Vincular", 
-                    callback: (html) => this.item.update({ [path]: html.find('select').val() }) 
-                } 
+                link: {
+                    icon: '<i class="fas fa-link"></i>',
+                    label: game.i18n.localize("GUM.SkillLink.Link"),
+                    callback: html => {
+                        const selectedId = String(html.find('input[name="skill_id"]:checked').val() || "");
+                        const selected = candidates.find(candidate => candidate.id === selectedId);
+                        if (!selected) {
+                            ui.notifications.warn(game.i18n.localize("GUM.SkillLink.SelectRequired"));
+                            return false;
+                        }
+                        input.val(selected.displayName);
+                        return this.item.update({ [path]: selected.displayName });
+                    }
+                },
+                cancel: { icon: '<i class="fas fa-times"></i>', label: game.i18n.localize("GUM.SkillLink.Cancel") }
+            },
+            default: "link",
+            render: html => {
+                const syncSelection = () => html.find(".skill-link-option").each((_index, element) => {
+                    element.classList.toggle("is-selected", Boolean(element.querySelector('input[type="radio"]')?.checked));
+                });
+                html.find('input[name="skill_id"]').on("change", syncSelection);
+                html.find('.skill-link-search input').on("input", event => {
+                    const term = normalizeSkillLinkSearch(event.currentTarget.value);
+                    let visible = 0;
+                    html.find(".skill-link-option").each((_index, element) => {
+                        const matches = !term || String(element.dataset.search || "").includes(term);
+                        element.hidden = !matches;
+                        if (matches) visible += 1;
+                    });
+                    html.find(".skill-link-no-results").prop("hidden", visible > 0);
+                });
+                syncSelection();
+                html.find('.skill-link-search input').trigger("focus");
             } 
-        }).render(true); 
+        }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog", "gum-skill-link-dialog"], width: 540, height: "auto" }).render(true);
     } 
      
  async _onViewEqpModifier(ev) { 
@@ -2461,13 +2545,15 @@ const rangedFields = `
  
         if (this.item?.type === "equipment") { 
             for (const key in data) { 
-                if (key.startsWith("system.dr_locations.")) { 
+                if (key.startsWith("system.dr_locations.") || key.startsWith("system.dr_location_options.")) {
                     delete data[key]; 
                 } 
             } 
  
             const drLocations = this._collectDRLocationsFromForm(); 
             Object.assign(data, this._buildDRLocationsUpdate(drLocations)); 
+            const drLocationOptions = this._collectDRLocationOptionsFromForm(drLocations);
+            Object.assign(data, this._buildDRLocationOptionsUpdate(drLocationOptions));
         } 
  
         return data; 
@@ -2738,6 +2824,18 @@ const rangedFields = `
  
         return drLocations; 
     } 
+
+    _collectDRLocationOptionsFromForm(drLocations = {}) {
+        const options = {};
+        const rows = this.element?.[0]?.querySelectorAll("[data-dr-location-row]") || [];
+        rows.forEach(row => {
+            const label = row.querySelector(".dr-location-label")?.value?.trim() || "";
+            const key = label ? this._getLocationKeyFromLabel(label) : (row.querySelector(".dr-location-key")?.value?.trim() || "");
+            if (!key || !(key in drLocations)) return;
+            options[key] = { provides_location: row.querySelector(".dr-location-provides")?.checked !== false };
+        });
+        return options;
+    }
  
     _buildDRLocationsUpdate(drLocations) { 
         const update = { 
@@ -2753,8 +2851,17 @@ const rangedFields = `
  
         return update; 
     } 
+
+    _buildDRLocationOptionsUpdate(options) {
+        const update = { "system.dr_location_options": options };
+        const existing = this.item.system.dr_location_options || {};
+        for (const key of Object.keys(existing)) {
+            if (!(key in options)) update[`system.dr_location_options.-=${key}`] = null;
+        }
+        return update;
+    }
  
-    _addDrLocationRow(html, { label = "", key = "", dr = "" } = {}) { 
+    _addDrLocationRow(html, { label = "", key = "", dr = "", providesLocation = true } = {}) {
         const container = html.find(".dr-locations-table"); 
         if (!container.length) return; 
  
@@ -2769,6 +2876,10 @@ const rangedFields = `
                         <div class="attack-cell"> 
                             <input class="dr-location-value" type="text" value="${dr}" placeholder="0"/> 
                         </div> 
+                        <label class="attack-cell dr-location-provides-label" title="${game.i18n.localize("GUM.Equipment.Protection.ProvidesLocationHint")}">
+                            <input class="dr-location-provides" type="checkbox" ${providesLocation ? "checked" : ""}/>
+                            <span>${game.i18n.localize("GUM.Equipment.Protection.ProvidesLocation")}</span>
+                        </label>
                         <div class="attack-cell"> 
                             <button class="dr-location-delete" type="button" title="${game.i18n.localize("GUM.Equipment.Protection.RemoveDR")}"><i class="fas fa-trash"></i></button>
                         </div> 
@@ -2790,10 +2901,14 @@ const rangedFields = `
         const label = input.value?.trim(); 
         if (!label) { 
             keyInput.value = ""; 
+            const providesLabel = row.querySelector(".dr-location-provides-label");
+            if (providesLabel) providesLabel.hidden = false;
             return; 
         } 
  
         keyInput.value = this._getLocationKeyFromLabel(label); 
+        const providesLabel = row.querySelector(".dr-location-provides-label");
+        if (providesLabel) providesLabel.hidden = keyInput.value === "all";
     } 
  
     _getLocationKeyFromLabel(label) { 
@@ -2806,6 +2921,11 @@ const rangedFields = `
  
         const escape = window.CSS?.escape || ((value) => value.replace(/["\\]/g, "\\$&")); 
         const option = list.querySelector(`option[value="${escape(label)}"]`); 
-        return option?.dataset?.key || label; 
+        if (option?.dataset?.key) return option.dataset.key;
+        const normalize = value => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLocaleLowerCase();
+        const normalized = normalize(label);
+        const normalizedOption = Array.from(list.querySelectorAll("option"))
+            .find(candidate => normalize(candidate.value) === normalized || normalize(candidate.dataset?.key) === normalized);
+        return normalizedOption?.dataset?.key || label;
     } 
 }

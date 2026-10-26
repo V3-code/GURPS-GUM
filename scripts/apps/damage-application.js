@@ -365,11 +365,12 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
         };
     }
 
-    _buildLocationRows(profile, drLocations) {
-        const locationsData = profile.locations || {};
+    _buildLocationRows(profile, drLocations, effectiveLocations = null) {
+        const locationsData = effectiveLocations?.definitions || profile.locations || {};
+        const locationOrder = effectiveLocations?.order || getBodyProfileLocationKeys(profile);
 
         const items = [];
-        for (const key of getBodyProfileLocationKeys(profile)) {
+        for (const key of locationOrder) {
             const data = locationsData[key];
             if (!data) continue;
             const drData = drLocations[key] || {};
@@ -527,8 +528,12 @@ const sortedEntries = Object.entries(normalized).sort(([a], [b]) => a.localeComp
 const profileId = this.targetActor.system.combat?.body_profile || "humanoid";
         const profile = getBodyProfile(profileId);
         const totalDrLocations = this.targetActor.system.combat.dr_locations || {};
+        const effectiveLocations = {
+            order: this.targetActor.system.combat?.dr_location_order || getBodyProfileLocationKeys(profile),
+            definitions: this.targetActor.system.combat?.dr_location_definitions || profile.locations
+        };
 
-        context.locations = this._buildLocationRows(profile, totalDrLocations);
+        context.locations = this._buildLocationRows(profile, totalDrLocations, effectiveLocations);
 
         context.locations.push({ key: "custom", label: this._t("OtherLocation"), roll: "--", totalDR: 0, custom: true });
 

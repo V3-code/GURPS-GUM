@@ -3,7 +3,7 @@ import { applyEffectWithResistance, performGURPSRoll } from "/systems/gum/script
 import { GurpsRollPrompt } from "../apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../apps/damage-roll-prompt.js";
 import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
-import { getBodyProfile, getBodyProfileLocationKeys, listBodyProfiles, localizeBodyGroupLabel, localizeBodyLocationLabel, localizeBodyProfileLabel } from "../config/body-profiles.js";
+import { getBodyLocationDefinition, getBodyProfile, getBodyProfileLocationKeys, listBodyLocations, listBodyProfiles, localizeBodyGroupLabel, localizeBodyLocationLabel, localizeBodyProfileLabel } from "../config/body-profiles.js";
 import { TemplateBrowser } from "../apps/template-browser.js";
 import { templateEntryDisplayName } from "../utils/template-entry-display.mjs";
 import { GumPreviewDialog } from "../apps/preview-dialog.js";
@@ -22,6 +22,8 @@ import { buildEquipmentConsumptionUpdate, equipmentIntegrityCurrentUpdate, equip
 import { UNGROUPED_ORGANIZER_ID, addItemOrganizationGroup, buildItemCategoryGroupPlan, createGroupsFromItemCategories, moveOrganizedItem, normalizeItemOrganization, removeItemOrganizationGroup, renameItemOrganizationGroup } from "../utils/item-organization.mjs";
 import { normalizeRequestedAttributeKey } from "../utils/requested-attributes.mjs";
 import { resolveStoredEffectStackingDomain } from "../utils/effect-stacking.mjs";
+import { calculateLiftingCapacities, resolveThrowingDistance } from "../utils/physical-feats.mjs";
+import { buildEffectiveBodyLocations, describeBodyLocationSources } from "../utils/damage-resistance-locations.mjs";
 
 const WOUND_NATURE_ICONS = Object.freeze({
   fire: "fa-fire",
@@ -138,9 +140,34 @@ async getData(options) {
         context.combatMetersVisible = this._combatControlFilters.size === 0 || this._combatControlFilters.has("meters");
         const encumbranceLevel = Math.min(4, Math.max(0, Number(this.actor.system.encumbrance?.level_value) || 0));
         context.encumbranceLevelLabel = game.i18n.localize(`GUM.Character.Sidebar.EncumbranceLevels.${encumbranceLevel}`);
-        
+        const encumbrance = this.actor.system.encumbrance || {};
+        const formatWeight = value => Number(value || 0).toLocaleString(game.i18n.lang, { maximumFractionDigits: 2 });
+        context.encumbranceDisplay = {
+            ariaLabel: game.i18n.format("GUM.Inventory.Encumbrance.CurrentLoadAria", {
+                current: formatWeight(encumbrance.total_weight),
+                maximum: formatWeight(encumbrance.max_capacity)
+            }),
+            levelLabel: context.encumbranceLevelLabel,
+            levels: (encumbrance.level_data || []).map((level, index) => ({
+                ...level,
+                active: index === encumbranceLevel,
+                label: game.i18n.localize(`GUM.Inventory.Encumbrance.Levels.${index}`),
+                short: game.i18n.localize(`GUM.Inventory.Encumbrance.Abbreviations.${index}`)
+            })),
+            segments: (encumbrance.segment_labels || []).map((segment, index) => ({
+                ...segment,
+                label: game.i18n.localize(`GUM.Inventory.Encumbrance.Levels.${index}`),
+                short: game.i18n.localize(`GUM.Inventory.Encumbrance.Abbreviations.${index}`)
+            }))
+        };
+
         const profileId = this.actor.system.combat?.body_profile || "humanoid";
         const profile = getBodyProfile(profileId);
+        const effectiveBodyLocations = buildEffectiveBodyLocations({
+            profile,
+            additionalLocations: this.actor.system.combat?.additional_locations,
+            equipment: Array.from(this.actor.items)
+        });
 
         context.bodyProfileId = profileId;
         context.bodyProfileLabel = localizeBodyProfileLabel(profile, key => game.i18n.localize(key));
@@ -148,9 +175,9 @@ async getData(options) {
             ...bodyProfile,
             label: localizeBodyProfileLabel(bodyProfile, key => game.i18n.localize(key))
         }));
-        context.hitLocations = profile.locations;          // <- isso substitui o hardcoded
-        context.hitLocationOrder = profile.order || [];
-        context.drDisplayRows = this._buildDrDisplayRows(profile, this.actor.system.combat?.dr_locations || {});
+        context.hitLocations = effectiveBodyLocations.definitions;
+        context.hitLocationOrder = effectiveBodyLocations.order;
+        context.drDisplayRows = this._buildDrDisplayRows(profile, this.actor.system.combat?.dr_locations || {}, effectiveBodyLocations);
 
 
 
@@ -1398,12 +1425,14 @@ _getSubmitData(updateData) {
         return parts.join(", ") || "—";
     }
 
- _buildDrDisplayRows(profile, drLocations) {
+ _buildDrDisplayRows(profile, drLocations, effectiveBodyLocations = null) {
         const rows = [];
-        const locations = profile.locations || {};
+        const locations = effectiveBodyLocations?.definitions || profile.locations || {};
+        const locationOrder = effectiveBodyLocations?.order || getBodyProfileLocationKeys(profile);
+        const locationSources = effectiveBodyLocations?.sources || {};
         const items = [];
 
-        for (const key of getBodyProfileLocationKeys(profile)) {
+        for (const key of locationOrder) {
             const loc = locations[key];
             if (!loc) continue;
             const rawDR = drLocations?.[key];
@@ -1420,6 +1449,8 @@ _getSubmitData(updateData) {
                 groupPlural: loc.groupKey
                     ? localizeBodyGroupLabel(loc.groupKey, loc.groupPlural || loc.groupLabel, localizationKey => game.i18n.localize(localizationKey))
                     : loc.groupPlural,
+                equipmentSources: describeBodyLocationSources(locationSources[key]),
+                isAdditional: (locationSources[key] || []).some(source => source.type === "manual"),
                 base,
                 extraLine,
                 drSignature: this._getDRSignature(drObject)
@@ -1450,6 +1481,8 @@ _getSubmitData(updateData) {
                 label: `${labelBase} (${groupItems.length})`,
                 base: groupItems[0].base,
                 extraLine: groupItems[0].extraLine,
+                equipmentSources: [...new Set(groupItems.flatMap(member => member.equipmentSources || []))],
+                isAdditional: groupItems.some(member => member.isAdditional),
                 children: groupItems
             });
         }
@@ -2049,6 +2082,188 @@ _onEditPortrait() {
     return picker.render(true);
 }
 
+_openPhysicalFeatsReference() {
+    const t = key => game.i18n.localize(key);
+    const attributes = this.actor.system.attributes || {};
+    const formatNumber = value => Number(value || 0).toLocaleString(game.i18n.lang, { maximumFractionDigits: 2 });
+    const movementStat = (icon, labelKey, attribute, unit = "") => `
+        <div class="physical-feats-reference-stat">
+            <i class="fas ${icon}" aria-hidden="true"></i>
+            <span>${t(labelKey)}</span>
+            <strong>${formatNumber(attribute?.final)}${unit}</strong>
+        </div>`;
+    const movementRows = [
+        movementStat("fa-walking", "GUM.Combat.Physical.Ground", attributes.basic_move),
+        Number(attributes.enhanced_move?.final) ? movementStat("fa-forward", "GUM.Combat.Physical.Enhanced", attributes.enhanced_move) : "",
+        attributes.air_move?.enabled ? movementStat("fa-wind", "GUM.Combat.Physical.Air", attributes.air_move) : "",
+        attributes.water_move?.enabled ? movementStat("fa-water", "GUM.Combat.Physical.Water", attributes.water_move) : "",
+        attributes.burrow_move?.enabled ? movementStat("fa-mountain", "GUM.Combat.Physical.Burrow", attributes.burrow_move) : "",
+        attributes.teleport_range?.enabled ? movementStat("fa-person-from-portal", "GUM.Combat.Physical.Teleport", attributes.teleport_range, " m") : ""
+    ].filter(Boolean).join("");
+    const liftingStrength = attributes.lifting_st?.final ?? attributes.lifting_st?.final_computed ?? 0;
+    const basicLift = attributes.basic_lift?.final ?? attributes.basic_lift?.value ?? 0;
+    const content = `
+        <div class="physical-feats-reference-content">
+            <p class="physical-feats-reference-intro">${t("GUM.PhysicalFeats.Intro")}</p>
+            <section class="physical-feats-reference-section">
+                <h3><i class="fas fa-route" aria-hidden="true"></i>${t("GUM.Combat.Physical.Movement")}</h3>
+                <div class="physical-feats-reference-grid">${movementRows}</div>
+            </section>
+            <section class="physical-feats-reference-section">
+                <h3><i class="fas fa-person-arrow-up-from-line" aria-hidden="true"></i>${t("GUM.Combat.Physical.Jump")}</h3>
+                <div class="physical-feats-reference-jumps">
+                    <div class="physical-feats-reference-jump-head"><span></span><span>${t("GUM.Combat.Physical.WithoutMomentum")}</span><span>${t("GUM.Combat.Physical.WithMomentum")}</span></div>
+                    <div><span>${t("GUM.Combat.Physical.HorizontalJump")}</span><strong>${formatNumber(attributes.jump_horizontal_standing?.final)} m</strong><strong>${formatNumber(attributes.jump_horizontal_running?.final)} m</strong></div>
+                    <div><span>${t("GUM.Combat.Physical.VerticalJump")}</span><strong>${formatNumber(attributes.jump_vertical_standing?.final)} m</strong><strong>${formatNumber(attributes.jump_vertical_running?.final)} m</strong></div>
+                </div>
+            </section>
+            <section class="physical-feats-reference-section physical-feats-reference-breathing">
+                <h3><i class="fas fa-lungs" aria-hidden="true"></i>${t("GUM.Combat.Physical.Breathing")}</h3>
+                <div class="physical-feats-reference-breathing-grid">
+                    <span><small>${t("GUM.Combat.Physical.NoExertion")}</small><strong>${formatNumber(attributes.breath_no_exertion?.final)} ${t("GUM.PhysicalFeats.SecondsAbbrev")}</strong></span>
+                    <span><small>${t("GUM.Combat.Physical.MildExertion")}</small><strong>${formatNumber(attributes.breath_mild_exertion?.final)} ${t("GUM.PhysicalFeats.SecondsAbbrev")}</strong></span>
+                    <span><small>${t("GUM.Combat.Physical.HeavyExertion")}</small><strong>${formatNumber(attributes.breath_heavy_exertion?.final)} ${t("GUM.PhysicalFeats.SecondsAbbrev")}</strong></span>
+                </div>
+            </section>
+            <section class="physical-feats-reference-section physical-feats-reference-lifting">
+                <h3><i class="fas fa-dumbbell" aria-hidden="true"></i>${t("GUM.Combat.Physical.Lifting")}</h3>
+                <div><span>${t("GUM.Combat.Physical.LiftingST")}<strong>${formatNumber(liftingStrength)}</strong></span><span>${t("GUM.Combat.Physical.BasicLift")}<strong>${formatNumber(basicLift)} kg</strong></span></div>
+            </section>
+            <div class="physical-feats-reference-actions">
+                <button type="button" class="physical-feats-open-lifting"><i class="fas fa-scale-balanced" aria-hidden="true"></i>${t("GUM.PhysicalLifting.OpenReference")}</button>
+                <button type="button" class="physical-feats-open-throw"><i class="fas fa-bowling-ball" aria-hidden="true"></i>${t("GUM.Combat.Physical.ThrowCalculator")}</button>
+            </div>
+        </div>`;
+    return new Dialog({
+        title: t("GUM.Combat.Physical.Title"),
+        content,
+        render: dialogHtml => {
+            dialogHtml.on("click", ".physical-feats-open-lifting", event => {
+                event.preventDefault();
+                this._openPhysicalLiftingReference();
+            });
+            dialogHtml.on("click", ".physical-feats-open-throw", event => {
+                event.preventDefault();
+                this._openPhysicalThrowCalculator();
+            });
+        },
+        buttons: {
+            close: { icon: '<i class="fas fa-times"></i>', label: t("GUM.PhysicalThrow.Close") }
+        },
+        default: "close"
+    }, {
+        classes: ["dialog", "gum", "physical-feats-reference-dialog", "gum-sheet-edit-dialog"],
+        width: 480
+    }).render(true);
+}
+
+_openPhysicalThrowCalculator() {
+    const t = key => game.i18n.localize(key);
+    const tf = (key, data) => game.i18n.format(key, data);
+    const attributes = this.actor.system.attributes || {};
+    const liftingStrength = Number(attributes.lifting_st?.final ?? attributes.lifting_st?.final_computed ?? 0);
+    const strikingStrength = Number(attributes.st?.final ?? attributes.st?.final_computed ?? 0);
+    const basicLiftKg = Number(attributes.basic_lift?.final ?? attributes.basic_lift?.value ?? 0);
+    const thrustDamage = attributes.thrust_damage?.final ?? attributes.thrust_damage?.value ?? "";
+    const formatNumber = value => Number(value || 0).toLocaleString(game.i18n.lang, { maximumFractionDigits: 2 });
+    const content = `
+        <form class="physical-throw-dialog-form">
+            <p class="physical-throw-intro">${t("GUM.PhysicalThrow.Intro")}</p>
+            <div class="physical-throw-bases">
+                <span>${t("GUM.Combat.Physical.LiftingST")} <strong>${formatNumber(liftingStrength)}</strong></span>
+                <span>ST <strong>${formatNumber(strikingStrength)}</strong></span>
+                <span>${t("GUM.Combat.Physical.BasicLift")} <strong>${formatNumber(basicLiftKg)} kg</strong></span>
+                <span>${t("GUM.Character.Sidebar.ThrustAbbrev")} <strong>${thrustDamage || "—"}</strong></span>
+            </div>
+            <label class="physical-throw-weight">
+                <span>${t("GUM.PhysicalThrow.Weight")}</span>
+                <span class="physical-throw-input"><input type="number" name="object-weight" min="0" step="0.01" autofocus><em>kg</em></span>
+            </label>
+            <button type="button" class="physical-throw-calculate"><i class="fas fa-calculator"></i>${t("GUM.PhysicalThrow.Calculate")}</button>
+            <div class="physical-throw-result" aria-live="polite"><p>${t("GUM.PhysicalThrow.EnterWeight")}</p></div>
+        </form>`;
+    return new Dialog({
+        title: t("GUM.PhysicalThrow.Title"),
+        content,
+        render: dialogHtml => {
+            const refresh = () => {
+                const objectWeightKg = Number(dialogHtml.find('[name="object-weight"]').val());
+                const resultRoot = dialogHtml.find('.physical-throw-result');
+                const result = resolveThrowingDistance({ liftingStrength, strikingStrength, basicLiftKg, objectWeightKg, thrustDamage });
+                if (!result.valid) {
+                    resultRoot.html(`<p class="is-warning">${t("GUM.PhysicalThrow.InvalidWeight")}</p>`);
+                    return;
+                }
+                if (!result.throwable) {
+                    resultRoot.html(`<p class="is-warning">${tf("GUM.PhysicalThrow.Unthrowable", { maximum: formatNumber(result.maximumWeightKg) })}</p>`);
+                    return;
+                }
+                const handsLabel = t(`GUM.PhysicalThrow.Hands.${result.hands}`);
+                resultRoot.html(`
+                    <div class="physical-throw-result-grid">
+                        <span>${t("GUM.PhysicalThrow.Ratio")}<strong>${formatNumber(result.ratio)} × BL</strong></span>
+                        <span>${t("GUM.PhysicalThrow.Hands.Label")}<strong>${handsLabel}</strong></span>
+                        <span class="physical-throw-range">${t("GUM.PhysicalThrow.Range")}<strong>${formatNumber(result.distanceMeters)} m</strong></span>
+                        <span class="physical-throw-damage">${t("GUM.PhysicalThrow.Damage")}<strong>${result.damage?.formula || t("GUM.PhysicalThrow.DamageUnavailable")} ${result.damage?.formula ? t("GUM.PhysicalThrow.CrushingAbbrev") : ""}</strong></span>
+                    </div>
+                    <small>${tf("GUM.PhysicalThrow.Maximum", { maximum: formatNumber(result.maximumWeightKg) })}</small>
+                    <small>${t("GUM.PhysicalThrow.DamageNote")}</small>`);
+            };
+            dialogHtml.on("click", ".physical-throw-calculate", refresh);
+            dialogHtml.on("submit", ".physical-throw-dialog-form", submitEvent => {
+                submitEvent.preventDefault();
+                refresh();
+            });
+        },
+        buttons: {
+            close: { icon: '<i class="fas fa-times"></i>', label: t("GUM.PhysicalThrow.Close") }
+        },
+        default: "close"
+    }, {
+        classes: ["dialog", "gum", "physical-throw-dialog", "gum-sheet-edit-dialog"],
+        width: 420
+    }).render(true);
+}
+
+_openPhysicalLiftingReference() {
+    const t = key => game.i18n.localize(key);
+    const attributes = this.actor.system.attributes || {};
+    const capacities = calculateLiftingCapacities(attributes.basic_lift?.final ?? attributes.basic_lift?.value ?? 0);
+    const formatNumber = value => Number(value || 0).toLocaleString(game.i18n.lang, { maximumFractionDigits: 2 });
+    const row = (labelKey, value, multiplier, noteKey) => `
+        <div class="physical-lifting-rule-row">
+            <span><strong>${t(labelKey)}</strong><small>${t(noteKey)}</small></span>
+            <span class="physical-lifting-rule-value"><strong>${formatNumber(value)} kg</strong><small>${multiplier}</small></span>
+        </div>`;
+    const content = `
+        <div class="physical-lifting-reference-content">
+            <header class="physical-lifting-reference-header">
+                <span>${t("GUM.Combat.Physical.BasicLift")}</span>
+                <strong>${formatNumber(capacities.basicLiftKg)} kg</strong>
+            </header>
+            <div class="physical-lifting-rule-list">
+                ${row("GUM.PhysicalLifting.OneHanded", capacities.oneHandedKg, "2×", "GUM.PhysicalLifting.OneHandedNote")}
+                ${row("GUM.PhysicalLifting.TwoHanded", capacities.twoHandedKg, "8×", "GUM.PhysicalLifting.TwoHandedNote")}
+                ${row("GUM.PhysicalLifting.ExtraHeavy", capacities.extraHeavyKg, "10×", "GUM.PhysicalLifting.ExtraHeavyNote")}
+                ${row("GUM.PhysicalLifting.CarryOnBack", capacities.carryOnBackKg, "15×", "GUM.PhysicalLifting.CarryOnBackNote")}
+                ${row("GUM.PhysicalLifting.Shove", capacities.shoveKg, "12× / 24×", "GUM.PhysicalLifting.ShoveNote")}
+                ${row("GUM.PhysicalLifting.ShiftSlightly", capacities.shiftSlightlyKg, "50×", "GUM.PhysicalLifting.ShiftSlightlyNote")}
+            </div>
+            <p class="physical-lifting-reference-note"><i class="fas fa-circle-info" aria-hidden="true"></i>${t("GUM.PhysicalLifting.NoAutomationNote")}</p>
+        </div>`;
+    return new Dialog({
+        title: t("GUM.PhysicalLifting.Title"),
+        content,
+        buttons: {
+            close: { icon: '<i class="fas fa-times"></i>', label: t("GUM.PhysicalThrow.Close") }
+        },
+        default: "close"
+    }, {
+        classes: ["dialog", "gum", "physical-lifting-dialog", "gum-sheet-edit-dialog"],
+        width: 440
+    }).render(true);
+}
+
 activateListeners(html) {
     super.activateListeners(html);
     html.on("click", ".combat-view-tab", (ev) => {
@@ -2099,11 +2314,23 @@ activateListeners(html) {
             html.find('[data-combat-filter-group]').each((_index, group) => {
                 group.hidden = filters.size > 0 && !filters.has(String(group.dataset.combatFilterGroup));
             });
-        } else {
+        } else if (scope === "control") {
             html.find('[data-combat-control-group]').each((_index, group) => {
                 group.hidden = filters.size > 0 && !filters.has(String(group.dataset.combatControlGroup));
             });
         }
+    });
+    html.on("click", ".physical-feats-reference-btn", ev => {
+        ev.preventDefault();
+        this._openPhysicalFeatsReference();
+    });
+    html.on("click", ".physical-throw-calculator", ev => {
+        ev.preventDefault();
+        this._openPhysicalThrowCalculator();
+    });
+    html.on("click", ".physical-lifting-reference", ev => {
+        ev.preventDefault();
+        this._openPhysicalLiftingReference();
     });
     if (!this.isEditable) return;
 
@@ -4028,6 +4255,29 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                     <span class="final-display" title="${t("GUM.SecondaryEditor.CurrentFinal")}">${stat.final ?? 0}</span>
                 </div>`;
         };
+        const physicalStatRow = (key, label, { movementProfile = false } = {}) => {
+            const stat = getAttr(key, 0);
+            const automatic = stat.automatic !== false && !movementProfile;
+            const enabled = movementProfile ? stat.enabled === true : true;
+            return `
+                <div class="secondary-editor-row secondary-editor-row--physical" data-physical-attribute="${key}">
+                    <div class="physical-attribute-heading">
+                        <label for="secondary-${key}-value">
+                            ${movementProfile ? `<input type="checkbox" class="physical-enabled-toggle" name="${key}.enabled" ${enabled ? "checked" : ""} aria-label="${t("GUM.SecondaryEditor.Physical.Enabled")}">` : ""}
+                            <span>${label}</span>
+                        </label>
+                        ${movementProfile ? "" : `<label class="physical-auto-control" title="${t("GUM.SecondaryEditor.Physical.AutomaticHint")}"><input type="checkbox" class="physical-auto-toggle" name="${key}.automatic" ${automatic ? "checked" : ""}><span>${t("GUM.SecondaryEditor.Physical.AutomaticShort")}</span></label>`}
+                    </div>
+                    <div class="physical-base-control">
+                        <input id="secondary-${key}-value" class="physical-base-input" type="number" name="${key}.value" value="${automatic ? (stat.calculated_base ?? stat.value ?? 0) : (stat.value ?? 0)}" step="0.01" ${automatic ? "disabled" : ""} />
+                    </div>
+                    <input type="number" name="${key}.mod" value="${stat.mod ?? 0}" step="0.01" aria-label="${tf("GUM.SecondaryEditor.FixedModifierFor", { attribute: label })}" />
+                    <span class="read-only" title="${t("GUM.SecondaryEditor.PassiveModifiersHint")}">${fmt(stat.passive)}</span>
+                    <span class="read-only" title="${t("GUM.SecondaryEditor.TemporaryEffectsHint")}">${fmt(stat.temp)}</span>
+                    <input type="number" name="${key}.points" value="${stat.points ?? 0}" aria-label="${tf("GUM.SecondaryEditor.PointsFor", { attribute: label })}" />
+                    <span class="final-display" title="${t("GUM.SecondaryEditor.CurrentFinal")}">${stat.final ?? 0}</span>
+                </div>`;
+        };
 
         const lifting = getAttr('lifting_st', 0);
         const dodge = getAttr('dodge');
@@ -4050,6 +4300,7 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                     <button type="button" class="secondary-editor-tab" data-panel="resources"><i class="fas fa-heartbeat"></i><span>${t("GUM.SecondaryEditor.Resources")}</span></button>
                     <button type="button" class="secondary-editor-tab" data-panel="senses"><i class="fas fa-eye"></i><span>${t("GUM.SecondaryEditor.Senses")}</span></button>
                     <button type="button" class="secondary-editor-tab" data-panel="damage"><i class="fas fa-dice-d6"></i><span>${t("GUM.SecondaryEditor.Damage")}</span></button>
+                    <button type="button" class="secondary-editor-tab" data-panel="physical"><i class="fas fa-person-running"></i><span>${t("GUM.SecondaryEditor.Physical.Tab")}</span></button>
                 </aside>
 
                 <div class="secondary-editor-workspace">
@@ -4127,6 +4378,45 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                                 </div>
                             </div>
                         </section>
+
+                        <section class="secondary-editor-panel" data-panel="physical">
+                            <div class="secondary-editor-card">
+                                <header><i class="fas fa-route"></i><div><h3>${t("GUM.SecondaryEditor.Physical.MovementTitle")}</h3><p>${t("GUM.SecondaryEditor.Physical.MovementHint")}</p></div></header>
+                                <div class="secondary-editor-table secondary-editor-table--physical">
+                                    <div class="secondary-editor-columns" aria-hidden="true">${editorColumns(t("GUM.SecondaryEditor.Column.Attribute"))}</div>
+                                    ${physicalStatRow('air_move', t('GUM.SecondaryEditor.Attributes.AirMove'), { movementProfile: true })}
+                                    ${physicalStatRow('water_move', t('GUM.SecondaryEditor.Attributes.WaterMove'), { movementProfile: true })}
+                                    ${physicalStatRow('burrow_move', t('GUM.SecondaryEditor.Attributes.BurrowMove'), { movementProfile: true })}
+                                    ${physicalStatRow('teleport_range', t('GUM.SecondaryEditor.Attributes.TeleportRange'), { movementProfile: true })}
+                                </div>
+                            </div>
+                            <div class="secondary-editor-card">
+                                <header><i class="fas fa-person-arrow-up-from-line"></i><div><h3>${t("GUM.SecondaryEditor.Physical.JumpTitle")}</h3><p>${t("GUM.SecondaryEditor.Physical.JumpHint")}</p></div></header>
+                                <div class="secondary-editor-table secondary-editor-table--physical">
+                                    <div class="secondary-editor-columns" aria-hidden="true">${editorColumns(t("GUM.SecondaryEditor.Column.Attribute"))}</div>
+                                    ${physicalStatRow('jump_horizontal_standing', t('GUM.SecondaryEditor.Attributes.HorizontalJumpStanding'))}
+                                    ${physicalStatRow('jump_horizontal_running', t('GUM.SecondaryEditor.Attributes.HorizontalJumpRunning'))}
+                                    ${physicalStatRow('jump_vertical_standing', t('GUM.SecondaryEditor.Attributes.VerticalJumpStanding'))}
+                                    ${physicalStatRow('jump_vertical_running', t('GUM.SecondaryEditor.Attributes.VerticalJumpRunning'))}
+                                </div>
+                            </div>
+                            <div class="secondary-editor-card">
+                                <header><i class="fas fa-dumbbell"></i><div><h3>${t("GUM.SecondaryEditor.Physical.LiftingTitle")}</h3><p>${t("GUM.SecondaryEditor.Physical.LiftingHint")}</p></div></header>
+                                <div class="secondary-editor-table secondary-editor-table--physical">
+                                    <div class="secondary-editor-columns" aria-hidden="true">${editorColumns(t("GUM.SecondaryEditor.Column.Attribute"))}</div>
+                                    ${physicalStatRow('basic_lift', t('GUM.SecondaryEditor.Attributes.BasicLift'))}
+                                </div>
+                            </div>
+                            <div class="secondary-editor-card">
+                                <header><i class="fas fa-lungs"></i><div><h3>${t("GUM.SecondaryEditor.Physical.BreathingTitle")}</h3><p>${t("GUM.SecondaryEditor.Physical.BreathingHint")}</p></div></header>
+                                <div class="secondary-editor-table secondary-editor-table--physical">
+                                    <div class="secondary-editor-columns" aria-hidden="true">${editorColumns(t("GUM.SecondaryEditor.Column.Attribute"))}</div>
+                                    ${physicalStatRow('breath_no_exertion', t('GUM.SecondaryEditor.Attributes.BreathNoExertion'))}
+                                    ${physicalStatRow('breath_mild_exertion', t('GUM.SecondaryEditor.Attributes.BreathMildExertion'))}
+                                    ${physicalStatRow('breath_heavy_exertion', t('GUM.SecondaryEditor.Attributes.BreathHeavyExertion'))}
+                                </div>
+                            </div>
+                        </section>
                     </div>
                 </div>
           </form>`;
@@ -4142,6 +4432,11 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                     $(tabEvent.currentTarget).addClass('active').attr('aria-selected', 'true');
                     dialogHtml.find(`.secondary-editor-panel[data-panel="${panel}"]`).addClass('active');
                 });
+                dialogHtml.on('change', '.physical-auto-toggle', toggleEvent => {
+                    const row = toggleEvent.currentTarget.closest('[data-physical-attribute]');
+                    const baseInput = row?.querySelector('.physical-base-input');
+                    if (baseInput) baseInput.disabled = toggleEvent.currentTarget.checked;
+                });
             },
             buttons: {
                 save: {
@@ -4155,7 +4450,17 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                             "vision.value", "vision.mod", "vision.points", "hearing.value", "hearing.mod", "hearing.points",
                             "tastesmell.value", "tastesmell.mod", "tastesmell.points", "touch.value", "touch.mod", "touch.points",
                             "thrust_damage.mod", "thrust_damage.points", "swing_damage.mod", "swing_damage.points",
-                            "thrust_damage_alt.mod", "thrust_damage_alt.points", "swing_damage_alt.mod", "swing_damage_alt.points"
+                            "thrust_damage_alt.mod", "thrust_damage_alt.points", "swing_damage_alt.mod", "swing_damage_alt.points",
+                            "air_move.value", "air_move.mod", "air_move.points", "water_move.value", "water_move.mod", "water_move.points",
+                            "burrow_move.value", "burrow_move.mod", "burrow_move.points", "teleport_range.value", "teleport_range.mod", "teleport_range.points",
+                            "basic_lift.value", "basic_lift.mod", "basic_lift.points",
+                            "jump_horizontal_standing.value", "jump_horizontal_standing.mod", "jump_horizontal_standing.points",
+                            "jump_horizontal_running.value", "jump_horizontal_running.mod", "jump_horizontal_running.points",
+                            "jump_vertical_standing.value", "jump_vertical_standing.mod", "jump_vertical_standing.points",
+                            "jump_vertical_running.value", "jump_vertical_running.mod", "jump_vertical_running.points",
+                            "breath_no_exertion.value", "breath_no_exertion.mod", "breath_no_exertion.points",
+                            "breath_mild_exertion.value", "breath_mild_exertion.mod", "breath_mild_exertion.points",
+                            "breath_heavy_exertion.value", "breath_heavy_exertion.mod", "breath_heavy_exertion.points"
                         ];
                         const updateData = {};
                         for (const field of numericFields) {
@@ -4163,6 +4468,16 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                         }
                         for (const field of ["thrust_damage.value", "swing_damage.value", "thrust_damage_alt.value", "swing_damage_alt.value"]) {
                             if (formData[field] !== undefined) updateData[`system.attributes.${field}`] = String(formData[field]).trim();
+                        }
+                        for (const key of ["air_move", "water_move", "burrow_move", "teleport_range"]) {
+                            updateData[`system.attributes.${key}.enabled`] = dialogHtml.find(`[name="${key}.enabled"]`).prop("checked") === true;
+                        }
+                        for (const key of ["basic_lift", "jump_horizontal_standing", "jump_horizontal_running", "jump_vertical_standing", "jump_vertical_running", "breath_no_exertion", "breath_mild_exertion", "breath_heavy_exertion"]) {
+                            const automatic = dialogHtml.find(`[name="${key}.automatic"]`).prop("checked") === true;
+                            updateData[`system.attributes.${key}.automatic`] = automatic;
+                            if (!automatic) {
+                                updateData[`system.attributes.${key}.value`] = Number(dialogHtml.find(`[name="${key}.value"]`).val()) || 0;
+                            }
                         }
                         
                         return this.actor.update(updateData);
@@ -5134,6 +5449,10 @@ async _onViewHitLocations(ev) {
   const profiles = listBodyProfiles();
   const currentProfileId = actor.system.combat?.body_profile || "humanoid";
   const sheetData = await this.getData();
+  const effectiveLocationOrder = sheetData.hitLocationOrder || getBodyProfileLocationKeys(getBodyProfile(currentProfileId));
+  const effectiveLocationSources = actor.system.combat?.dr_location_sources || {};
+  const additionalLocations = actor.system.combat?.additional_locations || {};
+  const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character]));
 
   // Pega todos os objetos de RD
   const actorDR_Armor = actor.system.combat.dr_from_armor || {};
@@ -5145,7 +5464,7 @@ async _onViewHitLocations(ev) {
   const actorDR_Total = actor.system.combat.dr_locations || {};
 
    let tableRows = "";
-  const locationOrder = getBodyProfileLocationKeys(getBodyProfile(currentProfileId));
+  const locationOrder = effectiveLocationOrder;
 
   for (const key of locationOrder) {
     const loc = sheetData.hitLocations?.[key];
@@ -5159,9 +5478,14 @@ async _onViewHitLocations(ev) {
     const computedDR_String = this._formatDRObjectToString(actorDR_Computed[key]);
     const totalDR_String  = this._formatDRObjectToString(actorDR_Total[key]);
 
+    const equipmentSources = describeBodyLocationSources(effectiveLocationSources[key]);
+    const sourceBadges = equipmentSources.map(source => `<span class="gum-rd-source-badge" title="${escapeHtml(tf("GUM.Combat.DR.ProvidedByEquipment", { source }))}"><i class="fas fa-toolbox"></i></span>`).join("");
+    const removeButton = Object.prototype.hasOwnProperty.call(additionalLocations, key)
+      ? `<button type="button" class="gum-rd-remove-location" data-location-key="${escapeHtml(key)}" title="${t("GUM.Combat.DR.RemoveAdditionalLocation")}"><i class="fas fa-times"></i></button>`
+      : "";
     tableRows += `
       <div class="table-row">
-        <div class="loc-label">${locationLabel}</div>
+        <div class="loc-label"><span>${escapeHtml(locationLabel)}</span>${sourceBadges}${removeButton}</div>
         <div class="loc-rd-armor" title="${t("GUM.Combat.DR.Armor")}">${armorDR_String}</div>
         <div class="loc-rd-temp" title="${t("GUM.Combat.DR.Temporary")}">${tempDR_String}</div>
         <div class="loc-rd-passive" title="${t("GUM.Combat.DR.Permanent")}">${passiveDR_String}</div>
@@ -5186,6 +5510,7 @@ const profileSelectorHtml = `
     <select id="gum-rd-body-profile" class="gum-body-profile-select" name="body_profile" aria-label="${t("GUM.Combat.DR.BodyType")}">
       ${profileOptionsHtml}
     </select>
+    <button type="button" class="gum-rd-add-location"><i class="fas fa-plus"></i> ${t("GUM.Combat.DR.AddLocation")}</button>
   </div>
 `;
 
@@ -5245,6 +5570,61 @@ const dlg = new Dialog({
 
   // ✅ AQUI é onde entra o "render" (fica DENTRO do primeiro objeto do Dialog)
   render: (dialogHtml) => {
+    dialogHtml.on("click", ".gum-rd-add-location", async () => {
+      const used = new Set(effectiveLocationOrder);
+      const availableLocationOptions = listBodyLocations()
+        .filter(location => !used.has(location.id))
+        .map(location => ({
+          id: location.id,
+          label: localizeBodyLocationLabel(location.id, getBodyLocationDefinition(location.id), t)
+        }));
+      const locationSuggestions = availableLocationOptions
+        .map(location => `<option value="${escapeHtml(location.label)}"></option>`)
+        .join("");
+      new Dialog({
+        title: t("GUM.Combat.DR.AddLocation"),
+        content: `<form class="gum-rd-add-location-form">
+          <div class="form-group"><label>${t("GUM.Combat.DR.LocationSearch")}</label><input type="text" name="location" list="gum-rd-location-suggestions" placeholder="${t("GUM.Combat.DR.LocationSearchPlaceholder")}" autocomplete="off"/><datalist id="gum-rd-location-suggestions">${locationSuggestions}</datalist></div>
+          <p class="notes">${t("GUM.Combat.DR.LocationSearchHint")}</p>
+          <div class="form-group"><label>${t("GUM.Combat.DR.CustomLocationRoll")}</label><input type="text" name="roll" placeholder="--"/></div>
+        </form>`,
+        buttons: {
+          add: { icon: '<i class="fas fa-plus"></i>', label: t("GUM.Combat.DR.AddLocation"), callback: async html => {
+            const form = html.find("form")[0];
+            const data = new FormDataExtended(form).object;
+            const requestedLocation = String(data.location || "").trim();
+            if (!requestedLocation) return ui.notifications.warn(t("GUM.Combat.DR.LocationRequired"));
+            const normalizeLocation = value => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLocaleLowerCase();
+            const normalizedRequestedLocation = normalizeLocation(requestedLocation);
+            const selectedLocation = availableLocationOptions.find(location =>
+              normalizeLocation(location.label) === normalizedRequestedLocation || normalizeLocation(location.id) === normalizedRequestedLocation
+            );
+            const key = selectedLocation?.id || `custom_${foundry.utils.randomID(8)}`;
+            const definition = getBodyLocationDefinition(key);
+            const label = selectedLocation?.label || definition?.label || definition?.name || requestedLocation;
+            const next = foundry.utils.deepClone(additionalLocations);
+            next[key] = { label, name: label, roll: String(data.roll || definition?.roll || "--").trim() || "--" };
+            await actor.update({ "system.combat.additional_locations": next });
+            dlg.close();
+            await this._onViewHitLocations({ preventDefault() {}, stopPropagation() {} });
+          }},
+          cancel: { icon: '<i class="fas fa-times"></i>', label: t("GUM.Combat.DR.Cancel") }
+        },
+        default: "add"
+      }, { classes: ["dialog", "gum", "gum-sheet-edit-dialog"], width: 420 }).render(true);
+    });
+
+    dialogHtml.on("click", ".gum-rd-remove-location", async event => {
+      const key = event.currentTarget.dataset.locationKey;
+      if (!key || !Object.prototype.hasOwnProperty.call(additionalLocations, key)) return;
+      await actor.update({
+        [`system.combat.additional_locations.-=${key}`]: null,
+        [`system.combat.dr_mods.-=${key}`]: null
+      });
+      dlg.close();
+      await this._onViewHitLocations({ preventDefault() {}, stopPropagation() {} });
+    });
+
     // Quando trocar o tipo corporal:
     dialogHtml.on("change", ".gum-body-profile-select", async (e) => {
       const newProfileId = e.currentTarget.value;
@@ -6665,7 +7045,11 @@ _calculatePointsSummary() {
   const secondaryKeys = [
     "hp", "fp", "basic_speed", "basic_move", "enhanced_move", "dodge",
     "vision", "hearing", "tastesmell", "touch", "mt",
-    "thrust_damage", "swing_damage", "thrust_damage_alt", "swing_damage_alt"
+    "thrust_damage", "swing_damage", "thrust_damage_alt", "swing_damage_alt",
+    "basic_lift", "air_move", "water_move", "burrow_move", "teleport_range",
+    "jump_horizontal_standing", "jump_horizontal_running",
+    "jump_vertical_standing", "jump_vertical_running",
+    "breath_no_exertion", "breath_mild_exertion", "breath_heavy_exertion"
   ];
   const attrs = this.actor.system.attributes || {};
 

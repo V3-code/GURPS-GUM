@@ -17,22 +17,22 @@ test("registers the occupancy layer in Foundry's transformed interface group", (
   assert.equal(GumHexOccupancyLayer.layerOptions.zIndex, 950);
 });
 
-test("keeps PIXI marker size constant while the canvas zoom changes", () => {
+test("keeps the marker at a fixed canvas scale like a token", () => {
   const layer = new GumHexOccupancyLayer();
   const applied = [];
   layer.markers.set("hex", { scale: { set: (x, y) => applied.push([x, y]) } });
 
   layer.syncMarkerScale(2);
   layer.syncMarkerScale(0.5);
-  assert.deepEqual(applied, [[0.4, 0.4], [1.6, 1.6]]);
-  assert.equal(2 * applied[0][0], 0.8);
-  assert.equal(0.5 * applied[1][0], 0.8);
+  assert.deepEqual(applied, [[0.8, 0.8], [0.8, 0.8]]);
+  assert.equal(2 * applied[0][0], 1.6);
+  assert.equal(0.5 * applied[1][0], 0.4);
 });
 
 test("preserves the original large, layered marker proportions", () => {
   assert.deepEqual(HEX_OCCUPANCY_MARKER_STYLE, {
     frameSize: 64,
-    screenScale: 0.8,
+    canvasScale: 0.8,
     outerRadius: 26,
     segmentRadius: 21.5,
     centerRadius: 19.2,
@@ -100,7 +100,7 @@ test("renders an interactive segmented marker at the occupied hex center", () =>
     assert.ok(marker);
     assert.equal(marker.x, 350);
     assert.equal(marker.y, 250);
-    assert.equal(marker.scaleX, 0.4);
+    assert.equal(marker.scaleX, 0.8);
     assert.equal(marker.hitArea.radius, 30);
     const frame = marker.children.find(child => child.name === "occupancy-frame");
     const count = marker.children.find(child => child.name === "occupancy-count");
