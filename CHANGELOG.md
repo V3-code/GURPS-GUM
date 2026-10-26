@@ -4,6 +4,28 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.4.8-beta] - 2026-10-26
+
+### Added
+
+- A ficha recebeu uma referência compacta de Proezas Físicas com deslocamentos especiais, saltos sem e com impulso, retenção de respiração, capacidades de carga e calculadora de arremesso com dano.
+- As proezas calculadas foram incorporadas aos atributos secundários, com suporte ao modelo padrão de modificadores, valores temporários, substituição manual e valor final.
+- A régua do canvas pode usar o deslocamento final do personagem, distinguir trechos disponíveis, excedidos e de impulso, exibir o modificador de distância e reconhecer teletransporte e salto.
+- A tabela de RD permite criar regiões manuais e equipamentos podem acrescentar regiões corporais que realmente não existem no perfil do personagem.
+
+### Changed
+
+- As proezas físicas passaram a abrir por um acesso compacto na ficha, enquanto deslocamentos especiais aparecem por ícones na barra lateral e as regras de carga ficam junto ao sumário de carga.
+- O consumo de Magias e Poderes reconhece recursos e registros de combate criados por equipamentos, preservando a identidade correta da fonte.
+- A busca de perícia vinculada aplica corretamente o nome selecionado e recebeu uma apresentação visual mais clara.
+- O indicador de acúmulo da ocupação tática mantém tamanho visual estável ao alterar o zoom do canvas.
+
+### Fixed
+
+- Regiões de RD criadas manualmente podem ser removidas novamente, e a seleção de regiões usa busca textual com nomenclatura coerente para proteções existentes ou acrescentadas.
+- Corrigida a resolução de registros fornecidos por equipamento nas diferentes modalidades de custo e consumo.
+- Corrigida a integração entre a perícia escolhida na busca e o campo de perícia vinculada.
+
 ## [1.4.7-beta] - 2026-10-23
 
 ### Added
