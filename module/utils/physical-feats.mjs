@@ -3,16 +3,21 @@ export const PHYSICAL_FEAT_ATTRIBUTE_KEYS = Object.freeze([
   "air_move",
   "water_move",
   "burrow_move",
+  "teleport_range",
   "jump_horizontal_standing",
   "jump_horizontal_running",
   "jump_vertical_standing",
-  "jump_vertical_running"
+  "jump_vertical_running",
+  "breath_no_exertion",
+  "breath_mild_exertion",
+  "breath_heavy_exertion"
 ]);
 
 export const MOVEMENT_PROFILE_KEYS = Object.freeze([
   "air_move",
   "water_move",
-  "burrow_move"
+  "burrow_move",
+  "teleport_range"
 ]);
 
 export const JUMP_ATTRIBUTE_KEYS = Object.freeze([
@@ -22,9 +27,16 @@ export const JUMP_ATTRIBUTE_KEYS = Object.freeze([
   "jump_vertical_running"
 ]);
 
+export const BREATH_HOLD_ATTRIBUTE_KEYS = Object.freeze([
+  "breath_no_exertion",
+  "breath_mild_exertion",
+  "breath_heavy_exertion"
+]);
+
 export const AUTOMATIC_PHYSICAL_FEAT_KEYS = Object.freeze([
   "basic_lift",
-  ...JUMP_ATTRIBUTE_KEYS
+  ...JUMP_ATTRIBUTE_KEYS,
+  ...BREATH_HOLD_ATTRIBUTE_KEYS
 ]);
 
 const THROWING_DISTANCE_TABLE = Object.freeze([
@@ -33,6 +45,16 @@ const THROWING_DISTANCE_TABLE = Object.freeze([
   [0.75, 0.7], [1.00, 0.6], [1.50, 0.4], [2.00, 0.3],
   [2.50, 0.25], [3.00, 0.2], [4.00, 0.15], [6.00, 0.1],
   [10.00, 0.06], [12.00, 0.05]
+]);
+
+const THROWING_DAMAGE_TABLE = Object.freeze([
+  [0.125, -2],
+  [0.25, -1],
+  [0.50, 0],
+  [1.00, 1],
+  [2.00, 0],
+  [4.00, -1],
+  [8.00, -2]
 ]);
 
 const finiteNumber = (value, fallback = 0) => {
@@ -72,6 +94,15 @@ export function calculateJumpBases(basicMove) {
   };
 }
 
+export function calculateBreathHoldingBases(health) {
+  const effectiveHealth = Math.max(0, finiteNumber(health));
+  return {
+    breath_no_exertion: round(effectiveHealth * 10),
+    breath_mild_exertion: round(effectiveHealth * 4),
+    breath_heavy_exertion: round(effectiveHealth)
+  };
+}
+
 export function prepareBasicLiftAttribute(attributes = {}, { liftingStrength } = {}) {
   attributes.basic_lift ??= createPhysicalFeatAttribute({ automatic: true });
   const attribute = attributes.basic_lift;
@@ -104,11 +135,13 @@ export function calculateLiftingCapacities(basicLift) {
   };
 }
 
-export function preparePhysicalFeatAttributes(attributes = {}, { basicMove, liftingStrength } = {}) {
+export function preparePhysicalFeatAttributes(attributes = {}, { basicMove, liftingStrength, health } = {}) {
   prepareBasicLiftAttribute(attributes, { liftingStrength });
   const jumpBases = calculateJumpBases(basicMove);
+  const breathHoldingBases = calculateBreathHoldingBases(health);
   const automaticBases = {
-    ...jumpBases
+    ...jumpBases,
+    ...breathHoldingBases
   };
   for (const key of PHYSICAL_FEAT_ATTRIBUTE_KEYS) {
     if (key === "basic_lift") continue;
@@ -133,7 +166,28 @@ export function preparePhysicalFeatAttributes(attributes = {}, { basicMove, lift
   return attributes;
 }
 
-export function resolveThrowingDistance({ liftingStrength, strikingStrength, basicLiftKg: suppliedBasicLiftKg, objectWeightKg } = {}) {
+function resolveThrownObjectDamage(thrustDamage, ratio) {
+  const row = THROWING_DAMAGE_TABLE.find(([maximumRatio]) => ratio <= maximumRatio)
+    ?? THROWING_DAMAGE_TABLE.at(-1);
+  const damageModifier = row[1];
+  const compact = String(thrustDamage || "").replace(/\s+/g, "").toLowerCase();
+  const match = compact.match(/^(\d+)d(?:6)?([+\-]\d+)?$/i);
+  if (!match) {
+    return { baseFormula: String(thrustDamage || ""), formula: "", damageModifier, type: "crushing" };
+  }
+
+  const diceCount = Number.parseInt(match[1], 10);
+  const baseModifier = match[2] ? Number.parseInt(match[2], 10) : 0;
+  const modifier = baseModifier + damageModifier;
+  return {
+    baseFormula: String(thrustDamage || ""),
+    formula: `${diceCount}d6${modifier > 0 ? `+${modifier}` : modifier < 0 ? modifier : ""}`,
+    damageModifier,
+    type: "crushing"
+  };
+}
+
+export function resolveThrowingDistance({ liftingStrength, strikingStrength, basicLiftKg: suppliedBasicLiftKg, objectWeightKg, thrustDamage } = {}) {
   const liftingST = Math.max(0, finiteNumber(liftingStrength));
   const strikingST = Math.max(0, finiteNumber(strikingStrength, liftingST));
   const weightKg = Math.max(0, finiteNumber(objectWeightKg));
@@ -155,7 +209,8 @@ export function resolveThrowingDistance({ liftingStrength, strikingStrength, bas
       ratio: round(ratio),
       distanceModifier: 0,
       distanceMeters: 0,
-      hands: "none"
+      hands: "none",
+      damage: null
     };
   }
 
@@ -171,6 +226,7 @@ export function resolveThrowingDistance({ liftingStrength, strikingStrength, bas
     ratio: round(ratio),
     distanceModifier,
     distanceMeters: throwable ? round(strikingST * distanceModifier * 0.9144) : 0,
-    hands: ratio <= 2 ? "one" : throwable ? "two" : "none"
+    hands: ratio <= 2 ? "one" : throwable ? "two" : "none",
+    damage: throwable ? resolveThrownObjectDamage(thrustDamage, ratio) : null
   };
 }

@@ -137,6 +137,46 @@ test("unique deduplica persistentes diretos, mas repete ações pontuais", async
   assert.ok(actor.effects[0].flags.gum.applicationId);
 });
 
+test("alteração de registro de combate alcança a integridade vinculada do equipamento", async () => {
+  const actor = makeActor();
+  const equipmentSystem = {
+    quantity: 1,
+    item_hp: 12,
+    item_hp_current: 8,
+    item_dr: 3,
+    integrity_record_enabled: true,
+    current_uses: 2,
+    max_uses: 6
+  };
+  const equipment = {
+    id: "shield",
+    name: "Escudo",
+    type: "equipment",
+    system: clone(equipmentSystem),
+    _source: { system: clone(equipmentSystem) },
+    async update(changes) {
+      for (const [path, value] of Object.entries(changes)) {
+        setPath(this, path, value);
+        setPath(this._source, path.replace(/^system\./, "system."), value);
+      }
+    }
+  };
+  actor.items.push(equipment);
+  const effect = makeEffect("unique", [{
+    id: "integrity-action",
+    type: "resource_change",
+    category: "combat_tracker",
+    name: "Escudo",
+    value: -3,
+    chat_notice: false
+  }]);
+
+  await applySingleEffect(effect, [{ actor }], { actor, origin: effect });
+
+  assert.equal(equipment.system.item_hp_current, 5);
+  assert.equal(equipment.system.current_uses, 2);
+});
+
 test("stack cria uma cópia por aplicação e fontes administradas ignoram a deduplicação genérica", async () => {
   const stackedActor = makeActor();
   const stacked = makeEffect("stack", [attributeAction()]);

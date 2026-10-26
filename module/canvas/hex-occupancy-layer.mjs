@@ -17,7 +17,7 @@ export const HEX_OCCUPANCY_MARKER_FRAME = "systems/gum/assets/ui/hex-occupancy-m
 
 export const HEX_OCCUPANCY_MARKER_STYLE = Object.freeze({
   frameSize: 64,
-  screenScale: 0.8,
+  canvasScale: 0.8,
   outerRadius: 26,
   segmentRadius: 21.5,
   centerRadius: 19.2,
@@ -85,11 +85,12 @@ export class GumHexOccupancyLayer extends CanvasLayerBase {
     this.syncMarkerScale();
   }
 
-  syncMarkerScale(scale = globalThis.canvas?.stage?.scale?.x) {
-    const normalizedScale = Number(scale);
-    const cameraScale = Number.isFinite(normalizedScale) && normalizedScale > 0 ? normalizedScale : 1;
-    const displayScale = HEX_OCCUPANCY_MARKER_STYLE.screenScale / cameraScale;
-    for (const marker of this.markers.values()) marker.scale.set(displayScale, displayScale);
+  syncMarkerScale() {
+    // The marker lives in the transformed canvas interface group. Keeping its
+    // local scale stable makes it follow the camera exactly like a token,
+    // instead of growing relative to tokens when the user zooms out.
+    const canvasScale = HEX_OCCUPANCY_MARKER_STYLE.canvasScale;
+    for (const marker of this.markers.values()) marker.scale.set(canvasScale, canvasScale);
   }
 
   clearMarkers() {

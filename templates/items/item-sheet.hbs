@@ -587,7 +587,7 @@
     </div>
     <p class="magic-consumption-editor__hint">{{localize "GUM.MagicConsumption.EditorHint"}}</p>
     <datalist id="magic-consumption-source-names">
-        {{#each magicConsumptionSourceOptions as |option|}}<option value="{{option.name}}">{{option.type}} · {{option.current}}</option>{{/each}}
+        {{#each magicConsumptionSourceOptions as |option|}}<option value="{{option.name}}" data-source-key="{{option.key}}" data-source-type="{{option.type}}">{{option.type}} · {{option.current}}</option>{{/each}}
     </datalist>
     {{#each consumptionGroups as |group|}}
     <article class="magic-consumption-group" data-consumption-group-id="{{group.id}}">
@@ -645,6 +645,7 @@
                         <option value="item_quantity" {{#if (eq source.type "item_quantity")}}selected{{/if}}>{{localize "GUM.MagicConsumption.SourceItemQuantity"}}</option>
                     </select>
                     <input class="magic-consumption-source-name" type="text" list="magic-consumption-source-names" name="system.consumptionGroups.{{group.id}}.sources.{{source.id}}.name" value="{{source.name}}" placeholder="{{localize 'GUM.MagicConsumption.SourceNameHint'}}" aria-label="{{localize 'GUM.MagicConsumption.SourceNameHint'}}" {{#if (or (eq source.type "hp") (eq source.type "fp"))}}disabled{{/if}}/>
+                    <input class="magic-consumption-source-key" type="hidden" name="system.consumptionGroups.{{group.id}}.sources.{{source.id}}.sourceKey" value="{{source.sourceKey}}"/>
                 </div>
                 <button type="button" class="delete-magic-consumption-source" title="{{localize 'GUM.MagicConsumption.DeleteSource'}}"><i class="fas fa-times"></i></button>
             </div>

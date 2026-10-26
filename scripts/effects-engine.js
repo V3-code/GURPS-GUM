@@ -1,7 +1,12 @@
 import { normalizeChatRoll } from "../module/utils/roll-request-data.mjs";
 import { recipientUserIdsForActor } from "../module/utils/test-request-targets.mjs";
 import { findConfiguredStatus } from "../module/utils/status-catalog.mjs";
-import { equipmentLinkedReserve, equipmentReserveBalanceUpdate } from "../module/utils/equipment-resolution.mjs";
+import {
+    equipmentIntegrityCurrentUpdate,
+    equipmentIntegrityRecord,
+    equipmentLinkedReserve,
+    equipmentReserveBalanceUpdate
+} from "../module/utils/equipment-resolution.mjs";
 import {
     isActorContextAvailable,
     isMissingSyntheticActorContextError
@@ -927,6 +932,15 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                                 if (linked) {
                                     const next = Math.max(0, Math.min(linked.reserve.max, linked.reserve.current + finalValue));
                                     updateObject = linked.item.update(equipmentReserveBalanceUpdate(linked.item, next, linked.item.system?.equipmentResolution));
+                                }
+                                if (!linked) {
+                                    const integrity = targetActor.items.filter(item => item.type === "equipment")
+                                        .map(item => ({ item, record: equipmentIntegrityRecord(item, item.system?.equipmentResolution) }))
+                                        .find(({ record }) => record?.name === action.name);
+                                    if (integrity) {
+                                        const next = Math.max(0, Math.min(integrity.record.max, integrity.record.current + finalValue));
+                                        updateObject = integrity.item.update(equipmentIntegrityCurrentUpdate(integrity.item, next, integrity.item.system?.equipmentResolution));
+                                    }
                                 }
                             }
                             break;

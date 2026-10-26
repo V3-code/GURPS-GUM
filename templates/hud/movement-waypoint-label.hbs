@@ -1,0 +1,49 @@
+<div class="waypoint-label {{cssClass}}">
+    {{#if action.img}}
+    <div class="img" style="background-image: url('{{action.img}}');"></div>
+    {{else if action.icon}}
+    <i class="icon {{action.icon}}"></i>
+    {{else if action.label}}
+    <label class="action-label">{{localize action.label}}</label>
+    {{/if}}
+    {{#if cost}}
+    <span class="total-measurement">{{cost.total}} {{cost.units}}</span>
+    {{#if cost.delta}}
+    <span class="delta-measurement">({{cost.delta}})</span>
+    {{/if}}
+    {{else}}
+    <span class="total-measurement">{{distance.total}} {{units}}</span>
+    {{#if distance.delta}}
+    <span class="delta-measurement">({{distance.delta}})</span>
+    {{/if}}
+    {{/if}}
+    {{#if gumDistanceModifier}}
+    <span class="gum-distance-modifier" title="{{localize 'GUM.CanvasDistance.ModifierTooltip' modifier=gumDistanceModifier.label}}">
+        <span class="gum-distance-separator" aria-hidden="true">|</span>
+        <strong>{{gumDistanceModifier.label}}</strong>
+    </span>
+    {{/if}}
+    {{#if (and elevation (not elevation.hidden))}}
+    <i class="icon {{elevation.icon}}"></i>
+    <span class="total-elevation">{{elevation.total}} {{units}}</span>
+    {{#if elevation.delta}}
+    <span class="delta-elevation">({{elevation.delta}})</span>
+    {{/if}}
+    {{/if}}
+    {{#if gumMovement}}
+    <span class="gum-movement-budget" title="{{localize 'GUM.CanvasMovement.BudgetTooltip' spent=gumMovement.spentLabel allowance=gumMovement.allowanceLabel}}">
+        {{#if (eq gumMovement.action 'blink')}}<i class="fa-solid fa-person-from-portal" aria-hidden="true"></i>{{else}}<i class="fa-solid fa-person-walking" aria-hidden="true"></i>{{/if}}
+        {{gumMovement.spentLabel}}/{{gumMovement.allowanceLabel}}
+    </span>
+    {{/if}}
+    {{#if gumJump}}
+    <span class="gum-jump-state" title="{{localize 'GUM.CanvasJump.Tooltip' horizontal=gumJump.horizontalLabel horizontalStanding=gumJump.horizontalStandingLabel horizontalRunning=gumJump.horizontalRunningLabel vertical=gumJump.verticalLabel verticalStanding=gumJump.verticalStandingLabel verticalRunning=gumJump.verticalRunningLabel}}">
+        <span class="gum-jump-separator" aria-hidden="true">|</span>
+        <i class="fa-solid fa-person-running-fast" aria-hidden="true"></i>
+        <strong>{{localize gumJump.labelKey}}</strong>
+    </span>
+    {{/if}}
+    {{#if secret}}
+    <i class="icon fa-solid fa-eye-slash"></i>
+    {{/if}}
+</div>

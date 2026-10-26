@@ -65,6 +65,8 @@ import { applyEquipmentDefenseBonus, collectActiveEquipmentDefenseBonuses, evalu
 import { collectActiveEquipmentGrantedEffects, EQUIPMENT_GRANTED_EFFECT_SOURCE, hasEquipmentGrantRelevantChange, matchesEquipmentGrantedEffectScope } from "../module/utils/equipment-granted-effects.mjs";
 import { registerHexOccupancyCanvasHooks } from "../module/canvas/hex-occupancy-overlay.js";
 import { registerHexOccupancyCanvasLayer } from "../module/canvas/hex-occupancy-layer.mjs";
+import { registerMovementRulerIntegration } from "../module/canvas/movement-ruler.mjs";
+import { registerDistanceRulerIntegration } from "../module/canvas/distance-ruler.mjs";
 import { PHYSICAL_FEAT_ATTRIBUTE_KEYS, prepareBasicLiftAttribute, preparePhysicalFeatAttributes } from "../module/utils/physical-feats.mjs";
 
 const { Actors: ActorsCollection, Items: ItemsCollection } = foundry.documents.collections;
@@ -803,11 +805,11 @@ const add_sub_modifiers = {};
             }
         }
 
-        let enc = { level_name: "Nenhuma", level_value: 0, penalty: 0 };
-        if (totalWeight > basicLift * 6) enc = { level_name: "M. Pesada (4)", level_value: 4, penalty: -4 };
-        else if (totalWeight > basicLift * 3) enc = { level_name: "Pesada (3)", level_value: 3, penalty: -3 };
-        else if (totalWeight > basicLift * 2) enc = { level_name: "Média (2)", level_value: 2, penalty: -2 };
-        else if (totalWeight > basicLift) enc = { level_name: "Leve (1)", level_value: 1, penalty: -1 };
+        let enc = { level_name: "none", level_value: 0, penalty: 0 };
+        if (totalWeight > basicLift * 6) enc = { level_name: "extraHeavy", level_value: 4, penalty: -4 };
+        else if (totalWeight > basicLift * 3) enc = { level_name: "heavy", level_value: 3, penalty: -3 };
+        else if (totalWeight > basicLift * 2) enc = { level_name: "medium", level_value: 2, penalty: -2 };
+        else if (totalWeight > basicLift) enc = { level_name: "light", level_value: 1, penalty: -1 };
         
         foundry.utils.mergeObject(this.system.encumbrance, { 
             total_weight: Math.round(totalWeight * 100) / 100,
@@ -828,11 +830,11 @@ const add_sub_modifiers = {};
         this.system.encumbrance.max_capacity = Math.round(maxEncumbrance * 100) / 100;
         this.system.encumbrance.progress_percent = Math.round(progressPercent * 100) / 100;
 this.system.encumbrance.level_data = [
-  { name: 'Nenhuma', short: '', max: levels.none },
-  { name: 'Leve', short: 'L', max: levels.light },
-  { name: 'Média', short: 'M', max: levels.medium },
-  { name: 'Pesada', short: 'P', max: levels.heavy },
-  { name: 'M. Pesada', short: 'MP', max: levels.xheavy }
+  { id: 'none', max: levels.none },
+  { id: 'light', max: levels.light },
+  { id: 'medium', max: levels.medium },
+  { id: 'heavy', max: levels.heavy },
+  { id: 'extraHeavy', max: levels.xheavy }
 ].map((level, idx, arr) => {
   const numericMax = Number(level.max) || 0;
   const markerPercent = maxEncumbrance > 0
@@ -842,19 +844,6 @@ this.system.encumbrance.level_data = [
   // Limite inferior (para texto "acima de")
   const prevMax = idx === 0 ? 0 : (Number(arr[idx - 1].max) || 0);
 
-  // Texto curto para legenda: "até X" / "acima de X"
-  const labelShort = idx === 0
-    ? `até ${numericMax.toFixed(2)} kg`
-    : `acima de ${prevMax.toFixed(2)} kg`;
-
-  // Tooltip mais completo (intervalo)
-  const labelRange = idx === 0
-    ? `Até ${numericMax.toFixed(2)} kg`
-    : (idx === arr.length - 1
-        ? `Acima de ${prevMax.toFixed(2)} kg`
-        : `Acima de ${prevMax.toFixed(2)} kg até ${numericMax.toFixed(2)} kg`);
-
-  // Penalidade (casando com sua regra enc.level_value)
   const penalty = idx === 0 ? 0 : -idx; // 0, -1, -2, -3, -4
 
   return {
@@ -863,9 +852,8 @@ this.system.encumbrance.level_data = [
 
     // Campos novos (não quebram nada se não usados)
     min: Math.round(prevMax * 100) / 100,
-    label_short: labelShort,
     barrier_tooltip: `${numericMax.toFixed(2)} kg`,
-    tooltip: `${level.name}: ${labelRange} • Penalidade ${penalty >= 0 ? `0` : penalty}`,
+    penalty,
     is_divider: idx < arr.length - 1
   };
 });
@@ -878,8 +866,7 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
     : 0;
 
   return {
-    short: level.short,
-    name: level.name,
+    id: level.id,
     midpoint_percent: Math.round(Math.min(100, Math.max(0, midpoint)) * 100) / 100
   };
 });
@@ -914,7 +901,14 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
         const liftingStrengthForFeats = attributes.lifting_st.override !== null && attributes.lifting_st.override !== undefined
             ? attributes.lifting_st.override
             : attributes.lifting_st.final_computed;
-        preparePhysicalFeatAttributes(attributes, { basicMove: basicMoveForFeats, liftingStrength: liftingStrengthForFeats });
+        const healthForFeats = attributes.ht.override !== null && attributes.ht.override !== undefined
+            ? attributes.ht.override
+            : attributes.ht.final_computed;
+        preparePhysicalFeatAttributes(attributes, {
+            basicMove: basicMoveForFeats,
+            liftingStrength: liftingStrengthForFeats,
+            health: healthForFeats
+        });
 
         // --- ETAPA 6: CÁLCULO FINALÍSSIMO ---
         for (const attr of allAttributes) {
@@ -3090,6 +3084,18 @@ Hooks.once('init', async function() {
     CONFIG.Actor.documentClass = GurpsActor;
 
     registerSystemSettings();
+    const movementRulerRegistered = registerMovementRulerIntegration(CONFIG, {
+        generation: game.release?.generation
+    });
+    const distanceRulerRegistered = registerDistanceRulerIntegration(CONFIG, {
+        generation: game.release?.generation
+    });
+    if (!movementRulerRegistered && Number(game.release?.generation) >= 13) {
+        console.warn("GUM | A API do medidor de movimento do token não está disponível nesta versão do Foundry.");
+    }
+    if (!distanceRulerRegistered && Number(game.release?.generation) >= 13) {
+        console.warn("GUM | A API da régua de distância não está disponível nesta versão do Foundry.");
+    }
 
     Hooks.on("gumWorldStatusConfigurationChanged", ({ rows }) => {
         synchronizeWorldStatusRuntime(rows).catch(error => {

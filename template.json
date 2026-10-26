@@ -256,6 +256,18 @@
           "automatic": false,
           "enabled": false
         },
+        "teleport_range": {
+          "value": 0,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "points": 0,
+          "override": null,
+          "final": 0,
+          "final_computed": 0,
+          "automatic": false,
+          "enabled": false
+        },
         "jump_horizontal_standing": {
           "value": 0,
           "mod": 0,
@@ -301,6 +313,42 @@
           "override": null,
           "final": 0,
           "final_computed": 0,
+          "automatic": true,
+          "enabled": true
+        },
+        "breath_no_exertion": {
+          "value": 0,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "points": 0,
+          "override": null,
+          "final": 100,
+          "final_computed": 100,
+          "automatic": true,
+          "enabled": true
+        },
+        "breath_mild_exertion": {
+          "value": 0,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "points": 0,
+          "override": null,
+          "final": 40,
+          "final_computed": 40,
+          "automatic": true,
+          "enabled": true
+        },
+        "breath_heavy_exertion": {
+          "value": 0,
+          "mod": 0,
+          "temp": 0,
+          "passive": 0,
+          "points": 0,
+          "override": null,
+          "final": 10,
+          "final_computed": 10,
           "automatic": true,
           "enabled": true
         },

@@ -47,6 +47,8 @@ import { GUM } from "./config.js";
 import { CONTENT_SOURCE_SETTING, contentSourceService } from "./services/content-source-service.mjs";
 import { buildPassiveConditionSyncOperations } from "./utils/passive-condition-sync.mjs";
 import { WORLD_STATUS_SETTING, applyWorldStatusConfiguration, normalizeWorldStatusConfiguration } from "./utils/world-status-config.mjs";
+import { MOVEMENT_RULER_SETTING } from "./canvas/movement-ruler.mjs";
+import { DISTANCE_MODIFIER_ENABLED_SETTING, DISTANCE_MODIFIER_TABLE_SETTING } from "./utils/distance-modifier.mjs";
 
 const STATUS_BINDINGS_MIGRATION_SETTING = "contentSourcesStatusBindingsMigrationV1";
 const RETIRED_BUNDLED_SOURCES_MIGRATION_SETTING = "contentSourcesRetiredBundledSourcesMigrationV2";
@@ -355,7 +357,20 @@ export const registerSystemSettings = function() {
         onChange: enabled => Hooks.callAll("gumHexOccupancySettingChanged", { enabled })
     });
 
-    game.settings.register("gum", "autoDistanceModifierEnabled", {
+    game.settings.register("gum", MOVEMENT_RULER_SETTING, {
+        name: "GUM.Settings.MovementRuler.Name",
+        hint: "GUM.Settings.MovementRuler.Hint",
+        scope: "world",
+        config: true,
+        restricted: true,
+        type: Boolean,
+        default: false,
+        onChange: () => {
+            if (globalThis.canvas?.tokens?.hud?.rendered) globalThis.canvas.tokens.hud.render(true);
+        }
+    });
+
+    game.settings.register("gum", DISTANCE_MODIFIER_ENABLED_SETTING, {
         name: "GUM.Settings.AutoDistanceModifier.Name",
         hint: "GUM.Settings.AutoDistanceModifier.Hint",
         scope: "world",
@@ -364,7 +379,7 @@ export const registerSystemSettings = function() {
         default: false
     });
 
-    game.settings.register("gum", "autoDistanceModifierTable", {
+    game.settings.register("gum", DISTANCE_MODIFIER_TABLE_SETTING, {
         name: "GUM.Settings.DistanceTable.Name",
         hint: "GUM.Settings.DistanceTable.Hint",
         scope: "world",

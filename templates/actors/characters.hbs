@@ -77,6 +77,7 @@
           <div class="cluster-header">
             <span class="cluster-title">{{localize "GUM.Character.Sidebar.SecondaryAttributes"}}</span>
             <div class="cluster-actions">
+              <a class="physical-feats-reference-btn" title="{{localize 'GUM.PhysicalFeats.Open'}}" aria-label="{{localize 'GUM.PhysicalFeats.Open'}}"><i class="fas fa-running"></i></a>
               <a class="recalc-secondary-stats-btn" title="{{localize 'GUM.Character.Sidebar.RecalculateSecondaries'}}" aria-label="{{localize 'GUM.Character.Sidebar.RecalculateSecondaries'}}"><i class="fas fa-sync-alt"></i></a>
               <a class="edit-secondary-stats-btn" title="{{localize 'GUM.Character.Sidebar.EditSecondaries'}}" aria-label="{{localize 'GUM.Character.Sidebar.EditSecondaries'}}"><i class="fas fa-cog"></i></a>
             </div>
@@ -107,6 +108,23 @@
               </div>
             </div>
           </div>
+
+          {{#if (or actor.system.attributes.air_move.enabled actor.system.attributes.water_move.enabled actor.system.attributes.burrow_move.enabled actor.system.attributes.teleport_range.enabled)}}
+          <div class="special-movement-strip" role="list" aria-label="{{localize 'GUM.Character.Sidebar.SpecialMovement'}}">
+            {{#if actor.system.attributes.air_move.enabled}}
+            <span class="special-movement-item" role="listitem" title="{{localize 'GUM.Combat.Physical.Air'}}: {{actor.system.attributes.air_move.final}}" aria-label="{{localize 'GUM.Combat.Physical.Air'}}: {{actor.system.attributes.air_move.final}}"><i class="fas fa-wind" aria-hidden="true"></i><strong>{{actor.system.attributes.air_move.final}}</strong></span>
+            {{/if}}
+            {{#if actor.system.attributes.water_move.enabled}}
+            <span class="special-movement-item" role="listitem" title="{{localize 'GUM.Combat.Physical.Water'}}: {{actor.system.attributes.water_move.final}}" aria-label="{{localize 'GUM.Combat.Physical.Water'}}: {{actor.system.attributes.water_move.final}}"><i class="fas fa-water" aria-hidden="true"></i><strong>{{actor.system.attributes.water_move.final}}</strong></span>
+            {{/if}}
+            {{#if actor.system.attributes.burrow_move.enabled}}
+            <span class="special-movement-item" role="listitem" title="{{localize 'GUM.Combat.Physical.Burrow'}}: {{actor.system.attributes.burrow_move.final}}" aria-label="{{localize 'GUM.Combat.Physical.Burrow'}}: {{actor.system.attributes.burrow_move.final}}"><i class="fas fa-mountain" aria-hidden="true"></i><strong>{{actor.system.attributes.burrow_move.final}}</strong></span>
+            {{/if}}
+            {{#if actor.system.attributes.teleport_range.enabled}}
+            <span class="special-movement-item" role="listitem" title="{{localize 'GUM.Combat.Physical.Teleport'}}: {{actor.system.attributes.teleport_range.final}} m" aria-label="{{localize 'GUM.Combat.Physical.Teleport'}}: {{actor.system.attributes.teleport_range.final}} m"><i class="fas fa-person-from-portal" aria-hidden="true"></i><strong>{{actor.system.attributes.teleport_range.final}}</strong></span>
+            {{/if}}
+          </div>
+          {{/if}}
 
           <div class="senses-container">
             <div class="sense-box">
@@ -1156,30 +1174,30 @@
   <div class="encumbrance-row encumbrance-row-top">
     <div class="encumbrance-inline-label">
       <i class="fas fa-weight-hanging"></i>
-      <span>Sumário de Carga</span>
+      <span>{{localize "GUM.Inventory.Encumbrance.Summary"}}</span>
     </div>
 
     <div class="encumbrance-inline-meter"
          role="img"
-         aria-label="Carga atual {{actor.system.encumbrance.total_weight}} de {{actor.system.encumbrance.max_capacity}} kg">
+         aria-label="{{encumbranceDisplay.ariaLabel}}">
 
       <div class="encumbrance-inline-fill"
            style="width: {{actor.system.encumbrance.progress_percent}}%;"></div>
 
-      {{#each actor.system.encumbrance.level_data}}
+      {{#each encumbranceDisplay.levels}}
       {{#if this.is_divider}}
         <span class="encumbrance-inline-marker
-              {{#if (eq this.name ../actor.system.encumbrance.level_name)}}active{{/if}}"
+              {{#if this.active}}active{{/if}}"
               style="left: {{this.marker_percent}}%;"
               title="{{this.barrier_tooltip}}">
         </span>
       {{/if}}
       {{/each}}
 
-      {{#each actor.system.encumbrance.segment_labels}}
+      {{#each encumbranceDisplay.segments}}
         <span class="encumbrance-inline-segment-label"
               style="left: {{this.midpoint_percent}}%;"
-              title="{{this.name}}">
+              title="{{this.label}}">
           {{this.short}}
         </span>
       {{/each}}
@@ -1191,31 +1209,37 @@
     </div>
 
     <div class="encumbrance-inline-state">
-      {{actor.system.encumbrance.level_name}}
+      {{encumbranceDisplay.levelLabel}}
     </div>
   </div>
 
   {{!-- LINHA 2 --}}
   <div class="encumbrance-row encumbrance-row-bottom">
-    <div class="encumbrance-inline-subtitle">
-      Ignorar:
+    <button type="button" class="physical-lifting-reference encumbrance-rules-button" title="{{localize 'GUM.PhysicalLifting.OpenReference'}}" aria-label="{{localize 'GUM.PhysicalLifting.OpenReference'}}"><i class="fas fa-scale-balanced" aria-hidden="true"></i>{{localize "GUM.PhysicalLifting.OpenReference"}}</button>
+
+    <div class="encumbrance-ignore-controls">
+      <div class="encumbrance-inline-subtitle">
+        {{localize "GUM.Inventory.Encumbrance.Ignore"}}
+      </div>
+
+      {{!-- Funcional (já existe no sistema) --}}
+      <label class="encumbrance-pill">
+        <input type="checkbox"
+               name="system.encumbrance.ignore_carried_weight"
+               {{checked actor.system.encumbrance.ignore_carried_weight}} />
+        <span>{{localize "GUM.Inventory.Carried"}}</span>
+      </label>
+
+      {{!-- Ignora o peso dos itens equipados/em uso no cálculo de carga --}}
+      <label class="encumbrance-pill">
+        <input type="checkbox"
+               name="system.encumbrance.ignore_equipped_weight"
+               {{checked actor.system.encumbrance.ignore_equipped_weight}} />
+        <span>{{localize "GUM.Inventory.InUse"}}</span>
+      </label>
     </div>
 
-    {{!-- Funcional (já existe no sistema) --}}
-    <label class="encumbrance-pill">
-      <input type="checkbox"
-             name="system.encumbrance.ignore_carried_weight"
-             {{checked actor.system.encumbrance.ignore_carried_weight}} />
-      <span>{{localize "GUM.Inventory.Carried"}}</span>
-    </label>
-
-    {{!-- Ignora o peso dos itens equipados/em uso no cálculo de carga --}}
-    <label class="encumbrance-pill">
-      <input type="checkbox"
-             name="system.encumbrance.ignore_equipped_weight"
-             {{checked actor.system.encumbrance.ignore_equipped_weight}} />
-      <span>{{localize "GUM.Inventory.InUse"}}</span>
-    </label>
+    <span class="encumbrance-row-balance" aria-hidden="true"></span>
   </div>
 
 </div>
@@ -1604,16 +1628,10 @@
         {{! --- COLUNA DA ESQUERDA (ESTREITA) --- }}
         <div class="combat-left-column">
 
-          <div class="combat-filter-list combat-filter-list--sidebar" role="group" aria-label="{{localize 'GUM.Combat.Physical.SidebarFilters'}}">
-            <button type="button" class="combat-filter-chip {{#if combatSidebarFilterAll}}is-active{{/if}}" data-filter-scope="sidebar" data-filter-value="all" aria-pressed="{{#if combatSidebarFilterAll}}true{{else}}false{{/if}}">{{localize "GUM.Combat.Filters.All"}}</button>
-            <button type="button" class="combat-filter-chip {{#if combatDefenseFilterActive}}is-active{{/if}}" data-filter-scope="sidebar" data-filter-value="defense" aria-pressed="{{#if combatDefenseFilterActive}}true{{else}}false{{/if}}">{{localize "GUM.Combat.Physical.Defense"}}</button>
-            <button type="button" class="combat-filter-chip {{#if combatFeatsFilterActive}}is-active{{/if}}" data-filter-scope="sidebar" data-filter-value="feats" aria-pressed="{{#if combatFeatsFilterActive}}true{{else}}false{{/if}}">{{localize "GUM.Combat.Physical.Title"}}</button>
-          </div>
-
           {{! ================================================= }}
           {{!     PAINEL DE RD   }}
           {{! ================================================= }}
-          <div class="gum-block dr-location-block" data-combat-sidebar-group="defense" {{#unless combatDefenseVisible}}hidden{{/unless}}>
+          <div class="gum-block dr-location-block">
             <div class="block-header">
               <h4>
                 <span class="dr-header-title">{{localize "GUM.Combat.DR.Title"}}</span>
@@ -1676,62 +1694,6 @@
             </ol>
           </div>
 
-          <div class="gum-block physical-feats-block" data-combat-sidebar-group="feats" {{#unless combatFeatsVisible}}hidden{{/unless}}>
-            <div class="block-header">
-              <h4>
-                <span class="physical-feats-title">{{localize "GUM.Combat.Physical.Title"}}</span>
-                <span class="physical-feats-subtitle">{{localize "GUM.Combat.Physical.Subtitle"}}</span>
-              </h4>
-              <div class="header-controls">
-                <a class="edit-secondary-stats-btn" title="{{localize 'GUM.SecondaryEditor.DialogTitle'}}"><i class="fas fa-edit"></i></a>
-              </div>
-            </div>
-
-            <div class="physical-feats-content">
-              <section class="physical-feat-section">
-                <h5><i class="fas fa-route" aria-hidden="true"></i>{{localize "GUM.Combat.Physical.Movement"}}</h5>
-                <div class="physical-feat-grid">
-                  <div class="physical-feat-stat"><span>{{localize "GUM.Combat.Physical.Ground"}}</span><strong>{{actor.system.attributes.basic_move.final}}</strong></div>
-                  {{#if actor.system.attributes.enhanced_move.final}}<div class="physical-feat-stat"><span>{{localize "GUM.Combat.Physical.Enhanced"}}</span><strong>{{actor.system.attributes.enhanced_move.final}}</strong></div>{{/if}}
-                  {{#if actor.system.attributes.air_move.enabled}}<div class="physical-feat-stat"><span>{{localize "GUM.Combat.Physical.Air"}}</span><strong>{{actor.system.attributes.air_move.final}}</strong></div>{{/if}}
-                  {{#if actor.system.attributes.water_move.enabled}}<div class="physical-feat-stat"><span>{{localize "GUM.Combat.Physical.Water"}}</span><strong>{{actor.system.attributes.water_move.final}}</strong></div>{{/if}}
-                  {{#if actor.system.attributes.burrow_move.enabled}}<div class="physical-feat-stat"><span>{{localize "GUM.Combat.Physical.Burrow"}}</span><strong>{{actor.system.attributes.burrow_move.final}}</strong></div>{{/if}}
-                </div>
-              </section>
-
-              <section class="physical-feat-section">
-                <h5><i class="fas fa-person-arrow-up-from-line" aria-hidden="true"></i>{{localize "GUM.Combat.Physical.Jump"}}</h5>
-                <div class="physical-jump-legend"><span>{{localize "GUM.Combat.Physical.WithoutMomentum"}}</span><span>{{localize "GUM.Combat.Physical.WithMomentum"}}</span></div>
-                <div class="physical-jump-row">
-                  <span>{{localize "GUM.Combat.Physical.HorizontalJump"}}</span>
-                  <strong>{{actor.system.attributes.jump_horizontal_standing.final}} / {{actor.system.attributes.jump_horizontal_running.final}} <small>m</small></strong>
-                </div>
-                <div class="physical-jump-row">
-                  <span>{{localize "GUM.Combat.Physical.VerticalJump"}}</span>
-                  <strong>{{actor.system.attributes.jump_vertical_standing.final}} / {{actor.system.attributes.jump_vertical_running.final}} <small>m</small></strong>
-                </div>
-              </section>
-
-              <section class="physical-feat-section">
-                <h5><i class="fas fa-dumbbell" aria-hidden="true"></i>{{localize "GUM.Combat.Physical.Lifting"}}</h5>
-                <div class="physical-lifting-base">
-                  <span>{{localize "GUM.Combat.Physical.BasicLift"}} <small>{{localize "GUM.Combat.Physical.FromLiftingST" value=actor.system.attributes.lifting_st.final}}</small></span>
-                  <strong>{{physicalLifting.basicLiftKg}} <small>kg</small></strong>
-                </div>
-                <div class="physical-capacity-list">
-                  <div class="physical-capacity-row" title="{{localize 'GUM.PhysicalLifting.LiftSummaryNote'}}"><span>{{localize "GUM.PhysicalLifting.LiftSummary"}}</span><strong>{{physicalLifting.oneHandedKg}} / {{physicalLifting.twoHandedKg}} <small>kg</small></strong></div>
-                  <div class="physical-capacity-row" title="{{localize 'GUM.PhysicalLifting.CarrySummaryNote'}}"><span>{{localize "GUM.PhysicalLifting.CarrySummary"}}</span><strong>{{physicalLifting.extraHeavyKg}} / {{physicalLifting.carryOnBackKg}} <small>kg</small></strong></div>
-                  <div class="physical-capacity-row" title="{{localize 'GUM.PhysicalLifting.ShoveNote'}}"><span>{{localize "GUM.PhysicalLifting.Shove"}}</span><strong>{{physicalLifting.shoveKg}} / {{physicalLifting.runningShoveKg}} <small>kg</small></strong></div>
-                  <div class="physical-capacity-row" title="{{localize 'GUM.PhysicalLifting.ShiftSlightlyNote'}}"><span>{{localize "GUM.PhysicalLifting.ShiftSlightly"}}</span><strong>{{physicalLifting.shiftSlightlyKg}} <small>kg</small></strong></div>
-                </div>
-              </section>
-
-              <div class="physical-feat-actions">
-                <button type="button" class="physical-lifting-reference"><i class="fas fa-scale-balanced" aria-hidden="true"></i><span>{{localize "GUM.PhysicalLifting.OpenReference"}}</span></button>
-                <button type="button" class="physical-throw-calculator"><i class="fas fa-bowling-ball" aria-hidden="true"></i><span>{{localize "GUM.Combat.Physical.ThrowCalculator"}}</span></button>
-              </div>
-            </div>
-          </div>
 </div>
 
         {{! --- COLUNA DA DIREITA (LARGA) --- }}

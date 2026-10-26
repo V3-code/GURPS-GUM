@@ -131,7 +131,6 @@ async getData(options) {
         this._combatActionView ??= "actions";
         this._combatAttackFilters ??= new Set();
         this._combatControlFilters ??= new Set();
-        this._combatSidebarFilters ??= new Set();
         context.combatActionView = this._combatActionView;
         context.combatAttackFilterAll = this._combatAttackFilters.size === 0;
         context.combatControlFilterAll = this._combatControlFilters.size === 0;
@@ -139,19 +138,29 @@ async getData(options) {
         context.combatMetersFilterActive = this._combatControlFilters.has("meters");
         context.combatWoundsVisible = this._combatControlFilters.size === 0 || this._combatControlFilters.has("wounds");
         context.combatMetersVisible = this._combatControlFilters.size === 0 || this._combatControlFilters.has("meters");
-        context.combatSidebarFilterAll = this._combatSidebarFilters.size === 0;
-        context.combatDefenseFilterActive = this._combatSidebarFilters.has("defense");
-        context.combatFeatsFilterActive = this._combatSidebarFilters.has("feats");
-        context.combatDefenseVisible = this._combatSidebarFilters.size === 0 || this._combatSidebarFilters.has("defense");
-        context.combatFeatsVisible = this._combatSidebarFilters.size === 0 || this._combatSidebarFilters.has("feats");
-        context.physicalLifting = calculateLiftingCapacities(
-            this.actor.system.attributes?.basic_lift?.final
-            ?? this.actor.system.attributes?.basic_lift?.value
-            ?? 0
-        );
         const encumbranceLevel = Math.min(4, Math.max(0, Number(this.actor.system.encumbrance?.level_value) || 0));
         context.encumbranceLevelLabel = game.i18n.localize(`GUM.Character.Sidebar.EncumbranceLevels.${encumbranceLevel}`);
-        
+        const encumbrance = this.actor.system.encumbrance || {};
+        const formatWeight = value => Number(value || 0).toLocaleString(game.i18n.lang, { maximumFractionDigits: 2 });
+        context.encumbranceDisplay = {
+            ariaLabel: game.i18n.format("GUM.Inventory.Encumbrance.CurrentLoadAria", {
+                current: formatWeight(encumbrance.total_weight),
+                maximum: formatWeight(encumbrance.max_capacity)
+            }),
+            levelLabel: context.encumbranceLevelLabel,
+            levels: (encumbrance.level_data || []).map((level, index) => ({
+                ...level,
+                active: index === encumbranceLevel,
+                label: game.i18n.localize(`GUM.Inventory.Encumbrance.Levels.${index}`),
+                short: game.i18n.localize(`GUM.Inventory.Encumbrance.Abbreviations.${index}`)
+            })),
+            segments: (encumbrance.segment_labels || []).map((segment, index) => ({
+                ...segment,
+                label: game.i18n.localize(`GUM.Inventory.Encumbrance.Levels.${index}`),
+                short: game.i18n.localize(`GUM.Inventory.Encumbrance.Abbreviations.${index}`)
+            }))
+        };
+
         const profileId = this.actor.system.combat?.body_profile || "humanoid";
         const profile = getBodyProfile(profileId);
         const effectiveBodyLocations = buildEffectiveBodyLocations({
@@ -2073,6 +2082,188 @@ _onEditPortrait() {
     return picker.render(true);
 }
 
+_openPhysicalFeatsReference() {
+    const t = key => game.i18n.localize(key);
+    const attributes = this.actor.system.attributes || {};
+    const formatNumber = value => Number(value || 0).toLocaleString(game.i18n.lang, { maximumFractionDigits: 2 });
+    const movementStat = (icon, labelKey, attribute, unit = "") => `
+        <div class="physical-feats-reference-stat">
+            <i class="fas ${icon}" aria-hidden="true"></i>
+            <span>${t(labelKey)}</span>
+            <strong>${formatNumber(attribute?.final)}${unit}</strong>
+        </div>`;
+    const movementRows = [
+        movementStat("fa-walking", "GUM.Combat.Physical.Ground", attributes.basic_move),
+        Number(attributes.enhanced_move?.final) ? movementStat("fa-forward", "GUM.Combat.Physical.Enhanced", attributes.enhanced_move) : "",
+        attributes.air_move?.enabled ? movementStat("fa-wind", "GUM.Combat.Physical.Air", attributes.air_move) : "",
+        attributes.water_move?.enabled ? movementStat("fa-water", "GUM.Combat.Physical.Water", attributes.water_move) : "",
+        attributes.burrow_move?.enabled ? movementStat("fa-mountain", "GUM.Combat.Physical.Burrow", attributes.burrow_move) : "",
+        attributes.teleport_range?.enabled ? movementStat("fa-person-from-portal", "GUM.Combat.Physical.Teleport", attributes.teleport_range, " m") : ""
+    ].filter(Boolean).join("");
+    const liftingStrength = attributes.lifting_st?.final ?? attributes.lifting_st?.final_computed ?? 0;
+    const basicLift = attributes.basic_lift?.final ?? attributes.basic_lift?.value ?? 0;
+    const content = `
+        <div class="physical-feats-reference-content">
+            <p class="physical-feats-reference-intro">${t("GUM.PhysicalFeats.Intro")}</p>
+            <section class="physical-feats-reference-section">
+                <h3><i class="fas fa-route" aria-hidden="true"></i>${t("GUM.Combat.Physical.Movement")}</h3>
+                <div class="physical-feats-reference-grid">${movementRows}</div>
+            </section>
+            <section class="physical-feats-reference-section">
+                <h3><i class="fas fa-person-arrow-up-from-line" aria-hidden="true"></i>${t("GUM.Combat.Physical.Jump")}</h3>
+                <div class="physical-feats-reference-jumps">
+                    <div class="physical-feats-reference-jump-head"><span></span><span>${t("GUM.Combat.Physical.WithoutMomentum")}</span><span>${t("GUM.Combat.Physical.WithMomentum")}</span></div>
+                    <div><span>${t("GUM.Combat.Physical.HorizontalJump")}</span><strong>${formatNumber(attributes.jump_horizontal_standing?.final)} m</strong><strong>${formatNumber(attributes.jump_horizontal_running?.final)} m</strong></div>
+                    <div><span>${t("GUM.Combat.Physical.VerticalJump")}</span><strong>${formatNumber(attributes.jump_vertical_standing?.final)} m</strong><strong>${formatNumber(attributes.jump_vertical_running?.final)} m</strong></div>
+                </div>
+            </section>
+            <section class="physical-feats-reference-section physical-feats-reference-breathing">
+                <h3><i class="fas fa-lungs" aria-hidden="true"></i>${t("GUM.Combat.Physical.Breathing")}</h3>
+                <div class="physical-feats-reference-breathing-grid">
+                    <span><small>${t("GUM.Combat.Physical.NoExertion")}</small><strong>${formatNumber(attributes.breath_no_exertion?.final)} ${t("GUM.PhysicalFeats.SecondsAbbrev")}</strong></span>
+                    <span><small>${t("GUM.Combat.Physical.MildExertion")}</small><strong>${formatNumber(attributes.breath_mild_exertion?.final)} ${t("GUM.PhysicalFeats.SecondsAbbrev")}</strong></span>
+                    <span><small>${t("GUM.Combat.Physical.HeavyExertion")}</small><strong>${formatNumber(attributes.breath_heavy_exertion?.final)} ${t("GUM.PhysicalFeats.SecondsAbbrev")}</strong></span>
+                </div>
+            </section>
+            <section class="physical-feats-reference-section physical-feats-reference-lifting">
+                <h3><i class="fas fa-dumbbell" aria-hidden="true"></i>${t("GUM.Combat.Physical.Lifting")}</h3>
+                <div><span>${t("GUM.Combat.Physical.LiftingST")}<strong>${formatNumber(liftingStrength)}</strong></span><span>${t("GUM.Combat.Physical.BasicLift")}<strong>${formatNumber(basicLift)} kg</strong></span></div>
+            </section>
+            <div class="physical-feats-reference-actions">
+                <button type="button" class="physical-feats-open-lifting"><i class="fas fa-scale-balanced" aria-hidden="true"></i>${t("GUM.PhysicalLifting.OpenReference")}</button>
+                <button type="button" class="physical-feats-open-throw"><i class="fas fa-bowling-ball" aria-hidden="true"></i>${t("GUM.Combat.Physical.ThrowCalculator")}</button>
+            </div>
+        </div>`;
+    return new Dialog({
+        title: t("GUM.Combat.Physical.Title"),
+        content,
+        render: dialogHtml => {
+            dialogHtml.on("click", ".physical-feats-open-lifting", event => {
+                event.preventDefault();
+                this._openPhysicalLiftingReference();
+            });
+            dialogHtml.on("click", ".physical-feats-open-throw", event => {
+                event.preventDefault();
+                this._openPhysicalThrowCalculator();
+            });
+        },
+        buttons: {
+            close: { icon: '<i class="fas fa-times"></i>', label: t("GUM.PhysicalThrow.Close") }
+        },
+        default: "close"
+    }, {
+        classes: ["dialog", "gum", "physical-feats-reference-dialog", "gum-sheet-edit-dialog"],
+        width: 480
+    }).render(true);
+}
+
+_openPhysicalThrowCalculator() {
+    const t = key => game.i18n.localize(key);
+    const tf = (key, data) => game.i18n.format(key, data);
+    const attributes = this.actor.system.attributes || {};
+    const liftingStrength = Number(attributes.lifting_st?.final ?? attributes.lifting_st?.final_computed ?? 0);
+    const strikingStrength = Number(attributes.st?.final ?? attributes.st?.final_computed ?? 0);
+    const basicLiftKg = Number(attributes.basic_lift?.final ?? attributes.basic_lift?.value ?? 0);
+    const thrustDamage = attributes.thrust_damage?.final ?? attributes.thrust_damage?.value ?? "";
+    const formatNumber = value => Number(value || 0).toLocaleString(game.i18n.lang, { maximumFractionDigits: 2 });
+    const content = `
+        <form class="physical-throw-dialog-form">
+            <p class="physical-throw-intro">${t("GUM.PhysicalThrow.Intro")}</p>
+            <div class="physical-throw-bases">
+                <span>${t("GUM.Combat.Physical.LiftingST")} <strong>${formatNumber(liftingStrength)}</strong></span>
+                <span>ST <strong>${formatNumber(strikingStrength)}</strong></span>
+                <span>${t("GUM.Combat.Physical.BasicLift")} <strong>${formatNumber(basicLiftKg)} kg</strong></span>
+                <span>${t("GUM.Character.Sidebar.ThrustAbbrev")} <strong>${thrustDamage || "—"}</strong></span>
+            </div>
+            <label class="physical-throw-weight">
+                <span>${t("GUM.PhysicalThrow.Weight")}</span>
+                <span class="physical-throw-input"><input type="number" name="object-weight" min="0" step="0.01" autofocus><em>kg</em></span>
+            </label>
+            <button type="button" class="physical-throw-calculate"><i class="fas fa-calculator"></i>${t("GUM.PhysicalThrow.Calculate")}</button>
+            <div class="physical-throw-result" aria-live="polite"><p>${t("GUM.PhysicalThrow.EnterWeight")}</p></div>
+        </form>`;
+    return new Dialog({
+        title: t("GUM.PhysicalThrow.Title"),
+        content,
+        render: dialogHtml => {
+            const refresh = () => {
+                const objectWeightKg = Number(dialogHtml.find('[name="object-weight"]').val());
+                const resultRoot = dialogHtml.find('.physical-throw-result');
+                const result = resolveThrowingDistance({ liftingStrength, strikingStrength, basicLiftKg, objectWeightKg, thrustDamage });
+                if (!result.valid) {
+                    resultRoot.html(`<p class="is-warning">${t("GUM.PhysicalThrow.InvalidWeight")}</p>`);
+                    return;
+                }
+                if (!result.throwable) {
+                    resultRoot.html(`<p class="is-warning">${tf("GUM.PhysicalThrow.Unthrowable", { maximum: formatNumber(result.maximumWeightKg) })}</p>`);
+                    return;
+                }
+                const handsLabel = t(`GUM.PhysicalThrow.Hands.${result.hands}`);
+                resultRoot.html(`
+                    <div class="physical-throw-result-grid">
+                        <span>${t("GUM.PhysicalThrow.Ratio")}<strong>${formatNumber(result.ratio)} × BL</strong></span>
+                        <span>${t("GUM.PhysicalThrow.Hands.Label")}<strong>${handsLabel}</strong></span>
+                        <span class="physical-throw-range">${t("GUM.PhysicalThrow.Range")}<strong>${formatNumber(result.distanceMeters)} m</strong></span>
+                        <span class="physical-throw-damage">${t("GUM.PhysicalThrow.Damage")}<strong>${result.damage?.formula || t("GUM.PhysicalThrow.DamageUnavailable")} ${result.damage?.formula ? t("GUM.PhysicalThrow.CrushingAbbrev") : ""}</strong></span>
+                    </div>
+                    <small>${tf("GUM.PhysicalThrow.Maximum", { maximum: formatNumber(result.maximumWeightKg) })}</small>
+                    <small>${t("GUM.PhysicalThrow.DamageNote")}</small>`);
+            };
+            dialogHtml.on("click", ".physical-throw-calculate", refresh);
+            dialogHtml.on("submit", ".physical-throw-dialog-form", submitEvent => {
+                submitEvent.preventDefault();
+                refresh();
+            });
+        },
+        buttons: {
+            close: { icon: '<i class="fas fa-times"></i>', label: t("GUM.PhysicalThrow.Close") }
+        },
+        default: "close"
+    }, {
+        classes: ["dialog", "gum", "physical-throw-dialog", "gum-sheet-edit-dialog"],
+        width: 420
+    }).render(true);
+}
+
+_openPhysicalLiftingReference() {
+    const t = key => game.i18n.localize(key);
+    const attributes = this.actor.system.attributes || {};
+    const capacities = calculateLiftingCapacities(attributes.basic_lift?.final ?? attributes.basic_lift?.value ?? 0);
+    const formatNumber = value => Number(value || 0).toLocaleString(game.i18n.lang, { maximumFractionDigits: 2 });
+    const row = (labelKey, value, multiplier, noteKey) => `
+        <div class="physical-lifting-rule-row">
+            <span><strong>${t(labelKey)}</strong><small>${t(noteKey)}</small></span>
+            <span class="physical-lifting-rule-value"><strong>${formatNumber(value)} kg</strong><small>${multiplier}</small></span>
+        </div>`;
+    const content = `
+        <div class="physical-lifting-reference-content">
+            <header class="physical-lifting-reference-header">
+                <span>${t("GUM.Combat.Physical.BasicLift")}</span>
+                <strong>${formatNumber(capacities.basicLiftKg)} kg</strong>
+            </header>
+            <div class="physical-lifting-rule-list">
+                ${row("GUM.PhysicalLifting.OneHanded", capacities.oneHandedKg, "2×", "GUM.PhysicalLifting.OneHandedNote")}
+                ${row("GUM.PhysicalLifting.TwoHanded", capacities.twoHandedKg, "8×", "GUM.PhysicalLifting.TwoHandedNote")}
+                ${row("GUM.PhysicalLifting.ExtraHeavy", capacities.extraHeavyKg, "10×", "GUM.PhysicalLifting.ExtraHeavyNote")}
+                ${row("GUM.PhysicalLifting.CarryOnBack", capacities.carryOnBackKg, "15×", "GUM.PhysicalLifting.CarryOnBackNote")}
+                ${row("GUM.PhysicalLifting.Shove", capacities.shoveKg, "12× / 24×", "GUM.PhysicalLifting.ShoveNote")}
+                ${row("GUM.PhysicalLifting.ShiftSlightly", capacities.shiftSlightlyKg, "50×", "GUM.PhysicalLifting.ShiftSlightlyNote")}
+            </div>
+            <p class="physical-lifting-reference-note"><i class="fas fa-circle-info" aria-hidden="true"></i>${t("GUM.PhysicalLifting.NoAutomationNote")}</p>
+        </div>`;
+    return new Dialog({
+        title: t("GUM.PhysicalLifting.Title"),
+        content,
+        buttons: {
+            close: { icon: '<i class="fas fa-times"></i>', label: t("GUM.PhysicalThrow.Close") }
+        },
+        default: "close"
+    }, {
+        classes: ["dialog", "gum", "physical-lifting-dialog", "gum-sheet-edit-dialog"],
+        width: 440
+    }).render(true);
+}
+
 activateListeners(html) {
     super.activateListeners(html);
     html.on("click", ".combat-view-tab", (ev) => {
@@ -2101,8 +2292,6 @@ activateListeners(html) {
             ? this._combatAttackFilters
             : scope === "control"
                 ? this._combatControlFilters
-                : scope === "sidebar"
-                    ? this._combatSidebarFilters
                 : null;
         if (!filters || !value) return;
 
@@ -2129,114 +2318,19 @@ activateListeners(html) {
             html.find('[data-combat-control-group]').each((_index, group) => {
                 group.hidden = filters.size > 0 && !filters.has(String(group.dataset.combatControlGroup));
             });
-        } else if (scope === "sidebar") {
-            html.find('[data-combat-sidebar-group]').each((_index, group) => {
-                group.hidden = filters.size > 0 && !filters.has(String(group.dataset.combatSidebarGroup));
-            });
         }
+    });
+    html.on("click", ".physical-feats-reference-btn", ev => {
+        ev.preventDefault();
+        this._openPhysicalFeatsReference();
     });
     html.on("click", ".physical-throw-calculator", ev => {
         ev.preventDefault();
-        const t = key => game.i18n.localize(key);
-        const tf = (key, data) => game.i18n.format(key, data);
-        const attributes = this.actor.system.attributes || {};
-        const liftingStrength = Number(attributes.lifting_st?.final ?? attributes.lifting_st?.final_computed ?? 0);
-        const strikingStrength = Number(attributes.st?.final ?? attributes.st?.final_computed ?? 0);
-        const basicLiftKg = Number(attributes.basic_lift?.final ?? attributes.basic_lift?.value ?? 0);
-        const formatNumber = value => Number(value || 0).toLocaleString(game.i18n.lang, { maximumFractionDigits: 2 });
-        const content = `
-            <form class="physical-throw-dialog-form">
-                <p class="physical-throw-intro">${t("GUM.PhysicalThrow.Intro")}</p>
-                <div class="physical-throw-bases">
-                    <span>${t("GUM.Combat.Physical.LiftingST")} <strong>${formatNumber(liftingStrength)}</strong></span>
-                    <span>ST <strong>${formatNumber(strikingStrength)}</strong></span>
-                    <span>${t("GUM.Combat.Physical.BasicLift")} <strong>${formatNumber(basicLiftKg)} kg</strong></span>
-                </div>
-                <label class="physical-throw-weight">
-                    <span>${t("GUM.PhysicalThrow.Weight")}</span>
-                    <span class="physical-throw-input"><input type="number" name="object-weight" min="0" step="0.01" autofocus><em>kg</em></span>
-                </label>
-                <button type="button" class="physical-throw-calculate"><i class="fas fa-calculator"></i>${t("GUM.PhysicalThrow.Calculate")}</button>
-                <div class="physical-throw-result" aria-live="polite"><p>${t("GUM.PhysicalThrow.EnterWeight")}</p></div>
-            </form>`;
-        new Dialog({
-            title: t("GUM.PhysicalThrow.Title"),
-            content,
-            render: dialogHtml => {
-                const refresh = () => {
-                    const objectWeightKg = Number(dialogHtml.find('[name="object-weight"]').val());
-                    const resultRoot = dialogHtml.find('.physical-throw-result');
-                    const result = resolveThrowingDistance({ liftingStrength, strikingStrength, basicLiftKg, objectWeightKg });
-                    if (!result.valid) {
-                        resultRoot.html(`<p class="is-warning">${t("GUM.PhysicalThrow.InvalidWeight")}</p>`);
-                        return;
-                    }
-                    if (!result.throwable) {
-                        resultRoot.html(`<p class="is-warning">${tf("GUM.PhysicalThrow.Unthrowable", { maximum: formatNumber(result.maximumWeightKg) })}</p>`);
-                        return;
-                    }
-                    const handsLabel = t(`GUM.PhysicalThrow.Hands.${result.hands}`);
-                    resultRoot.html(`
-                        <div class="physical-throw-result-grid">
-                            <span>${t("GUM.PhysicalThrow.Ratio")}<strong>${formatNumber(result.ratio)} × BL</strong></span>
-                            <span>${t("GUM.PhysicalThrow.Hands.Label")}<strong>${handsLabel}</strong></span>
-                            <span class="physical-throw-range">${t("GUM.PhysicalThrow.Range")}<strong>${formatNumber(result.distanceMeters)} m</strong></span>
-                        </div>
-                        <small>${tf("GUM.PhysicalThrow.Maximum", { maximum: formatNumber(result.maximumWeightKg) })}</small>`);
-                };
-                dialogHtml.on('click', '.physical-throw-calculate', refresh);
-                dialogHtml.on('submit', '.physical-throw-dialog-form', submitEvent => {
-                    submitEvent.preventDefault();
-                    refresh();
-                });
-            },
-            buttons: {
-                close: { icon: '<i class="fas fa-times"></i>', label: t("GUM.PhysicalThrow.Close") }
-            },
-            default: "close"
-        }, {
-            classes: ["dialog", "gum", "physical-throw-dialog", "gum-sheet-edit-dialog"],
-            width: 420
-        }).render(true);
+        this._openPhysicalThrowCalculator();
     });
     html.on("click", ".physical-lifting-reference", ev => {
         ev.preventDefault();
-        const t = key => game.i18n.localize(key);
-        const attributes = this.actor.system.attributes || {};
-        const capacities = calculateLiftingCapacities(attributes.basic_lift?.final ?? attributes.basic_lift?.value ?? 0);
-        const formatNumber = value => Number(value || 0).toLocaleString(game.i18n.lang, { maximumFractionDigits: 2 });
-        const row = (labelKey, value, multiplier, noteKey) => `
-            <div class="physical-lifting-rule-row">
-                <span><strong>${t(labelKey)}</strong><small>${t(noteKey)}</small></span>
-                <span class="physical-lifting-rule-value"><strong>${formatNumber(value)} kg</strong><small>${multiplier}</small></span>
-            </div>`;
-        const content = `
-            <div class="physical-lifting-reference-content">
-                <header class="physical-lifting-reference-header">
-                    <span>${t("GUM.Combat.Physical.BasicLift")}</span>
-                    <strong>${formatNumber(capacities.basicLiftKg)} kg</strong>
-                </header>
-                <div class="physical-lifting-rule-list">
-                    ${row("GUM.PhysicalLifting.OneHanded", capacities.oneHandedKg, "2×", "GUM.PhysicalLifting.OneHandedNote")}
-                    ${row("GUM.PhysicalLifting.TwoHanded", capacities.twoHandedKg, "8×", "GUM.PhysicalLifting.TwoHandedNote")}
-                    ${row("GUM.PhysicalLifting.ExtraHeavy", capacities.extraHeavyKg, "10×", "GUM.PhysicalLifting.ExtraHeavyNote")}
-                    ${row("GUM.PhysicalLifting.CarryOnBack", capacities.carryOnBackKg, "15×", "GUM.PhysicalLifting.CarryOnBackNote")}
-                    ${row("GUM.PhysicalLifting.Shove", capacities.shoveKg, "12× / 24×", "GUM.PhysicalLifting.ShoveNote")}
-                    ${row("GUM.PhysicalLifting.ShiftSlightly", capacities.shiftSlightlyKg, "50×", "GUM.PhysicalLifting.ShiftSlightlyNote")}
-                </div>
-                <p class="physical-lifting-reference-note"><i class="fas fa-circle-info" aria-hidden="true"></i>${t("GUM.PhysicalLifting.NoAutomationNote")}</p>
-            </div>`;
-        new Dialog({
-            title: t("GUM.PhysicalLifting.Title"),
-            content,
-            buttons: {
-                close: { icon: '<i class="fas fa-times"></i>', label: t("GUM.PhysicalThrow.Close") }
-            },
-            default: "close"
-        }, {
-            classes: ["dialog", "gum", "physical-lifting-dialog", "gum-sheet-edit-dialog"],
-            width: 440
-        }).render(true);
+        this._openPhysicalLiftingReference();
     });
     if (!this.isEditable) return;
 
@@ -4293,6 +4387,7 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                                     ${physicalStatRow('air_move', t('GUM.SecondaryEditor.Attributes.AirMove'), { movementProfile: true })}
                                     ${physicalStatRow('water_move', t('GUM.SecondaryEditor.Attributes.WaterMove'), { movementProfile: true })}
                                     ${physicalStatRow('burrow_move', t('GUM.SecondaryEditor.Attributes.BurrowMove'), { movementProfile: true })}
+                                    ${physicalStatRow('teleport_range', t('GUM.SecondaryEditor.Attributes.TeleportRange'), { movementProfile: true })}
                                 </div>
                             </div>
                             <div class="secondary-editor-card">
@@ -4310,6 +4405,15 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                                 <div class="secondary-editor-table secondary-editor-table--physical">
                                     <div class="secondary-editor-columns" aria-hidden="true">${editorColumns(t("GUM.SecondaryEditor.Column.Attribute"))}</div>
                                     ${physicalStatRow('basic_lift', t('GUM.SecondaryEditor.Attributes.BasicLift'))}
+                                </div>
+                            </div>
+                            <div class="secondary-editor-card">
+                                <header><i class="fas fa-lungs"></i><div><h3>${t("GUM.SecondaryEditor.Physical.BreathingTitle")}</h3><p>${t("GUM.SecondaryEditor.Physical.BreathingHint")}</p></div></header>
+                                <div class="secondary-editor-table secondary-editor-table--physical">
+                                    <div class="secondary-editor-columns" aria-hidden="true">${editorColumns(t("GUM.SecondaryEditor.Column.Attribute"))}</div>
+                                    ${physicalStatRow('breath_no_exertion', t('GUM.SecondaryEditor.Attributes.BreathNoExertion'))}
+                                    ${physicalStatRow('breath_mild_exertion', t('GUM.SecondaryEditor.Attributes.BreathMildExertion'))}
+                                    ${physicalStatRow('breath_heavy_exertion', t('GUM.SecondaryEditor.Attributes.BreathHeavyExertion'))}
                                 </div>
                             </div>
                         </section>
@@ -4348,12 +4452,15 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                             "thrust_damage.mod", "thrust_damage.points", "swing_damage.mod", "swing_damage.points",
                             "thrust_damage_alt.mod", "thrust_damage_alt.points", "swing_damage_alt.mod", "swing_damage_alt.points",
                             "air_move.value", "air_move.mod", "air_move.points", "water_move.value", "water_move.mod", "water_move.points",
-                            "burrow_move.value", "burrow_move.mod", "burrow_move.points",
+                            "burrow_move.value", "burrow_move.mod", "burrow_move.points", "teleport_range.value", "teleport_range.mod", "teleport_range.points",
                             "basic_lift.value", "basic_lift.mod", "basic_lift.points",
                             "jump_horizontal_standing.value", "jump_horizontal_standing.mod", "jump_horizontal_standing.points",
                             "jump_horizontal_running.value", "jump_horizontal_running.mod", "jump_horizontal_running.points",
                             "jump_vertical_standing.value", "jump_vertical_standing.mod", "jump_vertical_standing.points",
-                            "jump_vertical_running.value", "jump_vertical_running.mod", "jump_vertical_running.points"
+                            "jump_vertical_running.value", "jump_vertical_running.mod", "jump_vertical_running.points",
+                            "breath_no_exertion.value", "breath_no_exertion.mod", "breath_no_exertion.points",
+                            "breath_mild_exertion.value", "breath_mild_exertion.mod", "breath_mild_exertion.points",
+                            "breath_heavy_exertion.value", "breath_heavy_exertion.mod", "breath_heavy_exertion.points"
                         ];
                         const updateData = {};
                         for (const field of numericFields) {
@@ -4362,10 +4469,10 @@ html.on("click", ".rollable-basic-damage", async (ev) => {
                         for (const field of ["thrust_damage.value", "swing_damage.value", "thrust_damage_alt.value", "swing_damage_alt.value"]) {
                             if (formData[field] !== undefined) updateData[`system.attributes.${field}`] = String(formData[field]).trim();
                         }
-                        for (const key of ["air_move", "water_move", "burrow_move"]) {
+                        for (const key of ["air_move", "water_move", "burrow_move", "teleport_range"]) {
                             updateData[`system.attributes.${key}.enabled`] = dialogHtml.find(`[name="${key}.enabled"]`).prop("checked") === true;
                         }
-                        for (const key of ["basic_lift", "jump_horizontal_standing", "jump_horizontal_running", "jump_vertical_standing", "jump_vertical_running"]) {
+                        for (const key of ["basic_lift", "jump_horizontal_standing", "jump_horizontal_running", "jump_vertical_standing", "jump_vertical_running", "breath_no_exertion", "breath_mild_exertion", "breath_heavy_exertion"]) {
                             const automatic = dialogHtml.find(`[name="${key}.automatic"]`).prop("checked") === true;
                             updateData[`system.attributes.${key}.automatic`] = automatic;
                             if (!automatic) {
@@ -6939,9 +7046,10 @@ _calculatePointsSummary() {
     "hp", "fp", "basic_speed", "basic_move", "enhanced_move", "dodge",
     "vision", "hearing", "tastesmell", "touch", "mt",
     "thrust_damage", "swing_damage", "thrust_damage_alt", "swing_damage_alt",
-    "basic_lift", "air_move", "water_move", "burrow_move",
+    "basic_lift", "air_move", "water_move", "burrow_move", "teleport_range",
     "jump_horizontal_standing", "jump_horizontal_running",
-    "jump_vertical_standing", "jump_vertical_running"
+    "jump_vertical_standing", "jump_vertical_running",
+    "breath_no_exertion", "breath_mild_exertion", "breath_heavy_exertion"
   ];
   const attrs = this.actor.system.attributes || {};
 

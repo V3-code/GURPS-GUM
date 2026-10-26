@@ -1,4 +1,6 @@
 import {
+  equipmentIntegrityCurrentUpdate,
+  equipmentIntegrityRecord,
   equipmentLinkedReserve,
   equipmentReserveBalanceUpdate,
   resolveEquipment
@@ -87,7 +89,8 @@ export function collectMagicConsumptionSources(actor) {
       current: Math.max(0, Number(itemSystem.quantity) || 0),
       wholeOnly: true,
       itemId: item.id,
-      itemPath: "system.quantity"
+      itemPath: "system.quantity",
+      itemUpdateKind: "quantity"
     });
   }
 
@@ -97,19 +100,35 @@ export function collectMagicConsumptionSources(actor) {
     // activation cannot reuse a stale prepared reserve balance.
     const resolution = resolveEquipment(itemSystem);
     const reserve = equipmentLinkedReserve(item, resolution);
-    if (!reserve) continue;
-    const type = reserve.type === "spell" ? "spell_reserve" : reserve.type === "power" ? "power_reserve" : "combat_tracker";
-    add({
-      key: `equipment_reserve:${item.id}:${type}`,
-      type,
-      id: item.id,
-      name: text(reserve.name) || text(item.name) || item.id,
-      current: Number(reserve.current) || 0,
-      wholeOnly: true,
-      itemId: item.id,
-      equipmentReserve: true,
-      equipmentResolution: resolution
-    });
+    if (reserve) {
+      const type = reserve.type === "spell" ? "spell_reserve" : reserve.type === "power" ? "power_reserve" : "combat_tracker";
+      add({
+        key: `equipment_reserve:${item.id}:${type}`,
+        type,
+        id: item.id,
+        name: text(reserve.name) || text(item.name) || item.id,
+        current: Number(reserve.current) || 0,
+        wholeOnly: true,
+        itemId: item.id,
+        itemUpdateKind: "equipment_reserve",
+        equipmentResolution: resolution
+      });
+    }
+
+    const integrity = equipmentIntegrityRecord(item, resolution);
+    if (integrity) {
+      add({
+        key: `equipment_integrity:${item.id}`,
+        type: "combat_tracker",
+        id: item.id,
+        name: text(integrity.name) || text(item.name) || item.id,
+        current: Number(integrity.current) || 0,
+        wholeOnly: true,
+        itemId: item.id,
+        itemUpdateKind: "equipment_integrity",
+        equipmentResolution: resolution
+      });
+    }
   }
 
   return sources;
@@ -119,15 +138,19 @@ export function resolveMagicConsumptionOptions(group, sources) {
   const resolved = [];
   const seen = new Set();
   for (const configured of group?.sources || []) {
-    let matches = configured.sourceKey
+    const namedMatches = () => sources.filter(source => source.type === configured.type && (["hp", "fp"].includes(configured.type)
+      || normalizedName(source.name) === normalizedName(configured.name)));
+    const keyedMatches = configured.sourceKey
       ? sources.filter(source => source.key === configured.sourceKey && source.type === configured.type)
-      : sources.filter(source => source.type === configured.type && (["hp", "fp"].includes(configured.type)
-        || normalizedName(source.name) === normalizedName(configured.name)));
-    if (matches.length !== 1) continue;
-    const source = matches[0];
-    if (seen.has(source.key)) continue;
-    seen.add(source.key);
-    resolved.push(source);
+      : [];
+    // A stored key identifies the exact embedded resource. If that key became
+    // stale after an actor/item transfer, retain the portable name fallback.
+    const matches = keyedMatches.length ? keyedMatches : namedMatches();
+    for (const source of matches) {
+      if (seen.has(source.key)) continue;
+      seen.add(source.key);
+      resolved.push(source);
+    }
   }
   return resolved;
 }
@@ -199,8 +222,13 @@ export async function applyMagicConsumptionDeductions(actor, deductions = []) {
       const item = itemArray(actor).find(entry => entry.id === source.itemId);
       if (!item) throw new Error("invalid_source");
       const update = itemUpdates.get(item.id) || { _id: item.id };
-      if (source.equipmentReserve) Object.assign(update, equipmentReserveBalanceUpdate(item, next, source.equipmentResolution));
-      else update[source.itemPath] = next;
+      if (source.itemUpdateKind === "equipment_reserve") {
+        Object.assign(update, equipmentReserveBalanceUpdate(item, next, source.equipmentResolution));
+      } else if (source.itemUpdateKind === "equipment_integrity") {
+        Object.assign(update, equipmentIntegrityCurrentUpdate(item, next, source.equipmentResolution));
+      } else {
+        update[source.itemPath] = next;
+      }
       itemUpdates.set(item.id, update);
     }
     consumed.push({ ...deduction, name: source.name, type: source.type, before: source.current, after: next });

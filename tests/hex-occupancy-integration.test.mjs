@@ -35,8 +35,10 @@ test("uses public canvas lifecycle hooks without overriding Token internals", ()
   assert.match(overlay, /token\?\.setTarget\?\./);
 });
 
-test("uses the current canvasPan zoom to keep marker size stable", () => {
+test("refreshes marker presentation on canvasPan without inverse zoom compensation", () => {
   assert.match(overlay, /canvasPan[\s\S]*position\?\.scale/);
+  assert.doesNotMatch(layer, /screenScale\s*\/\s*cameraScale/);
+  assert.match(layer, /canvasScale/);
 });
 
 test("rebuilds occupancy after Foundry finishes an animated token movement", () => {
@@ -49,7 +51,7 @@ test("rebuilds occupancy after Foundry finishes an animated token movement", () 
 
 test("anchors markers to the current stage values during canvas panning", () => {
   assert.match(layer, /marker\.position\.set\(group\.center\.x, group\.center\.y\)/);
-  assert.match(layer, /screenScale \/ cameraScale/);
+  assert.match(layer, /marker\.scale\.set\(canvasScale, canvasScale\)/);
   assert.match(overlay, /syncMarkerScale\?\.\(position\?\.scale\)/);
   assert.match(layer, /marker\.on\("pointertap"/);
 });

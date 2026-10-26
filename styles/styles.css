@@ -554,6 +554,45 @@
 .gum.sheet.actor .d6-val-split { font-size: 1.02rem; letter-spacing: -0.01em; }
 .gum.sheet.actor .d6-label { font-size: 8px; color: #aaa; text-transform: uppercase; }
 
+.gum.sheet.actor .special-movement-strip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: -4px 0 8px;
+    padding: 4px 5px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.14);
+}
+
+.gum.sheet.actor .special-movement-item {
+    display: inline-flex;
+    min-width: 38px;
+    min-height: 24px;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    background: rgba(116, 161, 190, 0.09);
+    color: rgba(170, 207, 228, 0.78);
+    cursor: help;
+}
+
+.gum.sheet.actor .special-movement-item i {
+    width: 12px;
+    font-size: 10px;
+    text-align: center;
+}
+
+.gum.sheet.actor .special-movement-item strong {
+    color: #e0c77f;
+    font-family: var(--gum-font-condensed);
+    font-size: 11px;
+    line-height: 1;
+}
+
 /* Sentidos */
 .gum.sheet.actor .senses-container {
     display: flex; justify-content: space-between;
@@ -1506,11 +1545,21 @@
 
 .gum.sheet.actor .tab[data-tab="equipment"]
 .encumbrance-row-bottom {
-    grid-template-columns: auto auto auto;
-    justify-content: center;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
 
-    gap: 5px 11px;
+    gap: 11px;
     min-height: 18px;
+}
+
+.gum.sheet.actor .tab[data-tab="equipment"] .encumbrance-ignore-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px 11px;
+}
+
+.gum.sheet.actor .tab[data-tab="equipment"] .encumbrance-row-balance {
+    min-width: 0;
 }
 
 /* =================================================================== */
@@ -1795,6 +1844,32 @@
 
     text-shadow:
         0 1px 2px rgba(0, 0, 0, 0.78);
+}
+
+.gum.sheet.actor .tab[data-tab="equipment"] .encumbrance-rules-button {
+    display: inline-flex;
+    width: auto;
+    min-height: 18px;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    padding: 1px 3px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: rgba(197, 160, 91, 0.62);
+    font-family: var(--gum-font-condensed);
+    font-size: 0.58rem;
+    font-weight: 700;
+    line-height: 1;
+    text-transform: uppercase;
+    justify-self: start;
+}
+
+.gum.sheet.actor .tab[data-tab="equipment"] .encumbrance-rules-button:hover {
+    background: transparent;
+    box-shadow: none;
+    color: #ead49a;
 }
 
 /* =================================================================== */
@@ -2156,8 +2231,18 @@
 
     .gum.sheet.actor .tab[data-tab="equipment"]
     .encumbrance-row-bottom {
-        grid-template-columns: auto auto auto;
+        grid-template-columns: 1fr;
+        justify-items: center;
     }
+
+    .gum.sheet.actor .tab[data-tab="equipment"] .encumbrance-rules-button {
+        justify-self: start;
+    }
+
+    .gum.sheet.actor .tab[data-tab="equipment"] .encumbrance-row-balance {
+        display: none;
+    }
+
 }
 
 /* --- Colunas Colapsáveis (Details/Summary) --- */
@@ -9420,11 +9505,39 @@ background-color: var(--gum-accent-gold);
 .secondary-stats-unified-dialog .secondary-damage-fields small { display: block; margin-top: 2px; color: #777980; font-size: 8px; font-weight: 400; }
 .dialog.gum.secondary-stats-unified-dialog .dialog-buttons { flex: 0 0 48px; padding: 9px 16px; background: #1d1f24; }
 .dialog.gum.secondary-stats-unified-dialog .dialog-buttons button { flex: 0 0 auto; min-width: 170px; margin-left: auto; background: #9c814c; color: #191817; }
+.dialog.gum.physical-feats-reference-dialog .window-content { padding:0; background:#1b1d22; }
+.dialog.gum.physical-feats-reference-dialog .dialog-content { padding:14px 16px 10px; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-content { display:grid; gap:8px; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-intro { margin:0 0 2px; color:#929198; font-size:10px; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-section { display:grid; gap:6px; padding:9px; border-radius:5px; background:#24272d; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-section h3 { display:flex; align-items:center; gap:6px; margin:0; padding:0; border:0; color:#c8b176; font-family:var(--gum-font-condensed); font-size:10px; letter-spacing:.05em; text-transform:uppercase; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-section h3 i { width:13px; color:#7fa9c1; text-align:center; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-stat { display:grid; grid-template-columns:16px minmax(0,1fr) auto; align-items:center; gap:5px; padding:5px 6px; border-radius:3px; background:rgba(0,0,0,.14); color:#a5a4aa; font-size:9px; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-stat i { color:#8db4ca; text-align:center; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-stat strong { color:#dec889; font-size:11px; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-jumps { display:grid; gap:3px; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-jumps > div { display:grid; grid-template-columns:minmax(0,1fr) 86px 86px; align-items:center; gap:5px; padding:5px 6px; border-radius:3px; background:rgba(0,0,0,.14); color:#aaa9ae; font-size:9px; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-jumps .physical-feats-reference-jump-head { padding-block:1px; background:transparent; color:#74757c; font-size:7px; text-align:center; text-transform:uppercase; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-jumps strong { color:#dec889; font-size:10px; text-align:center; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-breathing-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-breathing-grid > span { display:flex; min-width:0; flex-direction:column; align-items:center; gap:3px; padding:6px 4px; border-radius:3px; background:rgba(0,0,0,.14); text-align:center; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-breathing-grid small { color:#99999f; font-size:8px; line-height:1.15; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-breathing-grid strong { color:#dec889; font-size:11px; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-lifting > div { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:5px; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-lifting > div > span { display:flex; align-items:baseline; justify-content:space-between; gap:8px; padding:6px 7px; border-radius:3px; background:rgba(0,0,0,.14); color:#99999f; font-size:9px; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-lifting strong { color:#dec889; font-size:11px; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-actions { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-actions button { display:flex; min-height:31px; align-items:center; justify-content:center; gap:6px; margin:0; border:0; border-radius:4px; background:rgba(116,161,190,.11); box-shadow:none; color:#b9d5e5; font-family:var(--gum-font-condensed); font-size:9px; font-weight:700; text-transform:uppercase; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-actions button:first-child { background:rgba(197,160,91,.11); color:#dbc481; }
+.dialog.gum.physical-feats-reference-dialog .physical-feats-reference-actions button:hover { filter:brightness(1.18); box-shadow:none; }
+.dialog.gum.physical-feats-reference-dialog .dialog-buttons { margin:0; padding:8px 16px 12px; border:0; background:#1b1d22; }
+.dialog.gum.physical-feats-reference-dialog .dialog-buttons button { min-height:28px; border:0; background:#2b2e34; color:#aaa9ae; box-shadow:none; }
 .dialog.gum.physical-throw-dialog .window-content { padding:0; background:#1b1d22; }
 .dialog.gum.physical-throw-dialog .dialog-content { padding:14px 16px 10px; }
 .dialog.gum.physical-throw-dialog .physical-throw-dialog-form { display:grid; gap:10px; }
 .dialog.gum.physical-throw-dialog .physical-throw-intro { margin:0; color:#929198; font-size:10px; }
-.dialog.gum.physical-throw-dialog .physical-throw-bases { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; }
+.dialog.gum.physical-throw-dialog .physical-throw-bases { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:5px; }
 .dialog.gum.physical-throw-dialog .physical-throw-bases span { display:grid; gap:2px; padding:7px; border-radius:5px; background:#26292f; color:#85868c; font-size:8px; text-transform:uppercase; }
 .dialog.gum.physical-throw-dialog .physical-throw-bases strong { color:#dec889; font-size:11px; text-transform:none; }
 .dialog.gum.physical-throw-dialog .physical-throw-weight { display:grid; grid-template-columns:minmax(0,1fr) 130px; align-items:center; gap:8px; color:#cbcacf; font-size:10px; }
@@ -9435,10 +9548,11 @@ background-color: var(--gum-accent-gold);
 .dialog.gum.physical-throw-dialog .physical-throw-result { min-height:62px; padding:8px; border-radius:5px; background:#22252b; }
 .dialog.gum.physical-throw-dialog .physical-throw-result > p { margin:13px 0; color:#85868c; font-size:10px; text-align:center; }
 .dialog.gum.physical-throw-dialog .physical-throw-result > p.is-warning { color:#d39a68; }
-.dialog.gum.physical-throw-dialog .physical-throw-result-grid { display:grid; grid-template-columns:1fr 1fr 1.2fr; gap:5px; }
+.dialog.gum.physical-throw-dialog .physical-throw-result-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; }
 .dialog.gum.physical-throw-dialog .physical-throw-result-grid span { display:grid; gap:2px; color:#7f8087; font-size:8px; text-transform:uppercase; }
 .dialog.gum.physical-throw-dialog .physical-throw-result-grid strong { color:#d7d5da; font-size:10px; text-transform:none; }
 .dialog.gum.physical-throw-dialog .physical-throw-result-grid .physical-throw-range strong { color:#dec889; font-size:13px; }
+.dialog.gum.physical-throw-dialog .physical-throw-result-grid .physical-throw-damage strong { color:#dca985; font-size:13px; }
 .dialog.gum.physical-throw-dialog .physical-throw-result small { display:block; margin-top:6px; color:#696b72; font-size:8px; }
 .dialog.gum.physical-throw-dialog .dialog-buttons { margin:0; padding:8px 16px 12px; border:0; background:#1b1d22; }
 .dialog.gum.physical-throw-dialog .dialog-buttons button { min-height:28px; border:0; background:#2b2e34; color:#aaa9ae; box-shadow:none; }
@@ -11903,57 +12017,6 @@ background-color: var(--gum-accent-gold);
   background:rgba(12,13,16,.72);
   box-shadow:inset 2px 0 0 rgba(211,176,111,.46);
 }
-.gum.sheet.actor .combat-tab .physical-feats-block {
-  overflow:hidden;
-  padding:0;
-  border:0;
-  border-radius:4px;
-  background:rgba(12,13,16,.72);
-  box-shadow:inset 2px 0 0 rgba(116,161,190,.5);
-}
-.gum.sheet.actor .combat-tab .physical-feats-block .block-header {
-  display:flex;
-  min-height:42px;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  margin:0;
-  padding:6px 8px 6px 10px;
-  border:0;
-  background:var(--combat-surface-raised);
-}
-.gum.sheet.actor .combat-tab .physical-feats-block .block-header h4 { display:flex; min-width:0; flex-direction:column; gap:2px; margin:0; }
-.gum.sheet.actor .combat-tab .physical-feats-title { color:var(--gum-text-claro); font-family:var(--gum-font-condensed); font-size:12px; font-weight:700; letter-spacing:.04em; line-height:1.1; text-transform:uppercase; }
-.gum.sheet.actor .combat-tab .physical-feats-subtitle { overflow:hidden; color:var(--combat-muted); font-family:var(--gum-font-condensed); font-size:9px; line-height:1.1; text-overflow:ellipsis; white-space:nowrap; }
-.gum.sheet.actor .combat-tab .physical-feats-block .header-controls a { display:grid; width:24px; height:24px; place-items:center; color:rgba(235,226,231,.55); }
-.gum.sheet.actor .combat-tab .physical-feats-block .header-controls a:hover { color:#f0d79f; transform:none; }
-.gum.sheet.actor .combat-tab .physical-feats-content { display:grid; gap:5px; padding:5px; }
-.gum.sheet.actor .combat-tab .physical-feat-section { padding:7px; border-radius:3px; background:var(--combat-surface-soft); }
-.gum.sheet.actor .combat-tab .physical-feat-section h5 { display:flex; align-items:center; gap:5px; margin:0 0 6px; color:rgba(216,194,154,.72); font-family:var(--gum-font-condensed); font-size:9px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
-.gum.sheet.actor .combat-tab .physical-feat-section h5 i { width:11px; color:rgba(132,176,204,.72); text-align:center; }
-.gum.sheet.actor .combat-tab .physical-feat-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; }
-.gum.sheet.actor .combat-tab .physical-feat-stat { display:flex; min-width:0; align-items:baseline; justify-content:space-between; gap:5px; padding:4px 5px; border-radius:3px; background:rgba(0,0,0,.13); color:var(--combat-muted); font-family:var(--gum-font-condensed); font-size:9px; }
-.gum.sheet.actor .combat-tab .physical-feat-stat span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.gum.sheet.actor .combat-tab .physical-feat-stat strong { flex:0 0 auto; color:#d9c082; font-size:11px; }
-.gum.sheet.actor .combat-tab .physical-feat-stat small,
-.gum.sheet.actor .combat-tab .physical-jump-row small { color:rgba(230,220,225,.45); font-size:8px; font-weight:500; }
-.gum.sheet.actor .combat-tab .physical-jump-legend { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin:0 0 2px auto; padding-left:42%; color:rgba(230,220,225,.38); font-size:7px; text-align:center; text-transform:uppercase; }
-.gum.sheet.actor .combat-tab .physical-jump-row { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:5px; min-height:24px; padding:3px 5px; border-radius:3px; background:rgba(0,0,0,.13); color:var(--combat-muted); font-family:var(--gum-font-condensed); font-size:9px; }
-.gum.sheet.actor .combat-tab .physical-jump-row + .physical-jump-row { margin-top:3px; }
-.gum.sheet.actor .combat-tab .physical-jump-row strong { color:#d9c082; font-size:10px; white-space:nowrap; }
-.gum.sheet.actor .combat-tab .physical-lifting-base { display:flex; align-items:center; justify-content:space-between; gap:7px; padding:6px 7px; border-radius:3px; background:rgba(211,176,111,.08); color:rgba(235,226,231,.68); font-family:var(--gum-font-condensed); font-size:9px; }
-.gum.sheet.actor .combat-tab .physical-lifting-base > span { display:flex; min-width:0; flex-direction:column; gap:1px; }
-.gum.sheet.actor .combat-tab .physical-lifting-base > span > small { overflow:hidden; color:rgba(230,220,225,.36); font-size:7px; text-overflow:ellipsis; white-space:nowrap; }
-.gum.sheet.actor .combat-tab .physical-lifting-base > strong { flex:0 0 auto; color:#e1c679; font-size:13px; }
-.gum.sheet.actor .combat-tab .physical-capacity-list { display:grid; gap:2px; margin-top:4px; }
-.gum.sheet.actor .combat-tab .physical-capacity-row { display:flex; min-width:0; min-height:21px; align-items:center; justify-content:space-between; gap:6px; padding:3px 5px; border-radius:3px; background:rgba(0,0,0,.11); color:var(--combat-muted); font-family:var(--gum-font-condensed); font-size:8px; }
-.gum.sheet.actor .combat-tab .physical-capacity-row span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.gum.sheet.actor .combat-tab .physical-capacity-row strong { flex:0 0 auto; color:#cfc3a4; font-size:9px; white-space:nowrap; }
-.gum.sheet.actor .combat-tab .physical-capacity-row small { color:rgba(230,220,225,.4); font-size:7px; font-weight:500; }
-.gum.sheet.actor .combat-tab .physical-feat-actions { display:grid; grid-template-columns:1fr; gap:4px; }
-.gum.sheet.actor .combat-tab .physical-feat-actions button { display:flex; width:100%; min-width:0; min-height:29px; align-items:center; justify-content:center; gap:5px; margin:0; padding:4px 5px; border:0; border-radius:3px; background:rgba(116,161,190,.11); box-shadow:none; color:rgba(190,218,234,.72); font-family:var(--gum-font-condensed); font-size:8px; font-weight:700; letter-spacing:.035em; line-height:1.1; text-transform:uppercase; }
-.gum.sheet.actor .combat-tab .physical-feat-actions button span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.gum.sheet.actor .combat-tab .physical-feat-actions button:hover { background:rgba(116,161,190,.18); box-shadow:none; color:#d5e8f2; }
 .gum.sheet.actor .combat-tab .dr-location-block::before { display:none; }
 .gum.sheet.actor .combat-tab .dr-location-block .block-header {
   min-height:42px;
@@ -12244,8 +12307,7 @@ background-color: var(--gum-accent-gold);
   color:#e5c47e;
 }
 .gum.sheet.actor .combat-tab [data-combat-filter-group][hidden],
-.gum.sheet.actor .combat-tab [data-combat-control-group][hidden],
-.gum.sheet.actor .combat-tab [data-combat-sidebar-group][hidden] { display:none !important; }
+.gum.sheet.actor .combat-tab [data-combat-control-group][hidden] { display:none !important; }
 .gum.sheet.actor .combat-tab .combat-favorites-root-content {
   display:flex;
   flex-direction:column;
@@ -12387,3 +12449,49 @@ background-color: var(--gum-accent-gold);
 .gum.sheet.actor .combat-tab .combat-favorite-card__details .magic-card__attack-level-tag { display:inline-flex; align-items:center; gap:2px; padding:1px 5px; border:0; border-radius:3px; background:rgba(153,116,206,.12); color:#d7b9ff; }
 .gum.sheet.actor .combat-tab .combat-favorite-card__details .magic-card__detail-branch--damage :is(a,span) { color:#e99aa2; }
 @media (max-width:760px) { .gum.sheet.actor .combat-tab .combat-favorites-root-content > .attack-group-details > .group-content { grid-template-columns:1fr; } }
+.waypoint-label .gum-movement-budget {
+  align-items: center;
+  border-left: 1px solid rgba(255, 255, 255, 0.28);
+  display: inline-flex;
+  font-size: 0.78em;
+  font-weight: 700;
+  gap: 0.25rem;
+  margin-left: 0.35rem;
+  padding-left: 0.35rem;
+  white-space: nowrap;
+}
+
+.waypoint-label.gum-movement-available .gum-movement-budget { color: #8fda91; }
+.waypoint-label.gum-movement-warning .gum-movement-budget { color: #f0cf73; }
+.waypoint-label.gum-movement-exceeded .gum-movement-budget { color: #ff8585; }
+
+.waypoint-label .gum-jump-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 0.2rem;
+  white-space: nowrap;
+}
+
+.waypoint-label .gum-jump-separator { color: rgba(255, 255, 255, 0.34); font-weight: 400; }
+.waypoint-label.gum-jump-available .gum-jump-state { color: #8fda91; }
+.waypoint-label.gum-jump-warning .gum-jump-state { color: #f0cf73; }
+.waypoint-label.gum-jump-exceeded .gum-jump-state { color: #ff8585; }
+
+.distance-ruler-labels .waypoint-label .gum-distance-modifier {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: 0.18rem;
+  color: #e8cf8a;
+  white-space: nowrap;
+}
+
+.distance-ruler-labels .waypoint-label .gum-distance-separator {
+  color: rgba(255, 255, 255, 0.34);
+  font-weight: 400;
+}
+
+.distance-ruler-labels .waypoint-label .gum-distance-modifier strong {
+  font-weight: 700;
+}
