@@ -4,6 +4,30 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.4.9-beta] - 2026-10-27
+
+### Added
+
+- Condições podem executar efeitos em fases específicas — entrada, evento, início do turno ou saída — e escolher se cada vínculo deve ser removido quando a condição terminar.
+- Itens Condição aceitam Itens Efeito arrastados diretamente para sua lista de efeitos vinculados.
+- Modificadores de equipamento importados do GCS podem conceder bônus de atributo, perícia nominal, reação e situação ao portador, além de propriedades equivalentes de Aparar, Bloqueio e ST efetiva.
+- Cards de Magias e Poderes sinalizam quando recebem modificadores em suas rolagens.
+
+### Changed
+
+- Alterações manuais ou automatizadas de recursos do ator agora emitem eventos estruturados para o motor de condições, permitindo detectar cruzamentos de limiares de PV e PF independentemente da origem da mudança.
+- O editor de Condição foi ampliado e reorganizado em três colunas; os controles de execução ficam centralizados e empilhados.
+- Janelas de importação selecionam `Criar novo compêndio` por padrão quando permitido, e o filtro contextual inicia selecionado mesmo quando o personagem não possui relações contextuais.
+- A ficha de fonte monetária abre com uma largura inicial maior.
+- O manifesto usa o endereço de download específico da versão publicada, sem depender do marcador `latest` do GitHub.
+
+### Fixed
+
+- Efeitos consumidos ou ativados pela ficha de um ator mundial são aplicados ao próprio ator, sem serem desviados para um token ativo não vinculado.
+- Vínculos de efeitos em Condições são normalizados quando o Foundry serializa a coleção como objeto indexado, evitando falhas ao reabrir a ficha.
+- Barreiras de resistência distinguem sucesso e falha críticos exatos nas ramificações condicionais.
+- A importação do GCS preserva em `gcs_features_unmapped` seletores sem equivalência segura, evitando bônus amplos ou semanticamente incorretos.
+
 ## [1.4.8-beta] - 2026-10-26
 
 ### Added

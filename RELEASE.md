@@ -28,8 +28,15 @@ Nome do arquivo esperado no release:
 
 - `gum.zip`
 
-> O campo `download` no `system.json` aponta para:
-> `https://github.com/V3-code/GURPS-GUM/releases/latest/download/gum.zip`
+> O campo `download` no `system.json` deve apontar para a própria versão:
+> `https://github.com/V3-code/GURPS-GUM/releases/download/v<VERSÃO>/gum.zip`
+>
+> Exemplo para `1.4.9-beta`:
+> `https://github.com/V3-code/GURPS-GUM/releases/download/v1.4.9-beta/gum.zip`
+
+Não use `releases/latest` no manifesto: uma versão publicada inicialmente como
+pré-release pode não assumir esse marcador e deixar a atualização apontando para
+um pacote anterior.
 
 ## 3) Publicação no GitHub
 
