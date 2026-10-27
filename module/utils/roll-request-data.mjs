@@ -66,7 +66,10 @@ export function normalizeBarrierBranches(branches = []) {
     const type = rawType === "otherwise" ? "otherwise" : "outcome";
     if (type === "otherwise" && hasOtherwise) return [];
     if (type === "otherwise") hasOtherwise = true;
-    const outcome = (branch.condition?.outcome ?? branch.outcome) === "success" ? "success" : "failure";
+    const requestedOutcome = String(branch.condition?.outcome ?? branch.outcome ?? "failure");
+    const outcome = ["success", "failure", "critical-success", "critical-failure"].includes(requestedOutcome)
+      ? requestedOutcome
+      : "failure";
     const rawActionIds = Array.isArray(branch.actionIds) ? branch.actionIds : String(branch.actionIds ?? "").split(",");
     const actionIds = [...new Set(rawActionIds.map(id => String(id).trim()).filter(Boolean))];
     const minimumMargin = Math.max(0, numberOr(branch.condition?.minimumMargin ?? branch.minimumMargin, 0));
@@ -74,7 +77,7 @@ export function normalizeBarrierBranches(branches = []) {
     const maximumMargin = rawMaximumMargin === null ? null : Math.max(minimumMargin, rawMaximumMargin);
     return [{
       id: String(branch.id || `branch-${index + 1}`),
-      label: String(branch.label || (type === "otherwise" ? "Nenhuma outra condição" : outcome === "success" ? "Sucesso" : "Falha")),
+      label: String(branch.label || (type === "otherwise" ? "Nenhuma outra condição" : outcome.includes("success") ? "Sucesso" : "Falha")),
       condition: {
         type,
         outcome,
@@ -133,7 +136,9 @@ export function evaluateBarrierConsequence(result, consequence = {}) {
   if (consequence.mode === "conditional") {
     const branches = normalizeBarrierBranches(consequence.branches);
     const matchedBranches = branches.filter(branch => branch.condition.type !== "otherwise" && (
-      (branch.condition.outcome === "success" ? success : !success)
+      (["critical-success", "critical-failure"].includes(branch.condition.outcome)
+        ? result?.outcome === branch.condition.outcome
+        : branch.condition.outcome === "success" ? success : !success)
       && achievedMargin >= branch.condition.minimumMargin
       && (branch.condition.maximumMargin === null || achievedMargin <= branch.condition.maximumMargin)
     ));

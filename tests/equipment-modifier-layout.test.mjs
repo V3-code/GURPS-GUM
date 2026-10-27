@@ -228,6 +228,16 @@ test("created attack editor exposes specialized melee and ranged statistics", ()
   assert.match(itemSheet, /numeric_attack_value/);
 });
 
+test("equipment modifier editor exposes GCS wearer equivalences", () => {
+  assert.match(template, /eq feature\.type "owner_modifier"/);
+  assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.owner_kind/);
+  assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.name_value/);
+  assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.situation/);
+  assert.match(itemSheet, /id: "owner_modifier"/);
+  assert.match(main, /collectActiveEquipmentOwnerModifiers/);
+  assert.match(rollPrompt, /_loadEquipmentOwnerModifiers/);
+});
+
 test("equipment modifiers author structured follow-up and fragmentation damage", () => {
   assert.match(template, /eq feature\.type "attack_damage"/);
   assert.match(template, /system\.features_data\.\{\{feature\.id\}\}\.damage_slot/);

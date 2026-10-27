@@ -35,6 +35,17 @@ test("collects only equipped equipment with an explicitly active Defense Bonus",
   assert.equal(totalActiveEquipmentDefenseBonus(items), 5);
 });
 
+test("uses the prepared equipment resolution when it is already available", () => {
+  const item = {
+    id: "prepared", name: "Prepared shield", type: "equipment",
+    _source: { system: { location: "equipped", defense_bonus: 1, defense_bonus_active: true } },
+    system: { equipmentResolution: { properties: { defense_bonus: 4 } } }
+  };
+  assert.deepEqual(collectActiveEquipmentDefenseBonuses([item]), [
+    { itemId: "prepared", name: "Prepared shield", bonus: 4 }
+  ]);
+});
+
 test("marks only ordinary defense outcomes crossed by an active Defense Bonus", () => {
   assert.deepEqual(evaluateDecisiveDefenseBonus({ rollTotal: 12, uncappedTarget: 12, defenseBonus: 2 }), {
     outcome: "success", bonus: 2, finalTarget: 12, targetWithoutBonus: 10

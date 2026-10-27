@@ -23,5 +23,6 @@ export function getContextualPurposeIds({ relatedPurposeIds = [], requestedPurpo
 }
 
 export function getInitialContextualFilterState(contextualPurposeIds = []) {
-  return normalizePurposeIds(contextualPurposeIds).length > 0;
+  normalizePurposeIds(contextualPurposeIds);
+  return true;
 }

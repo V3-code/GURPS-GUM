@@ -82,6 +82,18 @@ test("Barreira condicional permite ações compartilhadas entre resultados", () 
   assert.deepEqual(failure.actionIds, ["a", "c"]);
 });
 
+test("Barreira condicional distingue resultados críticos exatos", () => {
+  const consequence = normalizeResistanceRoll({
+    mode: "conditional",
+    branches: [
+      { id: "critical", outcome: "critical-failure", actionIds: ["critical-action"] },
+      { id: "ordinary", outcome: "failure", actionIds: ["failure-action"] }
+    ]
+  }).consequence;
+  assert.deepEqual(evaluateBarrierConsequence({ outcome: "critical-failure", margin: -6 }, consequence).actionIds, ["critical-action", "failure-action"]);
+  assert.deepEqual(evaluateBarrierConsequence({ outcome: "failure", margin: -2 }, consequence).actionIds, ["failure-action"]);
+});
+
 test("Barreira condicional respeita margem, ordem e caso contrário", () => {
   const consequence = normalizeResistanceRoll({
     mode: "conditional",

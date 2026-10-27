@@ -636,8 +636,7 @@
                                                     <div class="effect-premium-field">
                                                         <label class="effect-premium-field-label"><i class="fas fa-hashtag" aria-hidden="true"></i>{{localize "GUM.EffectSheet.InitialValue"}}</label>
                                                         <div class="effect-premium-field-control">
-                                                            <input type="text" class="effect-compact-value" name="system.actions.{{action.index}}.value" value="{{action.value}}" placeholder="{{localize 'GUM.EffectSheet.ExampleResourceValue'}}" />
-                                                            <p class="effect-premium-field-hint">{{localize "GUM.EffectSheet.EvaluatedOnCreate"}}</p>
+                                                            <input type="text" class="effect-compact-value" name="system.actions.{{action.index}}.value" value="{{action.value}}" placeholder="{{localize 'GUM.EffectSheet.ExampleResourceValue'}}" title="{{localize 'GUM.EffectSheet.EvaluatedOnCreate'}}" />
                                                         </div>
                                                     </div>
 
@@ -664,8 +663,7 @@
                                                     <div class="effect-premium-field">
                                                         <label class="effect-premium-field-label"><i class="fas fa-gauge-high" aria-hidden="true"></i>{{localize "GUM.EffectSheet.Maximum"}}</label>
                                                         <div class="effect-premium-field-control">
-                                                            <input type="text" class="effect-compact-value" name="system.actions.{{action.index}}.max" value="{{action.max}}" />
-                                                            <p class="effect-premium-field-hint">{{localize "GUM.EffectSheet.SameInitialExpressionHint"}}</p>
+                                                            <input type="text" class="effect-compact-value" name="system.actions.{{action.index}}.max" value="{{action.max}}" title="{{localize 'GUM.EffectSheet.SameInitialExpressionHint'}}" />
                                                         </div>
                                                     </div>
 
@@ -1685,8 +1683,10 @@
                                                 <option value="otherwise" {{#if branch.isOtherwise}}selected{{/if}}>{{localize "GUM.EffectSheet.Otherwise"}}</option>
                                             </select>
                                             <select name="system.resistanceRoll.branches.{{branch.index}}.condition.outcome" aria-label="{{localize 'GUM.EffectSheet.TestOutcome'}}" {{#if branch.isOtherwise}}disabled{{/if}}>
-                                                <option value="failure" {{#unless branch.isSuccess}}selected{{/unless}}>{{localize "GUM.EffectSheet.Failure"}}</option>
+                                                <option value="failure" {{#if branch.isFailure}}selected{{/if}}>{{localize "GUM.EffectSheet.Failure"}}</option>
                                                 <option value="success" {{#if branch.isSuccess}}selected{{/if}}>{{localize "GUM.EffectSheet.Success"}}</option>
+                                                <option value="critical-failure" {{#if branch.isCriticalFailure}}selected{{/if}}>{{localize "GUM.RollRequest.CriticalFailure"}}</option>
+                                                <option value="critical-success" {{#if branch.isCriticalSuccess}}selected{{/if}}>{{localize "GUM.RollRequest.CriticalSuccess"}}</option>
                                             </select>
                                             <label>{{localize "GUM.EffectSheet.MinimumMargin"}} <input type="number" min="0" step="1" name="system.resistanceRoll.branches.{{branch.index}}.condition.minimumMargin" value="{{branch.condition.minimumMargin}}" {{#if branch.isOtherwise}}disabled{{/if}}></label>
                                             <label>{{localize "GUM.EffectSheet.MaximumMargin"}} <input type="number" min="0" step="1" name="system.resistanceRoll.branches.{{branch.index}}.condition.maximumMargin" value="{{branch.maximumMargin}}" placeholder="{{localize 'GUM.EffectSheet.NoLimit'}}" {{#if branch.isOtherwise}}disabled{{/if}}></label>

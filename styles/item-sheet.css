@@ -3162,8 +3162,72 @@ color:#121114;
 /* 3) Passive/General (Nome | Ações) */
 .gum.sheet.item .effects-line.effects-line-passive {
   grid-template-columns:
-    minmax(220px, 1fr)
-    34px;
+    minmax(190px, 1fr)
+    minmax(280px, 1.25fr)
+    42px;
+}
+
+.gum.sheet.item.condition-sheet .effects-line.effects-line-passive {
+  grid-template-columns: minmax(220px, 1.05fr) minmax(310px, 1.2fr) 42px;
+}
+
+.gum.sheet.item.condition-sheet .condition-effect-link-settings {
+  display: grid;
+  grid-template-columns: minmax(200px, 280px);
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+  justify-items: center;
+  gap: 7px;
+}
+
+.gum.sheet.item.condition-sheet .condition-effect-link-option {
+  min-width: 0;
+  margin: 0;
+}
+
+.gum.sheet.item.condition-sheet .condition-effect-link-phase {
+  display: grid;
+  width: 100%;
+  gap: 3px;
+}
+
+.gum.sheet.item.condition-sheet .condition-effect-link-label {
+  color: var(--item-text-muted);
+  font-family: var(--item-font-condensed);
+  font-size: .56rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.gum.sheet.item.condition-sheet .condition-effect-link-phase select {
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  color: var(--item-input-text);
+  background: var(--item-input-bg);
+  border: 1px solid var(--item-input-border);
+  border-radius: 6px;
+}
+
+.gum.sheet.item.condition-sheet .condition-effect-link-settings > .custom-checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  justify-self: center;
+  white-space: nowrap;
+}
+
+.gum.sheet.item.condition-sheet .condition-effect-link-help {
+  color: var(--item-text-muted);
+  font-size: .68rem;
+}
+
+.gum.sheet.item.condition-sheet .condition-effect-link-controls {
+  min-width: 42px;
 }
 .gum.sheet.item .effects-line.effects-line-passive-use {
     grid-template-columns:

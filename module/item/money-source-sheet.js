@@ -6,7 +6,7 @@ export class MoneySourceSheet extends ItemSheet {
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
       classes: ["gum", "sheet", "item", "money-source-sheet", "theme-dark"],
-      width: 480,
+      width: 520,
       height: 560,
       template: "systems/gum/templates/items/money-source-sheet.hbs",
       submitOnChange: true,

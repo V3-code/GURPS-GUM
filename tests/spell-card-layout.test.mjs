@@ -41,6 +41,14 @@ test("primary damage signals secondary damage and attack level uses a subtle tag
   assert.match(styles, /\.magic-card__attack-level-tag\s*\{[^}]*border:[^}]*background:/s);
 });
 
+test("spell and power cards signal roll modifiers", () => {
+  assert.match(actorSheet, /spell\.modifierIndicators = buildSkillModifierIndicators/);
+  assert.match(actorSheet, /power\.modifierIndicators = buildSkillModifierIndicators/);
+  assert.match(spellTab, /magic-card__modifier-indicator/);
+  assert.match(powerTab, /magic-card__modifier-indicator/);
+  assert.match(styles, /\.magic-card__modifier-indicator\s*\{/);
+});
+
 test("spell rows preserve rolls, quick view, item actions, and drag behavior", () => {
   assert.match(spellTab, /class="rollable magic-card__metric-value"/);
   assert.match(spellTab, /class="rollable-damage magic-card__metric-value"/);

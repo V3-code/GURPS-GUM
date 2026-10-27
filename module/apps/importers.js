@@ -159,7 +159,7 @@ export async function importFromJson({ pack: fixedPack = null } = {}) {
                 </select>
             </div>` : "";
         const canCreatePack = Boolean(game.user?.isGM && !fixedPack);
-        const preferNewBundlePack = Boolean(itemBundle && canCreatePack);
+        const preferNewBundlePack = canCreatePack;
         const destinationFields = fixedPack ? `
             <div class="gum-import-destination-summary">
                 <i class="fas fa-book"></i>
@@ -2719,12 +2719,57 @@ function parseGCSLibraryEquipmentModifier(gcsMod) {
     const weaponPaths = {
         weapon_bonus: "damage_formula", weapon_acc_bonus: "accuracy", weapon_scope_acc_bonus: "accuracy",
         weapon_dr_divisor_bonus: "armor_divisor", weapon_min_st_bonus: "min_strength", weapon_recoil_bonus: "rcl",
-        weapon_bulk_bonus: "mag"
+        weapon_bulk_bonus: "mag", weapon_parry_bonus: "parry_bonus", weapon_block_bonus: "block_bonus",
+        weapon_effective_st_bonus: "effective_st_bonus", weapon_effective_strength_bonus: "effective_st_bonus"
     };
+    const featureAmount = feature => {
+        const raw = feature?.amount?.value ?? feature?.amount ?? feature?.bonus?.value ?? feature?.bonus ?? feature?.value ?? 0;
+        const parsed = Number(raw);
+        return Number.isFinite(parsed) ? parsed : 0;
+    };
+    const ownerFeature = (id, feature, kind, { nameValue = "", nameCompare = "is", situation = "" } = {}) => ({
+        id,
+        label: feature.name || feature.situation || `Feature GCS: ${feature.type}`,
+        enabled: true,
+        type: "owner_modifier",
+        owner_kind: kind,
+        name_compare: nameCompare,
+        name_value: nameValue,
+        situation,
+        value: featureAmount(feature),
+        per_level: feature.per_level === true || feature.leveled === true
+    });
     const structuredFeatures = {};
     const unmappedFeatures = [];
     for (const [index, feature] of (gcsMod.features || []).entries()) {
         const id = `gcs-${index}`;
+        if (feature?.type === "skill_bonus") {
+            const supportedSelection = !feature.selection_type || feature.selection_type === "skills_with_name";
+            const comparison = String(feature.name?.compare || "is");
+            if (!supportedSelection || !["is", "contains"].includes(comparison)) {
+                unmappedFeatures.push(foundry.utils.deepClone(feature));
+                continue;
+            }
+            const skillName = qualifier(feature.name || feature.skill || feature.specialization);
+            structuredFeatures[id] = ownerFeature(id, feature, "skill", {
+                nameValue: skillName,
+                nameCompare: comparison
+            });
+            continue;
+        }
+        if (feature?.type === "attribute_bonus") {
+            const attribute = String(feature.attribute || feature.attribute_id || feature.name || "").trim().toLowerCase();
+            structuredFeatures[id] = ownerFeature(id, feature, "attribute", { nameValue: attribute });
+            continue;
+        }
+        if (feature?.type === "conditional_modifier") {
+            structuredFeatures[id] = ownerFeature(id, feature, "conditional", { situation: String(feature.situation || feature.name || "").trim() });
+            continue;
+        }
+        if (feature?.type === "reaction_bonus") {
+            structuredFeatures[id] = ownerFeature(id, feature, "reaction", { situation: String(feature.situation || feature.name || "").trim() });
+            continue;
+        }
         if (feature?.type === "dr_bonus") {
             const locations = Array.isArray(feature.locations) && feature.locations.length ? feature.locations : ["all"];
             locations.forEach((location, locationIndex) => {
@@ -2733,7 +2778,7 @@ function parseGCSLibraryEquipmentModifier(gcsMod) {
                     id: featureId, label: `RD importada (${location})`, enabled: true, type: "equipment_dr",
                     location: String(location).toLowerCase() === "all" ? "all" : String(location),
                     damage_type: !feature.specialization || String(feature.specialization).toLowerCase() === "all" ? "base" : feature.specialization,
-                    operation: "add", value: Number(feature.amount) || 0, per_level: feature.per_level === true
+                    operation: "add", value: featureAmount(feature), per_level: feature.per_level === true
                 };
             });
             continue;
@@ -2752,7 +2797,7 @@ function parseGCSLibraryEquipmentModifier(gcsMod) {
         if (weaponPath && feature.percent !== true && !feature.dice) {
             structuredFeatures[id] = {
                 id, label: `Feature GCS: ${feature.type}`, enabled: true, type: "attack_property", attack_type: "all",
-                ...selectorForWeaponFeature(feature), path: weaponPath, operation: "add", value: Number(feature.amount) || 0,
+                ...selectorForWeaponFeature(feature), path: weaponPath, operation: "add", value: featureAmount(feature),
                 per_level: feature.per_level === true || feature.leveled === true
             };
             continue;

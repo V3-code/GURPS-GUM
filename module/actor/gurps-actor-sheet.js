@@ -24,6 +24,7 @@ import { normalizeRequestedAttributeKey } from "../utils/requested-attributes.mj
 import { resolveStoredEffectStackingDomain } from "../utils/effect-stacking.mjs";
 import { calculateLiftingCapacities, resolveThrowingDistance } from "../utils/physical-feats.mjs";
 import { buildEffectiveBodyLocations, describeBodyLocationSources } from "../utils/damage-resistance-locations.mjs";
+import { buildActorEffectTargets } from "../utils/condition-actor-context.mjs";
 
 const WOUND_NATURE_ICONS = Object.freeze({
   fire: "fa-fire",
@@ -519,6 +520,8 @@ async getData(options) {
             return contexts.some((ctx) => {
                 if (ctx === "skill") return item.type === "skill";
                 if (ctx.startsWith("skill_")) return item.type === "skill" && baseAttr === ctx.replace("skill_", "");
+                if (ctx === "spell") return item.type === "spell";
+                if (ctx === "power") return item.type === "power";
                 return false;
             });
         };
@@ -783,6 +786,12 @@ async getData(options) {
             spell.magicCardAdditionalDamageMarkers = "+".repeat(additionalDamageLabels.length);
             spell.magicCardAdditionalDamageHint = additionalDamageLabels.join(" + ");
             spell.magicCardExpanded = this._expandedSpellCards.has(spell.id);
+            spell.modifierIndicators = buildSkillModifierIndicators({
+                effects: actorActiveEffects,
+                skill: spell,
+                matchesTarget: matchesEntryTargetForItem,
+                matchesContext: matchesEntryContextForItem
+            });
             let groupName = (spell.system.group || 'Geral').trim();
             if (!groupName) groupName = 'Geral';
             if (!spellsByGroup[groupName]) spellsByGroup[groupName] = [];
@@ -822,6 +831,12 @@ async getData(options) {
             power.powerCardAdditionalDamageMarkers = "+".repeat(additionalDamageLabels.length);
             power.powerCardAdditionalDamageHint = additionalDamageLabels.join(" + ");
             power.powerCardExpanded = this._expandedPowerCards.has(power.id);
+            power.modifierIndicators = buildSkillModifierIndicators({
+                effects: actorActiveEffects,
+                skill: power,
+                matchesTarget: matchesEntryTargetForItem,
+                matchesContext: matchesEntryContextForItem
+            });
             let groupName = (power.system.group || 'Geral').trim();
             if (!groupName) groupName = 'Geral';
             if (!powersByGroup[groupName]) powersByGroup[groupName] = [];
@@ -1766,8 +1781,7 @@ async _onDrop(event) {
         }
         if (item?.type === "effect") {
             event.preventDefault();
-            const activeTokens = this.actor.getActiveTokens(true);
-            const targets = activeTokens.length ? activeTokens : [{ actor: this.actor }];
+            const targets = buildActorEffectTargets(this.actor);
             await applyEffectWithResistance(item, targets, { actor: this.actor, origin: item, mode: "sheet-drop" });
             return;
         }

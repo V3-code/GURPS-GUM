@@ -16,7 +16,7 @@ export function collectActiveEquipmentDefenseBonuses(items = []) {
     const system = item._source?.system || item.system || {};
     const equipped = system.equipped === true || String(system.location || "").toLowerCase() === "equipped";
     if (!equipped || system.defense_bonus_active !== true) return [];
-    const resolution = resolveEquipment(system);
+    const resolution = item.system?.equipmentResolution || resolveEquipment(system);
     const bonus = numeric(resolution.properties?.defense_bonus);
     if (!bonus) return [];
     return [{ itemId: item.id, name: String(item.name || ""), bonus }];

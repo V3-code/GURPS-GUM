@@ -621,6 +621,9 @@
       "reach": "C",
       "parry": "0",
       "block": "0",
+      "parry_bonus": 0,
+      "block_bonus": 0,
+      "effective_st_bonus": 0,
       "parry_default": true,
       "block_default": true,
       "min_strength": 0,
@@ -660,6 +663,7 @@
       "rcl": "1",
       "mag": "1",
       "min_strength": 0,
+      "effective_st_bonus": 0,
       "groups": "",
       "onDamageEffects": {},
       "follow_up_damage": {

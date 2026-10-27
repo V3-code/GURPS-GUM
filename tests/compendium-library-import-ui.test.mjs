@@ -64,6 +64,11 @@ test("a janela de destino usa formulário e seletor visual de modo", () => {
   assert.match(importer, /width: 620/);
 });
 
+test("criar novo compêndio é o destino padrão quando o usuário pode criá-lo", () => {
+  assert.match(importer, /const preferNewBundlePack = canCreatePack;/);
+  assert.match(importer, /value="new" \$\{preferNewBundlePack \|\| !allItemPacks\.length \? "checked" : ""\}/);
+});
+
 test("o diretório de atores usa o nome de ação orientado ao personagem", () => {
   assert.match(main, /GUM\.LibraryImport\.ImportCharacter/);
   assert.doesNotMatch(main, /> Importar do GCS/);

@@ -4,6 +4,7 @@ import { EffectBuilder } from "./effect-builder.js";
 import { TriggerBrowser } from "../../module/apps/trigger-browser.js";
 import { WORLD_STATUS_SETTING, normalizeWorldStatusConfiguration } from "../../module/utils/world-status-config.mjs";
 import { buildStatusCatalog, resolveStatusCatalogEntry } from "../../module/utils/status-catalog.mjs";
+import { normalizeConditionEffectLinks } from "../../module/utils/condition-effect-link.mjs";
 
 const { ItemSheet } = foundry.appv1.sheets;
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
@@ -12,8 +13,8 @@ export class ConditionSheet extends ItemSheet {
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
             classes: ["gum", "sheet", "item", "condition-sheet", "theme-dark"],
-            width: 500,
-            height: 600,
+            width: 720,
+            height: 650,
             resizable: true,
             template: "systems/gum/templates/items/condition-sheet.hbs",
             tabs: [{
@@ -58,8 +59,9 @@ export class ConditionSheet extends ItemSheet {
         context.enrichedChatDescription = await TextEditorImpl.enrichHTML(this.item.system.chat_description || "", { async: true });
         context.owner = this.item.isOwner;
         context.editable = this.options.editable;
+        context.canUseItemAttachmentDrops = this._canUseItemAttachmentDrops();
         
-        const effectLinks = this.item.system.effects || [];
+        const effectLinks = normalizeConditionEffectLinks(this.item.system.effects);
         const preparedEffects = [];
 
         // Para cada link na lista de efeitos, carregamos o item completo.
@@ -76,7 +78,9 @@ export class ConditionSheet extends ItemSheet {
                         chat_description: effectItem.system.chat_description,
                         summary: this._getEffectSummary(effectItem), // Gera o resumo␊
                         index: index, // O índice original para a função de deletar␊
-                        uuid: link.uuid // O UUID para a função de visualizar␊
+                        uuid: link.uuid, // O UUID para a função de visualizar␊
+                        phase: link.phase,
+                        removeOnConditionEnd: link.removeOnConditionEnd !== false
                     });
                 } else {
                     // Adiciona um placeholder se o link estiver quebrado␊
@@ -154,12 +158,23 @@ export class ConditionSheet extends ItemSheet {
         html.find('.delete-effect').on('click', (ev) => {
             ev.preventDefault();
             const effectIndex = $(ev.currentTarget).closest('.effect-entry').data('effectIndex');
-            const effects = foundry.utils.deepClone(this.item.system.effects || []);
+            const effects = foundry.utils.deepClone(normalizeConditionEffectLinks(this.item.system.effects));
             if (Number.isInteger(effectIndex)) {
                 effects.splice(effectIndex, 1);
             }
             this.item.update({ "system.effects": effects });
         });
+
+        html.on("dragenter dragover", ".condition-effect-dropzone", event => {
+            if (!this._canUseItemAttachmentDrops()) return;
+            event.preventDefault();
+            event.stopPropagation();
+            event.currentTarget.classList.add("is-dragover");
+        });
+        html.on("dragleave dragend", ".condition-effect-dropzone", event => {
+            event.currentTarget.classList.remove("is-dragover");
+        });
+        html.on("drop", ".condition-effect-dropzone", this._onEffectDrop.bind(this));
         
         // Visualizar a ficha do Item Efeito original
         html.find('.view-effect').on('click', async (ev) => {
@@ -184,6 +199,64 @@ export class ConditionSheet extends ItemSheet {
         html.find('.toggle-editor').on('click', this._toggleEditor.bind(this));
         html.find('.save-description').on('click', this._saveDescription.bind(this));
         html.find('.cancel-description').on('click', this._cancelDescription.bind(this));
+    }
+
+    _canUseItemAttachmentDrops() {
+        if (!this.isEditable || !this.item?.isOwner) return false;
+        if (game.user?.isGM) return true;
+        if (!game.settings.get("gum", "allowPlayerItemAttachmentDrops")) return false;
+        const minimumRole = Number(game.settings.get("gum", "itemAttachmentDropMinimumRole"));
+        return Number(game.user?.role) >= minimumRole;
+    }
+
+    async _onEffectDrop(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.currentTarget.classList.remove("is-dragover");
+        if (!this._canUseItemAttachmentDrops()) {
+            return ui.notifications.warn(game.i18n.localize("GUM.ItemAttachments.NotAllowed"));
+        }
+        const nativeEvent = event.originalEvent ?? event;
+        const data = TextEditorImpl.getDragEventData(nativeEvent);
+        if (data?.type !== "Item") return;
+        const effect = await Item.fromDropData(data).catch(() => null);
+        if (!effect?.uuid || effect.parent?.documentName === "Actor") {
+            return ui.notifications.warn(game.i18n.localize("GUM.ItemAttachments.InvalidSource"));
+        }
+        if (effect.type !== "effect") {
+            return ui.notifications.warn(game.i18n.localize("GUM.ItemAttachments.Incompatible"));
+        }
+        const effects = foundry.utils.deepClone(normalizeConditionEffectLinks(this.item.system.effects));
+        if (effects.some(link => link?.uuid === effect.uuid)) {
+            return ui.notifications.warn(game.i18n.format("GUM.ItemAttachments.AlreadyAttached", { name: effect.name }));
+        }
+        effects.push({ uuid: effect.uuid, phase: "always", removeOnConditionEnd: true });
+        await this.item.update({ "system.effects": effects });
+        ui.notifications.info(game.i18n.format("GUM.ItemAttachments.Added", { name: effect.name }));
+    }
+
+    async _updateObject(event, formData) {
+        const effects = foundry.utils.deepClone(normalizeConditionEffectLinks(this.item.system.effects));
+        const nestedEffects = formData["system.effects"];
+        if (nestedEffects && typeof nestedEffects === "object") {
+            for (const [index, values] of Object.entries(nestedEffects)) {
+                if (!effects[index] || !values || typeof values !== "object") continue;
+                Object.assign(effects[index], values);
+            }
+            delete formData["system.effects"];
+        }
+        for (const [key, value] of Object.entries(formData)) {
+            const match = key.match(/^system\.effects\.(\d+)\.(uuid|phase|removeOnConditionEnd)$/);
+            if (!match) continue;
+            const index = Number(match[1]);
+            if (effects[index]) effects[index][match[2]] = value;
+            delete formData[key];
+        }
+        for (const effect of effects) {
+            effect.removeOnConditionEnd = ![false, "false", 0, "0", null, undefined].includes(effect.removeOnConditionEnd);
+        }
+        formData["system.effects"] = effects;
+        return super._updateObject(event, formData);
     }
 
     _toggleEditor(event) {

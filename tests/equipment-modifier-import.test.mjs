@@ -66,6 +66,42 @@ test("GCS equipment modifier import converts supported features and preserves th
   assert.equal(features["gcs-2"].path, "damage_formula");
   assert.equal(features["gcs-2"].selector_field, "skill_name");
   assert.equal(features["gcs-2"].selector_value, "Escudo");
-  assert.equal(result.system.gcs_features_unmapped.length, 2);
+  assert.equal(features["gcs-3"].path, "parry_bonus");
+  assert.equal(result.system.gcs_features_unmapped.length, 1);
   assert.equal(result.system.description, "");
+});
+
+test("GCS wearer features preserve their target and situation", () => {
+  const context = vm.createContext({
+    foundry: { utils: { deepClone: value => structuredClone(value) } },
+    getSystemTemplate: () => ({ features_data: {} }),
+    getGCSItemNotes: () => ""
+  });
+  vm.runInContext(`${functionSource}\nthis.parseModifier = parseGCSLibraryEquipmentModifier;`, context);
+  const result = context.parseModifier({ features: [
+    { type: "skill_bonus", selection_type: "skills_with_name", name: { compare: "contains", qualifier: "Espada" }, amount: 2 },
+    { type: "attribute_bonus", attribute: "DX", amount: 1 },
+    { type: "conditional_modifier", situation: "no escuro", amount: -2 },
+    { type: "reaction_bonus", situation: "com mercadores", amount: 1 }
+  ] });
+  const features = JSON.parse(JSON.stringify(result.system.features_data));
+  assert.deepEqual([features["gcs-0"].owner_kind, features["gcs-0"].name_compare, features["gcs-0"].name_value], ["skill", "contains", "Espada"]);
+  assert.deepEqual([features["gcs-1"].owner_kind, features["gcs-1"].name_value], ["attribute", "dx"]);
+  assert.equal(features["gcs-2"].situation, "no escuro");
+  assert.equal(features["gcs-3"].owner_kind, "reaction");
+});
+
+test("GCS skill scopes without a safe sheet equivalent remain preserved", () => {
+  const context = vm.createContext({
+    foundry: { utils: { deepClone: value => structuredClone(value) } },
+    getSystemTemplate: () => ({ features_data: {} }),
+    getGCSItemNotes: () => ""
+  });
+  vm.runInContext(`${functionSource}\nthis.parseModifier = parseGCSLibraryEquipmentModifier;`, context);
+  const result = context.parseModifier({ features: [
+    { type: "skill_bonus", selection_type: "this_weapon", amount: 1 },
+    { type: "skill_bonus", selection_type: "skills_with_name", name: { compare: "does_not_contain", qualifier: "Machado" }, amount: 1 }
+  ] });
+  assert.equal(Object.keys(result.system.features_data).length, 0);
+  assert.equal(result.system.gcs_features_unmapped.length, 2);
 });
