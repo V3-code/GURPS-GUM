@@ -129,11 +129,15 @@ A aba de modificadores do equipamento agora apresenta as etapas efetivamente exe
 
 ## Etapa implementada: importação de features GCS
 
-O importador converte automaticamente um subconjunto seguro das features do GCS: bônus de RD por localização, ajustes não percentuais de usos máximos e bônus numéricos compatíveis de dano, precisão, divisor de armadura, ST mínima, recuo e Bulk. Seletores por perícia obrigatória ou nome são preservados quando aplicáveis. Features percentuais, com dados ou sem equivalente seguro não são descartadas: permanecem integralmente em `gcs_features_unmapped` e geram uma observação no modificador importado.
+O importador converte automaticamente um subconjunto seguro das features do GCS: bônus de RD por localização, ajustes não percentuais de usos máximos e bônus numéricos compatíveis de dano, precisão, divisor de armadura, ST mínima, ST efetiva, recuo, Bulk, Aparar e Bloqueio. Seletores por perícia obrigatória ou nome são preservados quando aplicáveis.
+
+Bônus de atributo, perícia nominal, reação e modificadores condicionais também se tornam features do portador. Eles só entram em funcionamento quando o equipamento está equipado. Comparações nominais de perícia `is` e `contains` são preservadas; seletores ou comparações cuja semântica local ainda não seja equivalente permanecem em `gcs_features_unmapped`, em vez de serem aplicados de modo amplo ou incorreto.
+
+Features percentuais, com dados ou sem equivalente seguro não são descartadas: permanecem integralmente em `gcs_features_unmapped` e geram uma observação no modificador importado.
 
 ## Próxima etapa
 
-Validar a importação contra bibliotecas GCS reais e ampliar a tabela somente quando a semântica local for equivalente — especialmente Aparar/Bloqueio, alcances compostos, cadência e tiros. Em paralelo, usar a memória de cálculo para conferir os demais fluxos já implementados no Foundry.
+Validar a importação contra bibliotecas GCS reais e ampliar a tabela somente quando a semântica local for equivalente — especialmente alcances compostos, cadência, tiros e seletores avançados de perícia. Em paralelo, usar a memória de cálculo para conferir os demais fluxos já implementados no Foundry.
 
 ## Estabilização após revisão
 

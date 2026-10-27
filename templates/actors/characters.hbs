@@ -863,6 +863,7 @@
                   <div class="magic-card__metric magic-card__nh">
                     <span class="magic-card__metric-label">{{localize 'GUM.Spells.SkillLevel'}}</span>
                     <a class="rollable magic-card__metric-value" data-type="spell" data-roll-value="{{this.system.final_nh}}" data-label="{{localize 'GUM.Spells.Test' name=this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
+                    {{#if (or this.modifierIndicators.included.visible this.modifierIndicators.roll.visible)}}<span class="magic-card__modifier-indicator" title="{{#if this.modifierIndicators.roll.visible}}{{this.modifierIndicators.roll.title}}{{else}}{{this.modifierIndicators.included.title}}{{/if}}" aria-label="{{#if this.modifierIndicators.roll.visible}}{{this.modifierIndicators.roll.title}}{{else}}{{this.modifierIndicators.included.title}}{{/if}}"><i class="fas fa-sparkles" aria-hidden="true"></i></span>{{/if}}
                   </div>
 
                   <div class="magic-card__metric magic-card__damage">
@@ -1067,6 +1068,7 @@
                   <div class="magic-card__metric magic-card__nh">
                     <span class="magic-card__metric-label">{{localize 'GUM.Spells.SkillLevel'}}</span>
                     <a class="rollable magic-card__metric-value" data-type="power" data-roll-value="{{this.system.final_nh}}" data-label="{{localize 'GUM.Powers.Test' name=this.name}}" data-item-id="{{this.id}}">{{this.system.final_nh}}</a>
+                    {{#if (or this.modifierIndicators.included.visible this.modifierIndicators.roll.visible)}}<span class="magic-card__modifier-indicator" title="{{#if this.modifierIndicators.roll.visible}}{{this.modifierIndicators.roll.title}}{{else}}{{this.modifierIndicators.included.title}}{{/if}}" aria-label="{{#if this.modifierIndicators.roll.visible}}{{this.modifierIndicators.roll.title}}{{else}}{{this.modifierIndicators.included.title}}{{/if}}"><i class="fas fa-sparkles" aria-hidden="true"></i></span>{{/if}}
                   </div>
 
                   <div class="magic-card__metric magic-card__damage">

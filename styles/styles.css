@@ -4445,6 +4445,15 @@ background-color: var(--gum-accent-gold);
     white-space:nowrap;
 }
 .gum.sheet.actor :is(.tab[data-tab="spells"], .tab[data-tab="powers"]) .magic-card__nh .magic-card__metric-value { color:#f0d79f; font-size:12px; }
+.gum.sheet.actor :is(.tab[data-tab="spells"], .tab[data-tab="powers"]) .magic-card__nh { position:relative; }
+.gum.sheet.actor :is(.tab[data-tab="spells"], .tab[data-tab="powers"]) .magic-card__modifier-indicator {
+    position:absolute;
+    margin:0 0 22px 22px;
+    color:#d8b668;
+    font-size:8px;
+    line-height:1;
+    filter:drop-shadow(0 0 3px rgba(216,182,104,.45));
+}
 .gum.sheet.actor :is(.tab[data-tab="spells"], .tab[data-tab="powers"]) .magic-card__damage .magic-card__metric-value { color:#e99aa2; }
 .gum.sheet.actor :is(.tab[data-tab="spells"], .tab[data-tab="powers"]) .magic-card__damage-value {
     display:flex;

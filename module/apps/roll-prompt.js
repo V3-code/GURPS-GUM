@@ -15,6 +15,7 @@ import { matchesEquipmentGrantedEffectScope } from "../utils/equipment-granted-e
 import { availableAmmunition, ammunitionRollModifier } from "../utils/ammunition.mjs";
 import { normalizeRequestedAttributeKey } from "../utils/requested-attributes.mjs";
 import { DISTANCE_MODIFIER_ENABLED_SETTING, DISTANCE_MODIFIER_TABLE_SETTING, getDistanceModifier } from "../utils/distance-modifier.mjs";
+import { collectActiveEquipmentOwnerModifiers } from "../utils/equipment-owner-modifiers.mjs";
 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
@@ -65,6 +66,7 @@ export class GurpsRollPrompt extends FormApplication {
         // 1. Carrega modificadores globais (Escudo)
         this._loadGMModifiers();
         this._loadEffectModifiers();
+        this._loadEquipmentOwnerModifiers();
         this._loadTargetCounterModifiers();
         this._loadAutoDistanceModifier();
         this._loadAutoSizeModifier();
@@ -196,6 +198,22 @@ export class GurpsRollPrompt extends FormApplication {
                 });
             });
         });
+    }
+
+    _loadEquipmentOwnerModifiers() {
+        const records = collectActiveEquipmentOwnerModifiers(this.actor?.items);
+        const reactionRoll = this.rollData?.type === "reaction" || this.context === "reaction";
+        for (const record of records) {
+            if (record.kind !== "conditional" && !(record.kind === "reaction" && reactionRoll)) continue;
+            const value = Number(record.value) || 0;
+            if (!value) continue;
+            this.selectedModifiers.push({
+                id: `equipment-owner-${record.sourceItemId}-${record.id}`,
+                label: [record.label, record.situation].filter(Boolean).join(" — ") || record.sourceItemName,
+                value,
+                isEquipment: true
+            });
+        }
     }
 
     _resolveModifierApplicationSide(entry = {}, fallback = {}) {

@@ -417,7 +417,11 @@ export class EffectSheet extends ItemSheet {
         const actionLabels = new Map(context.effectActions.map(action => [action.id, action.label || format("GUM.EffectSheet.Action.Numbered", { number: action.displayIndex })]));
         context.resistanceBranches = normalizeBarrierBranches(context.system.resistanceRoll?.branches).map((branch, index) => ({
             ...branch, index, displayIndex: index + 1, isOtherwise: branch.condition.type === "otherwise",
-            isSuccess: branch.condition.outcome === "success", actionIdsCsv: branch.actionIds.join(","),
+            isSuccess: branch.condition.outcome === "success",
+            isFailure: branch.condition.outcome === "failure",
+            isCriticalSuccess: branch.condition.outcome === "critical-success",
+            isCriticalFailure: branch.condition.outcome === "critical-failure",
+            actionIdsCsv: branch.actionIds.join(","),
             maximumMargin: branch.condition.maximumMargin ?? "",
             actionSummary: branch.actionIds.map(id => actionLabels.get(id) || format("GUM.EffectSheet.Action.Removed", { id })).join(", ") || localize("GUM.EffectSheet.Action.NoneSelected")
         }));

@@ -1,6 +1,7 @@
 // GUM/scripts/apps/effect-builder.js
 
 import { EffectBrowser } from "../../module/apps/effect-browser.js";
+import { normalizeConditionEffectLinks } from "../../module/utils/condition-effect-link.mjs";
 
 /**
  * [VERSÃO REATORADA]
@@ -39,14 +40,19 @@ export class EffectBuilder {
         if (!selectedEffects || selectedEffects.length === 0) return;
 
         // Pega a lista de links de efeito que já existem na Condição.
-        const existingEffectLinks = foundry.utils.deepClone(this.parentItem.system.effects || []);
+        const existingEffectLinks = foundry.utils.deepClone(normalizeConditionEffectLinks(this.parentItem.system.effects));
+        const existingUuids = new Set(existingEffectLinks.map(link => link.uuid).filter(Boolean));
 
         // Para cada Item Efeito selecionado, criamos um objeto de "link" com seu UUID.
         for (const effectItem of selectedEffects) {
+            if (!effectItem?.uuid || existingUuids.has(effectItem.uuid)) continue;
             const effectLink = {
-                uuid: effectItem.uuid
+                uuid: effectItem.uuid,
+                phase: "always",
+                removeOnConditionEnd: true
             };
             existingEffectLinks.push(effectLink);
+            existingUuids.add(effectItem.uuid);
         }
 
         // Atualiza o Item Condição com a nova lista de links de efeito.

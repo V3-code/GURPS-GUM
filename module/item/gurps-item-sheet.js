@@ -521,6 +521,10 @@ _promptMultipleReferences(parsedList) {
                 min_injury: feature.minInjury,
                 activation_chance: feature.activationChance,
                 required_damage_type: feature.requiredDamageType,
+                owner_kind: feature.ownerKind,
+                name_compare: feature.nameCompare,
+                name_value: feature.nameValue,
+                situation: feature.situation,
                 damage: feature.damage,
                 cumulative_text_equipment_value: ["material", "quality"].includes(feature.path),
                 formula_attack_value: feature.path === "damage_formula",
@@ -530,7 +534,7 @@ _promptMultipleReferences(parsedList) {
                 reserve_type: feature.reserveType,
                 reserve_name: feature.reserveName,
                 reserve_scope: feature.reserveScope,
-                numeric_attack_value: ["skill_level_mod", "armor_divisor", "min_strength", "accuracy", "rcl", "mag"].includes(feature.path),
+                numeric_attack_value: ["skill_level_mod", "armor_divisor", "min_strength", "accuracy", "rcl", "mag", "parry_bonus", "block_bonus", "effective_st_bonus"].includes(feature.path),
                 numeric_ammunition_value: ["attack_modifier", "low_warning"].includes(feature.path) || feature.path.endsWith(".armor_divisor"),
                 formula_ammunition_value: feature.path.endsWith(".formula"),
                 enabled_ammunition_value: feature.path === "enabled",
@@ -554,6 +558,7 @@ _promptMultipleReferences(parsedList) {
                 { id: "create_ammunition", label: game.i18n.localize("GUM.EquipmentModifier.Types.CreateAmmunition") },
                 { id: "ammunition_property", label: game.i18n.localize("GUM.EquipmentModifier.Types.AmmunitionProperty") },
                 { id: "granted_effect", label: game.i18n.localize("GUM.EquipmentModifier.Types.GrantEffect") }
+                ,{ id: "owner_modifier", label: game.i18n.localize("GUM.EquipmentModifier.Types.OwnerModifier") }
             ];
             context.equipmentFeatureOperationOptions = [
                 { id: "add", label: game.i18n.localize("GUM.EquipmentModifier.Operations.Add") },
@@ -585,7 +590,9 @@ _promptMultipleReferences(parsedList) {
                 { id: "damage_nature", label: game.i18n.localize("GUM.EquipmentModifier.Properties.DamageNature") }, { id: "armor_divisor", label: game.i18n.localize("GUM.EquipmentModifier.Properties.ArmorDivisor") },
                 { id: "skill_level_mod", label: game.i18n.localize("GUM.EquipmentModifier.Properties.SkillModifier") }, { id: "min_strength", label: game.i18n.localize("GUM.EquipmentModifier.Properties.MinStrength") },
                 { id: "reach", label: game.i18n.localize("GUM.EquipmentModifier.Properties.Reach") }, { id: "parry", label: game.i18n.localize("GUM.Equipment.Attacks.Parry") },
-                { id: "block", label: game.i18n.localize("GUM.Equipment.Attacks.Block") }, { id: "accuracy", label: game.i18n.localize("GUM.Equipment.Attacks.Accuracy") },
+                { id: "block", label: game.i18n.localize("GUM.Equipment.Attacks.Block") }, { id: "parry_bonus", label: game.i18n.localize("GUM.EquipmentModifier.Properties.ParryBonus") },
+                { id: "block_bonus", label: game.i18n.localize("GUM.EquipmentModifier.Properties.BlockBonus") }, { id: "effective_st_bonus", label: game.i18n.localize("GUM.EquipmentModifier.Properties.EffectiveStrength") },
+                { id: "unbalanced", label: game.i18n.localize("GUM.EquipmentModifier.Properties.Unbalanced") }, { id: "accuracy", label: game.i18n.localize("GUM.Equipment.Attacks.Accuracy") },
                 { id: "range", label: game.i18n.localize("GUM.Equipment.Attacks.Distance") }, { id: "rof", label: game.i18n.localize("GUM.EquipmentModifier.Properties.RateOfFire") },
                 { id: "shots", label: game.i18n.localize("GUM.EquipmentModifier.Properties.Shots") }, { id: "rcl", label: game.i18n.localize("GUM.EquipmentModifier.Properties.Recoil") },
                 { id: "mag", label: game.i18n.localize("GUM.EquipmentModifier.Properties.Magnitude") }, { id: "groups", label: game.i18n.localize("GUM.EquipmentModifier.Properties.Groups") }

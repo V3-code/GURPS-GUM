@@ -10,9 +10,9 @@ import {
 import { ROLL_PURPOSES, resolveRollMetadata } from "../module/utils/roll-purposes.mjs";
 import { matchesRollTags } from "../module/utils/roll-tags.mjs";
 
-test("sem relações o filtro contextual inicia desativado e o catálogo segue disponível", () => {
+test("sem relações o filtro contextual permanece selecionado e o catálogo segue disponível", () => {
   assert.deepEqual(getRelatedPurposeIds([]), []);
-  assert.equal(getInitialContextualFilterState(getContextualPurposeIds()), false);
+  assert.equal(getInitialContextualFilterState(getContextualPurposeIds()), true);
   assert.ok(ROLL_PURPOSES.length > 1);
 });
 

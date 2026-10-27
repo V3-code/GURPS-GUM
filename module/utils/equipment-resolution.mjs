@@ -9,7 +9,7 @@ const number = (value, fallback = 0) => {
 const roundForOutput = value => Math.round((value + Number.EPSILON) * 1e10) / 1e10;
 const clone = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 
-export const EQUIPMENT_FEATURE_TYPES = Object.freeze(["equipment_property", "equipment_descriptor", "equipment_dr", "attack_property", "attack_damage", "create_attack", "create_ammunition", "ammunition_property", "granted_effect"]);
+export const EQUIPMENT_FEATURE_TYPES = Object.freeze(["equipment_property", "equipment_descriptor", "equipment_dr", "attack_property", "attack_damage", "create_attack", "create_ammunition", "ammunition_property", "granted_effect", "owner_modifier"]);
 export const AMMUNITION_PROPERTY_PATHS = Object.freeze([
   "enabled", "attack_modifier", "low_warning",
   ...["main", "follow_up", "fragmentation"].flatMap(part => ["formula", "operation", "type", "nature", "armor_divisor", "divisor_operation"].map(field => `${part}.${field}`))
@@ -111,7 +111,7 @@ export function describeEquipmentResolutionWarnings(warnings = []) {
 }
 export const ATTACK_PROPERTY_PATHS = Object.freeze([
   "skill_level_mod", "damage_formula", "damage_type", "damage_nature", "armor_divisor", "min_strength",
-  "reach", "parry", "block", "accuracy", "range", "rof", "shots", "rcl", "mag", "groups"
+  "reach", "parry", "block", "parry_bonus", "block_bonus", "effective_st_bonus", "unbalanced", "accuracy", "range", "rof", "shots", "rcl", "mag", "groups"
 ]);
 
 function parseFraction(value) {
@@ -263,6 +263,10 @@ export function normalizeEquipmentFeature(feature = {}, index = 0) {
     minInjury: Math.max(0, number(feature.min_injury ?? feature.minInjury)),
     activationChance: Math.min(100, Math.max(0, number(feature.activation_chance ?? feature.activationChance, 100))),
     requiredDamageType: String(feature.required_damage_type ?? feature.requiredDamageType ?? "").trim(),
+    ownerKind: ["skill", "attribute", "conditional", "reaction"].includes(feature.owner_kind ?? feature.ownerKind) ? (feature.owner_kind ?? feature.ownerKind) : "conditional",
+    nameCompare: ["is", "contains"].includes(feature.name_compare ?? feature.nameCompare) ? (feature.name_compare ?? feature.nameCompare) : "is",
+    nameValue: String(feature.name_value ?? feature.nameValue ?? "").trim(),
+    situation: String(feature.situation ?? "").trim(),
     attack: {
       ...attack,
       parry_default: attack.parry_default !== false,
@@ -456,6 +460,7 @@ function resolveFeatures(equipment, modifiers, warnings) {
   let ammunition = defaultAmmunition(equipment.ammunition || {});
   const steps = [];
   const grantedEffects = [];
+  const ownerModifiers = [];
   const descriptors = (Array.isArray(equipment.descriptors) ? clone(equipment.descriptors) : [])
     .map((descriptor, index) => typeof descriptor === "string" ? { id: `base-${index}`, kind: "tag", value: descriptor, sourceName: "Equipamento-base" } : descriptor);
   const overrides = new Map();
@@ -482,6 +487,24 @@ function resolveFeatures(equipment, modifiers, warnings) {
     });
 
   for (const { modifier, feature, scale } of tasks) {
+
+      if (feature.type === "owner_modifier") {
+        const value = number(feature.value) * scale;
+        ownerModifiers.push({
+          id: `${modifier.id}:${feature.id}`,
+          sourceModifierId: modifier.id,
+          sourceModifierName: modifier.name,
+          featureId: feature.id,
+          label: feature.label,
+          kind: feature.ownerKind,
+          nameCompare: feature.nameCompare,
+          nameValue: feature.nameValue,
+          situation: feature.situation,
+          value
+        });
+        steps.push({ type: feature.type, sourceId: modifier.id, sourceName: modifier.name, featureId: feature.id, label: feature.label, path: `owner.${feature.ownerKind}`, input: 0, output: value });
+        continue;
+      }
 
       if (feature.type === "create_ammunition") {
         if (overrides.has("ammunition:create")) warnings.push({ type: "conflicting_feature_override", domain: "ammunition", path: "ammunition", sources: [overrides.get("ammunition:create"), modifier.id] });
@@ -716,7 +739,7 @@ function resolveFeatures(equipment, modifiers, warnings) {
         if (!matches) warnings.push({ type: "feature_no_match", domain: "attack", sourceId: modifier.id, featureId: feature.id, selectorField: feature.selectorField, selectorValue: feature.selectorValue });
       }
   }
-  return { properties, descriptors, drLocations, meleeAttacks, rangedAttacks, ammunition, grantedEffects, steps, chargeReserveType, chargeReserveName, chargeReserveScope, chargeModeFromModifier };
+  return { properties, descriptors, drLocations, meleeAttacks, rangedAttacks, ammunition, grantedEffects, ownerModifiers, steps, chargeReserveType, chargeReserveName, chargeReserveScope, chargeModeFromModifier };
 }
 
 export function resolveEquipmentUses(equipment = {}, resolvedProperties = {}) {

@@ -20,6 +20,8 @@ import { TriggerSheet } from './apps/trigger-sheet.js';
 import { applySingleEffect, getEffectActions } from './effects-engine.js';
 import { isPersistentEffectAction, normalizeEffectStackingMode } from '../module/utils/effect-stacking.mjs';
 import { buildActorEffectTarget, buildActorEffectTargets, getActorEvaluationKey, isActorContextAvailable, isMissingSyntheticActorContextError } from '../module/utils/condition-actor-context.mjs';
+import { captureActorResourceChanges } from '../module/utils/actor-resource-change.mjs';
+import { ConditionEventDeduper, normalizeConditionEffectLinks, shouldExecuteConditionEffectLink } from '../module/utils/condition-effect-link.mjs';
 import { reconcileAllStateEffects, removeAllStateEffectsForItem, setStateEffectGroupActive, syncItemStateEffects } from '../module/services/state-effect-service.js';
 import { GUM } from '../module/config.js';
 import { installItemCompendiumExportSourceCompatibility } from '../module/utils/foundry-item-compat.mjs';
@@ -63,6 +65,7 @@ import { installGumChatCommandInterceptor, normalizeGumLookup, resolveGumCommand
 import { buildEquipmentConsumptionUpdate, resolveEquipment } from "../module/utils/equipment-resolution.mjs";
 import { applyEquipmentDefenseBonus, collectActiveEquipmentDefenseBonuses, evaluateDecisiveDefenseBonus } from "../module/utils/equipment-defense-bonus.mjs";
 import { collectActiveEquipmentGrantedEffects, EQUIPMENT_GRANTED_EFFECT_SOURCE, hasEquipmentGrantRelevantChange, matchesEquipmentGrantedEffectScope } from "../module/utils/equipment-granted-effects.mjs";
+import { collectActiveEquipmentOwnerModifiers, equipmentAttributeBonus, equipmentSkillBonus } from "../module/utils/equipment-owner-modifiers.mjs";
 import { registerHexOccupancyCanvasHooks } from "../module/canvas/hex-occupancy-overlay.js";
 import { registerHexOccupancyCanvasLayer } from "../module/canvas/hex-occupancy-layer.mjs";
 import { registerMovementRulerIntegration } from "../module/canvas/movement-ruler.mjs";
@@ -688,6 +691,7 @@ const activeEffects = Array.isArray(this.effects) ? this.effects : Array.from(th
         const activeEquipmentDefenseBonus = activeEquipmentDefenseBonusSources.reduce((total, source) => total + source.bonus, 0);
         combat.active_equipment_defense_bonus = activeEquipmentDefenseBonus;
         combat.active_equipment_defense_bonus_sources = activeEquipmentDefenseBonusSources;
+        const activeEquipmentOwnerModifiers = collectActiveEquipmentOwnerModifiers(this.items);
 
         // --- ETAPA 2: MOTOR DE CONDIÇÕES ---
 const add_sub_modifiers = {};
@@ -737,6 +741,13 @@ const add_sub_modifiers = {};
         for (const path in add_sub_modifiers) {
             const currentVal = foundry.utils.getProperty(this, path) || 0; 
             foundry.utils.setProperty(this, path, currentVal + add_sub_modifiers[path]);
+        }
+        // Bônus de atributo concedidos por equipamento participam da mesma
+        // camada passiva dos efeitos, antes dos cálculos derivados.
+        for (const attr of allAttributes) {
+            if (!attributes[attr]) continue;
+            attributes[attr].passive = (Number(attributes[attr].passive) || 0)
+                + equipmentAttributeBonus(activeEquipmentOwnerModifiers, attr);
         }
 
         // --- ETAPA 4: CÁLCULOS INTERMEDIÁRIOS (FINAL_COMPUTED) ---
@@ -914,7 +925,8 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
         for (const attr of allAttributes) {
             if (attributes[attr]) {
                 const override = attributes[attr].override;
-                attributes[attr].final = (override !== null && override !== undefined) ? override : attributes[attr].final_computed;
+                const resolved = (override !== null && override !== undefined) ? override : attributes[attr].final_computed;
+                attributes[attr].final = Number(resolved) || 0;
             }
         }
         // Equipment DB is the last additive layer so item effects and overrides
@@ -1115,11 +1127,12 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                     const nhLevel = Number(i.system.skill_level) || 0;
                     const nhMod = Number(i.system.nh_mod) || 0;
                     const nhBonuses = collectNhBonusesForItem(i, i.system.base_attribute);
-                    const nhPassive = (Number(i.system.nh_passive) || 0) + nhBonuses.passive;
+                    const equipmentNhBonus = equipmentSkillBonus(activeEquipmentOwnerModifiers, i);
+                    const nhPassive = (Number(i.system.nh_passive) || 0) + nhBonuses.passive + equipmentNhBonus;
                     const nhTemp = (Number(i.system.nh_temp) || 0) + nhBonuses.temp;
                     const nhOverride = i.system.nh_override;
                     i.system.final_nh = nhOverride !== null && nhOverride !== "" && nhOverride !== undefined
-                        ? Number(nhOverride) || 0
+                        ? (Number(nhOverride) || 0) + equipmentNhBonus
                         : nhBase + nhLevel + nhMod + nhPassive + nhTemp;
 
                     const hasTreeOwnData = i.system.tree_base_attribute !== undefined
@@ -1135,7 +1148,7 @@ this.system.encumbrance.segment_labels = this.system.encumbrance.level_data.map(
                         const treeNhMod = Number(i.system.tree_nh_mod ?? 0) || 0;
                         const treeDefaultMod = Number(i.system.tree_default_mod ?? 0) || 0;
                         const treeNhBonuses = collectNhBonusesForItem(i, treeBaseAttribute);
-                        const treeNhPassive = (Number(i.system.nh_passive) || 0) + treeNhBonuses.passive;
+                        const treeNhPassive = (Number(i.system.nh_passive) || 0) + treeNhBonuses.passive + equipmentNhBonus;
                         const treeNhTemp = (Number(i.system.nh_temp) || 0) + treeNhBonuses.temp;
                         i.system.tree_final_nh = treeNhBase + treeDefaultMod + treeNhLevel + treeNhMod + treeNhPassive + treeNhTemp;
                     }
@@ -1207,10 +1220,15 @@ const splitDefenseValue = (value) => {
 
                         const calculateFinalDefense = (rawDefense, defenseType, useDefault = false, importedFinalDefense = null) => {
                             const defenseNhBonuses = collectNhBonusesForDefense(i, attack, "melee", defenseType);
+                            const ownerDefenseBonus = equipmentAttributeBonus(activeEquipmentOwnerModifiers, defenseType);
+                            const featureDefenseBonus = Number(defenseType === "parry" ? attack.parry_bonus : attack.block_bonus) || 0;
                             const shouldRecalculate = combatModifierEntries.some(({ entry }) => defenseType === "parry" ? entry.recalculate_parry : entry.recalculate_block);
                             const importedParsed = splitDefenseValue(importedFinalDefense);
                             if (importedParsed && !shouldRecalculate) {
-                                const finalImportedDefense = addBonusesToDefenseValue(importedFinalDefense, defenseNhBonuses);
+                                const finalImportedDefense = addBonusesToDefenseValue(importedFinalDefense, {
+                                    passive: (Number(defenseNhBonuses.passive) || 0) + ownerDefenseBonus + featureDefenseBonus,
+                                    temp: defenseNhBonuses.temp
+                                });
                                 return applyEquipmentDefenseBonus(finalImportedDefense, activeEquipmentDefenseBonus);
                             }
 
@@ -1234,7 +1252,7 @@ const splitDefenseValue = (value) => {
                             const defenseBase = Math.floor(effectiveDefenseNh / 2) + 3;
                             const parsedDefense = splitDefenseValue(rawDefense);
                             const defenseMod = useDefault ? 0 : (parsedDefense?.number ?? (Number(rawDefense) || 0));
-                            const baseValue = defenseMod > 5 ? defenseMod : defenseBase + defenseMod;
+                            const baseValue = (defenseMod > 5 ? defenseMod : defenseBase + defenseMod) + featureDefenseBonus + ownerDefenseBonus;
                             const suffix = !useDefault && parsedDefense?.suffix ? parsedDefense.suffix : "";
                             return applyEquipmentDefenseBonus(`${baseValue + defenseNhBonuses.passive + defenseNhBonuses.temp}${suffix}`, activeEquipmentDefenseBonus);
                         };
@@ -2817,8 +2835,7 @@ async function applyActivationEffects(item, actor, outcome, activationOptions = 
         if (effectItem) {
             let finalTargets = [];
             if (effectData.recipient === 'self') {
-                const activeTokens = actor.getActiveTokens();
-                finalTargets = activeTokens.length ? activeTokens : [buildFallbackTokenForActor(actor)];
+                finalTargets = buildActorEffectTargets(actor);
             } else {
                 finalTargets = Array.from(game.user.targets);
             }
@@ -2829,8 +2846,7 @@ async function applyActivationEffects(item, actor, outcome, activationOptions = 
                  if (effectData.recipient === 'target') {
                     ui.notifications.warn(`O efeito "${effectItem.name}" precisa de um alvo. Aplicando em si mesmo como padrão.`);
                  }
-                 const activeTokens = actor.getActiveTokens();
-                 finalTargets = activeTokens.length ? activeTokens : [buildFallbackTokenForActor(actor)];
+                 finalTargets = buildActorEffectTargets(actor);
             }
             // Se o efeito tiver barreira de resistência ativada, disparamos o prompt antes de aplicar.
             const requiresResistance = effectItem.system?.resistanceRoll?.isResisted;
@@ -2867,8 +2883,7 @@ async function applyUseEventEffects(item, actor, trigger, options = {}) {
 
         let finalTargets = [];
         if (effectData.recipient === "self") {
-            const activeTokens = actor.getActiveTokens();
-            finalTargets = activeTokens.length ? activeTokens : [buildFallbackTokenForActor(actor)];
+            finalTargets = buildActorEffectTargets(actor);
         } else {
             finalTargets = Array.from(game.user.targets || []);
         }
@@ -2877,8 +2892,7 @@ async function applyUseEventEffects(item, actor, trigger, options = {}) {
             if (effectData.recipient === "target") {
                 ui.notifications.warn(`O efeito "${effectItem.name}" precisa de um alvo. Aplicando em si mesmo como padrão.`);
             }
-            const activeTokens = actor.getActiveTokens();
-            finalTargets = activeTokens.length ? activeTokens : [buildFallbackTokenForActor(actor)];
+            finalTargets = buildActorEffectTargets(actor);
         }
 
         const requiresResistance = effectItem.system?.resistanceRoll?.isResisted;
@@ -3217,11 +3231,24 @@ Hooks.once('init', async function() {
         }
     });
 
+    // Capture o valor anterior para emitir cruzamentos de PV/PF independentemente
+    // da origem da atualização (ficha, macro, efeito ou dano).
+    Hooks.on("preUpdateActor", (actor, data, options = {}) => {
+        if (options.gumSkipResourceChangeEvents) return;
+        options.gumResourceChangeEvents = captureActorResourceChanges(actor, data, {
+            eventData: options.gumEventData,
+            eventIdFactory: () => foundry.utils.randomID()
+        });
+    });
+
     // Gatilho principal para quando os dados do ator mudam (HP, etc.)
     Hooks.on("updateActor", async (actor, data, options = {}, userId) => {
         if (game.user.id !== userId) return;
         try {
             await processConditions(actor, options.gumEventData);
+            for (const resourceEvent of options.gumResourceChangeEvents || []) {
+                await processConditions(actor, resourceEvent);
+            }
             await processStatusBindings(actor);
             actor.getActiveTokens().forEach(token => token.drawEffects());
         } catch (error) {
@@ -3737,7 +3764,7 @@ async function processResistanceSocketResult(payload) {
         const barrier = evaluateBarrierConsequence(payload.result, request.consequence);
         if (barrier.shouldApply) {
             const targetToken = target.tokenUuid ? await fromUuid(target.tokenUuid).catch(() => null) : null;
-            const targets = targetToken ? [targetToken.object || targetToken] : (actor.getActiveTokens?.().length ? actor.getActiveTokens() : [{ actor, name: actor.name }]);
+            const targets = targetToken ? [targetToken.object || targetToken] : buildActorEffectTargets(actor);
             const applicationContext = payload.context?.applicationContext
                 || (payload.context?.conditionId ? { conditionId: payload.context.conditionId, conditionActivationMode: payload.context.conditionActivationMode || null } : {});
             await applySingleEffect(effectItem, targets, { actor: request.origin.sourceActorUuid ? await fromUuid(request.origin.sourceActorUuid).catch(() => null) : null, origin: request.origin.sourceItemUuid ? await fromUuid(request.origin.sourceItemUuid).catch(() => effectItem) : effectItem, actionIds: barrier.actionIds, ...applicationContext });
@@ -3775,7 +3802,7 @@ async function processResistanceSocketResult(payload) {
         const effectItem = request.origin?.effectUuid ? await fromUuid(request.origin.effectUuid).catch(() => null) : null;
         if (!effectItem) { await message.update({ "flags.gum.rollRequest.status": "pending" }); return; }
         const targetToken = target.tokenUuid ? await fromUuid(target.tokenUuid).catch(() => null) : null;
-        const targets = targetToken ? [targetToken.object || targetToken] : (actor.getActiveTokens?.().length ? actor.getActiveTokens() : [{ actor, name: actor.name }]);
+        const targets = targetToken ? [targetToken.object || targetToken] : buildActorEffectTargets(actor);
         const originItem = context.originItemUuid ? await fromUuid(context.originItemUuid).catch(() => null) : null;
         const originActor = context.sourceActorId ? game.actors.get(context.sourceActorId) : null;
         const applicationContext = context.applicationContext
@@ -4095,6 +4122,7 @@ export const evaluateNumericFormula = (rawValue, { actor = null, eventData = nul
  * @param {Actor} actor O ator a ser processado.
  */
 let evaluatingActors = new Set(); 
+const conditionEventDeduper = new ConditionEventDeduper();
 const processingStatusBindingActors = new Set();
 const STATUS_BINDINGS_CACHE_TTL_MS = 15_000;
 const statusBindingsCache = {
@@ -4298,6 +4326,7 @@ async function processConditions(actor, eventData = null) {
     if (!isActorContextAvailable(actor)) return;
     const evaluationKey = getActorEvaluationKey(actor);
     if (!evaluationKey || evaluatingActors.has(evaluationKey)) return;
+    if (!conditionEventDeduper.claim(evaluationKey, eventData?.eventId)) return;
     evaluatingActors.add(evaluationKey);
 
  try {
@@ -4350,7 +4379,9 @@ const conditionTarget = buildActorEffectTarget(actor);
              // `pulse` continua aceito para compatibilidade com emissores existentes.
              const isPulseEvent = Boolean(eventData?.pulse) || (isEventDriven && hasEventPayload);
              const isTurnStartEvent = eventData?.reason === "turnStart";
-             const shouldRepeatOnTurnStart = condition.system?.triggerOnTurnStartWhileActive === true;
+             const effectLinks = normalizeConditionEffectLinks(condition.system.effects);
+             const shouldRepeatOnTurnStart = condition.system?.triggerOnTurnStartWhileActive === true
+                || effectLinks.some(link => link.phase === "turnStart");
              const isCurrentCombatantTurn = Boolean(
                 game.combat?.started
                 && game.combat?.combatant?.actorId === actor.id
@@ -4364,9 +4395,13 @@ const conditionTarget = buildActorEffectTarget(actor);
              // só devem reexecutar condições que consultam esse evento. Uma condição
              // contínua já ativa (por exemplo, PV abaixo de 1/3) conserva os efeitos
              // existentes em vez de duplicá-los a cada rolagem.
-             const shouldExecuteActivation = (stateChanged && isEffectivelyActiveNow)
-                || (isPulseEvent && isEventDriven && isEffectivelyActiveNow)
-                || (isTurnStartEvent && shouldRepeatOnTurnStart && isCurrentCombatantTurn && isEffectivelyActiveNow);
+             const execution = {
+                enter: stateChanged && isEffectivelyActiveNow,
+                event: isPulseEvent && isEventDriven && isEffectivelyActiveNow,
+                turnStart: isTurnStartEvent && shouldRepeatOnTurnStart && isCurrentCombatantTurn && isEffectivelyActiveNow,
+                exit: !isEventDriven && stateChanged && !isEffectivelyActiveNow
+             };
+             const shouldExecuteActivation = execution.enter || execution.event || execution.turnStart;
              const conditionActivationMode = isEventDriven ? "trigger" : "continuous";
 
              if (stateChanged) {
@@ -4374,10 +4409,9 @@ const conditionTarget = buildActorEffectTarget(actor);
                  await condition.setFlag("gum", "wasActive", isEffectivelyActiveNow);
              }
 
-             const effectLinks = condition.system.effects || []; // Pega os links de efeito dentro da condição
-
              if (shouldExecuteActivation) { // Condição acabou de LIGAR OU gatilho pulsado
                      for (const link of effectLinks) {
+                        if (!shouldExecuteConditionEffectLink(link, execution)) continue;
                         if(!link.uuid) continue; // Pula se não for um link válido
                         const effectItem = await fromUuid(link.uuid); // Carrega o Item Efeito original
                         if (!effectItem?.system) continue;
@@ -4426,6 +4460,7 @@ await applySingleEffect(effectItem, [conditionTarget], {
 
                  if (!isEventDriven && stateChanged && !isEffectivelyActiveNow) { // Condição acabou de DESLIGAR
                      for (const link of effectLinks) {
+                        if (link.phase === "exit" || link.removeOnConditionEnd === false) continue;
                         if(!link.uuid) continue;
                         const effectItem = await fromUuid(link.uuid);
                         if (!effectItem?.system) continue;
@@ -4487,6 +4522,32 @@ await applySingleEffect(effectItem, [conditionTarget], {
                             }
                         }
                         // Outras ações de "desligar" poderiam ir aqui no futuro
+                     }
+
+                     // Efeitos de saída são aplicados depois da limpeza do estado.
+                     for (const link of effectLinks) {
+                        if (!shouldExecuteConditionEffectLink(link, execution) || !link.uuid) continue;
+                        const effectItem = await fromUuid(link.uuid);
+                        if (!effectItem?.system) continue;
+                        if (effectItem.system?.resistanceRoll?.isResisted) {
+                            await _promptActivationResistance(effectItem, conditionTarget, actor, condition, link.id || null, {
+                                mode: "condition",
+                                source: "condition",
+                                stackingDomain: "condition",
+                                conditionId: condition.id,
+                                conditionActivationMode: "exit",
+                                eventData
+                            });
+                        } else {
+                            await applySingleEffect(effectItem, [conditionTarget], {
+                                actor,
+                                origin: condition,
+                                source: "condition",
+                                stackingDomain: "condition",
+                                conditionId: condition.id,
+                                conditionActivationMode: "exit"
+                            });
+                        }
                      }
                  }
         } // Fim do loop de Conditions

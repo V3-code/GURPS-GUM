@@ -217,7 +217,7 @@
 
           {{!-- Mantém effect-header/effect-main/effect-controls (hooks do JS),
                mas usa também o layout effects-line + effects-cell --}}
-          <div class="effect-header effects-line effects-line-passive">
+          <div class="effect-header effects-line effects-line-passive condition-effect-card">
 
             <div class="effect-main effects-cell effects-identity">
               <img src="{{effect.img}}" class="effect-icon effects-icon"/>
@@ -226,7 +226,26 @@
               </div>
             </div>
 
-            <div class="effect-controls effects-cell effects-actions">
+            <div class="effects-cell condition-effect-link-settings">
+              <label class="condition-effect-link-option condition-effect-link-phase">
+                <span class="condition-effect-link-label">{{localize "GUM.ConditionSheet.ExecutionPhase"}}</span>
+                <input type="hidden" name="system.effects.{{effect.index}}.uuid" value="{{effect.uuid}}">
+                <select name="system.effects.{{effect.index}}.phase">
+                  <option value="always" {{#if (eq effect.phase "always")}}selected{{/if}}>{{localize "GUM.ConditionSheet.PhaseLegacy"}}</option>
+                  <option value="enter" {{#if (eq effect.phase "enter")}}selected{{/if}}>{{localize "GUM.ConditionSheet.PhaseEnter"}}</option>
+                  <option value="turnStart" {{#if (eq effect.phase "turnStart")}}selected{{/if}}>{{localize "GUM.ConditionSheet.PhaseTurnStart"}}</option>
+                  <option value="event" {{#if (eq effect.phase "event")}}selected{{/if}}>{{localize "GUM.ConditionSheet.PhaseEvent"}}</option>
+                  <option value="exit" {{#if (eq effect.phase "exit")}}selected{{/if}}>{{localize "GUM.ConditionSheet.PhaseExit"}}</option>
+                </select>
+              </label>
+              <label class="custom-checkbox condition-effect-link-option" title="{{localize 'GUM.ConditionSheet.RemoveOnEndHint'}}">
+                <input type="checkbox" name="system.effects.{{effect.index}}.removeOnConditionEnd" {{checked effect.removeOnConditionEnd}}>
+                <span>{{localize "GUM.ConditionSheet.RemoveOnEnd"}}</span>
+                <i class="fas fa-circle-info condition-effect-link-help" aria-hidden="true"></i>
+              </label>
+            </div>
+
+            <div class="effect-controls effects-cell effects-actions condition-effect-link-controls">
               <span class="effects-controls">
                 <a class="view-effect" title="Ver Item Efeito Original">
                   <i class="fas fa-eye"></i>
@@ -247,6 +266,13 @@
     </ol>
   {{/if}}
 </div>
+
+  {{#if canUseItemAttachmentDrops}}
+    <div class="item-attachment-dropzone condition-effect-dropzone" data-attachment-type="effect">
+      <i class="fas fa-arrow-down" aria-hidden="true"></i>
+      <span>{{localize "GUM.ItemAttachments.DropEffect"}}</span>
+    </div>
+  {{/if}}
 
                     </div>
                 </section>
