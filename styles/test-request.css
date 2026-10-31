@@ -144,6 +144,10 @@
 .request-target-row button { width: calc(100% - 14px); margin: 0 7px 7px; min-height: 28px; border: 1px solid rgba(94,67,25,.4); border-radius: 4px; color: #4f3a1c; background: rgba(197,160,91,.15); font-size: .68rem; font-weight: 800; }
 .request-target-row button:hover { background: rgba(197,160,91,.3); }
 .request-target-row button:disabled { opacity:.65; cursor:default; }
+.request-target-row .gum-request-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 6px; margin: 0 7px 7px; }
+.request-target-row .gum-request-actions button { width: 100%; margin: 0; }
+.request-target-row .gum-roll-request-skip-button { color: #6d2d2d; background: rgba(139, 49, 49, .08); }
+.request-target-row .gum-roll-request-skip-button:hover { background: rgba(139, 49, 49, .16); }
 .gum-request-result-anchor { display: none; }
 .chat-message .gum-chat-roll-request,
 .chat-message .gum-chat-roll-request .request-targets,

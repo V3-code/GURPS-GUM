@@ -203,6 +203,41 @@ test("world status imports merge by status id and preserve local-only entries", 
   assert.deepEqual(replacedWithEmpty.statuses, []);
 });
 
+test("passive-condition export embeds conditions and their linked effects", async () => {
+  const documents = new Map([
+    ["Item.collapse", { id: "collapse", name: "Colapso", type: "condition", img: "collapse.svg", system: { effects: [{ id: "link", uuid: "Item.consciousness", phase: "turnStart" }] } }],
+    ["Item.consciousness", { id: "consciousness", name: "Teste de Consciência", type: "effect", img: "test.svg", system: { actions: [] } }]
+  ]);
+  const bundle = await buildConfigurationBundle({
+    id: "passive-test", kind: "passive-conditions",
+    configuration: { initialized: true, entries: [{ id: "collapse", sourceUuid: "Item.collapse", name: "Colapso", enabled: true, snapshot: documents.get("Item.collapse") }] },
+    resolveUuid: async uuid => documents.get(uuid) || null
+  });
+  assert.deepEqual(Object.keys(bundle.documents).sort(), ["condition-collapse", "effect-consciousness"]);
+  assert.equal(bundle.configuration.entries[0].conditionRef, "condition-collapse");
+  assert.equal(bundle.configuration.entries[0].snapshot, undefined);
+  assert.equal(bundle.documents["condition-collapse"].system.effects[0].effectRef, "effect-consciousness");
+  assert.equal(bundle.documents["condition-collapse"].system.effects[0].uuid, undefined);
+
+  const prepared = prepareConfigurationBundle(bundle, "world.passive-import");
+  const entry = prepared.configuration.entries[0];
+  assert.match(entry.sourceUuid, /^Compendium\.world\.passive-import\.Item\./);
+  assert.match(entry.snapshot.system.effects[0].uuid, /^Compendium\.world\.passive-import\.Item\./);
+  assert.equal(entry.snapshot.system.effects[0].effectRef, undefined);
+});
+
+test("passive-condition imports merge or replace entries by stable id", () => {
+  const current = { initialized: true, entries: [{ id: "shared", name: "Local" }, { id: "local", name: "Only here" }], managedSourceUuids: ["Item.local"] };
+  const incoming = { initialized: true, entries: [{ id: "shared", name: "Imported" }, { id: "new", name: "New" }], managedSourceUuids: ["Item.new"] };
+  const merged = combineConfigurationImport("passive-conditions", current, incoming, "merge");
+  assert.deepEqual(merged.entries.map(entry => entry.name), ["Imported", "Only here", "New"]);
+  assert.deepEqual(merged.managedSourceUuids, ["Item.local", "Item.new"]);
+  const added = combineConfigurationImport("passive-conditions", current, incoming, "add");
+  assert.deepEqual(added.entries.map(entry => entry.name), ["Local", "Only here", "New"]);
+  const replaced = combineConfigurationImport("passive-conditions", current, incoming, "replace");
+  assert.deepEqual(replaced.entries.map(entry => entry.name), ["Imported", "New"]);
+});
+
 test("configuration preview counts matching, changed, new, and current-only entries", () => {
   const summary = previewConfigurationImport("gm-screen", {
     groups: [{ id: "same", items: [] }, { id: "remove", items: [] }]

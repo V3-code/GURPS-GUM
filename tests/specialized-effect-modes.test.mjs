@@ -17,12 +17,29 @@ test("a ficha oferece modos especializados sem remover o modificador genérico",
   assert.match(sheetController, /key: "CombatModifier"/);
 });
 
-test("modificar perícia oferece escopos, NH e motor condicional", () => {
-  for (const field of ["modifier_value", "modifier_value_mode", "skill_scope", "skill_targets", "skill_attribute", "modifier_nh_display_mode"]) {
+test("modificador de habilidades oferece tipos, escopos, classificações, NH e motor condicional", () => {
+  for (const field of ["modifier_value", "modifier_value_mode", "ability_kind", "skill_scope", "skill_targets", "skill_attribute", "ability_sources", "ability_groups", "ability_sheet_groups", "ability_schools", "ability_classes", "modifier_nh_display_mode"]) {
     assert.match(sheet, new RegExp(`\\.${field}\\"`));
   }
   assert.match(sheet, /GUM\.EffectSheet\.ConditionalValueHint/);
-  assert.match(engine, /action\.skill_scope === "attribute" \? `skill_\$\{action\.skill_attribute/);
+  assert.match(engine, /action\.skill_scope === "attribute" \? `\$\{kind\}_\$\{action\.skill_attribute/);
+  assert.match(engine, /action\.ability_kind === "all"/);
+  assert.match(engine, /ability_sources: action\.skill_scope === "classification"/);
+  assert.match(main, /matchesAbilityClassificationFilters\(entry, item\)/);
+  assert.match(read("module/apps/roll-prompt.js"), /matchesAbilityClassificationFilters\(entry, item\)/);
+  assert.match(sheet, /effect-ability-primary-grid/);
+  assert.match(sheet, /data-ability-scope="specific"/);
+  assert.match(sheet, /data-ability-scope="classification"/);
+  assert.match(sheet, /textarea rows="1" class="effect-code-input [^"]*effect-ability-value-input"/);
+  assert.match(sheet, /effect-ability-options-grid/);
+  assert.match(sheet, /GUM\.EffectSheet\.ActionType\.SkillModifier/);
+});
+
+test("modificador genérico oferece contextos compostos de magia e poder", () => {
+  assert.match(sheetController, /id: "spell_dx", key: "SpellDX"/);
+  assert.match(sheetController, /id: "power_iq", key: "PowerIQ"/);
+  assert.match(main, /resolveAbilityRollContext\(type,/);
+  assert.match(read("module/apps/roll-prompt.js"), /resolveAbilityRollContext\(type,/);
 });
 
 test("modo de combate separa ataque, defesas, recálculo e dano", () => {
@@ -113,9 +130,9 @@ test("modificadores direcionados permanecem somente na rolagem", () => {
 
 test("modificador de todas as perícias não alcança testes diretos", () => {
   const prompt = read("module/apps/roll-prompt.js");
-  assert.match(engine, /skill_roll_only: true/);
-  assert.match(prompt, /entry\?\.skill_roll_only === true && this\.actor\?\.items\?\.get\(this\.rollData\?\.itemId\)\?\.type !== "skill"/);
-  assert.match(main, /entry\?\.skill_roll_only === true && _getRollSourceItem/);
+  assert.match(engine, /skill_roll_only: \(action\.ability_kind \|\| "skill"\) === "skill"/);
+  assert.match(prompt, /entry\?\.skill_roll_only === true && sourceItem\?\.type !== "skill"/);
+  assert.match(main, /entry\?\.skill_roll_only === true && rollSourceItem\?\.type !== "skill"/);
 });
 
 test("campos controlados não duplicam valores como arrays separados por vírgulas", () => {

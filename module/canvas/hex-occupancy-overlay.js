@@ -1,5 +1,9 @@
 import { clampFloatingPanelPosition } from "../utils/floating-panel-position.mjs";
-import { buildHexOccupancyGroups } from "../utils/hex-occupancy.mjs";
+import {
+  buildGridOccupancyGroups,
+  isSupportedOccupancyGrid,
+  normalizeTokenElevation
+} from "../utils/hex-occupancy.mjs";
 
 export const HEX_OCCUPANCY_SETTING = "tacticalHexOccupancyEnabled";
 
@@ -9,15 +13,92 @@ const tokenId = token => String(token?.id ?? token?.document?.id ?? "");
 const tokenName = token => String(token?.name ?? token?.document?.name ?? token?.actor?.name ?? "");
 const tokenImage = token => token?.document?.texture?.src ?? token?.texture?.src ?? token?.actor?.img ?? "icons/svg/mystery-man.svg";
 
+function tokenEffectsSignature(token) {
+  return Array.from(token?.actor?.temporaryEffects ?? token?.actor?.effects ?? [])
+    .filter(effect => !effect?.disabled && (effect?.img || effect?.icon))
+    .slice(0, 4)
+    .map(effect => `${effect?.id ?? ""}:${effect?.img ?? effect?.icon ?? ""}:${effect?.name ?? ""}`)
+    .join(",");
+}
+
+export function occupancyMarkerSignature(groups = []) {
+  return Array.from(groups ?? []).map(group => [
+    group?.key,
+    Number(group?.center?.x) || 0,
+    Number(group?.center?.y) || 0,
+    Array.from(group?.tokens ?? []).map(token => (
+      `${tokenId(token)}:${Number(token?.document?.disposition) || 0}`
+    )).join(",")
+  ].join("|")).join(";");
+}
+
+export function occupancyPanelSignature(group) {
+  return Array.from(group?.tokens ?? []).map(token => [
+    tokenId(token),
+    tokenName(token),
+    tokenImage(token),
+    normalizeTokenElevation(token),
+    token?.controlled === true,
+    globalThis.game?.user?.targets?.has?.(token) === true,
+    token?.document?.isOwner === true,
+    token?.actor?.visible === true,
+    tokenEffectsSignature(token)
+  ].join("|")).join(";");
+}
+
 function localize(key, fallback = key) {
   const value = globalThis.game?.i18n?.localize?.(key);
   return value && value !== key ? value : fallback;
+}
+
+function formatLocalization(key, data, fallback) {
+  const value = globalThis.game?.i18n?.format?.(key, data);
+  if (value && value !== key) return value;
+  return Object.entries(data).reduce(
+    (text, [name, replacement]) => text.replaceAll(`{${name}}`, String(replacement)),
+    fallback
+  );
+}
+
+export function tokenElevationLabel(token, canvas = globalThis.canvas) {
+  const elevation = normalizeTokenElevation(token);
+  const signedElevation = elevation > 0 ? `+${elevation}` : String(elevation);
+  const units = String(canvas?.scene?.grid?.units ?? canvas?.grid?.units ?? "").trim();
+  const value = units ? `${signedElevation} ${units}` : signedElevation;
+  return formatLocalization("GUM.HexOccupancy.Elevation", { elevation: value }, `Elevation: ${value}`);
 }
 
 function visibleToCurrentUser(token) {
   if (!token?.document || token.visible === false) return false;
   if (token.document.hidden && !globalThis.game?.user?.isGM) return false;
   return true;
+}
+
+export function findOccupancyGroupContinuation(previousGroup, groups = []) {
+  const previousIds = new Set(
+    Array.from(previousGroup?.tokens ?? []).map(tokenId).filter(Boolean)
+  );
+  if (previousIds.size < 2) return null;
+
+  const previousCenter = previousGroup?.center;
+  return Array.from(groups ?? [])
+    .map(group => {
+      const ids = new Set(Array.from(group?.tokens ?? []).map(tokenId).filter(Boolean));
+      if (![...previousIds].every(id => ids.has(id))) return null;
+      const dx = Number(group?.center?.x) - Number(previousCenter?.x);
+      const dy = Number(group?.center?.y) - Number(previousCenter?.y);
+      return {
+        group,
+        extras: Math.max(0, ids.size - previousIds.size),
+        distance: Number.isFinite(dx) && Number.isFinite(dy) ? (dx * dx) + (dy * dy) : Number.POSITIVE_INFINITY
+      };
+    })
+    .filter(Boolean)
+    .sort((left, right) => (
+      left.extras - right.extras
+      || left.distance - right.distance
+      || String(left.group.key).localeCompare(String(right.group.key))
+    ))[0]?.group ?? null;
 }
 
 export function canvasPointToViewport(scenePoint, canvas = globalThis.canvas) {
@@ -53,6 +134,9 @@ export class HexOccupancyOverlay {
     this.groups = new Map();
     this.refreshFrame = null;
     this.openGroupKey = null;
+    this.openGroupSnapshot = null;
+    this.markerSignature = null;
+    this.pickerSignature = null;
     this.pickerManuallyPositioned = false;
     this.pickerMinimized = false;
     this.pickerDragCleanup = null;
@@ -80,19 +164,30 @@ export class HexOccupancyOverlay {
 
   refresh() {
     const canvas = globalThis.canvas;
-    if (!this.isEnabled() || !canvas?.ready || canvas.grid?.isHexagonal !== true) {
+    if (!this.isEnabled() || !canvas?.ready || !isSupportedOccupancyGrid(canvas.grid)) {
       this.destroy();
       return;
     }
 
-    const groups = buildHexOccupancyGroups(canvas.tokens?.placeables ?? [], {
+    const previousOpenGroup = this.openGroupKey
+      ? this.groups.get(this.openGroupKey) ?? this.openGroupSnapshot
+      : null;
+    const groups = buildGridOccupancyGroups(canvas.tokens?.placeables ?? [], {
       grid: canvas.grid,
       tokenFilter: visibleToCurrentUser
     });
     this.groups = new Map(groups.map(group => [group.key, group]));
-    this.renderMarkers(groups);
+    const markerSignature = occupancyMarkerSignature(groups);
+    if (markerSignature !== this.markerSignature) {
+      this.renderMarkers(groups);
+      this.markerSignature = markerSignature;
+    }
     if (this.openGroupKey) {
-      const group = this.groups.get(this.openGroupKey);
+      let group = this.groups.get(this.openGroupKey);
+      if (!group) {
+        group = findOccupancyGroupContinuation(previousOpenGroup, groups);
+        if (group) this.openGroupKey = group.key;
+      }
       if (group) this.updatePickerGroup(group);
       else this.setPickerOccupancyEnded(true);
     }
@@ -120,11 +215,11 @@ export class HexOccupancyOverlay {
     picker.className = "gum-hex-occupancy-picker";
     picker.setAttribute("role", "dialog");
     picker.setAttribute("aria-modal", "false");
-    picker.setAttribute("aria-label", localize("GUM.HexOccupancy.PickerTitle", "Hex occupants"));
+    picker.setAttribute("aria-label", localize("GUM.HexOccupancy.PickerTitle", "Grid space occupants"));
 
     const header = document.createElement("header");
     const title = document.createElement("strong");
-    title.textContent = localize("GUM.HexOccupancy.PickerTitle", "Hex occupants");
+    title.textContent = localize("GUM.HexOccupancy.PickerTitle", "Grid space occupants");
     const headerActions = document.createElement("div");
     headerActions.className = "gum-hex-occupancy-window-actions";
     const minimize = document.createElement("button");
@@ -148,7 +243,7 @@ export class HexOccupancyOverlay {
 
     const ended = document.createElement("p");
     ended.className = "gum-hex-occupancy-ended";
-    ended.textContent = localize("GUM.HexOccupancy.Ended", "These tokens no longer share this occupied hex.");
+    ended.textContent = localize("GUM.HexOccupancy.Ended", "These tokens no longer share this occupied grid space.");
     picker.append(ended);
 
     const list = document.createElement("div");
@@ -170,9 +265,16 @@ export class HexOccupancyOverlay {
 
   updatePickerGroup(group) {
     if (!this.picker || !group) return;
+    this.openGroupSnapshot = group;
+    const pickerSignature = occupancyPanelSignature(group);
+    if (pickerSignature === this.pickerSignature) {
+      this.setPickerOccupancyEnded(false);
+      return;
+    }
     const list = this.picker.querySelector(".gum-hex-occupancy-list");
     if (!list) return;
     list.replaceChildren(...group.tokens.map(token => this.buildTokenRow(token)));
+    this.pickerSignature = pickerSignature;
     this.setPickerOccupancyEnded(false);
   }
 
@@ -263,7 +365,10 @@ export class HexOccupancyOverlay {
     identity.className = "gum-hex-occupancy-identity";
     const name = document.createElement("strong");
     name.textContent = tokenName(token) || localize("GUM.HexOccupancy.UnknownToken", "Token");
-    identity.append(name, this.buildStatusStrip(token));
+    const elevation = document.createElement("span");
+    elevation.className = "gum-hex-occupancy-elevation";
+    elevation.textContent = tokenElevationLabel(token);
+    identity.append(name, elevation, this.buildStatusStrip(token));
 
     const actions = document.createElement("div");
     actions.className = "gum-hex-occupancy-actions";
@@ -360,6 +465,8 @@ export class HexOccupancyOverlay {
     this.picker?.remove();
     this.picker = null;
     this.openGroupKey = null;
+    this.openGroupSnapshot = null;
+    this.pickerSignature = null;
     this.pickerManuallyPositioned = false;
     this.pickerMinimized = false;
     document.removeEventListener("keydown", this._escapeHandler, true);
@@ -368,6 +475,7 @@ export class HexOccupancyOverlay {
   destroy() {
     this.closePicker();
     globalThis.canvas?.gumHexOccupancy?.clearMarkers?.();
+    this.markerSignature = null;
     this.groups.clear();
   }
 }

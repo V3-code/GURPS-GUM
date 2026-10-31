@@ -28,3 +28,17 @@ test("campo de valor atravessa a grade e recebe mais espaço horizontal", () => 
     assert.match(styles, /\.effect-roll-modifier-value-field \{[\s\S]*?grid-column: 1 \/ -1;/);
     assert.match(styles, /\.effect-roll-modifier-value-input \{[\s\S]*?min-height: 38px;[\s\S]*?ui-monospace/);
 });
+
+test("campos de expressão do efeito são redimensionáveis manualmente", () => {
+    assert.match(template, /textarea[\s\S]*?effect-roll-modifier-value-input[\s\S]*?roll_modifier_entries\.\{\{entry\.index\}\}\.value/);
+    for (const field of [
+        "combat_attack_value",
+        "combat_parry_value",
+        "combat_block_value",
+        "roll_modifier"
+    ]) {
+        assert.match(template, new RegExp(`textarea[^>]*effect-resizable-code-input[^>]*name="system\\.actions\\.\\{\\{action\\.index\\}\\}\\.${field}"`));
+    }
+    assert.match(template, /textarea[^>]*effect-resizable-code-input[^>]*name="system\.resistanceRoll\.modifier"/);
+    assert.match(styles, /\.effect-resizable-code-input \{[\s\S]*?resize: vertical;/);
+});

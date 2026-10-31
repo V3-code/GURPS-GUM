@@ -1,5 +1,6 @@
 import { calculateItemTraitCost, calculateTraitCost } from "../utils/trait-cost.mjs";
 import { applyEffectWithResistance, performGURPSRoll } from "/systems/gum/scripts/main.js";
+import { matchesAbilityClassificationFilters, matchesAbilityRollContext, resolveAbilityRollContext } from "../utils/ability-roll-context.mjs";
 import { GurpsRollPrompt } from "../apps/roll-prompt.js";
 import { GurpsDamageRollPrompt } from "../apps/damage-roll-prompt.js";
 import { normalizeGurpsDamageExpression } from "../utils/damage-normalization.js";
@@ -496,6 +497,7 @@ async getData(options) {
             .filter(Boolean);
 
         const matchesEntryTargetForItem = (entry = {}, item = null) => {
+            if (!matchesAbilityClassificationFilters(entry, item)) return false;
             const sourceItemFilters = normalizeFilterTokens(entry?.source_item_ids);
             if (sourceItemFilters.length) {
                 if (!item) return false;
@@ -516,14 +518,8 @@ async getData(options) {
             const context = (entry?.contexts ?? entry?.context ?? "all").toString().trim();
             if (!context || context === "all") return true;
             const contexts = context.includes(",") ? context.split(",").map(c => c.trim()) : [context];
-            const baseAttr = (item?.system?.base_attribute || "").toString().trim().toLowerCase();
-            return contexts.some((ctx) => {
-                if (ctx === "skill") return item.type === "skill";
-                if (ctx.startsWith("skill_")) return item.type === "skill" && baseAttr === ctx.replace("skill_", "");
-                if (ctx === "spell") return item.type === "spell";
-                if (ctx === "power") return item.type === "power";
-                return false;
-            });
+            const abilityContext = resolveAbilityRollContext(item?.type, { item });
+            return contexts.some(ctx => abilityContext && matchesAbilityRollContext(ctx, abilityContext));
         };
 
          skills.forEach((skill) => {
@@ -770,7 +766,7 @@ async getData(options) {
         const spellSortPref = this.actor.system.sorting?.spell || 'manual';
         const spellSortFn = getSortFunction(spellSortPref);
         const spells = itemsByType.spell || [];
-        const spellsByGroup = {};
+        context.hasSpells = spells.length > 0;
 
         spells.forEach((spell) => {
             const system = spell.system || {};
@@ -792,21 +788,30 @@ async getData(options) {
                 matchesTarget: matchesEntryTargetForItem,
                 matchesContext: matchesEntryContextForItem
             });
-            let groupName = (spell.system.group || 'Geral').trim();
-            if (!groupName) groupName = 'Geral';
-            if (!spellsByGroup[groupName]) spellsByGroup[groupName] = [];
-            spellsByGroup[groupName].push(spell);
         });
 
-        Object.keys(spellsByGroup).forEach((groupName) => {
-            spellsByGroup[groupName].sort(spellSortFn);
-        });
-
-        context.spellsByGroup = spellsByGroup;
-        context.spellGroupsKeys = Object.keys(spellsByGroup).sort((a, b) => {
-            if (a === 'Geral') return -1;
-            if (b === 'Geral') return 1;
-            return a.localeCompare(b);
+        const spellOrganization = normalizeItemOrganization(this.actor.system.spell_organization, spells.map(item => item.id));
+        const spellsById = new Map(spells.map(item => [item.id, item]));
+        const orderedSpells = bucketId => {
+            const entries = (spellOrganization.itemOrder[bucketId] || []).map(id => spellsById.get(id)).filter(Boolean);
+            entries.forEach(item => { item.abilityOrganizationCanRemove = bucketId !== UNGROUPED_ORGANIZER_ID; });
+            return spellSortPref === 'manual' ? entries : entries.sort(spellSortFn);
+        };
+        context.spellOrganization = spellOrganization;
+        context.spellSections = [{
+            id: UNGROUPED_ORGANIZER_ID,
+            name: game.i18n.localize("GUM.Spells.DefaultGroup"),
+            isUngrouped: true,
+            items: orderedSpells(UNGROUPED_ORGANIZER_ID)
+        }, ...spellOrganization.groupOrder.map(groupId => ({
+            id: groupId,
+            name: spellOrganization.groups[groupId].name,
+            isUngrouped: false,
+            items: orderedSpells(groupId)
+        }))];
+        context.hasSpellCategorySuggestions = spells.some(item => {
+            const category = String(item.system?.group ?? "").trim().toLocaleLowerCase();
+            return category && category !== "geral";
         });
 
         // ================================================================== //
@@ -815,7 +820,7 @@ async getData(options) {
         const powerSortPref = this.actor.system.sorting?.power || 'manual';
         const powerSortFn = getSortFunction(powerSortPref);
         const powers = itemsByType.power || [];
-        const powersByGroup = {};
+        context.hasPowers = powers.length > 0;
 
         powers.forEach((power) => {
             const system = power.system || {};
@@ -837,21 +842,30 @@ async getData(options) {
                 matchesTarget: matchesEntryTargetForItem,
                 matchesContext: matchesEntryContextForItem
             });
-            let groupName = (power.system.group || 'Geral').trim();
-            if (!groupName) groupName = 'Geral';
-            if (!powersByGroup[groupName]) powersByGroup[groupName] = [];
-            powersByGroup[groupName].push(power);
         });
 
-        Object.keys(powersByGroup).forEach((groupName) => {
-            powersByGroup[groupName].sort(powerSortFn);
-        });
-
-        context.powersByGroup = powersByGroup;
-        context.powerGroupsKeys = Object.keys(powersByGroup).sort((a, b) => {
-            if (a === 'Geral') return -1;
-            if (b === 'Geral') return 1;
-            return a.localeCompare(b);
+        const powerOrganization = normalizeItemOrganization(this.actor.system.power_organization, powers.map(item => item.id));
+        const powersById = new Map(powers.map(item => [item.id, item]));
+        const orderedPowers = bucketId => {
+            const entries = (powerOrganization.itemOrder[bucketId] || []).map(id => powersById.get(id)).filter(Boolean);
+            entries.forEach(item => { item.abilityOrganizationCanRemove = bucketId !== UNGROUPED_ORGANIZER_ID; });
+            return powerSortPref === 'manual' ? entries : entries.sort(powerSortFn);
+        };
+        context.powerOrganization = powerOrganization;
+        context.powerSections = [{
+            id: UNGROUPED_ORGANIZER_ID,
+            name: game.i18n.localize("GUM.Powers.DefaultGroup"),
+            isUngrouped: true,
+            items: orderedPowers(UNGROUPED_ORGANIZER_ID)
+        }, ...powerOrganization.groupOrder.map(groupId => ({
+            id: groupId,
+            name: powerOrganization.groups[groupId].name,
+            isUngrouped: false,
+            items: orderedPowers(groupId)
+        }))];
+        context.hasPowerCategorySuggestions = powers.some(item => {
+            const category = String(item.system?.group ?? "").trim().toLocaleLowerCase();
+            return category && category !== "geral";
         });
 
         const getCharacteristicFinalPoints = (item) => calculateItemTraitCost(item).finalPoints;
@@ -1815,7 +1829,7 @@ async _saveSkillOrganization(organization) {
     });
 }
 
-_promptSkillGroupName({ title, initial = "" }) {
+_promptSkillGroupName({ title, initial = "", hintKey = "GUM.Skills.GroupNameHint" }) {
     const localize = key => game.i18n.localize(key);
     return new Promise(resolve => {
         let settled = false;
@@ -1827,7 +1841,7 @@ _promptSkillGroupName({ title, initial = "" }) {
         new Dialog({
             title,
             content: `<form class="gum-popup-form gum-record-editor skill-group-name-dialog">
-                <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon"><i class="fas fa-folder-plus" aria-hidden="true"></i></span><span><strong>${foundry.utils.escapeHTML(title)}</strong><small>${localize("GUM.Skills.GroupNameHint")}</small></span></header>
+                <header class="gum-record-editor__intro form-group--full"><span class="gum-record-editor__icon"><i class="fas fa-folder-plus" aria-hidden="true"></i></span><span><strong>${foundry.utils.escapeHTML(title)}</strong><small>${localize(hintKey)}</small></span></header>
                 <div class="form-group form-group--full skill-group-name-field"><label>${localize("GUM.Skills.GroupNameLabel")}</label><input class="gum-input-left" type="text" name="name" value="${foundry.utils.escapeHTML(initial)}" autocomplete="off" autofocus></div>
             </form>`,
             buttons: {
@@ -1866,9 +1880,13 @@ _confirmSkillOrganizationAction({ title, content, confirmLabel = game.i18n.local
     });
 }
 
-_promptSkillCategoryGroupPlan(plan) {
+_promptSkillCategoryGroupPlan(plan, options = {}) {
     const localize = key => game.i18n.localize(key);
     const format = (key, data) => game.i18n.format(key, data);
+    const titleKey = options.titleKey || "GUM.Skills.CategoryPlanTitle";
+    const headingKey = options.headingKey || "GUM.Skills.CategoryPlanHeading";
+    const hintKey = options.hintKey || "GUM.Skills.CategoryPlanHint";
+    const itemCountKey = options.itemCountKey || "GUM.Skills.SkillCount";
     return new Promise(resolve => {
         let settled = false;
         const finish = value => {
@@ -1881,13 +1899,13 @@ _promptSkillCategoryGroupPlan(plan) {
             const destination = category.existingGroupId ? localize("GUM.Skills.ExistingGroup") : localize("GUM.Skills.NewGroupDestination");
             return `<label class="skill-category-preview__row">
                 <input type="checkbox" name="category" value="${index}" checked>
-                <span><strong>${foundry.utils.escapeHTML(category.name)}</strong><small>${destination} · ${format("GUM.Skills.SkillCount", { count: category.items.length })}</small><em>${skillNames}</em></span>
+                <span><strong>${foundry.utils.escapeHTML(category.name)}</strong><small>${destination} · ${format(itemCountKey, { count: category.items.length })}</small><em>${skillNames}</em></span>
             </label>`;
         }).join("");
         new Dialog({
-            title: localize("GUM.Skills.CategoryPlanTitle"),
+            title: localize(titleKey),
             content: `<form class="skill-category-preview">
-                <div class="skill-category-preview__intro"><i class="fas fa-layer-group"></i><span><strong>${localize("GUM.Skills.CategoryPlanHeading")}</strong><small>${localize("GUM.Skills.CategoryPlanHint")}</small></span></div>
+                <div class="skill-category-preview__intro"><i class="fas fa-layer-group"></i><span><strong>${localize(headingKey)}</strong><small>${localize(hintKey)}</small></span></div>
                 <div class="skill-category-preview__list">${rows}</div>
             </form>`,
             buttons: {
@@ -1947,6 +1965,85 @@ async _suggestSkillOrganizationGroups() {
     if (!selectedCategories?.length) return;
     const createId = () => foundry.utils.randomID?.() ?? crypto.randomUUID();
     await this._saveSkillOrganization(createGroupsFromItemCategories(organization, skills, createId, selectedCategories));
+}
+
+_getAbilityOrganizationState(type) {
+    if (!['spell', 'power'].includes(type)) return { items: [], organization: normalizeItemOrganization() };
+    const items = this.actor.items.filter(item => item.type === type);
+    return {
+        items,
+        organization: normalizeItemOrganization(this.actor.system[`${type}_organization`], items.map(item => item.id))
+    };
+}
+
+async _saveAbilityOrganization(type, organization) {
+    if (!['spell', 'power'].includes(type)) return;
+    const field = `${type}_organization`;
+    const current = this.actor.system[field] || {};
+    const withDeletions = (next, previous) => {
+        const payload = { ...next };
+        for (const key of Object.keys(previous || {})) if (!(key in next)) payload[`-=${key}`] = null;
+        return payload;
+    };
+    return this.actor.update({
+        [`system.${field}.groups`]: withDeletions(organization.groups, current.groups),
+        [`system.${field}.groupOrder`]: organization.groupOrder,
+        [`system.${field}.assignments`]: withDeletions(organization.assignments, current.assignments),
+        [`system.${field}.itemOrder`]: withDeletions(organization.itemOrder, current.itemOrder)
+    });
+}
+
+async _createAbilityOrganizationGroup(type) {
+    const label = game.i18n.localize(type === 'spell' ? "GUM.Spells.Singular" : "GUM.Powers.Singular");
+    const name = await this._promptSkillGroupName({
+        title: game.i18n.format("GUM.AbilityOrganization.NewGroup", { type: label }),
+        hintKey: "GUM.AbilityOrganization.GroupNameHint"
+    });
+    if (!name) return;
+    const { items, organization } = this._getAbilityOrganizationState(type);
+    const id = foundry.utils.randomID?.() ?? crypto.randomUUID();
+    await this._saveAbilityOrganization(type, addItemOrganizationGroup(organization, { id, name }, items.map(item => item.id)));
+}
+
+async _renameAbilityOrganizationGroup(type, groupId) {
+    const { items, organization } = this._getAbilityOrganizationState(type);
+    const current = organization.groups[groupId];
+    if (!current) return;
+    const name = await this._promptSkillGroupName({
+        title: game.i18n.localize("GUM.AbilityOrganization.RenameGroup"),
+        initial: current.name,
+        hintKey: "GUM.AbilityOrganization.GroupNameHint"
+    });
+    if (!name || name === current.name) return;
+    await this._saveAbilityOrganization(type, renameItemOrganizationGroup(organization, { id: groupId, name }, items.map(item => item.id)));
+}
+
+async _deleteAbilityOrganizationGroup(type, groupId) {
+    const { items, organization } = this._getAbilityOrganizationState(type);
+    const group = organization.groups[groupId];
+    if (!group) return;
+    const confirmed = await this._confirmSkillOrganizationAction({
+        title: game.i18n.localize("GUM.AbilityOrganization.DeleteGroup"),
+        content: `<p>${game.i18n.format("GUM.AbilityOrganization.DeleteGroupContent", { name: foundry.utils.escapeHTML(group.name) })}</p>`,
+        confirmLabel: game.i18n.localize("GUM.Skills.DeleteGroupConfirm")
+    });
+    if (!confirmed) return;
+    await this._saveAbilityOrganization(type, removeItemOrganizationGroup(organization, groupId, items.map(item => item.id)));
+}
+
+async _suggestAbilityOrganizationGroups(type) {
+    const { items, organization } = this._getAbilityOrganizationState(type);
+    const plan = buildItemCategoryGroupPlan(organization, items);
+    if (!plan.length) return ui.notifications.info(game.i18n.localize("GUM.AbilityOrganization.NoCategories"));
+    const selectedCategories = await this._promptSkillCategoryGroupPlan(plan, {
+        titleKey: "GUM.AbilityOrganization.CategoryPlanTitle",
+        headingKey: "GUM.AbilityOrganization.CategoryPlanHeading",
+        hintKey: "GUM.AbilityOrganization.CategoryPlanHint",
+        itemCountKey: "GUM.AbilityOrganization.ItemCount"
+    });
+    if (!selectedCategories?.length) return;
+    const createId = () => foundry.utils.randomID?.() ?? crypto.randomUUID();
+    await this._saveAbilityOrganization(type, createGroupsFromItemCategories(organization, items, createId, selectedCategories));
 }
 
 _getCharacteristicOrganizationState() {
@@ -3561,6 +3658,50 @@ html.on('click', '.temporary-section .effects-grid-container, .permanent-section
                 const { skills, organization } = this._getSkillOrganizationState();
                 const updated = moveOrganizedItem(organization, { itemId, targetGroupId, targetIndex }, skills.map(item => item.id));
                 await this._saveSkillOrganization(updated);
+            }
+        });
+    }
+
+    html.find('.create-ability-group').click(ev => {
+        ev.preventDefault();
+        this._createAbilityOrganizationGroup(ev.currentTarget.dataset.abilityType);
+    });
+    html.find('.rename-ability-group').click(ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        this._renameAbilityOrganizationGroup(ev.currentTarget.dataset.abilityType, ev.currentTarget.dataset.groupId);
+    });
+    html.find('.delete-ability-group').click(ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        this._deleteAbilityOrganizationGroup(ev.currentTarget.dataset.abilityType, ev.currentTarget.dataset.groupId);
+    });
+    html.find('.suggest-ability-groups').click(ev => {
+        ev.preventDefault();
+        this._suggestAbilityOrganizationGroups(ev.currentTarget.dataset.abilityType);
+    });
+    html.find('.remove-ability-from-group').click(async ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const type = ev.currentTarget.dataset.abilityType;
+        const itemId = ev.currentTarget.dataset.itemId;
+        const { items, organization } = this._getAbilityOrganizationState(type);
+        const updated = moveOrganizedItem(organization, { itemId, targetGroupId: UNGROUPED_ORGANIZER_ID }, items.map(item => item.id));
+        await this._saveAbilityOrganization(type, updated);
+    });
+
+    for (const type of ['spell', 'power']) {
+        this[`_${type}OrganizerCleanup`]?.();
+        this[`_${type}OrganizerCleanup`] = attachSheetItemOrganizer(html[0], {
+            actorUuid: this.actor.uuid,
+            namespace: `${type}s`,
+            acceptedItemTypes: [type],
+            itemSelector: `[data-tab="${type}s"] [data-organizer-item-id]`,
+            zoneSelector: `[data-tab="${type}s"] [data-organizer-zone]`,
+            onMove: async ({ itemId, targetGroupId, targetIndex }) => {
+                const { items, organization } = this._getAbilityOrganizationState(type);
+                const updated = moveOrganizedItem(organization, { itemId, targetGroupId, targetIndex }, items.map(item => item.id));
+                await this._saveAbilityOrganization(type, updated);
             }
         });
     }

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { appendResistanceRequestResult, renderPendingChatRollRequest, renderPendingResistanceRequest } from "../module/utils/roll-request-view.mjs";
+import { appendResistanceRequestResult, appendSkippedRequestResult, renderPendingChatRollRequest, renderPendingResistanceRequest } from "../module/utils/roll-request-view.mjs";
 
 const english = JSON.parse(fs.readFileSync(new URL("../lang/en.json", import.meta.url), "utf8"));
 
@@ -25,6 +25,18 @@ test("Mensagem de Chat com teste usa o mesmo padrão e preserva sua mensagem", (
   assert.match(resolved, /request-result-resolved[^>]*>Resolvido/);
   assert.match(resolved, /gum-request-result-block success[^>]*><strong>Sucesso<\/strong><span>Margem 2<\/span>/);
   assert.doesNotMatch(resolved, /<details open>/);
+});
+
+test("teste opcional permite Fazer Nada e registra a dispensa sem rolagem", () => {
+  const request = { id: "collapse", title: "Teste de Consciência", skip: { allowed: true, label: "Fazer Nada (não testar)" }, origin: {}, test: { type: "attribute", attributeKey: "ht", fixedModifier: -2, fixedModifierLabel: "por múltiplo completo de PV abaixo de zero" } };
+  const pending = renderPendingChatRollRequest({ request, target: { targetKey: "Actor.a", actorName: "Alvo", actorImg: "actor.webp" } });
+  assert.match(pending, /-2 por múltiplo completo de PV abaixo de zero/);
+  assert.match(pending, /gum-roll-request-skip-button/);
+  assert.match(pending, /Fazer Nada \(não testar\)/);
+  const skipped = appendSkippedRequestResult(pending, { label: request.skip.label });
+  assert.match(skipped, /gum-roll-request-button[^>]*disabled/);
+  assert.match(skipped, /gum-roll-request-skip-button[^>]*disabled/);
+  assert.match(skipped, /request-result-resolved[^>]*>Resolvido/);
 });
 
 test("resultado é acrescentado abaixo do botão sem substituir o card solicitado", () => {

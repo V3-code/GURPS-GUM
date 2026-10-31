@@ -106,7 +106,11 @@ export function normalizeChatRoll(action = {}) {
       fixedModifierLabel: action.roll_modifier_label
     }),
     label: String(action.roll_label || "Rolar Teste"),
-    visibility: normalizeEffectTestChatVisibility(action.roll_visibility ?? legacyVisibility)
+    visibility: normalizeEffectTestChatVisibility(action.roll_visibility ?? legacyVisibility),
+    skip: {
+      allowed: action.roll_skip_allowed === true,
+      label: String(action.roll_skip_label || "")
+    }
   };
 }
 
@@ -122,6 +126,10 @@ export function normalizeRollRequest(data = {}, { id = null, userId = null, now 
     origin: { type: "manual-request", sourceActorUuid: null, sourceItemUuid: null, effectUuid: null, effectLinkId: null, ...(data.origin ?? {}) },
     targets: Array.isArray(data.targets) ? data.targets.map(target => ({ ...target, recipientUserIds: [...new Set(target.recipientUserIds ?? [])] })) : [],
     test: normalizeRollTest(data.test),
+    skip: {
+      allowed: data.skip?.allowed === true,
+      label: String(data.skip?.label || "")
+    },
     consequence: { type: "record-response", applyOn: null, minimumMargin: 0, ...(data.consequence ?? {}) },
     delivery: { rollMode: null, notifyPlayers: false, ...(data.delivery ?? {}) },
     responses: Array.isArray(data.responses) ? data.responses : []

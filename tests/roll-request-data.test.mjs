@@ -24,9 +24,10 @@ test("normaliza ação de chat antiga e valor fixo", () => {
 });
 
 test("preserva uma fórmula de modificador para avaliação no alvo", () => {
-  const chat = normalizeChatRoll({ roll_attribute: "ht", roll_modifier: "actor.system.attributes.ht.final - 10" });
+  const chat = normalizeChatRoll({ roll_attribute: "ht", roll_modifier: "actor.system.attributes.ht.final - 10", roll_skip_allowed: true, roll_skip_label: "Fazer Nada" });
   assert.equal(chat.test.fixedModifier, 0);
   assert.equal(chat.test.fixedModifierFormula, "actor.system.attributes.ht.final - 10");
+  assert.deepEqual(chat.skip, { allowed: true, label: "Fazer Nada" });
 });
 
 test("campos livres antigos distinguem atributos de nomes de perícia", () => {

@@ -33,12 +33,12 @@ const ROLL_MODIFIER_CONTEXT_OPTIONS = [
     { id: "skill", key: "Skill" }, { id: "spell", key: "Spell" }, { id: "power", key: "Power" },
     { id: "sense_vision", key: "Vision" }, { id: "sense_hearing", key: "Hearing" },
     { id: "sense_tastesmell", key: "TasteSmell" }, { id: "sense_touch", key: "Touch" },
-    { id: "check_st", key: "CheckST" }, { id: "skill_st", key: "SkillST" },
-    { id: "check_dx", key: "CheckDX" }, { id: "skill_dx", key: "SkillDX" },
-    { id: "check_iq", key: "CheckIQ" }, { id: "skill_iq", key: "SkillIQ" },
-    { id: "check_ht", key: "CheckHT" }, { id: "skill_ht", key: "SkillHT" },
-    { id: "check_per", key: "CheckPer" }, { id: "skill_per", key: "SkillPer" },
-    { id: "check_vont", key: "CheckWill" }, { id: "skill_vont", key: "SkillWill" }
+    { id: "check_st", key: "CheckST" }, { id: "skill_st", key: "SkillST" }, { id: "spell_st", key: "SpellST" }, { id: "power_st", key: "PowerST" },
+    { id: "check_dx", key: "CheckDX" }, { id: "skill_dx", key: "SkillDX" }, { id: "spell_dx", key: "SpellDX" }, { id: "power_dx", key: "PowerDX" },
+    { id: "check_iq", key: "CheckIQ" }, { id: "skill_iq", key: "SkillIQ" }, { id: "spell_iq", key: "SpellIQ" }, { id: "power_iq", key: "PowerIQ" },
+    { id: "check_ht", key: "CheckHT" }, { id: "skill_ht", key: "SkillHT" }, { id: "spell_ht", key: "SpellHT" }, { id: "power_ht", key: "PowerHT" },
+    { id: "check_per", key: "CheckPer" }, { id: "skill_per", key: "SkillPer" }, { id: "spell_per", key: "SpellPer" }, { id: "power_per", key: "PowerPer" },
+    { id: "check_vont", key: "CheckWill" }, { id: "skill_vont", key: "SkillWill" }, { id: "spell_vont", key: "SpellWill" }, { id: "power_vont", key: "PowerWill" }
 ];
 
 const ROLL_MODIFIER_APPLICATION_OPTIONS = [
@@ -82,6 +82,15 @@ const getApplicationSideLabel = (id) => {
     return option ? localize(`GUM.EffectSheet.Application.${option.key}`) : id || localize("GUM.EffectSheet.Application.SelfShort");
 };
 const getShortApplicationSideLabel = (id) => localize(id === "vs_targeter" ? "GUM.EffectSheet.Application.VsTargeterShort" : "GUM.EffectSheet.Application.SelfShort");
+const getAbilityKindLabel = (id) => {
+    const labels = {
+        skill: localize("GUM.EffectSheet.AbilityKind.skill"),
+        spell: localize("GUM.EffectSheet.AbilityKind.spell"),
+        power: localize("GUM.EffectSheet.AbilityKind.power"),
+        all: localize("GUM.EffectSheet.AbilityKind.all")
+    };
+    return labels[id] || labels.skill;
+};
 
 const buildRollEntrySummary = (entry = {}) => {
     const parts = compactParts(entry.label, entry.value, entry.contexts || "all", getShortApplicationSideLabel(entry.application_side || "self"));
@@ -101,7 +110,14 @@ const buildActionSummary = (action = {}) => {
         case "roll_modifier":
             return compactParts(action.rollModifierPrimaryContext || localize("GUM.EffectSheet.Summary.AnyRoll"), action.rollModifierPrimarySide || localize("GUM.EffectSheet.Application.SelfShort"), formatEntryCount(action.entryCount || 0)).join(" · ");
         case "skill_modifier":
-            return compactParts(localize("GUM.EffectSheet.Summary.Skills"), action.skill_scope === "specific" ? action.skill_targets : action.skill_scope === "attribute" ? action.skill_attribute?.toUpperCase() : localize("GUM.EffectSheet.Summary.All"), action.modifier_value).join(" · ");
+            return compactParts(
+                getAbilityKindLabel(action.ability_kind || "skill"),
+                action.skill_scope === "specific" ? action.skill_targets
+                    : action.skill_scope === "attribute" ? action.skill_attribute?.toUpperCase()
+                    : action.skill_scope === "classification" ? compactParts(action.ability_sources, action.ability_groups, action.ability_sheet_groups, action.ability_schools, action.ability_classes).join(", ")
+                    : localize("GUM.EffectSheet.Summary.All"),
+                action.modifier_value
+            ).join(" · ");
         case "combat_modifier": {
             const changes = [action.combat_attack_enabled && localize("GUM.EffectSheet.Summary.Attack"), action.combat_parry_enabled && localize("GUM.EffectSheet.Summary.Parry"), action.combat_block_enabled && localize("GUM.EffectSheet.Summary.Block"), action.combat_damage_enabled && localize("GUM.EffectSheet.Summary.Damage")].filter(Boolean);
             return compactParts(action.combat_scope === "specific" ? localize("GUM.EffectSheet.Summary.SpecificModes") : action.combat_scope, changes.join(", ")).join(" · ") || localize("GUM.EffectSheet.Summary.CombatModifier");
@@ -133,6 +149,9 @@ const DEFAULT_EFFECT_ACTION = {
     roll_label: localize("GUM.EffectSheet.RollTest", "Rolar Teste"),
     roll_attribute: "ht",
     roll_modifier: "0",
+    roll_modifier_label: "",
+    roll_skip_allowed: false,
+    roll_skip_label: "",
     roll_modifier_value: "0",
     roll_modifier_cap: "",
     roll_modifier_context: "all",
@@ -144,8 +163,14 @@ const DEFAULT_EFFECT_ACTION = {
     modifier_application_side: "self",
     modifier_nh_display_mode: "roll_only",
     skill_scope: "all",
+    ability_kind: "skill",
     skill_targets: "",
     skill_attribute: "dx",
+    ability_sources: "",
+    ability_groups: "",
+    ability_sheet_groups: "",
+    ability_schools: "",
+    ability_classes: "",
     combat_scope: "all",
     combat_source_item_ids: "",
     combat_source_attack_ids: "",
@@ -218,6 +243,11 @@ const normalizeAction = (action = {}) => {
             target_values: (entry?.target_values || "").toString().trim(),
             source_item_ids: (entry?.source_item_ids || "").toString().trim(),
             source_attack_ids: (entry?.source_attack_ids || "").toString().trim(),
+            ability_sources: normalizeControlledCsv(entry?.ability_sources),
+            ability_groups: normalizeControlledCsv(entry?.ability_groups),
+            ability_sheet_groups: normalizeControlledCsv(entry?.ability_sheet_groups),
+            ability_schools: normalizeControlledCsv(entry?.ability_schools),
+            ability_classes: normalizeControlledCsv(entry?.ability_classes),
              roll_tags: Array.isArray(entry?.roll_tags) ? entry.roll_tags.join(",") : (entry?.roll_tags || "").toString().trim(),
             roll_tag_match: entry?.roll_tag_match === "all" ? "all" : "any",
             nh_display_mode: (entry?.roll_tags?.length || String(entry?.roll_tags || "").trim()) ? "roll_only" : (entry?.nh_display_mode || "roll_only").toString().trim() || "roll_only"
@@ -244,9 +274,15 @@ const normalizeAction = (action = {}) => {
     next.roll_modifier_application_side = next.roll_modifier_entries[0]?.application_side ?? "self";
     next.modifier_value = normalizeRollModifierEntryValue(next.modifier_value);
     next.modifier_value_mode = next.modifier_value_mode === "per_origin_level" ? "per_origin_level" : "fixed";
-    next.skill_scope = ["all", "specific", "attribute"].includes(next.skill_scope) ? next.skill_scope : "all";
+    next.ability_kind = ["skill", "spell", "power", "all"].includes(next.ability_kind) ? next.ability_kind : "skill";
+    next.skill_scope = ["all", "specific", "attribute", "classification"].includes(next.skill_scope) ? next.skill_scope : "all";
     next.skill_targets = normalizeControlledCsv(next.skill_targets);
     next.skill_attribute = String(next.skill_attribute || "dx").trim().toLowerCase();
+    next.ability_sources = normalizeControlledCsv(next.ability_sources);
+    next.ability_groups = normalizeControlledCsv(next.ability_groups);
+    next.ability_sheet_groups = normalizeControlledCsv(next.ability_sheet_groups);
+    next.ability_schools = normalizeControlledCsv(next.ability_schools);
+    next.ability_classes = normalizeControlledCsv(next.ability_classes);
     next.combat_scope = ["all", "melee", "ranged", "specific"].includes(next.combat_scope) ? next.combat_scope : "all";
     next.combat_source_item_ids = normalizeControlledCsv(next.combat_source_item_ids);
     next.combat_source_attack_ids = normalizeControlledCsv(next.combat_source_attack_ids);
@@ -366,6 +402,11 @@ export class EffectSheet extends ItemSheet {
                     target_values: entry?.target_values || "",
                     source_item_ids: entry?.source_item_ids || "",
                     source_attack_ids: entry?.source_attack_ids || "",
+                    ability_sources: entry?.ability_sources || "",
+                    ability_groups: entry?.ability_groups || "",
+                    ability_sheet_groups: entry?.ability_sheet_groups || "",
+                    ability_schools: entry?.ability_schools || "",
+                    ability_classes: entry?.ability_classes || "",
                     roll_tags: Array.isArray(entry?.roll_tags) ? entry.roll_tags.join(",") : (entry?.roll_tags || ""),
                     roll_tag_match: entry?.roll_tag_match === "all" ? "all" : "any",
                     nh_display_mode: entry?.nh_display_mode || "roll_only"
@@ -407,7 +448,10 @@ export class EffectSheet extends ItemSheet {
             decoratedAction.summaryText = buildActionSummary(decoratedAction);
             return decoratedAction;
         });
-        context.hasTimedActions = actions.some((action) => ["attribute", "flag", "roll_modifier", "skill_modifier", "combat_modifier", "status"].includes(action.type));
+        const persistentActionTypes = new Set(["attribute", "flag", "roll_modifier", "skill_modifier", "combat_modifier", "status"]);
+        const instantActionTypes = new Set(["resource_change", "resource_create", "macro", "chat"]);
+        context.hasPersistentActions = actions.some(action => persistentActionTypes.has(action.type));
+        context.hasInstantActions = actions.some(action => instantActionTypes.has(action.type));
         const resistancePurposeIds = normalizePurposeIds(context.system.resistanceRoll?.requestedPurposeIds);
         context.resistancePurposeIdsCsv = resistancePurposeIds.join(",");
         context.resistancePurposeSummary = formatPurposeSelection(resistancePurposeIds);
@@ -499,8 +543,15 @@ activateListeners(html) {
         if (!actionRoot) return;
         const skillScope = actionRoot.querySelector('[name$=".skill_scope"]')?.value;
         if (skillScope) {
+            actionRoot.querySelectorAll("[data-ability-scope]").forEach(section => {
+                const scopes = String(section.dataset.abilityScope || "").split(",").map(value => value.trim()).filter(Boolean);
+                section.hidden = !scopes.includes(skillScope);
+            });
             setSpecializedFieldAvailability(actionRoot, "skill_targets", skillScope === "specific");
             setSpecializedFieldAvailability(actionRoot, "skill_attribute", skillScope === "attribute");
+            for (const field of ["ability_sources", "ability_groups", "ability_sheet_groups", "ability_schools", "ability_classes"]) {
+                setSpecializedFieldAvailability(actionRoot, field, skillScope === "classification");
+            }
         }
         const combatScope = actionRoot.querySelector('[name$=".combat_scope"]')?.value;
         if (combatScope) {
@@ -515,7 +566,7 @@ activateListeners(html) {
             displayMode.closest(".effect-premium-field")?.classList.toggle("is-disabled", applicationSide === "vs_targeter");
         }
     };
-    html.on("change", '[name$=".skill_scope"], [name$=".combat_scope"], [name$=".modifier_application_side"]', (event) => refreshSpecializedFields(event.currentTarget.closest(".effect-premium-action")));
+    html.on("change", '[name$=".ability_kind"], [name$=".skill_scope"], [name$=".combat_scope"], [name$=".modifier_application_side"]', (event) => refreshSpecializedFields(event.currentTarget.closest(".effect-premium-action")));
     html.find(".effect-premium-action").each((_index, element) => refreshSpecializedFields(element));
     if (!this.isEditable) return; // Adicionando uma verificação de segurança
 
@@ -1264,6 +1315,9 @@ activateListeners(html) {
             formData["system.roll_label"] = firstAction.roll_label;
             formData["system.roll_attribute"] = firstAction.roll_attribute;
             formData["system.roll_modifier"] = firstAction.roll_modifier;
+            formData["system.roll_modifier_label"] = firstAction.roll_modifier_label;
+            formData["system.roll_skip_allowed"] = Boolean(firstAction.roll_skip_allowed);
+            formData["system.roll_skip_label"] = firstAction.roll_skip_label;
             formData["system.roll_modifier_value"] = firstAction.roll_modifier_value;
             formData["system.roll_modifier_cap"] = firstAction.roll_modifier_cap;
             formData["system.roll_modifier_context"] = firstAction.roll_modifier_context;

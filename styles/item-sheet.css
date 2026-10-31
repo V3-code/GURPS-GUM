@@ -8439,6 +8439,41 @@ color:#121114;
   grid-template-columns: minmax(320px, 2fr) minmax(180px, 0.8fr);
 }
 
+.gum.sheet.item.effect-sheet .effect-ability-primary-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gum.sheet.item.effect-sheet .effect-ability-scope-body {
+  display: grid;
+  gap: 10px;
+}
+
+.gum.sheet.item.effect-sheet .effect-ability-scope-body [hidden] {
+  display: none !important;
+}
+
+.gum.sheet.item.effect-sheet .effect-ability-specific-field {
+  width: 100%;
+}
+
+.gum.sheet.item.effect-sheet .effect-ability-attribute-field {
+  width: min(190px, 100%);
+}
+
+.gum.sheet.item.effect-sheet .effect-resizable-code-input {
+  display: block;
+  min-height: 34px;
+  height: 34px;
+  width: 100%;
+  resize: vertical;
+  line-height: 1.35;
+  overflow: auto;
+}
+
+.gum.sheet.item.effect-sheet .effect-ability-options-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .gum.sheet.item.effect-sheet .effect-specialized-action .effect-premium-field.is-disabled {
   opacity: 0.48;
 }
@@ -8556,7 +8591,9 @@ color:#121114;
 @media (max-width: 720px) {
   .gum.sheet.item.effect-sheet .effect-specialized-grid-two,
   .gum.sheet.item.effect-sheet .effect-specialized-grid-three,
-  .gum.sheet.item.effect-sheet .effect-specialized-grid-value {
+  .gum.sheet.item.effect-sheet .effect-specialized-grid-value,
+  .gum.sheet.item.effect-sheet .effect-ability-primary-grid,
+  .gum.sheet.item.effect-sheet .effect-ability-options-grid {
     grid-template-columns: 1fr;
   }
 

@@ -21,6 +21,7 @@ import { applySingleEffect, getEffectActions } from './effects-engine.js';
 import { isPersistentEffectAction, normalizeEffectStackingMode } from '../module/utils/effect-stacking.mjs';
 import { buildActorEffectTarget, buildActorEffectTargets, getActorEvaluationKey, isActorContextAvailable, isMissingSyntheticActorContextError } from '../module/utils/condition-actor-context.mjs';
 import { captureActorResourceChanges } from '../module/utils/actor-resource-change.mjs';
+import { PASSIVE_CONDITION_CONFIG_SETTING, normalizePassiveConditionConfiguration, preparePassiveConditionCreateData, resolvePassiveConditionConfiguration } from '../module/utils/passive-condition-sync.mjs';
 import { ConditionEventDeduper, normalizeConditionEffectLinks, shouldExecuteConditionEffectLink } from '../module/utils/condition-effect-link.mjs';
 import { reconcileAllStateEffects, removeAllStateEffectsForItem, setStateEffectGroupActive, syncItemStateEffects } from '../module/services/state-effect-service.js';
 import { GUM } from '../module/config.js';
@@ -59,6 +60,7 @@ import { ContentSourceConfig } from "../module/apps/content-source-config.js";
 import { WorldStatusConfig } from "../module/apps/world-status-config.js";
 import { installGumApi } from "../module/api/gum-api.mjs";
 import { getRequestedAttributeOption, normalizeRequestedAttributeKey } from "../module/utils/requested-attributes.mjs";
+import { matchesAbilityClassificationFilters, matchesAbilityRollContext, resolveAbilityRollContext } from "../module/utils/ability-roll-context.mjs";
 
 import { getSkillDisplayName, setDirectoryEntryLabel } from "../module/utils/skill-display-name.mjs";
 import { installGumChatCommandInterceptor, normalizeGumLookup, resolveGumCommandActor, splitSkillModifier } from "../module/utils/gum-chat-command.mjs";
@@ -2309,8 +2311,10 @@ function _determineRollContext(actor, rollData) {
         if (rollData.attackType === 'melee') return 'attack_melee';
     }
 
-    if (type === 'spell') return 'spell';
-    if (type === 'power') return 'power';
+    if (type === 'spell' || type === 'power') {
+        const item = itemId ? actor?.items?.get(itemId) : null;
+        return resolveAbilityRollContext(type, { attributeKey: attributeKey || null, item }) || type;
+    }
 
     if (type === 'attribute' && attributeKey) {
         if (attributeKeys.includes(attributeKey)) return `check_${attributeKey}`;
@@ -2329,8 +2333,7 @@ function _determineRollContext(actor, rollData) {
     if (itemId) {
         const item = actor?.items?.get(itemId);
         if (item) {
-            if (item.type === 'spell') return 'spell';
-            if (item.type === 'power') return 'power';
+            if (item.type === 'spell' || item.type === 'power') return resolveAbilityRollContext(item.type, { item }) || item.type;
             if (item.type === 'ranged_weapon') return 'attack_ranged';
         }
     }
@@ -2343,15 +2346,11 @@ function _determineRollContext(actor, rollData) {
 
 function _matchesRollContext(modContext, rollContext) {
     if (!modContext || modContext === 'all') return true;
-    if (Array.isArray(modContext)) return modContext.includes(rollContext);
+    if (Array.isArray(modContext)) return modContext.some(context => matchesAbilityRollContext(context, rollContext));
     if (typeof modContext === 'string' && modContext.includes(',')) {
-        return modContext.split(',').map(c => c.trim()).includes(rollContext);
+        return modContext.split(',').map(c => c.trim()).some(context => matchesAbilityRollContext(context, rollContext));
     }
-    if (modContext === 'attack') return rollContext.startsWith('attack');
-    if (modContext === 'defense') return rollContext.startsWith('defense');
-    if (modContext === 'check') return rollContext.startsWith('check_') || rollContext.startsWith('sense_');
- if (modContext === 'skill') return rollContext.startsWith('skill_') || rollContext === 'skill';
-    return modContext === rollContext;
+    return matchesAbilityRollContext(modContext, rollContext);
 }
 
 function _splitModifierArgs(rawValue) {
@@ -2572,6 +2571,7 @@ function _getRollSourceAttack(item = null, rollData = {}) {
 }
 
 function _matchesRollModifierItemFilter(entry = {}, item = null) {
+    if (!matchesAbilityClassificationFilters(entry, item)) return false;
     const sourceItemFilters = _normalizeRollModifierFilterTokens(entry?.source_item_ids, { lower: true });
     if (sourceItemFilters.length) {
         if (!item) return false;
@@ -2610,11 +2610,10 @@ function _matchesNhDisplayContextForItem(entry = {}, item = null, baseAttribute 
     if (!context || context === "all") return true;
     const contexts = context.includes(",") ? context.split(",").map(c => c.trim()) : [context];
     const baseAttr = (baseAttribute ?? item?.system?.base_attribute ?? "").toString().trim().toLowerCase();
+    const hasExplicitBaseAttribute = baseAttribute !== null && baseAttribute !== undefined && baseAttribute !== "";
+    const abilityContext = resolveAbilityRollContext(item?.type, { attributeKey: hasExplicitBaseAttribute ? baseAttr : null, item });
     return contexts.some((ctx) => {
-        if (ctx === "skill") return item?.type === "skill";
-        if (ctx === "spell") return item?.type === "spell";
-        if (ctx === "power") return item?.type === "power";
-        if (ctx.startsWith("skill_")) return item?.type === "skill" && baseAttr === ctx.replace("skill_", "");
+        if (abilityContext && matchesAbilityRollContext(ctx, abilityContext)) return true;
         return false;
     });
 }
@@ -2670,7 +2669,9 @@ function _collectEffectRollModifiers(actor, rollContext, rollData = {}) {
 
         entries.forEach((entry, index) => {
             const context = entry?.contexts ?? entry?.context ?? data.context ?? "all";
-            if (entry?.skill_roll_only === true && _getRollSourceItem(actor, rollData)?.type !== "skill") return;
+            const rollSourceItem = _getRollSourceItem(actor, rollData);
+            if (entry?.skill_roll_only === true && rollSourceItem?.type !== "skill") return;
+            if (entry?.ability_roll_only === true && !["skill", "spell", "power"].includes(rollSourceItem?.type)) return;
             if (!_matchesRollContext(context, rollContext)) return;
             if (!matchesRollTags(entry, rollData.rollTags)) return;
             if (!_matchesRollTargetFilter(actor, rollData, entry)) return;
@@ -2734,7 +2735,9 @@ function _collectCounterCandidatesFromTarget(targetActor, rollContext, rollData 
 
         entries.forEach((entry, entryIndex) => {
             const context = entry?.contexts ?? entry?.context ?? data.context ?? "all";
-            if (entry?.skill_roll_only === true && _getRollSourceItem(rollingActor || targetActor, rollData)?.type !== "skill") return;
+            const rollSourceItem = _getRollSourceItem(rollingActor || targetActor, rollData);
+            if (entry?.skill_roll_only === true && rollSourceItem?.type !== "skill") return;
+            if (entry?.ability_roll_only === true && !["skill", "spell", "power"].includes(rollSourceItem?.type)) return;
             if (!_matchesRollContext(context, rollContext)) return;
             if (!matchesRollTags(entry, rollData.rollTags)) return;
             if (!_matchesRollTargetFilter(rollingActor || targetActor, rollData, entry)) return;
@@ -3190,8 +3193,11 @@ Hooks.once('init', async function() {
             await actor.setFlag("gum", "useDefaultModifiers", true);
         }
         
-        // Verifica configuração global (se existir)
-        if (!game.settings.get("gum", "addDefaultRules")) return;
+        // A configuração mundial autoritativa substitui a antiga chave geral.
+        // A chave legada continua valendo apenas enquanto a nova janela ainda
+        // não tiver sido inicializada.
+        const passiveConfiguration = normalizePassiveConditionConfiguration(game.settings.get("gum", PASSIVE_CONDITION_CONFIG_SETTING));
+        if (!passiveConfiguration.initialized && !game.settings.get("gum", "addDefaultRules")) return;
     
         console.log(`GUM | Populando novo ator: ${actor.name}`);
         const itemsToCreate = [];
@@ -3209,10 +3215,21 @@ Hooks.once('init', async function() {
         };
 
         // 1. REGRAS / CONDIÇÕES PASSIVAS
-        const { documents: passiveConditions, invalidSources } = await contentSourceService.getDocuments("passiveConditions");
-        passiveConditions.forEach(item => {
+        let passiveRecords;
+        let invalidSources = [];
+        if (passiveConfiguration.initialized) {
+            const resolution = await resolvePassiveConditionConfiguration(passiveConfiguration);
+            passiveRecords = resolution.resolved;
+            invalidSources = resolution.missing;
+        } else {
+            const legacy = await contentSourceService.getDocuments("passiveConditions");
+            passiveRecords = legacy.documents.map(item => ({ document: item, configId: item.uuid, sourceUuid: item.uuid }));
+            invalidSources = legacy.invalidSources;
+        }
+        passiveRecords.forEach(record => {
+            const item = record.document;
             if (item.system?.bindingMode === "status-link") return;
-            const data = normalizeItemForV13(item.toObject(), item.uuid);
+            const data = normalizeItemForV13(preparePassiveConditionCreateData(item, record), record.sourceUuid || item.uuid);
             itemsToCreate.push(data);
         });
         if (invalidSources.length) {

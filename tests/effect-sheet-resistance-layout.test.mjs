@@ -4,6 +4,7 @@ import test from "node:test";
 
 const template = fs.readFileSync(new URL("../templates/items/effect-sheet.hbs", import.meta.url), "utf8");
 const styles = fs.readFileSync(new URL("../styles/item-sheet.css", import.meta.url), "utf8");
+const schema = JSON.parse(fs.readFileSync(new URL("../template.json", import.meta.url), "utf8"));
 
 test("configuração apresenta duração antes da barreira de resistência", () => {
   const duration = template.indexOf("DURAÇÃO E EXPIRAÇÃO");
@@ -11,6 +12,28 @@ test("configuração apresenta duração antes da barreira de resistência", () 
 
   assert.ok(duration >= 0, "seção de duração ausente");
   assert.ok(resistance > duration, "a barreira deve vir depois da duração");
+});
+
+test("duração permanece visível e novos efeitos começam permanentes", () => {
+  const durationStart = template.indexOf("DURAÇÃO E EXPIRAÇÃO");
+  const resistanceStart = template.indexOf("BARREIRA DE RESISTÊNCIA", durationStart);
+  const durationSection = template.slice(durationStart, resistanceStart);
+
+  assert.doesNotMatch(durationSection, /{{#if hasTimedActions}}/);
+  assert.match(durationSection, /GUM\.EffectSheet\.PersistentDurationHint/);
+  assert.match(durationSection, /{{#unless hasPersistentActions}}[\s\S]*?GUM\.EffectSheet\.NoPersistentActionsHint/);
+  assert.match(durationSection, /{{#if hasInstantActions}}[\s\S]*?GUM\.EffectSheet\.InstantActionsDurationHint/);
+  assert.match(durationSection, /{{#if \(and system\.duration\.isPermanent hasPersistentActions\)}}[\s\S]*?GUM\.EffectSheet\.PassiveEffectHint/);
+
+  assert.deepEqual(schema.Item.effect.duration, {
+    value: 1,
+    unit: "rounds",
+    inCombat: false,
+    isPermanent: true,
+    _uiMode: "permanent",
+    startMode: "apply",
+    endMode: "turnEnd"
+  });
 });
 
 test("finalidades encerram as opções da barreira", () => {

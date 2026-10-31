@@ -7,7 +7,7 @@ const styles = fs.readFileSync(new URL("../styles/item-sheet.css", import.meta.u
 
 test("teste da mensagem de chat reserva uma linha para a expressão", () => {
   assert.match(template, /effect-chat-roll-value-field/);
-  assert.match(template, /effect-code-input effect-chat-roll-value-input/);
+  assert.match(template, /effect-code-input[^\"]*effect-chat-roll-value-input/);
   assert.match(template, /class="effect-field-help"[\s\S]*?role="tooltip"/);
   assert.doesNotMatch(template, /<small>Aceita número ou expressão JavaScript avaliada para o alvo\.<\/small>/);
   assert.match(styles, /\.effect-chat-roll-value-field \{[\s\S]*?grid-column: 1 \/ -1;/);

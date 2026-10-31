@@ -55,7 +55,7 @@ test("spell rows preserve rolls, quick view, item actions, and drag behavior", (
   assert.match(spellTab, /magic-card__name item-quick-view/);
   assert.match(spellTab, /item-edit gum-action-menu__item/);
   assert.match(spellTab, /item-delete gum-action-menu__item is-danger/);
-  assert.match(spellTab, /data-item-id="{{this\.id}}" draggable="true"/);
+  assert.match(spellTab, /data-item-id="{{this\.id}}"[^>]*data-organizer-item-type="spell"[^>]*draggable="true"/);
   assert.match(actorSheet, /html\.find\("\.magic-card"\)\.each/);
   assert.match(actorSheet, /card\.addEventListener\("dragstart"/);
   assert.match(actorSheet, /ev\.target\.closest\?\.\("\.rollable"\)/);

@@ -6,12 +6,13 @@ import {
 
 export const GUM_CONFIGURATION_BUNDLE_FORMAT = "gum-configuration-bundle";
 export const GUM_CONFIGURATION_BUNDLE_VERSION = 1;
-export const GUM_CONFIGURATION_BUNDLE_KINDS = Object.freeze(["gm-screen", "world-statuses"]);
+export const GUM_CONFIGURATION_BUNDLE_KINDS = Object.freeze(["gm-screen", "world-statuses", "passive-conditions"]);
 
 const KIND_SET = new Set(GUM_CONFIGURATION_BUNDLE_KINDS);
 const ALLOWED_TYPES = Object.freeze({
   "gm-screen": new Set(["effect", "gm_modifier"]),
-  "world-statuses": new Set(["effect"])
+  "world-statuses": new Set(["effect"]),
+  "passive-conditions": new Set(["condition", "effect"])
 });
 
 const isObject = value => Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -124,14 +125,37 @@ function mergeWorldStatusConfiguration(current, incoming, mode) {
   };
 }
 
+function mergePassiveConditionConfiguration(current, incoming, mode) {
+  const entries = clone(Array.isArray(current?.entries) ? current.entries : []);
+  const byId = new Map(entries.map(entry => [String(entry?.id || entry?.sourceUuid || ""), entry]));
+  for (const incomingEntry of incoming?.entries || []) {
+    const id = String(incomingEntry?.id || incomingEntry?.sourceUuid || "");
+    const existing = byId.get(id);
+    if (!existing) {
+      const added = clone(incomingEntry);
+      entries.push(added);
+      byId.set(id, added);
+      continue;
+    }
+    if (mode === "merge") Object.assign(existing, clone(incomingEntry));
+  }
+  return {
+    ...clone(current || {}),
+    version: Math.max(Number(current?.version) || 1, Number(incoming?.version) || 1),
+    initialized: true,
+    entries,
+    managedSourceUuids: mergeUniqueValues(current?.managedSourceUuids, incoming?.managedSourceUuids)
+  };
+}
+
 /** Combine an imported configuration with the current world state. */
 export function combineConfigurationImport(kind, current, incoming, mode = "merge") {
   if (!KIND_SET.has(kind)) throw new Error(`Unsupported GUM configuration bundle kind: ${kind}.`);
   if (!["add", "merge", "replace"].includes(mode)) throw new Error(`Unsupported configuration import mode: ${mode}.`);
   if (mode === "replace") return clone(incoming || {});
-  return kind === "gm-screen"
-    ? mergeGMScreenConfiguration(current || {}, incoming || {}, mode)
-    : mergeWorldStatusConfiguration(current || {}, incoming || {}, mode);
+  if (kind === "gm-screen") return mergeGMScreenConfiguration(current || {}, incoming || {}, mode);
+  if (kind === "passive-conditions") return mergePassiveConditionConfiguration(current || {}, incoming || {}, mode);
+  return mergeWorldStatusConfiguration(current || {}, incoming || {}, mode);
 }
 
 function configurationEntries(kind, configuration) {
@@ -140,6 +164,9 @@ function configurationEntries(kind, configuration) {
       `group:${tab?.id || tabIndex}:${group?.id || groupIndex}`,
       group
     ])));
+  }
+  if (kind === "passive-conditions") {
+    return new Map((configuration?.entries || []).map((value, index) => [`condition:${value?.id || value?.sourceUuid || index}`, value]));
   }
   return new Map([
     ...(configuration?.statuses || []).map((value, index) => [`status:${value?.id || `status-${index}`}`, value])
@@ -280,6 +307,30 @@ function resolveWorldStatusConfiguration(parsed, uuidByKey) {
   return configuration;
 }
 
+function resolvePassiveConditionConfiguration(parsed, uuidByKey, preparedItems) {
+  const configuration = clone(parsed.configuration);
+  const preparedByKey = new Map((preparedItems?.documents || []).map(entry => [entry.key, entry]));
+  configuration.entries = (configuration.entries || []).map((entry, index) => {
+    const location = `configuration.entries.${index}.conditionRef`;
+    const key = requiredText(entry?.conditionRef, location);
+    const uuid = resolveTarget(parsed, uuidByKey, key, new Set(["condition"]), location);
+    const target = parsed.documents[key];
+    const prepared = preparedByKey.get(key)?.data || target;
+    const snapshot = portableDocumentData(prepared);
+    if (snapshot.flags?.gum?.itemBundle) {
+      delete snapshot.flags.gum.itemBundle;
+      if (!Object.keys(snapshot.flags.gum).length) delete snapshot.flags.gum;
+      if (!Object.keys(snapshot.flags).length) delete snapshot.flags;
+    }
+    const resolved = { ...entry, sourceUuid: uuid, name: entry.name || target.name, img: entry.img || target.img, snapshot };
+    delete resolved.conditionRef;
+    return resolved;
+  });
+  configuration.managedSourceUuids = [...new Set([...(configuration.managedSourceUuids || []), ...configuration.entries.map(entry => entry.sourceUuid)].filter(Boolean))];
+  configuration.initialized = true;
+  return configuration;
+}
+
 function findUnresolvedReference(value, path = []) {
   if (Array.isArray(value)) {
     for (const [index, entry] of value.entries()) {
@@ -324,7 +375,9 @@ export function prepareConfigurationBundle(bundleData, packCollection = "") {
 
   const configuration = parsed.kind === "gm-screen"
     ? resolveGMScreenConfiguration(parsed, uuidByKey)
-    : resolveWorldStatusConfiguration(parsed, uuidByKey);
+    : parsed.kind === "passive-conditions"
+      ? resolvePassiveConditionConfiguration(parsed, uuidByKey, preparedItems)
+      : resolveWorldStatusConfiguration(parsed, uuidByKey);
   const unresolved = findUnresolvedReference(configuration);
   if (unresolved) throw new Error(`Configuration bundle reference is not allowed at ${unresolved}.`);
 
@@ -342,6 +395,7 @@ function referencedUuids(configuration, kind) {
   if (kind === "gm-screen") {
     return [...new Set(groupsFromGMScreen(configuration).flatMap(group => group?.items || []).filter(value => typeof value === "string" && value))];
   }
+  if (kind === "passive-conditions") return [...new Set((configuration?.entries || []).map(entry => entry?.sourceUuid).filter(Boolean))];
   return [...new Set([
     ...(configuration?.statuses || []).flatMap(row => row?.effectUuids || []),
     ...Object.values(configuration?.overrides || {}).flatMap(row => row?.effectUuids || []),
@@ -382,6 +436,7 @@ function collectExternalAssetPaths(value, path = [], result = new Set()) {
 function effectLinks(document) {
   const system = document?.system || {};
   return [
+    ...(document?.type === "condition" ? collectionValues(system.effects) : []),
     ...collectionValues(system.activationEffects?.success),
     ...collectionValues(system.activationEffects?.failure),
     ...collectionValues(system.onDamageEffects),
@@ -435,12 +490,52 @@ export async function buildConfigurationBundle({
     keyByUuid.set(uuid, key);
     const data = portableDocumentData(document);
     documents[key] = data;
-    if (kind === "gm-screen" && data.type === "gm_modifier") {
+    if ((kind === "gm-screen" && data.type === "gm_modifier") || (kind === "passive-conditions" && data.type === "condition")) {
       for (const link of effectLinks(data)) {
         const effectUuid = String(link.effectUuid || "").trim();
         if (effectUuid && !resolvedByUuid.has(effectUuid)) queuedUuids.push(effectUuid);
       }
     }
+  }
+
+  if (kind === "passive-conditions") {
+    for (const [index, entry] of (sourceConfiguration.entries || []).entries()) {
+      let conditionKey = keyByUuid.get(String(entry?.sourceUuid || "").trim());
+      if (!conditionKey && entry?.snapshot?.type === "condition") {
+        const base = `condition-${entry.id || `entry-${index + 1}`}`.replace(/[^A-Za-z0-9_-]/g, "-");
+        conditionKey = base;
+        let suffix = 2;
+        while (usedKeys.has(conditionKey)) conditionKey = `${base}-${suffix++}`;
+        usedKeys.add(conditionKey);
+        documents[conditionKey] = portableDocumentData(entry.snapshot);
+        const snapshotUuid = String(entry?.sourceUuid || "").trim();
+        if (snapshotUuid) keyByUuid.set(snapshotUuid, conditionKey);
+      }
+      if (!conditionKey) {
+        unresolvedReferences.add(entry?.sourceUuid || entry?.id || `entry-${index + 1}`);
+        continue;
+      }
+      const portableEntry = { id: entry.id, name: entry.name, img: entry.img, enabled: entry.enabled !== false, conditionRef: conditionKey };
+      sourceConfiguration.entries[index] = portableEntry;
+      for (const link of effectLinks(documents[conditionKey])) {
+        const effectUuid = String(link.uuid || link.effectUuid || "").trim();
+        if (!effectUuid || resolvedByUuid.has(effectUuid)) continue;
+        const effect = await resolveUuid(effectUuid);
+        resolvedByUuid.set(effectUuid, effect || null);
+        if (!effect || effect.type !== "effect") {
+          unresolvedReferences.add(effectUuid);
+          continue;
+        }
+        const base = `effect-${effect.id || "item"}`;
+        let key = base;
+        let suffix = 2;
+        while (usedKeys.has(key)) key = `${base}-${suffix++}`;
+        usedKeys.add(key);
+        keyByUuid.set(effectUuid, key);
+        documents[key] = portableDocumentData(effect);
+      }
+    }
+    sourceConfiguration.managedSourceUuids = [];
   }
 
   if (kind === "gm-screen") {
@@ -456,12 +551,26 @@ export async function buildConfigurationBundle({
     }
   }
 
+  if (kind === "passive-conditions") {
+    for (const document of Object.values(documents)) {
+      if (document.type !== "condition") continue;
+      for (const link of effectLinks(document)) {
+        const effectUuid = String(link.uuid || link.effectUuid || "").trim();
+        const effectKey = keyByUuid.get(effectUuid);
+        if (!effectKey) continue;
+        delete link.uuid;
+        delete link.effectUuid;
+        link.effectRef = effectKey;
+      }
+    }
+  }
+
   if (kind === "gm-screen") {
     for (const group of groupsFromGMScreen(sourceConfiguration)) {
       if (!Array.isArray(group?.items)) continue;
       group.items = group.items.map(uuid => keyByUuid.has(uuid) ? { itemRef: keyByUuid.get(uuid) } : uuid);
     }
-  } else {
+  } else if (kind === "world-statuses") {
     const rows = [
       ...(sourceConfiguration.statuses || []),
       ...Object.values(sourceConfiguration.overrides || {}),

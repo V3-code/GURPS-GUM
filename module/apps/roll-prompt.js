@@ -16,6 +16,7 @@ import { availableAmmunition, ammunitionRollModifier } from "../utils/ammunition
 import { normalizeRequestedAttributeKey } from "../utils/requested-attributes.mjs";
 import { DISTANCE_MODIFIER_ENABLED_SETTING, DISTANCE_MODIFIER_TABLE_SETTING, getDistanceModifier } from "../utils/distance-modifier.mjs";
 import { collectActiveEquipmentOwnerModifiers } from "../utils/equipment-owner-modifiers.mjs";
+import { matchesAbilityClassificationFilters, matchesAbilityRollContext, resolveAbilityRollContext } from "../utils/ability-roll-context.mjs";
 
 const TextEditorImpl = foundry?.applications?.ux?.TextEditor?.implementation ?? foundry?.applications?.ux?.TextEditor ?? TextEditor;
 
@@ -177,7 +178,9 @@ export class GurpsRollPrompt extends FormApplication {
 
             entries.forEach((entry, index) => {
                 const context = entry?.contexts ?? entry?.context ?? "all";
-                if (entry?.skill_roll_only === true && this.actor?.items?.get(this.rollData?.itemId)?.type !== "skill") return;
+                const sourceItem = this._getRollSourceItem();
+                if (entry?.skill_roll_only === true && sourceItem?.type !== "skill") return;
+                if (entry?.ability_roll_only === true && !["skill", "spell", "power"].includes(sourceItem?.type)) return;
                 if (!this._matchesEffectContext(context, this.context)) return;
                 if (!matchesRollTags(entry, this._getRollMetadata().rollTags)) return;
                 if (!this._matchesTargetFilter(entry)) return;
@@ -262,7 +265,9 @@ export class GurpsRollPrompt extends FormApplication {
 
             configuredEntries.forEach((entry, entryIndex) => {
                 const context = entry?.contexts ?? entry?.context ?? "all";
-                if (entry?.skill_roll_only === true && this.actor?.items?.get(this.rollData?.itemId)?.type !== "skill") return;
+                const sourceItem = this._getRollSourceItem();
+                if (entry?.skill_roll_only === true && sourceItem?.type !== "skill") return;
+                if (entry?.ability_roll_only === true && !["skill", "spell", "power"].includes(sourceItem?.type)) return;
                 if (!this._matchesEffectContext(context, this.context)) return;
                 if (!matchesRollTags(entry, this._getRollMetadata().rollTags)) return;
                 if (!this._matchesTargetFilter(entry)) return;
@@ -351,7 +356,7 @@ export class GurpsRollPrompt extends FormApplication {
     _isAutoDistanceContextSupported() {
         const supported = ["attack_melee", "attack_ranged", "spell", "power", "skill"];
         if (supported.includes(this.context)) return true;
-        return this.context.startsWith("skill_");
+        return ["skill_", "spell_", "power_"].some(prefix => this.context.startsWith(prefix));
     }
 
     _resolveAttackerToken() {
@@ -665,14 +670,7 @@ export class GurpsRollPrompt extends FormApplication {
         const normalized = `${modContext}`.trim();
         if (!normalized || normalized === "all") return true;
 
-        if (normalized === "attack") return rollContext.startsWith("attack");
-        if (normalized === "defense") return rollContext.startsWith("defense");
-        if (normalized === "check") return rollContext.startsWith("check_") || rollContext.startsWith("sense_");
-        if (normalized === "skill") {
-            return rollContext === "skill" || rollContext.startsWith("skill_") || rollContext.startsWith("check_") || rollContext.startsWith("sense_");
-        }
-
-        return normalized === rollContext;
+        return matchesAbilityRollContext(normalized, rollContext);
     }
 
     _normalizeFilterTokens(rawValue, { lower = false } = {}) {
@@ -739,6 +737,7 @@ export class GurpsRollPrompt extends FormApplication {
 
     _matchesTargetFilter(entry = {}) {
         const item = this._getRollSourceItem();
+        if (!matchesAbilityClassificationFilters(entry, item)) return false;
         if (!this._matchesSourceItemFilter(entry, item)) return false;
         if (!this._matchesSourceAttackFilter(entry, item)) return false;
 
@@ -775,8 +774,10 @@ export class GurpsRollPrompt extends FormApplication {
  if (this.rollData.attackType === 'melee') return 'attack_melee';
         }
 
-        if (type === 'spell') return 'spell';
-        if (type === 'power') return 'power';
+        if (type === 'spell' || type === 'power') {
+            const item = itemId ? this.actor.items.get(itemId) : null;
+            return resolveAbilityRollContext(type, { attributeKey: attributeKey || null, item }) || type;
+        }
 
         if (type === 'attribute' && attributeKey) {
             if (attributeKeys.includes(attributeKey)) return `check_${attributeKey}`;
@@ -795,8 +796,7 @@ export class GurpsRollPrompt extends FormApplication {
         if (itemId) {
             const item = this.actor.items.get(itemId);
             if (item) {
-                if (item.type === 'spell') return 'spell';
-                if (item.type === 'power') return 'power';
+                if (item.type === 'spell' || item.type === 'power') return resolveAbilityRollContext(item.type, { item }) || item.type;
                 if (item.type === 'ranged_weapon') return 'attack_ranged';
             }
         }
@@ -1107,10 +1107,10 @@ return 'default';
             if (context === 'defense_block') validKeys.push('combat_defense_block');
             if (context === 'defense') validKeys.push('combat_defense_dodge', 'combat_defense_parry', 'combat_defense_block');
         }
-        else if (context === 'spell') {
+        else if (context === 'spell' || context.startsWith('spell_')) {
             validKeys.push('combat_attack_spell', 'attr_iq_all', 'spell_iq', 'combat_all');
         }
-        else if (context === 'power') {
+        else if (context === 'power' || context.startsWith('power_')) {
              validKeys.push('combat_attack_power', 'power_iq', 'power_ht', 'power_will');
         }
         else if (context === 'skill' || context.startsWith('skill_') || context.startsWith('check_')) {
@@ -1325,6 +1325,10 @@ return 'default';
                     this.context = `check_${option.key}`;
                 } else if (this.rollData.type === "skill" || this.context.startsWith("skill_")) {
                     this.context = `skill_${option.key}`;
+                } else if (this.rollData.type === "spell" || this.context.startsWith("spell_")) {
+                    this.context = `spell_${option.key}`;
+                } else if (this.rollData.type === "power" || this.context.startsWith("power_")) {
+                    this.context = `power_${option.key}`;
                 }
             }
             this.rollData.modifier = parseInt(inputManual.val()) || 0;

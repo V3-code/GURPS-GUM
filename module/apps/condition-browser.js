@@ -9,6 +9,7 @@ constructor(targetItem, options = {}) {
     super({}, options);
     this.targetItem = targetItem;
     this.onSelect = options.onSelect;
+    this.purpose = options.purpose || "conditions";
     this.allConditions = [];
     this.availableFolders = [];
 }
@@ -27,7 +28,7 @@ constructor(targetItem, options = {}) {
     context.targetItem = this.targetItem;
     
     const { records, folders, invalidSources } = await loadContentSourceBrowserData({
-        purpose: "conditions",
+        purpose: this.purpose,
         selectionPrefix: "conditionSelection",
         service: contentSourceService
     });

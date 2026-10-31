@@ -73,10 +73,14 @@ test("keeps the occupant window persistent and supports minimize and restore", (
   assert.match(styles, /\.gum-hex-occupancy-picker\.is-ended \.gum-hex-occupancy-ended/);
 });
 
-test("delegates multi-hex footprints to Foundry's occupied-grid API", () => {
+test("supports square grids and delegates multi-space footprints to Foundry's occupied-grid API", () => {
   const occupancy = fs.readFileSync(new URL("../module/utils/hex-occupancy.mjs", import.meta.url), "utf8");
   assert.match(occupancy, /getOccupiedGridSpaceOffsets/);
-  assert.match(occupancy, /for \(const \{ i, j, elevation \} of getTokenOccupiedGridOffsets/);
+  assert.match(occupancy, /isSquareGrid/);
+  assert.match(occupancy, /for \(const \{ i, j \} of getTokenOccupiedGridOffsets/);
+  assert.match(overlay, /isSupportedOccupancyGrid/);
+  assert.match(overlay, /GUM\.HexOccupancy\.Elevation/);
+  assert.match(styles, /\.gum-hex-occupancy-elevation/);
 });
 
 test("localizes the setting and picker actions in English and Portuguese", () => {

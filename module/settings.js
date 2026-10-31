@@ -6,22 +6,32 @@
 async function syncCompendiumRules() {
     ui.notifications.info("Iniciando sincronização das Condições Passivas...");
 
-    const { documents: sourceRules, invalidSources } = await contentSourceService.getDocuments("passiveConditions");
-    const passiveRules = sourceRules.filter(rule => rule.system?.bindingMode !== "status-link");
-
-    if (passiveRules.length === 0) {
-        const missing = invalidSources.map(source => source.id).join(", ");
-        return ui.notifications.warn(missing
-            ? `Nenhuma condição passiva disponível. Fontes inválidas: ${missing}.`
-            : "As fontes configuradas de Condições Passivas estão vazias. Nenhuma regra para sincronizar.");
+    const configuration = normalizePassiveConditionConfiguration(game.settings.get("gum", PASSIVE_CONDITION_CONFIG_SETTING));
+    let passiveRules;
+    let invalidSources = [];
+    let options = { removeMissing: false };
+    if (configuration.initialized) {
+        const resolution = await resolvePassiveConditionConfiguration(configuration);
+        passiveRules = resolution.resolved;
+        options = { removeMissing: true, managedSourceUuids: configuration.managedSourceUuids };
+        invalidSources = resolution.missing;
+    } else {
+        const legacy = await contentSourceService.getDocuments("passiveConditions");
+        passiveRules = legacy.documents.filter(rule => rule.system?.bindingMode !== "status-link");
+        invalidSources = legacy.invalidSources;
+        if (passiveRules.length === 0) {
+            const missing = invalidSources.map(source => source.id).join(", ");
+            return ui.notifications.warn(missing ? `Nenhuma condição passiva disponível. Fontes inválidas: ${missing}.` : "As fontes configuradas de Condições Passivas estão vazias. Nenhuma regra para sincronizar.");
+        }
     }
 
     let createdCount = 0;
     let updatedCount = 0;
+    let deletedCount = 0;
     const actorsToUpdate = game.actors.filter(a => a.type === "character");
 
     for (const actor of actorsToUpdate) {
-        const { updates, creates } = buildPassiveConditionSyncOperations(actor.items, passiveRules);
+        const { updates, creates, deletes } = buildPassiveConditionSyncOperations(actor.items, passiveRules, options);
 
         if (updates.length > 0) {
             await actor.updateEmbeddedDocuments("Item", updates);
@@ -31,21 +41,26 @@ async function syncCompendiumRules() {
             await actor.createEmbeddedDocuments("Item", creates);
             createdCount += creates.length;
         }
+        if (deletes.length > 0) {
+            await actor.deleteEmbeddedDocuments("Item", deletes);
+            deletedCount += deletes.length;
+        }
     }
 
     if (invalidSources.length) {
         console.warn("GUM | Fontes de Condições Passivas indisponíveis durante a sincronização:", invalidSources);
     }
-    ui.notifications.info(`Sincronização completa: ${createdCount} condições adicionadas e ${updatedCount} atualizadas em ${actorsToUpdate.length} personagens.`);
+    ui.notifications.info(`Sincronização completa: ${createdCount} adicionadas, ${updatedCount} atualizadas e ${deletedCount} removidas em ${actorsToUpdate.length} personagens.`);
 }
 
 // --- IMPORTA A LÓGICA DOS IMPORTADORES ---
 import { importFromJson, importFromGCS, importTemplateFromGCS, exportCompendiumToJson, exportCharacterToJson } from "./apps/importers.js";
 import { ContentSourceConfig } from "./apps/content-source-config.js";
 import { WorldStatusConfig } from "./apps/world-status-config.js";
+import { PassiveConditionConfig } from "./apps/passive-condition-config.js";
 import { GUM } from "./config.js";
 import { CONTENT_SOURCE_SETTING, contentSourceService } from "./services/content-source-service.mjs";
-import { buildPassiveConditionSyncOperations } from "./utils/passive-condition-sync.mjs";
+import { PASSIVE_CONDITION_CONFIG_SETTING, buildPassiveConditionSyncOperations, normalizePassiveConditionConfiguration, resolvePassiveConditionConfiguration } from "./utils/passive-condition-sync.mjs";
 import { WORLD_STATUS_SETTING, applyWorldStatusConfiguration, normalizeWorldStatusConfiguration } from "./utils/world-status-config.mjs";
 import { MOVEMENT_RULER_SETTING } from "./canvas/movement-ruler.mjs";
 import { DISTANCE_MODIFIER_ENABLED_SETTING, DISTANCE_MODIFIER_TABLE_SETTING } from "./utils/distance-modifier.mjs";
@@ -185,6 +200,24 @@ export const registerSystemSettings = function() {
         restricted: true
     });
 
+    game.settings.register("gum", PASSIVE_CONDITION_CONFIG_SETTING, {
+        name: "GUM.PassiveConditions.Title",
+        hint: "GUM.PassiveConditions.SettingHint",
+        scope: "world",
+        config: false,
+        type: Object,
+        default: {}
+    });
+
+    game.settings.registerMenu("gum", "passiveConditionConfig", {
+        name: "GUM.PassiveConditions.Title",
+        label: "GUM.PassiveConditions.MenuLabel",
+        hint: "GUM.PassiveConditions.SettingHint",
+        icon: "fas fa-heart-pulse",
+        type: PassiveConditionConfig,
+        restricted: true
+    });
+
     applyWorldStatusConfiguration(GUM.statusEffects, game.settings.get("gum", WORLD_STATUS_SETTING));
 
     const userRoles = CONST.USER_ROLES;
@@ -271,7 +304,7 @@ export const registerSystemSettings = function() {
         name: "GUM.Settings.AddDefaultRules.Name",
         hint: "GUM.Settings.AddDefaultRules.Hint",
         scope: "world",
-        config: true,
+        config: false,
         type: Boolean,
         default: true
     });
@@ -281,7 +314,7 @@ export const registerSystemSettings = function() {
         name: "GUM.Settings.SyncPassiveConditions.Name",
         hint: "GUM.Settings.SyncPassiveConditions.Hint",
         scope: "world",
-        config: true,
+        config: false,
         type: Boolean,
         default: false,
         onChange: async (value) => {

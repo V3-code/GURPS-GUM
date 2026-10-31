@@ -4,7 +4,7 @@ import { normalizeSkillText, resolveSkillDefault } from "../utils/skill-default-
 import { normalizeRollRequest } from "../utils/roll-request-data.mjs";
 import { isUserAuthorizedForTarget } from "../utils/test-request-targets.mjs";
 import { getPurposeLabels } from "../utils/roll-purposes.mjs";
-import { appendResistanceRequestResult, renderPendingChatRollRequest } from "../utils/roll-request-view.mjs";
+import { appendResistanceRequestResult, appendSkippedRequestResult, renderPendingChatRollRequest } from "../utils/roll-request-view.mjs";
 import { evaluateGurpsRollResult } from "../utils/gurps-roll-result.mjs";
 import { createRollRequestExecutor } from "./roll-request-executor.mjs";
 import { contentSourceService } from "./content-source-service.mjs";
@@ -81,6 +81,21 @@ export async function createSingleRollRequestMessage(data, chatData = {}) {
 
 export function activateRollRequestChatListeners(html) {
   const root = html?.querySelectorAll ? html : html?.[0];
+  root?.querySelectorAll?.(".gum-roll-request-skip-button").forEach(button => button.addEventListener("click", async event => {
+    event.preventDefault();
+    const messageId = button.closest(".message, li.chat-message")?.dataset.messageId;
+    const message = game.messages.get(messageId);
+    const request = message?.getFlag("gum", "rollRequest");
+    const targetKey = decodeURIComponent(button.dataset.targetKey);
+    if (!request?.skip?.allowed || request.status !== "pending") return;
+    button.disabled = true;
+    if (!game.user.isGM) {
+      game.socket.emit("system.gum", { type: "rollRequest:chatSkip", messageId, requestId: request.id, targetKey, userId: game.user.id });
+      ui.notifications.info(game.i18n.localize("GUM.RollRequest.SkipSent"));
+      return;
+    }
+    await processChatRollSkip({ messageId, requestId: request.id, targetKey, userId: game.user.id });
+  }));
   root?.querySelectorAll?.(".gum-roll-request-button, .gum-roll-request-reroll-button").forEach(button => button.addEventListener("click", async event => {
     event.preventDefault();
     const messageId = button.closest(".message, li.chat-message")?.dataset.messageId;
@@ -150,11 +165,26 @@ async function processChatRollResult(payload) {
   return true;
 }
 
+async function processChatRollSkip(payload) {
+  const message = game.messages.get(payload.messageId);
+  if (!message || responsibleGM(message)?.id !== game.user.id) return false;
+  const request = foundry.utils.duplicate(message.getFlag("gum", "rollRequest"));
+  if (!request?.skip?.allowed || request.id !== payload.requestId || request.status !== "pending") return false;
+  const target = request.targets?.find(entry => entry.targetKey === payload.targetKey);
+  const resolved = target && await resolveRollRequestTarget(target);
+  const sender = game.users.get(payload.userId);
+  if (!resolved?.actor || !isUserAuthorizedForTarget(sender, resolved.actor, target)) return false;
+  const updated = { ...request, status: "skipped", skippedByUserId: sender.id, skippedAt: Date.now() };
+  const content = appendSkippedRequestResult(message.content, { label: request.skip.label });
+  await message.update({ content, "flags.gum.rollRequest": updated });
+  return true;
+}
+
 export function registerRollRequestSocket() {
   game.socket.on("system.gum", payload => {
-    if (payload?.type !== "rollRequest:chatResult") return;
+    if (!["rollRequest:chatResult", "rollRequest:chatSkip"].includes(payload?.type)) return;
     const previous = resultQueues.get(payload.messageId) ?? Promise.resolve();
-    const next = previous.then(() => processChatRollResult(payload)).catch(error => { console.error("GUM | Roll request", error); return false; });
+    const next = previous.then(() => payload.type === "rollRequest:chatSkip" ? processChatRollSkip(payload) : processChatRollResult(payload)).catch(error => { console.error("GUM | Roll request", error); return false; });
     const queued = next.finally(() => { if (resultQueues.get(payload.messageId) === queued) resultQueues.delete(payload.messageId); });
     resultQueues.set(payload.messageId, queued);
   });

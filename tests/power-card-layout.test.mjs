@@ -28,7 +28,7 @@ test("power cards preserve rolls, damage details, item actions, and drag behavio
   assert.match(powerTab, /item-quick-view gum-action-menu__item/);
   assert.match(powerTab, /item-edit gum-action-menu__item/);
   assert.match(powerTab, /item-delete gum-action-menu__item is-danger/);
-  assert.match(powerTab, /data-item-id="{{this\.id}}" draggable="true"/);
+  assert.match(powerTab, /data-item-id="{{this\.id}}"[^>]*data-organizer-item-type="power"[^>]*draggable="true"/);
   assert.match(actorSheet, /html\.find\("\.magic-card"\)\.each/);
 });
 

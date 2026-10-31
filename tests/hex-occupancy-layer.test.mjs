@@ -91,12 +91,12 @@ test("renders an interactive segmented marker at the occupied hex center", () =>
     layer.removeChildren = () => layer.children.splice(0);
     let activated = null;
     layer.renderGroups([{
-      key: "2:3:0",
+      key: "2:3",
       center: { x: 350, y: 250 },
       tokens: [{ id: "a", document: {} }, { id: "b", document: {} }]
     }], { onActivate: key => { activated = key; } });
 
-    const marker = layer.markers.get("2:3:0");
+    const marker = layer.markers.get("2:3");
     assert.ok(marker);
     assert.equal(marker.x, 350);
     assert.equal(marker.y, 250);
@@ -109,7 +109,7 @@ test("renders an interactive segmented marker at the occupied hex center", () =>
     assert.equal(frame.height, 64);
     assert.equal(count.text, "2");
     marker.events.pointertap({ stopPropagation() {} });
-    assert.equal(activated, "2:3:0");
+    assert.equal(activated, "2:3");
   } finally {
     globalThis.PIXI = previousPIXI;
     globalThis.canvas = previousCanvas;

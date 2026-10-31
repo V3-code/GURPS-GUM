@@ -1,0 +1,55 @@
+<form class="passive-condition-form">
+  <header class="passive-condition-toolbar">
+    <label class="passive-condition-search"><i class="fas fa-search"></i><input type="search" name="passive-search" placeholder="{{localize 'GUM.PassiveConditions.Search'}}"></label>
+    <button type="button" data-action="browse"><i class="fas fa-magnifying-glass"></i> {{localize "GUM.PassiveConditions.Browse"}}</button>
+    <button type="button" data-action="import"><i class="fas fa-file-import"></i> {{localize "GUM.PassiveConditions.Import"}}</button>
+    <button type="button" data-action="export"><i class="fas fa-file-export"></i> {{localize "GUM.PassiveConditions.Export"}}</button>
+  </header>
+
+  <p class="passive-condition-intro">{{localize "GUM.PassiveConditions.Introduction"}}</p>
+  <section class="passive-condition-flow" aria-label="{{localize 'GUM.PassiveConditions.FlowTitle'}}">
+    <div><span>1</span><i class="fas fa-books"></i><strong>{{localize "GUM.PassiveConditions.FlowCatalogTitle"}}</strong><small>{{localize "GUM.PassiveConditions.FlowCatalogHint"}}</small></div>
+    <i class="fas fa-chevron-right" aria-hidden="true"></i>
+    <div class="is-current"><span>2</span><i class="fas fa-list-check"></i><strong>{{localize "GUM.PassiveConditions.FlowConfigTitle"}}</strong><small>{{localize "GUM.PassiveConditions.FlowConfigHint"}}</small></div>
+    <i class="fas fa-chevron-right" aria-hidden="true"></i>
+    <div><span>3</span><i class="fas fa-users"></i><strong>{{localize "GUM.PassiveConditions.FlowActorsTitle"}}</strong><small>{{localize "GUM.PassiveConditions.FlowActorsHint"}}</small></div>
+  </section>
+  {{#if seededFromSources}}<p class="passive-condition-seeded"><i class="fas fa-wand-magic-sparkles"></i> {{localize "GUM.PassiveConditions.SeededFromSources"}}</p>{{/if}}
+
+  <div class="passive-condition-dropzone"><i class="fas fa-hand-pointer"></i><span>{{localize "GUM.PassiveConditions.DropHere"}}</span></div>
+
+  <ol class="passive-condition-list">
+    {{#each rows as |row|}}
+    <li class="passive-condition-row {{#if row.sourceMissing}}has-warning{{/if}}" data-entry-id="{{row.id}}" data-search-text="{{row.name}} {{row.sourceUuid}}">
+      <span class="passive-condition-order">{{row.displayIndex}}</span>
+      <img class="passive-condition-icon" src="{{row.img}}" alt="">
+      <div class="passive-condition-identity">
+        <strong>{{row.name}}</strong>
+        <small>{{#if row.sourceUuid}}{{row.sourceUuid}}{{else}}{{localize "GUM.PassiveConditions.EmbeddedOnly"}}{{/if}}</small>
+        {{#if row.sourceMissing}}<span class="passive-condition-warning"><i class="fas fa-triangle-exclamation"></i> {{localize "GUM.PassiveConditions.SourceUnavailableSnapshot"}}</span>{{/if}}
+      </div>
+      <div class="passive-condition-effects">
+        <span class="passive-condition-effect-count"><i class="fas fa-bolt"></i> {{row.effectCount}} {{localize "GUM.PassiveConditions.Effects"}}</span>
+        <div class="passive-condition-effect-list">
+          {{#each row.effects as |effect|}}<span class="passive-condition-effect {{#if effect.missing}}is-missing{{/if}}" title="{{effect.uuid}}"><img src="{{effect.img}}" alt=""><span>{{effect.name}}</span></span>{{/each}}
+        </div>
+      </div>
+      <label class="passive-condition-enabled"><input type="checkbox" data-field="enabled" {{checked row.enabled}}><span>{{localize "GUM.PassiveConditions.Enabled"}}</span></label>
+      <div class="passive-condition-actions">
+        <button type="button" data-action="move-up" title="{{localize 'GUM.PassiveConditions.MoveUp'}}" {{#unless row.canMoveUp}}disabled{{/unless}}><i class="fas fa-arrow-up"></i></button>
+        <button type="button" data-action="move-down" title="{{localize 'GUM.PassiveConditions.MoveDown'}}" {{#unless row.canMoveDown}}disabled{{/unless}}><i class="fas fa-arrow-down"></i></button>
+        <button type="button" data-action="open" title="{{localize 'GUM.PassiveConditions.Open'}}"><i class="fas fa-arrow-up-right-from-square"></i></button>
+        <button type="button" class="danger" data-action="remove" title="{{localize 'GUM.PassiveConditions.Remove'}}"><i class="fas fa-trash"></i></button>
+      </div>
+    </li>
+    {{else}}
+    <li class="passive-condition-empty"><i class="fas fa-inbox"></i><span>{{localize "GUM.PassiveConditions.Empty"}}</span></li>
+    {{/each}}
+  </ol>
+
+  <footer class="passive-condition-footer">
+    <button type="submit"><i class="fas fa-save"></i> {{localize "GUM.PassiveConditions.Save"}}</button>
+    <button type="button" class="primary" data-action="sync"><i class="fas fa-rotate"></i> {{localize "GUM.PassiveConditions.SaveAndSync"}}</button>
+    <button type="button" data-action="cancel"><i class="fas fa-times"></i> {{localize "GUM.PassiveConditions.Close"}}</button>
+  </footer>
+</form>

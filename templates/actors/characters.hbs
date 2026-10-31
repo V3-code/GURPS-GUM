@@ -773,6 +773,8 @@
               <a class="gum-action-menu__item add-energy-reserve" data-reserve-type="spell" role="menuitem"><i class="fas fa-battery-three-quarters"></i><span><strong>{{localize 'GUM.Spells.CreateReserve'}}</strong><small>{{localize 'GUM.Spells.CreateReserveHint'}}</small></span></a>
             </div>
           </div>
+          <a class="create-ability-group" data-ability-type="spell" title="{{localize 'GUM.AbilityOrganization.CreateGroup'}}"><i class="fas fa-folder-plus"></i> {{localize 'GUM.AbilityOrganization.Group'}}</a>
+          {{#if hasSpellCategorySuggestions}}<a class="suggest-ability-groups" data-ability-type="spell" title="{{localize 'GUM.AbilityOrganization.SuggestGroups'}}"><i class="fas fa-wand-magic-sparkles"></i> {{localize 'GUM.AbilityOrganization.Categories'}}</a>{{/if}}
           <a class="sort-control" data-item-type="spell" title="{{localize 'GUM.Spells.Sort'}}"><i class="fas fa-sort-alpha-down"></i></a>
         </div>
       </div>
@@ -833,21 +835,23 @@
 
       {{!-- Lista compacta de magias, isolada dos cards legados de poderes e combate. --}}
       <div class="magic-groups">
-      {{#each spellGroupsKeys as |groupName|}}
-          {{#with (lookup ../spellsByGroup groupName) as |spells|}}
-          <details class="magic-group" data-group-id="spell-group-{{groupName}}" {{collapsibleState (concat "spell-group-" groupName) @root.collapsedData}}>
+      {{#each spellSections as |section|}}
+          <details class="magic-group" data-group-id="spell-group-{{section.id}}" data-organizer-section data-organizer-group-id="{{section.id}}" {{collapsibleState (concat "spell-group-" section.id) @root.collapsedData}}>
             <summary class="magic-group__header">
               <div class="magic-group__identity">
                 <i class="fas fa-chevron-right indicator"></i>
                 <i class="fas fa-hat-wizard item-icon"></i>
-                <span class="group-name">{{groupName}}</span>
+                <span class="group-name">{{section.name}}</span>
               </div>
-              <span class="magic-group__count">{{localize 'GUM.Spells.Count' count=spells.length}}</span>
+              <span class="ability-group-header-tools">
+                {{#unless section.isUngrouped}}<span class="ability-group-actions"><a class="rename-ability-group" data-ability-type="spell" data-group-id="{{section.id}}" title="{{localize 'GUM.AbilityOrganization.RenameGroup'}}"><i class="fas fa-pen"></i></a><a class="delete-ability-group" data-ability-type="spell" data-group-id="{{section.id}}" title="{{localize 'GUM.AbilityOrganization.DeleteGroup'}}"><i class="fas fa-trash"></i></a></span>{{/unless}}
+                <span class="magic-group__count">{{localize 'GUM.Spells.Count' count=section.items.length}}</span>
+              </span>
             </summary>
 
-            <div class="magic-card-grid">
-              {{#each spells}}
-              <article class="item-wrapper item magic-card{{#if this.magicCardExpanded}} is-expanded{{/if}}" data-item-id="{{this.id}}" draggable="true">
+            <div class="magic-card-grid" data-organizer-zone data-organizer-group-id="{{section.id}}">
+              {{#each section.items}}
+              <article class="item-wrapper item magic-card{{#if this.magicCardExpanded}} is-expanded{{/if}}" data-item-id="{{this.id}}" data-organizer-item-id="{{this.id}}" data-organizer-item-type="spell" draggable="true">
                 <div class="magic-card__main">
                   <img class="magic-card__icon" src="{{this.img}}" alt="{{this.name}}">
 
@@ -879,6 +883,7 @@
                       <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Spells.Options'}}">
                         <a class="item-control item-quick-view gum-action-menu__item" data-item-id="{{this.id}}" role="menuitem"><i class="fas fa-eye"></i><span>{{localize 'GUM.Spells.View'}}</span></a>
                         <a class="item-control item-edit gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{localize 'GUM.Spells.Edit'}}</span></a>
+                        {{#if this.abilityOrganizationCanRemove}}<a class="item-control remove-ability-from-group gum-action-menu__item" data-ability-type="spell" data-item-id="{{this.id}}" role="menuitem"><i class="fas fa-folder-minus"></i><span>{{localize 'GUM.AbilityOrganization.RemoveFromGroup'}}</span></a>{{/if}}
                         <a class="item-control item-delete gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>{{localize 'GUM.Spells.Delete'}}</span></a>
                       </div>
                     </div>
@@ -945,10 +950,9 @@
               {{/each}}
             </div>
           </details>
-          {{/with}}
         {{/each}}
 
-        {{#unless spellGroupsKeys}}
+        {{#unless hasSpells}}
         <div class="empty-placeholder magic-empty">
           <p>{{localize 'GUM.Spells.Empty'}}</p>
         </div>
@@ -980,6 +984,8 @@
               <a class="gum-action-menu__item add-energy-reserve" data-reserve-type="power" role="menuitem"><i class="fas fa-battery-three-quarters"></i><span><strong>{{localize 'GUM.Powers.CreateReserve'}}</strong><small>{{localize 'GUM.Powers.CreateReserveHint'}}</small></span></a>
             </div>
           </div>
+          <a class="create-ability-group" data-ability-type="power" title="{{localize 'GUM.AbilityOrganization.CreateGroup'}}"><i class="fas fa-folder-plus"></i> {{localize 'GUM.AbilityOrganization.Group'}}</a>
+          {{#if hasPowerCategorySuggestions}}<a class="suggest-ability-groups" data-ability-type="power" title="{{localize 'GUM.AbilityOrganization.SuggestGroups'}}"><i class="fas fa-wand-magic-sparkles"></i> {{localize 'GUM.AbilityOrganization.Categories'}}</a>{{/if}}
           <a class="sort-control" data-item-type="power" title="{{localize 'GUM.Powers.Sort'}}"><i class="fas fa-sort-alpha-down"></i></a>
         </div>
       </div>
@@ -1038,21 +1044,23 @@
 
       {{!-- Lista compacta de poderes, usando o mesmo componente visual das magias. --}}
       <div class="magic-groups power-groups">
-      {{#each powerGroupsKeys as |groupName|}}
-          {{#with (lookup ../powersByGroup groupName) as |powers|}}
-          <details class="magic-group power-group" data-group-id="power-group-{{groupName}}" {{collapsibleState (concat "power-group-" groupName) @root.collapsedData}}>
+      {{#each powerSections as |section|}}
+          <details class="magic-group power-group" data-group-id="power-group-{{section.id}}" data-organizer-section data-organizer-group-id="{{section.id}}" {{collapsibleState (concat "power-group-" section.id) @root.collapsedData}}>
             <summary class="magic-group__header">
               <div class="magic-group__identity">
                 <i class="fas fa-chevron-right indicator"></i>
                 <i class="fas fa-bolt item-icon"></i>
-                <span class="group-name">{{groupName}}</span>
+                <span class="group-name">{{section.name}}</span>
               </div>
-              <span class="magic-group__count">{{localize 'GUM.Powers.Count' count=powers.length}}</span>
+              <span class="ability-group-header-tools">
+                {{#unless section.isUngrouped}}<span class="ability-group-actions"><a class="rename-ability-group" data-ability-type="power" data-group-id="{{section.id}}" title="{{localize 'GUM.AbilityOrganization.RenameGroup'}}"><i class="fas fa-pen"></i></a><a class="delete-ability-group" data-ability-type="power" data-group-id="{{section.id}}" title="{{localize 'GUM.AbilityOrganization.DeleteGroup'}}"><i class="fas fa-trash"></i></a></span>{{/unless}}
+                <span class="magic-group__count">{{localize 'GUM.Powers.Count' count=section.items.length}}</span>
+              </span>
             </summary>
 
-            <div class="magic-card-grid power-card-grid">
-              {{#each powers}}
-              <article class="item-wrapper item magic-card power-card{{#if this.powerCardExpanded}} is-expanded{{/if}}" data-item-id="{{this.id}}" draggable="true">
+            <div class="magic-card-grid power-card-grid" data-organizer-zone data-organizer-group-id="{{section.id}}">
+              {{#each section.items}}
+              <article class="item-wrapper item magic-card power-card{{#if this.powerCardExpanded}} is-expanded{{/if}}" data-item-id="{{this.id}}" data-organizer-item-id="{{this.id}}" data-organizer-item-type="power" draggable="true">
                 <div class="magic-card__main">
                   <img class="magic-card__icon" src="{{this.img}}" alt="{{this.name}}">
 
@@ -1084,6 +1092,7 @@
                       <div class="gum-action-menu__panel js-action-menu-panel" role="menu" aria-label="{{localize 'GUM.Powers.Options'}}">
                         <a class="item-control item-quick-view gum-action-menu__item" data-item-id="{{this.id}}" role="menuitem"><i class="fas fa-eye"></i><span>{{localize 'GUM.Powers.View'}}</span></a>
                         <a class="item-control item-edit gum-action-menu__item" role="menuitem"><i class="fas fa-edit"></i><span>{{localize 'GUM.Powers.Edit'}}</span></a>
+                        {{#if this.abilityOrganizationCanRemove}}<a class="item-control remove-ability-from-group gum-action-menu__item" data-ability-type="power" data-item-id="{{this.id}}" role="menuitem"><i class="fas fa-folder-minus"></i><span>{{localize 'GUM.AbilityOrganization.RemoveFromGroup'}}</span></a>{{/if}}
                         <a class="item-control item-delete gum-action-menu__item is-danger" role="menuitem"><i class="fas fa-trash"></i><span>{{localize 'GUM.Powers.Delete'}}</span></a>
                       </div>
                     </div>
@@ -1149,10 +1158,9 @@
               {{/each}}
             </div>
           </details>
-          {{/with}}
         {{/each}}
 
-        {{#unless powerGroupsKeys}}
+        {{#unless hasPowers}}
         <div class="empty-placeholder magic-empty">
           <p>{{localize 'GUM.Powers.Empty'}}</p>
         </div>

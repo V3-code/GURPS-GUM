@@ -200,6 +200,9 @@ const DEFAULT_EFFECT_ACTION = {
     roll_label: "Rolar Teste",
     roll_attribute: "ht",
     roll_modifier: "0",
+    roll_modifier_label: "",
+    roll_skip_allowed: false,
+    roll_skip_label: "",
     roll_modifier_value: "0",
     roll_modifier_cap: "",
     roll_modifier_context: "all",
@@ -212,8 +215,14 @@ const DEFAULT_EFFECT_ACTION = {
     modifier_application_side: "self",
     modifier_nh_display_mode: "roll_only",
     skill_scope: "all",
+    ability_kind: "skill",
     skill_targets: "",
     skill_attribute: "dx",
+    ability_sources: "",
+    ability_groups: "",
+    ability_sheet_groups: "",
+    ability_schools: "",
+    ability_classes: "",
     combat_scope: "all",
     combat_source_item_ids: "",
     combat_source_attack_ids: "",
@@ -323,6 +332,11 @@ const normalizeEffectAction = (action = {}) => {
         target_values: (entry?.target_values || "").toString().trim(),
         source_item_ids: (entry?.source_item_ids || "").toString().trim(),
         source_attack_ids: (entry?.source_attack_ids || "").toString().trim(),
+        ability_sources: normalizeControlledCsv(entry?.ability_sources),
+        ability_groups: normalizeControlledCsv(entry?.ability_groups),
+        ability_sheet_groups: normalizeControlledCsv(entry?.ability_sheet_groups),
+        ability_schools: normalizeControlledCsv(entry?.ability_schools),
+        ability_classes: normalizeControlledCsv(entry?.ability_classes),
          roll_tags: Array.isArray(entry?.roll_tags) ? entry.roll_tags.join(",") : (entry?.roll_tags || "").toString().trim(),
         roll_tag_match: entry?.roll_tag_match === "all" ? "all" : "any",
         nh_display_mode: (entry?.roll_tags?.length || String(entry?.roll_tags || "").trim()) ? "roll_only" : (entry?.nh_display_mode || "roll_only").toString().trim() || "roll_only"
@@ -335,8 +349,15 @@ const normalizeEffectAction = (action = {}) => {
     next.modifier_value = normalizeRollModifierEntryValue(next.modifier_value);
     next.modifier_value_mode = normalizeEffectValueMode(next.modifier_value_mode);
     next.modifier_application_side = normalizeRollModifierApplicationSide(next.modifier_application_side);
-    next.skill_scope = ["all", "specific", "attribute"].includes(next.skill_scope) ? next.skill_scope : "all";
+    next.ability_kind = ["skill", "spell", "power", "all"].includes(next.ability_kind) ? next.ability_kind : "skill";
+    next.skill_scope = ["all", "specific", "attribute", "classification"].includes(next.skill_scope) ? next.skill_scope : "all";
     next.skill_targets = normalizeControlledCsv(next.skill_targets);
+    next.skill_attribute = String(next.skill_attribute || "dx").trim().toLowerCase();
+    next.ability_sources = normalizeControlledCsv(next.ability_sources);
+    next.ability_groups = normalizeControlledCsv(next.ability_groups);
+    next.ability_sheet_groups = normalizeControlledCsv(next.ability_sheet_groups);
+    next.ability_schools = normalizeControlledCsv(next.ability_schools);
+    next.ability_classes = normalizeControlledCsv(next.ability_classes);
     next.combat_scope = ["all", "melee", "ranged", "specific"].includes(next.combat_scope) ? next.combat_scope : "all";
     next.combat_source_item_ids = normalizeControlledCsv(next.combat_source_item_ids);
     next.combat_source_attack_ids = normalizeControlledCsv(next.combat_source_attack_ids);
@@ -373,7 +394,7 @@ const buildFallbackActionLabel = (action = {}) => {
         case "roll_modifier":
             return "Modificador de Rolagem";
         case "skill_modifier":
-            return "Modificar Rolagem de Perícia";
+            return "Modificador de Habilidades";
         case "combat_modifier":
             return "Modificar Modo de Combate";
         case "status":
@@ -743,7 +764,12 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                         const entries = [];
 
                         if (action.type === "skill_modifier") {
-                            const contexts = action.skill_scope === "attribute" ? `skill_${action.skill_attribute || "dx"}` : "skill";
+                            const abilityKinds = action.ability_kind === "all"
+                                ? ["skill", "spell", "power"]
+                                : [action.ability_kind || "skill"];
+                            const contexts = abilityKinds
+                                .map(kind => action.skill_scope === "attribute" ? `${kind}_${action.skill_attribute || "dx"}` : kind)
+                                .join(",");
                             entries.push(scaleEntry({
                                 label: action.label || "",
                                 value: action.modifier_value,
@@ -754,7 +780,13 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                                 target_values: action.skill_scope === "specific" ? action.skill_targets || "" : "",
                                 source_item_ids: "",
                                 source_attack_ids: "",
-                                skill_roll_only: true,
+                                ability_sources: action.skill_scope === "classification" ? action.ability_sources || "" : "",
+                                ability_groups: action.skill_scope === "classification" ? action.ability_groups || "" : "",
+                                ability_sheet_groups: action.skill_scope === "classification" ? action.ability_sheet_groups || "" : "",
+                                ability_schools: action.skill_scope === "classification" ? action.ability_schools || "" : "",
+                                ability_classes: action.skill_scope === "classification" ? action.ability_classes || "" : "",
+                                ability_roll_only: true,
+                                skill_roll_only: (action.ability_kind || "skill") === "skill",
                                 nh_display_mode: resolveNhDisplayMode(action.modifier_value)
                             }));
                         } else {
@@ -1071,7 +1103,7 @@ export async function applySingleEffect(effectItem, targets, context = {}) {
                         if (privacy.whisper.length) chatData.whisper = privacy.whisper;
                         if (privacy.blind) chatData.blind = true;
                         const { createSingleRollRequestMessage } = await import("../module/services/roll-request-service.js");
-                        await createSingleRollRequestMessage({ title: normalized.label, description: chatBody, origin: { type: "effect-chat", effectUuid: effectItem.uuid, effectName: effectItem.name }, targets: [{ targetKey: targetActor.uuid, actorUuid: targetActor.uuid, tokenUuid: null, actorName: targetActor.name, actorImg: targetActor.img, recipientUserIds: recipients }], test: normalized.test, consequence: { type: "chat-record" }, delivery: { rollMode: privacy.mode, visibility: normalized.visibility } }, chatData);
+                        await createSingleRollRequestMessage({ title: normalized.label, description: chatBody, origin: { type: "effect-chat", effectUuid: effectItem.uuid, effectName: effectItem.name }, targets: [{ targetKey: targetActor.uuid, actorUuid: targetActor.uuid, tokenUuid: null, actorName: targetActor.name, actorImg: targetActor.img, recipientUserIds: recipients }], test: normalized.test, skip: normalized.skip, consequence: { type: "chat-record" }, delivery: { rollMode: privacy.mode, visibility: normalized.visibility } }, chatData);
                     } else {
                         if (action.whisperMode === "gm") chatData.whisper = ChatMessage.getWhisperRecipients("GM");
                         else if (action.whisperMode === "blind") chatData.blind = true;

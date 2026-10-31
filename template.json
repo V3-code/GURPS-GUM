@@ -477,6 +477,18 @@
         "assignments": {},
         "itemOrder": {}
       },
+      "spell_organization": {
+        "groups": {},
+        "groupOrder": [],
+        "assignments": {},
+        "itemOrder": {}
+      },
+      "power_organization": {
+        "groups": {},
+        "groupOrder": [],
+        "assignments": {},
+        "itemOrder": {}
+      },
       "characteristic_organization": {
         "groups": {},
         "groupOrder": [],
@@ -1121,9 +1133,15 @@
       "modifier_cap": "",
       "modifier_application_side": "self",
       "modifier_nh_display_mode": "roll_only",
+      "ability_kind": "skill",
       "skill_scope": "all",
       "skill_targets": "",
       "skill_attribute": "dx",
+      "ability_sources": "",
+      "ability_groups": "",
+      "ability_sheet_groups": "",
+      "ability_schools": "",
+      "ability_classes": "",
       "combat_scope": "all",
       "combat_source_item_ids": "",
       "combat_source_attack_ids": "",
@@ -1172,8 +1190,9 @@
       "duration": {
         "value": 1,
         "unit": "rounds",
-        "inCombat": true,
-        "isPermanent": false,
+        "inCombat": false,
+        "isPermanent": true,
+        "_uiMode": "permanent",
         "startMode": "apply",
         "endMode": "turnEnd"
       },
