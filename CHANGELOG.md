@@ -4,6 +4,29 @@ Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
 
 O formato segue uma adaptação de [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e usa [SemVer](https://semver.org/lang/pt-BR/).
 
+## [1.5.0-beta] - 2026-10-30
+
+### Added
+
+- Nova janela de configuração mundial de condições passivas, com ordenação, ativação, busca nas fontes configuradas e importação/exportação autocontida.
+- Modificadores de habilidades podem selecionar perícias, magias ou poderes por nome, atributo base, fonte, grupo, escola, classe e grupo visual da ficha.
+- Magias e poderes agora aceitam grupos visuais criados e reorganizados diretamente na ficha, sem alterar a classificação interna dos itens.
+- Contextos especializados de rolagem reconhecem o tipo da habilidade e seu atributo base, permitindo filtros como magias baseadas em DX ou poderes baseados em IQ.
+
+### Changed
+
+- A sincronização de condições passivas passa a usar a lista configurada pelo mundo como fonte autoritativa e preserva a distinção entre condições gerenciadas e condições adicionadas manualmente.
+- A configuração de duração do Item Efeito fica sempre visível e novos efeitos usam duração permanente por padrão, com indicações próprias para ações instantâneas.
+- Campos de expressões e valores no editor de Efeito podem ser redimensionados manualmente, e os modos de modificador foram reorganizados para facilitar a leitura.
+- A ocupação tática do canvas foi ampliada para grades quadradas, tokens de múltiplos espaços e atualização mais eficiente dos marcadores.
+- A compatibilidade mínima passa a ser Foundry VTT 13, com verificação no Foundry VTT 14.
+
+### Fixed
+
+- Filtros por grupo visual consultam a organização local do ator, enquanto filtros por classificação continuam usando os dados internos do item; quando combinados, todos os critérios precisam corresponder.
+- Configurações passivas exportadas preservam seus itens vinculados e podem ser reimportadas sem perder as referências necessárias.
+- Solicitações e modificadores de rolagem preservam corretamente os novos contextos de habilidades durante a preparação e exibição do teste.
+
 ## [1.4.9-beta] - 2026-10-27
 
 ### Added
